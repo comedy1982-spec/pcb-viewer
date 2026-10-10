@@ -49,15 +49,21 @@ function controller(code,mcu){
   const outs=Object.keys(st);if(!outs.length)return{error:'출력 핀이 없습니다. setup()에서 pinMode(핀, OUTPUT) 또는 pwmInit(핀, 주파수)을 호출하세요.',logs};
   const srcs=outs.map(p=>({id:'FW_'+p,type:'V',n:[mcu.pins[p],mcu.gnd],v:mcu.vdd,wave:'fw',pwm:st[p].pwm,freq:st[p].freq,duty:0,level:0,ph0:0,fw:true,label:`${mcu.ref||'MCU'} ${p} · ${st[p].pwm?'PWM':'GPIO'} (펌웨어)`}));
   outs.forEach(p=>{trace.out[p]=[];});
-  const ctl={dt:1e-3,srcs,logs,trace,error:null,errLine:null,
+  // loop period: 1 ms unless the firmware declares const LOOP_PERIOD_US (e.g. fast BLDC commutation)
+  const lp=params(code).find(p=>p.name==='LOOP_PERIOD_US');const dt=lp?Math.max(10,Math.min(1e5,lp.value))*1e-6:1e-3;
+  const ctl={dt,srcs,logs,trace,error:null,errLine:null,
     tick(t,readNet,set){
-      ms=Math.round(t*1000);read=readNet;guard=0;
+      ms=Math.round(t*1e6)/1000;read=readNet;guard=0;
       try{inst.loop(ms);}catch(e){if(!ctl.error){ctl.error=`loop(${ms}) 오류: ${e.message}`;ctl.errLine=lineOf(e);}}
       trace.t.push(ms);
       outs.forEach(p=>{const s=st[p];set('FW_'+p,s.pwm?{duty:s.duty,freq:s.freq}:{level:s.level});trace.out[p].push(s.pwm?s.duty:s.level);});
     }};
   return ctl;
 }
-return{params,setParam,compile,controller,API_NAMES};
+// which pins the firmware drives (from setup) and reads (from the code), for HSIS cross-checks
+function pinUsage(code,mcu){const ctl=controller(code,mcu);const out=ctl.error?[]:ctl.srcs.map(s=>({pin:s.id.slice(3),pwm:s.pwm,freq:s.freq}));
+  const reads=[];const re=/\b(analogRead|analogReadVoltage|digitalRead)\s*\(\s*(P[A-K]\d{1,2})\s*\)/g;let m;while((m=re.exec(code)))if(!reads.some(r=>r.pin===m[2]))reads.push({pin:m[2],analog:m[1]!=='digitalRead'});
+  const lp=params(code).find(p=>p.name==='LOOP_PERIOD_US');return{error:ctl.error||null,out,reads,loopUs:lp?lp.value:1000};}
+return{params,setParam,compile,controller,pinUsage,API_NAMES};
 })();
 if(typeof module!=='undefined')module.exports=FW;

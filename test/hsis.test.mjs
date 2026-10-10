@@ -49,3 +49,24 @@ test('traceability', () => {
   assert.equal(R.status['HSIS-007'], 'ok');
   assert.equal(R.status['HSIS-011'], 'err');
 });
+
+test('each built-in board has its own HSIS; firmware is cross-checked against it', () => {
+  const L = load();
+  const { PCB, HSIS, FW, HSIS_SAMPLES } = L;
+  for (const [k, spec, expect] of [['mcu', L.SAMPLE_MCU, ['TRACE_TEST', 'SW_INIT']], ['bldc', L.SAMPLE_BLDC, ['TRACE_REQ', 'SW_DIR']]]) {
+    const B = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec))));
+    const S = HSIS_SAMPLES[k];
+    const H = HSIS.fromRows([S.hsis.header].concat(S.hsis.rows), S.hsis.meta);
+    let r = HSIS.check(B, H, HSIS.parseARXML(S.arxml), 'U1');
+    const u1 = B.byRef.U1, pins = {};
+    u1.pads.forEach(p => { if (p.fn && /^P[A-K]\d+$/.test(p.fn)) pins[p.fn] = p.net || null; });
+    r = HSIS.checkFw(H, FW.pinUsage(u1.fw, { pins, gnd: 'GND', vdd: 3.3 }), r);
+    const bad = r.results.filter(x => x.sev === 'err' || x.sev === 'warn').map(x => x.code).sort();
+    assert.deepEqual(bad.join(','), expect.slice().sort().join(','), `${k}: ${bad}`);
+    assert.ok(r.results.some(x => x.code === 'FW_DIR' && x.sev === 'ok'));
+    // changing the PWM frequency in firmware is caught against the HSIS timing column
+    const fw2 = FW.setParam(u1.fw, 'PWM_FREQ_HZ', 777);
+    const r2 = HSIS.checkFw(H, FW.pinUsage(fw2, { pins, gnd: 'GND', vdd: 3.3 }), HSIS.check(B, H, null, 'U1'));
+    assert.ok(r2.results.some(x => x.code === 'FW_FREQ' && x.sev === 'warn'));
+  }
+});

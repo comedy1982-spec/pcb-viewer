@@ -18,15 +18,15 @@ function fwCardHTML(c){
   const ps=FW.params(fwCode(c)).filter(p=>!/OHM$/.test(p.name)).slice(0,8);
   const R=SR.fw,tr=SR.cfg&&SR.cfg.sp&&SR.cfg.sp.tran;let sum='';
   if(R&&R.error)sum=`<p class="fwsum" style="color:var(--err)">${esc(R.error)}</p>`;
-  else if(R&&tr&&tr.anim&&!tr.error){const m=Object.values(tr.anim.mot)[0];const pw=(R.srcs||[]).find(s=>s.pwm),d=pw&&R.trace?R.trace.out[pw.id.slice(3)]:null;
-    if(m)sum=`<p class="fwsum">마지막 실행: 출력축 ${(m.w[m.w.length-1]/(m.gear||1)*60/TAU).toFixed(0)} rpm${d?` · 최종 듀티 ${(d[d.length-1]*100).toFixed(0)} %`:''}${R.logs.length?` · 로그 ${R.logs.length}줄`:''}</p>`;}
+  else if(R&&tr&&tr.anim&&!tr.error){const m=Object.values(tr.anim.mot)[0];const dl=R.trace?Math.max(0,...(R.srcs||[]).filter(s=>s.pwm).map(s=>{const a=R.trace.out[s.id.slice(3)];return a&&a.length?a[a.length-1]:0;})):null;
+    if(m)sum=`<p class="fwsum">마지막 실행: 출력축 ${(m.w[m.w.length-1]/(m.gear||1)*60/TAU).toFixed(0)} rpm${dl!=null&&R.srcs.some(s=>s.pwm)?` · 최종 듀티 ${(dl*100).toFixed(0)} %`:''}${R.logs.length?` · 로그 ${R.logs.length}줄`:''}</p>`;}
   return`<div class="fwcard"><div class="sub">펌웨어 · 주요 파라미터</div>
     <div class="fwq">${ps.map(p=>`<label title="${esc(p.comment)}"><span>${esc(p.name)}</span><input type="number" step="any" data-fwp="${esc(p.name)}" value="${p.value}" aria-label="${esc(p.name)} ${esc(p.comment)}"></label>`).join('')}</div>
     <div class="acts"><button class="btn sm" data-fw="edit">코드 편집</button><button class="btn sm primary" data-fw="run">빌드 &amp; 시뮬레이션</button></div>${sum}</div>`;
 }
 $('#pane').addEventListener('click',e=>{const b=e.target.closest('[data-fw]');if(!b)return;if(b.dataset.fw==='edit')fwOpen();else fwRunAll(b);});
 $('#pane').addEventListener('change',e=>{const i=e.target.closest('[data-fwp]');if(!i)return;const c=fwMcu();if(!c)return;const v=parseFloat(i.value);if(!isFinite(v))return;
-  fwSetCode(c,FW.setParam(fwCode(c),i.dataset.fwp,v));if(!$('#fwModal').hidden)fwRender(true);toast(`${i.dataset.fwp} = ${v} · "빌드 & 시뮬레이션"을 누르면 반영됩니다.`);});
+  fwSetCode(c,FW.setParam(fwCode(c),i.dataset.fwp,v));hsisOnFirmware();if(!$('#fwModal').hidden)fwRender(true);toast(`${i.dataset.fwp} = ${v} · "빌드 & 시뮬레이션"을 누르면 반영됩니다.`);});
 
 /* ---- run: firmware + circuit transient together ---- */
 function fwRunAll(btn){
@@ -35,6 +35,7 @@ function fwRunAll(btn){
     if(btn){btn.disabled=false;btn.textContent=label;}
     renderSim();updateLegend();refresh(true);if(!$('#fwModal').hidden)fwRender(false);
     if(r&&r.error)toast('실행하지 못했습니다: '+r.error);
+    else if(SR.fwWarn)toast(SR.fwWarn);
     else if(r&&r.autoSteps)toast(`PWM 주파수에 맞춰 계산 단계를 ${r.autoSteps}로 늘렸습니다.`);},30);
 }
 
@@ -55,7 +56,7 @@ function fwParams(){
     <input type="range" min="${mn}" max="${mx}" step="${st}" value="${Math.min(mx,Math.max(mn,p.value))}" data-fwpr="${esc(p.name)}" aria-label="${esc(p.name)} 조절"><input type="number" step="any" data-fwpn="${esc(p.name)}" value="${p.value}" aria-label="${esc(p.name)}"></div>`;}).join('')
     :'<p class="fwsum">코드 위쪽에 <code>const 이름 = 숫자; // 설명</code> 형식으로 적은 상수가 여기 파라미터로 나타납니다.</p>';
 }
-function fwApplyParam(name,v){const c=fwMcu(),ta=$('#fwCode'),st=ta.scrollTop;const code=FW.setParam(ta.value,name,v);ta.value=code;ta.scrollTop=st;fwSetCode(c,code);
+function fwApplyParam(name,v){const c=fwMcu(),ta=$('#fwCode'),st=ta.scrollTop;const code=FW.setParam(ta.value,name,v);ta.value=code;ta.scrollTop=st;fwSetCode(c,code);clearTimeout(FWS.htimer);FWS.htimer=setTimeout(hsisOnFirmware,300);
   $('#fwParams').querySelectorAll(`[data-fwpn="${name}"],[data-fwpr="${name}"]`).forEach(x=>{if(document.activeElement!==x)x.value=v;});$('#fwMsg').textContent='변경됨 · 빌드 & 시뮬레이션으로 확인하세요';}
 $('#fwParams').addEventListener('input',e=>{const r=e.target.closest('[data-fwpr]');if(r)fwApplyParam(r.dataset.fwpr,+r.value);});
 $('#fwParams').addEventListener('change',e=>{const n=e.target.closest('[data-fwpn]');if(n){const v=parseFloat(n.value);if(isFinite(v))fwApplyParam(n.dataset.fwpn,v);}});
@@ -74,6 +75,7 @@ function fwResult(){
   const R=SR.fw,box=$('#fwResult');
   if(!R){box.innerHTML='<p class="fwsum">아직 실행하지 않았습니다. <b>빌드 &amp; 시뮬레이션</b>을 누르면 펌웨어의 <code>loop(ms)</code>가 1 ms마다 회로 해석과 함께 돌고, 결과가 여기와 3D 보기에 나타납니다.</p>';return;}
   let h='';
+  if(SR.fwWarn&&!R.checkOnly)h+=`<p class="fwerr" style="color:var(--warn-fg);background:var(--warn-bg)">${esc(SR.fwWarn)}</p>`;
   if(R.error)h+=`<p class="fwerr">${esc(R.error)}${R.line?` <button class="btn sm" data-fwline="${R.line}">${R.line}번째 줄로</button>`:''}</p>`;
   else if(R.checkOnly)h+=`<p class="fwok">빌드 성공 · 출력 핀: ${esc(R.pins)}</p>`;
   const tr=SR.cfg&&SR.cfg.sp&&SR.cfg.sp.tran;
@@ -88,13 +90,15 @@ function fwResult(){
       for(let i=0;i<ia.length;i++){acc+=ia[i];if(i>=win)acc-=ia[i-win];avg[i]=acc/Math.min(i+1,win);}
       h+=miniChart(`${r} 모터 전류 (2 ms 평균)`,ts,avg,{color:'var(--s6)',last:SIM.fmtSI(avg[avg.length-1],'A'),ylab:SIM.fmtSI(Math.max(...avg),'A').replace(' ','')});});
   }
+  if(typeof HS!=='undefined'&&HS.fw&&HS.res){const fr=HS.res.results.filter(r=>/^FW_/.test(r.code));const bad=fr.filter(r=>r.sev==='err'||r.sev==='warn');
+    h+=`<div class="sub" style="margin-top:10px">HSIS 대조</div><p class="fwsum">${bad.length?bad.map(r=>`${r.sev==='err'?'✕':'!'} ${esc(r.id||'')} ${esc(r.msg)}`).join('<br>'):`✓ 펌웨어가 쓰는 핀 ${fr.filter(r=>r.sev==='ok').length}건이 HSIS(${esc(HS.H.meta.docId||'')})와 일치합니다.`}</p>`;}
   if(R.logs&&R.logs.length)h+=`<div class="sub" style="margin-top:10px">로그</div><div class="fwlog">${R.logs.map(l=>`<div><span class="t">${l.ms} ms</span>${esc(l.text)}</div>`).join('')}</div>`;
   box.innerHTML=h;
 }
 $('#fwResult').addEventListener('click',e=>{const b=e.target.closest('[data-fwline]');if(!b)return;const n=+b.dataset.fwline,ta=$('#fwCode'),lines=ta.value.split('\n');let pos=0;for(let i=0;i<n-1;i++)pos+=lines[i].length+1;
   ta.focus();ta.setSelectionRange(pos,pos+(lines[n-1]||'').length);ta.scrollTop=Math.max(0,(n-6)*19);fwGutter();});
 const fwTa=$('#fwCode');
-fwTa.addEventListener('input',()=>{const c=fwMcu();if(!c)return;fwSetCode(c,fwTa.value);fwGutter();$('#fwMsg').textContent='변경됨';clearTimeout(FWS.timer);FWS.timer=setTimeout(()=>{fwParams();renderPane();},350);});
+fwTa.addEventListener('input',()=>{const c=fwMcu();if(!c)return;fwSetCode(c,fwTa.value);fwGutter();$('#fwMsg').textContent='변경됨';clearTimeout(FWS.timer);FWS.timer=setTimeout(()=>{fwParams();renderPane();hsisOnFirmware();},350);});
 fwTa.addEventListener('scroll',()=>{$('#fwGut').scrollTop=fwTa.scrollTop;});
 fwTa.addEventListener('keydown',e=>{
   if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();const s=fwTa.selectionStart,en=fwTa.selectionEnd;fwTa.setRangeText('  ',s,en,'end');fwTa.dispatchEvent(new Event('input'));}
@@ -105,7 +109,7 @@ $('#fwRun').addEventListener('click',()=>fwRunAll($('#fwRun')));
 $('#fwCheck').addEventListener('click',()=>{const c=fwMcu();const ctl=FW.controller(fwCode(c),fwMcuDesc(c));
   SR.fw=ctl.error?{error:ctl.error,line:ctl.line,logs:ctl.logs}:{checkOnly:true,logs:ctl.logs,pins:ctl.srcs.map(s=>`${s.id.slice(3)} (${s.pwm?'PWM '+s.freq+' Hz':'GPIO'})`).join(', ')};fwRender(false);
   $('#fwMsg').textContent=ctl.error?'빌드 실패':'빌드 성공';});
-$('#fwReset').addEventListener('click',()=>{const c=fwMcu();if(!c)return;fwSetCode(c,c.fw);fwRender(true);renderPane();$('#fwMsg').textContent='기본 코드로 되돌렸습니다';});
+$('#fwReset').addEventListener('click',()=>{const c=fwMcu();if(!c)return;fwSetCode(c,c.fw);fwRender(true);renderPane();hsisOnFirmware();$('#fwMsg').textContent='기본 코드로 되돌렸습니다';});
 $('#fw3d').addEventListener('click',()=>{fwClose();setWorkspace('board');if(S.view!=='3d'||S.sch==='full')setView('3d');playReset();});
 $('#fwModal').addEventListener('click',e=>{if(e.target.id==='fwModal'||e.target.closest('[data-fwclose]'))fwClose();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#fwModal').hidden){e.stopPropagation();fwClose();}},true);

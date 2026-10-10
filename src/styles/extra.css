@@ -226,13 +226,13 @@
 /* resizable panes */
 .main{position:relative;grid-template-columns:var(--lw,212px) minmax(0,1fr) var(--rw,316px)}
 .main.simwide{grid-template-columns:var(--lw,212px) minmax(0,1fr) var(--rws,392px)}
-.hsis-ws{position:relative;grid-template-columns:var(--hl,248px) minmax(0,1fr) var(--hr,380px)}
+.hsis-ws{position:relative;grid-template-columns:var(--hsw-l,248px) minmax(0,1fr) var(--hsw-r,380px)}
 .rh{position:absolute;top:0;bottom:0;width:12px;cursor:col-resize;z-index:6;touch-action:none}
 .rh::after,#splitter::after{content:"";position:absolute;left:5px;top:14px;bottom:14px;width:2px;border-radius:2px;background:transparent;transition:background .12s}
 .rh:hover::after,.rh.on::after,.rh:focus-visible::after{background:var(--accent)}
 .rh:focus-visible{outline:none}
 #hLeft{left:var(--lw,212px)}#hRight{right:var(--rw,316px)}.main.simwide #hRight{right:var(--rws,392px)}
-#hHsL{left:var(--hl,248px)}#hHsR{right:var(--hr,380px)}
+#hHsL{left:var(--hsw-l,248px)}#hHsR{right:var(--hsw-r,380px)}
 #splitter{position:absolute;top:0;bottom:0;left:calc(var(--split,50%) - 6px);width:12px;cursor:col-resize;z-index:4;touch-action:none}
 #splitter::after{top:0;bottom:0;background:var(--line)}
 #splitter:hover::after,#splitter.on::after,#splitter:focus-visible::after{background:var(--accent)}
@@ -240,7 +240,7 @@
 .viewport:not(.split) #splitter{display:none}
 body.resizing,body.resizing *{cursor:col-resize!important;user-select:none}
 body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
-@media (max-width:1180px){.hsis-ws{grid-template-columns:var(--hl,220px) minmax(0,1fr)}#hHsR{display:none}}
+@media (max-width:1180px){.hsis-ws{grid-template-columns:var(--hsw-l,220px) minmax(0,1fr)}#hHsR{display:none}}
 @media (max-width:980px){#hLeft,#hRight{display:none}.main,.main.simwide{grid-template-columns:1fr}}
 @media (max-width:820px){#hHsL{display:none}.hsis-ws{grid-template-columns:1fr}}
 /* MCU firmware editor */

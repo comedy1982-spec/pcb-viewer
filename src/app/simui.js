@@ -185,6 +185,7 @@ function thConfig(){
   BD.comps.forEach(c=>{if(c.kind!=='none')P[c.ref]=0;});
   if(BD.source==='예제'&&!BD.demo)Object.assign(P,{U2:0.45,U1:0.12,U3:0.03,D1:0.008,R2:0.006});
   if(BD.demo==='mcu')Object.assign(P,{M1:0.9,U2:0.03,U1:0.05,Q1:0.02,D1:0.05,R5:0.01});
+  if(BD.demo==='bldc')Object.assign(P,{M1:2.5,U3:0.35,U2:0.18,U1:0.05});
   SR.cfg.th={P,res:160};return SR.cfg.th;
 }
 function coverageGrid(res){
@@ -246,27 +247,33 @@ function thBind(b){
 function importPower(){const cfg=thConfig();if(!SR.sp||!SR.sp.parts)return;Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);SR.sp.parts.forEach(p=>{if(p.ref&&cfg.P[p.ref]!=null&&p.P>0)cfg.P[p.ref]=+(cfg.P[p.ref]+p.P).toFixed(4);});}
 
 /* ---------- circuit ---------- */
-const TYPE_LABEL={R:'저항',C:'커패시터',L:'인덕터',D:'다이오드',SW:'스위치',LOAD:'IC 부하',REG:'레귤레이터',V:'전압 소스',NMOS:'N-MOSFET · Vth',MOTOR:'DC 모터 · 부하 토크'};
+const TYPE_LABEL={R:'저항',C:'커패시터',L:'인덕터',D:'다이오드',SW:'스위치',LOAD:'IC 부하',REG:'레귤레이터',V:'전압 소스',NMOS:'N-MOSFET · Vth',MOTOR:'DC 모터 · 부하 토크',BLDC:'BLDC 모터 · 부하 토크',BRIDGE3:'3상 드라이버 · RDS(on)',HALL:'홀 센서'};
 function spConfig(){
   if(SR.cfg.sp)return SR.cfg.sp;const ck=SIM.extractCircuit(BD);
   let tstop=12,steps=1200;
-  if(BD.demo==='mcu'){
+  if(BD.demo==='bldc'){
+    ck.srcs.forEach(s=>{if(s.n[0]==='+12V'){s.wave='dc';s.v=12;s.label='J1 12 V 입력 전원';}});
+    ck.els.forEach(e=>{if(e.type==='LOAD'&&e.ref==='U1')e.I=0.02;});
+    tstop=400;steps=6400;
+  }
+  else if(BD.demo==='mcu'){
     // MCU board: 5 V applied at t = 0; the firmware drives PA8 (PWM) and PB3 (LED) during the run
     ck.srcs.forEach(s=>{if(s.n[0]==='VIN'){s.wave='dc';s.label='J1 5 V 입력 전원';}});
     ck.els.forEach(e=>{if(e.type==='LOAD'&&e.ref==='U1')e.I=0.015;});
     tstop=800;steps=10000;
   }
   else if(BD.source==='예제'){ck.els.forEach(e=>{if(e.type==='LOAD')e.I=e.ref==='U1'?0.02:0.008;});if(BD.nets.LED)ck.srcs.push({id:'V2',type:'V',n:['LED',ck.gnd],v:3.3,wave:'pulse',t0:3e-3,per:4e-3,duty:0.5,tr:1e-3,label:'U1 GPIO (PB3) 출력 · 예시'});}
-  const probes=[...new Set(ck.srcs.map(s=>s.n[0]).concat(ck.els.filter(e=>e.type==='REG').map(e=>e.n[1])).concat(BD.nets.LED_A?['LED_A']:[]).concat(ck.els.filter(e=>e.type==='MOTOR').map(e=>e.n[1])).concat(BD.nets.ISNS_ADC?['ISNS_ADC']:[]))].slice(0,4);
+  const probes=[...new Set(ck.srcs.map(s=>s.n[0]).concat(ck.els.filter(e=>e.type==='REG').map(e=>e.n[1])).concat(BD.nets.LED_A?['LED_A']:[]).concat(ck.els.filter(e=>e.type==='MOTOR').map(e=>e.n[1]).concat(ck.els.filter(e=>e.type==='BLDC').map(e=>e.n[0]))).concat(BD.nets.ISNS_ADC?['ISNS_ADC']:[]))].slice(0,4);
   SR.cfg.sp={ck,tstop,steps,probes,tran:null,hidden:{}};return SR.cfg.sp;
 }
-const valStr=e=>e.type==='MOTOR'?(e.tl*1000).toFixed(2):e.type==='NMOS'?String(e.vth):e.type==='R'?SIM.fmtSI(e.val,'Ω').replace(' ',''):e.type==='C'?SIM.fmtSI(e.val,'F').replace(' ',''):e.type==='L'?SIM.fmtSI(e.val,'H').replace(' ',''):e.type==='LOAD'?(e.I*1000).toFixed(1):e.type==='REG'?e.vset:'';
+const valStr=e=>e.type==='BRIDGE3'?SIM.fmtSI(e.ron,'Ω').replace(' ',''):(e.type==='MOTOR'||e.type==='BLDC')?(e.tl*1000).toFixed(2):e.type==='NMOS'?String(e.vth):e.type==='R'?SIM.fmtSI(e.val,'Ω').replace(' ',''):e.type==='C'?SIM.fmtSI(e.val,'F').replace(' ',''):e.type==='L'?SIM.fmtSI(e.val,'H').replace(' ',''):e.type==='LOAD'?(e.I*1000).toFixed(1):e.type==='REG'?e.vset:'';
 // transient run; when the board has an MCU with firmware, its loop() is co-simulated and drives the MCU pins
 function spRunTransient(){
   const cfg=spConfig(),ck=cfg.ck,mcu=fwMcu();let ctl=null,c=ck,autoSteps=0;
   if(mcu){ctl=FW.controller(fwCode(mcu),{pins:fwPins(mcu),gnd:ck.gnd,vdd:3.3,ref:mcu.ref});
     if(ctl.error){SR.fw={error:ctl.error,line:ctl.line,logs:ctl.logs};return{error:ctl.error};}
     const fmax=Math.max(0,...ctl.srcs.filter(s=>s.pwm).map(s=>s.freq));const need=Math.ceil(cfg.tstop*1e-3*fmax*16);
+    if(fmax*16*cfg.tstop*1e-3>40000)SR.fwWarn=`PWM ${fmax} Hz는 계산 단계(최대 40,000)로 충분히 풀 수 없어 파형이 거칠어집니다. 해석 시간을 줄이거나 주파수를 낮추세요.`;else SR.fwWarn=null;
     if(need>cfg.steps){cfg.steps=Math.min(40000,need);autoSteps=cfg.steps;}
     c=Object.assign({},ck,{srcs:ck.srcs.concat(ctl.srcs)});}
   cfg.probes=[...new Set(cfg.probes.concat(c.srcs.map(s=>s.n[0])))].slice(0,8);
@@ -279,20 +286,20 @@ function spHTML(){
   const cfg=spConfig(),ck=cfg.ck,f=SIM.fmtSI;
   const netOpts=sel=>BD.netOrder.map(n=>`<option${n===sel?' selected':''}>${esc(n)}</option>`).join('');
   const mcu=fwMcu();const fwSrc=mcu?`<div class="srccard fwsrc"><div class="hd"><span>${esc(mcu.ref)} · ${esc(mcu.val)} 펌웨어</span><button class="btn sm" id="sp-fw">펌웨어 편집</button></div>
-    <p class="lead" style="margin:0">출력 핀(${Object.entries(fwPins(mcu)).filter(([p,n])=>n&&/PWM|LED|_ST|GATE/.test(n)).map(([p,n])=>esc(p)+'→'+esc(n)).join(', ')||'펌웨어가 정함'})은 실행할 때 펌웨어의 <code>loop(ms)</code>가 1 ms마다 정합니다. ADC 핀은 회로의 전압을 읽습니다.</p></div>`:'';
+    <p class="lead" style="margin:0">출력 핀(${(()=>{const u=FW.pinUsage(fwCode(mcu),fwMcuDesc(mcu)),pn=fwPins(mcu);return u.out.map(o=>esc(o.pin)+'→'+esc(pn[o.pin]||'?')+(o.pwm?' PWM':'')).join(', ')||'펌웨어가 정함';})()})은 실행할 때 펌웨어의 <code>loop(ms)</code>가 1 ms마다 정합니다. ADC 핀은 회로의 전압을 읽습니다.</p></div>`:'';
   const srcs=fwSrc+ck.srcs.map((s,i)=>`<div class="srccard"><div class="hd"><span>${esc(s.id)} · ${esc(s.label||'전압 소스')}</span><button class="x" data-srcdel="${i}" aria-label="${esc(s.id)} 삭제">✕</button></div>
     <div class="row3"><label class="fld"><span>+ 넷</span><select data-src="${i}" data-k="n0" id="src${i}-n">${netOpts(s.n[0])}</select></label><label class="fld"><span>파형</span><select data-src="${i}" data-k="wave" id="src${i}-w"><option value="dc"${s.wave==='dc'?' selected':''}>직류</option><option value="step"${s.wave==='step'?' selected':''}>계단</option><option value="pulse"${s.wave==='pulse'?' selected':''}>펄스</option></select></label><label class="fld"><span>전압 V</span><input type="number" step="0.1" data-src="${i}" data-k="v" value="${s.v}" id="src${i}-v"></label></div>
     ${s.wave==='step'?`<div class="row3"><label class="fld"><span>시작 ms</span><input type="number" step="0.1" min="0" data-src="${i}" data-k="t0" value="${+(s.t0*1e3).toFixed(3)}" id="src${i}-t0"></label><label class="fld"><span>상승 ms</span><input type="number" step="0.1" min="0.001" data-src="${i}" data-k="tr" value="${+(s.tr*1e3).toFixed(3)}" id="src${i}-tr"></label></div>`:''}
     ${s.wave==='pulse'?`<div class="row3"><label class="fld"><span>시작 ms</span><input type="number" step="0.1" min="0" data-src="${i}" data-k="t0" value="${+(s.t0*1e3).toFixed(3)}" id="src${i}-t0"></label><label class="fld"><span>주기 ms</span><input type="number" step="0.1" min="0.01" data-src="${i}" data-k="per" value="${+(s.per*1e3).toFixed(3)}" id="src${i}-per"></label><label class="fld"><span>듀티 %</span><input type="number" step="5" min="1" max="99" data-src="${i}" data-k="duty" value="${Math.round(s.duty*100)}" id="src${i}-d"></label></div>`:''}</div>`).join('');
-  const els=ck.els.map((e,i)=>{const unit=e.type==='LOAD'?'mA':e.type==='REG'?'V':e.type==='MOTOR'?'mN·m':e.type==='NMOS'?'V':'';
-    const valCell=e.type==='SW'?`<select data-el="${i}" data-k="closed" aria-label="${esc(e.ref)} 상태" id="el${i}-sw"><option value="0"${!e.closed?' selected':''}>열림</option><option value="1"${e.closed?' selected':''}>닫힘</option></select>`:e.type==='D'?(e.led?'LED':'Si'):`<input type="text" data-el="${i}" data-k="val" value="${esc(valStr(e))}" aria-label="${esc(e.ref)} 값" id="el${i}-v" style="width:72px">${unit?' '+unit:''}`;
+  const els=ck.els.map((e,i)=>{const unit=e.type==='LOAD'?'mA':e.type==='REG'?'V':(e.type==='MOTOR'||e.type==='BLDC')?'mN·m':e.type==='NMOS'?'V':'';
+    const valCell=e.type==='SW'?`<select data-el="${i}" data-k="closed" aria-label="${esc(e.ref)} 상태" id="el${i}-sw"><option value="0"${!e.closed?' selected':''}>열림</option><option value="1"${e.closed?' selected':''}>닫힘</option></select>`:e.type==='D'?(e.led?'LED':'Si'):e.type==='HALL'?'회전각 연동':`<input type="text" data-el="${i}" data-k="val" value="${esc(valStr(e))}" aria-label="${esc(e.ref)} 값" id="el${i}-v" style="width:72px">${unit?' '+unit:''}`;
     return`<tr><td><input type="checkbox" data-el="${i}" data-k="on"${e.on?' checked':''} aria-label="${esc(e.ref)} 사용" id="el${i}-on"></td><td class="mono">${esc(e.ref)}</td><td style="white-space:nowrap">${TYPE_LABEL[e.type]}${e.guess?' <span class="cls">값 추정</span>':''}</td><td class="mono" style="font-size:11px;white-space:nowrap">${e.n.map(esc).join(' → ')}</td><td class="r">${valCell}</td></tr>`;}).join('');
   let res='';const R=SR.sp;
   if(R&&R.error)res=`<p class="errline">${esc(R.error)}</p>`;
   else if(R){
     const nets=Object.entries(R.nets).sort((a,b)=>b[1]-a[1]);
     const parts=R.parts.filter(p=>p.type!=='C'&&p.type!=='L'&&Math.abs(p.P)>1e-6).sort((a,b)=>Math.abs(b.P)-Math.abs(a.P));
-    const mots=R.parts.filter(p=>p.type==='MOTOR'),leds=R.parts.filter(p=>p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led');
+    const mots=R.parts.filter(p=>(p.type==='MOTOR'||p.type==='BLDC')),leds=R.parts.filter(p=>p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led');
     res=`<div class="res"><div class="acts" style="justify-content:space-between"><h4>${esc(R.label)}</h4><span class="hgap"><button class="btn sm" id="sp-play">3D에서 보기</button><button class="btn sm" id="sp-th">전력을 열 해석으로 보내기</button></span></div>
     ${mots.length||leds.length?`<div class="kpis">${mots.map(p=>`<div class="kpi"><b>${p.rpm.toFixed(0)} rpm</b><span>${esc(p.id)} 출력축${p.gear>1?` (기어 1:${p.gear})`:''} · ${f(Math.abs(p.I),'A')}</span></div>`).join('')}${leds.map(p=>`<div class="kpi"><b>${f(Math.max(0,p.I),'A')}</b><span>${esc(p.id)} ${esc(BD.byRef[p.id].val||'LED')} 전류</span></div>`).join('')}</div>`:''}
     <div class="scroll" style="max-height:200px"><table class="stbl"><thead><tr><th>넷</th><th class="r">전압</th></tr></thead><tbody>${nets.map(([n,v])=>`<tr class="click" data-spnet="${esc(n)}"><td class="mono">${esc(n)}</td><td class="r mono">${f(v,'V',3)}</td></tr>`).join('')}</tbody></table></div>
@@ -318,7 +325,7 @@ function spBind(b){
   b.querySelector('#sp-gnd')?.addEventListener('change',e=>{ck.gnd=e.target.value;ck.srcs.forEach(s=>{s.n[1]=ck.gnd;});});
   b.querySelectorAll('[data-el]').forEach(el=>el.addEventListener('change',()=>{const e=ck.els[+el.dataset.el],k=el.dataset.k;
     if(k==='on')e.on=el.checked;else if(k==='closed')e.closed=el.value==='1';
-    else{const v=SIM.parseVal(el.value);if(e.type==='MOTOR'){const x=parseFloat(el.value);if(x>=0)e.tl=x/1000;}else if(e.type==='NMOS'){const x=parseFloat(el.value);if(x>0)e.vth=x;}else if(e.type==='LOAD'){const x=parseFloat(el.value);if(x>=0)e.I=x/1000;}else if(e.type==='REG'){const x=parseFloat(el.value);if(x>0)e.vset=x;}else if(v>0){e.val=v;e.guess=false;}el.value=valStr(e);}}));
+    else{const v=SIM.parseVal(el.value);if(e.type==='MOTOR'||e.type==='BLDC'){const x=parseFloat(el.value);if(x>=0)e.tl=x/1000;}else if(e.type==='BRIDGE3'){if(v>0)e.ron=v;}else if(e.type==='NMOS'){const x=parseFloat(el.value);if(x>0)e.vth=x;}else if(e.type==='LOAD'){const x=parseFloat(el.value);if(x>=0)e.I=x/1000;}else if(e.type==='REG'){const x=parseFloat(el.value);if(x>0)e.vset=x;}else if(v>0){e.val=v;e.guess=false;}el.value=valStr(e);}}));
   b.querySelector('#sp-t')?.addEventListener('change',e=>{cfg.tstop=Math.max(0.01,num(e.target.value,cfg.tstop));});
   b.querySelector('#sp-n')?.addEventListener('change',e=>{cfg.steps=Math.round(Math.min(20000,Math.max(100,num(e.target.value,cfg.steps))));});
   b.querySelector('#sp-dc')?.addEventListener('click',()=>{const r=SIM.dcop(Object.assign({},ck,{tDC:cfg.tstop*1e-3}));SR.sp=r.error?{error:r.error}:Object.assign(r,{label:`DC 동작점 (t = ${cfg.tstop} ms 소스 값)`});playReset();renderSim();updateLegend();refresh(false);});

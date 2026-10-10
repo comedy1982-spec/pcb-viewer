@@ -76,3 +76,28 @@ test('MCU example: firmware drives the MOSFET by PWM, the motor spins up, LEDs f
   assert.equal(u1.fw.split('\n')[bad.errLine - 1].includes('pwmWrite(PA8, duty)'), true);
   assert.match(FW.controller('function setup(){pinMode(PA5,OUTPUT)}\nfunction loop(){}', { pins, gnd: 'GND', vdd: 3.3 }).error, /PA5/);
 });
+
+test('BLDC example: hall-sensor six-step firmware spins the 3-phase motor through the bridge driver', () => {
+  const { SAMPLE_BLDC, FW } = load();
+  const M = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_BLDC))));
+  const ck = SIM.extractCircuit(M);
+  assert.ok(ck.els.some(e => e.type === 'BLDC' && e.id === 'M1'));
+  assert.equal(ck.els.filter(e => e.type === 'HALL').length, 3);
+  assert.ok(ck.els.some(e => e.type === 'BRIDGE3' && e.id === 'U3'));
+  ck.srcs.forEach(s => { s.wave = 'dc'; s.v = 12; });
+  const u1 = M.byRef.U1, pins = {};
+  u1.pads.forEach(p => { if (p.fn && /^P[A-K]\d+$/.test(p.fn)) pins[p.fn] = p.net || null; });
+  const ctl = FW.controller(u1.fw, { pins, gnd: ck.gnd, vdd: 3.3, ref: 'U1' });
+  assert.ok(!ctl.error, ctl.error);
+  assert.ok(Math.abs(ctl.dt - 50e-6) < 1e-9, 'LOOP_PERIOD_US sets the firmware tick');
+  const tr = SIM.transient(Object.assign({}, ck, { srcs: ck.srcs.concat(ctl.srcs) }), 0.3, 4800, [], ctl);
+  assert.ok(!tr.error && !ctl.error, tr.error || ctl.error);
+  const w = tr.anim.mot.M1.w, n = w.length - 1, rpm = i => w[i] * 60 / (2 * Math.PI);
+  assert.ok(rpm(n) > 1500 && rpm(n) < 3200, `rpm ${rpm(n)}`);
+  assert.ok(rpm(Math.round(n / 3)) < rpm(n), 'accelerating');
+  assert.ok(ctl.logs.some(l => /홀 속도 \d{3,}/.test(l.text)), 'firmware measures speed from halls');
+  // reversing DIRECTION spins the other way
+  const rev = FW.controller(FW.setParam(u1.fw, 'DIRECTION', -1), { pins, gnd: ck.gnd, vdd: 3.3 });
+  const tr2 = SIM.transient(Object.assign({}, ck, { srcs: ck.srcs.concat(rev.srcs) }), 0.12, 1920, [], rev);
+  assert.ok(tr2.anim.mot.M1.w[1920] < -10, `reverse w ${tr2.anim.mot.M1.w[1920]}`);
+});

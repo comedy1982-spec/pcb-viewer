@@ -6,14 +6,21 @@ const SEV={err:['오류','✕'],warn:['경고','!'],ok:['정상','✓'],info:['�
 const pill=s=>`<span class="sv ${s}"><i aria-hidden="true">${SEV[s][1]}</i>${SEV[s][0]}</span>`;
 const pct=v=>Math.round(v*100)+'%';
 
-function hsisLoadSample(){
-  HS.H=HSIS.fromRows([SAMPLE_HSIS.header].concat(SAMPLE_HSIS.rows),SAMPLE_HSIS.meta);
-  HS.arxml=HSIS.parseARXML(SAMPLE_ARXML);HS.arxmlFile='SENSE-32_Port.arxml (예제)';HS.mcu=null;HS.sel=null;HS.selPin=null;hsisRun();
+// each built-in board has its own example HSIS + ARXML; other boards fall back to the SENSE-32 one
+const hsisSampleKey=()=>BD&&BD.source==='예제'&&BD.demo&&HSIS_SAMPLES[BD.demo]?BD.demo:'sense';
+function hsisLoadSample(key){
+  key=key||hsisSampleKey();const S=HSIS_SAMPLES[key];HS.sample=key;
+  HS.H=HSIS.fromRows([S.hsis.header].concat(S.hsis.rows),S.hsis.meta);
+  HS.arxml=HSIS.parseARXML(S.arxml);HS.arxmlFile=S.file;HS.mcu=null;HS.sel=null;HS.selPin=null;hsisRun();
 }
 function hsisRun(){
   if(!HS.H||!BD)return;
   if(!HS.mcu||!BD.byRef[HS.mcu])HS.mcu=(HS.H.meta.mcuRef&&BD.byRef[HS.H.meta.mcuRef]?HS.H.meta.mcuRef:null)||HSIS.pickMcu(BD,HS.H.items);
-  HS.res=HSIS.check(BD,HS.H,HS.arxml,HS.mcu);HS.tr=HSIS.trace(HS.H);HS.ver=(HS.ver||0)+1;
+  HS.res=HSIS.check(BD,HS.H,HS.arxml,HS.mcu);HS.tr=HSIS.trace(HS.H);
+  // firmware cross-check when the selected MCU carries firmware
+  const fm=typeof fwMcu==='function'?fwMcu():null;HS.fw=null;
+  if(fm&&fm.ref===HS.mcu){HS.fw=FW.pinUsage(fwCode(fm),fwMcuDesc(fm));HS.res=HSIS.checkFw(HS.H,HS.fw,HS.res);}
+  HS.ver=(HS.ver||0)+1;
 }
 // board net for an HSIS item (exact name, else normalised match)
 function hsisNetOf(it){if(!it||!it.net||!BD)return null;return BD.nets[it.net]?it.net:(Object.keys(BD.nets).find(n=>HSIS.netN(n)===HSIS.netN(it.net))||null);}
@@ -24,7 +31,9 @@ function hsisSelect(id,pin){
   if(net){S.hlNet=net;S.selRef=null;}
   renderHSIS();refresh(HS.ws==='board');
 }
-function hsisOnBoard(){if(!HS.H)hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();}
+function hsisOnBoard(){if(!HS.H||(HS.sample&&HS.sample!==hsisSampleKey()))hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();}
+// firmware edits change what the HSIS cross-check sees
+function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')renderHSIS();else if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});}
 function setWorkspace(w){
   HS.ws=w;document.querySelectorAll('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
   $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
@@ -51,7 +60,7 @@ function renderHSIS(){
   const cats=HSIS.CAT_ORDER.concat([...new Set(HS.H.items.map(i=>i._cat))].filter(x=>!HSIS.CAT_ORDER.includes(x)));
   $('#hsLeft').innerHTML=`
     <div class="grp"><p class="h">문서</p>
-      <div class="doc"><b>${esc(m.title||m.docId||'HSIS')}</b><span class="mono">${esc([m.docId,m.version&&'v'+m.version].filter(Boolean).join(' · '))}</span><span>${esc(m.file||'')}</span>${HS.arxml?`<span>SW 설정: ${esc(HS.arxmlFile)} · PortPin ${HS.arxml.length}개</span>`:'<span>SW 설정(ARXML) 없음</span>'}</div>
+      <div class="doc"><b>${esc(m.title||m.docId||'HSIS')}</b><span class="mono">${esc([m.docId,m.version&&'v'+m.version].filter(Boolean).join(' · '))}</span><span>${esc(m.file||'')}</span>${HS.arxml?`<span>SW 설정: ${esc(HS.arxmlFile)} · PortPin ${HS.arxml.length}개</span>`:'<span>SW 설정(ARXML) 없음</span>'}${HS.fw?`<span>펌웨어: ${esc(HS.mcu)} · 출력 ${HS.fw.out.length} · 입력 ${HS.fw.reads.length}핀 <button class="lnk" id="hs-fw">펌웨어 열기</button></span>`:''}</div>
       <label class="fld" style="margin-top:10px"><span>보드의 MCU 부품</span><select id="hs-mcu" class="fi">${mcuOpts}</select></label>
       <div class="acts" style="margin-top:10px"><button class="btn primary sm" id="hs-open">HSIS·ARXML 불러오기</button><button class="btn ghost sm" id="hs-sample">예제로 되돌리기</button></div>
       <input type="file" id="hs-file" multiple hidden accept=".xlsx,.xls,.csv,.tsv,.arxml,.xml">
@@ -125,10 +134,10 @@ function traceHTML(){
 function checksHTML(){
   const R=HS.res.results;const g=s=>R.filter(r=>r.sev===s);
   const row=r=>`<li>${pill(r.sev)}<div>${r.id?`<button class="tchip" data-item="${esc(r.id)}">${esc(r.id)}</button> `:r.pin?`<button class="tchip" data-pinsel="${esc(r.pin)}">${esc(HS.mcu)}.${esc(r.pin)}</button> `:''}<span>${esc(r.msg)}</span><span class="code">${esc(r.code)}</span></div></li>`;
-  return`<div class="sim" style="max-width:none"><div class="acts" style="justify-content:space-between"><span class="lead">회로도(${esc(BD.name)}), MCU 풋프린트, SW 설정(${HS.arxml?esc(HS.arxmlFile):'없음'})과 HSIS를 대조한 결과입니다.</span><button class="btn sm" id="hs-copy">결과 CSV 복사</button></div>
+  return`<div class="sim" style="max-width:none"><div class="acts" style="justify-content:space-between"><span class="lead">회로도(${esc(BD.name)}), MCU 풋프린트, SW 설정(${HS.arxml?esc(HS.arxmlFile):'없음'})${HS.fw?`, ${esc(HS.mcu)} 펌웨어`:''}와 HSIS를 대조한 결과입니다.</span><button class="btn sm" id="hs-copy">결과 CSV 복사</button></div>
     <ul class="chk">${g('err').map(row).join('')}${g('warn').map(row).join('')}</ul>
     <details class="okbox"><summary>통과한 검사 ${g('ok').length}건 · 참고 ${g('info').length}건</summary><ul class="chk">${g('ok').concat(g('info')).map(row).join('')}</ul></details>
-    <p class="lead">검사 항목: MCU 핀↔회로도 넷, 핀 이름, HW 연결 부품·핀, 외부 풀업·풀다운 저항값, 핀 중복, HSIS에 없는 연결 핀, SW Port 설정의 핀·방향·초기값, 요구사항·테스트 연결.</p></div>`;
+    <p class="lead">검사 항목: MCU 핀↔회로도 넷, 핀 이름, HW 연결 부품·핀, 외부 풀업·풀다운 저항값, 핀 중복, HSIS에 없는 연결 핀, SW Port 설정의 핀·방향·초기값, 요구사항·테스트 연결${HS.fw?', 펌웨어가 쓰는 핀·방향·ADC·PWM 주파수':''}.</p></div>`;
 }
 function renderDetail(box,inCell){box=box||$('#hsDetail');box.innerHTML=detailHTML(inCell);bindDetail(box,inCell);}
 function detailHTML(inCell){
@@ -145,6 +154,8 @@ function detailHTML(inCell){
   const swSt=rs.some(r=>r.sev==='err'&&/^SW/.test(r.code))?'err':rs.some(r=>r.sev==='warn'&&/^SW/.test(r.code))?'warn':'ok';
   const hwSt=rs.some(r=>r.sev==='err'&&/^(HW|PULL|NET_MISSING)/.test(r.code))?'err':rs.some(r=>r.sev==='warn'&&/^(HW|PULL)/.test(r.code))?'warn':'ok';
   const trSt=it.req&&it.test?'ok':'warn';
+  const fwRs=rs.filter(r=>/^FW_/.test(r.code)),fwSt=fwRs.some(r=>r.sev==='err')?'err':fwRs.some(r=>r.sev==='warn')?'warn':'ok';
+  const fwUse=HS.fw?[...HS.fw.out.filter(o=>o.pin===String(it.port).toUpperCase()).map(o=>o.pwm?`PWM 출력 ${o.freq} Hz`:'GPIO 출력'),...HS.fw.reads.filter(r=>r.pin===String(it.port).toUpperCase()).map(r=>r.analog?'ADC 입력':'디지털 입력')]:[];
   const ap=HS.arxml&&HS.arxml.find(a=>[it.signal,it.func,it.swcfg&&it.swcfg.replace(/^.*_/,'')].filter(Boolean).map(HSIS.netN).includes(HSIS.netN(a.name.replace(/^PortPin_?/i,''))));
   const step=(t,s,body)=>`<li class="step ${s}"><div class="st-h"><b>${t}</b>${pill(s)}</div><div class="st-b">${body}</div></li>`;
   const fields=Object.keys(HSIS.LABEL).filter(k=>it[k]&&!['id','signal'].includes(k)).map(k=>`<dt>${HSIS.LABEL[k]}</dt><dd>${esc(it[k])}</dd>`).join('');
@@ -156,6 +167,7 @@ function detailHTML(inCell){
       ${step('HW 연결',hwSt,`${esc(it.hw||'—')}${partsTxt.length?`<div class="parts">넷의 부품: ${partsTxt.join(' · ')}</div>`:''}${it.pull?`<div>풀업/풀다운: ${esc(it.pull)}</div>`:''}`)}
       ${step('MCU 핀',mcuSt,`<span class="mono">${esc(HS.mcu||'?')}.${esc(it.pins||'—')}</span> · ${esc([it.port,it.func].filter(Boolean).join(' / '))}<div>회로도 넷: <span class="mono">${esc(net||it.net||'—')}</span>${it.net&&!net?' <span class="miss">보드에 없음</span>':''}</div>`)}
       ${step('SW',swSt,`${esc([it.swmod,it.swcfg].filter(Boolean).join(' · ')||'—')}${it.api?`<div class="mono">${esc(it.api)}()</div>`:''}${ap?`<div>ARXML: <span class="mono">${esc(ap.name)}</span> · ${esc(ap.id)}번 핀 · ${esc(ap.mode.replace('PORT_PIN_MODE_',''))}${ap.level?' · '+esc(ap.level.replace('PORT_PIN_LEVEL_','')):''}</div>`:HS.arxml?'<div class="lead">ARXML에 해당 PortPin 없음</div>':''}`)}
+      ${HS.fw&&(fwRs.length||fwUse.length)?step('펌웨어',fwSt,`${fwUse.length?`<span class="mono">${esc(it.port)}</span> · ${esc(fwUse.join(', '))}`:'펌웨어에서 쓰지 않음'}${fwRs.filter(r=>r.sev!=='ok').map(r=>`<div>${esc(r.msg)}</div>`).join('')}<div><button class="lnk" data-fwopen>펌웨어 열기</button></div>`):''}
       ${step('추적',trSt,`요구사항 <span class="mono">${it.req?esc(it.req):'<span class="miss">없음</span>'}</span> → 테스트 <span class="mono">${it.test?esc(it.test):'<span class="miss">없음</span>'}</span>`)}
     </ol>
     <div class="sub">HSIS 내용</div><dl class="kv">${fields}</dl></div>${net?miniBoard(net,inCell):''}`;
@@ -169,6 +181,7 @@ function drawMini(root){root=root||$('#hsDetail');const cv=root.querySelector('.
     const save=[S.hlNet,S.selRef,S.panel];S.hlNet=cv.dataset.net;S.selRef=null;S.panel='info';try{drawSide(ctx,side,{texture:true});}finally{[S.hlNet,S.selRef,S.panel]=save;}}}
 function bindDetail(root,inCell){
   root=root||$('#hsDetail');drawMini(root);
+  root.querySelectorAll('[data-fwopen]').forEach(b=>b.addEventListener('click',()=>fwOpen()));
   root.querySelectorAll('[data-hlnet]').forEach(b=>b.addEventListener('click',()=>{S.hlNet=b.dataset.hlnet;S.selRef=null;refresh(HS.ws==='board');}));
   if(inCell)return;
   root.querySelectorAll('[data-gosch]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.gosch;setWorkspace('board');S.hlNet=n;S.selRef=null;SV.fromMe=false;SV.lastKey='';setView('sch');refresh(true);}));
@@ -177,9 +190,10 @@ function bindDetail(root,inCell){
 function bindHSIS(){
   const L=$('#hsLeft');
   L.querySelector('#hs-mcu')?.addEventListener('change',e=>{HS.mcu=e.target.value;hsisRun();renderHSIS();});
+  L.querySelector('#hs-fw')?.addEventListener('click',()=>fwOpen());
   L.querySelector('#hs-open')?.addEventListener('click',()=>L.querySelector('#hs-file').click());
   L.querySelector('#hs-file')?.addEventListener('change',e=>{hsisFiles([...e.target.files]);e.target.value='';});
-  L.querySelector('#hs-sample')?.addEventListener('click',()=>{hsisLoadSample();renderHSIS();toast('예제 HSIS와 ARXML로 되돌렸습니다.');});
+  L.querySelector('#hs-sample')?.addEventListener('click',()=>{hsisLoadSample();renderHSIS();toast(`${BD.name}의 예제 HSIS와 ARXML로 되돌렸습니다.`);});
   const q=L.querySelector('#hs-q');q?.addEventListener('input',()=>{HS.q=q.value;const pos=q.selectionStart;renderHSIS();const n=$('#hs-q');n.focus();n.setSelectionRange(pos,pos);});
   L.querySelectorAll('[data-sev]').forEach(b=>b.addEventListener('click',()=>{HS.sev=b.dataset.sev;renderHSIS();}));
   L.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.cat;const all=[...L.querySelectorAll('[data-cat]')].map(x=>x.dataset.cat);

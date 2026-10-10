@@ -372,13 +372,13 @@ pre.code{font-family:var(--f-mono);font-size:11.5px;line-height:1.55;background:
 /* resizable panes */
 .main{position:relative;grid-template-columns:var(--lw,212px) minmax(0,1fr) var(--rw,316px)}
 .main.simwide{grid-template-columns:var(--lw,212px) minmax(0,1fr) var(--rws,392px)}
-.hsis-ws{position:relative;grid-template-columns:var(--hl,248px) minmax(0,1fr) var(--hr,380px)}
+.hsis-ws{position:relative;grid-template-columns:var(--hsw-l,248px) minmax(0,1fr) var(--hsw-r,380px)}
 .rh{position:absolute;top:0;bottom:0;width:12px;cursor:col-resize;z-index:6;touch-action:none}
 .rh::after,#splitter::after{content:"";position:absolute;left:5px;top:14px;bottom:14px;width:2px;border-radius:2px;background:transparent;transition:background .12s}
 .rh:hover::after,.rh.on::after,.rh:focus-visible::after{background:var(--accent)}
 .rh:focus-visible{outline:none}
 #hLeft{left:var(--lw,212px)}#hRight{right:var(--rw,316px)}.main.simwide #hRight{right:var(--rws,392px)}
-#hHsL{left:var(--hl,248px)}#hHsR{right:var(--hr,380px)}
+#hHsL{left:var(--hsw-l,248px)}#hHsR{right:var(--hsw-r,380px)}
 #splitter{position:absolute;top:0;bottom:0;left:calc(var(--split,50%) - 6px);width:12px;cursor:col-resize;z-index:4;touch-action:none}
 #splitter::after{top:0;bottom:0;background:var(--line)}
 #splitter:hover::after,#splitter.on::after,#splitter:focus-visible::after{background:var(--accent)}
@@ -386,7 +386,7 @@ pre.code{font-family:var(--f-mono);font-size:11.5px;line-height:1.55;background:
 .viewport:not(.split) #splitter{display:none}
 body.resizing,body.resizing *{cursor:col-resize!important;user-select:none}
 body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
-@media (max-width:1180px){.hsis-ws{grid-template-columns:var(--hl,220px) minmax(0,1fr)}#hHsR{display:none}}
+@media (max-width:1180px){.hsis-ws{grid-template-columns:var(--hsw-l,220px) minmax(0,1fr)}#hHsR{display:none}}
 @media (max-width:980px){#hLeft,#hRight{display:none}.main,.main.simwide{grid-template-columns:1fr}}
 @media (max-width:820px){#hHsL{display:none}.hsis-ws{grid-template-columns:1fr}}
 /* MCU firmware editor */
@@ -612,7 +612,7 @@ body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
     </div>
     <div class="sheet-f">
       <span class="msg" id="impMsg"></span>
-      <button class="btn ghost sm" id="impSample">예제: SENSE-32</button><button class="btn ghost sm" id="impSample2">예제: MCU 모터 제어</button>
+      <button class="btn ghost sm" id="impSample">예제: SENSE-32</button><button class="btn ghost sm" id="impSample2">예제: MCU DC 모터</button><button class="btn ghost sm" id="impSample3">예제: MCU BLDC 3상</button>
       <button class="btn ghost sm" id="impClear" hidden>목록 비우기</button>
       <button class="btn ghost" data-close>취소</button>
       <button class="btn primary" id="impGo" disabled>보드 만들기</button>
@@ -1147,6 +1147,11 @@ const FP={};
   FP['SMA']={kind:'diode',body:[4.3,2.6,2.1],pads:[{n:'1',x:-2.0,y:0,w:1.5,h:1.7},{n:'2',x:2.0,y:0,w:1.5,h:1.7}]};
   // board-mount brushed DC motor (130 size can lying on a bracket); the rotor/fan is drawn only in 3D
   FP['MOTOR-130']={kind:'motor',body:[24,16,15.5],pads:[{n:'1',x:-14,y:2.5,w:2.2,h:2.2,round:true,drill:1.1},{n:'2',x:-14,y:-2.5,w:2.2,h:2.2,round:true,drill:1.1}]};
+  // 20-pin TSSOP with exposed pad (pin 21)
+  const t20=[];for(let i=0;i<10;i++)t20.push({n:''+(1+i),x:-2.9,y:2.925-0.65*i,w:1.45,h:0.4});for(let i=0;i<10;i++)t20.push({n:''+(11+i),x:2.9,y:-2.925+0.65*i,w:1.45,h:0.4});t20.push({n:'21',x:0,y:0,w:2.4,h:4.2});
+  FP['HTSSOP-20']={kind:'ic',stand:0.05,body:[4.4,6.5,1.1],pads:t20,dot:[-1.6,2.6]};
+  // board-mount 3-phase BLDC motor with 8-pin lead row (U V W H1 H2 H3 VCC GND)
+  FP['BLDC-2418']={kind:'motor',body:[30,24,23],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:-19,y:8.75-2.5*i,w:2.0,h:2.0,round:true,drill:1.0}))};
   for(const k in FP){const f=FP[k];const[bw,bh]=f.body;let a=-bw/2,b=-bh/2,c=bw/2,d=bh/2;f.pads.forEach(p=>{a=Math.min(a,p.x-p.w/2);b=Math.min(b,p.y-p.h/2);c=Math.max(c,p.x+p.w/2);d=Math.max(d,p.y+p.h/2);});f.lbb=[a,b,c,d];}
 })();
 function fromSpec(spec){
@@ -1648,13 +1653,17 @@ function cg(n,mul,b,diag,tol,maxIt){
   }
   return{x,it};
 }
-function lusolve(A,b,n){ // dense, partial pivot; A is Float64Array n*n (destroyed)
+let NZ=new Int32Array(64);
+function lusolve(A,b,n){ // dense storage, partial pivot, skips zero columns; A is Float64Array n*n (destroyed)
+  if(NZ.length<n)NZ=new Int32Array(n*2);
   for(let k=0;k<n;k++){
     let p=k,mx=Math.abs(A[k*n+k]);for(let i=k+1;i<n;i++){const v=Math.abs(A[i*n+k]);if(v>mx){mx=v;p=i;}}
     if(mx<1e-300)return null;
     if(p!==k){for(let j=0;j<n;j++){const t=A[k*n+j];A[k*n+j]=A[p*n+j];A[p*n+j]=t;}const t=b[k];b[k]=b[p];b[p]=t;}
-    const akk=A[k*n+k];
-    for(let i=k+1;i<n;i++){const f=A[i*n+k]/akk;if(f===0)continue;A[i*n+k]=0;for(let j=k+1;j<n;j++)A[i*n+j]-=f*A[k*n+j];b[i]-=f*b[k];}
+    const akk=A[k*n+k],kn=k*n;
+    // circuit matrices are sparse: only update the columns where the pivot row is non-zero
+    let m=0;for(let j=k+1;j<n;j++)if(A[kn+j]!==0)NZ[m++]=j;
+    for(let i=k+1;i<n;i++){const f=A[i*n+k]/akk;if(f===0)continue;A[i*n+k]=0;const inn=i*n;for(let q=0;q<m;q++){const j=NZ[q];A[inn+j]-=f*A[kn+j];}b[i]-=f*b[k];}
   }
   const x=new Float64Array(n);for(let i=n-1;i>=0;i--){let s=b[i];for(let j=i+1;j<n;j++)s-=A[i*n+j]*x[j];x[i]=s/A[i*n+i];}return x;
 }
@@ -1809,6 +1818,11 @@ function extractCircuit(B){
       const led=c.kind==='led'||/LED/i.test(c.val+' '+c.fp+' '+(c.lib||''));
       els.push({id:c.ref,ref:c.ref,type:'D',n:[pa.net,pk.net],led,on:true});}
     else if(/^(SW|S|BTN|K)\d/.test(r)&&nets.length>=2){els.push({id:c.ref,ref:c.ref,type:'SW',n:nets.slice(0,2),closed:false,on:true});}
+    else if(/^(U|IC)\d/.test(r)&&[1,2,3].every(k=>['OUT','IN','EN'].every(f=>c.pads.some(p=>(p.fn||'').toUpperCase()===f+k&&p.net)))){
+      // integrated 3-phase half-bridge driver: OUTk to VM when ENk & INk, to GND when ENk & !INk, high-Z when !ENk; body diodes
+      const net=f=>{const p=c.pads.find(q=>(q.fn||'').toUpperCase()===f&&q.net);return p&&p.net;};const vm=net('VM'),pg=net('PGND')||net('GND')||gnd;
+      if(vm&&pg){const m=c.model||{};els.push({id:c.ref,ref:c.ref,type:'BRIDGE3',n:[vm,pg,net('OUT1'),net('OUT2'),net('OUT3'),net('IN1'),net('IN2'),net('IN3'),net('EN1'),net('EN2'),net('EN3')],ron:m.ron||0.3,vth:m.vth||1.6,iq:m.iq||0.003,on:true});return;}
+      skipped.push([c.ref,'VM/GND 핀을 찾지 못함']);}
     else if(/^(U|IC|VR|PS)\d/.test(r)){
       const txt=c.val+' '+c.fp+' '+(c.desc||'')+' '+(c.mpn||'');
       const fn=re=>c.pads.find(p=>re.test(p.fn||''));
@@ -1833,6 +1847,12 @@ function extractCircuit(B){
       if(pg&&pd&&ps&&pg.net&&pd.net&&ps.net&&nch&&!/P-?CH|PMOS/.test(txt)){const m=c.model||{};
         els.push({id:c.ref,ref:c.ref,type:'NMOS',n:[pd.net,pg.net,ps.net],vth:m.vth||1.2,kp:m.kp||8,lam:m.lambda||0.01,on:true});}
       else skipped.push([c.ref,'트랜지스터 모델 없음 (N채널 MOSFET만 지원)']);}
+    else if(/^(M|MOT)\d/.test(r)&&['U','V','W'].every(k=>c.pads.some(p=>(p.fn||'').toUpperCase()===k&&p.net))){
+      // 3-phase BLDC: Y windings with internal neutral, trapezoidal back-EMF, hall sensors from rotor angle
+      const m=Object.assign({R:1.2,L:6e-4,ke:0.02,kt:0.02,J:3e-5,b:1e-5,tf:2e-3,tl:0,poles:2,gear:1,hallV:3.3},c.model||{});
+      const ph=['U','V','W'].map(k=>c.pads.find(p=>(p.fn||'').toUpperCase()===k).net);
+      els.push(Object.assign({id:c.ref,ref:c.ref,type:'BLDC',n:ph.concat([c.ref+'#N'])},m,{on:true}));
+      ['H1','H2','H3'].forEach((h,i)=>{const p=c.pads.find(q=>(q.fn||'').toUpperCase()===h);if(p&&p.net&&gnd)els.push({id:c.ref+'.'+h,ref:c.ref,type:'HALL',n:[p.net,gnd],mot:c.ref,hk:i,poles:m.poles,v:m.hallV,on:true});});}
     else if(/^(M|MOT)\d/.test(r)&&nets.length===2){
       // brushed DC motor: electrical R-L + back-EMF, mechanical inertia, viscous + Coulomb friction, gearbox
       const m=Object.assign({R:2.5,L:5e-4,ke:0.004,kt:0.004,J:1.2e-6,b:2e-7,tf:1e-4,tl:0,gear:1},c.model||{});
@@ -1860,7 +1880,7 @@ function srcVal(s,t){if(s.wave==='dc')return s.v;if(s.wave==='step'){if(t<=s.t0)
 function compile(ckt){
   const nodes=new Map();const id=n=>{if(!n||n===ckt.gnd)return-1;let k=nodes.get(n);if(k==null){k=nodes.size;nodes.set(n,k);}return k;};
   const els=ckt.els.filter(e=>e.on).concat(ckt.srcs.filter(s=>s.on!==false)).map(e=>Object.assign({},e,{k:e.n.map(id)}));
-  let nb=nodes.size;els.forEach(e=>{if(e.type==='V'||e.type==='REG'||e.type==='L'||e.type==='MOTOR')e.br=nb++;});
+  let nb=nodes.size;els.forEach(e=>{if((e.type==='V'&&e.wave!=='fw')||e.type==='REG'||e.type==='L'||e.type==='MOTOR')e.br=nb++;if(e.type==='BLDC')e.brs=[nb++,nb++,nb++];});
   return{nodes,els,N:nb,nn:nodes.size};
 }
 // level-1 square law, smoothed around threshold, symmetric in drain/source
@@ -1879,15 +1899,23 @@ function motorCoef(e,h,wp,Ip,I){
   const D=jh+e.b;return{req:e.R+lh+e.ke*e.kt/D,rhs:-lh*Ip+e.ke*(jh*wp-e.tl-s*e.tf)/D,s};
 }
 function motorSpeed(e,h,wp,I){const jh=h?e.J/h:0,s=motorDir(e,wp,I);if(s===0&&Math.abs(wp)<1e-3)return 0;let w=(jh*wp+e.kt*I-e.tl-s*e.tf)/(jh+e.b);if(s!==0&&w*s<0)w=0;return w;}
+const TAU_=2*Math.PI;
+// trapezoidal back-EMF shape (flat ±1 over 120°), phase k lags by k·120° electrical
+function trap(th){const d=((th*180/Math.PI)%360+360)%360;return d<30?d/30:d<150?1:d<210?1-(d-150)/30:d<330?-1:-1+(d-330)/30;}
+const bldcF=(e,th,k)=>trap(th*e.poles-k*TAU_/3);
+const hallLevel=(e,th)=>((((th*e.poles-e.hk*TAU_/3)%TAU_)+TAU_)%TAU_)<Math.PI?1:0;
 function newton(C,x0,mode,h,t,xprev,state){
   const N=C.N,gmin=1e-9;let x=Float64Array.from(x0);
   for(let it=0;it<150;it++){
     let lim=false;
-    const A=new Float64Array(N*N),b=new Float64Array(N);
+    const A=C.A||(C.A=new Float64Array(N*N)),b=C.b||(C.b=new Float64Array(N));A.fill(0);b.fill(0);
     const add=(i,j,v)=>{if(i>=0&&j>=0)A[i*N+j]+=v;};const rhs=(i,v)=>{if(i>=0)b[i]+=v;};
     const V=i=>i>=0?x[i]:0,Vp=i=>i>=0?xprev[i]:0;
     const G=(a,c,g)=>{add(a,a,g);add(c,c,g);add(a,c,-g);add(c,a,-g);};
     for(let i=0;i<C.nn;i++)A[i*N+i]+=gmin;
+    const diode=(a,c,key,Is,n)=>{const vt=n*VT;let vd=V(a)-V(c);const old=state.vd[key]==null?0:state.vd[key];
+      const vcrit=vt*Math.log(vt/(Math.SQRT2*Is));if(vd>vcrit&&Math.abs(vd-old)>2*vt){lim=true;if(old>0){const arg=1+(vd-old)/vt;vd=arg>0?old+vt*Math.log(arg):vcrit;}else vd=vt*Math.log(vd/vt);}
+      state.vd[key]=vd;const ex=Math.exp(Math.min(vd/vt,80));const id_=Is*(ex-1),gd=Is/vt*ex+gmin;const ieq=id_-gd*vd;G(a,c,gd);rhs(a,-ieq);rhs(c,ieq);};
     for(const e of C.els){const[a,c,d]=e.k;
       if(e.type==='R')G(a,c,1/Math.max(e.val,1e-6));
       else if(e.type==='SW')G(a,c,e.closed?20:1e-9);
@@ -1903,7 +1931,15 @@ function newton(C,x0,mode,h,t,xprev,state){
         G(dn,sn,1e-9);}
       else if(e.type==='MOTOR'){const k=e.br;add(a,k,1);add(c,k,-1);add(k,a,1);add(k,c,-1);
         const I=x[k],m=motorCoef(e,mode==='tran'?h:0,mode==='tran'?(state.w[e.id]||0):0,mode==='tran'?xprev[k]:0,I);add(k,k,-m.req);b[k]+=m.rhs;}
+      else if(e.type==='BLDC'){const nn=e.k[3],w=mode==='tran'?(state.w[e.id]||0):0,th=state.th[e.id]||0,lh=mode==='tran'?e.L/h:0;
+        for(let q=0;q<3;q++){const kb=e.brs[q],tn=e.k[q];add(tn,kb,1);add(nn,kb,-1);add(kb,tn,1);add(kb,nn,-1);add(kb,kb,-(e.R+lh));b[kb]+=(mode==='tran'?-lh*xprev[kb]:0)+e.ke*w*bldcF(e,th,q);}}
+      // MCU pins and hall outputs are push-pull drivers: Norton source with output resistance (keeps the matrix small)
+      else if(e.type==='HALL'){const g=1/(e.rout||50),vv=hallLevel(e,state.th[e.mot]||0)?e.v:0;G(a,c,g);rhs(a,vv*g);rhs(c,-vv*g);}
+      else if(e.type==='BRIDGE3'){const[vm,pg]=e.k;rhs(vm,-e.iq);rhs(pg,e.iq);
+        for(let q=0;q<3;q++){const o=e.k[2+q],en=V(e.k[8+q])-V(pg)>e.vth,hi=V(e.k[5+q])-V(pg)>e.vth;
+          G(o,vm,en&&hi?1/e.ron:1e-9);G(o,pg,en&&!hi?1/e.ron:1e-9);diode(o,vm,e.id+'h'+q,1e-12,1.4);diode(pg,o,e.id+'l'+q,1e-12,1.4);}}
       else if(e.type==='LOAD'){const v=V(a)-V(c);if(v<e.vmin)G(a,c,e.I/e.vmin);else{rhs(a,-e.I);rhs(c,e.I);}}
+      else if(e.type==='V'&&e.wave==='fw'){const g=1/(e.rout||25),vv=srcVal(e,t);G(a,c,g);rhs(a,vv*g);rhs(c,-vv*g);}
       else if(e.type==='V'){const k=e.br;add(a,k,1);add(c,k,-1);add(k,a,1);add(k,c,-1);b[k]+=srcVal(e,t);}
       else if(e.type==='REG'){const[ni,no,ng]=e.k,k=e.br;const vin=V(ni)-V(ng);
         add(no,k,1);add(ni,k,-1);rhs(ni,-e.iq*Math.min(1,Math.max(vin,0)/1));rhs(ng,e.iq*Math.min(1,Math.max(vin,0)/1));
@@ -1925,18 +1961,26 @@ function report(C,x,t,st){
     else if(e.type==='SW'){I=v*(e.closed?20:1e-9);P=v*I;}
     else if(e.type==='D'){const Is=e.led?1e-18:1e-14,vt=(e.led?2:1)*VT;I=Is*(Math.exp(Math.min(v/vt,80))-1);P=v*I;}
     else if(e.type==='LOAD'){I=v<e.vmin?e.I*v/e.vmin:e.I;P=v*I;}
+    else if(e.type==='V'&&e.wave==='fw'){I=(srcVal(e,t)-v)/(e.rout||25);P=-srcVal(e,t)*I;}
     else if(e.type==='V'){I=-x[e.br];P=-srcVal(e,t)*I;}
     else if(e.type==='REG'){const[ni,no,ng]=e.k;const Io=-x[e.br];const vin=V(ni)-V(ng),vout=V(no)-V(ng);I=Io;P=(vin-vout)*Io+vin*e.iq*Math.min(1,Math.max(vin,0));}
     else if(e.type==='L'){I=x[e.br];P=0;}else if(e.type==='C'){I=0;P=0;}
     let extra=null;
     if(e.type==='NMOS'){const[dn,gn,sn]=e.k;const vds=V(dn)-V(sn);I=mosEval(e,V(gn)-V(sn),vds).id;P=vds*I;}
+    if(e.type==='HALL'){I=0;P=0;}
+    if(e.type==='BRIDGE3'){I=null;P=null;}
+    if(e.type==='BLDC'){const ii=e.brs.map(k=>x[k]);I=(Math.abs(ii[0])+Math.abs(ii[1])+Math.abs(ii[2]))/2;P=ii.reduce((s2,q,j)=>s2+q*q*e.R,0);const w=st&&st.w[e.id]!=null?st.w[e.id]:0;extra={w,rpm:w/e.gear*60/(2*Math.PI),gear:e.gear,phases:ii};}
     if(e.type==='MOTOR'){I=x[e.br];P=v*I;const w=st&&st.w[e.id]!=null?st.w[e.id]:motorSpeed(e,0,0,I);extra={w,rpm:w/e.gear*60/(2*Math.PI),gear:e.gear,torque:e.kt*I};}
     parts.push(Object.assign({id:e.id,ref:e.ref||null,type:e.type,I,P,v},extra));});
   return{nets,parts};
 }
 const newState=()=>({vd:{},vgs:{},w:{},th:{}});
 // after an accepted time step: integrate motor speed and shaft angle
-function advance(C,x,h,st){C.els.forEach(e=>{if(e.type!=='MOTOR')return;const w=motorSpeed(e,h,st.w[e.id]||0,x[e.br]);st.th[e.id]=(st.th[e.id]||0)+((st.w[e.id]||0)+w)/2*h;st.w[e.id]=w;});}
+function advance(C,x,h,st){C.els.forEach(e=>{
+  if(e.type==='BLDC'){const wp=st.w[e.id]||0,th=st.th[e.id]||0;let T=0;for(let q=0;q<3;q++)T+=e.kt*bldcF(e,th,q)*x[e.brs[q]];T-=e.tl;
+    let w;const jh=e.J/h;if(Math.abs(wp)<1e-3&&Math.abs(T)<=e.tf)w=0;else{const s=Math.abs(wp)>1e-3?Math.sign(wp):Math.sign(T);w=(jh*wp+T-s*e.tf)/(jh+e.b);if(s!==0&&w*s<0)w=0;}
+    st.th[e.id]=th+(wp+w)/2*h;st.w[e.id]=w;return;}
+  if(e.type!=='MOTOR')return;const w=motorSpeed(e,h,st.w[e.id]||0,x[e.br]);st.th[e.id]=(st.th[e.id]||0)+((st.w[e.id]||0)+w)/2*h;st.w[e.id]=w;});}
 function dcop(ckt){const C=compile(ckt);if(!C.nn)return{error:'시뮬레이션할 넷이 없습니다.'};const r=newton(C,new Float64Array(C.N),'dc',0,ckt.tDC||1e9,new Float64Array(C.N),newState());
   if(!r.ok)return{error:'DC 동작점이 수렴하지 않았습니다. 소자 값이나 소스를 확인해 주세요.'};return Object.assign(report(C,r.x,ckt.tDC||1e9),{C});}
 function transient(ckt,tstop,steps,probes,ctl){
@@ -1944,9 +1988,10 @@ function transient(ckt,tstop,steps,probes,ctl){
   const st=newState();let r=newton(C,new Float64Array(C.N),'dc',0,0,new Float64Array(C.N),st);if(!r.ok)return{error:'초기 동작점이 수렴하지 않았습니다.'};
   let x=r.x;const h=tstop/steps;const time=[0];const data={};probes.forEach(p=>{data[p]=[C.nodes.has(p)?x[C.nodes.get(p)]:0];});
   // animation track: LED currents and motor speed / angle / current, sampled every step (decimated at the end)
-  const leds=C.els.filter(e=>e.type==='D'&&e.led),mots=C.els.filter(e=>e.type==='MOTOR');
+  const leds=C.els.filter(e=>e.type==='D'&&e.led),mots=C.els.filter(e=>e.type==='MOTOR'||e.type==='BLDC');
+  const motI=e=>e.type==='BLDC'?(Math.abs(x[e.brs[0]])+Math.abs(x[e.brs[1]])+Math.abs(x[e.brs[2]]))/2:x[e.br];
   const an={t:[0],led:{},mot:{}};const vOf=i=>i>=0?x[i]:0;const ledI=e=>{const v=vOf(e.k[0])-vOf(e.k[1]);return Math.max(0,1e-18*(Math.exp(Math.min(v/(2*VT),80))-1));};
-  leds.forEach(e=>{an.led[e.id]=[ledI(e)];});mots.forEach(e=>{an.mot[e.id]={w:[0],th:[0],I:[x[e.br]],gear:e.gear};});
+  leds.forEach(e=>{an.led[e.id]=[ledI(e)];});mots.forEach(e=>{an.mot[e.id]={w:[0],th:[0],I:[motI(e)],gear:e.gear,type:e.type};});
   // firmware co-simulation: every ctl.dt the MCU loop reads node voltages and updates its pin sources
   let tick=null;
   if(ctl){const byId={};C.els.forEach(e=>{if(e.wave==='fw')byId[e.id]=e;});let next=0;
@@ -1959,7 +2004,7 @@ function transient(ckt,tstop,steps,probes,ctl){
     else{const h2=h/4;let xx=x;let ok=true;for(let k=1;k<=4;k++){const qq=newton(C,xx,'tran',h2,t-h+k*h2,xx,st);if(!qq.ok){ok=false;break;}xx=qq.x;advance(C,xx,h2,st);}if(!ok){fails++;if(fails>20)return{error:`${(t*1e3).toFixed(3)} ms에서 수렴하지 않았습니다.`};}q={x:xx};}
     x=q.x;time.push(t);probes.forEach(p=>{data[p].push(C.nodes.has(p)?x[C.nodes.get(p)]:0);});
     if(tick)tick(t,x);
-    an.t.push(t);leds.forEach(e=>an.led[e.id].push(ledI(e)));mots.forEach(e=>{const m=an.mot[e.id];m.w.push(st.w[e.id]||0);m.th.push(st.th[e.id]||0);m.I.push(x[e.br]);});}
+    an.t.push(t);leds.forEach(e=>an.led[e.id].push(ledI(e)));mots.forEach(e=>{const m=an.mot[e.id];m.w.push(st.w[e.id]||0);m.th.push(st.th[e.id]||0);m.I.push(motI(e));});}
   return Object.assign({time,data,final:report(C,x,tstop,st),anim:an},{C});
 }
 
@@ -2071,6 +2116,7 @@ const SAMPLE_SPEC=(function(){
 </script>
 <script>
 /* Built-in example 2: MCU-controlled DC motor with LEDs. U1 runs editable firmware that is co-simulated with the circuit. */
+const MCU_Q32_PINS={1:'VDD',2:'PA0',3:'PA2',4:'PA3',5:'PA4',6:'VSS',7:'PA5',8:'VSS',9:'PB0',10:'PB3',11:'PB4',12:'PB5',13:'PB6',14:'PB7',15:'PA1',16:'PA6',17:'PA7',18:'PA8',19:'PA9',20:'PA10',21:'PA11',22:'PA12',23:'PA13',24:'VDD',25:'NRST',26:'PA14',27:'PA15',28:'PB8',29:'PB9',30:'PC14',31:'PC15',32:'BOOT0',33:'EP'};
 const SAMPLE_MCU_FW=`// U1 MCU-Q32 펌웨어 — 회로 시뮬레이션과 함께 실행됩니다 (JavaScript 문법, Arduino 스타일 API)
 // ▼ 주요 파라미터: 값을 바꾸고 [빌드 & 시뮬레이션]을 누르세요
 const PWM_FREQ_HZ      = 500;   // 모터 PWM 주파수 [Hz]
@@ -2154,7 +2200,7 @@ const SAMPLE_MCU=(function(){
       {ref:'C5',value:'100µF',footprint:'1206',side:'top',x:30,y:44,rotation:0,mpn:'GRM31CR60J107ME39',description:'모터 전원 벌크 커패시터',pins:{1:'VIN',2:'GND'}},
       {ref:'U1',value:'MCU-Q32',footprint:'QFN-32',side:'top',x:20,y:22,rotation:0,mpn:'MCU-Q32 (예시 부품)',description:'32비트 마이크로컨트롤러 · 펌웨어로 모터 PWM·LED를 제어 (부품을 클릭해 펌웨어 편집)',
         pins:{1:'+3V3',6:'GND',8:'GND',10:'LED_ST',15:'ISNS_ADC',18:'PWM_M',24:'+3V3',33:'GND'},
-        pinNames:{1:'VDD',2:'PA0',3:'PA2',4:'PA3',5:'PA4',6:'VSS',7:'PA5',8:'VSS',9:'PB0',10:'PB3',11:'PB4',12:'PB5',13:'PB6',14:'PB7',15:'PA1',16:'PA6',17:'PA7',18:'PA8',19:'PA9',20:'PA10',21:'PA11',22:'PA12',23:'PA13',24:'VDD',25:'NRST',26:'PA14',27:'PA15',28:'PB8',29:'PB9',30:'PC14',31:'PC15',32:'BOOT0',33:'EP'},
+        pinNames:MCU_Q32_PINS,
         firmware:SAMPLE_MCU_FW,label:[20,17]},
       {ref:'R1',value:'100Ω',footprint:'0603',side:'top',x:27,y:20.75,rotation:0,mpn:'RC0603FR-07100RL',description:'게이트 직렬 저항',pins:{1:'PWM_M',2:'GATE'}},
       {ref:'R2',value:'10kΩ',footprint:'0603',side:'top',x:28,y:17,rotation:90,mpn:'RC0603FR-0710KL',description:'게이트 풀다운 (MCU 리셋 중 모터 OFF)',pins:{1:'GND',2:'GATE'},label:[26.4,17]},
@@ -2179,6 +2225,125 @@ const SAMPLE_MCU=(function(){
       {side:'top',text:'5V',x:2.4,y:41.6,size:0.8},{side:'top',text:'PWR',x:8,y:19.6,size:0.6},{side:'top',text:'STAT',x:21.4,y:9,size:0.6,align:'left'},
       {side:'top',text:'RUN',x:66,y:10.4,size:0.6},{side:'top',text:'MCU',x:20,y:28.4,size:0.6},
       {side:'bottom',text:'MOTION-32 · MCU PWM MOTOR + LED',x:40,y:6,size:0.9},
+    ]
+  };
+})();
+
+/* Built-in example 3: MCU + integrated 3-phase driver + hall-sensor BLDC motor, six-step commutation in firmware */
+const SAMPLE_BLDC_FW=`// U1 MCU-Q32 BLDC 펌웨어 — 홀 센서 6스텝 정류, 회로 시뮬레이션과 함께 실행됩니다
+// ▼ 주요 파라미터: 값을 바꾸고 [빌드 & 시뮬레이션]을 누르세요
+const PWM_FREQ_HZ    = 1000;  // 상단 스위치 PWM 주파수 [Hz]
+const TARGET_DUTY    = 80;    // 목표 듀티 [%]
+const START_DELAY_MS = 20;    // 전원 인가 후 기동 지연 [ms]
+const SOFT_START_MS  = 150;   // 0 → 목표 듀티까지 올리는 시간 [ms]
+const LOOP_PERIOD_US = 50;    // 제어 루프 주기 [µs] (홀 변화 → 정류 지연)
+const DIRECTION      = 1;     // 회전 방향: 1 정방향, -1 역방향
+const POLE_PAIRS     = 2;     // 모터 극쌍 수 (속도 계산용)
+
+// 상별 드라이버 입력 (U3): INx = PWM, ENx = 상 활성화
+const PH = [ { name: 'U', inp: PA13, en: PA12 },
+             { name: 'V', inp: PA11, en: PA10 },
+             { name: 'W', inp: PA9,  en: PA8  } ];
+// 홀 코드 (H3 H2 H1) → [PWM 거는 상단 상, ON 하는 하단 상]
+const STEP = { 5: [2, 1], 1: [0, 1], 3: [0, 2], 2: [1, 2], 6: [1, 0], 4: [2, 0] };
+
+let duty = 0, lastHall = -1, steps = 0, loggedSteps = 0;
+
+function setup() {
+  PH.forEach(p => { pwmInit(p.inp, PWM_FREQ_HZ); pinMode(p.en, OUTPUT); });
+  pinMode(PB3, OUTPUT);          // D3 상태 LED
+  log('BLDC 6스텝 · PWM', PWM_FREQ_HZ, 'Hz · 루프', LOOP_PERIOD_US, 'µs');
+}
+
+function stopAll() { PH.forEach(p => { pwmWrite(p.inp, 0); digitalWrite(p.en, LOW); }); }
+
+function loop(ms) {              // LOOP_PERIOD_US마다 호출됩니다 (ms는 소수일 수 있음)
+  if (digitalRead(PA7) === LOW) { stopAll(); return; }          // U3 nFAULT
+  const hall = digitalRead(PB5) | (digitalRead(PB6) << 1) | (digitalRead(PB7) << 2);
+  duty = ms < START_DELAY_MS ? 0 : TARGET_DUTY * Math.min(1, (ms - START_DELAY_MS) / SOFT_START_MS);
+  let s = STEP[hall];
+  if (!s || duty <= 0) { stopAll(); digitalWrite(PB3, LOW); return; }
+  if (DIRECTION < 0) s = [s[1], s[0]];
+  PH.forEach((p, i) => {
+    if (i === s[0])      { pwmWrite(p.inp, duty); digitalWrite(p.en, HIGH); }  // 상단 PWM
+    else if (i === s[1]) { pwmWrite(p.inp, 0);    digitalWrite(p.en, HIGH); }  // 하단 ON
+    else                 { pwmWrite(p.inp, 0);    digitalWrite(p.en, LOW);  }  // 개방
+  });
+  if (hall !== lastHall) { steps++; lastHall = hall; }
+  digitalWrite(PB3, Math.floor(steps / (6 * POLE_PAIRS)) % 2);  // 기계 1회전마다 LED 토글
+
+  if (Number.isInteger(ms) && ms % 100 === 0) {                 // 100 ms마다 홀로 잰 속도
+    log('홀 속도', Math.round((steps - loggedSteps) / (6 * POLE_PAIRS) * 600), 'rpm · 듀티', Math.round(duty), '%');
+    loggedSteps = steps;
+  }
+}
+`;
+const SAMPLE_BLDC=(function(){
+  const T=[],V=[];
+  const tr=(layer,net,width,...points)=>T.push({layer:layer==='T'?'top':'bottom',net,width,points});
+  const via=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.8,drill:0.4}));
+  // 12 V input → LDO, bulk cap, driver VM
+  tr('T','+12V',1.0,'J1.1',[9,45.27],[9,53],[48,53],[48,31.5],'U3.20');
+  tr('T','+12V',0.6,[9,49.15],'U2.3');tr('T','+12V',0.6,'C1.1',[11,53]);tr('T','+12V',0.8,'C5.1',[48,44]);
+  // 3.3 V
+  tr('T','+3V3',0.6,'U2.4',[16,30.5],[26.2,30.5]);tr('T','+3V3',0.6,'U2.2','U2.4');
+  tr('T','+3V3',0.3,'U1.24',[24.45,30.5]);tr('T','+3V3',0.3,'U1.1',[19.55,30.5]);
+  tr('T','+3V3',0.4,'C2.2',[16,38]);tr('T','+3V3',0.3,'C3.1',[26.2,30.5]);tr('T','+3V3',0.3,'R3.2',[13,34],'C2.2');
+  via('+3V3',[26.2,30.5]);tr('B','+3V3',0.4,[26.2,30.5],[26.2,34.5],[55.2,34.5],[55.2,20.75],'M1.7');
+  tr('T','+3V3',0.3,'R10.1',[38,19.6]);via('+3V3',[38,19.6]);tr('B','+3V3',0.3,[38,19.6],[38,34.5]);
+  tr('T','PWR_A',0.3,'R3.1',[7.2,31.6],'D2.2');
+  // MCU → driver: monotonic fan-out (no crossings)
+  [[17,7,'NFAULT'],[18,6,'EN_W'],[19,5,'IN_W'],[20,4,'EN_V'],[21,3,'IN_V'],[22,2,'EN_U'],[23,1,'IN_U']].forEach(([mp,dp,net])=>{
+    const ym=26-1.75+0.5*(mp-17),yd=27+2.925-0.65*(dp-1);tr('T',net,0.25,'U1.'+mp,[28,ym],[36,yd],'U3.'+dp);});
+  tr('T','NFAULT',0.25,'R10.2',[38,26.025]);
+  // driver → motor phases
+  tr('T','PH_U',0.5,'U3.19',[48.5,29.275],[52,35.75],'M1.1');
+  tr('T','PH_V',0.5,'U3.17',[50,27.975],[53,33.25],'M1.2');
+  tr('T','PH_W',0.5,'U3.15',[51.5,26.675],[54,30.75],'M1.3');
+  // hall sensors back to the MCU (bottom layer)
+  tr('T','HALL1',0.25,'M1.4',[53.8,28.25]);via('HALL1',[53.8,28.25],[20.9,17.5]);tr('B','HALL1',0.25,[53.8,28.25],[53.8,17.5],[20.9,17.5]);tr('T','HALL1',0.25,[20.9,17.5],[21.75,19],'U1.12');
+  tr('T','HALL2',0.25,'M1.5',[53,25.75]);via('HALL2',[53,25.75],[22.25,16]);tr('B','HALL2',0.25,[53,25.75],[53,16],[22.25,16]);tr('T','HALL2',0.25,[22.25,16],'U1.13');
+  tr('T','HALL3',0.25,'M1.6',[52.2,23.25]);via('HALL3',[52.2,23.25],[23.6,14.5]);tr('B','HALL3',0.25,[52.2,23.25],[52.2,14.5],[23.6,14.5]);tr('T','HALL3',0.25,[23.6,14.5],[22.75,19.5],'U1.14');
+  // status LED
+  tr('T','LED_ST',0.3,'U1.10',[20.75,22],[18,19.25],'R4.2');tr('T','STAT_A',0.3,'R4.1','D3.2');
+  // ground
+  [['U2.1',[20.6,49.15]],['C1.2',[14.6,51.6]],['C2.1',[11,36.3]],['C3.2',[29.3,32]],['C5.2',[55,44]],['D2.1',[8,27.7]],['D3.1',[18,11.7]],['M1.8',[55.6,17.2]]]
+    .forEach(([a,b])=>{tr('T','GND',0.5,a,b);via('GND',b);});
+  tr('T','GND',0.4,'U1.6',[17.6,25.25],[17.6,24.25],'U1.8');via('GND',[17.6,24.75],[22,26],[44,26],[44,28]);
+  tr('T','GND',0.5,'U3.13',[45,25.375]);tr('T','GND',0.4,'U3.10',[42.9,25.2]);
+  return{
+    _source:'예제',_demo:'bldc',
+    board:{name:'MOTION-32 BLDC v1.0',width:100,height:55,thickness:1.6,corner:2,holes:[[3.5,3.5,3.2],[96.5,3.5,3.2],[3.5,51.5,3.2],[96.5,51.5,3.2]]},
+    components:[
+      {ref:'J1',value:'12V 입력',footprint:'HDR-1x2',side:'top',x:5,y:44,rotation:0,mpn:'PH-2.54-1x2',description:'12 V 모터 전원 입력',pins:{1:'+12V',2:'GND'},pinNames:{1:'12V',2:'GND'}},
+      {ref:'U2',value:'AMS1117-3.3',footprint:'SOT-223',side:'top',x:16,y:46,rotation:180,mpn:'AMS1117-3.3',description:'3.3 V LDO (MCU·홀 센서 전원)',pins:{1:'GND',2:'+3V3',3:'+12V',4:'+3V3'},pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'VOUT'},label:[16,41]},
+      {ref:'C1',value:'10µF',footprint:'0805',side:'top',x:12,y:51.6,rotation:0,mpn:'CL21A106KAYNNNE',description:'LDO 입력 커패시터',pins:{1:'+12V',2:'GND'}},
+      {ref:'C2',value:'10µF',footprint:'0805',side:'top',x:12,y:38,rotation:0,mpn:'CL21A106KAYNNNE',description:'LDO 출력 커패시터',pins:{1:'GND',2:'+3V3'}},
+      {ref:'C3',value:'100nF',footprint:'0603',side:'top',x:27,y:32,rotation:0,mpn:'CL10B104KB8NNNC',description:'MCU 디커플링',pins:{1:'+3V3',2:'GND'}},
+      {ref:'C5',value:'220µF',footprint:'1206',side:'top',x:52,y:44,rotation:0,mpn:'EEE-FK1E221P (예시)',description:'모터 전원 벌크 커패시터',pins:{1:'+12V',2:'GND'}},
+      {ref:'U1',value:'MCU-Q32',footprint:'QFN-32',side:'top',x:22,y:26,rotation:0,mpn:'MCU-Q32 (예시 부품)',description:'32비트 MCU · 홀 센서로 6스텝 정류, 3상 PWM 출력 (부품을 클릭해 펌웨어 편집)',
+        pins:{1:'+3V3',6:'GND',8:'GND',10:'LED_ST',12:'HALL1',13:'HALL2',14:'HALL3',17:'NFAULT',18:'EN_W',19:'IN_W',20:'EN_V',21:'IN_V',22:'EN_U',23:'IN_U',24:'+3V3',33:'GND'},
+        pinNames:MCU_Q32_PINS,firmware:SAMPLE_BLDC_FW,label:[22,21.2]},
+      {ref:'U3',value:'BLDC-DRV3',footprint:'HTSSOP-20',side:'top',x:44,y:27,rotation:0,mpn:'BLDC-DRV3 (예시 부품)',description:'3상 하프브리지 드라이버 · 상별 IN(PWM)/EN, RDS(on) 0.3 Ω, 바디 다이오드',
+        pins:{1:'IN_U',2:'EN_U',3:'IN_V',4:'EN_V',5:'IN_W',6:'EN_W',7:'NFAULT',10:'GND',13:'GND',15:'PH_W',17:'PH_V',19:'PH_U',20:'+12V',21:'GND'},
+        pinNames:{1:'IN1',2:'EN1',3:'IN2',4:'EN2',5:'IN3',6:'EN3',7:'nFAULT',8:'NC',9:'NC',10:'GND',11:'NC',12:'NC',13:'PGND',14:'NC',15:'OUT3',16:'NC',17:'OUT2',18:'NC',19:'OUT1',20:'VM',21:'EP'},
+        model:{type:'bridge3',ron:0.3},label:[44,22]},
+      {ref:'R10',value:'10kΩ',footprint:'0603',side:'top',x:38,y:22,rotation:90,mpn:'RC0603FR-0710KL',description:'nFAULT 풀업 (오픈 드레인)',pins:{1:'+3V3',2:'NFAULT'},label:[39.8,22]},
+      {ref:'M1',value:'BLDC 2418',footprint:'BLDC-2418',side:'top',x:76,y:27,rotation:0,mpn:'BL2418-12V-2P (예시)',description:'3상 BLDC 모터 · 12 V · 2극쌍 · 홀 센서 내장, 직결 팬',
+        pins:{1:'PH_U',2:'PH_V',3:'PH_W',4:'HALL1',5:'HALL2',6:'HALL3',7:'+3V3',8:'GND'},pinNames:{1:'U',2:'V',3:'W',4:'H1',5:'H2',6:'H3',7:'VCC',8:'GND'},label:[76,13.5],
+        model:{R:1.2,L:6e-4,ke:0.02,kt:0.02,J:3e-5,b:1e-5,tf:2e-3,tl:0,poles:2,gear:1,hallV:3.3}},
+      {ref:'R3',value:'330Ω',footprint:'0603',side:'top',x:8,y:34,rotation:0,mpn:'RC0603FR-07330RL',description:'전원 LED 전류 제한',pins:{1:'PWR_A',2:'+3V3'}},
+      {ref:'D2',value:'LED 빨강',footprint:'LED-0603',side:'top',x:8,y:30,rotation:90,mpn:'19-217/R6C',description:'3.3 V 전원 표시 LED',pins:{1:'GND',2:'PWR_A'},pinNames:{1:'K',2:'A'},label:[5.8,30]},
+      {ref:'R4',value:'330Ω',footprint:'0603',side:'top',x:18,y:18,rotation:90,mpn:'RC0603FR-07330RL',description:'상태 LED 전류 제한',pins:{1:'STAT_A',2:'LED_ST'},label:[16.2,18]},
+      {ref:'D3',value:'LED 녹색',footprint:'LED-0603',side:'top',x:18,y:14,rotation:90,mpn:'19-217/GHC',description:'MCU 상태 LED (PB3) · 회전마다 토글',pins:{1:'GND',2:'STAT_A'},pinNames:{1:'K',2:'A'},label:[16.2,14]},
+    ],
+    tracks:T,vias:V,
+    pours:[{layer:'bottom',net:'GND',clearance:0.4,inset:0.5}],
+    texts:[
+      {side:'top',text:'MOTION-32 BLDC',x:40,y:4,size:1.2},{side:'top',text:'v1.0',x:48.6,y:4,size:0.8,align:'left'},
+      {side:'top',text:'12V',x:2.6,y:47.6,size:0.8},{side:'top',text:'PWR',x:8,y:25.6,size:0.6},{side:'top',text:'STAT',x:20,y:12,size:0.6,align:'left'},
+      {side:'top',text:'U V W H1 H2 H3 + -',x:59,y:11.5,size:0.55},
+      {side:'bottom',text:'MOTION-32 BLDC · 6-STEP HALL',x:50,y:6,size:0.9},
     ]
   };
 })();
@@ -2236,16 +2401,22 @@ function controller(code,mcu){
   const outs=Object.keys(st);if(!outs.length)return{error:'출력 핀이 없습니다. setup()에서 pinMode(핀, OUTPUT) 또는 pwmInit(핀, 주파수)을 호출하세요.',logs};
   const srcs=outs.map(p=>({id:'FW_'+p,type:'V',n:[mcu.pins[p],mcu.gnd],v:mcu.vdd,wave:'fw',pwm:st[p].pwm,freq:st[p].freq,duty:0,level:0,ph0:0,fw:true,label:`${mcu.ref||'MCU'} ${p} · ${st[p].pwm?'PWM':'GPIO'} (펌웨어)`}));
   outs.forEach(p=>{trace.out[p]=[];});
-  const ctl={dt:1e-3,srcs,logs,trace,error:null,errLine:null,
+  // loop period: 1 ms unless the firmware declares const LOOP_PERIOD_US (e.g. fast BLDC commutation)
+  const lp=params(code).find(p=>p.name==='LOOP_PERIOD_US');const dt=lp?Math.max(10,Math.min(1e5,lp.value))*1e-6:1e-3;
+  const ctl={dt,srcs,logs,trace,error:null,errLine:null,
     tick(t,readNet,set){
-      ms=Math.round(t*1000);read=readNet;guard=0;
+      ms=Math.round(t*1e6)/1000;read=readNet;guard=0;
       try{inst.loop(ms);}catch(e){if(!ctl.error){ctl.error=`loop(${ms}) 오류: ${e.message}`;ctl.errLine=lineOf(e);}}
       trace.t.push(ms);
       outs.forEach(p=>{const s=st[p];set('FW_'+p,s.pwm?{duty:s.duty,freq:s.freq}:{level:s.level});trace.out[p].push(s.pwm?s.duty:s.level);});
     }};
   return ctl;
 }
-return{params,setParam,compile,controller,API_NAMES};
+// which pins the firmware drives (from setup) and reads (from the code), for HSIS cross-checks
+function pinUsage(code,mcu){const ctl=controller(code,mcu);const out=ctl.error?[]:ctl.srcs.map(s=>({pin:s.id.slice(3),pwm:s.pwm,freq:s.freq}));
+  const reads=[];const re=/\b(analogRead|analogReadVoltage|digitalRead)\s*\(\s*(P[A-K]\d{1,2})\s*\)/g;let m;while((m=re.exec(code)))if(!reads.some(r=>r.pin===m[2]))reads.push({pin:m[2],analog:m[1]!=='digitalRead'});
+  const lp=params(code).find(p=>p.name==='LOOP_PERIOD_US');return{error:ctl.error||null,out,reads,loopUs:lp?lp.value:1000};}
+return{params,setParam,compile,controller,pinUsage,API_NAMES};
 })();
 
 
@@ -2402,7 +2573,34 @@ function trace(H){
   return{reqs:Object.values(reqs).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})).map(r=>Object.assign(r,{tests:[...r.tests]})),noReq,
     reqCov:H.items.filter(i=>i.req).length/n,testCov:H.items.filter(i=>i.test).length/n};
 }
-return{FIELDS,LABEL,CAT_ORDER,csvRows,mapColumns,fromRows,parseARXML,parsePins,category,pickMcu,check,trace,netN};
+// firmware ↔ HSIS: pins the firmware drives (setup) and reads (code) against the documented ports, directions and PWM frequency
+// fw: {ref, out:[{pin,pwm,freq}], reads:[{pin,analog}], error}
+function checkFw(H,fw,prev){
+  const res=[];const add=(sev,code,id,msg,extra)=>res.push(Object.assign({sev,code,id,msg},extra||{}));
+  const items=H.items,port=it=>String(it.port||'').trim().toUpperCase(),byPort=p=>items.find(it=>port(it)===p);
+  const pinOf=it=>{const ps=parsePins(it.pins);return ps.length===1?{pin:ps[0]}:{};};
+  if(fw.error)add('warn','FW_BUILD',null,`펌웨어를 빌드하지 못해 펌웨어 대조를 건너뜁니다: ${fw.error}`);
+  else{
+    fw.out.forEach(o=>{const it=byPort(o.pin);
+      if(!it){add('warn','FW_UNDOC',null,`펌웨어가 ${o.pin}을(를) ${o.pwm?'PWM':'GPIO'} 출력으로 쓰지만 HSIS에 해당 포트가 없습니다.`);return;}
+      const d=dirOf(it.dir);if(d==='I')add('err','FW_DIR',it.id,`펌웨어는 ${o.pin}을(를) 출력으로 설정하는데, HSIS 방향은 ${it.dir}입니다.`,pinOf(it));
+      else add('ok','FW_DIR',it.id,`펌웨어 ${o.pin} ${o.pwm?'PWM':'GPIO'} 출력 ↔ HSIS ${it.dir||'출력'} 일치`);
+      if(o.pwm){const m=String(it.timing||'').match(/(\d+(?:\.\d+)?)\s*(k|K)?\s*Hz/);
+        if(m){const hz=parseFloat(m[1])*(m[2]?1000:1);if(Math.abs(hz-o.freq)/hz>0.02)add('warn','FW_FREQ',it.id,`PWM 주파수가 다릅니다: HSIS ${hz} Hz, 펌웨어 ${o.freq} Hz.`,pinOf(it));else add('ok','FW_FREQ',it.id,`PWM ${o.freq} Hz ↔ HSIS 타이밍 일치`);}
+        else add('info','FW_FREQ',it.id,`HSIS 타이밍에 PWM 주파수가 없습니다 (펌웨어 ${o.freq} Hz).`);}});
+    fw.reads.forEach(r=>{const it=byPort(r.pin);
+      if(!it){add('warn','FW_UNDOC',null,`펌웨어가 ${r.pin}을(를) ${r.analog?'ADC로':'디지털 입력으로'} 읽지만 HSIS에 해당 포트가 없습니다.`);return;}
+      const d=dirOf(it.dir);if(d==='O')add('err','FW_DIR',it.id,`펌웨어는 ${r.pin}을(를) 읽는데, HSIS 방향은 ${it.dir}입니다.`,pinOf(it));
+      else if(r.analog&&category(it)!=='아날로그'&&!/ADC/i.test(it.func+' '+it.periph))add('warn','FW_ADC',it.id,`펌웨어는 ${r.pin}을(를) ADC로 읽는데, HSIS에 아날로그/ADC 기능이 없습니다.`,pinOf(it));
+      else add('ok','FW_IN',it.id,`펌웨어 ${r.pin} ${r.analog?'ADC':'디지털'} 입력 ↔ HSIS 일치`);});
+    items.forEach(it=>{const p=port(it);if(/^P[A-K]\d{1,2}$/.test(p)&&dirOf(it.dir)==='O'&&!fw.out.some(o=>o.pin===p))add('warn','FW_UNUSED',it.id,`HSIS는 ${p}를 출력으로 정의했지만 펌웨어 setup()에서 설정하지 않습니다.`,pinOf(it));});
+  }
+  // merge into an existing check() result
+  const out={results:prev.results.concat(res),status:Object.assign({},prev.status)};
+  res.forEach(r=>{if(!r.id||!(r.id in out.status))return;if(r.sev==='err')out.status[r.id]='err';else if(r.sev==='warn'&&out.status[r.id]!=='err')out.status[r.id]='warn';});
+  return out;
+}
+return{FIELDS,LABEL,CAT_ORDER,csvRows,mapColumns,fromRows,parseARXML,parsePins,category,pickMcu,check,checkFw,trace,netN};
 })();
 
 
@@ -2431,12 +2629,8 @@ const SAMPLE_HSIS={
     ['HSIS-016','VBUS_MON','아날로그','26','PA0','ADC1_IN0','ADC1','아날로그 입력','','','','VBUS_MON','R6/R7 분압 (10k/10k)','0–6.6 V','VBUS = ADC × 3.3 / 4095 × 2.0','1 kHz 샘플링','Adc','AdcGroup_VbusMon','Adc_ReadGroup','SYS-REQ-050','TC-ADC-01','QM','초안','HW rev B에서 추가 예정'],
   ]
 };
-const SAMPLE_ARXML=(function(){
-  const pins=[['LED_STATUS',15,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH'],['FLASH_CS',2,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH'],
-    ['SPI1_SCK',5,'PORT_PIN_OUT','PORT_PIN_MODE_SPI',''],['SPI1_MISO',3,'PORT_PIN_IN','PORT_PIN_MODE_SPI',''],['SPI1_MOSI',4,'PORT_PIN_OUT','PORT_PIN_MODE_SPI',''],
-    ['I2C1_SCL',18,'PORT_PIN_INOUT','PORT_PIN_MODE_I2C',''],['I2C1_SDA',20,'PORT_PIN_INOUT','PORT_PIN_MODE_I2C',''],
-    ['USB_DP',10,'PORT_PIN_INOUT','PORT_PIN_MODE_USB',''],['USB_DM',9,'PORT_PIN_INOUT','PORT_PIN_MODE_USB',''],
-    ['VBUS_MON',26,'PORT_PIN_IN','PORT_PIN_MODE_ADC',''],['UART_TX',22,'PORT_PIN_OUT','PORT_PIN_MODE_UART','']];
+function buildArxml(note,pins){
+  return (function(){
   const D='/AUTOSAR/EcucDefs/Port/PortConfigSet/PortContainer/PortPin';
   const num=(n,v)=>`            <ECUC-NUMERICAL-PARAM-VALUE><DEFINITION-REF DEST="ECUC-INTEGER-PARAM-DEF">${D}/${n}</DEFINITION-REF><VALUE>${v}</VALUE></ECUC-NUMERICAL-PARAM-VALUE>`;
   const txt=(n,v)=>`            <ECUC-TEXTUAL-PARAM-VALUE><DEFINITION-REF DEST="ECUC-ENUMERATION-PARAM-DEF">${D}/${n}</DEFINITION-REF><VALUE>${v}</VALUE></ECUC-TEXTUAL-PARAM-VALUE>`;
@@ -2448,7 +2642,7 @@ ${[num('PortPinId',id),txt('PortPinDirection',dir),txt('PortPinMode',mode)].conc
           </PARAMETER-VALUES>
         </ECUC-CONTAINER-VALUE>`).join('\n');
   return`<?xml version="1.0" encoding="UTF-8"?>
-<!-- SENSE-32 예제 Port 설정. 이 예제에서 PortPinId는 MCU 패키지 핀 번호를 씁니다. -->
+<!-- ${note} 이 예제에서 PortPinId는 MCU 패키지 핀 번호를 씁니다. -->
 <AUTOSAR xmlns="http://autosar.org/schema/r4.0">
   <AR-PACKAGES><AR-PACKAGE><SHORT-NAME>EcucConfig</SHORT-NAME><ELEMENTS>
   <ECUC-MODULE-CONFIGURATION-VALUES>
@@ -2464,6 +2658,61 @@ ${body}
   </ELEMENTS></AR-PACKAGE></AR-PACKAGES>
 </AUTOSAR>
 `;})();
+}
+const SAMPLE_ARXML=buildArxml('SENSE-32 예제 Port 설정.',[['LED_STATUS',15,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH'],['FLASH_CS',2,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH'],
+    ['SPI1_SCK',5,'PORT_PIN_OUT','PORT_PIN_MODE_SPI',''],['SPI1_MISO',3,'PORT_PIN_IN','PORT_PIN_MODE_SPI',''],['SPI1_MOSI',4,'PORT_PIN_OUT','PORT_PIN_MODE_SPI',''],
+    ['I2C1_SCL',18,'PORT_PIN_INOUT','PORT_PIN_MODE_I2C',''],['I2C1_SDA',20,'PORT_PIN_INOUT','PORT_PIN_MODE_I2C',''],
+    ['USB_DP',10,'PORT_PIN_INOUT','PORT_PIN_MODE_USB',''],['USB_DM',9,'PORT_PIN_INOUT','PORT_PIN_MODE_USB',''],
+    ['VBUS_MON',26,'PORT_PIN_IN','PORT_PIN_MODE_ADC',''],['UART_TX',22,'PORT_PIN_OUT','PORT_PIN_MODE_UART','']]);
+
+/* HSIS for the MCU motor-control example (MOTION-32 DEV). Two deliberate findings: LED_STATUS has no test ID, and its ARXML initial level differs. */
+const SAMPLE_HSIS_MCU={
+  meta:{docId:'HSIS-MOTION32',title:'MOTION-32 DEV HW/SW 인터페이스 사양',version:'0.2',mcuRef:'U1',date:'2026-10-11',file:'MOTION-32_HSIS.xlsx (예제)'},
+  header:SAMPLE_HSIS.header,
+  rows:[
+    ['HSIS-101','VDD','전원','1, 24','','VDD','PWR','전원','','','','+3V3','U2.2 (LDO 출력)','3.3 V ±3%, 최대 30 mA','','','','','','SYS-REQ-101','TC-PWR-01','QM','승인','디커플링 C2 10 µF, C3 100 nF'],
+    ['HSIS-102','VSS','접지','6, 8, 33','','VSS / EP','PWR','접지','','','','GND','J1.2','','','','','','','SYS-REQ-101','TC-PWR-01','QM','승인','노출 패드(33) 포함'],
+    ['HSIS-103','MOTOR_PWM','디지털 출력','18','PA8','TIM1_CH1','Pwm','출력','Low','High','없음 (게이트 풀다운 R2는 GATE 넷)','PWM_M','R1.1','3.3 V 푸시풀 · 게이트 직렬 100 Ω','듀티 0–100 % → 모터 평균 전압 0–5 V','500 Hz','Pwm','PwmChannel_MOTOR','Pwm_SetDutyCycle','SYS-REQ-110','TC-MOT-01','QM','승인','소프트 스타트 250 ms · 펌웨어 PWM_FREQ_HZ'],
+    ['HSIS-104','MOTOR_ISENSE','아날로그','15','PA1','ADC1_IN1','Adc','입력','','','','ISNS_ADC','R6.1','R5 0.1 Ω 션트 → R6·C4 RC 필터 (τ 10 ms)','I[mA] = V[V] ÷ 0.1 Ω × 1000','1 kHz 샘플','Adc','AdcGroup_MotorCurrent','Adc_ReadGroup','SYS-REQ-111','TC-MOT-02','QM','승인','전류 제한 400 mA (펌웨어 CURRENT_LIMIT_MA)'],
+    ['HSIS-105','LED_STATUS','디지털 출력','10','PB3','GPIO','Dio','출력','Low','High','없음','LED_ST','R4.2','약 4 mA @ 3.3 V (R4 330 Ω)','','가속 중 60 ms 점멸, 정속 시 점등','Dio','DioConf_DioChannel_LED_STATUS','Dio_WriteChannel','SYS-REQ-120','','QM','리뷰 중','D3 녹색 LED'],
+  ]
+};
+const SAMPLE_ARXML_MCU=buildArxml('MOTION-32 DEV 예제 Port 설정.',[['MOTOR_PWM',18,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['MOTOR_ISENSE',15,'PORT_PIN_IN','PORT_PIN_MODE_ADC',''],['LED_STATUS',10,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH']]);
+
+/* HSIS for the BLDC example (MOTION-32 BLDC). Deliberate findings: NFAULT has no requirement, HALL2's ARXML direction is wrong. */
+const SAMPLE_HSIS_BLDC=(function(){
+  const ph=(id,sig,pin,port,fn,net,hw,dir,timing,api,req,test,note)=>[id,sig,'디지털 출력',String(pin),port,fn,fn.startsWith('TIM')?'Pwm':'Dio',dir,'Low','High','없음',net,hw,'3.3 V 푸시풀',fn.startsWith('TIM')?'듀티 0–100 %':'',timing,fn.startsWith('TIM')?'Pwm':'Dio',(fn.startsWith('TIM')?'PwmChannel_':'DioConf_DioChannel_')+sig,api,req,test,'QM','승인',note];
+  const hall=(id,sig,pin,port,net,hw,test)=>[id,sig,'디지털 입력',String(pin),port,'GPIO','Dio','입력','','High','없음 (홀 IC 푸시풀 출력)',net,hw,'0 / 3.3 V','','전기각 180° 펄스, 최대 ~100 Hz','Dio','DioConf_DioChannel_'+sig,'Dio_ReadChannel','SYS-REQ-210',test,'QM','승인','6스텝 정류 입력'];
+  return{
+    meta:{docId:'HSIS-MOTION32-BLDC',title:'MOTION-32 BLDC HW/SW 인터페이스 사양',version:'0.1',mcuRef:'U1',date:'2026-10-11',file:'MOTION-32-BLDC_HSIS.xlsx (예제)'},
+    header:SAMPLE_HSIS.header,
+    rows:[
+      ['HSIS-201','VDD','전원','1, 24','','VDD','PWR','전원','','','','+3V3','U2.2 (LDO 출력)','3.3 V ±3%','','','','','','SYS-REQ-201','TC-PWR-01','QM','승인','홀 센서 전원 공용'],
+      ['HSIS-202','VSS','접지','6, 8, 33','','VSS / EP','PWR','접지','','','','GND','J1.2','','','','','','','SYS-REQ-201','TC-PWR-01','QM','승인',''],
+      ph('HSIS-203','IN_U',23,'PA13','TIM1_CH1','IN_U','U3.1','출력','1 kHz','Pwm_SetDutyCycle','SYS-REQ-220','TC-BLDC-01','U상 상단 PWM'),
+      ph('HSIS-204','EN_U',22,'PA12','GPIO','EN_U','U3.2','출력','정류 스텝마다 변경','Dio_WriteChannel','SYS-REQ-220','TC-BLDC-01','U상 활성화'),
+      ph('HSIS-205','IN_V',21,'PA11','TIM1_CH2','IN_V','U3.3','출력','1 kHz','Pwm_SetDutyCycle','SYS-REQ-220','TC-BLDC-01','V상 상단 PWM'),
+      ph('HSIS-206','EN_V',20,'PA10','GPIO','EN_V','U3.4','출력','정류 스텝마다 변경','Dio_WriteChannel','SYS-REQ-220','TC-BLDC-01','V상 활성화'),
+      ph('HSIS-207','IN_W',19,'PA9','TIM1_CH3','IN_W','U3.5','출력','1 kHz','Pwm_SetDutyCycle','SYS-REQ-220','TC-BLDC-01','W상 상단 PWM'),
+      ph('HSIS-208','EN_W',18,'PA8','GPIO','EN_W','U3.6','출력','정류 스텝마다 변경','Dio_WriteChannel','SYS-REQ-220','TC-BLDC-01','W상 활성화'),
+      ['HSIS-209','NFAULT','디지털 입력','17','PA7','GPIO','Dio','입력(오픈 드레인)','','Low','외부 풀업 10kΩ','NFAULT','U3.7','오픈 드레인, Low = 과전류·과열','','','Dio','DioConf_DioChannel_NFAULT','Dio_ReadChannel','','TC-BLDC-03','QM','리뷰 중','Low이면 즉시 모든 상 개방'],
+      hall('HSIS-210','HALL1',12,'PB5','HALL1','M1.4','TC-BLDC-02'),
+      hall('HSIS-211','HALL2',13,'PB6','HALL2','M1.5','TC-BLDC-02'),
+      hall('HSIS-212','HALL3',14,'PB7','HALL3','M1.6','TC-BLDC-02'),
+      ['HSIS-213','LED_STATUS','디지털 출력','10','PB3','GPIO','Dio','출력','Low','High','없음','LED_ST','R4.2','약 4 mA @ 3.3 V','','기계 1회전마다 토글','Dio','DioConf_DioChannel_LED_STATUS','Dio_WriteChannel','SYS-REQ-230','TC-LED-01','QM','승인','D3 녹색 LED'],
+    ]};
+})();
+const SAMPLE_ARXML_BLDC=buildArxml('MOTION-32 BLDC 예제 Port 설정.',[
+  ['IN_U',23,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_U',22,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
+  ['IN_V',21,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_V',20,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
+  ['IN_W',19,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_W',18,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
+  ['NFAULT',17,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],['HALL1',12,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],['HALL2',13,'PORT_PIN_OUT','PORT_PIN_MODE_DIO',''],['HALL3',14,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],
+  ['LED_STATUS',10,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW']]);
+// which HSIS belongs to which built-in board
+const HSIS_SAMPLES={
+  sense:{hsis:SAMPLE_HSIS,arxml:SAMPLE_ARXML,file:'SENSE-32_Port.arxml (예제)'},
+  mcu:{hsis:SAMPLE_HSIS_MCU,arxml:SAMPLE_ARXML_MCU,file:'MOTION-32_Port.arxml (예제)'},
+  bldc:{hsis:SAMPLE_HSIS_BLDC,arxml:SAMPLE_ARXML_BLDC,file:'MOTION-32-BLDC_Port.arxml (예제)'}};
 
 
 </script>
@@ -2729,19 +2978,20 @@ function build3D(c){
     else if(k==='diode')inner.add(box(bw-2*e,bh*0.98,ht*0.98,m.res,0,0,0),box(Math.max(0.3,bw*0.08),bh*0.99,ht*1.0,m.ceramic,(c.pads[0]&&c.pads[0].n==='1'&&/^(K|C)$/i.test(c.pads[0].fn||'')?-1:1)*(bw/2-e-bw*0.08),0,0.005));
     else inner.add(box(bw-2*e,bh*0.98,ht*0.98,c.ref[0]==='C'?m.cap:c.ref[0]==='L'?m.ind:m.res,0,0,0));
   }else if(k==='motor'){
-    // 130-size can lying along local +x on a bracket, terminals to the pads, gearbox output fan on the shaft
-    const r=Math.min(bh,ht)/2-0.3,zc=ht-r,cyl=(rr,len,mat,x,seg)=>{const g=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,len,seg||40),mat);g.rotation.z=Math.PI/2;g.position.set(x,0,zc);return g;};
-    inner.add(box(bw*0.62,bh*0.82,zc-r*0.55,m.conn,-1,0,0));
-    inner.add(cyl(r,17,m.steel,-1.5),cyl(r*0.96,2.4,m.beige,-11.2),cyl(r*0.42,1.2,m.steel,7.6,24),cyl(0.9,5.6,m.steel,10.6,16));
-    [2.5,-2.5].forEach(y=>inner.add(box(0.5,1.2,zc-r*0.15,m.tin,-12.9,y,0)));
-    const rot=new THREE.Group();rot.position.set(13.2,0,zc);
+    // can lying along local +x on a bracket, a lead post per pad, fan on the shaft; dimensions scale with the body (130 DC can = 24 mm)
+    const k3=bw/24,bl3=f&&f.pads.length>=6,r=Math.min(bh,ht)/2-0.3,zc=ht-r,cyl=(rr,len,mat,x,seg)=>{const g=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,len,seg||40),mat);g.rotation.z=Math.PI/2;g.position.set(x,0,zc);return g;};
+    inner.add(box(bw*0.62,bh*0.82,zc-r*0.55,m.conn,-1*k3,0,0));
+    inner.add(cyl(r,17*k3,bl3?m.grey:m.steel,-1.5*k3),cyl(r*0.96,2.4*k3,bl3?m.black:m.beige,-11.2*k3),cyl(r*0.42,1.2*k3,m.steel,7.6*k3,24),cyl(0.9*k3,5.6*k3,m.steel,10.6*k3,16));
+    if(bl3)inner.add(cyl(r*1.01,1.2*k3,m.elec,4.5*k3));
+    (f?f.pads:[{x:-14,y:2.5},{x:-14,y:-2.5}]).forEach(p=>inner.add(box(0.5,Math.min(1.2,2.5*0.5),zc-r*0.15,m.tin,p.x+1.1,p.y,0)));
+    const rot=new THREE.Group();rot.position.set(13.2*k3,0,zc);
     const prop=m.prop||(m.prop=new THREE.MeshStandardMaterial({color:0xe8590c,roughness:0.5}));
-    const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.9,1.9,2.6,28),m.plastic);hub.rotation.z=Math.PI/2;rot.add(hub);
-    for(let i=0;i<3;i++){const a=i*TAU/3,bl=new THREE.Group();bl.rotation.x=a;const blade=box(0.7,2.9,5.6,i===0?m.ceramic:prop,0,0,1.6);blade.rotation.y=0.35;bl.add(blade);rot.add(bl);}
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.9*k3,1.9*k3,2.6*k3,28),m.plastic);hub.rotation.z=Math.PI/2;rot.add(hub);
+    const nb=bl3?5:3;for(let i=0;i<nb;i++){const a=i*TAU/nb,bl=new THREE.Group();bl.rotation.x=a;const blade=box(0.7*k3,2.9*k3,5.6*k3,i===0?m.ceramic:prop,0,0,1.6*k3);blade.rotation.y=0.35;bl.add(blade);rot.add(bl);}
     inner.add(rot);outer.userData.rotor=rot;
   }else if(k==='ic'){
     const st=f?(f.stand||0):(c.pads.some(p=>p.drill)?0.5:0.05);
-    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({U1:['MCU-Q32','2641 A'],U2:['AMS1117','3.3 2638'],U3:['25Q32JV','SIQ 2635']}[c.ref]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
+    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({'MCU-Q32':['MCU-Q32','2641 A'],'AMS1117-3.3':['AMS1117','3.3 2638'],'W25Q32JV':['25Q32JV','SIQ 2635'],'BLDC-DRV3':['DRV3','2640']}[c.val]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
       top=new THREE.MeshStandardMaterial({map:markTex(lines,bw,bh,f?!!f.dot:true),roughness:0.55});}
     inner.add(box(bw,bh,ht,[m.black,m.black,m.black,m.black,top,m.black],0,0,st));
     if(f)f.pads.forEach(p=>{
@@ -2841,7 +3091,7 @@ function playSrc(){
   if(typeof SR==='undefined'||!SR.sp||SR.sp.error)return null;
   const tr=SR.cfg&&SR.cfg.sp&&SR.cfg.sp.tran;
   if(SR.sp.fromTran&&tr&&tr.anim&&tr.anim.t.length>1){const A=tr.anim;if(!Object.keys(A.led).length&&!Object.keys(A.mot).length)return null;return{tran:A,T:A.t[A.t.length-1]};}
-  if(SR.sp.parts&&SR.sp.parts.some(p=>p.type==='MOTOR'||(p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led')))return{dc:SR.sp};
+  if(SR.sp.parts&&SR.sp.parts.some(p=>(p.type==='MOTOR'||p.type==='BLDC')||(p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led')))return{dc:SR.sp};
   return null;
 }
 const bsearch=(a,t)=>{let lo=0,hi=a.length-1;if(t<=a[0])return 0;if(t>=a[hi])return hi;while(hi-lo>1){const m=(lo+hi)>>1;if(a[m]<=t)lo=m;else hi=m;}return lo;};
@@ -2865,7 +3115,7 @@ function stepPlay(now){
     Object.keys(A.mot).forEach(r=>{const m=A.mot[r];setRot(r,interpAt(A.t,m.th,t)/(m.gear||1));});PLAY.applied='tran';}
   else{const P=src.dc.parts;const by={};P.forEach(p=>{by[p.id]=p;});
     Object.keys(G3.leds).forEach(r=>setLed(r,by[r]&&by[r].type==='D'?by[r].I:0));
-    P.filter(p=>p.type==='MOTOR').forEach(p=>{if(PLAY.on)PLAY.ang[p.id]=((PLAY.ang[p.id]||0)+p.w/(p.gear||1)*dt)%TAU;setRot(p.id,PLAY.ang[p.id]||0);});PLAY.applied='dc';}
+    P.filter(p=>(p.type==='MOTOR'||p.type==='BLDC')).forEach(p=>{if(PLAY.on)PLAY.ang[p.id]=((PLAY.ang[p.id]||0)+p.w/(p.gear||1)*dt)%TAU;setRot(p.id,PLAY.ang[p.id]||0);});PLAY.applied='dc';}
   if(changed){G3.dirty=true;G3.ver=(G3.ver||0)+1;}
   if(now-PLAY.bar>90){PLAY.bar=now;updatePlayBar(src);}
 }
@@ -2877,8 +3127,8 @@ function updatePlayBar(src){
   if(tr){const A=src.tran,T=src.T,t=PLAY.simT;if(document.activeElement!==$('#pbSeek'))$('#pbSeek').value=String(Math.round(t/T*1000));
     $('#pbTime').textContent=`${(t*1e3).toFixed(t<0.01?2:1)} / ${(T*1e3).toFixed(0)} ms`;
     Object.keys(A.mot).forEach(r=>{const m=A.mot[r];const w=interpAt(A.t,m.w,t);info.push(`${r} ${(w/(m.gear||1)*60/TAU).toFixed(0)} rpm · ${f(Math.abs(interpAt(A.t,m.I,t)),'A')}`);});
-    const F=SR.fw&&SR.fw.trace;if(F&&F.t.length){const k=Math.min(F.t.length-1,Math.max(0,Math.round(t*1000)));(SR.fw.srcs||[]).filter(s=>s.pwm).forEach(s=>{const p=s.id.slice(3);info.unshift(`${p} 듀티 ${(F.out[p][k]*100).toFixed(0)}%`);});}}
-  else{$('#pbTime').textContent='DC 동작점';src.dc.parts.filter(p=>p.type==='MOTOR').forEach(p=>info.push(`${p.id} ${p.rpm.toFixed(0)} rpm · ${f(Math.abs(p.I),'A')}`));}
+    const F=SR.fw&&SR.fw.trace;if(F&&F.t.length){const k=bsearch(F.t,t*1000);let best=null;(SR.fw.srcs||[]).filter(s=>s.pwm).forEach(s=>{const p=s.id.slice(3),d=F.out[p][k];if(!best||d>best[1])best=[p,d];});if(best)info.unshift(`${best[0]} 듀티 ${(best[1]*100).toFixed(0)}%`);}}
+  else{$('#pbTime').textContent='DC 동작점';src.dc.parts.filter(p=>(p.type==='MOTOR'||p.type==='BLDC')).forEach(p=>info.push(`${p.id} ${p.rpm.toFixed(0)} rpm · ${f(Math.abs(p.I),'A')}`));}
   Object.keys(G3&&G3.leds||{}).forEach(r=>{const L=G3.leds[r];if(L.b>0.01)info.push(`${r} ${f(L.I,'A')}`);});
   $('#pbInfo').textContent=info.join(' · ');
 }
@@ -3026,8 +3276,8 @@ function stats(){
   const prs=new Set();['T.cu','B.cu'].forEach(L=>BD.layers[L].forEach(p=>{if(p.t==='pad'&&!p.via)prs.add(p);}));pads=prs.size;
   $('#stats').innerHTML=`<dt>부품</dt><dd>${BD.comps.length}</dd><dt>상단 / 하단</dt><dd>${BD.comps.filter(c=>c.side==='T').length} / ${BD.comps.filter(c=>c.side==='B').length}</dd><dt>넷</dt><dd>${BD.netOrder.length}</dd><dt>패드</dt><dd>${pads}</dd><dt>비아</dt><dd>${BD.vias.length}</dd><dt>드릴</dt><dd>${BD.drills.length}</dd>${tl?`<dt>트랙 길이</dt><dd>${fmt(tl,0)} mm</dd>`:''}`;
   const src=$('#srcBox');
-  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'가상의 MCU 모터 제어 예제입니다. U1 펌웨어가 PA8 PWM으로 Q1·M1 모터를, PB3로 상태 LED를 제어하고 PA1 ADC로 모터 전류를 읽습니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
-    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button>${BD.demo==='mcu'?'<button class="btn sm" data-fwopen>펌웨어 편집</button>':''}<button class="btn sm" data-ex="${BD.demo==='mcu'?'sense':'mcu'}">${BD.demo==='mcu'?'SENSE-32 예제':'MCU 모터 제어 예제'}</button></div>`;}
+  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'가상의 MCU DC 모터 예제입니다. U1 펌웨어가 PA8 PWM으로 Q1·M1 모터를, PB3로 상태 LED를 제어하고 PA1 ADC로 모터 전류를 읽습니다.':BD.demo==='bldc'?'가상의 MCU BLDC 3상 예제입니다. U1 펌웨어가 홀 센서(PB5~PB7)를 읽어 3상 드라이버 U3의 IN/EN 6개를 6스텝으로 정류합니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
+    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button>${BD.demo?'<button class="btn sm" data-fwopen>펌웨어 편집</button>':''}${Object.entries(EXAMPLES).filter(([k])=>k!==(BD.demo||'sense')).map(([k,v])=>`<button class="btn sm" data-ex="${k}">${esc(v[0])} 예제</button>`).join('')}</div>`;}
   else{src.innerHTML=`<ul class="files">${BD.files.filter(f=>f.role!=='ignore').map(f=>`<li><span class="fn">${esc(f.name.split('/').pop())}</span><span class="fr">${esc(PCB.ROLES[f.role]||f.role)}</span></li>`).join('')}</ul>`+
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
 }
@@ -3106,11 +3356,14 @@ function renderImport(){
 $('#flist').addEventListener('change',e=>{const s=e.target.closest('[data-role]');if(!s)return;const en=IMP.entries.find(x=>x.id===+s.dataset.role);if(en){en.role=s.value;en.note=en.role===en.auto?en.note:'';}renderImport();});
 $('#flist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(!d)return;IMP.entries=IMP.entries.filter(x=>x.id!==+d.dataset.del);renderImport();});
 $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImport();});
-function loadExample(which){const spec=which==='mcu'?SAMPLE_MCU:SAMPLE_SPEC;setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
-  if(which==='mcu'){selectComp('U1',false);toast('MCU 모터 제어 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다.');}
+const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC]};
+function loadExample(which){const spec=(EXAMPLES[which]||EXAMPLES.sense)[1]();setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
+  if(which==='mcu'){selectComp('U1',false);toast('MCU DC 모터 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다. HSIS 탭에서 펌웨어·회로 대조 결과를 볼 수 있습니다.');}
+  else if(which==='bldc'){selectComp('U1',false);toast('MCU BLDC 3상 예제입니다. U1 펌웨어가 홀 센서로 6스텝 정류를 합니다. "빌드 & 시뮬레이션"으로 3상 모터를 돌려 보세요.');}
   else toast('예제 보드로 돌아왔습니다.');}
 $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));
+$('#impSample3').addEventListener('click',()=>loadExample('bldc'));
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{
@@ -3308,6 +3561,7 @@ function thConfig(){
   BD.comps.forEach(c=>{if(c.kind!=='none')P[c.ref]=0;});
   if(BD.source==='예제'&&!BD.demo)Object.assign(P,{U2:0.45,U1:0.12,U3:0.03,D1:0.008,R2:0.006});
   if(BD.demo==='mcu')Object.assign(P,{M1:0.9,U2:0.03,U1:0.05,Q1:0.02,D1:0.05,R5:0.01});
+  if(BD.demo==='bldc')Object.assign(P,{M1:2.5,U3:0.35,U2:0.18,U1:0.05});
   SR.cfg.th={P,res:160};return SR.cfg.th;
 }
 function coverageGrid(res){
@@ -3369,27 +3623,33 @@ function thBind(b){
 function importPower(){const cfg=thConfig();if(!SR.sp||!SR.sp.parts)return;Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);SR.sp.parts.forEach(p=>{if(p.ref&&cfg.P[p.ref]!=null&&p.P>0)cfg.P[p.ref]=+(cfg.P[p.ref]+p.P).toFixed(4);});}
 
 /* ---------- circuit ---------- */
-const TYPE_LABEL={R:'저항',C:'커패시터',L:'인덕터',D:'다이오드',SW:'스위치',LOAD:'IC 부하',REG:'레귤레이터',V:'전압 소스',NMOS:'N-MOSFET · Vth',MOTOR:'DC 모터 · 부하 토크'};
+const TYPE_LABEL={R:'저항',C:'커패시터',L:'인덕터',D:'다이오드',SW:'스위치',LOAD:'IC 부하',REG:'레귤레이터',V:'전압 소스',NMOS:'N-MOSFET · Vth',MOTOR:'DC 모터 · 부하 토크',BLDC:'BLDC 모터 · 부하 토크',BRIDGE3:'3상 드라이버 · RDS(on)',HALL:'홀 센서'};
 function spConfig(){
   if(SR.cfg.sp)return SR.cfg.sp;const ck=SIM.extractCircuit(BD);
   let tstop=12,steps=1200;
-  if(BD.demo==='mcu'){
+  if(BD.demo==='bldc'){
+    ck.srcs.forEach(s=>{if(s.n[0]==='+12V'){s.wave='dc';s.v=12;s.label='J1 12 V 입력 전원';}});
+    ck.els.forEach(e=>{if(e.type==='LOAD'&&e.ref==='U1')e.I=0.02;});
+    tstop=400;steps=6400;
+  }
+  else if(BD.demo==='mcu'){
     // MCU board: 5 V applied at t = 0; the firmware drives PA8 (PWM) and PB3 (LED) during the run
     ck.srcs.forEach(s=>{if(s.n[0]==='VIN'){s.wave='dc';s.label='J1 5 V 입력 전원';}});
     ck.els.forEach(e=>{if(e.type==='LOAD'&&e.ref==='U1')e.I=0.015;});
     tstop=800;steps=10000;
   }
   else if(BD.source==='예제'){ck.els.forEach(e=>{if(e.type==='LOAD')e.I=e.ref==='U1'?0.02:0.008;});if(BD.nets.LED)ck.srcs.push({id:'V2',type:'V',n:['LED',ck.gnd],v:3.3,wave:'pulse',t0:3e-3,per:4e-3,duty:0.5,tr:1e-3,label:'U1 GPIO (PB3) 출력 · 예시'});}
-  const probes=[...new Set(ck.srcs.map(s=>s.n[0]).concat(ck.els.filter(e=>e.type==='REG').map(e=>e.n[1])).concat(BD.nets.LED_A?['LED_A']:[]).concat(ck.els.filter(e=>e.type==='MOTOR').map(e=>e.n[1])).concat(BD.nets.ISNS_ADC?['ISNS_ADC']:[]))].slice(0,4);
+  const probes=[...new Set(ck.srcs.map(s=>s.n[0]).concat(ck.els.filter(e=>e.type==='REG').map(e=>e.n[1])).concat(BD.nets.LED_A?['LED_A']:[]).concat(ck.els.filter(e=>e.type==='MOTOR').map(e=>e.n[1]).concat(ck.els.filter(e=>e.type==='BLDC').map(e=>e.n[0]))).concat(BD.nets.ISNS_ADC?['ISNS_ADC']:[]))].slice(0,4);
   SR.cfg.sp={ck,tstop,steps,probes,tran:null,hidden:{}};return SR.cfg.sp;
 }
-const valStr=e=>e.type==='MOTOR'?(e.tl*1000).toFixed(2):e.type==='NMOS'?String(e.vth):e.type==='R'?SIM.fmtSI(e.val,'Ω').replace(' ',''):e.type==='C'?SIM.fmtSI(e.val,'F').replace(' ',''):e.type==='L'?SIM.fmtSI(e.val,'H').replace(' ',''):e.type==='LOAD'?(e.I*1000).toFixed(1):e.type==='REG'?e.vset:'';
+const valStr=e=>e.type==='BRIDGE3'?SIM.fmtSI(e.ron,'Ω').replace(' ',''):(e.type==='MOTOR'||e.type==='BLDC')?(e.tl*1000).toFixed(2):e.type==='NMOS'?String(e.vth):e.type==='R'?SIM.fmtSI(e.val,'Ω').replace(' ',''):e.type==='C'?SIM.fmtSI(e.val,'F').replace(' ',''):e.type==='L'?SIM.fmtSI(e.val,'H').replace(' ',''):e.type==='LOAD'?(e.I*1000).toFixed(1):e.type==='REG'?e.vset:'';
 // transient run; when the board has an MCU with firmware, its loop() is co-simulated and drives the MCU pins
 function spRunTransient(){
   const cfg=spConfig(),ck=cfg.ck,mcu=fwMcu();let ctl=null,c=ck,autoSteps=0;
   if(mcu){ctl=FW.controller(fwCode(mcu),{pins:fwPins(mcu),gnd:ck.gnd,vdd:3.3,ref:mcu.ref});
     if(ctl.error){SR.fw={error:ctl.error,line:ctl.line,logs:ctl.logs};return{error:ctl.error};}
     const fmax=Math.max(0,...ctl.srcs.filter(s=>s.pwm).map(s=>s.freq));const need=Math.ceil(cfg.tstop*1e-3*fmax*16);
+    if(fmax*16*cfg.tstop*1e-3>40000)SR.fwWarn=`PWM ${fmax} Hz는 계산 단계(최대 40,000)로 충분히 풀 수 없어 파형이 거칠어집니다. 해석 시간을 줄이거나 주파수를 낮추세요.`;else SR.fwWarn=null;
     if(need>cfg.steps){cfg.steps=Math.min(40000,need);autoSteps=cfg.steps;}
     c=Object.assign({},ck,{srcs:ck.srcs.concat(ctl.srcs)});}
   cfg.probes=[...new Set(cfg.probes.concat(c.srcs.map(s=>s.n[0])))].slice(0,8);
@@ -3402,20 +3662,20 @@ function spHTML(){
   const cfg=spConfig(),ck=cfg.ck,f=SIM.fmtSI;
   const netOpts=sel=>BD.netOrder.map(n=>`<option${n===sel?' selected':''}>${esc(n)}</option>`).join('');
   const mcu=fwMcu();const fwSrc=mcu?`<div class="srccard fwsrc"><div class="hd"><span>${esc(mcu.ref)} · ${esc(mcu.val)} 펌웨어</span><button class="btn sm" id="sp-fw">펌웨어 편집</button></div>
-    <p class="lead" style="margin:0">출력 핀(${Object.entries(fwPins(mcu)).filter(([p,n])=>n&&/PWM|LED|_ST|GATE/.test(n)).map(([p,n])=>esc(p)+'→'+esc(n)).join(', ')||'펌웨어가 정함'})은 실행할 때 펌웨어의 <code>loop(ms)</code>가 1 ms마다 정합니다. ADC 핀은 회로의 전압을 읽습니다.</p></div>`:'';
+    <p class="lead" style="margin:0">출력 핀(${(()=>{const u=FW.pinUsage(fwCode(mcu),fwMcuDesc(mcu)),pn=fwPins(mcu);return u.out.map(o=>esc(o.pin)+'→'+esc(pn[o.pin]||'?')+(o.pwm?' PWM':'')).join(', ')||'펌웨어가 정함';})()})은 실행할 때 펌웨어의 <code>loop(ms)</code>가 1 ms마다 정합니다. ADC 핀은 회로의 전압을 읽습니다.</p></div>`:'';
   const srcs=fwSrc+ck.srcs.map((s,i)=>`<div class="srccard"><div class="hd"><span>${esc(s.id)} · ${esc(s.label||'전압 소스')}</span><button class="x" data-srcdel="${i}" aria-label="${esc(s.id)} 삭제">✕</button></div>
     <div class="row3"><label class="fld"><span>+ 넷</span><select data-src="${i}" data-k="n0" id="src${i}-n">${netOpts(s.n[0])}</select></label><label class="fld"><span>파형</span><select data-src="${i}" data-k="wave" id="src${i}-w"><option value="dc"${s.wave==='dc'?' selected':''}>직류</option><option value="step"${s.wave==='step'?' selected':''}>계단</option><option value="pulse"${s.wave==='pulse'?' selected':''}>펄스</option></select></label><label class="fld"><span>전압 V</span><input type="number" step="0.1" data-src="${i}" data-k="v" value="${s.v}" id="src${i}-v"></label></div>
     ${s.wave==='step'?`<div class="row3"><label class="fld"><span>시작 ms</span><input type="number" step="0.1" min="0" data-src="${i}" data-k="t0" value="${+(s.t0*1e3).toFixed(3)}" id="src${i}-t0"></label><label class="fld"><span>상승 ms</span><input type="number" step="0.1" min="0.001" data-src="${i}" data-k="tr" value="${+(s.tr*1e3).toFixed(3)}" id="src${i}-tr"></label></div>`:''}
     ${s.wave==='pulse'?`<div class="row3"><label class="fld"><span>시작 ms</span><input type="number" step="0.1" min="0" data-src="${i}" data-k="t0" value="${+(s.t0*1e3).toFixed(3)}" id="src${i}-t0"></label><label class="fld"><span>주기 ms</span><input type="number" step="0.1" min="0.01" data-src="${i}" data-k="per" value="${+(s.per*1e3).toFixed(3)}" id="src${i}-per"></label><label class="fld"><span>듀티 %</span><input type="number" step="5" min="1" max="99" data-src="${i}" data-k="duty" value="${Math.round(s.duty*100)}" id="src${i}-d"></label></div>`:''}</div>`).join('');
-  const els=ck.els.map((e,i)=>{const unit=e.type==='LOAD'?'mA':e.type==='REG'?'V':e.type==='MOTOR'?'mN·m':e.type==='NMOS'?'V':'';
-    const valCell=e.type==='SW'?`<select data-el="${i}" data-k="closed" aria-label="${esc(e.ref)} 상태" id="el${i}-sw"><option value="0"${!e.closed?' selected':''}>열림</option><option value="1"${e.closed?' selected':''}>닫힘</option></select>`:e.type==='D'?(e.led?'LED':'Si'):`<input type="text" data-el="${i}" data-k="val" value="${esc(valStr(e))}" aria-label="${esc(e.ref)} 값" id="el${i}-v" style="width:72px">${unit?' '+unit:''}`;
+  const els=ck.els.map((e,i)=>{const unit=e.type==='LOAD'?'mA':e.type==='REG'?'V':(e.type==='MOTOR'||e.type==='BLDC')?'mN·m':e.type==='NMOS'?'V':'';
+    const valCell=e.type==='SW'?`<select data-el="${i}" data-k="closed" aria-label="${esc(e.ref)} 상태" id="el${i}-sw"><option value="0"${!e.closed?' selected':''}>열림</option><option value="1"${e.closed?' selected':''}>닫힘</option></select>`:e.type==='D'?(e.led?'LED':'Si'):e.type==='HALL'?'회전각 연동':`<input type="text" data-el="${i}" data-k="val" value="${esc(valStr(e))}" aria-label="${esc(e.ref)} 값" id="el${i}-v" style="width:72px">${unit?' '+unit:''}`;
     return`<tr><td><input type="checkbox" data-el="${i}" data-k="on"${e.on?' checked':''} aria-label="${esc(e.ref)} 사용" id="el${i}-on"></td><td class="mono">${esc(e.ref)}</td><td style="white-space:nowrap">${TYPE_LABEL[e.type]}${e.guess?' <span class="cls">값 추정</span>':''}</td><td class="mono" style="font-size:11px;white-space:nowrap">${e.n.map(esc).join(' → ')}</td><td class="r">${valCell}</td></tr>`;}).join('');
   let res='';const R=SR.sp;
   if(R&&R.error)res=`<p class="errline">${esc(R.error)}</p>`;
   else if(R){
     const nets=Object.entries(R.nets).sort((a,b)=>b[1]-a[1]);
     const parts=R.parts.filter(p=>p.type!=='C'&&p.type!=='L'&&Math.abs(p.P)>1e-6).sort((a,b)=>Math.abs(b.P)-Math.abs(a.P));
-    const mots=R.parts.filter(p=>p.type==='MOTOR'),leds=R.parts.filter(p=>p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led');
+    const mots=R.parts.filter(p=>(p.type==='MOTOR'||p.type==='BLDC')),leds=R.parts.filter(p=>p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led');
     res=`<div class="res"><div class="acts" style="justify-content:space-between"><h4>${esc(R.label)}</h4><span class="hgap"><button class="btn sm" id="sp-play">3D에서 보기</button><button class="btn sm" id="sp-th">전력을 열 해석으로 보내기</button></span></div>
     ${mots.length||leds.length?`<div class="kpis">${mots.map(p=>`<div class="kpi"><b>${p.rpm.toFixed(0)} rpm</b><span>${esc(p.id)} 출력축${p.gear>1?` (기어 1:${p.gear})`:''} · ${f(Math.abs(p.I),'A')}</span></div>`).join('')}${leds.map(p=>`<div class="kpi"><b>${f(Math.max(0,p.I),'A')}</b><span>${esc(p.id)} ${esc(BD.byRef[p.id].val||'LED')} 전류</span></div>`).join('')}</div>`:''}
     <div class="scroll" style="max-height:200px"><table class="stbl"><thead><tr><th>넷</th><th class="r">전압</th></tr></thead><tbody>${nets.map(([n,v])=>`<tr class="click" data-spnet="${esc(n)}"><td class="mono">${esc(n)}</td><td class="r mono">${f(v,'V',3)}</td></tr>`).join('')}</tbody></table></div>
@@ -3441,7 +3701,7 @@ function spBind(b){
   b.querySelector('#sp-gnd')?.addEventListener('change',e=>{ck.gnd=e.target.value;ck.srcs.forEach(s=>{s.n[1]=ck.gnd;});});
   b.querySelectorAll('[data-el]').forEach(el=>el.addEventListener('change',()=>{const e=ck.els[+el.dataset.el],k=el.dataset.k;
     if(k==='on')e.on=el.checked;else if(k==='closed')e.closed=el.value==='1';
-    else{const v=SIM.parseVal(el.value);if(e.type==='MOTOR'){const x=parseFloat(el.value);if(x>=0)e.tl=x/1000;}else if(e.type==='NMOS'){const x=parseFloat(el.value);if(x>0)e.vth=x;}else if(e.type==='LOAD'){const x=parseFloat(el.value);if(x>=0)e.I=x/1000;}else if(e.type==='REG'){const x=parseFloat(el.value);if(x>0)e.vset=x;}else if(v>0){e.val=v;e.guess=false;}el.value=valStr(e);}}));
+    else{const v=SIM.parseVal(el.value);if(e.type==='MOTOR'||e.type==='BLDC'){const x=parseFloat(el.value);if(x>=0)e.tl=x/1000;}else if(e.type==='BRIDGE3'){if(v>0)e.ron=v;}else if(e.type==='NMOS'){const x=parseFloat(el.value);if(x>0)e.vth=x;}else if(e.type==='LOAD'){const x=parseFloat(el.value);if(x>=0)e.I=x/1000;}else if(e.type==='REG'){const x=parseFloat(el.value);if(x>0)e.vset=x;}else if(v>0){e.val=v;e.guess=false;}el.value=valStr(e);}}));
   b.querySelector('#sp-t')?.addEventListener('change',e=>{cfg.tstop=Math.max(0.01,num(e.target.value,cfg.tstop));});
   b.querySelector('#sp-n')?.addEventListener('change',e=>{cfg.steps=Math.round(Math.min(20000,Math.max(100,num(e.target.value,cfg.steps))));});
   b.querySelector('#sp-dc')?.addEventListener('click',()=>{const r=SIM.dcop(Object.assign({},ck,{tDC:cfg.tstop*1e-3}));SR.sp=r.error?{error:r.error}:Object.assign(r,{label:`DC 동작점 (t = ${cfg.tstop} ms 소스 값)`});playReset();renderSim();updateLegend();refresh(false);});
@@ -3501,14 +3761,21 @@ const SEV={err:['오류','✕'],warn:['경고','!'],ok:['정상','✓'],info:['�
 const pill=s=>`<span class="sv ${s}"><i aria-hidden="true">${SEV[s][1]}</i>${SEV[s][0]}</span>`;
 const pct=v=>Math.round(v*100)+'%';
 
-function hsisLoadSample(){
-  HS.H=HSIS.fromRows([SAMPLE_HSIS.header].concat(SAMPLE_HSIS.rows),SAMPLE_HSIS.meta);
-  HS.arxml=HSIS.parseARXML(SAMPLE_ARXML);HS.arxmlFile='SENSE-32_Port.arxml (예제)';HS.mcu=null;HS.sel=null;HS.selPin=null;hsisRun();
+// each built-in board has its own example HSIS + ARXML; other boards fall back to the SENSE-32 one
+const hsisSampleKey=()=>BD&&BD.source==='예제'&&BD.demo&&HSIS_SAMPLES[BD.demo]?BD.demo:'sense';
+function hsisLoadSample(key){
+  key=key||hsisSampleKey();const S=HSIS_SAMPLES[key];HS.sample=key;
+  HS.H=HSIS.fromRows([S.hsis.header].concat(S.hsis.rows),S.hsis.meta);
+  HS.arxml=HSIS.parseARXML(S.arxml);HS.arxmlFile=S.file;HS.mcu=null;HS.sel=null;HS.selPin=null;hsisRun();
 }
 function hsisRun(){
   if(!HS.H||!BD)return;
   if(!HS.mcu||!BD.byRef[HS.mcu])HS.mcu=(HS.H.meta.mcuRef&&BD.byRef[HS.H.meta.mcuRef]?HS.H.meta.mcuRef:null)||HSIS.pickMcu(BD,HS.H.items);
-  HS.res=HSIS.check(BD,HS.H,HS.arxml,HS.mcu);HS.tr=HSIS.trace(HS.H);HS.ver=(HS.ver||0)+1;
+  HS.res=HSIS.check(BD,HS.H,HS.arxml,HS.mcu);HS.tr=HSIS.trace(HS.H);
+  // firmware cross-check when the selected MCU carries firmware
+  const fm=typeof fwMcu==='function'?fwMcu():null;HS.fw=null;
+  if(fm&&fm.ref===HS.mcu){HS.fw=FW.pinUsage(fwCode(fm),fwMcuDesc(fm));HS.res=HSIS.checkFw(HS.H,HS.fw,HS.res);}
+  HS.ver=(HS.ver||0)+1;
 }
 // board net for an HSIS item (exact name, else normalised match)
 function hsisNetOf(it){if(!it||!it.net||!BD)return null;return BD.nets[it.net]?it.net:(Object.keys(BD.nets).find(n=>HSIS.netN(n)===HSIS.netN(it.net))||null);}
@@ -3519,7 +3786,9 @@ function hsisSelect(id,pin){
   if(net){S.hlNet=net;S.selRef=null;}
   renderHSIS();refresh(HS.ws==='board');
 }
-function hsisOnBoard(){if(!HS.H)hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();}
+function hsisOnBoard(){if(!HS.H||(HS.sample&&HS.sample!==hsisSampleKey()))hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();}
+// firmware edits change what the HSIS cross-check sees
+function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')renderHSIS();else if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});}
 function setWorkspace(w){
   HS.ws=w;document.querySelectorAll('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
   $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
@@ -3546,7 +3815,7 @@ function renderHSIS(){
   const cats=HSIS.CAT_ORDER.concat([...new Set(HS.H.items.map(i=>i._cat))].filter(x=>!HSIS.CAT_ORDER.includes(x)));
   $('#hsLeft').innerHTML=`
     <div class="grp"><p class="h">문서</p>
-      <div class="doc"><b>${esc(m.title||m.docId||'HSIS')}</b><span class="mono">${esc([m.docId,m.version&&'v'+m.version].filter(Boolean).join(' · '))}</span><span>${esc(m.file||'')}</span>${HS.arxml?`<span>SW 설정: ${esc(HS.arxmlFile)} · PortPin ${HS.arxml.length}개</span>`:'<span>SW 설정(ARXML) 없음</span>'}</div>
+      <div class="doc"><b>${esc(m.title||m.docId||'HSIS')}</b><span class="mono">${esc([m.docId,m.version&&'v'+m.version].filter(Boolean).join(' · '))}</span><span>${esc(m.file||'')}</span>${HS.arxml?`<span>SW 설정: ${esc(HS.arxmlFile)} · PortPin ${HS.arxml.length}개</span>`:'<span>SW 설정(ARXML) 없음</span>'}${HS.fw?`<span>펌웨어: ${esc(HS.mcu)} · 출력 ${HS.fw.out.length} · 입력 ${HS.fw.reads.length}핀 <button class="lnk" id="hs-fw">펌웨어 열기</button></span>`:''}</div>
       <label class="fld" style="margin-top:10px"><span>보드의 MCU 부품</span><select id="hs-mcu" class="fi">${mcuOpts}</select></label>
       <div class="acts" style="margin-top:10px"><button class="btn primary sm" id="hs-open">HSIS·ARXML 불러오기</button><button class="btn ghost sm" id="hs-sample">예제로 되돌리기</button></div>
       <input type="file" id="hs-file" multiple hidden accept=".xlsx,.xls,.csv,.tsv,.arxml,.xml">
@@ -3620,10 +3889,10 @@ function traceHTML(){
 function checksHTML(){
   const R=HS.res.results;const g=s=>R.filter(r=>r.sev===s);
   const row=r=>`<li>${pill(r.sev)}<div>${r.id?`<button class="tchip" data-item="${esc(r.id)}">${esc(r.id)}</button> `:r.pin?`<button class="tchip" data-pinsel="${esc(r.pin)}">${esc(HS.mcu)}.${esc(r.pin)}</button> `:''}<span>${esc(r.msg)}</span><span class="code">${esc(r.code)}</span></div></li>`;
-  return`<div class="sim" style="max-width:none"><div class="acts" style="justify-content:space-between"><span class="lead">회로도(${esc(BD.name)}), MCU 풋프린트, SW 설정(${HS.arxml?esc(HS.arxmlFile):'없음'})과 HSIS를 대조한 결과입니다.</span><button class="btn sm" id="hs-copy">결과 CSV 복사</button></div>
+  return`<div class="sim" style="max-width:none"><div class="acts" style="justify-content:space-between"><span class="lead">회로도(${esc(BD.name)}), MCU 풋프린트, SW 설정(${HS.arxml?esc(HS.arxmlFile):'없음'})${HS.fw?`, ${esc(HS.mcu)} 펌웨어`:''}와 HSIS를 대조한 결과입니다.</span><button class="btn sm" id="hs-copy">결과 CSV 복사</button></div>
     <ul class="chk">${g('err').map(row).join('')}${g('warn').map(row).join('')}</ul>
     <details class="okbox"><summary>통과한 검사 ${g('ok').length}건 · 참고 ${g('info').length}건</summary><ul class="chk">${g('ok').concat(g('info')).map(row).join('')}</ul></details>
-    <p class="lead">검사 항목: MCU 핀↔회로도 넷, 핀 이름, HW 연결 부품·핀, 외부 풀업·풀다운 저항값, 핀 중복, HSIS에 없는 연결 핀, SW Port 설정의 핀·방향·초기값, 요구사항·테스트 연결.</p></div>`;
+    <p class="lead">검사 항목: MCU 핀↔회로도 넷, 핀 이름, HW 연결 부품·핀, 외부 풀업·풀다운 저항값, 핀 중복, HSIS에 없는 연결 핀, SW Port 설정의 핀·방향·초기값, 요구사항·테스트 연결${HS.fw?', 펌웨어가 쓰는 핀·방향·ADC·PWM 주파수':''}.</p></div>`;
 }
 function renderDetail(box,inCell){box=box||$('#hsDetail');box.innerHTML=detailHTML(inCell);bindDetail(box,inCell);}
 function detailHTML(inCell){
@@ -3640,6 +3909,8 @@ function detailHTML(inCell){
   const swSt=rs.some(r=>r.sev==='err'&&/^SW/.test(r.code))?'err':rs.some(r=>r.sev==='warn'&&/^SW/.test(r.code))?'warn':'ok';
   const hwSt=rs.some(r=>r.sev==='err'&&/^(HW|PULL|NET_MISSING)/.test(r.code))?'err':rs.some(r=>r.sev==='warn'&&/^(HW|PULL)/.test(r.code))?'warn':'ok';
   const trSt=it.req&&it.test?'ok':'warn';
+  const fwRs=rs.filter(r=>/^FW_/.test(r.code)),fwSt=fwRs.some(r=>r.sev==='err')?'err':fwRs.some(r=>r.sev==='warn')?'warn':'ok';
+  const fwUse=HS.fw?[...HS.fw.out.filter(o=>o.pin===String(it.port).toUpperCase()).map(o=>o.pwm?`PWM 출력 ${o.freq} Hz`:'GPIO 출력'),...HS.fw.reads.filter(r=>r.pin===String(it.port).toUpperCase()).map(r=>r.analog?'ADC 입력':'디지털 입력')]:[];
   const ap=HS.arxml&&HS.arxml.find(a=>[it.signal,it.func,it.swcfg&&it.swcfg.replace(/^.*_/,'')].filter(Boolean).map(HSIS.netN).includes(HSIS.netN(a.name.replace(/^PortPin_?/i,''))));
   const step=(t,s,body)=>`<li class="step ${s}"><div class="st-h"><b>${t}</b>${pill(s)}</div><div class="st-b">${body}</div></li>`;
   const fields=Object.keys(HSIS.LABEL).filter(k=>it[k]&&!['id','signal'].includes(k)).map(k=>`<dt>${HSIS.LABEL[k]}</dt><dd>${esc(it[k])}</dd>`).join('');
@@ -3651,6 +3922,7 @@ function detailHTML(inCell){
       ${step('HW 연결',hwSt,`${esc(it.hw||'—')}${partsTxt.length?`<div class="parts">넷의 부품: ${partsTxt.join(' · ')}</div>`:''}${it.pull?`<div>풀업/풀다운: ${esc(it.pull)}</div>`:''}`)}
       ${step('MCU 핀',mcuSt,`<span class="mono">${esc(HS.mcu||'?')}.${esc(it.pins||'—')}</span> · ${esc([it.port,it.func].filter(Boolean).join(' / '))}<div>회로도 넷: <span class="mono">${esc(net||it.net||'—')}</span>${it.net&&!net?' <span class="miss">보드에 없음</span>':''}</div>`)}
       ${step('SW',swSt,`${esc([it.swmod,it.swcfg].filter(Boolean).join(' · ')||'—')}${it.api?`<div class="mono">${esc(it.api)}()</div>`:''}${ap?`<div>ARXML: <span class="mono">${esc(ap.name)}</span> · ${esc(ap.id)}번 핀 · ${esc(ap.mode.replace('PORT_PIN_MODE_',''))}${ap.level?' · '+esc(ap.level.replace('PORT_PIN_LEVEL_','')):''}</div>`:HS.arxml?'<div class="lead">ARXML에 해당 PortPin 없음</div>':''}`)}
+      ${HS.fw&&(fwRs.length||fwUse.length)?step('펌웨어',fwSt,`${fwUse.length?`<span class="mono">${esc(it.port)}</span> · ${esc(fwUse.join(', '))}`:'펌웨어에서 쓰지 않음'}${fwRs.filter(r=>r.sev!=='ok').map(r=>`<div>${esc(r.msg)}</div>`).join('')}<div><button class="lnk" data-fwopen>펌웨어 열기</button></div>`):''}
       ${step('추적',trSt,`요구사항 <span class="mono">${it.req?esc(it.req):'<span class="miss">없음</span>'}</span> → 테스트 <span class="mono">${it.test?esc(it.test):'<span class="miss">없음</span>'}</span>`)}
     </ol>
     <div class="sub">HSIS 내용</div><dl class="kv">${fields}</dl></div>${net?miniBoard(net,inCell):''}`;
@@ -3664,6 +3936,7 @@ function drawMini(root){root=root||$('#hsDetail');const cv=root.querySelector('.
     const save=[S.hlNet,S.selRef,S.panel];S.hlNet=cv.dataset.net;S.selRef=null;S.panel='info';try{drawSide(ctx,side,{texture:true});}finally{[S.hlNet,S.selRef,S.panel]=save;}}}
 function bindDetail(root,inCell){
   root=root||$('#hsDetail');drawMini(root);
+  root.querySelectorAll('[data-fwopen]').forEach(b=>b.addEventListener('click',()=>fwOpen()));
   root.querySelectorAll('[data-hlnet]').forEach(b=>b.addEventListener('click',()=>{S.hlNet=b.dataset.hlnet;S.selRef=null;refresh(HS.ws==='board');}));
   if(inCell)return;
   root.querySelectorAll('[data-gosch]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.gosch;setWorkspace('board');S.hlNet=n;S.selRef=null;SV.fromMe=false;SV.lastKey='';setView('sch');refresh(true);}));
@@ -3672,9 +3945,10 @@ function bindDetail(root,inCell){
 function bindHSIS(){
   const L=$('#hsLeft');
   L.querySelector('#hs-mcu')?.addEventListener('change',e=>{HS.mcu=e.target.value;hsisRun();renderHSIS();});
+  L.querySelector('#hs-fw')?.addEventListener('click',()=>fwOpen());
   L.querySelector('#hs-open')?.addEventListener('click',()=>L.querySelector('#hs-file').click());
   L.querySelector('#hs-file')?.addEventListener('change',e=>{hsisFiles([...e.target.files]);e.target.value='';});
-  L.querySelector('#hs-sample')?.addEventListener('click',()=>{hsisLoadSample();renderHSIS();toast('예제 HSIS와 ARXML로 되돌렸습니다.');});
+  L.querySelector('#hs-sample')?.addEventListener('click',()=>{hsisLoadSample();renderHSIS();toast(`${BD.name}의 예제 HSIS와 ARXML로 되돌렸습니다.`);});
   const q=L.querySelector('#hs-q');q?.addEventListener('input',()=>{HS.q=q.value;const pos=q.selectionStart;renderHSIS();const n=$('#hs-q');n.focus();n.setSelectionRange(pos,pos);});
   L.querySelectorAll('[data-sev]').forEach(b=>b.addEventListener('click',()=>{HS.sev=b.dataset.sev;renderHSIS();}));
   L.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.cat;const all=[...L.querySelectorAll('[data-cat]')].map(x=>x.dataset.cat);
@@ -4177,7 +4451,7 @@ const LAYOUT_KEY='pcbv.layout';
 const LAY=(function(){try{return JSON.parse(localStorage.getItem(LAYOUT_KEY)||'{}')||{};}catch(e){return{};}})();
 function saveLayout(){try{localStorage.setItem(LAYOUT_KEY,JSON.stringify(LAY));}catch(e){}}
 function applyLayout(){const m=$('.main'),h=$('#hsisWs');
-  [['lw',m,'--lw'],['rw',m,'--rw'],['rws',m,'--rws'],['hl',h,'--hl'],['hr',h,'--hr']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
+  [['lw',m,'--lw'],['rw',m,'--rw'],['rws',m,'--rws'],['hl',h,'--hsw-l'],['hr',h,'--hsw-r']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
   if(LAY.split)vp.style.setProperty('--split',LAY.split+'%');else vp.style.removeProperty('--split');}
 function makeHandle(el,opts){
   // opts: {get():px, set(px), min, max, reset()}
@@ -4270,15 +4544,15 @@ function fwCardHTML(c){
   const ps=FW.params(fwCode(c)).filter(p=>!/OHM$/.test(p.name)).slice(0,8);
   const R=SR.fw,tr=SR.cfg&&SR.cfg.sp&&SR.cfg.sp.tran;let sum='';
   if(R&&R.error)sum=`<p class="fwsum" style="color:var(--err)">${esc(R.error)}</p>`;
-  else if(R&&tr&&tr.anim&&!tr.error){const m=Object.values(tr.anim.mot)[0];const pw=(R.srcs||[]).find(s=>s.pwm),d=pw&&R.trace?R.trace.out[pw.id.slice(3)]:null;
-    if(m)sum=`<p class="fwsum">마지막 실행: 출력축 ${(m.w[m.w.length-1]/(m.gear||1)*60/TAU).toFixed(0)} rpm${d?` · 최종 듀티 ${(d[d.length-1]*100).toFixed(0)} %`:''}${R.logs.length?` · 로그 ${R.logs.length}줄`:''}</p>`;}
+  else if(R&&tr&&tr.anim&&!tr.error){const m=Object.values(tr.anim.mot)[0];const dl=R.trace?Math.max(0,...(R.srcs||[]).filter(s=>s.pwm).map(s=>{const a=R.trace.out[s.id.slice(3)];return a&&a.length?a[a.length-1]:0;})):null;
+    if(m)sum=`<p class="fwsum">마지막 실행: 출력축 ${(m.w[m.w.length-1]/(m.gear||1)*60/TAU).toFixed(0)} rpm${dl!=null&&R.srcs.some(s=>s.pwm)?` · 최종 듀티 ${(dl*100).toFixed(0)} %`:''}${R.logs.length?` · 로그 ${R.logs.length}줄`:''}</p>`;}
   return`<div class="fwcard"><div class="sub">펌웨어 · 주요 파라미터</div>
     <div class="fwq">${ps.map(p=>`<label title="${esc(p.comment)}"><span>${esc(p.name)}</span><input type="number" step="any" data-fwp="${esc(p.name)}" value="${p.value}" aria-label="${esc(p.name)} ${esc(p.comment)}"></label>`).join('')}</div>
     <div class="acts"><button class="btn sm" data-fw="edit">코드 편집</button><button class="btn sm primary" data-fw="run">빌드 &amp; 시뮬레이션</button></div>${sum}</div>`;
 }
 $('#pane').addEventListener('click',e=>{const b=e.target.closest('[data-fw]');if(!b)return;if(b.dataset.fw==='edit')fwOpen();else fwRunAll(b);});
 $('#pane').addEventListener('change',e=>{const i=e.target.closest('[data-fwp]');if(!i)return;const c=fwMcu();if(!c)return;const v=parseFloat(i.value);if(!isFinite(v))return;
-  fwSetCode(c,FW.setParam(fwCode(c),i.dataset.fwp,v));if(!$('#fwModal').hidden)fwRender(true);toast(`${i.dataset.fwp} = ${v} · "빌드 & 시뮬레이션"을 누르면 반영됩니다.`);});
+  fwSetCode(c,FW.setParam(fwCode(c),i.dataset.fwp,v));hsisOnFirmware();if(!$('#fwModal').hidden)fwRender(true);toast(`${i.dataset.fwp} = ${v} · "빌드 & 시뮬레이션"을 누르면 반영됩니다.`);});
 
 /* ---- run: firmware + circuit transient together ---- */
 function fwRunAll(btn){
@@ -4287,6 +4561,7 @@ function fwRunAll(btn){
     if(btn){btn.disabled=false;btn.textContent=label;}
     renderSim();updateLegend();refresh(true);if(!$('#fwModal').hidden)fwRender(false);
     if(r&&r.error)toast('실행하지 못했습니다: '+r.error);
+    else if(SR.fwWarn)toast(SR.fwWarn);
     else if(r&&r.autoSteps)toast(`PWM 주파수에 맞춰 계산 단계를 ${r.autoSteps}로 늘렸습니다.`);},30);
 }
 
@@ -4307,7 +4582,7 @@ function fwParams(){
     <input type="range" min="${mn}" max="${mx}" step="${st}" value="${Math.min(mx,Math.max(mn,p.value))}" data-fwpr="${esc(p.name)}" aria-label="${esc(p.name)} 조절"><input type="number" step="any" data-fwpn="${esc(p.name)}" value="${p.value}" aria-label="${esc(p.name)}"></div>`;}).join('')
     :'<p class="fwsum">코드 위쪽에 <code>const 이름 = 숫자; // 설명</code> 형식으로 적은 상수가 여기 파라미터로 나타납니다.</p>';
 }
-function fwApplyParam(name,v){const c=fwMcu(),ta=$('#fwCode'),st=ta.scrollTop;const code=FW.setParam(ta.value,name,v);ta.value=code;ta.scrollTop=st;fwSetCode(c,code);
+function fwApplyParam(name,v){const c=fwMcu(),ta=$('#fwCode'),st=ta.scrollTop;const code=FW.setParam(ta.value,name,v);ta.value=code;ta.scrollTop=st;fwSetCode(c,code);clearTimeout(FWS.htimer);FWS.htimer=setTimeout(hsisOnFirmware,300);
   $('#fwParams').querySelectorAll(`[data-fwpn="${name}"],[data-fwpr="${name}"]`).forEach(x=>{if(document.activeElement!==x)x.value=v;});$('#fwMsg').textContent='변경됨 · 빌드 & 시뮬레이션으로 확인하세요';}
 $('#fwParams').addEventListener('input',e=>{const r=e.target.closest('[data-fwpr]');if(r)fwApplyParam(r.dataset.fwpr,+r.value);});
 $('#fwParams').addEventListener('change',e=>{const n=e.target.closest('[data-fwpn]');if(n){const v=parseFloat(n.value);if(isFinite(v))fwApplyParam(n.dataset.fwpn,v);}});
@@ -4326,6 +4601,7 @@ function fwResult(){
   const R=SR.fw,box=$('#fwResult');
   if(!R){box.innerHTML='<p class="fwsum">아직 실행하지 않았습니다. <b>빌드 &amp; 시뮬레이션</b>을 누르면 펌웨어의 <code>loop(ms)</code>가 1 ms마다 회로 해석과 함께 돌고, 결과가 여기와 3D 보기에 나타납니다.</p>';return;}
   let h='';
+  if(SR.fwWarn&&!R.checkOnly)h+=`<p class="fwerr" style="color:var(--warn-fg);background:var(--warn-bg)">${esc(SR.fwWarn)}</p>`;
   if(R.error)h+=`<p class="fwerr">${esc(R.error)}${R.line?` <button class="btn sm" data-fwline="${R.line}">${R.line}번째 줄로</button>`:''}</p>`;
   else if(R.checkOnly)h+=`<p class="fwok">빌드 성공 · 출력 핀: ${esc(R.pins)}</p>`;
   const tr=SR.cfg&&SR.cfg.sp&&SR.cfg.sp.tran;
@@ -4340,13 +4616,15 @@ function fwResult(){
       for(let i=0;i<ia.length;i++){acc+=ia[i];if(i>=win)acc-=ia[i-win];avg[i]=acc/Math.min(i+1,win);}
       h+=miniChart(`${r} 모터 전류 (2 ms 평균)`,ts,avg,{color:'var(--s6)',last:SIM.fmtSI(avg[avg.length-1],'A'),ylab:SIM.fmtSI(Math.max(...avg),'A').replace(' ','')});});
   }
+  if(typeof HS!=='undefined'&&HS.fw&&HS.res){const fr=HS.res.results.filter(r=>/^FW_/.test(r.code));const bad=fr.filter(r=>r.sev==='err'||r.sev==='warn');
+    h+=`<div class="sub" style="margin-top:10px">HSIS 대조</div><p class="fwsum">${bad.length?bad.map(r=>`${r.sev==='err'?'✕':'!'} ${esc(r.id||'')} ${esc(r.msg)}`).join('<br>'):`✓ 펌웨어가 쓰는 핀 ${fr.filter(r=>r.sev==='ok').length}건이 HSIS(${esc(HS.H.meta.docId||'')})와 일치합니다.`}</p>`;}
   if(R.logs&&R.logs.length)h+=`<div class="sub" style="margin-top:10px">로그</div><div class="fwlog">${R.logs.map(l=>`<div><span class="t">${l.ms} ms</span>${esc(l.text)}</div>`).join('')}</div>`;
   box.innerHTML=h;
 }
 $('#fwResult').addEventListener('click',e=>{const b=e.target.closest('[data-fwline]');if(!b)return;const n=+b.dataset.fwline,ta=$('#fwCode'),lines=ta.value.split('\n');let pos=0;for(let i=0;i<n-1;i++)pos+=lines[i].length+1;
   ta.focus();ta.setSelectionRange(pos,pos+(lines[n-1]||'').length);ta.scrollTop=Math.max(0,(n-6)*19);fwGutter();});
 const fwTa=$('#fwCode');
-fwTa.addEventListener('input',()=>{const c=fwMcu();if(!c)return;fwSetCode(c,fwTa.value);fwGutter();$('#fwMsg').textContent='변경됨';clearTimeout(FWS.timer);FWS.timer=setTimeout(()=>{fwParams();renderPane();},350);});
+fwTa.addEventListener('input',()=>{const c=fwMcu();if(!c)return;fwSetCode(c,fwTa.value);fwGutter();$('#fwMsg').textContent='변경됨';clearTimeout(FWS.timer);FWS.timer=setTimeout(()=>{fwParams();renderPane();hsisOnFirmware();},350);});
 fwTa.addEventListener('scroll',()=>{$('#fwGut').scrollTop=fwTa.scrollTop;});
 fwTa.addEventListener('keydown',e=>{
   if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();const s=fwTa.selectionStart,en=fwTa.selectionEnd;fwTa.setRangeText('  ',s,en,'end');fwTa.dispatchEvent(new Event('input'));}
@@ -4357,7 +4635,7 @@ $('#fwRun').addEventListener('click',()=>fwRunAll($('#fwRun')));
 $('#fwCheck').addEventListener('click',()=>{const c=fwMcu();const ctl=FW.controller(fwCode(c),fwMcuDesc(c));
   SR.fw=ctl.error?{error:ctl.error,line:ctl.line,logs:ctl.logs}:{checkOnly:true,logs:ctl.logs,pins:ctl.srcs.map(s=>`${s.id.slice(3)} (${s.pwm?'PWM '+s.freq+' Hz':'GPIO'})`).join(', ')};fwRender(false);
   $('#fwMsg').textContent=ctl.error?'빌드 실패':'빌드 성공';});
-$('#fwReset').addEventListener('click',()=>{const c=fwMcu();if(!c)return;fwSetCode(c,c.fw);fwRender(true);renderPane();$('#fwMsg').textContent='기본 코드로 되돌렸습니다';});
+$('#fwReset').addEventListener('click',()=>{const c=fwMcu();if(!c)return;fwSetCode(c,c.fw);fwRender(true);renderPane();hsisOnFirmware();$('#fwMsg').textContent='기본 코드로 되돌렸습니다';});
 $('#fw3d').addEventListener('click',()=>{fwClose();setWorkspace('board');if(S.view!=='3d'||S.sch==='full')setView('3d');playReset();});
 $('#fwModal').addEventListener('click',e=>{if(e.target.id==='fwModal'||e.target.closest('[data-fwclose]'))fwClose();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#fwModal').hidden){e.stopPropagation();fwClose();}},true);

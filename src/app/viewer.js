@@ -259,19 +259,20 @@ function build3D(c){
     else if(k==='diode')inner.add(box(bw-2*e,bh*0.98,ht*0.98,m.res,0,0,0),box(Math.max(0.3,bw*0.08),bh*0.99,ht*1.0,m.ceramic,(c.pads[0]&&c.pads[0].n==='1'&&/^(K|C)$/i.test(c.pads[0].fn||'')?-1:1)*(bw/2-e-bw*0.08),0,0.005));
     else inner.add(box(bw-2*e,bh*0.98,ht*0.98,c.ref[0]==='C'?m.cap:c.ref[0]==='L'?m.ind:m.res,0,0,0));
   }else if(k==='motor'){
-    // 130-size can lying along local +x on a bracket, terminals to the pads, gearbox output fan on the shaft
-    const r=Math.min(bh,ht)/2-0.3,zc=ht-r,cyl=(rr,len,mat,x,seg)=>{const g=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,len,seg||40),mat);g.rotation.z=Math.PI/2;g.position.set(x,0,zc);return g;};
-    inner.add(box(bw*0.62,bh*0.82,zc-r*0.55,m.conn,-1,0,0));
-    inner.add(cyl(r,17,m.steel,-1.5),cyl(r*0.96,2.4,m.beige,-11.2),cyl(r*0.42,1.2,m.steel,7.6,24),cyl(0.9,5.6,m.steel,10.6,16));
-    [2.5,-2.5].forEach(y=>inner.add(box(0.5,1.2,zc-r*0.15,m.tin,-12.9,y,0)));
-    const rot=new THREE.Group();rot.position.set(13.2,0,zc);
+    // can lying along local +x on a bracket, a lead post per pad, fan on the shaft; dimensions scale with the body (130 DC can = 24 mm)
+    const k3=bw/24,bl3=f&&f.pads.length>=6,r=Math.min(bh,ht)/2-0.3,zc=ht-r,cyl=(rr,len,mat,x,seg)=>{const g=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,len,seg||40),mat);g.rotation.z=Math.PI/2;g.position.set(x,0,zc);return g;};
+    inner.add(box(bw*0.62,bh*0.82,zc-r*0.55,m.conn,-1*k3,0,0));
+    inner.add(cyl(r,17*k3,bl3?m.grey:m.steel,-1.5*k3),cyl(r*0.96,2.4*k3,bl3?m.black:m.beige,-11.2*k3),cyl(r*0.42,1.2*k3,m.steel,7.6*k3,24),cyl(0.9*k3,5.6*k3,m.steel,10.6*k3,16));
+    if(bl3)inner.add(cyl(r*1.01,1.2*k3,m.elec,4.5*k3));
+    (f?f.pads:[{x:-14,y:2.5},{x:-14,y:-2.5}]).forEach(p=>inner.add(box(0.5,Math.min(1.2,2.5*0.5),zc-r*0.15,m.tin,p.x+1.1,p.y,0)));
+    const rot=new THREE.Group();rot.position.set(13.2*k3,0,zc);
     const prop=m.prop||(m.prop=new THREE.MeshStandardMaterial({color:0xe8590c,roughness:0.5}));
-    const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.9,1.9,2.6,28),m.plastic);hub.rotation.z=Math.PI/2;rot.add(hub);
-    for(let i=0;i<3;i++){const a=i*TAU/3,bl=new THREE.Group();bl.rotation.x=a;const blade=box(0.7,2.9,5.6,i===0?m.ceramic:prop,0,0,1.6);blade.rotation.y=0.35;bl.add(blade);rot.add(bl);}
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.9*k3,1.9*k3,2.6*k3,28),m.plastic);hub.rotation.z=Math.PI/2;rot.add(hub);
+    const nb=bl3?5:3;for(let i=0;i<nb;i++){const a=i*TAU/nb,bl=new THREE.Group();bl.rotation.x=a;const blade=box(0.7*k3,2.9*k3,5.6*k3,i===0?m.ceramic:prop,0,0,1.6*k3);blade.rotation.y=0.35;bl.add(blade);rot.add(bl);}
     inner.add(rot);outer.userData.rotor=rot;
   }else if(k==='ic'){
     const st=f?(f.stand||0):(c.pads.some(p=>p.drill)?0.5:0.05);
-    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({U1:['MCU-Q32','2641 A'],U2:['AMS1117','3.3 2638'],U3:['25Q32JV','SIQ 2635']}[c.ref]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
+    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({'MCU-Q32':['MCU-Q32','2641 A'],'AMS1117-3.3':['AMS1117','3.3 2638'],'W25Q32JV':['25Q32JV','SIQ 2635'],'BLDC-DRV3':['DRV3','2640']}[c.val]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
       top=new THREE.MeshStandardMaterial({map:markTex(lines,bw,bh,f?!!f.dot:true),roughness:0.55});}
     inner.add(box(bw,bh,ht,[m.black,m.black,m.black,m.black,top,m.black],0,0,st));
     if(f)f.pads.forEach(p=>{
@@ -371,7 +372,7 @@ function playSrc(){
   if(typeof SR==='undefined'||!SR.sp||SR.sp.error)return null;
   const tr=SR.cfg&&SR.cfg.sp&&SR.cfg.sp.tran;
   if(SR.sp.fromTran&&tr&&tr.anim&&tr.anim.t.length>1){const A=tr.anim;if(!Object.keys(A.led).length&&!Object.keys(A.mot).length)return null;return{tran:A,T:A.t[A.t.length-1]};}
-  if(SR.sp.parts&&SR.sp.parts.some(p=>p.type==='MOTOR'||(p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led')))return{dc:SR.sp};
+  if(SR.sp.parts&&SR.sp.parts.some(p=>(p.type==='MOTOR'||p.type==='BLDC')||(p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led')))return{dc:SR.sp};
   return null;
 }
 const bsearch=(a,t)=>{let lo=0,hi=a.length-1;if(t<=a[0])return 0;if(t>=a[hi])return hi;while(hi-lo>1){const m=(lo+hi)>>1;if(a[m]<=t)lo=m;else hi=m;}return lo;};
@@ -395,7 +396,7 @@ function stepPlay(now){
     Object.keys(A.mot).forEach(r=>{const m=A.mot[r];setRot(r,interpAt(A.t,m.th,t)/(m.gear||1));});PLAY.applied='tran';}
   else{const P=src.dc.parts;const by={};P.forEach(p=>{by[p.id]=p;});
     Object.keys(G3.leds).forEach(r=>setLed(r,by[r]&&by[r].type==='D'?by[r].I:0));
-    P.filter(p=>p.type==='MOTOR').forEach(p=>{if(PLAY.on)PLAY.ang[p.id]=((PLAY.ang[p.id]||0)+p.w/(p.gear||1)*dt)%TAU;setRot(p.id,PLAY.ang[p.id]||0);});PLAY.applied='dc';}
+    P.filter(p=>(p.type==='MOTOR'||p.type==='BLDC')).forEach(p=>{if(PLAY.on)PLAY.ang[p.id]=((PLAY.ang[p.id]||0)+p.w/(p.gear||1)*dt)%TAU;setRot(p.id,PLAY.ang[p.id]||0);});PLAY.applied='dc';}
   if(changed){G3.dirty=true;G3.ver=(G3.ver||0)+1;}
   if(now-PLAY.bar>90){PLAY.bar=now;updatePlayBar(src);}
 }
@@ -407,8 +408,8 @@ function updatePlayBar(src){
   if(tr){const A=src.tran,T=src.T,t=PLAY.simT;if(document.activeElement!==$('#pbSeek'))$('#pbSeek').value=String(Math.round(t/T*1000));
     $('#pbTime').textContent=`${(t*1e3).toFixed(t<0.01?2:1)} / ${(T*1e3).toFixed(0)} ms`;
     Object.keys(A.mot).forEach(r=>{const m=A.mot[r];const w=interpAt(A.t,m.w,t);info.push(`${r} ${(w/(m.gear||1)*60/TAU).toFixed(0)} rpm · ${f(Math.abs(interpAt(A.t,m.I,t)),'A')}`);});
-    const F=SR.fw&&SR.fw.trace;if(F&&F.t.length){const k=Math.min(F.t.length-1,Math.max(0,Math.round(t*1000)));(SR.fw.srcs||[]).filter(s=>s.pwm).forEach(s=>{const p=s.id.slice(3);info.unshift(`${p} 듀티 ${(F.out[p][k]*100).toFixed(0)}%`);});}}
-  else{$('#pbTime').textContent='DC 동작점';src.dc.parts.filter(p=>p.type==='MOTOR').forEach(p=>info.push(`${p.id} ${p.rpm.toFixed(0)} rpm · ${f(Math.abs(p.I),'A')}`));}
+    const F=SR.fw&&SR.fw.trace;if(F&&F.t.length){const k=bsearch(F.t,t*1000);let best=null;(SR.fw.srcs||[]).filter(s=>s.pwm).forEach(s=>{const p=s.id.slice(3),d=F.out[p][k];if(!best||d>best[1])best=[p,d];});if(best)info.unshift(`${best[0]} 듀티 ${(best[1]*100).toFixed(0)}%`);}}
+  else{$('#pbTime').textContent='DC 동작점';src.dc.parts.filter(p=>(p.type==='MOTOR'||p.type==='BLDC')).forEach(p=>info.push(`${p.id} ${p.rpm.toFixed(0)} rpm · ${f(Math.abs(p.I),'A')}`));}
   Object.keys(G3&&G3.leds||{}).forEach(r=>{const L=G3.leds[r];if(L.b>0.01)info.push(`${r} ${f(L.I,'A')}`);});
   $('#pbInfo').textContent=info.join(' · ');
 }
@@ -556,8 +557,8 @@ function stats(){
   const prs=new Set();['T.cu','B.cu'].forEach(L=>BD.layers[L].forEach(p=>{if(p.t==='pad'&&!p.via)prs.add(p);}));pads=prs.size;
   $('#stats').innerHTML=`<dt>부품</dt><dd>${BD.comps.length}</dd><dt>상단 / 하단</dt><dd>${BD.comps.filter(c=>c.side==='T').length} / ${BD.comps.filter(c=>c.side==='B').length}</dd><dt>넷</dt><dd>${BD.netOrder.length}</dd><dt>패드</dt><dd>${pads}</dd><dt>비아</dt><dd>${BD.vias.length}</dd><dt>드릴</dt><dd>${BD.drills.length}</dd>${tl?`<dt>트랙 길이</dt><dd>${fmt(tl,0)} mm</dd>`:''}`;
   const src=$('#srcBox');
-  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'가상의 MCU 모터 제어 예제입니다. U1 펌웨어가 PA8 PWM으로 Q1·M1 모터를, PB3로 상태 LED를 제어하고 PA1 ADC로 모터 전류를 읽습니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
-    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button>${BD.demo==='mcu'?'<button class="btn sm" data-fwopen>펌웨어 편집</button>':''}<button class="btn sm" data-ex="${BD.demo==='mcu'?'sense':'mcu'}">${BD.demo==='mcu'?'SENSE-32 예제':'MCU 모터 제어 예제'}</button></div>`;}
+  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'가상의 MCU DC 모터 예제입니다. U1 펌웨어가 PA8 PWM으로 Q1·M1 모터를, PB3로 상태 LED를 제어하고 PA1 ADC로 모터 전류를 읽습니다.':BD.demo==='bldc'?'가상의 MCU BLDC 3상 예제입니다. U1 펌웨어가 홀 센서(PB5~PB7)를 읽어 3상 드라이버 U3의 IN/EN 6개를 6스텝으로 정류합니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
+    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button>${BD.demo?'<button class="btn sm" data-fwopen>펌웨어 편집</button>':''}${Object.entries(EXAMPLES).filter(([k])=>k!==(BD.demo||'sense')).map(([k,v])=>`<button class="btn sm" data-ex="${k}">${esc(v[0])} 예제</button>`).join('')}</div>`;}
   else{src.innerHTML=`<ul class="files">${BD.files.filter(f=>f.role!=='ignore').map(f=>`<li><span class="fn">${esc(f.name.split('/').pop())}</span><span class="fr">${esc(PCB.ROLES[f.role]||f.role)}</span></li>`).join('')}</ul>`+
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
 }
@@ -636,11 +637,14 @@ function renderImport(){
 $('#flist').addEventListener('change',e=>{const s=e.target.closest('[data-role]');if(!s)return;const en=IMP.entries.find(x=>x.id===+s.dataset.role);if(en){en.role=s.value;en.note=en.role===en.auto?en.note:'';}renderImport();});
 $('#flist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(!d)return;IMP.entries=IMP.entries.filter(x=>x.id!==+d.dataset.del);renderImport();});
 $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImport();});
-function loadExample(which){const spec=which==='mcu'?SAMPLE_MCU:SAMPLE_SPEC;setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
-  if(which==='mcu'){selectComp('U1',false);toast('MCU 모터 제어 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다.');}
+const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC]};
+function loadExample(which){const spec=(EXAMPLES[which]||EXAMPLES.sense)[1]();setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
+  if(which==='mcu'){selectComp('U1',false);toast('MCU DC 모터 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다. HSIS 탭에서 펌웨어·회로 대조 결과를 볼 수 있습니다.');}
+  else if(which==='bldc'){selectComp('U1',false);toast('MCU BLDC 3상 예제입니다. U1 펌웨어가 홀 센서로 6스텝 정류를 합니다. "빌드 & 시뮬레이션"으로 3상 모터를 돌려 보세요.');}
   else toast('예제 보드로 돌아왔습니다.');}
 $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));
+$('#impSample3').addEventListener('click',()=>loadExample('bldc'));
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{

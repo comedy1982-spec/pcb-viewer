@@ -149,6 +149,33 @@ function trace(H){
   return{reqs:Object.values(reqs).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})).map(r=>Object.assign(r,{tests:[...r.tests]})),noReq,
     reqCov:H.items.filter(i=>i.req).length/n,testCov:H.items.filter(i=>i.test).length/n};
 }
-return{FIELDS,LABEL,CAT_ORDER,csvRows,mapColumns,fromRows,parseARXML,parsePins,category,pickMcu,check,trace,netN};
+// firmware ↔ HSIS: pins the firmware drives (setup) and reads (code) against the documented ports, directions and PWM frequency
+// fw: {ref, out:[{pin,pwm,freq}], reads:[{pin,analog}], error}
+function checkFw(H,fw,prev){
+  const res=[];const add=(sev,code,id,msg,extra)=>res.push(Object.assign({sev,code,id,msg},extra||{}));
+  const items=H.items,port=it=>String(it.port||'').trim().toUpperCase(),byPort=p=>items.find(it=>port(it)===p);
+  const pinOf=it=>{const ps=parsePins(it.pins);return ps.length===1?{pin:ps[0]}:{};};
+  if(fw.error)add('warn','FW_BUILD',null,`펌웨어를 빌드하지 못해 펌웨어 대조를 건너뜁니다: ${fw.error}`);
+  else{
+    fw.out.forEach(o=>{const it=byPort(o.pin);
+      if(!it){add('warn','FW_UNDOC',null,`펌웨어가 ${o.pin}을(를) ${o.pwm?'PWM':'GPIO'} 출력으로 쓰지만 HSIS에 해당 포트가 없습니다.`);return;}
+      const d=dirOf(it.dir);if(d==='I')add('err','FW_DIR',it.id,`펌웨어는 ${o.pin}을(를) 출력으로 설정하는데, HSIS 방향은 ${it.dir}입니다.`,pinOf(it));
+      else add('ok','FW_DIR',it.id,`펌웨어 ${o.pin} ${o.pwm?'PWM':'GPIO'} 출력 ↔ HSIS ${it.dir||'출력'} 일치`);
+      if(o.pwm){const m=String(it.timing||'').match(/(\d+(?:\.\d+)?)\s*(k|K)?\s*Hz/);
+        if(m){const hz=parseFloat(m[1])*(m[2]?1000:1);if(Math.abs(hz-o.freq)/hz>0.02)add('warn','FW_FREQ',it.id,`PWM 주파수가 다릅니다: HSIS ${hz} Hz, 펌웨어 ${o.freq} Hz.`,pinOf(it));else add('ok','FW_FREQ',it.id,`PWM ${o.freq} Hz ↔ HSIS 타이밍 일치`);}
+        else add('info','FW_FREQ',it.id,`HSIS 타이밍에 PWM 주파수가 없습니다 (펌웨어 ${o.freq} Hz).`);}});
+    fw.reads.forEach(r=>{const it=byPort(r.pin);
+      if(!it){add('warn','FW_UNDOC',null,`펌웨어가 ${r.pin}을(를) ${r.analog?'ADC로':'디지털 입력으로'} 읽지만 HSIS에 해당 포트가 없습니다.`);return;}
+      const d=dirOf(it.dir);if(d==='O')add('err','FW_DIR',it.id,`펌웨어는 ${r.pin}을(를) 읽는데, HSIS 방향은 ${it.dir}입니다.`,pinOf(it));
+      else if(r.analog&&category(it)!=='아날로그'&&!/ADC/i.test(it.func+' '+it.periph))add('warn','FW_ADC',it.id,`펌웨어는 ${r.pin}을(를) ADC로 읽는데, HSIS에 아날로그/ADC 기능이 없습니다.`,pinOf(it));
+      else add('ok','FW_IN',it.id,`펌웨어 ${r.pin} ${r.analog?'ADC':'디지털'} 입력 ↔ HSIS 일치`);});
+    items.forEach(it=>{const p=port(it);if(/^P[A-K]\d{1,2}$/.test(p)&&dirOf(it.dir)==='O'&&!fw.out.some(o=>o.pin===p))add('warn','FW_UNUSED',it.id,`HSIS는 ${p}를 출력으로 정의했지만 펌웨어 setup()에서 설정하지 않습니다.`,pinOf(it));});
+  }
+  // merge into an existing check() result
+  const out={results:prev.results.concat(res),status:Object.assign({},prev.status)};
+  res.forEach(r=>{if(!r.id||!(r.id in out.status))return;if(r.sev==='err')out.status[r.id]='err';else if(r.sev==='warn'&&out.status[r.id]!=='err')out.status[r.id]='warn';});
+  return out;
+}
+return{FIELDS,LABEL,CAT_ORDER,csvRows,mapColumns,fromRows,parseARXML,parsePins,category,pickMcu,check,checkFw,trace,netN};
 })();
 if(typeof module!=='undefined')module.exports=HSIS;

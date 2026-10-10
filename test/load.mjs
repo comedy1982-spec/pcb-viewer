@@ -9,5 +9,5 @@ export function load() {
   for (const f of ['src/core/pcb-core.js', 'src/sch/sch.js', 'src/sim/sim.js', 'src/app/sample.js', 'src/app/sample-mcu.js', 'src/fw/fw.js', 'src/hsis/hsis.js', 'src/hsis/sample-hsis.js'])
     vm.runInContext(readFileSync(join(root, f), 'utf8').replace(/if\(typeof module[^;]+;/, ''), ctx, { filename: f });
   const g = (n) => vm.runInContext(n, ctx);
-  return { PCB: g('PCB'), SIM: g('SIM'), SAMPLE: g('SAMPLE_SPEC'), SAMPLE_MCU: g('SAMPLE_MCU'), FW: g('FW'), HSIS: g('HSIS'), SAMPLE_HSIS: g('SAMPLE_HSIS'), SAMPLE_ARXML: g('SAMPLE_ARXML'), SCH: g('SCH') };
+  return { PCB: g('PCB'), SIM: g('SIM'), SAMPLE: g('SAMPLE_SPEC'), SAMPLE_MCU: g('SAMPLE_MCU'), SAMPLE_BLDC: g('SAMPLE_BLDC'), FW: g('FW'), HSIS: g('HSIS'), SAMPLE_HSIS: g('SAMPLE_HSIS'), SAMPLE_ARXML: g('SAMPLE_ARXML'), HSIS_SAMPLES: g('HSIS_SAMPLES'), SCH: g('SCH') };
 }

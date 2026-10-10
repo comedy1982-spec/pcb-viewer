@@ -307,7 +307,7 @@ const LAYOUT_KEY='pcbv.layout';
 const LAY=(function(){try{return JSON.parse(localStorage.getItem(LAYOUT_KEY)||'{}')||{};}catch(e){return{};}})();
 function saveLayout(){try{localStorage.setItem(LAYOUT_KEY,JSON.stringify(LAY));}catch(e){}}
 function applyLayout(){const m=$('.main'),h=$('#hsisWs');
-  [['lw',m,'--lw'],['rw',m,'--rw'],['rws',m,'--rws'],['hl',h,'--hl'],['hr',h,'--hr']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
+  [['lw',m,'--lw'],['rw',m,'--rw'],['rws',m,'--rws'],['hl',h,'--hsw-l'],['hr',h,'--hsw-r']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
   if(LAY.split)vp.style.setProperty('--split',LAY.split+'%');else vp.style.removeProperty('--split');}
 function makeHandle(el,opts){
   // opts: {get():px, set(px), min, max, reset()}
