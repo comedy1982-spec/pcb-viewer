@@ -13,7 +13,16 @@ function hsisLoadSample(){
 function hsisRun(){
   if(!HS.H||!BD)return;
   if(!HS.mcu||!BD.byRef[HS.mcu])HS.mcu=(HS.H.meta.mcuRef&&BD.byRef[HS.H.meta.mcuRef]?HS.H.meta.mcuRef:null)||HSIS.pickMcu(BD,HS.H.items);
-  HS.res=HSIS.check(BD,HS.H,HS.arxml,HS.mcu);HS.tr=HSIS.trace(HS.H);
+  HS.res=HSIS.check(BD,HS.H,HS.arxml,HS.mcu);HS.tr=HSIS.trace(HS.H);HS.ver=(HS.ver||0)+1;
+}
+// board net for an HSIS item (exact name, else normalised match)
+function hsisNetOf(it){if(!it||!it.net||!BD)return null;return BD.nets[it.net]?it.net:(Object.keys(BD.nets).find(n=>HSIS.netN(n)===HSIS.netN(it.net))||null);}
+// select an HSIS item (or an undocumented MCU pin) everywhere: HSIS views, and the net on board/schematic views
+function hsisSelect(id,pin){
+  HS.sel=id||null;HS.selPin=id?null:(pin!=null?String(pin):null);
+  let net=null;if(id)net=hsisNetOf(itemById(id));else if(HS.selPin){const m=BD.byRef[HS.mcu];const p=m&&m.pads.find(q=>String(q.n)===HS.selPin);net=p&&p.net||null;}
+  if(net){S.hlNet=net;S.selRef=null;}
+  renderHSIS();refresh(HS.ws==='board');
 }
 function hsisOnBoard(){if(!HS.H)hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();}
 function setWorkspace(w){
@@ -65,12 +74,13 @@ function renderHSIS(){
   const body=$('#hsBody');
   if(HS.tab==='table')body.innerHTML=tableHTML();else if(HS.tab==='pins')body.innerHTML=pinmapHTML();else if(HS.tab==='trace')body.innerHTML=traceHTML();else body.innerHTML=checksHTML();
   renderDetail();bindHSIS();
+  if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});
 }
 function tableHTML(){
   const rows=filtered();
   if(!rows.length)return'<p class="empty">조건에 맞는 신호가 없습니다.</p>';
   return`<div class="tscroll"><table class="stbl hs"><thead><tr><th>상태</th><th>ID</th><th>신호</th><th>분류</th><th class="r">MCU 핀</th><th>포트 · 기능</th><th>방향</th><th>회로도 넷</th><th>SW 모듈</th><th>요구사항</th><th>테스트</th></tr></thead><tbody>
-  ${rows.map(it=>`<tr class="click${HS.sel===it.id?' on':''}" data-item="${esc(it.id)}"><td>${pill(HS.res.status[it.id])}</td><td class="mono">${esc(it.id)}</td><td class="mono"><b>${esc(it.signal)}</b></td>
+  ${rows.map(it=>`<tr class="click${HS.sel===it.id?' on':!HS.sel&&S.hlNet&&hsisNetOf(it)===S.hlNet?' hlrow':''}" data-item="${esc(it.id)}"><td>${pill(HS.res.status[it.id])}</td><td class="mono">${esc(it.id)}</td><td class="mono"><b>${esc(it.signal)}</b></td>
     <td><span class="cat"><i style="background:${catColor(it._cat)}"></i>${esc(it._cat)}</span></td><td class="r mono">${esc(it.pins)}</td><td class="mono">${esc([it.port,it.func].filter(Boolean).join(' · '))}</td><td>${esc(it.dir)}</td>
     <td class="mono">${esc(it.net)}</td><td>${esc(it.swmod)}</td><td class="mono">${it.req?esc(it.req):'<span class="miss">없음</span>'}</td><td class="mono">${it.test?esc(it.test):'<span class="miss">없음</span>'}</td></tr>`).join('')}</tbody></table></div>`;
 }
@@ -120,13 +130,14 @@ function checksHTML(){
     <details class="okbox"><summary>통과한 검사 ${g('ok').length}건 · 참고 ${g('info').length}건</summary><ul class="chk">${g('ok').concat(g('info')).map(row).join('')}</ul></details>
     <p class="lead">검사 항목: MCU 핀↔회로도 넷, 핀 이름, HW 연결 부품·핀, 외부 풀업·풀다운 저항값, 핀 중복, HSIS에 없는 연결 핀, SW Port 설정의 핀·방향·초기값, 요구사항·테스트 연결.</p></div>`;
 }
-function renderDetail(){
-  const box=$('#hsDetail');const it=HS.sel&&itemById(HS.sel);const mcu=BD.byRef[HS.mcu];
+function renderDetail(box,inCell){box=box||$('#hsDetail');box.innerHTML=detailHTML(inCell);bindDetail(box,inCell);}
+function detailHTML(inCell){
+  const it=HS.sel&&itemById(HS.sel);const mcu=BD.byRef[HS.mcu];
   if(!it&&HS.selPin&&mcu){const p=mcu.pads.find(q=>String(q.n)===HS.selPin);
-    box.innerHTML=`<div class="card"><div class="card-h"><span class="ref">${esc(mcu.ref)}.${esc(HS.selPin)}</span>${pill(p&&p.net?'warn':'info')}</div><p class="desc">${p&&p.fn?esc(p.fn)+' · ':''}${p&&p.net?`회로도 넷 ${esc(p.net)}에 연결되어 있지만 HSIS 항목이 없습니다.`:'회로도에서 연결되지 않은 핀입니다.'}</p></div>${p&&p.net?miniBoard(p.net):''}`;bindDetail();return;}
-  if(!it){box.innerHTML=`<div class="empty"><p style="margin:0">신호 표나 핀 맵에서 항목을 고르면 HW에서 SW까지의 연결 경로와 검사 결과를 보여줍니다.</p><ul><li>엑셀(.xlsx)·CSV HSIS와 AUTOSAR Port ARXML을 불러올 수 있습니다.</li><li>머리글 이름으로 열을 자동으로 찾습니다 (ID, 신호명, MCU 핀, 회로도 넷 등).</li><li>회로도는 보드 뷰어에 열려 있는 보드를 씁니다.</li></ul></div>`;return;}
+    return`<div class="card"><div class="card-h"><span class="ref">${esc(mcu.ref)}.${esc(HS.selPin)}</span>${pill(p&&p.net?'warn':'info')}</div><p class="desc">${p&&p.fn?esc(p.fn)+' · ':''}${p&&p.net?`회로도 넷 ${esc(p.net)}에 연결되어 있지만 HSIS 항목이 없습니다.`:'회로도에서 연결되지 않은 핀입니다.'}</p></div>${p&&p.net?miniBoard(p.net,inCell):''}`;}
+  if(!it){return`<div class="empty"><p style="margin:0">신호 표나 핀 맵에서 항목을 고르면 HW에서 SW까지의 연결 경로와 검사 결과를 보여줍니다.</p><ul><li>엑셀(.xlsx)·CSV HSIS와 AUTOSAR Port ARXML을 불러올 수 있습니다.</li><li>머리글 이름으로 열을 자동으로 찾습니다 (ID, 신호명, MCU 핀, 회로도 넷 등).</li><li>회로도는 보드 뷰어에 열려 있는 보드를 씁니다.</li></ul></div>`;}
   const rs=resFor(it.id),st=HS.res.status[it.id];
-  const net=it.net&&(BD.nets[it.net]?it.net:Object.keys(BD.nets).find(n=>HSIS.netN(n)===HSIS.netN(it.net)));
+  const net=hsisNetOf(it);
   const hwRefs=[...String(it.hw||'').matchAll(/\b([A-Z]{1,3}\d+)(?:\.([A-Za-z0-9]+))?/g)].map(m=>m[1]);
   const parts=net?BD.comps.filter(c=>c.ref!==HS.mcu&&c.pads.some(p=>p.net===net)):[];
   const partsTxt=parts.map(c=>{const o=c.pads.filter(p=>p.net&&p.net!==net).map(p=>p.net);return`<span class="mono">${esc(c.ref)}</span> ${esc(c.val||'')}${o.length?` → ${esc([...new Set(o)].join(', '))}`:''}`;});
@@ -137,7 +148,7 @@ function renderDetail(){
   const ap=HS.arxml&&HS.arxml.find(a=>[it.signal,it.func,it.swcfg&&it.swcfg.replace(/^.*_/,'')].filter(Boolean).map(HSIS.netN).includes(HSIS.netN(a.name.replace(/^PortPin_?/i,''))));
   const step=(t,s,body)=>`<li class="step ${s}"><div class="st-h"><b>${t}</b>${pill(s)}</div><div class="st-b">${body}</div></li>`;
   const fields=Object.keys(HSIS.LABEL).filter(k=>it[k]&&!['id','signal'].includes(k)).map(k=>`<dt>${HSIS.LABEL[k]}</dt><dd>${esc(it[k])}</dd>`).join('');
-  box.innerHTML=`<div class="card"><div class="card-h"><span class="ref">${esc(it.signal)}</span>${pill(st)}</div>
+  return`<div class="card"><div class="card-h"><span class="ref">${esc(it.signal)}</span>${pill(st)}</div>
     <p class="desc" style="margin-bottom:8px"><span class="mono">${esc(it.id)}</span> · <span class="cat"><i style="background:${catColor(it._cat)}"></i>${esc(it._cat)}</span>${it.status?' · '+esc(it.status):''}${it.asil?' · ASIL '+esc(it.asil):''}</p>
     ${rs.filter(r=>r.sev==='err'||r.sev==='warn').length?`<ul class="chk sm">${rs.filter(r=>r.sev==='err'||r.sev==='warn').map(r=>`<li>${pill(r.sev)}<div><span>${esc(r.msg)}</span></div></li>`).join('')}</ul>`:''}
     <div class="sub">신호 경로</div>
@@ -147,19 +158,21 @@ function renderDetail(){
       ${step('SW',swSt,`${esc([it.swmod,it.swcfg].filter(Boolean).join(' · ')||'—')}${it.api?`<div class="mono">${esc(it.api)}()</div>`:''}${ap?`<div>ARXML: <span class="mono">${esc(ap.name)}</span> · ${esc(ap.id)}번 핀 · ${esc(ap.mode.replace('PORT_PIN_MODE_',''))}${ap.level?' · '+esc(ap.level.replace('PORT_PIN_LEVEL_','')):''}</div>`:HS.arxml?'<div class="lead">ARXML에 해당 PortPin 없음</div>':''}`)}
       ${step('추적',trSt,`요구사항 <span class="mono">${it.req?esc(it.req):'<span class="miss">없음</span>'}</span> → 테스트 <span class="mono">${it.test?esc(it.test):'<span class="miss">없음</span>'}</span>`)}
     </ol>
-    <div class="sub">HSIS 내용</div><dl class="kv">${fields}</dl></div>${net?miniBoard(net):''}`;
-  bindDetail();
+    <div class="sub">HSIS 내용</div><dl class="kv">${fields}</dl></div>${net?miniBoard(net,inCell):''}`;
 }
-function miniBoard(net){
+function miniBoard(net,inCell){
   const onT=BD.layers['T.cu'].some(p=>p.net===net),side=onT?'T':'B';
-  return`<div class="card mini"><div class="card-h"><b style="font-size:13px">보드에서 ${esc(net)} (${side==='T'?'TOP':'BOTTOM'})</b><span class="hgap"><button class="btn sm" data-gosch="${esc(net)}">회로도</button><button class="btn sm" data-goboard="${esc(net)}" data-side="${side}">보드</button></span></div><canvas id="hsMini" data-net="${esc(net)}" data-side="${side}" aria-label="보드에서 ${esc(net)} 위치"></canvas></div>`;
+  return`<div class="card mini"><div class="card-h"><b style="font-size:13px">보드에서 ${esc(net)} (${side==='T'?'TOP':'BOTTOM'})</b><span class="hgap">${inCell?`<button class="btn sm" data-hlnet="${esc(net)}" title="다른 칸의 보드·회로도에서 이 넷을 강조합니다">다른 칸에 강조</button>`:`<button class="btn sm" data-gosch="${esc(net)}">회로도</button><button class="btn sm" data-goboard="${esc(net)}" data-side="${side}">보드</button>`}</span></div><canvas class="hsmini" data-net="${esc(net)}" data-side="${side}" aria-label="보드에서 ${esc(net)} 위치"></canvas></div>`;
 }
-function bindDetail(){
-  const cv=$('#hsMini');if(cv){const w=cv.clientWidth||340,k=w/BD.W,h=Math.round(BD.H*k),d=Math.min(window.devicePixelRatio||1,2);cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';
+function drawMini(root){root=root||$('#hsDetail');const cv=root.querySelector('.hsmini');if(cv){const w=cv.clientWidth||340,k=w/BD.W,h=Math.round(BD.H*k),d=Math.min((cv.ownerDocument.defaultView||window).devicePixelRatio||1,2);cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';
     const ctx=cv.getContext('2d'),side=cv.dataset.side,mir=side==='B';ctx.setTransform(d*k*(mir?-1:1),0,0,-d*k,mir?d*w:0,d*h);
-    const save=[S.hlNet,S.selRef,S.panel];S.hlNet=cv.dataset.net;S.selRef=null;S.panel='info';try{drawSide(ctx,side,{texture:true});}finally{[S.hlNet,S.selRef,S.panel]=save;}}
-  document.querySelectorAll('[data-gosch]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.gosch;setWorkspace('board');S.hlNet=n;S.selRef=null;SV.fromMe=false;SV.lastKey='';setView('sch');refresh(true);}));
-  document.querySelectorAll('[data-goboard]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.goboard;setWorkspace('board');setView(b.dataset.side);S.hlNet=n;S.selRef=null;S.tab='sel';refresh(true);}));
+    const save=[S.hlNet,S.selRef,S.panel];S.hlNet=cv.dataset.net;S.selRef=null;S.panel='info';try{drawSide(ctx,side,{texture:true});}finally{[S.hlNet,S.selRef,S.panel]=save;}}}
+function bindDetail(root,inCell){
+  root=root||$('#hsDetail');drawMini(root);
+  root.querySelectorAll('[data-hlnet]').forEach(b=>b.addEventListener('click',()=>{S.hlNet=b.dataset.hlnet;S.selRef=null;refresh(HS.ws==='board');}));
+  if(inCell)return;
+  root.querySelectorAll('[data-gosch]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.gosch;setWorkspace('board');S.hlNet=n;S.selRef=null;SV.fromMe=false;SV.lastKey='';setView('sch');refresh(true);}));
+  root.querySelectorAll('[data-goboard]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.goboard;setWorkspace('board');setView(b.dataset.side);S.hlNet=n;S.selRef=null;S.tab='sel';refresh(true);}));
 }
 function bindHSIS(){
   const L=$('#hsLeft');
@@ -171,10 +184,12 @@ function bindHSIS(){
   L.querySelectorAll('[data-sev]').forEach(b=>b.addEventListener('click',()=>{HS.sev=b.dataset.sev;renderHSIS();}));
   L.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.cat;const all=[...L.querySelectorAll('[data-cat]')].map(x=>x.dataset.cat);
     if(!HS.cats.size){HS.cats=new Set([k]);}else if(HS.cats.has(k)){HS.cats.delete(k);}else HS.cats.add(k);if(HS.cats.size===all.length)HS.cats.clear();renderHSIS();}));
-  const B=$('#hsBody');
-  B.querySelectorAll('[data-item]').forEach(r=>r.addEventListener('click',()=>{HS.sel=r.dataset.item;HS.selPin=null;renderHSIS();}));
-  B.querySelectorAll('[data-pinsel]').forEach(r=>r.addEventListener('click',()=>{HS.selPin=r.dataset.pinsel;HS.sel=null;renderHSIS();}));
-  B.querySelectorAll('.pg').forEach(g=>{const go=()=>{const n=g.dataset.pin;const it=HS.H.items.find(i=>(i._pins||[]).includes(n));if(it){HS.sel=it.id;HS.selPin=null;}else{HS.sel=null;HS.selPin=n;}renderHSIS();};
+  bindHsBody($('#hsBody'));
+}
+function bindHsBody(B){
+  B.querySelectorAll('[data-item]').forEach(r=>r.addEventListener('click',()=>hsisSelect(r.dataset.item)));
+  B.querySelectorAll('[data-pinsel]').forEach(r=>r.addEventListener('click',()=>hsisSelect(null,r.dataset.pinsel)));
+  B.querySelectorAll('.pg').forEach(g=>{const go=()=>{const n=g.dataset.pin;const it=HS.H.items.find(i=>(i._pins||[]).includes(n));if(it)hsisSelect(it.id);else hsisSelect(null,n);};
     g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});});
   B.querySelector('#hs-copy')?.addEventListener('click',()=>{const csv=['심각도,코드,항목,메시지'].concat(HS.res.results.map(r=>[SEV[r.sev][0],r.code,r.id||(r.pin?HS.mcu+'.'+r.pin:''),'"'+r.msg.replace(/"/g,'""')+'"'].join(','))).join('\n');
     const done=()=>toast('검사 결과를 CSV로 복사했습니다. 엑셀에 붙여넣으세요.');

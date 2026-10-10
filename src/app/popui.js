@@ -1,13 +1,20 @@
 /* ---------- multi-view windows: a grid of cells (TOP / BOTTOM / 회로도 / 3D) in a browser window, or floating in-page when popups are blocked ---------- */
 const POPS=new Set();   // every live cell, across all windows
 const WINS=new Set();
-const KINDS=['T','B','sch','3d'];
-const KIND_LABEL={T:'TOP',B:'BOTTOM',sch:'회로도','3d':'3D'};
+const HKINDS={'h-table':['신호 표','table'],'h-pins':['핀 맵','pins'],'h-trace':['추적성','trace'],'h-checks':['검사 결과','checks'],'h-detail':['신호 상세','detail']};
+const KINDS=['T','B','3d','sch'].concat(Object.keys(HKINDS));
+const KIND_LABEL=Object.assign({T:'TOP',B:'BOTTOM',sch:'회로도','3d':'3D'},Object.fromEntries(Object.entries(HKINDS).map(([k,v])=>[k,'HSIS '+v[0]])));
+const isH=k=>k&&k[0]==='h'&&k[1]==='-';
+// grouped <option>s for every viewer kind
+function kindOptions(sel){const o=k=>`<option value="${k}"${k===sel?' selected':''}>${KIND_LABEL[k]}</option>`;
+  return`<optgroup label="보드">${['T','B','3d'].map(o).join('')}</optgroup><optgroup label="회로">${o('sch')}</optgroup><optgroup label="HSIS">${Object.keys(HKINDS).map(o).join('')}</optgroup>`;}
 const PRESETS=[[1,1],[1,2],[1,4],[2,2]];
 const MAXR=2,MAXC=4;
 function defaultKinds(r,c){const n=r*c;if(n===1)return['sch'];if(n===2)return['sch','T'];if(n===4)return['T','B','sch','3d'];const cyc=['T','sch','B','3d'];return Array.from({length:n},(_,i)=>cyc[i%4]);}
 function gridIcon(r,c){return`<span class="gi" style="grid-template-columns:repeat(${c},1fr);grid-template-rows:repeat(${r},1fr)" aria-hidden="true">${'<i></i>'.repeat(r*c)}</span>`;}
-const TOKENS=['--bg','--surface','--raised','--fg','--muted','--line','--accent','--accent-soft','--vp','--grid','--f-ui','--f-mono'];
+const TOKENS=['--bg','--surface','--raised','--fg','--muted','--line','--accent','--accent-soft','--on-accent','--vp','--grid','--f-ui','--f-mono','--critical','--warning','--good','--warn-bg','--warn-fg','--err','--s1','--s2','--s3','--s4','--s5','--s6','--s7','--s8'];
+// popup windows get the page's own styles (HSIS tables, pills, cards…) then the live theme tokens
+const pageCSS=()=>[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
 function tokenCSS(){const cs=getComputedStyle(document.documentElement);return':root{'+TOKENS.map(t=>`${t}:${cs.getPropertyValue(t).trim()}`).join(';')+'}';}
 const POP_BASE=`*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:13px}[hidden]{display:none!important}`;
 const WIN_CSS=`
@@ -30,7 +37,11 @@ const WIN_CSS=`
 .pw .chead .c3{display:inline-flex;gap:3px}
 .pw .chead select,.pw .chead button{padding:2px 7px;font-size:11.5px}
 .pw .cbody{position:relative;flex:1;min-height:0;background-color:var(--vp);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;touch-action:none;overflow:hidden}
-.pw .cbody canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+.pw .cbody>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+.pw .hview{position:absolute;inset:0;overflow:auto;padding:10px;background:var(--surface);font-size:13px;line-height:1.5;touch-action:auto}
+.pw .hview .tscroll{max-height:none}.pw .hview .pinwrap{min-height:0;height:100%}.pw .hview .pinmap{flex:1;min-height:220px;max-height:none}.pw .hview .mini canvas{position:static}
+.pw .hview .stbl.hs td,.pw .hview .stbl.hs th{padding:5px 7px}
+.pw .hview .hnone{color:var(--muted);display:grid;place-items:center;height:100%;text-align:center}
 .pw .cmsg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);padding:16px;text-align:center}
 .pw .ptip{position:absolute;pointer-events:none;background:var(--raised);border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.18);white-space:nowrap;transform:translate(12px,12px);z-index:3}
 .pw .ptip.flip{transform:translate(calc(-100% - 12px),12px)}
@@ -53,7 +64,7 @@ function openWindow(rows,cols,kinds){
   const def=defaultKinds(rows,cols);kinds=Array.from({length:rows*cols},(_,i)=>(kinds&&KINDS.includes(kinds[i]))?kinds[i]:def[i]);
   let w=null;
   try{w=window.open('','_blank',`popup=yes,width=${cols>2?1440:1240},height=${rows>1?860:720}`);
-    if(w){w.document.open();w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(BD.name)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"><style>${tokenCSS()}${POP_BASE}${WIN_CSS}</style></head><body>${winMarkup(false)}</body></html>`);w.document.close();}}
+    if(w){w.document.open();w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(BD.name)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"><style>${pageCSS()}${tokenCSS()}${POP_BASE}${WIN_CSS}</style></head><body>${winMarkup(false)}</body></html>`);w.document.close();}}
   catch(e){try{w&&w.close();}catch(_){}w=null;}
   if(w&&w.document&&w.document.querySelector('.pw'))return mountWindow(w,w.document,w.document.body,false,rows,cols,kinds);
   ensureWinCSS();
@@ -130,7 +141,7 @@ function makeDivider(W,axis,i,a,b){
 
 function makeCell(W,kind,idx){
   const doc=W.doc,win=W.win,el=doc.createElement('div');el.className='cell';
-  el.innerHTML=`<div class="chead"><span class="cn" aria-hidden="true">${idx+1}</span><select class="ckind" aria-label="${idx+1}번 칸 보기">${KINDS.map(k=>`<option value="${k}">${KIND_LABEL[k]}</option>`).join('')}</select><select class="cpage" aria-label="회로도 시트" hidden></select><span class="sp"></span><span class="c3" hidden><button data-c="iso" title="등각 보기">등각</button><button data-c="top" title="위에서 보기">위</button><button data-c="bot" title="아래에서 보기">아래</button></span><button class="cfit" title="화면 맞춤 (더블클릭)">맞춤</button></div><div class="cbody"><div class="ptip" hidden></div></div>`;
+  el.innerHTML=`<div class="chead"><span class="cn" aria-hidden="true">${idx+1}</span><select class="ckind" aria-label="${idx+1}번 칸 보기">${kindOptions(kind)}</select><select class="cpage" aria-label="회로도 시트" hidden></select><span class="sp"></span><span class="c3" hidden><button data-c="iso" title="등각 보기">등각</button><button data-c="top" title="위에서 보기">위</button><button data-c="bot" title="아래에서 보기">아래</button></span><button class="cfit" title="화면 맞춤 (더블클릭)">맞춤</button></div><div class="cbody"><div class="ptip" hidden></div></div>`;
   const q=s=>el.querySelector(s),body=q('.cbody');
   const C={kind:null,W,win,doc,root:el,cv:null,tip:q('.ptip'),ctx:null,dpr:1,w:0,h:0,s:3,ox:0,oy:0,page:0,fitted:-1,hover:null,lastKey:'',fromMe:false,userMoved:false,raf:0,g:null,ro:null};
   C.sync=()=>{q('.ckind').value=C.kind;const pg=q('.cpage');q('.c3').hidden=C.kind!=='3d';
@@ -140,7 +151,7 @@ function makeCell(W,kind,idx){
     else{C.cv.width=Math.round(r.width*d);C.cv.height=Math.round(r.height*d);}};
   C.fit=()=>{if(C.kind==='sch'){schFit(C);return;}C.s=Math.min((C.w-30)/BD.W,(C.h-30)/BD.H);C.ox=(C.w-BD.W*C.s)/2;C.oy=(C.h-BD.H*C.s)/2;C.fitted=0;};
   C.refit=()=>{if(!C.w)return;if(C.g){C.g.home(false);return;}C.fitted=-1;C.fit();};
-  C.paint=()=>{if(!BD||!C.w)return;
+  C.paint=()=>{if(C.hv){paintHsCell(C);return;}if(!BD||!C.w)return;
     if(C.g){C.g.dirty=true;return;}if(!C.ctx)return;
     if(C.kind==='sch'){paintSchV(C);return;}
     if(C.fitted<0)C.fit();const c=C.ctx,mir=C.kind==='B',s=C.s,d=C.dpr;
@@ -148,18 +159,20 @@ function makeCell(W,kind,idx){
     c.setTransform(d*s*(mir?-1:1),0,0,-d*s,d*(C.ox+(mir?BD.W*s:0)),d*(C.oy+BD.H*s));
     c.save();c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=18*d;c.shadowOffsetY=6*d;outlinePath(c);c.fillStyle='#000';c.fill('evenodd');c.restore();
     drawSide(c,C.kind,{hover:C.hover&&C.hover.type==='comp'?C.hover.c:null});};
-  C.draw=()=>{if(C.g){C.g.dirty=true;return;}if(C.raf)return;C.raf=win.requestAnimationFrame(()=>{C.raf=0;C.paint();});};
+  C.draw=()=>{if(C.g){C.g.dirty=true;return;}if(C.hv){if(C.raf)return;C.raf=win.requestAnimationFrame(()=>{C.raf=0;C.paint();});return;}if(C.raf)return;C.raf=win.requestAnimationFrame(()=>{C.raf=0;C.paint();});};
   C.s2w=(px,py)=>{if(C.kind==='sch')return schS2W(C,px,py);let x=(px-C.ox)/C.s;if(C.kind==='B')x=BD.W-x;return[x,BD.H-(py-C.oy)/C.s];};
   C.hit=(px,py)=>{const[x,y]=C.s2w(px,py);return C.kind==='sch'?schHit(C,x,y):hit(x,y,C.kind,3/C.s);};
   C.showTip=(html,x,y)=>{if(!html){C.tip.hidden=true;return;}C.tip.innerHTML=html;C.tip.hidden=false;C.tip.style.left=x+'px';C.tip.style.top=y+'px';C.tip.classList.toggle('flip',x>C.w*0.58);};
   C.setKind=k=>{
-    if(C.g){C.g.dispose();C.g=null;}if(C.cv){C.cv.remove();C.cv=null;}const m=body.querySelector('.cmsg');if(m)m.remove();
-    C.kind=k;C.fitted=-1;C.hover=null;C.lastKey='';C.fromMe=false;C.userMoved=false;C.tip.hidden=true;C.ctx=null;
+    if(C.g){C.g.dispose();C.g=null;}if(C.cv){C.cv.remove();C.cv=null;}if(C.hv){C.hv.remove();C.hv=null;}const m=body.querySelector('.cmsg');if(m)m.remove();
+    C.kind=k;C.fitted=-1;C.hover=null;C.lastKey='';C.fromMe=false;C.userMoved=false;C.tip.hidden=true;C.ctx=null;C.hkey='';
+    q('.cfit').hidden=isH(k);
+    if(isH(k)){C.w=0;const hv=doc.createElement('div');hv.className='hview';hv.tabIndex=0;hv.setAttribute('aria-label',KIND_LABEL[k]);body.insertBefore(hv,C.tip);C.hv=hv;C.sync();C.paint();W.alive&&W.cells.includes(C)&&W.sync();return;}
     const cv=doc.createElement('canvas');cv.setAttribute('aria-label',KIND_LABEL[k]+' 보기');body.insertBefore(cv,C.tip);C.cv=cv;
     if(k==='3d'){if(!mount3DCell(C)){cv.remove();C.cv=null;body.insertAdjacentHTML('afterbegin','<div class="cmsg">이 브라우저에서 3D(WebGL)를 표시할 수 없습니다.<br>TOP·BOTTOM 보기를 사용하세요.</div>');}}
     else{C.ctx=cv.getContext('2d');bind2DCell(C);}
     C.sync();C.resize();if(C.kind==='sch')schFocus(C);C.paint();W.sync&&W.alive&&W.cells.includes(C)&&W.sync();};
-  C.observe=()=>{C.ro=new win.ResizeObserver(()=>{C.resize();if(!C.userMoved)C.refit();C.paint();});C.ro.observe(body);};
+  C.observe=()=>{C.ro=new win.ResizeObserver(()=>{if(C.hv){if(C.kind==='h-detail')drawMini(C.hv);return;}C.resize();if(!C.userMoved)C.refit();C.paint();});C.ro.observe(body);};
   C.destroy=()=>{if(C.g){C.g.dispose();C.g=null;}if(C.ro)try{C.ro.disconnect();}catch(e){}POPS.delete(C);el.remove();};
   q('.ckind').addEventListener('change',e=>C.setKind(e.target.value));
   q('.cpage').addEventListener('change',e=>{C.page=+e.target.value;C.fitted=-1;C.userMoved=false;C.paint();});
@@ -168,6 +181,18 @@ function makeCell(W,kind,idx){
     if(b.dataset.c==='iso')g.home(true);else if(b.dataset.c==='top')g.to(-Math.PI/2,0.02,r,true);else g.to(Math.PI/2,Math.PI-0.02,r,true);});
   POPS.add(C);C.setKind(kind);
   return C;
+}
+// HSIS cells: HTML views that share HS state; re-rendered only when what they show changes, keeping scroll position
+function paintHsCell(C){
+  if(!BD)return;if(!HS.H){hsisLoadSample();}if(!HS.res)hsisRun();
+  const sub=HKINDS[C.kind][1],key=[sub,HS.ver,HS.sel,HS.selPin,S.hlNet,HS.mcu,BD.name,HS.q,HS.sev,[...HS.cats].join(',')].join('|');if(key===C.hkey)return;C.hkey=key;
+  const hv=C.hv,sc=hv.querySelector('.tscroll'),st=[hv.scrollTop,hv.scrollLeft,sc?sc.scrollTop:0,sc?sc.scrollLeft:0];
+  if(sub==='detail'){renderDetail(hv,true);return;}
+  hv.innerHTML=sub==='table'?tableHTML():sub==='pins'?pinmapHTML():sub==='trace'?traceHTML():checksHTML();
+  bindHsBody(hv);
+  hv.scrollTop=st[0];hv.scrollLeft=st[1];const sc2=hv.querySelector('.tscroll');if(sc2){sc2.scrollTop=st[2];sc2.scrollLeft=st[3];}
+  // bring the selected row into view if it is off screen
+  const on=hv.querySelector('tr.on');if(on&&sub==='table'){const r=on.getBoundingClientRect(),b=(sc2||hv).getBoundingClientRect();if(r.top<b.top+30||r.bottom>b.bottom)on.scrollIntoView({block:'nearest'});}
 }
 // 2D board (TOP/BOTTOM) and schematic cells: pan, zoom, hover, click
 function bind2DCell(C){
@@ -272,7 +297,7 @@ function makeHandle(el,opts){
   makeHandle($('#hLeft'),{label:'왼쪽 패널 너비',get:()=>w($('.layers')),set:v=>{LAY.lw=Math.round(v);applyLayout();},min:170,max:()=>Math.min(420,w(m)*0.35),reset:()=>{delete LAY.lw;applyLayout();}});
   makeHandle($('#hRight'),{label:'오른쪽 패널 너비',dir:-1,get:()=>w($('.insp')),set:v=>{LAY[sim()?'rws':'rw']=Math.round(v);applyLayout();},min:260,max:()=>Math.min(720,w(m)*0.5),reset:()=>{delete LAY[sim()?'rws':'rw'];applyLayout();}});
   makeHandle($('#hHsL'),{label:'HSIS 왼쪽 패널 너비',get:()=>w($('#hsLeft')),set:v=>{LAY.hl=Math.round(v);applyLayout();},min:190,max:()=>Math.min(440,w(h)*0.35),reset:()=>{delete LAY.hl;applyLayout();}});
-  makeHandle($('#hHsR'),{label:'HSIS 상세 패널 너비',dir:-1,get:()=>w($('#hsDetail')),set:v=>{LAY.hr=Math.round(v);applyLayout();bindDetail();},min:280,max:()=>Math.min(760,w(h)*0.55),reset:()=>{delete LAY.hr;applyLayout();bindDetail();}});
+  makeHandle($('#hHsR'),{label:'HSIS 상세 패널 너비',dir:-1,get:()=>w($('#hsDetail')),set:v=>{LAY.hr=Math.round(v);applyLayout();drawMini();},min:280,max:()=>Math.min(760,w(h)*0.55),reset:()=>{delete LAY.hr;applyLayout();drawMini();}});
   const sp=$('#splitter');const narrow=()=>matchMedia('(max-width:760px)').matches;
   makeHandle(sp,{label:'회로도와 보드 나누기',vertical:narrow,get:()=>{const r=vp.getBoundingClientRect();const f=LAY.split||50;return(narrow()?r.height:r.width)*f/100;},
     set:v=>{const r=vp.getBoundingClientRect();LAY.split=+(v/(narrow()?r.height:r.width)*100).toFixed(1);applyLayout();relayoutViews();},min:120,max:()=>{const r=vp.getBoundingClientRect();return(narrow()?r.height:r.width)-120;},
@@ -301,7 +326,7 @@ function relayoutViews(){if(relayRaf)return;relayRaf=requestAnimationFrame(()=>{
   const render=()=>{mark(st.r,st.c,false);
     pk.querySelectorAll('[data-pre]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pre===`${st.r}x${st.c}`?'true':'false'));
     const ks=kindsFor(st.r,st.c);cells.style.gridTemplateColumns=`repeat(${st.c},minmax(0,1fr))`;
-    cells.innerHTML=ks.map((k,i)=>`<label class="wp-cell"><span class="wp-n">${i+1}</span><select data-i="${i}" aria-label="${i+1}번 칸 보기">${KINDS.map(x=>`<option value="${x}"${x===k?' selected':''}>${KIND_LABEL[x]}</option>`).join('')}</select></label>`).join('');};
+    cells.innerHTML=ks.map((k,i)=>`<label class="wp-cell"><span class="wp-n">${i+1}</span><select data-i="${i}" aria-label="${i+1}번 칸 보기">${kindOptions(k)}</select></label>`).join('');};
   const setSize=(r,c)=>{st.r=r;st.c=c;render();};
   const save=()=>{LAY.win={r:st.r,c:st.c,k:st.k};saveLayout();};
   const open=()=>{render();pk.hidden=false;btn.setAttribute('aria-expanded','true');const f=pk.querySelector('[data-pre][aria-pressed="true"]')||gridBtns[0];f.focus();};
