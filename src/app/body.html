@@ -1,0 +1,149 @@
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-ico" aria-hidden="true"></div>
+      <div style="min-width:0">
+        <div class="b-name"><span id="bName">SENSE-32 DEV v1.2</span><span class="tag" id="bTag">예제 보드</span></div>
+        <div class="b-sub" id="bSub"></div>
+      </div>
+    </div>
+    <div class="top-r">
+      <button class="btn primary" id="openImp"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.6 8 2.4l3.2 3.2M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>파일 불러오기</button>
+      <div class="seg" role="tablist" aria-label="보기 전환">
+        <button role="tab" data-view="3d" aria-selected="true" id="v-3d">3D</button>
+        <button role="tab" data-view="T" aria-selected="false" id="v-top">TOP</button>
+        <button role="tab" data-view="B" aria-selected="false" id="v-bot">BOTTOM</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="main">
+    <aside class="panel layers" aria-label="레이어">
+      <div class="grp">
+        <p class="h">레이어</p>
+        <label class="ly"><input type="checkbox" id="ly-cuT" checked><i class="sw" style="background:#c9773e"></i><span class="lbl">상단 동박</span><span class="code">F.Cu</span></label>
+        <label class="ly"><input type="checkbox" id="ly-cuB" checked><i class="sw" style="background:#3f78c4"></i><span class="lbl">하단 동박</span><span class="code">B.Cu</span></label>
+        <label class="ly"><input type="checkbox" id="ly-silk" checked><i class="sw" style="background:#f4f4ec"></i><span class="lbl">실크스크린</span><span class="code">SilkS</span></label>
+        <label class="ly"><input type="checkbox" id="ly-mask" checked><i class="sw" id="sw-mask" style="background:#1e6a3e"></i><span class="lbl">솔더마스크</span><span class="code">Mask</span></label>
+        <label class="ly"><input type="checkbox" id="ly-drill" checked><i class="sw" style="background:#0c0e0f"></i><span class="lbl">드릴·비아</span><span class="code">Drill</span></label>
+        <label class="ly"><input type="checkbox" id="ly-body"><i class="sw" style="background:#555b61"></i><span class="lbl" id="lbl-body">부품 외형</span><span class="code">Body</span></label>
+        <label class="ly"><input type="checkbox" id="ly-ghost"><i class="sw" style="background:rgba(255,255,255,.45)"></i><span class="lbl">반대면 비침</span><span class="code">Ghost</span></label>
+      </div>
+      <div class="grp">
+        <p class="h">솔더마스크 색</p>
+        <div class="masks" id="masks"></div>
+      </div>
+      <div class="grp">
+        <p class="h">3D 분해</p>
+        <input type="range" class="range" id="explode" min="0" max="100" value="0" aria-label="3D 분해 정도">
+        <div class="note" style="font-size:12px">부품을 보드에서 띄워 패드와 배선을 봅니다.</div>
+      </div>
+      <div class="grp">
+        <p class="h">보드 요약</p>
+        <dl class="stats" id="stats"></dl>
+      </div>
+      <div class="grp">
+        <p class="h">데이터 출처</p>
+        <div id="srcBox"></div>
+      </div>
+    </aside>
+
+    <section class="viewport" id="vp" aria-label="PCB 뷰포트">
+      <canvas id="cv2" hidden></canvas>
+      <canvas id="cv3"></canvas>
+      <div class="ov ov-tl ov-col"><span class="pill side-badge" id="sideBadge">3D</span><div class="pill legend" id="legend" hidden></div></div>
+      <div class="ov ov-tr" id="ctl"></div>
+      <div class="ov ov-bl"><span class="pill mono" id="coord">X — · Y — mm</span><span class="pill scale" id="scale"><i id="scaleBar"></i><span class="mono" id="scaleTxt"></span></span></div>
+      <div class="ov ov-br"><span class="pill hint" id="hint"></span></div>
+      <div class="tip" id="tip" hidden></div>
+    </section>
+
+    <aside class="panel insp" aria-label="정보">
+      <div class="seg pmode" role="tablist" aria-label="패널 전환"><button role="tab" data-panel="info" aria-selected="true" id="p-info">정보</button><button role="tab" data-panel="sim" aria-selected="false" id="p-sim">시뮬레이션</button></div>
+      <div id="infoPane">
+      <input class="search" id="q" type="search" placeholder="부품·값·넷 검색 (예: U1, 100nF, SDA)" autocomplete="off">
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="sel" aria-selected="true" id="t-sel">선택</button>
+        <button role="tab" data-tab="bom" aria-selected="false" id="t-bom">부품<span class="n" id="n-bom"></span></button>
+        <button role="tab" data-tab="net" aria-selected="false" id="t-net">넷<span class="n" id="n-net"></span></button>
+        <button role="tab" data-tab="data" aria-selected="false" id="t-data">데이터</button>
+      </div>
+      <div id="pane"></div>
+      </div>
+      <div id="simPane" hidden>
+        <div class="tabs stabs" role="tablist">
+          <button role="tab" data-stab="ir" aria-selected="true" id="st-ir">전원 경로</button>
+          <button role="tab" data-stab="si" aria-selected="false" id="st-si">신호</button>
+          <button role="tab" data-stab="th" aria-selected="false" id="st-th">열</button>
+          <button role="tab" data-stab="sp" aria-selected="false" id="st-sp">회로</button>
+        </div>
+        <details class="env" id="envBox"><summary>기판 조건 <span id="envSum"></span></summary>
+          <div class="envgrid">
+            <label for="env-cu">동박 두께</label><select id="env-cu"><option value="18">0.5 oz · 18 µm</option><option value="35" selected>1 oz · 35 µm</option><option value="70">2 oz · 70 µm</option></select>
+            <label for="env-h">기준면까지 거리</label><span class="unit"><input id="env-h" type="number" step="0.01" min="0.05"> mm</span>
+            <label for="env-er">유전율 εr</label><input id="env-er" type="number" step="0.1" min="1" value="4.3">
+            <label for="env-ta">주변 온도</label><span class="unit"><input id="env-ta" type="number" step="1" value="25"> °C</span>
+            <label for="env-hc">공기 냉각</label><select id="env-hc"><option value="10" selected>자연 대류 (10 W/m²K)</option><option value="25">약한 바람 (25 W/m²K)</option><option value="50">팬 냉각 (50 W/m²K)</option></select>
+          </div>
+        </details>
+        <div id="simBody"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal" id="imp" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="impT">
+    <div class="sheet-h"><h2 id="impT">PCB 파일 불러오기</h2><button class="x" data-close aria-label="닫기">✕</button></div>
+    <div class="sheet-b">
+      <div class="drop" id="drop" role="button" tabindex="0"><input type="file" id="file" multiple hidden>
+        <b>파일을 여기에 끌어다 놓거나 클릭해서 선택하세요</b>
+        <span>.kicad_pcb · Gerber(.zip 가능) · 드릴 · Pick-and-Place · BOM · IPC-D-356 · 뷰어 JSON</span>
+      </div>
+      <div class="fmt">
+        <div><b>KiCad PCB 하나</b><span>.kicad_pcb 파일만 있으면 동박, 실크, 부품, 넷이 모두 표시됩니다.</span></div>
+        <div><b>Gerber 세트</b><span>상단·하단 동박, 실크, 외곽선, 드릴. zip으로 묶어도 됩니다.</span></div>
+        <div><b>+ Pick-and-Place / BOM</b><span>부품 위치와 3D 부품, 값과 부품 번호를 더합니다.</span></div>
+      </div>
+      <div id="flist"></div>
+      <ul class="plan" id="impPlan"></ul>
+      <p class="note" style="font-size:12px;margin:12px 0 0">파일은 이 브라우저 안에서만 읽고, 어디에도 전송하거나 저장하지 않습니다. 역할이 잘못 잡힌 파일은 목록의 역할 칸에서 바꿀 수 있습니다.</p>
+    </div>
+    <div class="sheet-f">
+      <span class="msg" id="impMsg"></span>
+      <button class="btn ghost sm" id="impSample">예제 보드 보기</button>
+      <button class="btn ghost sm" id="impClear" hidden>목록 비우기</button>
+      <button class="btn ghost" data-close>취소</button>
+      <button class="btn primary" id="impGo" disabled>보드 만들기</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<template id="dataTpl">
+<p class="note"><b>파일 불러오기</b>로 실제 보드를 열 수 있습니다. 지원하는 입력은 다음과 같습니다.</p>
+<ul class="note" style="padding-left:18px;margin:6px 0 12px;font-size:13px">
+<li><b>KiCad</b> .kicad_pcb (버전 5~10): 동박·존·실크·외곽선·부품·핀 기능·넷</li>
+<li><b>Gerber</b> RS-274X와 X2 속성(넷·부품), <b>Excellon</b> 드릴</li>
+<li><b>Pick-and-Place</b> CSV/.pos, <b>BOM</b> CSV, <b>IPC-D-356</b> 넷리스트</li>
+<li><b>뷰어 JSON</b> (아래 구조)</li>
+</ul>
+<pre class="code">{
+  "board": { "width": 60, "height": 40,
+             "thickness": 1.6 },
+  "components": [{
+    "ref": "R2", "value": "330Ω",
+    "footprint": "0603", "side": "top",
+    "x": 40, "y": 10, "rotation": 0,
+    "pins": { "1": "LED", "2": "LED_A" }
+  }],
+  "tracks": [{
+    "layer": "top", "net": "LED_A",
+    "width": 0.25,
+    "points": ["R2.2", "D1.1"]
+  }],
+  "vias": [{ "x": 46, "y": 10,
+             "net": "GND" }]
+}</pre>
+<p class="note">좌표는 mm, 원점은 보드 왼쪽 아래입니다. 내장 풋프린트(0402·0603·0805·1206·SOT-223·SOIC-8·QFN-32 등)가 아니면 components[].pads에 패드 좌표를 함께 적어 주세요. 아직 ODB++, IPC-2581, Altium·Eagle 원본 파일은 읽지 못합니다.</p>
+</template>
