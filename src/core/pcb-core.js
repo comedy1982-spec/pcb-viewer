@@ -488,6 +488,7 @@ function fromSpec(spec){
     const lib=FP[cs.footprint];
     const c={ref:cs.ref,val:cs.value||'',fp:cs.footprint||'',side,x,y,rot,pads:[],mpn:cs.mpn||'',desc:cs.description||'',pn:cs.pinNames||null,lab:cs.label||null};
     if(cs.model&&typeof cs.model==='object')c.model=cs.model;
+    if(typeof cs.firmware==='string')c.fw=cs.firmware;
     const xf=(lx,ly)=>{const xx=side==='B'?-lx:lx,a=rot*D2R;return[x+xx*Math.cos(a)-ly*Math.sin(a),y+xx*Math.sin(a)+ly*Math.cos(a)];};
     const padsL=cs.pads||(lib?lib.pads:[]);
     padsL.forEach(p=>{const[wx,wy]=xf(+p.x,+p.y);const n=''+(p.n!=null?p.n:p.number);const round=p.round||p.shape==='circle';

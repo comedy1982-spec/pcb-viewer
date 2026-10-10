@@ -243,6 +243,40 @@ body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
 @media (max-width:1180px){.hsis-ws{grid-template-columns:var(--hl,220px) minmax(0,1fr)}#hHsR{display:none}}
 @media (max-width:980px){#hLeft,#hRight{display:none}.main,.main.simwide{grid-template-columns:1fr}}
 @media (max-width:820px){#hHsL{display:none}.hsis-ws{grid-template-columns:1fr}}
+/* MCU firmware editor */
+.fwsheet{width:min(1180px,100%);height:min(820px,calc(100% - 8px))}
+.fwbody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:14px;padding:6px 18px 12px}
+.fwcode{display:flex;flex-direction:column;min-height:0;gap:6px}
+.fwbar{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;color:var(--muted)}
+.fwbar .mono{font-family:var(--f-mono);color:var(--fg)}
+.fwed{flex:1;min-height:240px;display:flex;border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}
+.fwgut{flex:none;width:40px;padding:10px 6px 10px 0;text-align:right;font-size:12px;line-height:19px;color:var(--muted);background:color-mix(in srgb,var(--line) 35%,transparent);overflow:hidden;user-select:none;white-space:pre}
+.fwgut span{display:block}.fwgut span.err{color:#fff;background:var(--critical);border-radius:0 4px 4px 0}
+#fwCode{flex:1;min-width:0;border:0;outline:none;resize:none;padding:10px 12px;font-size:12.5px;line-height:19px;background:transparent;color:var(--fg);tab-size:2;white-space:pre;overflow:auto}
+.mono{font-family:var(--f-mono)}
+.fwapi{font-size:12px;color:var(--muted)}.fwapi summary{cursor:pointer}.fwapi ul{margin:6px 0 0;padding-left:18px;line-height:1.7;font-size:11.5px}
+.fwside{display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto}
+.fwside h3{margin:0 0 8px;font-size:13px;font-weight:600}
+.fwp{display:grid;grid-template-columns:minmax(0,1fr) 120px 72px;gap:0 10px;align-items:center;padding:3px 0;border-bottom:1px solid var(--line)}
+.fwp .nm{min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.fwp .n{font-family:var(--f-mono);font-size:11.5px;font-weight:600}.fwp .c{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fwp input[type=number]{width:72px;font:inherit;font-family:var(--f-mono);font-size:12.5px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--fg);text-align:right}
+.fwp input[type=range]{width:100%;accent-color:var(--accent)}
+.fwlog{font-family:var(--f-mono);font-size:11.5px;background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:6px 8px;max-height:150px;overflow:auto;line-height:1.6}
+.fwlog .t{color:var(--muted);margin-right:8px}
+.fwerr{font-size:12.5px;color:var(--err);background:color-mix(in srgb,var(--critical) 10%,transparent);border-radius:8px;padding:8px 10px;margin:0 0 8px}
+.fwerr button{margin-left:6px}
+.fwchart{margin-top:8px}.fwchart .h{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);text-transform:none;letter-spacing:0;margin:0}.fwchart .h b{color:var(--fg);font-weight:600}
+.fwchart svg{display:block;width:100%;height:64px}
+.fwok{font-size:12.5px;color:color-mix(in srgb,var(--good) 70%,var(--fg));margin:0 0 8px}
+.fwcard{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.fwq{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;margin:6px 0 10px}
+.fwq label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);min-width:0}
+.fwq label span{font-family:var(--f-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fwq input{font:inherit;font-family:var(--f-mono);font-size:12.5px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--fg);width:100%}
+.fwsum{font-size:12px;color:var(--muted);margin:8px 0 0}
+.srccard.fwsrc{border-style:dashed}
+@media (max-width:860px){.fwbody{grid-template-columns:1fr;overflow:auto}.fwsheet{height:calc(100% - 8px)}.fwed{min-height:320px}}
 /* circuit playback bar (3D) */
 .playbar{display:grid;grid-template-columns:auto minmax(0,auto);justify-content:start;gap:6px;max-width:calc(100% - 300px);align-items:center}
 .playbar .pb-info{grid-column:1/-1;justify-self:start}

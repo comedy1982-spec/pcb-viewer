@@ -21,7 +21,7 @@ function envSync(){
   envSync();if(SR.ir)SR.stale.ir=true;if(SR.th)SR.stale.th=true;if(SR.si)runSI();renderSim();refresh(false);}));
 
 function simReset(){
-  ENV.h=Math.max(0.1,BD.t-2*ENV.cu*1e-3);SR.ir=SR.si=SR.th=SR.sp=null;SR.stale={};SR.cfg={ir:null,th:null,sp:null,si:{z:50,zd:90}};
+  ENV.h=Math.max(0.1,BD.t-2*ENV.cu*1e-3);SR.ir=SR.si=SR.th=SR.sp=null;SR.fw=null;SR.stale={};SR.cfg={ir:null,th:null,sp:null,si:{z:50,zd:90}};
   if(S.panel==='sim')renderSim();else simCellsDirty();updateLegend();
 }
 function setPanel(p){
@@ -184,7 +184,7 @@ function thConfig(){
   if(SR.cfg.th)return SR.cfg.th;const P={};
   BD.comps.forEach(c=>{if(c.kind!=='none')P[c.ref]=0;});
   if(BD.source==='예제'&&!BD.demo)Object.assign(P,{U2:0.45,U1:0.12,U3:0.03,D1:0.008,R2:0.006});
-  if(BD.demo==='motor')Object.assign(P,{M1:0.9,Q1:0.02,D1:0.05,D2:0.006,D3:0.01});
+  if(BD.demo==='mcu')Object.assign(P,{M1:0.9,U2:0.03,U1:0.05,Q1:0.02,D1:0.05,R5:0.01});
   SR.cfg.th={P,res:160};return SR.cfg.th;
 }
 function coverageGrid(res){
@@ -250,21 +250,37 @@ const TYPE_LABEL={R:'저항',C:'커패시터',L:'인덕터',D:'다이오드',SW:
 function spConfig(){
   if(SR.cfg.sp)return SR.cfg.sp;const ck=SIM.extractCircuit(BD);
   let tstop=12,steps=1200;
-  if(BD.demo==='motor'){
-    // signal injection on the PWM header: 500 Hz, 60 % duty, starting at 50 ms; long enough to watch the motor spin up
+  if(BD.demo==='mcu'){
+    // MCU board: 5 V applied at t = 0; the firmware drives PA8 (PWM) and PB3 (LED) during the run
     ck.srcs.forEach(s=>{if(s.n[0]==='VIN'){s.wave='dc';s.label='J1 5 V 입력 전원';}});
-    if(BD.nets.PWM)ck.srcs.push({id:'V2',type:'V',n:['PWM',ck.gnd],v:3.3,wave:'pulse',t0:50e-3,per:2e-3,duty:0.6,tr:1e-3,label:'J2 PWM 입력 · 신호 주입'});
+    ck.els.forEach(e=>{if(e.type==='LOAD'&&e.ref==='U1')e.I=0.015;});
     tstop=800;steps=10000;
   }
   else if(BD.source==='예제'){ck.els.forEach(e=>{if(e.type==='LOAD')e.I=e.ref==='U1'?0.02:0.008;});if(BD.nets.LED)ck.srcs.push({id:'V2',type:'V',n:['LED',ck.gnd],v:3.3,wave:'pulse',t0:3e-3,per:4e-3,duty:0.5,tr:1e-3,label:'U1 GPIO (PB3) 출력 · 예시'});}
-  const probes=[...new Set(ck.srcs.map(s=>s.n[0]).concat(ck.els.filter(e=>e.type==='REG').map(e=>e.n[1])).concat(BD.nets.LED_A?['LED_A']:[]).concat(ck.els.filter(e=>e.type==='MOTOR').map(e=>e.n[1])))].slice(0,4);
+  const probes=[...new Set(ck.srcs.map(s=>s.n[0]).concat(ck.els.filter(e=>e.type==='REG').map(e=>e.n[1])).concat(BD.nets.LED_A?['LED_A']:[]).concat(ck.els.filter(e=>e.type==='MOTOR').map(e=>e.n[1])).concat(BD.nets.ISNS_ADC?['ISNS_ADC']:[]))].slice(0,4);
   SR.cfg.sp={ck,tstop,steps,probes,tran:null,hidden:{}};return SR.cfg.sp;
 }
 const valStr=e=>e.type==='MOTOR'?(e.tl*1000).toFixed(2):e.type==='NMOS'?String(e.vth):e.type==='R'?SIM.fmtSI(e.val,'Ω').replace(' ',''):e.type==='C'?SIM.fmtSI(e.val,'F').replace(' ',''):e.type==='L'?SIM.fmtSI(e.val,'H').replace(' ',''):e.type==='LOAD'?(e.I*1000).toFixed(1):e.type==='REG'?e.vset:'';
+// transient run; when the board has an MCU with firmware, its loop() is co-simulated and drives the MCU pins
+function spRunTransient(){
+  const cfg=spConfig(),ck=cfg.ck,mcu=fwMcu();let ctl=null,c=ck,autoSteps=0;
+  if(mcu){ctl=FW.controller(fwCode(mcu),{pins:fwPins(mcu),gnd:ck.gnd,vdd:3.3,ref:mcu.ref});
+    if(ctl.error){SR.fw={error:ctl.error,line:ctl.line,logs:ctl.logs};return{error:ctl.error};}
+    const fmax=Math.max(0,...ctl.srcs.filter(s=>s.pwm).map(s=>s.freq));const need=Math.ceil(cfg.tstop*1e-3*fmax*16);
+    if(need>cfg.steps){cfg.steps=Math.min(40000,need);autoSteps=cfg.steps;}
+    c=Object.assign({},ck,{srcs:ck.srcs.concat(ctl.srcs)});}
+  cfg.probes=[...new Set(cfg.probes.concat(c.srcs.map(s=>s.n[0])))].slice(0,8);
+  const r=SIM.transient(c,cfg.tstop*1e-3,cfg.steps,cfg.probes,ctl);cfg.tran=r;
+  if(mcu)SR.fw={error:ctl.error||(r.error?'회로 해석: '+r.error:null),line:ctl.errLine,logs:ctl.logs,trace:ctl.trace,srcs:ctl.srcs};
+  if(!r.error){SR.sp=Object.assign({},r.final,{label:`과도 해석 끝 (t = ${cfg.tstop} ms)`+(mcu?` · ${mcu.ref} 펌웨어 포함`:''),fromTran:true});playReset();}
+  return{error:r.error||(ctl&&ctl.error),autoSteps};
+}
 function spHTML(){
   const cfg=spConfig(),ck=cfg.ck,f=SIM.fmtSI;
   const netOpts=sel=>BD.netOrder.map(n=>`<option${n===sel?' selected':''}>${esc(n)}</option>`).join('');
-  const srcs=ck.srcs.map((s,i)=>`<div class="srccard"><div class="hd"><span>${esc(s.id)} · ${esc(s.label||'전압 소스')}</span><button class="x" data-srcdel="${i}" aria-label="${esc(s.id)} 삭제">✕</button></div>
+  const mcu=fwMcu();const fwSrc=mcu?`<div class="srccard fwsrc"><div class="hd"><span>${esc(mcu.ref)} · ${esc(mcu.val)} 펌웨어</span><button class="btn sm" id="sp-fw">펌웨어 편집</button></div>
+    <p class="lead" style="margin:0">출력 핀(${Object.entries(fwPins(mcu)).filter(([p,n])=>n&&/PWM|LED|_ST|GATE/.test(n)).map(([p,n])=>esc(p)+'→'+esc(n)).join(', ')||'펌웨어가 정함'})은 실행할 때 펌웨어의 <code>loop(ms)</code>가 1 ms마다 정합니다. ADC 핀은 회로의 전압을 읽습니다.</p></div>`:'';
+  const srcs=fwSrc+ck.srcs.map((s,i)=>`<div class="srccard"><div class="hd"><span>${esc(s.id)} · ${esc(s.label||'전압 소스')}</span><button class="x" data-srcdel="${i}" aria-label="${esc(s.id)} 삭제">✕</button></div>
     <div class="row3"><label class="fld"><span>+ 넷</span><select data-src="${i}" data-k="n0" id="src${i}-n">${netOpts(s.n[0])}</select></label><label class="fld"><span>파형</span><select data-src="${i}" data-k="wave" id="src${i}-w"><option value="dc"${s.wave==='dc'?' selected':''}>직류</option><option value="step"${s.wave==='step'?' selected':''}>계단</option><option value="pulse"${s.wave==='pulse'?' selected':''}>펄스</option></select></label><label class="fld"><span>전압 V</span><input type="number" step="0.1" data-src="${i}" data-k="v" value="${s.v}" id="src${i}-v"></label></div>
     ${s.wave==='step'?`<div class="row3"><label class="fld"><span>시작 ms</span><input type="number" step="0.1" min="0" data-src="${i}" data-k="t0" value="${+(s.t0*1e3).toFixed(3)}" id="src${i}-t0"></label><label class="fld"><span>상승 ms</span><input type="number" step="0.1" min="0.001" data-src="${i}" data-k="tr" value="${+(s.tr*1e3).toFixed(3)}" id="src${i}-tr"></label></div>`:''}
     ${s.wave==='pulse'?`<div class="row3"><label class="fld"><span>시작 ms</span><input type="number" step="0.1" min="0" data-src="${i}" data-k="t0" value="${+(s.t0*1e3).toFixed(3)}" id="src${i}-t0"></label><label class="fld"><span>주기 ms</span><input type="number" step="0.1" min="0.01" data-src="${i}" data-k="per" value="${+(s.per*1e3).toFixed(3)}" id="src${i}-per"></label><label class="fld"><span>듀티 %</span><input type="number" step="5" min="1" max="99" data-src="${i}" data-k="duty" value="${Math.round(s.duty*100)}" id="src${i}-d"></label></div>`:''}</div>`).join('');
@@ -306,9 +322,8 @@ function spBind(b){
   b.querySelector('#sp-t')?.addEventListener('change',e=>{cfg.tstop=Math.max(0.01,num(e.target.value,cfg.tstop));});
   b.querySelector('#sp-n')?.addEventListener('change',e=>{cfg.steps=Math.round(Math.min(20000,Math.max(100,num(e.target.value,cfg.steps))));});
   b.querySelector('#sp-dc')?.addEventListener('click',()=>{const r=SIM.dcop(Object.assign({},ck,{tDC:cfg.tstop*1e-3}));SR.sp=r.error?{error:r.error}:Object.assign(r,{label:`DC 동작점 (t = ${cfg.tstop} ms 소스 값)`});playReset();renderSim();updateLegend();refresh(false);});
-  b.querySelector('#sp-run')?.addEventListener('click',()=>{const btn=b.querySelector('#sp-run');btn.disabled=true;btn.textContent='계산 중…';
-    setTimeout(()=>{const nets=[...new Set(cfg.probes.concat(ck.srcs.map(s=>s.n[0])))];cfg.probes=nets.slice(0,8);
-      const r=SIM.transient(ck,cfg.tstop*1e-3,cfg.steps,cfg.probes);cfg.tran=r;if(!r.error){SR.sp=Object.assign({},r.final,{label:`과도 해석 끝 (t = ${cfg.tstop} ms)`,fromTran:true});playReset();}renderSim();updateLegend();refresh(false);},20);});
+  b.querySelector('#sp-run')?.addEventListener('click',()=>fwRunAll(b.querySelector('#sp-run')));
+  b.querySelector('#sp-fw')?.addEventListener('click',()=>fwOpen());
   b.querySelectorAll('[data-probe]').forEach(x=>x.addEventListener('click',()=>{const p=x.dataset.probe;cfg.hidden[p]=!cfg.hidden[p];renderSim();}));
   b.querySelectorAll('[data-spnet]').forEach(r=>r.addEventListener('click',()=>{const n=r.dataset.spnet;if(!cfg.probes.includes(n)){cfg.probes.push(n);if(cfg.probes.length>8)cfg.probes.shift();}S.hlNet=n;refresh(false);renderSim();}));
   b.querySelectorAll('#sp-play,#sp-play2').forEach(x=>x.addEventListener('click',()=>{playReset();if(S.view!=='3d'||S.sch==='full'){setView('3d');}toast(SR.sp&&SR.sp.fromTran?'3D 보기에서 과도 해석을 재생합니다. 아래 재생 막대로 멈추거나 시간을 옮길 수 있습니다.':'3D 보기에서 DC 동작점의 LED 밝기와 모터 회전을 보여줍니다.');}));

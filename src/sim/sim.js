@@ -239,7 +239,9 @@ function extractCircuit(B){
 /* ---------- MNA engine ---------- */
 const VT=0.025852;
 function srcVal(s,t){if(s.wave==='dc')return s.v;if(s.wave==='step'){if(t<=s.t0)return 0;if(t>=s.t0+s.tr)return s.v;return s.v*(t-s.t0)/s.tr;}
-  if(s.wave==='pulse'){if(t<s.t0)return 0;const ph=((t-s.t0)%s.per)/s.per;return ph<s.duty?s.v:0;}return s.v;}
+  if(s.wave==='pulse'){if(t<s.t0)return 0;const ph=((t-s.t0)%s.per)/s.per;return ph<s.duty?s.v:0;}
+  if(s.wave==='fw'){if(!s.pwm)return s.level?s.v:0;if(s.duty<=0)return 0;if(s.duty>=1)return s.v;const ph=((t-s.ph0)*s.freq)%1;return ph<s.duty?s.v:0;}
+  return s.v;}
 function compile(ckt){
   const nodes=new Map();const id=n=>{if(!n||n===ckt.gnd)return-1;let k=nodes.get(n);if(k==null){k=nodes.size;nodes.set(n,k);}return k;};
   const els=ckt.els.filter(e=>e.on).concat(ckt.srcs.filter(s=>s.on!==false)).map(e=>Object.assign({},e,{k:e.n.map(id)}));
@@ -322,7 +324,7 @@ const newState=()=>({vd:{},vgs:{},w:{},th:{}});
 function advance(C,x,h,st){C.els.forEach(e=>{if(e.type!=='MOTOR')return;const w=motorSpeed(e,h,st.w[e.id]||0,x[e.br]);st.th[e.id]=(st.th[e.id]||0)+((st.w[e.id]||0)+w)/2*h;st.w[e.id]=w;});}
 function dcop(ckt){const C=compile(ckt);if(!C.nn)return{error:'시뮬레이션할 넷이 없습니다.'};const r=newton(C,new Float64Array(C.N),'dc',0,ckt.tDC||1e9,new Float64Array(C.N),newState());
   if(!r.ok)return{error:'DC 동작점이 수렴하지 않았습니다. 소자 값이나 소스를 확인해 주세요.'};return Object.assign(report(C,r.x,ckt.tDC||1e9),{C});}
-function transient(ckt,tstop,steps,probes){
+function transient(ckt,tstop,steps,probes,ctl){
   const C=compile(ckt);if(!C.nn)return{error:'시뮬레이션할 넷이 없습니다.'};
   const st=newState();let r=newton(C,new Float64Array(C.N),'dc',0,0,new Float64Array(C.N),st);if(!r.ok)return{error:'초기 동작점이 수렴하지 않았습니다.'};
   let x=r.x;const h=tstop/steps;const time=[0];const data={};probes.forEach(p=>{data[p]=[C.nodes.has(p)?x[C.nodes.get(p)]:0];});
@@ -330,11 +332,18 @@ function transient(ckt,tstop,steps,probes){
   const leds=C.els.filter(e=>e.type==='D'&&e.led),mots=C.els.filter(e=>e.type==='MOTOR');
   const an={t:[0],led:{},mot:{}};const vOf=i=>i>=0?x[i]:0;const ledI=e=>{const v=vOf(e.k[0])-vOf(e.k[1]);return Math.max(0,1e-18*(Math.exp(Math.min(v/(2*VT),80))-1));};
   leds.forEach(e=>{an.led[e.id]=[ledI(e)];});mots.forEach(e=>{an.mot[e.id]={w:[0],th:[0],I:[x[e.br]],gear:e.gear};});
+  // firmware co-simulation: every ctl.dt the MCU loop reads node voltages and updates its pin sources
+  let tick=null;
+  if(ctl){const byId={};C.els.forEach(e=>{if(e.wave==='fw')byId[e.id]=e;});let next=0;
+    const set=(id,v)=>{const e=byId[id];if(!e)return;if(v.freq!=null&&v.freq!==e.freq){e.ph0=nowT;e.freq=v.freq;}Object.assign(e,v);};let nowT=0;
+    tick=(t,xx)=>{while(t+1e-12>=next){nowT=next;ctl.tick(next,n=>{const k=C.nodes.get(n);return k==null?0:xx[k];},set);next+=ctl.dt;}};
+    tick(0,x);}
   let fails=0;
   for(let s=1;s<=steps;s++){const t=s*h;let q=newton(C,x,'tran',h,t,x,st);
     if(q.ok)advance(C,q.x,h,st);
     else{const h2=h/4;let xx=x;let ok=true;for(let k=1;k<=4;k++){const qq=newton(C,xx,'tran',h2,t-h+k*h2,xx,st);if(!qq.ok){ok=false;break;}xx=qq.x;advance(C,xx,h2,st);}if(!ok){fails++;if(fails>20)return{error:`${(t*1e3).toFixed(3)} ms에서 수렴하지 않았습니다.`};}q={x:xx};}
     x=q.x;time.push(t);probes.forEach(p=>{data[p].push(C.nodes.has(p)?x[C.nodes.get(p)]:0);});
+    if(tick)tick(t,x);
     an.t.push(t);leds.forEach(e=>an.led[e.id].push(ledI(e)));mots.forEach(e=>{const m=an.mot[e.id];m.w.push(st.w[e.id]||0);m.th.push(st.th[e.id]||0);m.I.push(x[e.br]);});}
   return Object.assign({time,data,final:report(C,x,tstop,st),anim:an},{C});
 }

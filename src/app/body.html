@@ -147,11 +147,32 @@
     </div>
     <div class="sheet-f">
       <span class="msg" id="impMsg"></span>
-      <button class="btn ghost sm" id="impSample">예제: SENSE-32</button><button class="btn ghost sm" id="impSample2">예제: DC 모터</button>
+      <button class="btn ghost sm" id="impSample">예제: SENSE-32</button><button class="btn ghost sm" id="impSample2">예제: MCU 모터 제어</button>
       <button class="btn ghost sm" id="impClear" hidden>목록 비우기</button>
       <button class="btn ghost" data-close>취소</button>
       <button class="btn primary" id="impGo" disabled>보드 만들기</button>
     </div>
+  </div>
+</div>
+<div class="modal" id="fwModal" hidden>
+  <div class="sheet fwsheet" role="dialog" aria-modal="true" aria-labelledby="fwTitle">
+    <div class="sheet-h"><h2 id="fwTitle">MCU 펌웨어</h2><button class="x" data-fwclose aria-label="닫기">✕</button></div>
+    <div class="fwbody">
+      <div class="fwcode">
+        <div class="fwbar"><span class="mono" id="fwFile">firmware.js</span><span class="fwhint">JavaScript 문법 · Arduino 스타일 API · Ctrl+Enter 실행</span></div>
+        <div class="fwed"><div class="fwgut mono" id="fwGut" aria-hidden="true"></div><textarea id="fwCode" class="mono" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="펌웨어 코드"></textarea></div>
+        <details class="fwapi"><summary>사용할 수 있는 함수</summary><ul class="mono">
+          <li>pinMode(PB3, OUTPUT) · digitalWrite(PB3, HIGH/LOW)</li>
+          <li>pwmInit(PA8, 주파수Hz) · pwmWrite(PA8, 듀티%) · analogWrite(PA8, 0~255)</li>
+          <li>analogRead(PA1) → 0~4095 · analogReadVoltage(PA1) → V · digitalRead(핀)</li>
+          <li>millis() · log(...) — loop(ms)는 1 ms마다 회로 해석과 함께 호출</li></ul></details>
+      </div>
+      <div class="fwside">
+        <section><h3>주요 파라미터</h3><div id="fwParams"></div></section>
+        <section><h3>실행 결과</h3><div id="fwResult"></div></section>
+      </div>
+    </div>
+    <div class="sheet-f"><span class="msg" id="fwMsg"></span><button class="btn ghost sm" id="fwReset">기본 코드로</button><button class="btn sm" id="fwCheck">빌드 확인</button><button class="btn sm" id="fw3d">3D에서 보기</button><button class="btn primary" id="fwRun">빌드 &amp; 시뮬레이션</button></div>
   </div>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>

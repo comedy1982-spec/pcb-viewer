@@ -406,7 +406,8 @@ function updatePlayBar(src){
   const f=SIM.fmtSI;let info=[];
   if(tr){const A=src.tran,T=src.T,t=PLAY.simT;if(document.activeElement!==$('#pbSeek'))$('#pbSeek').value=String(Math.round(t/T*1000));
     $('#pbTime').textContent=`${(t*1e3).toFixed(t<0.01?2:1)} / ${(T*1e3).toFixed(0)} ms`;
-    Object.keys(A.mot).forEach(r=>{const m=A.mot[r];const w=interpAt(A.t,m.w,t);info.push(`${r} ${(w/(m.gear||1)*60/TAU).toFixed(0)} rpm · ${f(Math.abs(interpAt(A.t,m.I,t)),'A')}`);});}
+    Object.keys(A.mot).forEach(r=>{const m=A.mot[r];const w=interpAt(A.t,m.w,t);info.push(`${r} ${(w/(m.gear||1)*60/TAU).toFixed(0)} rpm · ${f(Math.abs(interpAt(A.t,m.I,t)),'A')}`);});
+    const F=SR.fw&&SR.fw.trace;if(F&&F.t.length){const k=Math.min(F.t.length-1,Math.max(0,Math.round(t*1000)));(SR.fw.srcs||[]).filter(s=>s.pwm).forEach(s=>{const p=s.id.slice(3);info.unshift(`${p} 듀티 ${(F.out[p][k]*100).toFixed(0)}%`);});}}
   else{$('#pbTime').textContent='DC 동작점';src.dc.parts.filter(p=>p.type==='MOTOR').forEach(p=>info.push(`${p.id} ${p.rpm.toFixed(0)} rpm · ${f(Math.abs(p.I),'A')}`));}
   Object.keys(G3&&G3.leds||{}).forEach(r=>{const L=G3.leds[r];if(L.b>0.01)info.push(`${r} ${f(L.I,'A')}`);});
   $('#pbInfo').textContent=info.join(' · ');
@@ -505,6 +506,7 @@ function compCard(c){
   return`<div class="card"><div class="card-h"><span class="ref">${esc(c.ref)}</span><span class="hgap">${sideBadge(c.side)}<button class="x" data-clear="comp" aria-label="선택 해제">✕</button></span></div>
   <div class="val">${esc(c.val||'값 정보 없음')}</div>${c.desc?`<p class="desc">${esc(c.desc)}</p>`:'<div style="height:8px"></div>'}
   <dl class="kv"><dt>풋프린트</dt><dd>${esc(c.fp||'—')}</dd><dt>부품 번호</dt><dd>${esc(c.mpn||'—')}</dd><dt>위치</dt><dd>X ${fmt(c.x)} · Y ${fmt(c.y)} mm</dd><dt>회전</dt><dd>${fmt(c.rot,1)}°</dd>${b.w>0?`<dt>바디</dt><dd>${fmt(b.w,1)} × ${fmt(b.h,1)} × ${fmt(b.ht,1)} mm</dd>`:''}</dl>
+  ${c.fw?fwCardHTML(c):''}
   ${c.pads.length?`<div class="sub">패드 ${c.pads.length}개${nc?` · 넷 없음 ${nc}개`:''}</div><div class="tblwrap"><table class="pins"><tbody>${rows}</tbody></table></div>`:'<div class="sub">패드 정보 없음</div><p class="desc">Pick-and-Place 위치만 있는 부품입니다.</p>'}</div>`;
 }
 function netCard(n){
@@ -554,12 +556,12 @@ function stats(){
   const prs=new Set();['T.cu','B.cu'].forEach(L=>BD.layers[L].forEach(p=>{if(p.t==='pad'&&!p.via)prs.add(p);}));pads=prs.size;
   $('#stats').innerHTML=`<dt>부품</dt><dd>${BD.comps.length}</dd><dt>상단 / 하단</dt><dd>${BD.comps.filter(c=>c.side==='T').length} / ${BD.comps.filter(c=>c.side==='B').length}</dd><dt>넷</dt><dd>${BD.netOrder.length}</dd><dt>패드</dt><dd>${pads}</dd><dt>비아</dt><dd>${BD.vias.length}</dd><dt>드릴</dt><dd>${BD.drills.length}</dd>${tl?`<dt>트랙 길이</dt><dd>${fmt(tl,0)} mm</dd>`:''}`;
   const src=$('#srcBox');
-  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='motor'?'가상의 DC 모터 구동 예제입니다. J2에 PWM 신호를 넣으면 MOSFET이 모터를 돌리고 RUN LED가 켜집니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
-    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button><button class="btn sm" data-ex="${BD.demo==='motor'?'sense':'motor'}">${BD.demo==='motor'?'SENSE-32 예제':'DC 모터 예제'}</button></div>`;}
+  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'가상의 MCU 모터 제어 예제입니다. U1 펌웨어가 PA8 PWM으로 Q1·M1 모터를, PB3로 상태 LED를 제어하고 PA1 ADC로 모터 전류를 읽습니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
+    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button>${BD.demo==='mcu'?'<button class="btn sm" data-fwopen>펌웨어 편집</button>':''}<button class="btn sm" data-ex="${BD.demo==='mcu'?'sense':'mcu'}">${BD.demo==='mcu'?'SENSE-32 예제':'MCU 모터 제어 예제'}</button></div>`;}
   else{src.innerHTML=`<ul class="files">${BD.files.filter(f=>f.role!=='ignore').map(f=>`<li><span class="fn">${esc(f.name.split('/').pop())}</span><span class="fr">${esc(PCB.ROLES[f.role]||f.role)}</span></li>`).join('')}</ul>`+
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
 }
-$('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();const x=e.target.closest('[data-ex]');if(x)loadExample(x.dataset.ex);});
+$('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();const x=e.target.closest('[data-ex]');if(x)loadExample(x.dataset.ex);if(e.target.closest('[data-fwopen]'))fwOpen();});
 function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}popsRefresh();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
   BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
@@ -634,10 +636,11 @@ function renderImport(){
 $('#flist').addEventListener('change',e=>{const s=e.target.closest('[data-role]');if(!s)return;const en=IMP.entries.find(x=>x.id===+s.dataset.role);if(en){en.role=s.value;en.note=en.role===en.auto?en.note:'';}renderImport();});
 $('#flist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(!d)return;IMP.entries=IMP.entries.filter(x=>x.id!==+d.dataset.del);renderImport();});
 $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImport();});
-function loadExample(which){const spec=which==='motor'?SAMPLE_MOTOR:SAMPLE_SPEC;setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
-  toast(which==='motor'?'DC 모터 구동 예제입니다. 시뮬레이션 → 회로 동작에서 "과도 해석 실행"을 누르면 3D에서 모터가 돌고 LED가 켜집니다.':'예제 보드로 돌아왔습니다.');}
+function loadExample(which){const spec=which==='mcu'?SAMPLE_MCU:SAMPLE_SPEC;setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
+  if(which==='mcu'){selectComp('U1',false);toast('MCU 모터 제어 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다.');}
+  else toast('예제 보드로 돌아왔습니다.');}
 $('#impSample').addEventListener('click',()=>loadExample('sense'));
-$('#impSample2').addEventListener('click',()=>loadExample('motor'));
+$('#impSample2').addEventListener('click',()=>loadExample('mcu'));
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{
