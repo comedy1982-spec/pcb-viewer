@@ -262,7 +262,8 @@ function mount3DCell(C){
   g.home=an=>g.to(-1.95,0.95,g.fitR()*1.05,an);
   const step=()=>{const a=g.anim;if(!a)return;const k=Math.min(1,(performance.now()-a.t0)/450),e=1-Math.pow(1-k,3),o=g.orb,L=(p,q)=>p+(q-p)*e;
     o.th=L(a.from.th,a.to.th);o.ph=L(a.from.ph,a.to.ph);o.r=L(a.from.r,a.to.r);o.t.set(L(a.from.tx,0),L(a.from.ty,0),0);g.place();if(k>=1)g.anim=null;};
-  const tick=()=>{if(!g.alive)return;C.win.requestAnimationFrame(tick);step();if(G3.ver!==g.ver){g.ver=G3.ver;g.dirty=true;}
+  const tick=()=>{if(!g.alive)return;C.win.requestAnimationFrame(tick);step();stepPlay(performance.now()); // keeps circuit playback moving even if the main window is in the background
+    if(G3.ver!==g.ver){g.ver=G3.ver;g.dirty=true;}
     if(g.dirty&&G3.board&&C.w){try{renderer.render(G3.scene,cam);}catch(e){console.error(e);g.alive=false;}g.dirty=false;}};
   g.dispose=()=>{g.alive=false;try{renderer.dispose();renderer.forceContextLoss();}catch(e){}};
   C.g=g;bind3DCell(C);C.win.requestAnimationFrame(tick);

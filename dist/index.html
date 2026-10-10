@@ -389,6 +389,17 @@ body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
 @media (max-width:1180px){.hsis-ws{grid-template-columns:var(--hl,220px) minmax(0,1fr)}#hHsR{display:none}}
 @media (max-width:980px){#hLeft,#hRight{display:none}.main,.main.simwide{grid-template-columns:1fr}}
 @media (max-width:820px){#hHsL{display:none}.hsis-ws{grid-template-columns:1fr}}
+/* circuit playback bar (3D) */
+.playbar{display:grid;grid-template-columns:auto minmax(0,auto);justify-content:start;gap:6px;max-width:calc(100% - 300px);align-items:center}
+.playbar .pb-info{grid-column:1/-1;justify-self:start}
+.playbar .pb-play{min-width:36px;text-align:center;font-size:13px}
+.playbar .pb-main{display:flex;align-items:center;gap:8px;padding:4px 10px}
+.playbar input[type=range]{width:min(260px,30vw);accent-color:var(--accent)}
+.playbar #pbTime{font-size:11.5px;white-space:nowrap;min-width:92px}
+.playbar select{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);padding:2px 4px}
+.playbar .pb-info{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.playbar.dc #pbSeek,.playbar.dc #pbDur{display:none}
+@media (max-width:760px){.playbar{max-width:calc(100% - 24px)}.playbar .pb-info{display:none}}
 /* floating windows (popup fallback); inner grid styles come from WIN_CSS */
 .fwin{position:fixed;min-width:360px;min-height:260px;resize:both;overflow:hidden;z-index:26;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 22px 60px rgba(0,0,0,.32)}
 .fwin .pbar{cursor:move;background:var(--raised)}.fwin .fdrag{color:var(--muted)}
@@ -490,6 +501,12 @@ body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
       <div class="ov ov-tl ov-col"><span class="pill side-badge" id="sideBadge">3D</span><div class="pill legend" id="legend" hidden></div></div>
       <div class="ov ov-tr" id="ctl"></div>
       <div class="ov ov-bl"><span class="pill mono" id="coord">X — · Y — mm</span><span class="pill scale" id="scale"><i id="scaleBar"></i><span class="mono" id="scaleTxt"></span></span></div>
+      <div class="ov ov-bl playbar" id="playBar" hidden role="group" aria-label="회로 시뮬레이션 재생">
+        <button class="pill vbtn pb-play" id="pbPlay" aria-label="일시 정지">❚❚</button>
+        <div class="pill pb-main"><input type="range" id="pbSeek" min="0" max="1000" value="0" aria-label="시뮬레이션 시간"><span class="mono" id="pbTime"></span>
+          <select id="pbDur" aria-label="재생 속도"><option value="3">3초에 재생</option><option value="6" selected>6초에 재생</option><option value="12">12초에 재생</option><option value="30">30초에 재생</option><option value="rt">실제 속도</option></select></div>
+        <span class="pill pb-info mono" id="pbInfo"></span>
+      </div>
       <div class="ov ov-br"><span class="pill hint" id="hint"></span></div>
       <div class="tip" id="tip" hidden></div>
     </section>
@@ -561,7 +578,7 @@ body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
     </div>
     <div class="sheet-f">
       <span class="msg" id="impMsg"></span>
-      <button class="btn ghost sm" id="impSample">예제 보드 보기</button>
+      <button class="btn ghost sm" id="impSample">예제: SENSE-32</button><button class="btn ghost sm" id="impSample2">예제: DC 모터</button>
       <button class="btn ghost sm" id="impClear" hidden>목록 비우기</button>
       <button class="btn ghost" data-close>취소</button>
       <button class="btn primary" id="impGo" disabled>보드 만들기</button>
@@ -1070,10 +1087,15 @@ const FP={};
   FP['XTAL-3225']={kind:'xtal',body:[3.2,2.5,0.8],pads:[{n:'1',x:-1.1,y:-0.8,w:1.4,h:1.2},{n:'2',x:1.1,y:-0.8,w:1.4,h:1.2},{n:'3',x:1.1,y:0.8,w:1.4,h:1.2},{n:'4',x:-1.1,y:0.8,w:1.4,h:1.2}]};
   FP['SW-6x6']={kind:'btn',body:[6,6,3.5],pads:[{n:'1',x:-4,y:2.25,w:1.6,h:1.4},{n:'2',x:4,y:2.25,w:1.6,h:1.4},{n:'3',x:-4,y:-2.25,w:1.6,h:1.4},{n:'4',x:4,y:-2.25,w:1.6,h:1.4}]};
   FP['HDR-1x4']={kind:'hdr',body:[2.54,10.16,2.5],pads:[3.81,1.27,-1.27,-3.81].map((y,i)=>({n:''+(i+1),x:0,y,w:1.7,h:1.7,round:true,drill:1.0}))};
+  FP['HDR-1x2']={kind:'hdr',body:[2.54,5.08,2.5],pads:[1.27,-1.27].map((y,i)=>({n:''+(i+1),x:0,y,w:1.7,h:1.7,round:true,drill:1.0}))};
+  FP['SOT-23']={kind:'ic',stand:0.05,body:[2.9,1.3,1.0],pads:[{n:'1',x:-0.95,y:-1.05,w:0.6,h:0.9},{n:'2',x:0.95,y:-1.05,w:0.6,h:0.9},{n:'3',x:0,y:1.05,w:0.6,h:0.9}]};
+  FP['SMA']={kind:'diode',body:[4.3,2.6,2.1],pads:[{n:'1',x:-2.0,y:0,w:1.5,h:1.7},{n:'2',x:2.0,y:0,w:1.5,h:1.7}]};
+  // board-mount brushed DC motor (130 size can lying on a bracket); the rotor/fan is drawn only in 3D
+  FP['MOTOR-130']={kind:'motor',body:[24,16,15.5],pads:[{n:'1',x:-14,y:2.5,w:2.2,h:2.2,round:true,drill:1.1},{n:'2',x:-14,y:-2.5,w:2.2,h:2.2,round:true,drill:1.1}]};
   for(const k in FP){const f=FP[k];const[bw,bh]=f.body;let a=-bw/2,b=-bh/2,c=bw/2,d=bh/2;f.pads.forEach(p=>{a=Math.min(a,p.x-p.w/2);b=Math.min(b,p.y-p.h/2);c=Math.max(c,p.x+p.w/2);d=Math.max(d,p.y+p.h/2);});f.lbb=[a,b,c,d];}
 })();
 function fromSpec(spec){
-  const B=newBoard();B.source=spec._source||'JSON';const bd=spec.board||{};
+  const B=newBoard();B.source=spec._source||'JSON';B.demo=spec._demo||null;const bd=spec.board||{};
   B.name=bd.name||'';B.t=bd.thickness||1.6;
   const W=+bd.width,H=+bd.height;if(!(W>0&&H>0))throw new Error('JSON의 board.width, board.height가 필요합니다.');
   const R=bd.corner!=null?+bd.corner:0;
@@ -1086,6 +1108,7 @@ function fromSpec(spec){
     const side=sideOf(cs.side),rot=+(cs.rotation||cs.rot||0),x=+cs.x,y=+cs.y;
     const lib=FP[cs.footprint];
     const c={ref:cs.ref,val:cs.value||'',fp:cs.footprint||'',side,x,y,rot,pads:[],mpn:cs.mpn||'',desc:cs.description||'',pn:cs.pinNames||null,lab:cs.label||null};
+    if(cs.model&&typeof cs.model==='object')c.model=cs.model;
     const xf=(lx,ly)=>{const xx=side==='B'?-lx:lx,a=rot*D2R;return[x+xx*Math.cos(a)-ly*Math.sin(a),y+xx*Math.sin(a)+ly*Math.cos(a)];};
     const padsL=cs.pads||(lib?lib.pads:[]);
     padsL.forEach(p=>{const[wx,wy]=xf(+p.x,+p.y);const n=''+(p.n!=null?p.n:p.number);const round=p.round||p.shape==='circle';
@@ -1480,6 +1503,8 @@ function twoPin(c,pads){
   else if(/^(L|FB)/.test(r)){const p=[];for(let k=0;k<4;k++){for(let i=0;i<=8;i++){const a=Math.PI-Math.PI*i/8;p.push([-2.54+k*1.27+0.635+0.635*Math.cos(a),-0.635*Math.sin(a)]);}}poly(p);}
   else if(/^(D|LED)/.test(r)){poly([[-1.27,-1.27],[1.27,0],[-1.27,1.27],[-1.27,-1.27]],c.kind==='led'?'none':'none');poly([[1.27,-1.27],[1.27,1.27]]);poly([[-2.54,0],[-1.27,0]]);poly([[1.27,0],[2.54,0]]);
     if(c.kind==='led'||/LED/i.test(c.val+c.fp)){poly([[0,-1.6],[1.1,-2.7]]);poly([[0.7,-2.7],[1.1,-2.7],[1.1,-2.3]]);poly([[0.8,-1.6],[1.9,-2.7]]);poly([[1.5,-2.7],[1.9,-2.7],[1.9,-2.3]]);}}
+  else if(/^(M|MOT)\d/.test(r)){const p=[];for(let i=0;i<=24;i++){const t=i/24*2*Math.PI;p.push([1.9*Math.cos(t),1.9*Math.sin(t)]);}poly(p);poly([[-2.54,0],[-1.9,0]]);poly([[1.9,0],[2.54,0]]);
+    poly([[-0.8,0.7],[-0.8,-0.7],[0,0.2],[0.8,-0.7],[0.8,0.7]]);}
   else if(/^(Y|X)/.test(r)){poly([[-0.8,-1.6],[0.8,-1.6],[0.8,1.6],[-0.8,1.6],[-0.8,-1.6]]);poly([[-1.6,-1.6],[-1.6,1.6]]);poly([[1.6,-1.6],[1.6,1.6]]);poly([[-2.54,0],[-1.6,0]]);poly([[1.6,0],[2.54,0]]);}
   else poly([[-2.54,-1.27],[2.54,-1.27],[2.54,1.27],[-2.54,1.27],[-2.54,-1.27]]);
   // anode/cathode: pin with fn A goes left for diodes
@@ -1744,7 +1769,20 @@ function extractCircuit(B){
       if(pw.length&&gnd){els.push({id:c.ref,ref:c.ref,type:'LOAD',n:[pw[0],gnd],I:0.01,vmin:1.0,on:true});}
       else skipped.push([c.ref,'전원 핀을 찾지 못해 제외']);
     }
-    else if(/^Q\d/.test(r))skipped.push([c.ref,'트랜지스터 모델 없음']);
+    else if(/^Q\d/.test(r)){
+      // N-channel MOSFET (pins named G/D/S, or a MOSFET part number); BJTs and P-channel parts are not modelled
+      const txt=(c.val+' '+c.fp+' '+(c.desc||'')+' '+(c.mpn||'')).toUpperCase(),fn=re=>c.pads.find(p=>re.test(p.fn||''));
+      const pg=fn(/^G(ATE)?$/i),pd=fn(/^D(RAIN)?$/i),ps=fn(/^S(OURCE)?$/i);
+      const nch=/N-?CH|NMOS|N-MOS|AO3400|2N7002|BSS138|IRLML2502|SI2302|DMN|IRLZ|FDN3/.test(txt)||(c.model&&c.model.type==='nmos');
+      if(pg&&pd&&ps&&pg.net&&pd.net&&ps.net&&nch&&!/P-?CH|PMOS/.test(txt)){const m=c.model||{};
+        els.push({id:c.ref,ref:c.ref,type:'NMOS',n:[pd.net,pg.net,ps.net],vth:m.vth||1.2,kp:m.kp||8,lam:m.lambda||0.01,on:true});}
+      else skipped.push([c.ref,'트랜지스터 모델 없음 (N채널 MOSFET만 지원)']);}
+    else if(/^(M|MOT)\d/.test(r)&&nets.length===2){
+      // brushed DC motor: electrical R-L + back-EMF, mechanical inertia, viscous + Coulomb friction, gearbox
+      const m=Object.assign({R:2.5,L:5e-4,ke:0.004,kt:0.004,J:1.2e-6,b:2e-7,tf:1e-4,tl:0,gear:1},c.model||{});
+      let pp=c.pads.find(p=>/^(\+|M\+|P)$/i.test(p.fn||''))||c.pads.find(p=>p.n==='1');const pm=c.pads.find(p=>p!==pp&&p.net&&p.net!==pp.net);
+      if(!pp||!pm){skipped.push([c.ref,'모터 단자를 알 수 없음']);return;}
+      els.push(Object.assign({id:c.ref,ref:c.ref,type:'MOTOR',n:[pp.net,pm.net],on:true},m));}
     else if(/^(Y|X)\d/.test(r)&&c.kind==='xtal')skipped.push([c.ref,'크리스털은 모델링하지 않음']);
   });
   // sources
@@ -1764,9 +1802,25 @@ function srcVal(s,t){if(s.wave==='dc')return s.v;if(s.wave==='step'){if(t<=s.t0)
 function compile(ckt){
   const nodes=new Map();const id=n=>{if(!n||n===ckt.gnd)return-1;let k=nodes.get(n);if(k==null){k=nodes.size;nodes.set(n,k);}return k;};
   const els=ckt.els.filter(e=>e.on).concat(ckt.srcs.filter(s=>s.on!==false)).map(e=>Object.assign({},e,{k:e.n.map(id)}));
-  let nb=nodes.size;els.forEach(e=>{if(e.type==='V'||e.type==='REG'||e.type==='L')e.br=nb++;});
+  let nb=nodes.size;els.forEach(e=>{if(e.type==='V'||e.type==='REG'||e.type==='L'||e.type==='MOTOR')e.br=nb++;});
   return{nodes,els,N:nb,nn:nodes.size};
 }
+// level-1 square law, smoothed around threshold, symmetric in drain/source
+function mosEval(e,vgs,vds){
+  if(vds<0){const r=mosEval(e,vgs-vds,-vds);return{id:-r.id,gm:-r.gm,gds:r.gm+r.gds};}
+  const sm=0.04,z=(vgs-e.vth)/sm,vov=z>30?vgs-e.vth:sm*Math.log1p(Math.exp(z)),dvov=z>30?1:1/(1+Math.exp(-z));
+  const k=e.kp,lam=e.lam;
+  if(vds<vov){const id=k*(vov*vds-vds*vds/2)*(1+lam*vds);return{id,gm:k*vds*(1+lam*vds)*dvov,gds:k*(vov-vds)*(1+lam*vds)+k*(vov*vds-vds*vds/2)*lam};}
+  const id=k/2*vov*vov*(1+lam*vds);return{id,gm:k*vov*(1+lam*vds)*dvov,gds:k/2*vov*vov*lam};
+}
+// motor branch equation  Va-Vc - req*I = rhs ; h=0 means steady state (DC)
+function motorDir(e,wp,I){const eps=1e-3;if(wp>eps)return 1;if(wp<-eps)return-1;const T=e.kt*I-e.tl;return Math.abs(T)>e.tf?Math.sign(T):0;}
+function motorCoef(e,h,wp,Ip,I){
+  const s=motorDir(e,wp,I),jh=h?e.J/h:0,lh=h?e.L/h:0;
+  if(s===0&&Math.abs(wp)<1e-3)return{req:e.R+lh,rhs:-lh*Ip,s:0};
+  const D=jh+e.b;return{req:e.R+lh+e.ke*e.kt/D,rhs:-lh*Ip+e.ke*(jh*wp-e.tl-s*e.tf)/D,s};
+}
+function motorSpeed(e,h,wp,I){const jh=h?e.J/h:0,s=motorDir(e,wp,I);if(s===0&&Math.abs(wp)<1e-3)return 0;let w=(jh*wp+e.kt*I-e.tl-s*e.tf)/(jh+e.b);if(s!==0&&w*s<0)w=0;return w;}
 function newton(C,x0,mode,h,t,xprev,state){
   const N=C.N,gmin=1e-9;let x=Float64Array.from(x0);
   for(let it=0;it<150;it++){
@@ -1784,6 +1838,13 @@ function newton(C,x0,mode,h,t,xprev,state){
       else if(e.type==='D'){const Is=e.led?1e-18:1e-14,n=e.led?2:1,vt=n*VT;let vd=V(a)-V(c);const old=state.vd[e.id]==null?0:state.vd[e.id];
         const vcrit=vt*Math.log(vt/(Math.SQRT2*Is));if(vd>vcrit&&Math.abs(vd-old)>2*vt){lim=true;if(old>0){const arg=1+(vd-old)/vt;vd=arg>0?old+vt*Math.log(arg):vcrit;}else vd=vt*Math.log(vd/vt);}
         state.vd[e.id]=vd;const ex=Math.exp(Math.min(vd/vt,80));const id_=Is*(ex-1),gd=Is/vt*ex+gmin;const ieq=id_-gd*vd;G(a,c,gd);rhs(a,-ieq);rhs(c,ieq);}
+      else if(e.type==='NMOS'){const[dn,gn,sn]=e.k;let vgs=V(gn)-V(sn),vds=V(dn)-V(sn);
+        const old=state.vgs[e.id];if(old!=null&&Math.abs(vgs-old)>0.5){vgs=old+Math.sign(vgs-old)*0.5;lim=true;}state.vgs[e.id]=vgs;
+        const m=mosEval(e,vgs,vds);const ieq=m.id-m.gm*vgs-m.gds*vds;
+        add(dn,dn,m.gds);add(dn,sn,-m.gds-m.gm);add(dn,gn,m.gm);add(sn,sn,m.gds+m.gm);add(sn,dn,-m.gds);add(sn,gn,-m.gm);rhs(dn,-ieq);rhs(sn,ieq);
+        G(dn,sn,1e-9);}
+      else if(e.type==='MOTOR'){const k=e.br;add(a,k,1);add(c,k,-1);add(k,a,1);add(k,c,-1);
+        const I=x[k],m=motorCoef(e,mode==='tran'?h:0,mode==='tran'?(state.w[e.id]||0):0,mode==='tran'?xprev[k]:0,I);add(k,k,-m.req);b[k]+=m.rhs;}
       else if(e.type==='LOAD'){const v=V(a)-V(c);if(v<e.vmin)G(a,c,e.I/e.vmin);else{rhs(a,-e.I);rhs(c,e.I);}}
       else if(e.type==='V'){const k=e.br;add(a,k,1);add(c,k,-1);add(k,a,1);add(k,c,-1);b[k]+=srcVal(e,t);}
       else if(e.type==='REG'){const[ni,no,ng]=e.k,k=e.br;const vin=V(ni)-V(ng);
@@ -1798,7 +1859,7 @@ function newton(C,x0,mode,h,t,xprev,state){
   }
   return{x,ok:false};
 }
-function report(C,x,t){
+function report(C,x,t,st){
   const V=i=>i>=0?x[i]:0;const nets={};C.nodes.forEach((k,n)=>{nets[n]=x[k];});
   const parts=[];
   C.els.forEach(e=>{const[a,c]=e.k;let I=null,P=null;const v=V(a)-V(c);
@@ -1809,21 +1870,32 @@ function report(C,x,t){
     else if(e.type==='V'){I=-x[e.br];P=-srcVal(e,t)*I;}
     else if(e.type==='REG'){const[ni,no,ng]=e.k;const Io=-x[e.br];const vin=V(ni)-V(ng),vout=V(no)-V(ng);I=Io;P=(vin-vout)*Io+vin*e.iq*Math.min(1,Math.max(vin,0));}
     else if(e.type==='L'){I=x[e.br];P=0;}else if(e.type==='C'){I=0;P=0;}
-    parts.push({id:e.id,ref:e.ref||null,type:e.type,I,P,v});});
+    let extra=null;
+    if(e.type==='NMOS'){const[dn,gn,sn]=e.k;const vds=V(dn)-V(sn);I=mosEval(e,V(gn)-V(sn),vds).id;P=vds*I;}
+    if(e.type==='MOTOR'){I=x[e.br];P=v*I;const w=st&&st.w[e.id]!=null?st.w[e.id]:motorSpeed(e,0,0,I);extra={w,rpm:w/e.gear*60/(2*Math.PI),gear:e.gear,torque:e.kt*I};}
+    parts.push(Object.assign({id:e.id,ref:e.ref||null,type:e.type,I,P,v},extra));});
   return{nets,parts};
 }
-function dcop(ckt){const C=compile(ckt);if(!C.nn)return{error:'시뮬레이션할 넷이 없습니다.'};const r=newton(C,new Float64Array(C.N),'dc',0,ckt.tDC||1e9,new Float64Array(C.N),{vd:{}});
+const newState=()=>({vd:{},vgs:{},w:{},th:{}});
+// after an accepted time step: integrate motor speed and shaft angle
+function advance(C,x,h,st){C.els.forEach(e=>{if(e.type!=='MOTOR')return;const w=motorSpeed(e,h,st.w[e.id]||0,x[e.br]);st.th[e.id]=(st.th[e.id]||0)+((st.w[e.id]||0)+w)/2*h;st.w[e.id]=w;});}
+function dcop(ckt){const C=compile(ckt);if(!C.nn)return{error:'시뮬레이션할 넷이 없습니다.'};const r=newton(C,new Float64Array(C.N),'dc',0,ckt.tDC||1e9,new Float64Array(C.N),newState());
   if(!r.ok)return{error:'DC 동작점이 수렴하지 않았습니다. 소자 값이나 소스를 확인해 주세요.'};return Object.assign(report(C,r.x,ckt.tDC||1e9),{C});}
 function transient(ckt,tstop,steps,probes){
   const C=compile(ckt);if(!C.nn)return{error:'시뮬레이션할 넷이 없습니다.'};
-  const st={vd:{}};let r=newton(C,new Float64Array(C.N),'dc',0,0,new Float64Array(C.N),st);if(!r.ok)return{error:'초기 동작점이 수렴하지 않았습니다.'};
+  const st=newState();let r=newton(C,new Float64Array(C.N),'dc',0,0,new Float64Array(C.N),st);if(!r.ok)return{error:'초기 동작점이 수렴하지 않았습니다.'};
   let x=r.x;const h=tstop/steps;const time=[0];const data={};probes.forEach(p=>{data[p]=[C.nodes.has(p)?x[C.nodes.get(p)]:0];});
-  const curE=C.els.filter(e=>e.type==='D'||e.type==='LOAD');const cur={};curE.forEach(e=>{cur[e.id]=[];});
+  // animation track: LED currents and motor speed / angle / current, sampled every step (decimated at the end)
+  const leds=C.els.filter(e=>e.type==='D'&&e.led),mots=C.els.filter(e=>e.type==='MOTOR');
+  const an={t:[0],led:{},mot:{}};const vOf=i=>i>=0?x[i]:0;const ledI=e=>{const v=vOf(e.k[0])-vOf(e.k[1]);return Math.max(0,1e-18*(Math.exp(Math.min(v/(2*VT),80))-1));};
+  leds.forEach(e=>{an.led[e.id]=[ledI(e)];});mots.forEach(e=>{an.mot[e.id]={w:[0],th:[0],I:[x[e.br]],gear:e.gear};});
   let fails=0;
   for(let s=1;s<=steps;s++){const t=s*h;let q=newton(C,x,'tran',h,t,x,st);
-    if(!q.ok){const h2=h/4;let xx=x;let ok=true;for(let k=1;k<=4;k++){const qq=newton(C,xx,'tran',h2,t-h+k*h2,xx,st);if(!qq.ok){ok=false;break;}xx=qq.x;}if(!ok){fails++;if(fails>20)return{error:`${(t*1e3).toFixed(3)} ms에서 수렴하지 않았습니다.`};}q={x:xx};}
-    x=q.x;time.push(t);probes.forEach(p=>{data[p].push(C.nodes.has(p)?x[C.nodes.get(p)]:0);});}
-  return Object.assign({time,data,final:report(C,x,tstop)},{C});
+    if(q.ok)advance(C,q.x,h,st);
+    else{const h2=h/4;let xx=x;let ok=true;for(let k=1;k<=4;k++){const qq=newton(C,xx,'tran',h2,t-h+k*h2,xx,st);if(!qq.ok){ok=false;break;}xx=qq.x;advance(C,xx,h2,st);}if(!ok){fails++;if(fails>20)return{error:`${(t*1e3).toFixed(3)} ms에서 수렴하지 않았습니다.`};}q={x:xx};}
+    x=q.x;time.push(t);probes.forEach(p=>{data[p].push(C.nodes.has(p)?x[C.nodes.get(p)]:0);});
+    an.t.push(t);leds.forEach(e=>an.led[e.id].push(ledI(e)));mots.forEach(e=>{const m=an.mot[e.id];m.w.push(st.w[e.id]||0);m.th.push(st.th[e.id]||0);m.I.push(x[e.br]);});}
+  return Object.assign({time,data,final:report(C,x,tstop,st),anim:an},{C});
 }
 
 return{parseVal,fmtSI,nominalV,irSolve,siAnalyze,microstrip,thermalSolve,extractCircuit,dcop,transient,IPCmax,IPC};
@@ -1927,6 +1999,64 @@ const SAMPLE_SPEC=(function(){
       {side:'top',text:'SCL',x:56.6,y:18.73,size:0.56,align:'left'},{side:'top',text:'GND',x:56.6,y:16.19,size:0.56,align:'left'},
       {side:'bottom',text:'SENSE-32',x:38,y:6.9,size:1.1},{side:'bottom',text:'REV A · 2026-10 · LOT 0001',x:38,y:4.6,size:0.6},
       {side:'bottom',text:'SPI FLASH',x:20,y:13.4,size:0.64},
+    ]
+  };
+})();
+
+</script>
+<script>
+/* Second built-in example: a low-side MOSFET DC motor driver with power and run LEDs (viewer JSON format) */
+const SAMPLE_MOTOR=(function(){
+  const T=[],V=[];
+  const tr=(layer,net,width,...points)=>T.push({layer:layer==='T'?'top':'bottom',net,width,points});
+  const via=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.8,drill:0.4}));
+  // 5 V input rail
+  tr('T','VIN',1.0,'J1.1',[36,31.27],'M1.1');
+  tr('T','VIN',0.8,[14.5,31.27],'C1.1');
+  tr('T','VIN',0.5,[15.2,31.27],'C2.1');
+  tr('T','VIN',0.8,'D1.2',[30,31.27]);
+  tr('T','VIN',0.4,[10,31.27],[10,40],'R3.1');
+  tr('T','VIN',0.5,[36,31.27],[39.5,31.27]);tr('B','VIN',0.5,[39.5,31.27],[39.5,8]);tr('T','VIN',0.4,[39.5,8],'R4.1');via('VIN',[39.5,31.27],[39.5,8]);
+  // motor low side
+  tr('T','MOT_N',1.0,'Q1.3',[26,21.5],'D1.1');
+  tr('T','MOT_N',1.0,'D1.1',[33,21.5],'M1.2');
+  tr('T','MOT_N',0.4,'D3.2',[48.5,8],[48.5,5.5],[33,5.5],[33,21.5]);
+  // gate drive
+  tr('T','PWM',0.4,'J2.1','R1.1');
+  tr('T','GATE',0.4,'R1.2',[21,15.27],[23.2,13],'Q1.1');
+  tr('T','GATE',0.4,'R2.2',[21,15.27]);
+  // LEDs
+  tr('T','PWR_A',0.3,'R3.2','D2.1');
+  tr('T','RUN_A',0.3,'R4.2','D3.1');
+  // ground: short stubs to vias into the bottom pour
+  const G=[['C1.2',[19.5,36]],['C2.2',[18.5,26]],['R2.1',[21,6.5]],['Q1.2',[28.5,11]],['D2.2',[19,40]]];
+  G.forEach(([a,b])=>{tr('T','GND',0.5,a,b);via('GND',b);});
+  return{
+    _source:'예제',_demo:'motor',
+    board:{name:'MOTOR-DRV v1.0',width:70,height:45,thickness:1.6,corner:2,holes:[[3.5,3.5,3.2],[66.5,3.5,3.2],[3.5,41.5,3.2],[66.5,41.5,3.2]]},
+    components:[
+      {ref:'J1',value:'5V 입력',footprint:'HDR-1x2',side:'top',x:6,y:30,rotation:0,mpn:'PH-2.54-1x2',description:'모터 전원 입력 · 2.54 mm',pins:{1:'VIN',2:'GND'},pinNames:{1:'5V',2:'GND'}},
+      {ref:'J2',value:'PWM 입력',footprint:'HDR-1x2',side:'top',x:6,y:14,rotation:0,mpn:'PH-2.54-1x2',description:'구동 신호 입력 (3.3 V 로직 PWM)',pins:{1:'PWM',2:'GND'},pinNames:{1:'PWM',2:'GND'}},
+      {ref:'C1',value:'100µF',footprint:'1206',side:'top',x:16,y:36,rotation:0,mpn:'GRM31CR60J107ME39',description:'모터 전원 벌크 커패시터',pins:{1:'VIN',2:'GND'}},
+      {ref:'C2',value:'100nF',footprint:'0603',side:'top',x:16,y:26,rotation:0,mpn:'CL10B104KB8NNNC',description:'고주파 디커플링',pins:{1:'VIN',2:'GND'}},
+      {ref:'R1',value:'100Ω',footprint:'0603',side:'top',x:14,y:15.27,rotation:0,mpn:'RC0603FR-07100RL',description:'게이트 직렬 저항',pins:{1:'PWM',2:'GATE'}},
+      {ref:'R2',value:'10kΩ',footprint:'0603',side:'top',x:21,y:9,rotation:90,mpn:'RC0603FR-0710KL',description:'게이트 풀다운 (입력 개방 시 OFF)',pins:{1:'GND',2:'GATE'},label:[23,9]},
+      {ref:'Q1',value:'AO3400A',footprint:'SOT-23',side:'top',x:26,y:14,rotation:0,mpn:'AO3400A',description:'N채널 MOSFET 30 V 5.7 A · 로우사이드 스위치',pins:{1:'GATE',2:'GND',3:'MOT_N'},pinNames:{1:'G',2:'S',3:'D'},model:{type:'nmos',vth:1.2,kp:8,lambda:0.01}},
+      {ref:'D1',value:'SS14',footprint:'SMA',side:'top',x:30,y:24,rotation:90,mpn:'SS14',description:'플라이백 쇼트키 다이오드 (모터 역기전력 흡수)',pins:{1:'MOT_N',2:'VIN'},pinNames:{1:'A',2:'K'},label:[33,26]},
+      {ref:'M1',value:'DC 모터 130',footprint:'MOTOR-130',side:'top',x:50,y:24,rotation:0,mpn:'RF-130 + 기어 1:48',description:'브러시 DC 모터 · 5 V · 기어비 1:48 출력 팬',pins:{1:'VIN',2:'MOT_N'},pinNames:{1:'+',2:'-'},label:[50,13.5],
+        model:{R:2.5,L:5e-4,ke:0.004,kt:0.004,J:6e-7,b:2e-7,tf:1e-4,tl:0,gear:48}},
+      {ref:'R3',value:'1kΩ',footprint:'0603',side:'top',x:12,y:40,rotation:0,mpn:'RC0603FR-071KL',description:'전원 LED 전류 제한',pins:{1:'VIN',2:'PWR_A'}},
+      {ref:'D2',value:'LED 빨강',footprint:'LED-0603',side:'top',x:16.5,y:40,rotation:0,mpn:'19-217/R6C',description:'전원 표시 LED · 630 nm',pins:{1:'PWR_A',2:'GND'},pinNames:{1:'A',2:'K'}},
+      {ref:'R4',value:'680Ω',footprint:'0603',side:'top',x:42,y:8,rotation:0,mpn:'RC0603FR-07680RL',description:'구동 LED 전류 제한',pins:{1:'VIN',2:'RUN_A'}},
+      {ref:'D3',value:'LED 녹색',footprint:'LED-0603',side:'top',x:46,y:8,rotation:0,mpn:'19-217/GHC',description:'모터 구동 표시 LED (MOSFET이 켜지면 점등)',pins:{1:'RUN_A',2:'MOT_N'},pinNames:{1:'A',2:'K'}},
+    ],
+    tracks:T,vias:V,
+    pours:[{layer:'bottom',net:'GND',clearance:0.4,inset:0.5}],
+    texts:[
+      {side:'top',text:'MOTOR-DRV',x:16,y:5,size:1.2},{side:'top',text:'v1.0',x:22.4,y:5,size:0.8,align:'left'},
+      {side:'top',text:'5V',x:2.6,y:34,size:0.8},{side:'top',text:'PWM',x:3.2,y:18,size:0.8},
+      {side:'top',text:'PWR',x:16.5,y:42.4,size:0.6},{side:'top',text:'RUN',x:46,y:10.4,size:0.6},
+      {side:'bottom',text:'MOTOR-DRV · LOW-SIDE NMOS',x:35,y:6,size:0.9},
     ]
   };
 })();
@@ -2229,7 +2359,7 @@ function brackets(ctx,bb,color,w){
 function bodyColor(c){
   const k=c.kind,r=c.ref[0];
   if(k==='chip')return r==='C'?'#a8835a':r==='L'?'#3b3d40':'#1f1f20';
-  return{ic:'#1d1e21',usb:'#a9afb4',conn:'#2b2c2f',xtal:'#b8bdc2',btn:'#2a2d31',hdr:'#151617',led:'#e6ece6',tht2:r==='C'?'#2c4f8a':r==='R'?'#d8c9a3':'#232425',box:'#6b7076'}[k]||'#6b7076';
+  return{diode:'#1f1f20',motor:'#b8bdc2',ic:'#1d1e21',usb:'#a9afb4',conn:'#2b2c2f',xtal:'#b8bdc2',btn:'#2a2d31',hdr:'#151617',led:'#e6ece6',tht2:r==='C'?'#2c4f8a':r==='R'?'#d8c9a3':'#232425',box:'#6b7076'}[k]||'#6b7076';
 }
 const padOn=(p,side)=>p.side==='both'||p.side===side||!p.side;
 function drawSide(ctx,side,o){
@@ -2390,16 +2520,37 @@ function markTex(lines,bw,bh,dot){
   if(dot){g.fillStyle='#3a3d42';g.beginPath();g.arc(fs*0.9,fs*0.9,fs*0.35,0,TAU);g.fill();}
   const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;
 }
+function ledColor(c){const t=(c.val+' '+c.mpn+' '+(c.desc||'')).toLowerCase();
+  return new THREE.Color(/빨|적색|red|630|625|r6c/.test(t)?0xff3b2f:/파랑|청색|blue|470|465/.test(t)?0x3d8bff:/노랑|황색|yellow|amber|590|585/.test(t)?0xffc23d:/흰|백색|white/.test(t)?0xf4f6ff:0x3dff7a);}
+let GLOW=null;function glowTex(){if(GLOW)return GLOW;const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(0.25,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);GLOW=new THREE.CanvasTexture(c);return GLOW;}
 function build3D(c){
   const m=mats(),outer=new THREE.Group(),inner=new THREE.Group();outer.add(inner);
   const b=c.body,f=c.f,T=BD.t;
   if(f){outer.position.set(c.x,c.y,0);outer.rotation.z=c.rot*D2R;}else{outer.position.set(b.cx,b.cy,0);outer.rotation.z=b.ang*D2R;}
   if(c.side==='B')inner.rotation.y=Math.PI;
   const bw=b.w,bh=b.h,ht=b.ht,k=c.kind;
-  if(k==='chip'||k==='led'){
+  if(k==='chip'||k==='led'||k==='diode'){
     const e=bw*0.2;inner.add(box(e,bh,ht,m.tin,-(bw/2-e/2),0,0),box(e,bh,ht,m.tin,bw/2-e/2,0,0));
-    if(k==='led')inner.add(box(bw-2*e,bh*0.98,ht*0.55,m.ledBody,0,0,0),box(bw-2*e,bh*0.8,ht*0.45,m.lens,0,0,ht*0.55));
+    if(k==='led'){
+      // each LED gets its own lens material and an additive glow sprite, driven by the circuit simulation
+      const col=ledColor(c),lens=new THREE.MeshStandardMaterial({color:col.clone().lerp(new THREE.Color(0xffffff),0.35),emissive:col,emissiveIntensity:0.06,transparent:true,opacity:0.88,roughness:0.2});
+      const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:col,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false,opacity:0}));
+      glow.position.set(0,0,ht+0.25);glow.visible=false;glow.userData.noPick=true;
+      inner.add(box(bw-2*e,bh*0.98,ht*0.55,m.ledBody,0,0,0),box(bw-2*e,bh*0.8,ht*0.45,lens,0,0,ht*0.55),glow);outer.userData.led={mat:lens,glow,b:0};}
+    else if(k==='diode')inner.add(box(bw-2*e,bh*0.98,ht*0.98,m.res,0,0,0),box(Math.max(0.3,bw*0.08),bh*0.99,ht*1.0,m.ceramic,(c.pads[0]&&c.pads[0].n==='1'&&/^(K|C)$/i.test(c.pads[0].fn||'')?-1:1)*(bw/2-e-bw*0.08),0,0.005));
     else inner.add(box(bw-2*e,bh*0.98,ht*0.98,c.ref[0]==='C'?m.cap:c.ref[0]==='L'?m.ind:m.res,0,0,0));
+  }else if(k==='motor'){
+    // 130-size can lying along local +x on a bracket, terminals to the pads, gearbox output fan on the shaft
+    const r=Math.min(bh,ht)/2-0.3,zc=ht-r,cyl=(rr,len,mat,x,seg)=>{const g=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,len,seg||40),mat);g.rotation.z=Math.PI/2;g.position.set(x,0,zc);return g;};
+    inner.add(box(bw*0.62,bh*0.82,zc-r*0.55,m.conn,-1,0,0));
+    inner.add(cyl(r,17,m.steel,-1.5),cyl(r*0.96,2.4,m.beige,-11.2),cyl(r*0.42,1.2,m.steel,7.6,24),cyl(0.9,5.6,m.steel,10.6,16));
+    [2.5,-2.5].forEach(y=>inner.add(box(0.5,1.2,zc-r*0.15,m.tin,-12.9,y,0)));
+    const rot=new THREE.Group();rot.position.set(13.2,0,zc);
+    const prop=m.prop||(m.prop=new THREE.MeshStandardMaterial({color:0xe8590c,roughness:0.5}));
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.9,1.9,2.6,28),m.plastic);hub.rotation.z=Math.PI/2;rot.add(hub);
+    for(let i=0;i<3;i++){const a=i*TAU/3,bl=new THREE.Group();bl.rotation.x=a;const blade=box(0.7,2.9,5.6,i===0?m.ceramic:prop,0,0,1.6);blade.rotation.y=0.35;bl.add(blade);rot.add(bl);}
+    inner.add(rot);outer.userData.rotor=rot;
   }else if(k==='ic'){
     const st=f?(f.stand||0):(c.pads.some(p=>p.drill)?0.5:0.05);
     let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({U1:['MCU-Q32','2641 A'],U2:['AMS1117','3.3 2638'],U3:['25Q32JV','SIQ 2635']}[c.ref]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
@@ -2447,7 +2598,7 @@ function init3D(){
   const sel=new THREE.BoxHelper(undefined,0xffd23f);sel.visible=false;scene.add(sel);
   G3={renderer,scene,cam,sel,dirty:true,orb:{th:-1.95,ph:0.95,r:110,t:new THREE.Vector3()},anim:null,board:null};
   bind3D();
-  (function loop(){requestAnimationFrame(loop);stepAnim();if(G3.dirty&&S.view==='3d'&&S.sch!=='full'&&G3.board){G3.renderer.render(G3.scene,G3.cam);G3.dirty=false;}})();
+  (function loop(now){requestAnimationFrame(loop);stepAnim();stepPlay(now||performance.now());if(G3.dirty&&S.view==='3d'&&S.sch!=='full'&&G3.board){G3.renderer.render(G3.scene,G3.cam);G3.dirty=false;}})();
   return true;
 }
 function disposeTree(o){o.traverse(n=>{if(n.geometry)n.geometry.dispose();const ms=Array.isArray(n.material)?n.material:n.material?[n.material]:[];ms.forEach(mm=>{if(mm.map){mm.map.dispose();mm.dispose();}});});}
@@ -2473,8 +2624,9 @@ function rebuild3D(){
   const top=new THREE.Mesh(sg,new THREE.MeshStandardMaterial({map:G3.tex.T,roughness:0.55,metalness:0.05}));top.position.z=T/2+0.01;top.userData.side='T';root.add(top);
   const bot=new THREE.Mesh(sg,new THREE.MeshStandardMaterial({map:G3.tex.B,roughness:0.55,metalness:0.05,side:THREE.BackSide}));bot.position.z=-T/2-0.01;bot.userData.side='B';root.add(bot);
   G3.planes=[top,bot];
-  const compRoot=new THREE.Group();root.add(compRoot);G3.compRoot=compRoot;G3.comps={};
-  BD.comps.forEach(c=>{if(c.kind==='none'||!(c.body.w>0.1&&c.body.h>0.1))return;const g=build3D(c);compRoot.add(g);G3.comps[c.ref]=g;});
+  const compRoot=new THREE.Group();root.add(compRoot);G3.compRoot=compRoot;G3.comps={};G3.leds={};G3.rotors={};
+  BD.comps.forEach(c=>{if(c.kind==='none'||!(c.body.w>0.1&&c.body.h>0.1))return;const g=build3D(c);compRoot.add(g);G3.comps[c.ref]=g;
+    if(g.userData.led)G3.leds[c.ref]=g.userData.led;if(g.userData.rotor)G3.rotors[c.ref]=g.userData.rotor;});PLAY.applied=null;
   G3.board=BD;setExplode(S.explode,true);updateTextures();resize3D();homeCam(false);
 }
 function resize3D(){if(!G3||S.view!=='3d'||S.sch==='full')return;const w=cv3.clientWidth,h=cv3.clientHeight;if(!w||!h)return;G3.renderer.setSize(w,h,false);G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.dirty=true;}
@@ -2494,6 +2646,56 @@ function setExplode(v,quiet){
   BD.comps.forEach(c=>{const g=G3.comps[c.ref];if(g)g.position.z=(c.side==='B'?-1:1)*(T/2+v*lift);});
   if(G3.sel.visible)G3.sel.update();G3.ver=(G3.ver||0)+1;if(!quiet)G3.dirty=true;
 }
+/* ---------- circuit playback in 3D: LED glow and motor rotation from the circuit simulation ---------- */
+const PLAY={on:true,simT:0,dur:6,rt:false,last:0,key:null,ang:{},applied:null,bar:0};
+function playReset(){PLAY.key=null;PLAY.simT=0;PLAY.on=true;PLAY.ang={};}
+function playSrc(){
+  if(typeof SR==='undefined'||!SR.sp||SR.sp.error)return null;
+  const tr=SR.cfg&&SR.cfg.sp&&SR.cfg.sp.tran;
+  if(SR.sp.fromTran&&tr&&tr.anim&&tr.anim.t.length>1){const A=tr.anim;if(!Object.keys(A.led).length&&!Object.keys(A.mot).length)return null;return{tran:A,T:A.t[A.t.length-1]};}
+  if(SR.sp.parts&&SR.sp.parts.some(p=>p.type==='MOTOR'||(p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led')))return{dc:SR.sp};
+  return null;
+}
+const bsearch=(a,t)=>{let lo=0,hi=a.length-1;if(t<=a[0])return 0;if(t>=a[hi])return hi;while(hi-lo>1){const m=(lo+hi)>>1;if(a[m]<=t)lo=m;else hi=m;}return lo;};
+function interpAt(ts,v,t){const i=bsearch(ts,t);if(i>=ts.length-1)return v[v.length-1];const k=(t-ts[i])/(ts[i+1]-ts[i]||1);return v[i]+(v[i+1]-v[i])*k;}
+// average LED current over the sim-time window one display frame covers, so fast PWM looks dimmed rather than strobing
+function ledAvg(A,ref,t,win){const cum=A._cum||(A._cum={});let c=cum[ref];if(!c){const v=A.led[ref];c=cum[ref]=new Float64Array(v.length);for(let i=1;i<v.length;i++)c[i]=c[i-1]+(v[i]+v[i-1])/2*(A.t[i]-A.t[i-1]);}
+  const t0=Math.max(0,t-win);if(t-t0<1e-12)return interpAt(A.t,A.led[ref],t);return(interpAt(A.t,c,t)-interpAt(A.t,c,t0))/(t-t0);}
+const ledLevel=I=>I>2e-5?Math.min(1,Math.pow(I/0.005,0.5)):0;
+function stepPlay(now){
+  const dt=PLAY.last?Math.min(0.1,(now-PLAY.last)/1000):0;PLAY.last=now;
+  if(!G3||!G3.board||!G3.leds)return;
+  const src=playSrc();let changed=false;
+  const setLed=(ref,I)=>{const L=G3.leds[ref];if(!L)return;const b=ledLevel(I);if(Math.abs(L.b-b)<0.003&&PLAY.applied)return;L.b=b;L.I=I;
+    L.mat.emissiveIntensity=0.06+b*2.6;L.glow.material.opacity=b>0.01?Math.min(1,0.3+b*0.8):0;const sc=1+b*8;L.glow.scale.set(sc,sc,1);L.glow.visible=b>0.01;changed=true;};
+  const setRot=(ref,a)=>{const g=G3.rotors[ref];if(!g)return;if(Math.abs(g.rotation.x-a)>1e-4){g.rotation.x=a;changed=true;}};
+  if(!src){if(PLAY.applied!=='none'){Object.keys(G3.leds).forEach(r=>{G3.leds[r].b=-1;setLed(r,0);});PLAY.applied='none';}}
+  else if(src.tran){const A=src.tran,T=src.T;if(PLAY.key!==A){PLAY.key=A;PLAY.simT=0;}
+    const speed=PLAY.rt?1:T/PLAY.dur;if(PLAY.on){PLAY.simT+=dt*speed;if(PLAY.simT>T)PLAY.simT%=T;}
+    const t=PLAY.simT,win=Math.max(PLAY.on?dt*speed:0,(T/(A.t.length-1))*2);
+    Object.keys(G3.leds).forEach(r=>setLed(r,A.led[r]?ledAvg(A,r,t,win):0));
+    Object.keys(A.mot).forEach(r=>{const m=A.mot[r];setRot(r,interpAt(A.t,m.th,t)/(m.gear||1));});PLAY.applied='tran';}
+  else{const P=src.dc.parts;const by={};P.forEach(p=>{by[p.id]=p;});
+    Object.keys(G3.leds).forEach(r=>setLed(r,by[r]&&by[r].type==='D'?by[r].I:0));
+    P.filter(p=>p.type==='MOTOR').forEach(p=>{if(PLAY.on)PLAY.ang[p.id]=((PLAY.ang[p.id]||0)+p.w/(p.gear||1)*dt)%TAU;setRot(p.id,PLAY.ang[p.id]||0);});PLAY.applied='dc';}
+  if(changed){G3.dirty=true;G3.ver=(G3.ver||0)+1;}
+  if(now-PLAY.bar>90){PLAY.bar=now;updatePlayBar(src);}
+}
+function updatePlayBar(src){
+  const bar=$('#playBar');const show=!!src&&S.view==='3d'&&S.sch!=='full'&&HS.ws==='board';bar.hidden=!show;if(!show)return;
+  const tr=!!src.tran;bar.classList.toggle('dc',!tr);
+  $('#pbPlay').textContent=PLAY.on?'❚❚':'▶';$('#pbPlay').setAttribute('aria-label',PLAY.on?'일시 정지':'재생');
+  const f=SIM.fmtSI;let info=[];
+  if(tr){const A=src.tran,T=src.T,t=PLAY.simT;if(document.activeElement!==$('#pbSeek'))$('#pbSeek').value=String(Math.round(t/T*1000));
+    $('#pbTime').textContent=`${(t*1e3).toFixed(t<0.01?2:1)} / ${(T*1e3).toFixed(0)} ms`;
+    Object.keys(A.mot).forEach(r=>{const m=A.mot[r];const w=interpAt(A.t,m.w,t);info.push(`${r} ${(w/(m.gear||1)*60/TAU).toFixed(0)} rpm · ${f(Math.abs(interpAt(A.t,m.I,t)),'A')}`);});}
+  else{$('#pbTime').textContent='DC 동작점';src.dc.parts.filter(p=>p.type==='MOTOR').forEach(p=>info.push(`${p.id} ${p.rpm.toFixed(0)} rpm · ${f(Math.abs(p.I),'A')}`));}
+  Object.keys(G3&&G3.leds||{}).forEach(r=>{const L=G3.leds[r];if(L.b>0.01)info.push(`${r} ${f(L.I,'A')}`);});
+  $('#pbInfo').textContent=info.join(' · ');
+}
+$('#pbPlay').addEventListener('click',()=>{PLAY.on=!PLAY.on;PLAY.bar=0;});
+$('#pbSeek').addEventListener('input',e=>{const s=playSrc();if(!s||!s.tran)return;PLAY.simT=+e.target.value/1000*s.T;PLAY.on=false;PLAY.bar=0;});
+$('#pbDur').addEventListener('change',e=>{const v=e.target.value;PLAY.rt=v==='rt';if(!PLAY.rt)PLAY.dur=+v;});
 function sync3D(){
   if(!G3||!G3.board)return;const g=S.selRef&&G3.comps[S.selRef];
   if(g){G3.sel.setFromObject(g);G3.sel.visible=true;}else G3.sel.visible=false;
@@ -2505,7 +2707,7 @@ function pick3DCam(cam,w,h,px,py){
   const objs=(S.layers.body3d?[G3.compRoot]:[]).concat(G3.planes);
   for(const h of rc.intersectObjects(objs,true)){
     if(h.object.userData.side){if(!h.uv)return null;const r=hit(h.uv.x,h.uv.y,h.object.userData.side,0.2)||{type:'none'};r._x=h.uv.x;r._y=h.uv.y;return r;}
-    const ref=h.object.userData.ref;if(ref)return{type:'comp',c:BD.byRef[ref]};
+    if(h.object.isSprite)continue;const ref=h.object.userData.ref;if(ref)return{type:'comp',c:BD.byRef[ref]};
   }
   return null;
 }
@@ -2627,18 +2829,19 @@ document.addEventListener('keydown',e=>{
 function header(){
   $('#bName').textContent=BD.name;$('#bTag').textContent=BD.source==='예제'?'예제 보드':BD.source;
   const n=BD.comps.length;$('#bSub').textContent=`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개`;
-  document.title=BD.source==='예제'?'SENSE-32 PCB 뷰어':BD.name+' · PCB 뷰어';
+  document.title=BD.source==='예제'?BD.name.split(' ')[0]+' PCB 뷰어':BD.name+' · PCB 뷰어';
 }
 function stats(){
   let tl=0,pads=0;Object.values(BD.nets).forEach(N=>{tl+=N.len.T+N.len.B;});
   const prs=new Set();['T.cu','B.cu'].forEach(L=>BD.layers[L].forEach(p=>{if(p.t==='pad'&&!p.via)prs.add(p);}));pads=prs.size;
   $('#stats').innerHTML=`<dt>부품</dt><dd>${BD.comps.length}</dd><dt>상단 / 하단</dt><dd>${BD.comps.filter(c=>c.side==='T').length} / ${BD.comps.filter(c=>c.side==='B').length}</dd><dt>넷</dt><dd>${BD.netOrder.length}</dd><dt>패드</dt><dd>${pads}</dd><dt>비아</dt><dd>${BD.vias.length}</dd><dt>드릴</dt><dd>${BD.drills.length}</dd>${tl?`<dt>트랙 길이</dt><dd>${fmt(tl,0)} mm</dd>`:''}`;
   const src=$('#srcBox');
-  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.</p><button class="btn primary sm" data-open style="margin-top:10px">파일 불러오기</button>`;}
+  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='motor'?'가상의 DC 모터 구동 예제입니다. J2에 PWM 신호를 넣으면 MOSFET이 모터를 돌리고 RUN LED가 켜집니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
+    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button><button class="btn sm" data-ex="${BD.demo==='motor'?'sense':'motor'}">${BD.demo==='motor'?'SENSE-32 예제':'DC 모터 예제'}</button></div>`;}
   else{src.innerHTML=`<ul class="files">${BD.files.filter(f=>f.role!=='ignore').map(f=>`<li><span class="fn">${esc(f.name.split('/').pop())}</span><span class="fr">${esc(PCB.ROLES[f.role]||f.role)}</span></li>`).join('')}</ul>`+
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
 }
-$('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();});
+$('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();const x=e.target.closest('[data-ex]');if(x)loadExample(x.dataset.ex);});
 function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}popsRefresh();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
   BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
@@ -2713,7 +2916,10 @@ function renderImport(){
 $('#flist').addEventListener('change',e=>{const s=e.target.closest('[data-role]');if(!s)return;const en=IMP.entries.find(x=>x.id===+s.dataset.role);if(en){en.role=s.value;en.note=en.role===en.auto?en.note:'';}renderImport();});
 $('#flist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(!d)return;IMP.entries=IMP.entries.filter(x=>x.id!==+d.dataset.del);renderImport();});
 $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImport();});
-$('#impSample').addEventListener('click',()=>{setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));closeImport();toast('예제 보드로 돌아왔습니다.');});
+function loadExample(which){const spec=which==='motor'?SAMPLE_MOTOR:SAMPLE_SPEC;setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
+  toast(which==='motor'?'DC 모터 구동 예제입니다. 시뮬레이션 → 회로 동작에서 "과도 해석 실행"을 누르면 3D에서 모터가 돌고 LED가 켜집니다.':'예제 보드로 돌아왔습니다.');}
+$('#impSample').addEventListener('click',()=>loadExample('sense'));
+$('#impSample2').addEventListener('click',()=>loadExample('motor'));
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{
@@ -2909,7 +3115,8 @@ function siBind(b){
 function thConfig(){
   if(SR.cfg.th)return SR.cfg.th;const P={};
   BD.comps.forEach(c=>{if(c.kind!=='none')P[c.ref]=0;});
-  if(BD.source==='예제')Object.assign(P,{U2:0.45,U1:0.12,U3:0.03,D1:0.008,R2:0.006});
+  if(BD.source==='예제'&&!BD.demo)Object.assign(P,{U2:0.45,U1:0.12,U3:0.03,D1:0.008,R2:0.006});
+  if(BD.demo==='motor')Object.assign(P,{M1:0.9,Q1:0.02,D1:0.05,D2:0.006,D3:0.01});
   SR.cfg.th={P,res:160};return SR.cfg.th;
 }
 function coverageGrid(res){
@@ -2971,14 +3178,21 @@ function thBind(b){
 function importPower(){const cfg=thConfig();if(!SR.sp||!SR.sp.parts)return;Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);SR.sp.parts.forEach(p=>{if(p.ref&&cfg.P[p.ref]!=null&&p.P>0)cfg.P[p.ref]=+(cfg.P[p.ref]+p.P).toFixed(4);});}
 
 /* ---------- circuit ---------- */
-const TYPE_LABEL={R:'저항',C:'커패시터',L:'인덕터',D:'다이오드',SW:'스위치',LOAD:'IC 부하',REG:'레귤레이터',V:'전압 소스'};
+const TYPE_LABEL={R:'저항',C:'커패시터',L:'인덕터',D:'다이오드',SW:'스위치',LOAD:'IC 부하',REG:'레귤레이터',V:'전압 소스',NMOS:'N-MOSFET · Vth',MOTOR:'DC 모터 · 부하 토크'};
 function spConfig(){
   if(SR.cfg.sp)return SR.cfg.sp;const ck=SIM.extractCircuit(BD);
-  if(BD.source==='예제'){ck.els.forEach(e=>{if(e.type==='LOAD')e.I=e.ref==='U1'?0.02:0.008;});if(BD.nets.LED)ck.srcs.push({id:'V2',type:'V',n:['LED',ck.gnd],v:3.3,wave:'pulse',t0:3e-3,per:4e-3,duty:0.5,tr:1e-3,label:'U1 GPIO (PB3) 출력 · 예시'});}
-  const probes=[...new Set(ck.srcs.map(s=>s.n[0]).concat(ck.els.filter(e=>e.type==='REG').map(e=>e.n[1])).concat(BD.nets.LED_A?['LED_A']:[]))].slice(0,4);
-  SR.cfg.sp={ck,tstop:12,steps:1200,probes,tran:null,hidden:{}};return SR.cfg.sp;
+  let tstop=12,steps=1200;
+  if(BD.demo==='motor'){
+    // signal injection on the PWM header: 500 Hz, 60 % duty, starting at 50 ms; long enough to watch the motor spin up
+    ck.srcs.forEach(s=>{if(s.n[0]==='VIN'){s.wave='dc';s.label='J1 5 V 입력 전원';}});
+    if(BD.nets.PWM)ck.srcs.push({id:'V2',type:'V',n:['PWM',ck.gnd],v:3.3,wave:'pulse',t0:50e-3,per:2e-3,duty:0.6,tr:1e-3,label:'J2 PWM 입력 · 신호 주입'});
+    tstop=800;steps=10000;
+  }
+  else if(BD.source==='예제'){ck.els.forEach(e=>{if(e.type==='LOAD')e.I=e.ref==='U1'?0.02:0.008;});if(BD.nets.LED)ck.srcs.push({id:'V2',type:'V',n:['LED',ck.gnd],v:3.3,wave:'pulse',t0:3e-3,per:4e-3,duty:0.5,tr:1e-3,label:'U1 GPIO (PB3) 출력 · 예시'});}
+  const probes=[...new Set(ck.srcs.map(s=>s.n[0]).concat(ck.els.filter(e=>e.type==='REG').map(e=>e.n[1])).concat(BD.nets.LED_A?['LED_A']:[]).concat(ck.els.filter(e=>e.type==='MOTOR').map(e=>e.n[1])))].slice(0,4);
+  SR.cfg.sp={ck,tstop,steps,probes,tran:null,hidden:{}};return SR.cfg.sp;
 }
-const valStr=e=>e.type==='R'?SIM.fmtSI(e.val,'Ω').replace(' ',''):e.type==='C'?SIM.fmtSI(e.val,'F').replace(' ',''):e.type==='L'?SIM.fmtSI(e.val,'H').replace(' ',''):e.type==='LOAD'?(e.I*1000).toFixed(1):e.type==='REG'?e.vset:'';
+const valStr=e=>e.type==='MOTOR'?(e.tl*1000).toFixed(2):e.type==='NMOS'?String(e.vth):e.type==='R'?SIM.fmtSI(e.val,'Ω').replace(' ',''):e.type==='C'?SIM.fmtSI(e.val,'F').replace(' ',''):e.type==='L'?SIM.fmtSI(e.val,'H').replace(' ',''):e.type==='LOAD'?(e.I*1000).toFixed(1):e.type==='REG'?e.vset:'';
 function spHTML(){
   const cfg=spConfig(),ck=cfg.ck,f=SIM.fmtSI;
   const netOpts=sel=>BD.netOrder.map(n=>`<option${n===sel?' selected':''}>${esc(n)}</option>`).join('');
@@ -2986,7 +3200,7 @@ function spHTML(){
     <div class="row3"><label class="fld"><span>+ 넷</span><select data-src="${i}" data-k="n0" id="src${i}-n">${netOpts(s.n[0])}</select></label><label class="fld"><span>파형</span><select data-src="${i}" data-k="wave" id="src${i}-w"><option value="dc"${s.wave==='dc'?' selected':''}>직류</option><option value="step"${s.wave==='step'?' selected':''}>계단</option><option value="pulse"${s.wave==='pulse'?' selected':''}>펄스</option></select></label><label class="fld"><span>전압 V</span><input type="number" step="0.1" data-src="${i}" data-k="v" value="${s.v}" id="src${i}-v"></label></div>
     ${s.wave==='step'?`<div class="row3"><label class="fld"><span>시작 ms</span><input type="number" step="0.1" min="0" data-src="${i}" data-k="t0" value="${+(s.t0*1e3).toFixed(3)}" id="src${i}-t0"></label><label class="fld"><span>상승 ms</span><input type="number" step="0.1" min="0.001" data-src="${i}" data-k="tr" value="${+(s.tr*1e3).toFixed(3)}" id="src${i}-tr"></label></div>`:''}
     ${s.wave==='pulse'?`<div class="row3"><label class="fld"><span>시작 ms</span><input type="number" step="0.1" min="0" data-src="${i}" data-k="t0" value="${+(s.t0*1e3).toFixed(3)}" id="src${i}-t0"></label><label class="fld"><span>주기 ms</span><input type="number" step="0.1" min="0.01" data-src="${i}" data-k="per" value="${+(s.per*1e3).toFixed(3)}" id="src${i}-per"></label><label class="fld"><span>듀티 %</span><input type="number" step="5" min="1" max="99" data-src="${i}" data-k="duty" value="${Math.round(s.duty*100)}" id="src${i}-d"></label></div>`:''}</div>`).join('');
-  const els=ck.els.map((e,i)=>{const unit=e.type==='LOAD'?'mA':e.type==='REG'?'V':'';
+  const els=ck.els.map((e,i)=>{const unit=e.type==='LOAD'?'mA':e.type==='REG'?'V':e.type==='MOTOR'?'mN·m':e.type==='NMOS'?'V':'';
     const valCell=e.type==='SW'?`<select data-el="${i}" data-k="closed" aria-label="${esc(e.ref)} 상태" id="el${i}-sw"><option value="0"${!e.closed?' selected':''}>열림</option><option value="1"${e.closed?' selected':''}>닫힘</option></select>`:e.type==='D'?(e.led?'LED':'Si'):`<input type="text" data-el="${i}" data-k="val" value="${esc(valStr(e))}" aria-label="${esc(e.ref)} 값" id="el${i}-v" style="width:72px">${unit?' '+unit:''}`;
     return`<tr><td><input type="checkbox" data-el="${i}" data-k="on"${e.on?' checked':''} aria-label="${esc(e.ref)} 사용" id="el${i}-on"></td><td class="mono">${esc(e.ref)}</td><td style="white-space:nowrap">${TYPE_LABEL[e.type]}${e.guess?' <span class="cls">값 추정</span>':''}</td><td class="mono" style="font-size:11px;white-space:nowrap">${e.n.map(esc).join(' → ')}</td><td class="r">${valCell}</td></tr>`;}).join('');
   let res='';const R=SR.sp;
@@ -2994,20 +3208,22 @@ function spHTML(){
   else if(R){
     const nets=Object.entries(R.nets).sort((a,b)=>b[1]-a[1]);
     const parts=R.parts.filter(p=>p.type!=='C'&&p.type!=='L'&&Math.abs(p.P)>1e-6).sort((a,b)=>Math.abs(b.P)-Math.abs(a.P));
-    res=`<div class="res"><div class="acts" style="justify-content:space-between"><h4>${esc(R.label)}</h4><button class="btn sm" id="sp-th">전력을 열 해석으로 보내기</button></div>
+    const mots=R.parts.filter(p=>p.type==='MOTOR'),leds=R.parts.filter(p=>p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led');
+    res=`<div class="res"><div class="acts" style="justify-content:space-between"><h4>${esc(R.label)}</h4><span class="hgap"><button class="btn sm" id="sp-play">3D에서 보기</button><button class="btn sm" id="sp-th">전력을 열 해석으로 보내기</button></span></div>
+    ${mots.length||leds.length?`<div class="kpis">${mots.map(p=>`<div class="kpi"><b>${p.rpm.toFixed(0)} rpm</b><span>${esc(p.id)} 출력축${p.gear>1?` (기어 1:${p.gear})`:''} · ${f(Math.abs(p.I),'A')}</span></div>`).join('')}${leds.map(p=>`<div class="kpi"><b>${f(Math.max(0,p.I),'A')}</b><span>${esc(p.id)} ${esc(BD.byRef[p.id].val||'LED')} 전류</span></div>`).join('')}</div>`:''}
     <div class="scroll" style="max-height:200px"><table class="stbl"><thead><tr><th>넷</th><th class="r">전압</th></tr></thead><tbody>${nets.map(([n,v])=>`<tr class="click" data-spnet="${esc(n)}"><td class="mono">${esc(n)}</td><td class="r mono">${f(v,'V',3)}</td></tr>`).join('')}</tbody></table></div>
     <table class="stbl"><thead><tr><th>소자</th><th class="r">전류</th><th class="r">전력</th></tr></thead><tbody>${parts.slice(0,10).map(p=>`<tr><td class="mono">${esc(p.id)} <span class="cls">${TYPE_LABEL[p.type]||''}</span></td><td class="r mono">${f(Math.abs(p.I),'A')}</td><td class="r mono">${p.type==='V'?'공급 ':''}${f(Math.abs(p.P),'W')}</td></tr>`).join('')}</tbody></table></div>`;
   }
   const tr=cfg.tran;let chart='';
   if(tr&&tr.error)chart=`<p class="errline">${esc(tr.error)}</p>`;
-  else if(tr)chart=`<div class="res"><h4>과도 응답 · 0–${cfg.tstop} ms</h4><div class="chipset" role="group" aria-label="표시할 넷">${cfg.probes.map((p,i)=>`<button data-probe="${esc(p)}" aria-pressed="${!cfg.hidden[p]}"><i style="background:var(--s${i%8+1})"></i>${esc(p)}</button>`).join('')}</div><div class="chart" id="spChart"></div></div>`;
+  else if(tr)chart=`<div class="res"><div class="acts" style="justify-content:space-between"><h4>과도 응답 · 0–${cfg.tstop} ms</h4>${tr.anim&&(Object.keys(tr.anim.led).length||Object.keys(tr.anim.mot).length)?'<button class="btn sm primary" id="sp-play2">▶ 3D에서 재생</button>':''}</div><div class="chipset" role="group" aria-label="표시할 넷">${cfg.probes.map((p,i)=>`<button data-probe="${esc(p)}" aria-pressed="${!cfg.hidden[p]}"><i style="background:var(--s${i%8+1})"></i>${esc(p)}</button>`).join('')}</div><div class="chart" id="spChart"></div></div>`;
   return`<div class="sim"><p class="lead">보드의 넷리스트와 부품 값으로 회로를 만들어 DC 동작점과 시간에 따른 전압 변화를 계산합니다. IC는 정전류 부하나 레귤레이터 모델로 바꿔 넣었습니다.</p>
   <div><h4 style="margin:0 0 6px;font-size:13px">소스</h4><div style="display:flex;flex-direction:column;gap:8px">${srcs||'<p class="lead">소스가 없습니다.</p>'}</div><div class="acts" style="margin-top:8px"><button class="btn sm" id="sp-add">+ 전압 소스</button><label class="fld" style="flex-direction:row;align-items:center;gap:6px;margin-left:auto"><span>접지 넷</span><select id="sp-gnd" style="width:auto">${netOpts(ck.gnd)}</select></label></div></div>
   <div><h4 style="margin:0 0 6px;font-size:13px">소자 ${ck.els.filter(e=>e.on).length}/${ck.els.length}</h4><div class="scroll"><table class="stbl"><thead><tr><th></th><th>참조</th><th>종류</th><th>연결</th><th class="r">값</th></tr></thead><tbody>${els||'<tr><td colspan="5">모델로 바꿀 수 있는 부품이 없습니다.</td></tr>'}</tbody></table></div>
   ${ck.skipped.length?`<p class="lead" style="margin-top:6px">제외: ${ck.skipped.map(s=>esc(s[0])+' ('+esc(s[1])+')').join(', ')}</p>`:''}</div>
   <div class="row3"><label class="fld"><span>해석 시간 ms</span><input type="number" min="0.01" step="1" id="sp-t" value="${cfg.tstop}"></label><label class="fld"><span>계산 단계</span><input type="number" min="100" max="20000" step="100" id="sp-n" value="${cfg.steps}"></label><div class="fld"><span>&nbsp;</span><button class="btn sm" id="sp-dc">DC 동작점</button></div></div>
   <div class="acts"><button class="btn primary" id="sp-run">과도 해석 실행</button></div>${chart}${res}
-  <p class="lead">R·C·L·다이오드·스위치·전압 소스는 MNA(수정 절점 해석) 방식으로 풉니다. 크리스털, 트랜지스터, 디지털 동작은 모델링하지 않습니다.</p></div>`;
+  <p class="lead">R·C·L·다이오드·스위치·N채널 MOSFET·전압 소스는 MNA(수정 절점 해석) 방식으로 풉니다. DC 모터는 권선 저항·인덕턴스·역기전력과 회전자 관성·마찰·기어비를 묶은 전기-기계 모델로, 회전 속도를 시간에 따라 적분합니다. 크리스털, BJT, 디지털 동작은 모델링하지 않습니다.</p></div>`;
 }
 function spBind(b){
   const cfg=SR.cfg.sp,ck=cfg.ck;
@@ -3018,15 +3234,16 @@ function spBind(b){
   b.querySelector('#sp-gnd')?.addEventListener('change',e=>{ck.gnd=e.target.value;ck.srcs.forEach(s=>{s.n[1]=ck.gnd;});});
   b.querySelectorAll('[data-el]').forEach(el=>el.addEventListener('change',()=>{const e=ck.els[+el.dataset.el],k=el.dataset.k;
     if(k==='on')e.on=el.checked;else if(k==='closed')e.closed=el.value==='1';
-    else{const v=SIM.parseVal(el.value);if(e.type==='LOAD'){const x=parseFloat(el.value);if(x>=0)e.I=x/1000;}else if(e.type==='REG'){const x=parseFloat(el.value);if(x>0)e.vset=x;}else if(v>0){e.val=v;e.guess=false;}el.value=valStr(e);}}));
+    else{const v=SIM.parseVal(el.value);if(e.type==='MOTOR'){const x=parseFloat(el.value);if(x>=0)e.tl=x/1000;}else if(e.type==='NMOS'){const x=parseFloat(el.value);if(x>0)e.vth=x;}else if(e.type==='LOAD'){const x=parseFloat(el.value);if(x>=0)e.I=x/1000;}else if(e.type==='REG'){const x=parseFloat(el.value);if(x>0)e.vset=x;}else if(v>0){e.val=v;e.guess=false;}el.value=valStr(e);}}));
   b.querySelector('#sp-t')?.addEventListener('change',e=>{cfg.tstop=Math.max(0.01,num(e.target.value,cfg.tstop));});
   b.querySelector('#sp-n')?.addEventListener('change',e=>{cfg.steps=Math.round(Math.min(20000,Math.max(100,num(e.target.value,cfg.steps))));});
-  b.querySelector('#sp-dc')?.addEventListener('click',()=>{const r=SIM.dcop(Object.assign({},ck,{tDC:cfg.tstop*1e-3}));SR.sp=r.error?{error:r.error}:Object.assign(r,{label:`DC 동작점 (t = ${cfg.tstop} ms 소스 값)`});renderSim();updateLegend();refresh(false);});
+  b.querySelector('#sp-dc')?.addEventListener('click',()=>{const r=SIM.dcop(Object.assign({},ck,{tDC:cfg.tstop*1e-3}));SR.sp=r.error?{error:r.error}:Object.assign(r,{label:`DC 동작점 (t = ${cfg.tstop} ms 소스 값)`});playReset();renderSim();updateLegend();refresh(false);});
   b.querySelector('#sp-run')?.addEventListener('click',()=>{const btn=b.querySelector('#sp-run');btn.disabled=true;btn.textContent='계산 중…';
     setTimeout(()=>{const nets=[...new Set(cfg.probes.concat(ck.srcs.map(s=>s.n[0])))];cfg.probes=nets.slice(0,8);
-      const r=SIM.transient(ck,cfg.tstop*1e-3,cfg.steps,cfg.probes);cfg.tran=r;if(!r.error)SR.sp=Object.assign({},r.final,{label:`과도 해석 끝 (t = ${cfg.tstop} ms)`});renderSim();updateLegend();refresh(false);},20);});
+      const r=SIM.transient(ck,cfg.tstop*1e-3,cfg.steps,cfg.probes);cfg.tran=r;if(!r.error){SR.sp=Object.assign({},r.final,{label:`과도 해석 끝 (t = ${cfg.tstop} ms)`,fromTran:true});playReset();}renderSim();updateLegend();refresh(false);},20);});
   b.querySelectorAll('[data-probe]').forEach(x=>x.addEventListener('click',()=>{const p=x.dataset.probe;cfg.hidden[p]=!cfg.hidden[p];renderSim();}));
   b.querySelectorAll('[data-spnet]').forEach(r=>r.addEventListener('click',()=>{const n=r.dataset.spnet;if(!cfg.probes.includes(n)){cfg.probes.push(n);if(cfg.probes.length>8)cfg.probes.shift();}S.hlNet=n;refresh(false);renderSim();}));
+  b.querySelectorAll('#sp-play,#sp-play2').forEach(x=>x.addEventListener('click',()=>{playReset();if(S.view!=='3d'||S.sch==='full'){setView('3d');}toast(SR.sp&&SR.sp.fromTran?'3D 보기에서 과도 해석을 재생합니다. 아래 재생 막대로 멈추거나 시간을 옮길 수 있습니다.':'3D 보기에서 DC 동작점의 LED 밝기와 모터 회전을 보여줍니다.');}));
   b.querySelector('#sp-th')?.addEventListener('click',()=>{importPower();SR.tab='th';renderSim();updateLegend();refresh(false);toast('회로 해석의 소비전력을 열 해석 표에 넣었습니다. "열 분포 계산"을 누르세요.');});
   const ch=b.querySelector('#spChart');if(ch&&cfg.tran&&!cfg.tran.error)drawChart(ch,cfg);
 }
@@ -3709,7 +3926,8 @@ function mount3DCell(C){
   g.home=an=>g.to(-1.95,0.95,g.fitR()*1.05,an);
   const step=()=>{const a=g.anim;if(!a)return;const k=Math.min(1,(performance.now()-a.t0)/450),e=1-Math.pow(1-k,3),o=g.orb,L=(p,q)=>p+(q-p)*e;
     o.th=L(a.from.th,a.to.th);o.ph=L(a.from.ph,a.to.ph);o.r=L(a.from.r,a.to.r);o.t.set(L(a.from.tx,0),L(a.from.ty,0),0);g.place();if(k>=1)g.anim=null;};
-  const tick=()=>{if(!g.alive)return;C.win.requestAnimationFrame(tick);step();if(G3.ver!==g.ver){g.ver=G3.ver;g.dirty=true;}
+  const tick=()=>{if(!g.alive)return;C.win.requestAnimationFrame(tick);step();stepPlay(performance.now()); // keeps circuit playback moving even if the main window is in the background
+    if(G3.ver!==g.ver){g.ver=G3.ver;g.dirty=true;}
     if(g.dirty&&G3.board&&C.w){try{renderer.render(G3.scene,cam);}catch(e){console.error(e);g.alive=false;}g.dirty=false;}};
   g.dispose=()=>{g.alive=false;try{renderer.dispose();renderer.forceContextLoss();}catch(e){}};
   C.g=g;bind3DCell(C);C.win.requestAnimationFrame(tick);

@@ -43,3 +43,29 @@ test('thermal: a point source heats above ambient', () => {
   const r = SIM.thermalSolve({ nx, ny, a: 1e-3, mask: new Uint8Array(n).fill(1), cov: new Float32Array(n).fill(0.5) }, { t: 1.6, cu: 35, hconv: 10, Ta: 25 }, P);
   assert.ok(r.tmax > 30 && r.tmin >= 25 - 1e-6);
 });
+
+test('motor example: MOSFET switches the motor, which spins up and lights the RUN LED', () => {
+  const { SAMPLE_MOTOR } = load();
+  const M = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_MOTOR))));
+  const ck = SIM.extractCircuit(M);
+  assert.ok(ck.els.some(e => e.type === 'NMOS' && e.id === 'Q1'));
+  assert.ok(ck.els.some(e => e.type === 'MOTOR' && e.id === 'M1' && e.gear === 48));
+  ck.srcs.push({ id: 'V2', type: 'V', n: ['PWM', ck.gnd], v: 3.3, wave: 'dc' });
+  const dc = SIM.dcop(Object.assign({}, ck, { tDC: 1 }));
+  assert.ok(!dc.error, dc.error);
+  const m = dc.parts.find(p => p.id === 'M1');
+  assert.ok(m.rpm > 150 && m.rpm < 300, `rpm ${m.rpm}`);
+  assert.ok(dc.nets.MOT_N < 0.2, `MOT_N ${dc.nets.MOT_N}`);
+  // gate low: motor stopped, RUN LED dark, power LED still on
+  ck.srcs[ck.srcs.length - 1].v = 0;
+  const off = SIM.dcop(Object.assign({}, ck, { tDC: 1 }));
+  assert.ok(Math.abs(off.parts.find(p => p.id === 'M1').rpm) < 1);
+  assert.ok(off.parts.find(p => p.id === 'D3').I < 1e-5 && off.parts.find(p => p.id === 'D2').I > 1e-3);
+  // transient: speed rises monotonically on average and the animation track is recorded
+  ck.srcs[ck.srcs.length - 1] = { id: 'V2', type: 'V', n: ['PWM', ck.gnd], v: 3.3, wave: 'step', t0: 0.02, tr: 1e-4 };
+  const tr = SIM.transient(ck, 0.4, 4000, ['MOT_N']);
+  assert.ok(!tr.error, tr.error);
+  const w = tr.anim.mot.M1.w;
+  assert.ok(w[1000] > 50 && w[4000] > w[2000] && w[2000] > w[1000], `w ${w[1000]} ${w[2000]} ${w[4000]}`);
+  assert.ok(tr.anim.led.D3[4000] > 1e-3);
+});

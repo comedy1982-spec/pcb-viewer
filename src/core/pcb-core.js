@@ -466,10 +466,15 @@ const FP={};
   FP['XTAL-3225']={kind:'xtal',body:[3.2,2.5,0.8],pads:[{n:'1',x:-1.1,y:-0.8,w:1.4,h:1.2},{n:'2',x:1.1,y:-0.8,w:1.4,h:1.2},{n:'3',x:1.1,y:0.8,w:1.4,h:1.2},{n:'4',x:-1.1,y:0.8,w:1.4,h:1.2}]};
   FP['SW-6x6']={kind:'btn',body:[6,6,3.5],pads:[{n:'1',x:-4,y:2.25,w:1.6,h:1.4},{n:'2',x:4,y:2.25,w:1.6,h:1.4},{n:'3',x:-4,y:-2.25,w:1.6,h:1.4},{n:'4',x:4,y:-2.25,w:1.6,h:1.4}]};
   FP['HDR-1x4']={kind:'hdr',body:[2.54,10.16,2.5],pads:[3.81,1.27,-1.27,-3.81].map((y,i)=>({n:''+(i+1),x:0,y,w:1.7,h:1.7,round:true,drill:1.0}))};
+  FP['HDR-1x2']={kind:'hdr',body:[2.54,5.08,2.5],pads:[1.27,-1.27].map((y,i)=>({n:''+(i+1),x:0,y,w:1.7,h:1.7,round:true,drill:1.0}))};
+  FP['SOT-23']={kind:'ic',stand:0.05,body:[2.9,1.3,1.0],pads:[{n:'1',x:-0.95,y:-1.05,w:0.6,h:0.9},{n:'2',x:0.95,y:-1.05,w:0.6,h:0.9},{n:'3',x:0,y:1.05,w:0.6,h:0.9}]};
+  FP['SMA']={kind:'diode',body:[4.3,2.6,2.1],pads:[{n:'1',x:-2.0,y:0,w:1.5,h:1.7},{n:'2',x:2.0,y:0,w:1.5,h:1.7}]};
+  // board-mount brushed DC motor (130 size can lying on a bracket); the rotor/fan is drawn only in 3D
+  FP['MOTOR-130']={kind:'motor',body:[24,16,15.5],pads:[{n:'1',x:-14,y:2.5,w:2.2,h:2.2,round:true,drill:1.1},{n:'2',x:-14,y:-2.5,w:2.2,h:2.2,round:true,drill:1.1}]};
   for(const k in FP){const f=FP[k];const[bw,bh]=f.body;let a=-bw/2,b=-bh/2,c=bw/2,d=bh/2;f.pads.forEach(p=>{a=Math.min(a,p.x-p.w/2);b=Math.min(b,p.y-p.h/2);c=Math.max(c,p.x+p.w/2);d=Math.max(d,p.y+p.h/2);});f.lbb=[a,b,c,d];}
 })();
 function fromSpec(spec){
-  const B=newBoard();B.source=spec._source||'JSON';const bd=spec.board||{};
+  const B=newBoard();B.source=spec._source||'JSON';B.demo=spec._demo||null;const bd=spec.board||{};
   B.name=bd.name||'';B.t=bd.thickness||1.6;
   const W=+bd.width,H=+bd.height;if(!(W>0&&H>0))throw new Error('JSON의 board.width, board.height가 필요합니다.');
   const R=bd.corner!=null?+bd.corner:0;
@@ -482,6 +487,7 @@ function fromSpec(spec){
     const side=sideOf(cs.side),rot=+(cs.rotation||cs.rot||0),x=+cs.x,y=+cs.y;
     const lib=FP[cs.footprint];
     const c={ref:cs.ref,val:cs.value||'',fp:cs.footprint||'',side,x,y,rot,pads:[],mpn:cs.mpn||'',desc:cs.description||'',pn:cs.pinNames||null,lab:cs.label||null};
+    if(cs.model&&typeof cs.model==='object')c.model=cs.model;
     const xf=(lx,ly)=>{const xx=side==='B'?-lx:lx,a=rot*D2R;return[x+xx*Math.cos(a)-ly*Math.sin(a),y+xx*Math.sin(a)+ly*Math.cos(a)];};
     const padsL=cs.pads||(lib?lib.pads:[]);
     padsL.forEach(p=>{const[wx,wy]=xf(+p.x,+p.y);const n=''+(p.n!=null?p.n:p.number);const round=p.round||p.shape==='circle';

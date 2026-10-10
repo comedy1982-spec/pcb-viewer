@@ -77,7 +77,7 @@ function brackets(ctx,bb,color,w){
 function bodyColor(c){
   const k=c.kind,r=c.ref[0];
   if(k==='chip')return r==='C'?'#a8835a':r==='L'?'#3b3d40':'#1f1f20';
-  return{ic:'#1d1e21',usb:'#a9afb4',conn:'#2b2c2f',xtal:'#b8bdc2',btn:'#2a2d31',hdr:'#151617',led:'#e6ece6',tht2:r==='C'?'#2c4f8a':r==='R'?'#d8c9a3':'#232425',box:'#6b7076'}[k]||'#6b7076';
+  return{diode:'#1f1f20',motor:'#b8bdc2',ic:'#1d1e21',usb:'#a9afb4',conn:'#2b2c2f',xtal:'#b8bdc2',btn:'#2a2d31',hdr:'#151617',led:'#e6ece6',tht2:r==='C'?'#2c4f8a':r==='R'?'#d8c9a3':'#232425',box:'#6b7076'}[k]||'#6b7076';
 }
 const padOn=(p,side)=>p.side==='both'||p.side===side||!p.side;
 function drawSide(ctx,side,o){
@@ -238,16 +238,37 @@ function markTex(lines,bw,bh,dot){
   if(dot){g.fillStyle='#3a3d42';g.beginPath();g.arc(fs*0.9,fs*0.9,fs*0.35,0,TAU);g.fill();}
   const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;
 }
+function ledColor(c){const t=(c.val+' '+c.mpn+' '+(c.desc||'')).toLowerCase();
+  return new THREE.Color(/빨|적색|red|630|625|r6c/.test(t)?0xff3b2f:/파랑|청색|blue|470|465/.test(t)?0x3d8bff:/노랑|황색|yellow|amber|590|585/.test(t)?0xffc23d:/흰|백색|white/.test(t)?0xf4f6ff:0x3dff7a);}
+let GLOW=null;function glowTex(){if(GLOW)return GLOW;const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(0.25,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);GLOW=new THREE.CanvasTexture(c);return GLOW;}
 function build3D(c){
   const m=mats(),outer=new THREE.Group(),inner=new THREE.Group();outer.add(inner);
   const b=c.body,f=c.f,T=BD.t;
   if(f){outer.position.set(c.x,c.y,0);outer.rotation.z=c.rot*D2R;}else{outer.position.set(b.cx,b.cy,0);outer.rotation.z=b.ang*D2R;}
   if(c.side==='B')inner.rotation.y=Math.PI;
   const bw=b.w,bh=b.h,ht=b.ht,k=c.kind;
-  if(k==='chip'||k==='led'){
+  if(k==='chip'||k==='led'||k==='diode'){
     const e=bw*0.2;inner.add(box(e,bh,ht,m.tin,-(bw/2-e/2),0,0),box(e,bh,ht,m.tin,bw/2-e/2,0,0));
-    if(k==='led')inner.add(box(bw-2*e,bh*0.98,ht*0.55,m.ledBody,0,0,0),box(bw-2*e,bh*0.8,ht*0.45,m.lens,0,0,ht*0.55));
+    if(k==='led'){
+      // each LED gets its own lens material and an additive glow sprite, driven by the circuit simulation
+      const col=ledColor(c),lens=new THREE.MeshStandardMaterial({color:col.clone().lerp(new THREE.Color(0xffffff),0.35),emissive:col,emissiveIntensity:0.06,transparent:true,opacity:0.88,roughness:0.2});
+      const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:col,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false,opacity:0}));
+      glow.position.set(0,0,ht+0.25);glow.visible=false;glow.userData.noPick=true;
+      inner.add(box(bw-2*e,bh*0.98,ht*0.55,m.ledBody,0,0,0),box(bw-2*e,bh*0.8,ht*0.45,lens,0,0,ht*0.55),glow);outer.userData.led={mat:lens,glow,b:0};}
+    else if(k==='diode')inner.add(box(bw-2*e,bh*0.98,ht*0.98,m.res,0,0,0),box(Math.max(0.3,bw*0.08),bh*0.99,ht*1.0,m.ceramic,(c.pads[0]&&c.pads[0].n==='1'&&/^(K|C)$/i.test(c.pads[0].fn||'')?-1:1)*(bw/2-e-bw*0.08),0,0.005));
     else inner.add(box(bw-2*e,bh*0.98,ht*0.98,c.ref[0]==='C'?m.cap:c.ref[0]==='L'?m.ind:m.res,0,0,0));
+  }else if(k==='motor'){
+    // 130-size can lying along local +x on a bracket, terminals to the pads, gearbox output fan on the shaft
+    const r=Math.min(bh,ht)/2-0.3,zc=ht-r,cyl=(rr,len,mat,x,seg)=>{const g=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,len,seg||40),mat);g.rotation.z=Math.PI/2;g.position.set(x,0,zc);return g;};
+    inner.add(box(bw*0.62,bh*0.82,zc-r*0.55,m.conn,-1,0,0));
+    inner.add(cyl(r,17,m.steel,-1.5),cyl(r*0.96,2.4,m.beige,-11.2),cyl(r*0.42,1.2,m.steel,7.6,24),cyl(0.9,5.6,m.steel,10.6,16));
+    [2.5,-2.5].forEach(y=>inner.add(box(0.5,1.2,zc-r*0.15,m.tin,-12.9,y,0)));
+    const rot=new THREE.Group();rot.position.set(13.2,0,zc);
+    const prop=m.prop||(m.prop=new THREE.MeshStandardMaterial({color:0xe8590c,roughness:0.5}));
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.9,1.9,2.6,28),m.plastic);hub.rotation.z=Math.PI/2;rot.add(hub);
+    for(let i=0;i<3;i++){const a=i*TAU/3,bl=new THREE.Group();bl.rotation.x=a;const blade=box(0.7,2.9,5.6,i===0?m.ceramic:prop,0,0,1.6);blade.rotation.y=0.35;bl.add(blade);rot.add(bl);}
+    inner.add(rot);outer.userData.rotor=rot;
   }else if(k==='ic'){
     const st=f?(f.stand||0):(c.pads.some(p=>p.drill)?0.5:0.05);
     let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({U1:['MCU-Q32','2641 A'],U2:['AMS1117','3.3 2638'],U3:['25Q32JV','SIQ 2635']}[c.ref]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
@@ -295,7 +316,7 @@ function init3D(){
   const sel=new THREE.BoxHelper(undefined,0xffd23f);sel.visible=false;scene.add(sel);
   G3={renderer,scene,cam,sel,dirty:true,orb:{th:-1.95,ph:0.95,r:110,t:new THREE.Vector3()},anim:null,board:null};
   bind3D();
-  (function loop(){requestAnimationFrame(loop);stepAnim();if(G3.dirty&&S.view==='3d'&&S.sch!=='full'&&G3.board){G3.renderer.render(G3.scene,G3.cam);G3.dirty=false;}})();
+  (function loop(now){requestAnimationFrame(loop);stepAnim();stepPlay(now||performance.now());if(G3.dirty&&S.view==='3d'&&S.sch!=='full'&&G3.board){G3.renderer.render(G3.scene,G3.cam);G3.dirty=false;}})();
   return true;
 }
 function disposeTree(o){o.traverse(n=>{if(n.geometry)n.geometry.dispose();const ms=Array.isArray(n.material)?n.material:n.material?[n.material]:[];ms.forEach(mm=>{if(mm.map){mm.map.dispose();mm.dispose();}});});}
@@ -321,8 +342,9 @@ function rebuild3D(){
   const top=new THREE.Mesh(sg,new THREE.MeshStandardMaterial({map:G3.tex.T,roughness:0.55,metalness:0.05}));top.position.z=T/2+0.01;top.userData.side='T';root.add(top);
   const bot=new THREE.Mesh(sg,new THREE.MeshStandardMaterial({map:G3.tex.B,roughness:0.55,metalness:0.05,side:THREE.BackSide}));bot.position.z=-T/2-0.01;bot.userData.side='B';root.add(bot);
   G3.planes=[top,bot];
-  const compRoot=new THREE.Group();root.add(compRoot);G3.compRoot=compRoot;G3.comps={};
-  BD.comps.forEach(c=>{if(c.kind==='none'||!(c.body.w>0.1&&c.body.h>0.1))return;const g=build3D(c);compRoot.add(g);G3.comps[c.ref]=g;});
+  const compRoot=new THREE.Group();root.add(compRoot);G3.compRoot=compRoot;G3.comps={};G3.leds={};G3.rotors={};
+  BD.comps.forEach(c=>{if(c.kind==='none'||!(c.body.w>0.1&&c.body.h>0.1))return;const g=build3D(c);compRoot.add(g);G3.comps[c.ref]=g;
+    if(g.userData.led)G3.leds[c.ref]=g.userData.led;if(g.userData.rotor)G3.rotors[c.ref]=g.userData.rotor;});PLAY.applied=null;
   G3.board=BD;setExplode(S.explode,true);updateTextures();resize3D();homeCam(false);
 }
 function resize3D(){if(!G3||S.view!=='3d'||S.sch==='full')return;const w=cv3.clientWidth,h=cv3.clientHeight;if(!w||!h)return;G3.renderer.setSize(w,h,false);G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.dirty=true;}
@@ -342,6 +364,56 @@ function setExplode(v,quiet){
   BD.comps.forEach(c=>{const g=G3.comps[c.ref];if(g)g.position.z=(c.side==='B'?-1:1)*(T/2+v*lift);});
   if(G3.sel.visible)G3.sel.update();G3.ver=(G3.ver||0)+1;if(!quiet)G3.dirty=true;
 }
+/* ---------- circuit playback in 3D: LED glow and motor rotation from the circuit simulation ---------- */
+const PLAY={on:true,simT:0,dur:6,rt:false,last:0,key:null,ang:{},applied:null,bar:0};
+function playReset(){PLAY.key=null;PLAY.simT=0;PLAY.on=true;PLAY.ang={};}
+function playSrc(){
+  if(typeof SR==='undefined'||!SR.sp||SR.sp.error)return null;
+  const tr=SR.cfg&&SR.cfg.sp&&SR.cfg.sp.tran;
+  if(SR.sp.fromTran&&tr&&tr.anim&&tr.anim.t.length>1){const A=tr.anim;if(!Object.keys(A.led).length&&!Object.keys(A.mot).length)return null;return{tran:A,T:A.t[A.t.length-1]};}
+  if(SR.sp.parts&&SR.sp.parts.some(p=>p.type==='MOTOR'||(p.type==='D'&&BD.byRef[p.id]&&BD.byRef[p.id].kind==='led')))return{dc:SR.sp};
+  return null;
+}
+const bsearch=(a,t)=>{let lo=0,hi=a.length-1;if(t<=a[0])return 0;if(t>=a[hi])return hi;while(hi-lo>1){const m=(lo+hi)>>1;if(a[m]<=t)lo=m;else hi=m;}return lo;};
+function interpAt(ts,v,t){const i=bsearch(ts,t);if(i>=ts.length-1)return v[v.length-1];const k=(t-ts[i])/(ts[i+1]-ts[i]||1);return v[i]+(v[i+1]-v[i])*k;}
+// average LED current over the sim-time window one display frame covers, so fast PWM looks dimmed rather than strobing
+function ledAvg(A,ref,t,win){const cum=A._cum||(A._cum={});let c=cum[ref];if(!c){const v=A.led[ref];c=cum[ref]=new Float64Array(v.length);for(let i=1;i<v.length;i++)c[i]=c[i-1]+(v[i]+v[i-1])/2*(A.t[i]-A.t[i-1]);}
+  const t0=Math.max(0,t-win);if(t-t0<1e-12)return interpAt(A.t,A.led[ref],t);return(interpAt(A.t,c,t)-interpAt(A.t,c,t0))/(t-t0);}
+const ledLevel=I=>I>2e-5?Math.min(1,Math.pow(I/0.005,0.5)):0;
+function stepPlay(now){
+  const dt=PLAY.last?Math.min(0.1,(now-PLAY.last)/1000):0;PLAY.last=now;
+  if(!G3||!G3.board||!G3.leds)return;
+  const src=playSrc();let changed=false;
+  const setLed=(ref,I)=>{const L=G3.leds[ref];if(!L)return;const b=ledLevel(I);if(Math.abs(L.b-b)<0.003&&PLAY.applied)return;L.b=b;L.I=I;
+    L.mat.emissiveIntensity=0.06+b*2.6;L.glow.material.opacity=b>0.01?Math.min(1,0.3+b*0.8):0;const sc=1+b*8;L.glow.scale.set(sc,sc,1);L.glow.visible=b>0.01;changed=true;};
+  const setRot=(ref,a)=>{const g=G3.rotors[ref];if(!g)return;if(Math.abs(g.rotation.x-a)>1e-4){g.rotation.x=a;changed=true;}};
+  if(!src){if(PLAY.applied!=='none'){Object.keys(G3.leds).forEach(r=>{G3.leds[r].b=-1;setLed(r,0);});PLAY.applied='none';}}
+  else if(src.tran){const A=src.tran,T=src.T;if(PLAY.key!==A){PLAY.key=A;PLAY.simT=0;}
+    const speed=PLAY.rt?1:T/PLAY.dur;if(PLAY.on){PLAY.simT+=dt*speed;if(PLAY.simT>T)PLAY.simT%=T;}
+    const t=PLAY.simT,win=Math.max(PLAY.on?dt*speed:0,(T/(A.t.length-1))*2);
+    Object.keys(G3.leds).forEach(r=>setLed(r,A.led[r]?ledAvg(A,r,t,win):0));
+    Object.keys(A.mot).forEach(r=>{const m=A.mot[r];setRot(r,interpAt(A.t,m.th,t)/(m.gear||1));});PLAY.applied='tran';}
+  else{const P=src.dc.parts;const by={};P.forEach(p=>{by[p.id]=p;});
+    Object.keys(G3.leds).forEach(r=>setLed(r,by[r]&&by[r].type==='D'?by[r].I:0));
+    P.filter(p=>p.type==='MOTOR').forEach(p=>{if(PLAY.on)PLAY.ang[p.id]=((PLAY.ang[p.id]||0)+p.w/(p.gear||1)*dt)%TAU;setRot(p.id,PLAY.ang[p.id]||0);});PLAY.applied='dc';}
+  if(changed){G3.dirty=true;G3.ver=(G3.ver||0)+1;}
+  if(now-PLAY.bar>90){PLAY.bar=now;updatePlayBar(src);}
+}
+function updatePlayBar(src){
+  const bar=$('#playBar');const show=!!src&&S.view==='3d'&&S.sch!=='full'&&HS.ws==='board';bar.hidden=!show;if(!show)return;
+  const tr=!!src.tran;bar.classList.toggle('dc',!tr);
+  $('#pbPlay').textContent=PLAY.on?'❚❚':'▶';$('#pbPlay').setAttribute('aria-label',PLAY.on?'일시 정지':'재생');
+  const f=SIM.fmtSI;let info=[];
+  if(tr){const A=src.tran,T=src.T,t=PLAY.simT;if(document.activeElement!==$('#pbSeek'))$('#pbSeek').value=String(Math.round(t/T*1000));
+    $('#pbTime').textContent=`${(t*1e3).toFixed(t<0.01?2:1)} / ${(T*1e3).toFixed(0)} ms`;
+    Object.keys(A.mot).forEach(r=>{const m=A.mot[r];const w=interpAt(A.t,m.w,t);info.push(`${r} ${(w/(m.gear||1)*60/TAU).toFixed(0)} rpm · ${f(Math.abs(interpAt(A.t,m.I,t)),'A')}`);});}
+  else{$('#pbTime').textContent='DC 동작점';src.dc.parts.filter(p=>p.type==='MOTOR').forEach(p=>info.push(`${p.id} ${p.rpm.toFixed(0)} rpm · ${f(Math.abs(p.I),'A')}`));}
+  Object.keys(G3&&G3.leds||{}).forEach(r=>{const L=G3.leds[r];if(L.b>0.01)info.push(`${r} ${f(L.I,'A')}`);});
+  $('#pbInfo').textContent=info.join(' · ');
+}
+$('#pbPlay').addEventListener('click',()=>{PLAY.on=!PLAY.on;PLAY.bar=0;});
+$('#pbSeek').addEventListener('input',e=>{const s=playSrc();if(!s||!s.tran)return;PLAY.simT=+e.target.value/1000*s.T;PLAY.on=false;PLAY.bar=0;});
+$('#pbDur').addEventListener('change',e=>{const v=e.target.value;PLAY.rt=v==='rt';if(!PLAY.rt)PLAY.dur=+v;});
 function sync3D(){
   if(!G3||!G3.board)return;const g=S.selRef&&G3.comps[S.selRef];
   if(g){G3.sel.setFromObject(g);G3.sel.visible=true;}else G3.sel.visible=false;
@@ -353,7 +425,7 @@ function pick3DCam(cam,w,h,px,py){
   const objs=(S.layers.body3d?[G3.compRoot]:[]).concat(G3.planes);
   for(const h of rc.intersectObjects(objs,true)){
     if(h.object.userData.side){if(!h.uv)return null;const r=hit(h.uv.x,h.uv.y,h.object.userData.side,0.2)||{type:'none'};r._x=h.uv.x;r._y=h.uv.y;return r;}
-    const ref=h.object.userData.ref;if(ref)return{type:'comp',c:BD.byRef[ref]};
+    if(h.object.isSprite)continue;const ref=h.object.userData.ref;if(ref)return{type:'comp',c:BD.byRef[ref]};
   }
   return null;
 }
@@ -475,18 +547,19 @@ document.addEventListener('keydown',e=>{
 function header(){
   $('#bName').textContent=BD.name;$('#bTag').textContent=BD.source==='예제'?'예제 보드':BD.source;
   const n=BD.comps.length;$('#bSub').textContent=`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개`;
-  document.title=BD.source==='예제'?'SENSE-32 PCB 뷰어':BD.name+' · PCB 뷰어';
+  document.title=BD.source==='예제'?BD.name.split(' ')[0]+' PCB 뷰어':BD.name+' · PCB 뷰어';
 }
 function stats(){
   let tl=0,pads=0;Object.values(BD.nets).forEach(N=>{tl+=N.len.T+N.len.B;});
   const prs=new Set();['T.cu','B.cu'].forEach(L=>BD.layers[L].forEach(p=>{if(p.t==='pad'&&!p.via)prs.add(p);}));pads=prs.size;
   $('#stats').innerHTML=`<dt>부품</dt><dd>${BD.comps.length}</dd><dt>상단 / 하단</dt><dd>${BD.comps.filter(c=>c.side==='T').length} / ${BD.comps.filter(c=>c.side==='B').length}</dd><dt>넷</dt><dd>${BD.netOrder.length}</dd><dt>패드</dt><dd>${pads}</dd><dt>비아</dt><dd>${BD.vias.length}</dd><dt>드릴</dt><dd>${BD.drills.length}</dd>${tl?`<dt>트랙 길이</dt><dd>${fmt(tl,0)} mm</dd>`:''}`;
   const src=$('#srcBox');
-  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.</p><button class="btn primary sm" data-open style="margin-top:10px">파일 불러오기</button>`;}
+  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='motor'?'가상의 DC 모터 구동 예제입니다. J2에 PWM 신호를 넣으면 MOSFET이 모터를 돌리고 RUN LED가 켜집니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
+    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button><button class="btn sm" data-ex="${BD.demo==='motor'?'sense':'motor'}">${BD.demo==='motor'?'SENSE-32 예제':'DC 모터 예제'}</button></div>`;}
   else{src.innerHTML=`<ul class="files">${BD.files.filter(f=>f.role!=='ignore').map(f=>`<li><span class="fn">${esc(f.name.split('/').pop())}</span><span class="fr">${esc(PCB.ROLES[f.role]||f.role)}</span></li>`).join('')}</ul>`+
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
 }
-$('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();});
+$('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();const x=e.target.closest('[data-ex]');if(x)loadExample(x.dataset.ex);});
 function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}popsRefresh();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
   BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
@@ -561,7 +634,10 @@ function renderImport(){
 $('#flist').addEventListener('change',e=>{const s=e.target.closest('[data-role]');if(!s)return;const en=IMP.entries.find(x=>x.id===+s.dataset.role);if(en){en.role=s.value;en.note=en.role===en.auto?en.note:'';}renderImport();});
 $('#flist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(!d)return;IMP.entries=IMP.entries.filter(x=>x.id!==+d.dataset.del);renderImport();});
 $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImport();});
-$('#impSample').addEventListener('click',()=>{setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));closeImport();toast('예제 보드로 돌아왔습니다.');});
+function loadExample(which){const spec=which==='motor'?SAMPLE_MOTOR:SAMPLE_SPEC;setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
+  toast(which==='motor'?'DC 모터 구동 예제입니다. 시뮬레이션 → 회로 동작에서 "과도 해석 실행"을 누르면 3D에서 모터가 돌고 LED가 켜집니다.':'예제 보드로 돌아왔습니다.');}
+$('#impSample').addEventListener('click',()=>loadExample('sense'));
+$('#impSample2').addEventListener('click',()=>loadExample('motor'));
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{

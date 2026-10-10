@@ -70,6 +70,12 @@
       <div class="ov ov-tl ov-col"><span class="pill side-badge" id="sideBadge">3D</span><div class="pill legend" id="legend" hidden></div></div>
       <div class="ov ov-tr" id="ctl"></div>
       <div class="ov ov-bl"><span class="pill mono" id="coord">X — · Y — mm</span><span class="pill scale" id="scale"><i id="scaleBar"></i><span class="mono" id="scaleTxt"></span></span></div>
+      <div class="ov ov-bl playbar" id="playBar" hidden role="group" aria-label="회로 시뮬레이션 재생">
+        <button class="pill vbtn pb-play" id="pbPlay" aria-label="일시 정지">❚❚</button>
+        <div class="pill pb-main"><input type="range" id="pbSeek" min="0" max="1000" value="0" aria-label="시뮬레이션 시간"><span class="mono" id="pbTime"></span>
+          <select id="pbDur" aria-label="재생 속도"><option value="3">3초에 재생</option><option value="6" selected>6초에 재생</option><option value="12">12초에 재생</option><option value="30">30초에 재생</option><option value="rt">실제 속도</option></select></div>
+        <span class="pill pb-info mono" id="pbInfo"></span>
+      </div>
       <div class="ov ov-br"><span class="pill hint" id="hint"></span></div>
       <div class="tip" id="tip" hidden></div>
     </section>
@@ -141,7 +147,7 @@
     </div>
     <div class="sheet-f">
       <span class="msg" id="impMsg"></span>
-      <button class="btn ghost sm" id="impSample">예제 보드 보기</button>
+      <button class="btn ghost sm" id="impSample">예제: SENSE-32</button><button class="btn ghost sm" id="impSample2">예제: DC 모터</button>
       <button class="btn ghost sm" id="impClear" hidden>목록 비우기</button>
       <button class="btn ghost" data-close>취소</button>
       <button class="btn primary" id="impGo" disabled>보드 만들기</button>

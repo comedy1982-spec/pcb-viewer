@@ -210,7 +210,20 @@ function extractCircuit(B){
       if(pw.length&&gnd){els.push({id:c.ref,ref:c.ref,type:'LOAD',n:[pw[0],gnd],I:0.01,vmin:1.0,on:true});}
       else skipped.push([c.ref,'전원 핀을 찾지 못해 제외']);
     }
-    else if(/^Q\d/.test(r))skipped.push([c.ref,'트랜지스터 모델 없음']);
+    else if(/^Q\d/.test(r)){
+      // N-channel MOSFET (pins named G/D/S, or a MOSFET part number); BJTs and P-channel parts are not modelled
+      const txt=(c.val+' '+c.fp+' '+(c.desc||'')+' '+(c.mpn||'')).toUpperCase(),fn=re=>c.pads.find(p=>re.test(p.fn||''));
+      const pg=fn(/^G(ATE)?$/i),pd=fn(/^D(RAIN)?$/i),ps=fn(/^S(OURCE)?$/i);
+      const nch=/N-?CH|NMOS|N-MOS|AO3400|2N7002|BSS138|IRLML2502|SI2302|DMN|IRLZ|FDN3/.test(txt)||(c.model&&c.model.type==='nmos');
+      if(pg&&pd&&ps&&pg.net&&pd.net&&ps.net&&nch&&!/P-?CH|PMOS/.test(txt)){const m=c.model||{};
+        els.push({id:c.ref,ref:c.ref,type:'NMOS',n:[pd.net,pg.net,ps.net],vth:m.vth||1.2,kp:m.kp||8,lam:m.lambda||0.01,on:true});}
+      else skipped.push([c.ref,'트랜지스터 모델 없음 (N채널 MOSFET만 지원)']);}
+    else if(/^(M|MOT)\d/.test(r)&&nets.length===2){
+      // brushed DC motor: electrical R-L + back-EMF, mechanical inertia, viscous + Coulomb friction, gearbox
+      const m=Object.assign({R:2.5,L:5e-4,ke:0.004,kt:0.004,J:1.2e-6,b:2e-7,tf:1e-4,tl:0,gear:1},c.model||{});
+      let pp=c.pads.find(p=>/^(\+|M\+|P)$/i.test(p.fn||''))||c.pads.find(p=>p.n==='1');const pm=c.pads.find(p=>p!==pp&&p.net&&p.net!==pp.net);
+      if(!pp||!pm){skipped.push([c.ref,'모터 단자를 알 수 없음']);return;}
+      els.push(Object.assign({id:c.ref,ref:c.ref,type:'MOTOR',n:[pp.net,pm.net],on:true},m));}
     else if(/^(Y|X)\d/.test(r)&&c.kind==='xtal')skipped.push([c.ref,'크리스털은 모델링하지 않음']);
   });
   // sources
@@ -230,9 +243,25 @@ function srcVal(s,t){if(s.wave==='dc')return s.v;if(s.wave==='step'){if(t<=s.t0)
 function compile(ckt){
   const nodes=new Map();const id=n=>{if(!n||n===ckt.gnd)return-1;let k=nodes.get(n);if(k==null){k=nodes.size;nodes.set(n,k);}return k;};
   const els=ckt.els.filter(e=>e.on).concat(ckt.srcs.filter(s=>s.on!==false)).map(e=>Object.assign({},e,{k:e.n.map(id)}));
-  let nb=nodes.size;els.forEach(e=>{if(e.type==='V'||e.type==='REG'||e.type==='L')e.br=nb++;});
+  let nb=nodes.size;els.forEach(e=>{if(e.type==='V'||e.type==='REG'||e.type==='L'||e.type==='MOTOR')e.br=nb++;});
   return{nodes,els,N:nb,nn:nodes.size};
 }
+// level-1 square law, smoothed around threshold, symmetric in drain/source
+function mosEval(e,vgs,vds){
+  if(vds<0){const r=mosEval(e,vgs-vds,-vds);return{id:-r.id,gm:-r.gm,gds:r.gm+r.gds};}
+  const sm=0.04,z=(vgs-e.vth)/sm,vov=z>30?vgs-e.vth:sm*Math.log1p(Math.exp(z)),dvov=z>30?1:1/(1+Math.exp(-z));
+  const k=e.kp,lam=e.lam;
+  if(vds<vov){const id=k*(vov*vds-vds*vds/2)*(1+lam*vds);return{id,gm:k*vds*(1+lam*vds)*dvov,gds:k*(vov-vds)*(1+lam*vds)+k*(vov*vds-vds*vds/2)*lam};}
+  const id=k/2*vov*vov*(1+lam*vds);return{id,gm:k*vov*(1+lam*vds)*dvov,gds:k/2*vov*vov*lam};
+}
+// motor branch equation  Va-Vc - req*I = rhs ; h=0 means steady state (DC)
+function motorDir(e,wp,I){const eps=1e-3;if(wp>eps)return 1;if(wp<-eps)return-1;const T=e.kt*I-e.tl;return Math.abs(T)>e.tf?Math.sign(T):0;}
+function motorCoef(e,h,wp,Ip,I){
+  const s=motorDir(e,wp,I),jh=h?e.J/h:0,lh=h?e.L/h:0;
+  if(s===0&&Math.abs(wp)<1e-3)return{req:e.R+lh,rhs:-lh*Ip,s:0};
+  const D=jh+e.b;return{req:e.R+lh+e.ke*e.kt/D,rhs:-lh*Ip+e.ke*(jh*wp-e.tl-s*e.tf)/D,s};
+}
+function motorSpeed(e,h,wp,I){const jh=h?e.J/h:0,s=motorDir(e,wp,I);if(s===0&&Math.abs(wp)<1e-3)return 0;let w=(jh*wp+e.kt*I-e.tl-s*e.tf)/(jh+e.b);if(s!==0&&w*s<0)w=0;return w;}
 function newton(C,x0,mode,h,t,xprev,state){
   const N=C.N,gmin=1e-9;let x=Float64Array.from(x0);
   for(let it=0;it<150;it++){
@@ -250,6 +279,13 @@ function newton(C,x0,mode,h,t,xprev,state){
       else if(e.type==='D'){const Is=e.led?1e-18:1e-14,n=e.led?2:1,vt=n*VT;let vd=V(a)-V(c);const old=state.vd[e.id]==null?0:state.vd[e.id];
         const vcrit=vt*Math.log(vt/(Math.SQRT2*Is));if(vd>vcrit&&Math.abs(vd-old)>2*vt){lim=true;if(old>0){const arg=1+(vd-old)/vt;vd=arg>0?old+vt*Math.log(arg):vcrit;}else vd=vt*Math.log(vd/vt);}
         state.vd[e.id]=vd;const ex=Math.exp(Math.min(vd/vt,80));const id_=Is*(ex-1),gd=Is/vt*ex+gmin;const ieq=id_-gd*vd;G(a,c,gd);rhs(a,-ieq);rhs(c,ieq);}
+      else if(e.type==='NMOS'){const[dn,gn,sn]=e.k;let vgs=V(gn)-V(sn),vds=V(dn)-V(sn);
+        const old=state.vgs[e.id];if(old!=null&&Math.abs(vgs-old)>0.5){vgs=old+Math.sign(vgs-old)*0.5;lim=true;}state.vgs[e.id]=vgs;
+        const m=mosEval(e,vgs,vds);const ieq=m.id-m.gm*vgs-m.gds*vds;
+        add(dn,dn,m.gds);add(dn,sn,-m.gds-m.gm);add(dn,gn,m.gm);add(sn,sn,m.gds+m.gm);add(sn,dn,-m.gds);add(sn,gn,-m.gm);rhs(dn,-ieq);rhs(sn,ieq);
+        G(dn,sn,1e-9);}
+      else if(e.type==='MOTOR'){const k=e.br;add(a,k,1);add(c,k,-1);add(k,a,1);add(k,c,-1);
+        const I=x[k],m=motorCoef(e,mode==='tran'?h:0,mode==='tran'?(state.w[e.id]||0):0,mode==='tran'?xprev[k]:0,I);add(k,k,-m.req);b[k]+=m.rhs;}
       else if(e.type==='LOAD'){const v=V(a)-V(c);if(v<e.vmin)G(a,c,e.I/e.vmin);else{rhs(a,-e.I);rhs(c,e.I);}}
       else if(e.type==='V'){const k=e.br;add(a,k,1);add(c,k,-1);add(k,a,1);add(k,c,-1);b[k]+=srcVal(e,t);}
       else if(e.type==='REG'){const[ni,no,ng]=e.k,k=e.br;const vin=V(ni)-V(ng);
@@ -264,7 +300,7 @@ function newton(C,x0,mode,h,t,xprev,state){
   }
   return{x,ok:false};
 }
-function report(C,x,t){
+function report(C,x,t,st){
   const V=i=>i>=0?x[i]:0;const nets={};C.nodes.forEach((k,n)=>{nets[n]=x[k];});
   const parts=[];
   C.els.forEach(e=>{const[a,c]=e.k;let I=null,P=null;const v=V(a)-V(c);
@@ -275,21 +311,32 @@ function report(C,x,t){
     else if(e.type==='V'){I=-x[e.br];P=-srcVal(e,t)*I;}
     else if(e.type==='REG'){const[ni,no,ng]=e.k;const Io=-x[e.br];const vin=V(ni)-V(ng),vout=V(no)-V(ng);I=Io;P=(vin-vout)*Io+vin*e.iq*Math.min(1,Math.max(vin,0));}
     else if(e.type==='L'){I=x[e.br];P=0;}else if(e.type==='C'){I=0;P=0;}
-    parts.push({id:e.id,ref:e.ref||null,type:e.type,I,P,v});});
+    let extra=null;
+    if(e.type==='NMOS'){const[dn,gn,sn]=e.k;const vds=V(dn)-V(sn);I=mosEval(e,V(gn)-V(sn),vds).id;P=vds*I;}
+    if(e.type==='MOTOR'){I=x[e.br];P=v*I;const w=st&&st.w[e.id]!=null?st.w[e.id]:motorSpeed(e,0,0,I);extra={w,rpm:w/e.gear*60/(2*Math.PI),gear:e.gear,torque:e.kt*I};}
+    parts.push(Object.assign({id:e.id,ref:e.ref||null,type:e.type,I,P,v},extra));});
   return{nets,parts};
 }
-function dcop(ckt){const C=compile(ckt);if(!C.nn)return{error:'시뮬레이션할 넷이 없습니다.'};const r=newton(C,new Float64Array(C.N),'dc',0,ckt.tDC||1e9,new Float64Array(C.N),{vd:{}});
+const newState=()=>({vd:{},vgs:{},w:{},th:{}});
+// after an accepted time step: integrate motor speed and shaft angle
+function advance(C,x,h,st){C.els.forEach(e=>{if(e.type!=='MOTOR')return;const w=motorSpeed(e,h,st.w[e.id]||0,x[e.br]);st.th[e.id]=(st.th[e.id]||0)+((st.w[e.id]||0)+w)/2*h;st.w[e.id]=w;});}
+function dcop(ckt){const C=compile(ckt);if(!C.nn)return{error:'시뮬레이션할 넷이 없습니다.'};const r=newton(C,new Float64Array(C.N),'dc',0,ckt.tDC||1e9,new Float64Array(C.N),newState());
   if(!r.ok)return{error:'DC 동작점이 수렴하지 않았습니다. 소자 값이나 소스를 확인해 주세요.'};return Object.assign(report(C,r.x,ckt.tDC||1e9),{C});}
 function transient(ckt,tstop,steps,probes){
   const C=compile(ckt);if(!C.nn)return{error:'시뮬레이션할 넷이 없습니다.'};
-  const st={vd:{}};let r=newton(C,new Float64Array(C.N),'dc',0,0,new Float64Array(C.N),st);if(!r.ok)return{error:'초기 동작점이 수렴하지 않았습니다.'};
+  const st=newState();let r=newton(C,new Float64Array(C.N),'dc',0,0,new Float64Array(C.N),st);if(!r.ok)return{error:'초기 동작점이 수렴하지 않았습니다.'};
   let x=r.x;const h=tstop/steps;const time=[0];const data={};probes.forEach(p=>{data[p]=[C.nodes.has(p)?x[C.nodes.get(p)]:0];});
-  const curE=C.els.filter(e=>e.type==='D'||e.type==='LOAD');const cur={};curE.forEach(e=>{cur[e.id]=[];});
+  // animation track: LED currents and motor speed / angle / current, sampled every step (decimated at the end)
+  const leds=C.els.filter(e=>e.type==='D'&&e.led),mots=C.els.filter(e=>e.type==='MOTOR');
+  const an={t:[0],led:{},mot:{}};const vOf=i=>i>=0?x[i]:0;const ledI=e=>{const v=vOf(e.k[0])-vOf(e.k[1]);return Math.max(0,1e-18*(Math.exp(Math.min(v/(2*VT),80))-1));};
+  leds.forEach(e=>{an.led[e.id]=[ledI(e)];});mots.forEach(e=>{an.mot[e.id]={w:[0],th:[0],I:[x[e.br]],gear:e.gear};});
   let fails=0;
   for(let s=1;s<=steps;s++){const t=s*h;let q=newton(C,x,'tran',h,t,x,st);
-    if(!q.ok){const h2=h/4;let xx=x;let ok=true;for(let k=1;k<=4;k++){const qq=newton(C,xx,'tran',h2,t-h+k*h2,xx,st);if(!qq.ok){ok=false;break;}xx=qq.x;}if(!ok){fails++;if(fails>20)return{error:`${(t*1e3).toFixed(3)} ms에서 수렴하지 않았습니다.`};}q={x:xx};}
-    x=q.x;time.push(t);probes.forEach(p=>{data[p].push(C.nodes.has(p)?x[C.nodes.get(p)]:0);});}
-  return Object.assign({time,data,final:report(C,x,tstop)},{C});
+    if(q.ok)advance(C,q.x,h,st);
+    else{const h2=h/4;let xx=x;let ok=true;for(let k=1;k<=4;k++){const qq=newton(C,xx,'tran',h2,t-h+k*h2,xx,st);if(!qq.ok){ok=false;break;}xx=qq.x;advance(C,xx,h2,st);}if(!ok){fails++;if(fails>20)return{error:`${(t*1e3).toFixed(3)} ms에서 수렴하지 않았습니다.`};}q={x:xx};}
+    x=q.x;time.push(t);probes.forEach(p=>{data[p].push(C.nodes.has(p)?x[C.nodes.get(p)]:0);});
+    an.t.push(t);leds.forEach(e=>an.led[e.id].push(ledI(e)));mots.forEach(e=>{const m=an.mot[e.id];m.w.push(st.w[e.id]||0);m.th.push(st.th[e.id]||0);m.I.push(x[e.br]);});}
+  return Object.assign({time,data,final:report(C,x,tstop,st),anim:an},{C});
 }
 
 return{parseVal,fmtSI,nominalV,irSolve,siAnalyze,microstrip,thermalSolve,extractCircuit,dcop,transient,IPCmax,IPC};

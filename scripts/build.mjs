@@ -31,6 +31,7 @@ ${script(stripExport(read('src/core/pcb-core.js')))}
 ${script(stripExport(read('src/sch/sch.js')))}
 ${script(stripExport(read('src/sim/sim.js')))}
 ${script(read('src/app/sample.js'))}
+${script(read('src/app/sample-motor.js'))}
 ${script(stripExport(read('src/hsis/hsis.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}
