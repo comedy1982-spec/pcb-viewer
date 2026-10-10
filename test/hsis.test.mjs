@@ -9,7 +9,7 @@ const R = HSIS.check(B, H, AX, 'U1');
 const has = (code, id) => R.results.some(r => r.code === code && r.id === id);
 
 test('column mapping finds every sample column', () => {
-  assert.equal(H.items.length, 16);
+  assert.equal(H.items.length, 14);
   assert.equal(H.unmapped.length, 0);
   assert.equal(HSIS.pickMcu(B, H.items), 'U1');
 });
@@ -23,7 +23,7 @@ test('CSV with English headers and a title row', () => {
 test('ARXML PortPin parsing', () => {
   assert.equal(AX.length, 11);
   const sda = AX.find(a => a.name === 'PortPin_I2C1_SDA');
-  assert.equal(sda.id, '20'); assert.equal(sda.mode, 'PORT_PIN_MODE_I2C');
+  assert.equal(sda.id, '31'); assert.equal(sda.mode, 'PORT_PIN_MODE_I2C');
 });
 
 test('schematic checks', () => {

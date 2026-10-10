@@ -59,18 +59,18 @@ ODB++, IPC-2581, Altium/Eagle 원본 파일은 아직 읽지 못합니다.
 
 파일 불러오기 창의 **예제: MCU DC 모터** 버튼(또는 왼쪽 패널의 예제 전환 버튼)으로 엽니다. DC 모터·LED·MCU를 한 보드에 담았습니다.
 
-- **회로**: J1 5 V → AMS1117 LDO(U2) → MCU(U1, 3.3 V). U1 **PA8 PWM** → R1 → AO3400A(Q1) 로우사이드 스위치 → 130 모터(M1, 기어 1:48 팬), SS14 플라이백(D1). Q1 소스의 0.1 Ω 션트(R5) 전압을 R6·C4 RC 필터(10 ms)로 평균내 **PA1 ADC**로 읽습니다. LED는 전원(D2, 3.3 V), 상태(D3, **PB3** GPIO), 구동 표시(D4, MOSFET이 켜지면 점등) 세 개입니다.
+- **회로**: J1(Würth 61300211121) 5 V → AMS1117-3.3 LDO(U2) → STM32F042K6U6(U1, UFQFPN32). U1 **PA8(TIM1_CH1) PWM** → R1 → AO3400A(Q1) 로우사이드 스위치 → Mabuchi FA-130RA 모터(M1, Tamiya 70097 기어 1:58 팬), Vishay SS14 플라이백(D1). Q1 소스의 0.1 Ω 션트(R5, Yageo RL1206) 전압을 R6·C4 RC 필터로 평균내 **PB1(ADC_IN9)**로 읽습니다. LED는 Kingbright APT1608 시리즈로 전원(D2), 상태(D3, **PA4** GPIO), 구동 표시(D4) 세 개입니다.
 - **펌웨어**: U1을 클릭하면 정보 패널에 **주요 파라미터**(PWM 주파수, 목표 듀티, 기동 지연, 소프트 스타트 시간, 전류 제한, LED 점멸 주기)가 나타나 바로 바꿀 수 있고, **코드 편집**으로 펌웨어 전체를 고칠 수 있습니다. 코드는 JavaScript 문법의 Arduino 스타일 API(`pinMode`, `digitalWrite`, `pwmInit`, `pwmWrite`, `analogRead`, `analogReadVoltage`, `millis`, `log`)를 씁니다. 코드 위쪽의 `const 이름 = 숫자; // 설명` 상수가 자동으로 파라미터 슬라이더가 됩니다.
 - **코시뮬레이션**: **빌드 & 시뮬레이션**을 누르면 `setup()` 후 `loop(ms)`가 1 ms마다 회로 과도 해석과 함께 실행됩니다. 펌웨어가 ADC로 읽는 값은 그 순간의 회로 전압이고, 펌웨어가 정한 PWM 듀티·GPIO 값이 곧바로 회로에 반영됩니다. 기본 펌웨어는 소프트 스타트 중 모터 평균 전류가 제한값을 넘으면 듀티를 줄입니다.
-- **결과**: 편집기 오른쪽에 PA8 듀티, PB3 출력, 모터 속도·평균 전류 그래프와 `log()` 출력이 나오고, 3D에서 모터 회전과 세 LED 점등이 재생됩니다(재생 막대에 현재 듀티 표시). 오류가 나면 해당 줄을 표시하고 그 줄로 이동할 수 있습니다. 무한 루프는 자동으로 중단됩니다.
+- **결과**: 편집기 오른쪽에 PA8 듀티, PA4 출력, 모터 속도·평균 전류 그래프와 `log()` 출력이 나오고, 3D에서 모터 회전과 세 LED 점등이 재생됩니다(재생 막대에 현재 듀티 표시). 오류가 나면 해당 줄을 표시하고 그 줄로 이동할 수 있습니다. 무한 루프는 자동으로 중단됩니다.
 - PWM 주파수를 높이면 계산 단계를 자동으로 늘립니다(최대 40,000 단계). 주파수가 아주 높으면 계산 시간이 길어집니다.
 
 ### 예제: MCU BLDC 3상 모터 (MOTION-32 BLDC)
 
-**예제: MCU BLDC 3상** 버튼으로 엽니다. 12 V 입력 → LDO → MCU, MCU의 6개 핀(PA8~PA13)이 3상 하프브리지 드라이버 U3의 IN1~3(PWM)·EN1~3를 구동하고, 드라이버 출력이 홀 센서 내장 BLDC 모터(M1, 2극쌍, 직결 팬)의 U·V·W 상을 돌립니다. 홀 신호 H1~H3는 PB5~PB7로, 드라이버 nFAULT(오픈 드레인, R10 풀업)는 PA7로 들어갑니다.
+**예제: MCU BLDC 3상** 버튼으로 엽니다. 12 V 입력 → LDO → STM32F042K6U6, MCU의 TIM1 핀 PA8·PA10·PA11(PWM)과 PA9·PA12·PA15(EN)가 TI **DRV8313PWPR**(HTSSOP-28, 실제 핀 배치)의 IN1~3·EN1~3를 구동하고, 드라이버 OUT3/OUT2/OUT1이 홀 센서 내장 BLDC 모터 **42BLF01**(MIKROE-4455, 4극쌍, 직결 팬)의 U·V·W 상을 돌립니다. 홀 신호 H1~H3는 PA6·PA7·PB0(내부 풀업)로, DRV8313 nFAULT(오픈 드레인, R10 풀업)는 PB3으로 들어갑니다. 차지 펌프 커패시터(C8 10 nF CPL–CPH, C9 100 nF VCP–VM)와 V3P3 디커플링(C10)도 데이터시트 권장대로 넣었습니다.
 
-- **시뮬레이션 모델**: BLDC는 Y결선 3상 권선(R·L)과 사다리꼴 역기전력, 토크 = Σ kt·f(θe)·i, 관성·마찰을 시간 적분합니다. 홀 센서는 회전자 전기각으로 출력이 정해지는 푸시풀 출력, 드라이버는 상별로 EN·IN에 따라 VM/GND로 스위칭하는 RDS(on) 0.3 Ω 하프브리지와 바디 다이오드입니다.
-- **펌웨어**: `LOOP_PERIOD_US = 50`으로 제어 루프를 50 µs마다 돌려 홀 코드 → 6스텝 정류표(STEP)로 상단 PWM 상·하단 ON 상·개방 상을 정하고, 소프트 스타트, 회전 방향(DIRECTION), nFAULT 차단, 홀로 잰 속도 로그, 기계 1회전마다 토글하는 상태 LED를 구현합니다. 기본값으로 약 2,300 rpm까지 가속합니다.
+- **시뮬레이션 모델**: BLDC는 Y결선 3상 권선(R·L)과 사다리꼴 역기전력, 토크 = Σ kt·f(θe)·i, 관성·마찰을 시간 적분합니다. 홀 센서는 회전자 전기각으로 출력이 정해지는 푸시풀 출력, 드라이버는 상별로 EN·IN에 따라 VM/GND로 스위칭하는 RDS(on) 0.24 Ω(DRV8313 typ) 하프브리지와 바디 다이오드입니다.
+- **펌웨어**: `LOOP_PERIOD_US = 50`으로 제어 루프를 50 µs마다(PWM 2 kHz) 돌려 홀 코드 → 6스텝 정류표(STEP)로 상단 PWM 상·하단 ON 상·개방 상을 정하고, 소프트 스타트, 회전 방향(DIRECTION), nFAULT 차단, 홀로 잰 속도 로그, 기계 1회전마다 토글하는 상태 LED를 구현합니다. 기본값으로 약 2,600 rpm까지 가속합니다.
 
 ### HSIS 연동
 
@@ -80,6 +80,25 @@ ODB++, IPC-2581, Altium/Eagle 원본 파일은 아직 읽지 못합니다.
 - `analogRead`하는 핀에 HSIS의 아날로그/ADC 기능이 있는지(FW_ADC), PWM 주파수가 HSIS 타이밍 열과 같은지(FW_FREQ) 확인합니다. 예를 들어 펌웨어 파라미터 PWM_FREQ_HZ를 바꾸면 해당 HSIS 신호가 곧바로 경고로 바뀝니다.
 - HSIS 신호 상세에 **펌웨어** 단계가 추가되어 그 핀을 펌웨어가 어떻게 쓰는지 보여 주고, 펌웨어 편집기 결과에도 HSIS 대조 요약이 나옵니다.
 - 예제마다 일부러 넣은 지적 사항이 있습니다: DC 모터 예제는 LED_STATUS의 테스트 ID 누락·ARXML 초기값 불일치, BLDC 예제는 NFAULT 요구사항 누락·HALL2 ARXML 방향 오류.
+
+## 실제 부품과 데이터시트
+
+세 예제 보드는 가능한 한 실제 판매되는 부품으로 구성했습니다. 부품 번호·풋프린트·핀 배치는 제조사 데이터시트를 따릅니다.
+
+| 부품 | 쓰인 곳 | 비고 |
+|---|---|---|
+| ST STM32F042K6U6 (UFQFPN32) | 세 보드 MCU | 핀 번호·대체 기능(TIM1, ADC_IN, USB) 데이터시트 기준. SENSE-32는 크리스털 없는 USB(HSI48+CRS)로 바꿔 Y1 제거 |
+| TI DRV8313PWPR (HTSSOP-28) | BLDC 드라이버 | 28핀 + 써멀 패드, INx/ENx 논리, nFAULT, 차지 펌프 |
+| Winbond W25Q32JVSSIQ | SENSE-32 플래시 | SOIC-8 |
+| AMS1117-3.3, AOS AO3400A, Vishay SS14 | 전원·스위칭 | |
+| Mabuchi FA-130RA / Tamiya 70097 | DC 모터 | 모델 R·kt·J는 공개 사양에서 산출 |
+| 42BLF01 (MIKROE-4455) | BLDC 모터 | 정격 사양 기준, R·L은 추정값 |
+| Kingbright APT1608, Omron B3FS-1000P, Würth 613002/613004, GCT USB4105-GF-A | LED·스위치·커넥터 | USB4105 풋프린트는 단순화 |
+| Samsung CL/Murata GRM 커패시터, Yageo RC0603/RL1206 저항 | 수동 소자 | 값으로 정확한 부품 번호 생성 |
+
+- **보기**: 부품을 클릭하면 정보 카드에 제조사, 주요 사양, 데이터시트(PDF)·제품 페이지·Octopart 링크가 나옵니다. 정보 패널의 **데이터** 탭 위쪽에 보드 전체 부품 데이터시트 목록이 있습니다. 데이터베이스에 없는 부품 번호는 검색 링크를 보여 줍니다.
+- **저장**: `datasheets/README.md`와 `datasheets/manifest.json`에 부품별 데이터시트 URL 목록이 있습니다. `npm run datasheets:download`(= `node scripts/datasheets.mjs --download`)를 실행하면 PDF를 `datasheets/pdf/`에 내려받고, 뷰어를 로컬 파일로 열면 정보 카드에 로컬 사본 링크도 나옵니다.
+- 부품 데이터는 `src/parts/parts.js`에 있습니다. 새 부품을 추가한 뒤 `npm run datasheets`로 목록을 다시 만듭니다.
 
 ## HSIS (HW/SW 인터페이스 사양)
 
@@ -109,6 +128,8 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/fw/fw.js` | MCU 펌웨어 런타임 (파라미터 추출, 샌드박스, 회로와 1 ms 코시뮬레이션) |
 | `src/app/fwui.js` | 펌웨어 파라미터 카드와 코드 편집기 (빌드 시 viewer.js에 삽입) |
 | `src/app/sample.js` | 내장 예제 보드 (뷰어 JSON 형식) |
+| `src/parts/parts.js` | 실제 부품 데이터베이스(제조사, 사양, 데이터시트 링크) |
+| `scripts/datasheets.mjs` | 데이터시트 목록 생성·PDF 내려받기 |
 | `src/hsis/hsis.js` | HSIS 열 매핑, ARXML Port 파서, 일관성 검사, 추적성 |
 | `src/hsis/sample-hsis.js` | 예제 HSIS와 ARXML |
 | `src/app/hsisui.js` | HSIS 작업 공간 UI (빌드 시 viewer.js에 삽입) |

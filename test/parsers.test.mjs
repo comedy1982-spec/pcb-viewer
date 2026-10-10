@@ -7,9 +7,9 @@ test('sample board builds from viewer JSON', () => {
   const { SAMPLE } = load();
   const B = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE))));
   assert.equal(B.W, 60); assert.equal(B.H, 40);
-  assert.equal(B.comps.length, 20);
+  assert.equal(B.comps.length, 17);
   assert.ok(B.nets['+3V3'].pads.length > 5);
-  assert.equal(B.byRef.U1.pads.find(p => p.n === '12').fn, 'OSC_IN');
+  assert.equal(B.byRef.U1.pads.find(p => p.n === '21').fn, 'PA11');
 });
 
 test('minimal KiCad board', () => {

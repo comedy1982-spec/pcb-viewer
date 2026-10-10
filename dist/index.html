@@ -389,6 +389,13 @@ body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
 @media (max-width:1180px){.hsis-ws{grid-template-columns:var(--hsw-l,220px) minmax(0,1fr)}#hHsR{display:none}}
 @media (max-width:980px){#hLeft,#hRight{display:none}.main,.main.simwide{grid-template-columns:1fr}}
 @media (max-width:820px){#hHsL{display:none}.hsis-ws{grid-template-columns:1fr}}
+/* datasheet block */
+.dsbox{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.dsbox .dst{margin:2px 0 6px;font-size:12.5px;font-weight:600}
+.dsbox .dskv dt{min-width:72px}
+.dsl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.dsl a{text-decoration:none}
+.dsnote{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+.dst-t a{color:var(--accent);text-decoration:none;white-space:nowrap}
 /* MCU firmware editor */
 .fwsheet{width:min(1180px,100%);height:min(820px,calc(100% - 8px))}
 .fwbody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:14px;padding:6px 18px 12px}
@@ -1150,6 +1157,10 @@ const FP={};
   // 20-pin TSSOP with exposed pad (pin 21)
   const t20=[];for(let i=0;i<10;i++)t20.push({n:''+(1+i),x:-2.9,y:2.925-0.65*i,w:1.45,h:0.4});for(let i=0;i<10;i++)t20.push({n:''+(11+i),x:2.9,y:-2.925+0.65*i,w:1.45,h:0.4});t20.push({n:'21',x:0,y:0,w:2.4,h:4.2});
   FP['HTSSOP-20']={kind:'ic',stand:0.05,body:[4.4,6.5,1.1],pads:t20,dot:[-1.6,2.6]};
+  // TI PWP (HTSSOP-28) with thermal pad (pin 29)
+  const t28=[];for(let i=0;i<14;i++)t28.push({n:''+(1+i),x:-2.85,y:4.225-0.65*i,w:1.4,h:0.4});for(let i=0;i<14;i++)t28.push({n:''+(15+i),x:2.85,y:-4.225+0.65*i,w:1.4,h:0.4});t28.push({n:'29',x:0,y:0,w:2.6,h:5.0});
+  FP['HTSSOP-28']={kind:'ic',stand:0.05,body:[4.4,9.7,1.1],pads:t28,dot:[-1.5,4.2]};
+  FP['1210']={kind:'chip',body:[3.2,2.5,1.6],pads:[{n:'1',x:-1.5,y:0,w:1.2,h:2.7},{n:'2',x:1.5,y:0,w:1.2,h:2.7}]};
   // board-mount 3-phase BLDC motor with 8-pin lead row (U V W H1 H2 H3 VCC GND)
   FP['BLDC-2418']={kind:'motor',body:[30,24,23],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:-19,y:8.75-2.5*i,w:2.0,h:2.0,round:true,drill:1.0}))};
   for(const k in FP){const f=FP[k];const[bw,bh]=f.body;let a=-bw/2,b=-bh/2,c=bw/2,d=bh/2;f.pads.forEach(p=>{a=Math.min(a,p.x-p.w/2);b=Math.min(b,p.y-p.h/2);c=Math.max(c,p.x+p.w/2);d=Math.max(d,p.y+p.h/2);});f.lbb=[a,b,c,d];}
@@ -2015,88 +2026,86 @@ return{parseVal,fmtSI,nominalV,irSolve,siAnalyze,microstrip,thermalSolve,extract
 </script>
 <script>
 /* Built-in example board, expressed in the viewer JSON format */
+// STM32F042K6U6 (UFQFPN32) pin names, from the ST datasheet pin-definition table; the exposed pad (33 here) is VSS
+const STM32F042K6U6_PINS={1:'VDD',2:'PF0',3:'PF1',4:'NRST',5:'VDDA',6:'PA0',7:'PA1',8:'PA2',9:'PA3',10:'PA4',11:'PA5',12:'PA6',13:'PA7',14:'PB0',15:'PB1',16:'PB2',17:'VDDIO2',18:'PA8',19:'PA9',20:'PA10',21:'PA11',22:'PA12',23:'PA13',24:'PA14',25:'PA15',26:'PB3',27:'PB4',28:'PB5',29:'PB6',30:'PB7',31:'BOOT0',32:'PB8',33:'VSS'};
 const SAMPLE_SPEC=(function(){
   const T=[],V=[];
   const tr=(layer,net,width,...points)=>T.push({layer:layer==='T'?'top':'bottom',net,width,points});
   const G=(...pairs)=>{for(let i=0;i<pairs.length;i+=2)tr('T','GND',0.3,pairs[i],pairs[i+1]);};
+  // U1 = STM32F042K6U6 (UFQFPN32) rotated 270°: VDD/NRST/VDDA on top, SPI1 on the left, USB on the bottom, I²C/PB3/BOOT0 on the right
   tr('T','VBUS',0.6,'J1.2',[7.6,21.5],[7.6,31],'C1.1');
   tr('T','VBUS',0.6,'C1.1',[11,32.2],[11.95,33.15],'U2.3');
-  tr('T','+3V3',0.5,'U2.4',[30.3,26.85],'C3.1');
+  // 3.3 V: LDO → VDDA (pin 5), VDD (pin 1, from the bottom trunk), VDDIO2 (pin 17, via the flash supply)
   tr('T','+3V3',0.6,'U2.2','U2.4');
-  tr('T','+3V3',0.4,[21.5,26.85],[22,27.35],'C2.1');
-  tr('T','+3V3',0.3,'C3.1',[31.2,24],[30.25,23.05],'U1.32');
-  tr('T','+3V3',0.25,'U1.1',[29.1,21.75],[29.1,23.05],[30.25,23.05]);
-  tr('T','+3V3',0.3,'U1.24',[35.6,21.75],[37,23.15],'C4.1');
-  tr('T','+3V3',0.3,'C4.1',[39.6,23.7],[41.5,25.6],[45,25.6]);
-  tr('T','+3V3',0.3,[24.3,19.4],[24.3,26.85]);
+  tr('T','+3V3',0.5,'U2.4',[24.3,26.85]);
+  tr('T','+3V3',0.4,[22,26.85],'C2.1');
+  tr('T','+3V3',0.3,[24.3,26.85],[24.3,24.3],[31.75,24.3],'U1.5');
+  tr('T','+3V3',0.3,[28.8,24.3],'C4.1');
+  tr('T','+3V3',0.3,'U1.1',[33.75,23.6],'C3.1');tr('T','+3V3',0.3,'C3.1',[34.4,24.6]);
+  tr('T','+3V3',0.3,'U1.17',[29.6,17.3],[28.4,17.3]);
   tr('T','+3V3',0.3,'R1.2',[40.8,34.2]);
   tr('T','+3V3',0.3,'R3.2',[45,25.6]);
   tr('T','+3V3',0.3,'R4.1',[48,13.4]);
-  tr('T','NRST',0.25,'U1.25',[33.75,28.5],[35.25,30],'R1.1');
+  tr('T','NRST',0.25,'U1.4',[32.25,25.6],[37.6,25.6],[39.2,27.2],'R1.1');
   tr('T','NRST',0.25,'R1.1',[39.2,28.6],[42.2,28.6],'SW1.3');
   tr('T','NRST',0.25,'SW1.3','SW1.1');
-  tr('T','USB_DM',0.25,'J1.4',[8.5,19.5],[11.5,16.5],[30.25,16.5],'U1.9');
-  tr('T','USB_DP',0.25,'J1.5',[8,18.5],[10.5,16],[30.75,16],'U1.10');
+  // USB FS (crystal-less: HSI48 + CRS)
+  tr('T','USB_DM',0.25,'J1.4',[7.5,19.5],[10.5,16.5],[32.25,16.5],'U1.21');
+  tr('T','USB_DP',0.25,'J1.5',[7.2,18.5],[9.7,16.0],[32.75,16.0],'U1.22');
   tr('T','CC1',0.25,'J1.1',[6.6,23.4]);
-  tr('T','I2C_SDA',0.25,'U1.19',[36,19.25],[38,21.27],'J2.2');
+  // I²C1 on PB6/PB7 to the header
+  tr('T','I2C_SDA',0.25,'U1.30',[38,20.75],[38.52,21.27],'J2.2');
   tr('T','I2C_SDA',0.25,[45,21.27],'R3.1');
-  tr('T','I2C_SCL',0.25,'U1.18',[53.6,18.75],'J2.3');
-  tr('T','I2C_SCL',0.25,[48,18.75],'R4.2');
-  tr('T','LED',0.25,'U1.15',[33.25,15.8],[35.5,15.8],[38.2,13.1],[38.2,10],'R2.1');
+  tr('T','I2C_SCL',0.25,'U1.29',[39,20.25],[40.52,18.73],'J2.3');
+  tr('T','I2C_SCL',0.25,[48,18.73],'R4.2');
+  // status LED on PB3
+  tr('T','LED',0.25,'U1.26',[36.2,18.75],[37.6,17.35],[37.6,11],'R2.1');
   tr('T','LED_A',0.25,'R2.2','D1.1');
-  tr('T','XIN',0.25,'U1.12',[31.75,15],[29.6,15],[29.6,11.2],'Y1.1');
-  tr('T','XIN',0.25,[29.6,11.2],'C5.2');
-  tr('T','XOUT',0.25,'U1.13',[32.25,14.5],[33.1,13.65],'Y1.3');
-  tr('T','XOUT',0.25,'Y1.3','C6.1');
-  tr('T','FLASH_CS',0.25,'U1.2',[28.6,21.25],[27.6,22.25]);
-  tr('T','FLASH_MISO',0.25,'U1.3',[26.4,20.75]);
-  tr('T','FLASH_MOSI',0.25,'U1.4',[28.6,20.25],[27.6,19.25]);
-  tr('T','FLASH_CLK',0.25,'U1.5',[28.9,19.75],[28.9,18.6],[28.6,18.3]);
+  // SPI1 (PA4–PA7) to the flash on the bottom side
+  tr('T','FLASH_CS',0.25,'U1.10',[28.2,21.25],[27.6,21.9]);tr('B','FLASH_CS',0.25,[27.6,21.9],'U3.1');
+  tr('T','FLASH_MISO',0.25,'U1.12',[28.7,20.25]);tr('B','FLASH_MISO',0.25,[28.7,20.25],[24.5,20.635],'U3.2');
+  tr('T','FLASH_CLK',0.25,'U1.11',[26.5,20.75],[25.2,19.365],[15.8,19.365]);tr('B','FLASH_CLK',0.25,[15.8,19.365],'U3.6');
+  tr('T','FLASH_MOSI',0.25,'U1.13',[27.2,19.75],[26.6,18.095],[15.8,18.095]);tr('B','FLASH_MOSI',0.25,[15.8,18.095],'U3.5');
   G('J1.3',[6.9,20.5],'J1.6',[6.8,16.8],'J1.S1',[4.5,25.4],'J1.S2',[4.5,14.6],'C1.2',[11,27.7],'U2.1',[18.3,35.2],'C2.2',[22,32.4],
-    'C3.2',[32.8,27.3],'C4.2',[37,26.4],'C5.1',[26.7,9.8],'C6.2',[36.8,11.4],'Y1.4','Y1.2','Y1.2',[34.4,10.2],'D1.2',[46,10],
-    'SW1.2',[52.6,32.25],'SW1.4',[52.6,27.75],'U1.6',[30.6,19.25],'U1.8',[30.6,18.25],'U1.11',[31.25,18.6],'U1.30',[31.25,21.4]);
-  tr('B','FLASH_CS',0.25,[27.6,22.25],[23.1,22.25],'U3.1');
-  tr('B','FLASH_MISO',0.25,[26.4,20.75],'U3.2');
-  tr('B','FLASH_MOSI',0.25,[27.6,19.25],[26,17.65],[26,16.6],[18.6,16.6],[17.3,17.9],'U3.5');
-  tr('B','FLASH_CLK',0.25,[28.6,18.3],[27.2,16.9],[27.2,15.6],[16.3,15.6],[15.6,16.3],[15.6,19.365],'U3.6');
+    'C3.2',[37.2,23.6],'C4.2',[31.2,26.6],'D1.2',[46,10],'SW1.2',[52.6,32.25],'SW1.4',[52.6,27.75]);
+  // bottom: 3.3 V trunk, flash supply, CC pull-down
   tr('B','+3V3',0.45,[24.3,26.85],[24.3,34.2],[54,34.2],[56.5,31.7],[56.5,15.9],[54,13.4],[48,13.4]);
   tr('B','+3V3',0.3,[56.5,23.81],'J2.1');
   tr('B','+3V3',0.3,[45,25.6],[45,34.2]);
-  tr('B','+3V3',0.3,'U3.3',[24.3,19.4]);
+  tr('B','+3V3',0.3,[34.4,24.6],[34.4,34.2]);
   tr('B','+3V3',0.3,[24.3,26.85],[16.3,26.85],[16.3,20.635],'U3.7');
   tr('B','+3V3',0.3,[16.3,21.905],'U3.8');
   tr('B','+3V3',0.3,[22.4,26.85],[20.8,25.25],'C7.1');
+  tr('B','+3V3',0.3,[28.4,17.3],[23.9,17.3],[23.9,19.0],'U3.3');
+  tr('B','+3V3',0.3,'U3.3',[21.6,19.6],[18.4,21.6],'U3.8');
   tr('B','CC1',0.25,[6.6,23.4],[6.6,27.8],'R5.1');
   const via=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.6,drill:0.3}));
-  via('GND',[6.9,20.5],[6.8,16.8],[4.5,25.4],[4.5,14.6],[11,27.7],[18.3,35.2],[22,32.4],[32.8,27.3],[37,26.4],[26.7,9.8],[36.8,11.4],[34.4,10.2],[46,10],[52.6,32.25],[52.6,27.75],
-    [31.2,19.2],[32.8,19.2],[31.2,20.8],[32.8,20.8],[12,7],[20,7],[44,6.5],[52,7.5],[11,37.2],[50,37.2]);
-  via('+3V3',[24.3,26.85],[24.3,19.4],[40.8,34.2],[45,25.6],[48,13.4]);
-  via('CC1',[6.6,23.4]);via('FLASH_CS',[27.6,22.25]);via('FLASH_MISO',[26.4,20.75]);via('FLASH_MOSI',[27.6,19.25]);via('FLASH_CLK',[28.6,18.3]);
+  via('GND',[6.9,20.5],[6.8,16.8],[4.5,25.4],[4.5,14.6],[11,27.7],[18.3,35.2],[22,32.4],[37.2,23.6],[31.2,26.6],[46,10],[52.6,32.25],[52.6,27.75],
+    [31.4,19.4],[32.6,19.4],[31.4,20.6],[32.6,20.6],[12,7],[20,7],[44,6.5],[52,7.5],[11,37.2],[50,37.2]);
+  via('+3V3',[24.3,26.85],[40.8,34.2],[45,25.6],[48,13.4],[34.4,24.6],[28.4,17.3]);
+  via('CC1',[6.6,23.4]);via('FLASH_CS',[27.6,21.9]);via('FLASH_MISO',[28.7,20.25]);via('FLASH_MOSI',[15.8,18.095]);via('FLASH_CLK',[15.8,19.365]);
   const C=(ref,value,footprint,side,x,y,rotation,mpn,description,pins,extra)=>Object.assign({ref,value,footprint,side,x,y,rotation,mpn,description,pins},extra||{});
   return{
     _source:'예제',
     board:{name:'SENSE-32 DEV v1.2',width:60,height:40,thickness:1.6,corner:2,holes:[[3.5,3.5,3.2],[56.5,3.5,3.2],[3.5,36.5,3.2],[56.5,36.5,3.2]]},
     components:[
-      C('J1','USB-C 16P','USB-C','top',3,20,0,'TYPE-C-31-M-12','USB-C 리셉터클 · 전원과 USB 2.0 데이터',{1:'CC1',2:'VBUS',3:'GND',4:'USB_DM',5:'USB_DP',6:'GND',S1:'GND',S2:'GND'},{label:[3,20],pinNames:{1:'CC1',2:'VBUS',3:'GND',4:'D−',5:'D+',6:'GND',S1:'SHIELD',S2:'SHIELD'}}),
+      C('J1','USB-C 16P','USB-C','top',3,20,0,'USB4105-GF-A','USB-C 리셉터클 (GCT) · 전원과 USB 2.0 데이터 · 뷰어 풋프린트는 사용 핀만 단순화',{1:'CC1',2:'VBUS',3:'GND',4:'USB_DM',5:'USB_DP',6:'GND',S1:'GND',S2:'GND'},{label:[3,20],pinNames:{1:'CC1',2:'VBUS',3:'GND',4:'D−',5:'D+',6:'GND',S1:'SHIELD',S2:'SHIELD'}}),
       C('U2','AMS1117-3.3','SOT-223','top',16,30,180,'AMS1117-3.3','3.3 V LDO 레귤레이터 · 최대 1 A',{1:'GND',2:'+3V3',3:'VBUS',4:'+3V3'},{label:[16,30],pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'TAB'}}),
       C('C1','10µF','0805','top',11,30,270,'CL21A106KAYNNNE','LDO 입력 커패시터 · X5R 25 V',{1:'VBUS',2:'GND'},{label:[9.3,30]}),
       C('C2','10µF','0805','top',22,30,90,'CL21A106KAYNNNE','LDO 출력 커패시터 · X5R 25 V',{1:'+3V3',2:'GND'},{label:[23.9,30]}),
-      C('U1','MCU QFN-32','QFN-32','top',32,20,0,'MCU-Q32 (예시 부품)','32비트 마이크로컨트롤러 · 5×5 mm, 노출 패드',
-        {1:'+3V3',2:'FLASH_CS',3:'FLASH_MISO',4:'FLASH_MOSI',5:'FLASH_CLK',6:'GND',8:'GND',9:'USB_DM',10:'USB_DP',11:'GND',12:'XIN',13:'XOUT',15:'LED',18:'I2C_SCL',19:'I2C_SDA',24:'+3V3',25:'NRST',30:'GND',32:'+3V3',33:'GND'},
-        {pinNames:{1:'VDD',2:'PA4',3:'PA6',4:'PA7',5:'PA5',6:'VSS',7:'PA8',8:'VSS',9:'PA11',10:'PA12',11:'VSS',12:'OSC_IN',13:'OSC_OUT',14:'PB0',15:'PB3',16:'PB4',17:'PB5',18:'PB6',19:'PB7',20:'PB8',21:'PB9',22:'PC14',23:'PC15',24:'VDD',25:'NRST',26:'PA0',27:'PA1',28:'PA2',29:'PA3',30:'VSS',31:'BOOT0',32:'VDD',33:'EP'}}),
-      C('C3','100nF','0603','top',32,26,0,'CL10B104KB8NNNC','디커플링 · VDD(32번 핀)',{1:'+3V3',2:'GND'},{label:[32.3,24.9]}),
-      C('C4','100nF','0603','top',37,24.5,90,'CL10B104KB8NNNC','디커플링 · VDD(24번 핀)',{1:'+3V3',2:'GND'},{label:[38.7,24.5]}),
-      C('Y1','16 MHz','XTAL-3225','top',32,12,0,'X322516MLB4SI','크리스털 · 3.2×2.5 mm, CL 8 pF',{1:'XIN',2:'GND',3:'XOUT',4:'GND'},{pinNames:{1:'X1',2:'GND',3:'X2',4:'GND'}}),
-      C('C5','12pF','0603','top',27.5,11.2,0,'CL10C120JB8NNNC','크리스털 부하 커패시터 · C0G',{1:'GND',2:'XIN'}),
-      C('C6','12pF','0603','top',36,12.8,0,'CL10C120JB8NNNC','크리스털 부하 커패시터 · C0G',{1:'XOUT',2:'GND'}),
+      C('U1','STM32F042K6U6','QFN-32','top',32,20,270,'STM32F042K6U6','Arm Cortex-M0 48 MHz · 32 KB 플래시 · 6 KB SRAM · 크리스털리스 USB FS (HSI48+CRS) · UFQFPN32',
+        {1:'+3V3',4:'NRST',5:'+3V3',10:'FLASH_CS',11:'FLASH_CLK',12:'FLASH_MISO',13:'FLASH_MOSI',17:'+3V3',21:'USB_DM',22:'USB_DP',26:'LED',29:'I2C_SCL',30:'I2C_SDA',33:'GND'},
+        {pinNames:STM32F042K6U6_PINS,label:[32,14.6]}),
+      C('C3','100nF','0603','top',35.2,23.6,0,'CL10B104KB8NNNC','디커플링 · VDD(1번 핀)',{1:'+3V3',2:'GND'},{label:[35.2,22.5]}),
+      C('C4','100nF','0603','top',29.6,25.6,0,'CL10B104KB8NNNC','디커플링 · VDDA(5번 핀)',{1:'+3V3',2:'GND'},{label:[29.6,26.7]}),
       C('R1','10kΩ','0603','top',40,30,0,'RC0603FR-0710KL','NRST 풀업 저항 · 1%',{1:'NRST',2:'+3V3'}),
-      C('SW1','RESET','SW-6x6','top',47,30,0,'TS-1187A-B-A-B','리셋 택트 스위치 · 6×6 mm',{1:'NRST',2:'GND',3:'NRST',4:'GND'},{label:[47,30]}),
+      C('SW1','RESET','SW-6x6','top',47,30,0,'B3FS-1000P','리셋 택트 스위치 (Omron) · 6×6 mm SMD',{1:'NRST',2:'GND',3:'NRST',4:'GND'},{label:[47,30]}),
       C('R2','330Ω','0603','top',40,10,0,'RC0603FR-07330RL','LED 전류 제한 저항',{1:'LED',2:'LED_A'}),
-      C('D1','LED 녹색','LED-0603','top',44,10,0,'19-217/GHC-YR1S2/3T','상태 표시 LED · 525 nm',{1:'LED_A',2:'GND'},{pinNames:{1:'A',2:'K'}}),
+      C('D1','LED 녹색','LED-0603','top',44,10,0,'APT1608SGC','상태 표시 LED (Kingbright) · 568 nm',{1:'LED_A',2:'GND'},{pinNames:{1:'A',2:'K'}}),
       C('R3','4.7kΩ','0603','top',45,23.5,90,'RC0603FR-074K7L','I²C SDA 풀업 저항',{1:'I2C_SDA',2:'+3V3'},{label:[46.7,23.5]}),
       C('R4','4.7kΩ','0603','top',48,15.5,90,'RC0603FR-074K7L','I²C SCL 풀업 저항',{1:'+3V3',2:'I2C_SCL'},{label:[49.7,15.5]}),
-      C('J2','I²C 헤더','HDR-1x4','top',55,20,0,'PH-2.54-1x4','I²C 확장 헤더 · 2.54 mm 스루홀',{1:'+3V3',2:'I2C_SDA',3:'I2C_SCL',4:'GND'},{pinNames:{1:'3V3',2:'SDA',3:'SCL',4:'GND'}}),
-      C('U3','W25Q32JV','SOIC-8','bottom',20,20,0,'W25Q32JVSSIQ','32 Mbit SPI NOR 플래시',{1:'FLASH_CS',2:'FLASH_MISO',3:'+3V3',4:'GND',5:'FLASH_MOSI',6:'FLASH_CLK',7:'+3V3',8:'+3V3'},{label:[20,20],pinNames:{1:'/CS',2:'DO',3:'/WP',4:'GND',5:'DI',6:'CLK',7:'/HOLD',8:'VCC'}}),
+      C('J2','I²C 헤더','HDR-1x4','top',55,20,0,'61300411121','I²C 확장 헤더 (Würth WR-PHD) · 2.54 mm 스루홀',{1:'+3V3',2:'I2C_SDA',3:'I2C_SCL',4:'GND'},{pinNames:{1:'3V3',2:'SDA',3:'SCL',4:'GND'}}),
+      C('U3','W25Q32JV','SOIC-8','bottom',20,20,0,'W25Q32JVSSIQ','32 Mbit SPI NOR 플래시 (Winbond)',{1:'FLASH_CS',2:'FLASH_MISO',3:'+3V3',4:'GND',5:'FLASH_MOSI',6:'FLASH_CLK',7:'+3V3',8:'+3V3'},{label:[20,20],pinNames:{1:'/CS',2:'DO',3:'/WP',4:'GND',5:'DI',6:'CLK',7:'/HOLD',8:'VCC'}}),
       C('C7','100nF','0603','bottom',20,24.5,0,'CL10B104KB8NNNC','플래시 디커플링',{1:'+3V3',2:'GND'},{label:[17.6,24.5]}),
       C('R5','5.1kΩ','0603','bottom',9,27,90,'RC0603FR-075K1L','USB-C CC 풀다운 (싱크 지정)',{1:'CC1',2:'GND'},{label:[10.7,27]}),
     ],
@@ -2116,11 +2125,10 @@ const SAMPLE_SPEC=(function(){
 </script>
 <script>
 /* Built-in example 2: MCU-controlled DC motor with LEDs. U1 runs editable firmware that is co-simulated with the circuit. */
-const MCU_Q32_PINS={1:'VDD',2:'PA0',3:'PA2',4:'PA3',5:'PA4',6:'VSS',7:'PA5',8:'VSS',9:'PB0',10:'PB3',11:'PB4',12:'PB5',13:'PB6',14:'PB7',15:'PA1',16:'PA6',17:'PA7',18:'PA8',19:'PA9',20:'PA10',21:'PA11',22:'PA12',23:'PA13',24:'VDD',25:'NRST',26:'PA14',27:'PA15',28:'PB8',29:'PB9',30:'PC14',31:'PC15',32:'BOOT0',33:'EP'};
-const SAMPLE_MCU_FW=`// U1 MCU-Q32 펌웨어 — 회로 시뮬레이션과 함께 실행됩니다 (JavaScript 문법, Arduino 스타일 API)
+const SAMPLE_MCU_FW=`// U1 STM32F042K6U6 펌웨어 — 회로 시뮬레이션과 함께 실행됩니다 (JavaScript 문법, Arduino 스타일 API)
 // ▼ 주요 파라미터: 값을 바꾸고 [빌드 & 시뮬레이션]을 누르세요
 const PWM_FREQ_HZ      = 500;   // 모터 PWM 주파수 [Hz]
-const TARGET_DUTY      = 70;    // 목표 듀티 [%]
+const TARGET_DUTY      = 60;    // 목표 듀티 [%] (FA-130 정격 3 V를 고려한 평균 전압 제한)
 const START_DELAY_MS   = 50;    // 전원 인가 후 기동 지연 [ms]
 const SOFT_START_MS    = 250;   // 0 → 목표 듀티까지 올리는 시간 [ms]
 const CURRENT_LIMIT_MA = 400;   // 모터 평균 전류 제한 [mA]
@@ -2131,14 +2139,14 @@ let duty = 0;                   // 현재 듀티 [%]
 let limitCount = 0;             // 전류 제한이 걸린 횟수 [ms]
 
 function setup() {
-  pinMode(PB3, OUTPUT);          // D3 상태 LED (R4 경유)
-  pwmInit(PA8, PWM_FREQ_HZ);     // R1 → Q1 게이트 → M1 모터
+  pinMode(PA4, OUTPUT);          // D3 상태 LED (R4 경유)
+  pwmInit(PA8, PWM_FREQ_HZ);     // TIM1_CH1 → R1 → Q1 게이트 → M1 모터
   log('부팅: PWM', PWM_FREQ_HZ, 'Hz · 목표 듀티', TARGET_DUTY, '%');
 }
 
 function loop(ms) {              // 1 ms마다 호출됩니다
   // R5 션트 전압을 R6·C4 필터로 평균낸 값 → 모터 평균 전류 [mA]
-  const iMotor = analogReadVoltage(PA1) / SHUNT_OHM * 1000;
+  const iMotor = analogReadVoltage(PB1) / SHUNT_OHM * 1000;   // PB1 = ADC_IN9
 
   if (ms < START_DELAY_MS) {
     duty = 0;
@@ -2156,8 +2164,8 @@ function loop(ms) {              // 1 ms마다 호출됩니다
 
   // 상태 LED: 대기 중 꺼짐 · 가속 중 점멸 · 정속 운전 중 켜짐
   const accel = ms >= START_DELAY_MS && ms < START_DELAY_MS + SOFT_START_MS;
-  if (accel) digitalWrite(PB3, Math.floor(ms / LED_BLINK_MS) % 2);
-  else digitalWrite(PB3, ms >= START_DELAY_MS ? HIGH : LOW);
+  if (accel) digitalWrite(PA4, Math.floor(ms / LED_BLINK_MS) % 2);
+  else digitalWrite(PA4, ms >= START_DELAY_MS ? HIGH : LOW);
 }
 `;
 const SAMPLE_MCU=(function(){
@@ -2169,7 +2177,8 @@ const SAMPLE_MCU=(function(){
   tr('T','VIN',0.6,[9,43.15],'U2.3');tr('T','VIN',0.6,'C1.1',[11,47.5]);tr('T','VIN',0.8,'C5.1',[28.5,47.5]);tr('T','VIN',0.8,'D1.2',[40,47.5]);
   tr('B','VIN',0.5,[44,40],[76,40],[76,8]);tr('T','VIN',0.4,[76,8],'R7.2');via('VIN',[44,40],[76,8]);
   // 3.3 V from the LDO to the MCU, decoupling and the power LED
-  tr('T','+3V3',0.6,'U2.4',[16,26.5],[22.45,26.5],'U1.24');tr('T','+3V3',0.6,'U2.2','U2.4');
+  tr('T','+3V3',0.6,'U2.4',[16,26.5],[22.45,26.5]);tr('T','+3V3',0.4,[16,26.5],[16,21.75],'U1.5');
+  tr('T','+3V3',0.3,'U1.17',[23.4,19.3]);via('+3V3',[23.4,19.3],[23.4,27.6]);tr('B','+3V3',0.3,[23.4,19.3],[23.4,27.6]);tr('T','+3V3',0.3,[23.4,27.6],'C3.1');tr('T','+3V3',0.6,'U2.2','U2.4');
   tr('T','+3V3',0.3,'U1.1',[17.55,26.5]);tr('T','+3V3',0.4,'C2.2',[16,32]);tr('T','+3V3',0.3,'C3.1',[22.45,28],[22.45,26.5]);
   tr('T','+3V3',0.3,'R3.2',[13,28],'C2.2');
   tr('T','PWR_A',0.3,'R3.1',[7.2,25.6],'D2.2');
@@ -2187,36 +2196,36 @@ const SAMPLE_MCU=(function(){
   // ground stubs to the bottom pour
   [['U2.1',[20.6,43.15]],['C1.2',[14.6,46.5]],['C2.1',[11,30.3]],['C3.2',[27.4,28]],['C5.2',[33.1,44]],['R2.1',[28,14.7]],['R5.1',[38,7.8]],['C4.1',[26,5.7]],['D2.1',[8,21.7]],['D3.1',[18.75,6.7]]]
     .forEach(([a,b])=>{tr('T','GND',0.5,a,b);via('GND',b);});
-  tr('T','GND',0.4,'U1.6',[15.6,21.25],[15.6,20.25],'U1.8');via('GND',[15.6,20.75],[20,22]);
+  via('GND',[20,22],[19.2,21.2],[20.8,22.8]);
   return{
     _source:'예제',_demo:'mcu',
     board:{name:'MOTION-32 DEV v1.0',width:80,height:50,thickness:1.6,corner:2,holes:[[3.5,3.5,3.2],[76.5,3.5,3.2],[3.5,46.5,3.2],[76.5,46.5,3.2]]},
     components:[
-      {ref:'J1',value:'5V 입력',footprint:'HDR-1x2',side:'top',x:5,y:38,rotation:0,mpn:'PH-2.54-1x2',description:'5 V 전원 입력 · 2.54 mm',pins:{1:'VIN',2:'GND'},pinNames:{1:'5V',2:'GND'}},
+      {ref:'J1',value:'5V 입력',footprint:'HDR-1x2',side:'top',x:5,y:38,rotation:0,mpn:'61300211121',description:'5 V 전원 입력 (Würth WR-PHD 2.54 mm)',pins:{1:'VIN',2:'GND'},pinNames:{1:'5V',2:'GND'}},
       {ref:'U2',value:'AMS1117-3.3',footprint:'SOT-223',side:'top',x:16,y:40,rotation:180,mpn:'AMS1117-3.3',description:'3.3 V LDO 레귤레이터 (MCU 전원)',pins:{1:'GND',2:'+3V3',3:'VIN',4:'+3V3'},pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'VOUT'},label:[16,35]},
       {ref:'C1',value:'10µF',footprint:'0805',side:'top',x:12,y:46.5,rotation:0,mpn:'CL21A106KAYNNNE',description:'LDO 입력 커패시터',pins:{1:'VIN',2:'GND'}},
       {ref:'C2',value:'10µF',footprint:'0805',side:'top',x:12,y:32,rotation:0,mpn:'CL21A106KAYNNNE',description:'LDO 출력 커패시터',pins:{1:'GND',2:'+3V3'}},
       {ref:'C3',value:'100nF',footprint:'0603',side:'top',x:25,y:28,rotation:0,mpn:'CL10B104KB8NNNC',description:'MCU 디커플링',pins:{1:'+3V3',2:'GND'}},
       {ref:'C5',value:'100µF',footprint:'1206',side:'top',x:30,y:44,rotation:0,mpn:'GRM31CR60J107ME39',description:'모터 전원 벌크 커패시터',pins:{1:'VIN',2:'GND'}},
-      {ref:'U1',value:'MCU-Q32',footprint:'QFN-32',side:'top',x:20,y:22,rotation:0,mpn:'MCU-Q32 (예시 부품)',description:'32비트 마이크로컨트롤러 · 펌웨어로 모터 PWM·LED를 제어 (부품을 클릭해 펌웨어 편집)',
-        pins:{1:'+3V3',6:'GND',8:'GND',10:'LED_ST',15:'ISNS_ADC',18:'PWM_M',24:'+3V3',33:'GND'},
-        pinNames:MCU_Q32_PINS,
+      {ref:'U1',value:'STM32F042K6U6',footprint:'QFN-32',side:'top',x:20,y:22,rotation:0,mpn:'STM32F042K6U6',description:'Arm Cortex-M0 48 MHz · PA8 TIM1 PWM으로 모터, PA4로 LED, PB1 ADC로 전류 (부품을 클릭해 펌웨어 편집)',
+        pins:{1:'+3V3',5:'+3V3',10:'LED_ST',15:'ISNS_ADC',17:'+3V3',18:'PWM_M',33:'GND'},
+        pinNames:STM32F042K6U6_PINS,
         firmware:SAMPLE_MCU_FW,label:[20,17]},
       {ref:'R1',value:'100Ω',footprint:'0603',side:'top',x:27,y:20.75,rotation:0,mpn:'RC0603FR-07100RL',description:'게이트 직렬 저항',pins:{1:'PWM_M',2:'GATE'}},
       {ref:'R2',value:'10kΩ',footprint:'0603',side:'top',x:28,y:17,rotation:90,mpn:'RC0603FR-0710KL',description:'게이트 풀다운 (MCU 리셋 중 모터 OFF)',pins:{1:'GND',2:'GATE'},label:[26.4,17]},
-      {ref:'Q1',value:'AO3400A',footprint:'SOT-23',side:'top',x:34,y:16,rotation:0,mpn:'AO3400A',description:'N채널 MOSFET 30 V 5.7 A · 로우사이드 스위치',pins:{1:'GATE',2:'I_SENSE',3:'MOT_N'},pinNames:{1:'G',2:'S',3:'D'},model:{type:'nmos',vth:1.2,kp:8,lambda:0.01},label:[34,19]},
+      {ref:'Q1',value:'AO3400A',footprint:'SOT-23',side:'top',x:34,y:16,rotation:0,mpn:'AO3400A',description:'N채널 MOSFET (Alpha & Omega) 30 V 5.7 A · VGS(th) 1.05 V · 로우사이드 스위치',pins:{1:'GATE',2:'I_SENSE',3:'MOT_N'},pinNames:{1:'G',2:'S',3:'D'},model:{type:'nmos',vth:1.05,kp:8,lambda:0.01},label:[34,19]},
       {ref:'R5',value:'0.1Ω',footprint:'1206',side:'top',x:38,y:11,rotation:90,mpn:'RL1206FR-070R1L',description:'모터 전류 검출 션트',pins:{1:'GND',2:'I_SENSE'},label:[40.4,11]},
       {ref:'R6',value:'10kΩ',footprint:'0603',side:'top',x:30,y:11,rotation:0,mpn:'RC0603FR-0710KL',description:'전류 검출 RC 필터 저항',pins:{1:'ISNS_ADC',2:'I_SENSE'},label:[30,12.6]},
       {ref:'C4',value:'1µF',footprint:'0603',side:'top',x:26,y:8,rotation:90,mpn:'CL10A105KB8NNNC',description:'전류 검출 RC 필터 (τ = 10 ms)',pins:{1:'GND',2:'ISNS_ADC'},label:[24.4,8]},
-      {ref:'D1',value:'SS14',footprint:'SMA',side:'top',x:40,y:32,rotation:90,mpn:'SS14',description:'플라이백 쇼트키 다이오드',pins:{1:'MOT_N',2:'VIN'},pinNames:{1:'A',2:'K'},label:[43,32]},
-      {ref:'M1',value:'DC 모터 130',footprint:'MOTOR-130',side:'top',x:58,y:26,rotation:0,mpn:'RF-130 + 기어 1:48',description:'브러시 DC 모터 · 5 V · 기어비 1:48 출력 팬',pins:{1:'VIN',2:'MOT_N'},pinNames:{1:'+',2:'-'},label:[58,15.5],
-        model:{R:2.5,L:5e-4,ke:0.004,kt:0.004,J:6e-7,b:2e-7,tf:1e-4,tl:0,gear:48}},
+      {ref:'D1',value:'SS14',footprint:'SMA',side:'top',x:40,y:32,rotation:90,mpn:'SS14',description:'플라이백 쇼트키 다이오드 (Vishay) · 40 V 1 A',pins:{1:'MOT_N',2:'VIN'},pinNames:{1:'A',2:'K'},label:[43,32]},
+      {ref:'M1',value:'FA-130RA',footprint:'MOTOR-130',side:'top',x:58,y:26,rotation:0,mpn:'FA-130RA',description:'Mabuchi FA-130 브러시 DC 모터 · 3 V 무부하 12,300 rpm · Tamiya 70097 기어박스 58:1 출력 팬',pins:{1:'VIN',2:'MOT_N'},pinNames:{1:'+',2:'-'},label:[58,15.5],
+        model:{R:1.43,L:1.5e-4,ke:0.00216,kt:0.00216,J:1.6e-7,b:1e-9,tf:3.2e-4,tl:0,gear:58}},
       {ref:'R3',value:'330Ω',footprint:'0603',side:'top',x:8,y:28,rotation:0,mpn:'RC0603FR-07330RL',description:'전원 LED 전류 제한',pins:{1:'PWR_A',2:'+3V3'}},
-      {ref:'D2',value:'LED 빨강',footprint:'LED-0603',side:'top',x:8,y:24,rotation:90,mpn:'19-217/R6C',description:'3.3 V 전원 표시 LED',pins:{1:'GND',2:'PWR_A'},pinNames:{1:'K',2:'A'},label:[5.8,24]},
+      {ref:'D2',value:'LED 빨강',footprint:'LED-0603',side:'top',x:8,y:24,rotation:90,mpn:'APT1608EC',description:'3.3 V 전원 표시 LED (Kingbright)',pins:{1:'GND',2:'PWR_A'},pinNames:{1:'K',2:'A'},label:[5.8,24]},
       {ref:'R4',value:'330Ω',footprint:'0603',side:'top',x:18.75,y:13,rotation:90,mpn:'RC0603FR-07330RL',description:'상태 LED 전류 제한',pins:{1:'STAT_A',2:'LED_ST'},label:[16.8,13]},
-      {ref:'D3',value:'LED 녹색',footprint:'LED-0603',side:'top',x:18.75,y:9,rotation:90,mpn:'19-217/GHC',description:'MCU 상태 LED (PB3)',pins:{1:'GND',2:'STAT_A'},pinNames:{1:'K',2:'A'},label:[16.8,9]},
+      {ref:'D3',value:'LED 녹색',footprint:'LED-0603',side:'top',x:18.75,y:9,rotation:90,mpn:'APT1608SGC',description:'MCU 상태 LED (PA4, Kingbright)',pins:{1:'GND',2:'STAT_A'},pinNames:{1:'K',2:'A'},label:[16.8,9]},
       {ref:'R7',value:'680Ω',footprint:'0603',side:'top',x:72,y:8,rotation:0,mpn:'RC0603FR-07680RL',description:'구동 LED 전류 제한',pins:{1:'RUN_A',2:'VIN'}},
-      {ref:'D4',value:'LED 파랑',footprint:'LED-0603',side:'top',x:66,y:8,rotation:180,mpn:'19-217/BHC',description:'모터 구동 표시 LED (MOSFET이 켜지면 점등)',pins:{1:'RUN_A',2:'MOT_N'},pinNames:{1:'A',2:'K'}},
+      {ref:'D4',value:'LED 파랑',footprint:'LED-0603',side:'top',x:66,y:8,rotation:180,mpn:'APT1608QBC/D',description:'모터 구동 표시 LED (Kingbright 청색, MOSFET이 켜지면 점등)',pins:{1:'RUN_A',2:'MOT_N'},pinNames:{1:'A',2:'K'}},
     ],
     tracks:T,vias:V,
     pours:[{layer:'bottom',net:'GND',clearance:0.4,inset:0.5}],
@@ -2229,21 +2238,22 @@ const SAMPLE_MCU=(function(){
   };
 })();
 
-/* Built-in example 3: MCU + integrated 3-phase driver + hall-sensor BLDC motor, six-step commutation in firmware */
-const SAMPLE_BLDC_FW=`// U1 MCU-Q32 BLDC 펌웨어 — 홀 센서 6스텝 정류, 회로 시뮬레이션과 함께 실행됩니다
+/* Built-in example 3: STM32F042K6U6 + TI DRV8313 3-phase driver + 42BLF01 hall-sensor BLDC motor, six-step commutation in firmware */
+const SAMPLE_BLDC_FW=`// U1 STM32F042K6U6 BLDC 펌웨어 — 홀 센서 6스텝 정류, 회로 시뮬레이션과 함께 실행됩니다
 // ▼ 주요 파라미터: 값을 바꾸고 [빌드 & 시뮬레이션]을 누르세요
-const PWM_FREQ_HZ    = 1000;  // 상단 스위치 PWM 주파수 [Hz]
+const PWM_FREQ_HZ    = 2000;  // 상단 스위치 PWM 주파수 [Hz] (실제 제품은 보통 20 kHz 이상)
 const TARGET_DUTY    = 80;    // 목표 듀티 [%]
-const START_DELAY_MS = 20;    // 전원 인가 후 기동 지연 [ms]
-const SOFT_START_MS  = 150;   // 0 → 목표 듀티까지 올리는 시간 [ms]
+const START_DELAY_MS = 10;    // 전원 인가 후 기동 지연 [ms]
+const SOFT_START_MS  = 60;    // 0 → 목표 듀티까지 올리는 시간 [ms]
 const LOOP_PERIOD_US = 50;    // 제어 루프 주기 [µs] (홀 변화 → 정류 지연)
 const DIRECTION      = 1;     // 회전 방향: 1 정방향, -1 역방향
-const POLE_PAIRS     = 2;     // 모터 극쌍 수 (속도 계산용)
+const POLE_PAIRS     = 4;     // 42BLF01: 8극 = 4극쌍 (속도 계산용)
 
-// 상별 드라이버 입력 (U3): INx = PWM, ENx = 상 활성화
-const PH = [ { name: 'U', inp: PA13, en: PA12 },
-             { name: 'V', inp: PA11, en: PA10 },
-             { name: 'W', inp: PA9,  en: PA8  } ];
+// DRV8313 상별 입력: INx = PWM(TIM1), ENx = 상 활성화 (GPIO)
+const PH = [ { name: 'U', inp: PA11, en: PA15 },   // OUT3 → U
+             { name: 'V', inp: PA10, en: PA12 },   // OUT2 → V
+             { name: 'W', inp: PA8,  en: PA9  } ]; // OUT1 → W
+const HALL = [PA6, PA7, PB0];                       // 홀 출력 (오픈 컬렉터, MCU 내부 풀업)
 // 홀 코드 (H3 H2 H1) → [PWM 거는 상단 상, ON 하는 하단 상]
 const STEP = { 5: [2, 1], 1: [0, 1], 3: [0, 2], 2: [1, 2], 6: [1, 0], 4: [2, 0] };
 
@@ -2251,18 +2261,20 @@ let duty = 0, lastHall = -1, steps = 0, loggedSteps = 0;
 
 function setup() {
   PH.forEach(p => { pwmInit(p.inp, PWM_FREQ_HZ); pinMode(p.en, OUTPUT); });
-  pinMode(PB3, OUTPUT);          // D3 상태 LED
+  HALL.forEach(h => pinMode(h, INPUT_PULLUP));
+  pinMode(PB3, INPUT);           // DRV8313 nFAULT (R10 풀업)
+  pinMode(PA4, OUTPUT);          // D3 상태 LED
   log('BLDC 6스텝 · PWM', PWM_FREQ_HZ, 'Hz · 루프', LOOP_PERIOD_US, 'µs');
 }
 
 function stopAll() { PH.forEach(p => { pwmWrite(p.inp, 0); digitalWrite(p.en, LOW); }); }
 
 function loop(ms) {              // LOOP_PERIOD_US마다 호출됩니다 (ms는 소수일 수 있음)
-  if (digitalRead(PA7) === LOW) { stopAll(); return; }          // U3 nFAULT
-  const hall = digitalRead(PB5) | (digitalRead(PB6) << 1) | (digitalRead(PB7) << 2);
+  if (digitalRead(PB3) === LOW) { stopAll(); return; }         // nFAULT: 과전류·과열·저전압
+  const hall = digitalRead(HALL[0]) | (digitalRead(HALL[1]) << 1) | (digitalRead(HALL[2]) << 2);
   duty = ms < START_DELAY_MS ? 0 : TARGET_DUTY * Math.min(1, (ms - START_DELAY_MS) / SOFT_START_MS);
   let s = STEP[hall];
-  if (!s || duty <= 0) { stopAll(); digitalWrite(PB3, LOW); return; }
+  if (!s || duty <= 0) { stopAll(); digitalWrite(PA4, LOW); return; }
   if (DIRECTION < 0) s = [s[1], s[0]];
   PH.forEach((p, i) => {
     if (i === s[0])      { pwmWrite(p.inp, duty); digitalWrite(p.en, HIGH); }  // 상단 PWM
@@ -2270,10 +2282,10 @@ function loop(ms) {              // LOOP_PERIOD_US마다 호출됩니다 (ms는 
     else                 { pwmWrite(p.inp, 0);    digitalWrite(p.en, LOW);  }  // 개방
   });
   if (hall !== lastHall) { steps++; lastHall = hall; }
-  digitalWrite(PB3, Math.floor(steps / (6 * POLE_PAIRS)) % 2);  // 기계 1회전마다 LED 토글
+  digitalWrite(PA4, Math.floor(steps / (6 * POLE_PAIRS)) % 2);  // 기계 1회전마다 LED 토글
 
-  if (Number.isInteger(ms) && ms % 100 === 0) {                 // 100 ms마다 홀로 잰 속도
-    log('홀 속도', Math.round((steps - loggedSteps) / (6 * POLE_PAIRS) * 600), 'rpm · 듀티', Math.round(duty), '%');
+  if (Number.isInteger(ms) && ms % 50 === 0) {                  // 50 ms마다 홀로 잰 속도
+    log('홀 속도', Math.round((steps - loggedSteps) / (6 * POLE_PAIRS) * 1200), 'rpm · 듀티', Math.round(duty), '%');
     loggedSteps = steps;
   }
 }
@@ -2282,60 +2294,75 @@ const SAMPLE_BLDC=(function(){
   const T=[],V=[];
   const tr=(layer,net,width,...points)=>T.push({layer:layer==='T'?'top':'bottom',net,width,points});
   const via=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.8,drill:0.4}));
-  // 12 V input → LDO, bulk cap, driver VM
-  tr('T','+12V',1.0,'J1.1',[9,45.27],[9,53],[48,53],[48,31.5],'U3.20');
-  tr('T','+12V',0.6,[9,49.15],'U2.3');tr('T','+12V',0.6,'C1.1',[11,53]);tr('T','+12V',0.8,'C5.1',[48,44]);
-  // 3.3 V
-  tr('T','+3V3',0.6,'U2.4',[16,30.5],[26.2,30.5]);tr('T','+3V3',0.6,'U2.2','U2.4');
-  tr('T','+3V3',0.3,'U1.24',[24.45,30.5]);tr('T','+3V3',0.3,'U1.1',[19.55,30.5]);
-  tr('T','+3V3',0.4,'C2.2',[16,38]);tr('T','+3V3',0.3,'C3.1',[26.2,30.5]);tr('T','+3V3',0.3,'R3.2',[13,34],'C2.2');
-  via('+3V3',[26.2,30.5]);tr('B','+3V3',0.4,[26.2,30.5],[26.2,34.5],[55.2,34.5],[55.2,20.75],'M1.7');
-  tr('T','+3V3',0.3,'R10.1',[38,19.6]);via('+3V3',[38,19.6]);tr('B','+3V3',0.3,[38,19.6],[38,34.5]);
+  const via5=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.5,drill:0.25}));
+  // 12 V input → LDO, bulk cap, DRV8313 VM (pins 4 and 11)
+  tr('T','+12V',1.0,'J1.1',[9,45.27],[9,53],[48.3,53],[48.3,29.275],'U3.11');
+  tr('T','+12V',0.6,[9,49.15],'U2.3');tr('T','+12V',0.6,'C1.1',[11,53]);tr('T','+12V',0.8,[48.3,44],'C5.1');
+  tr('T','+12V',0.4,'U3.4',[49.05,24.725]);via5('+12V',[49.05,24.725],[48.3,29.275]);tr('B','+12V',0.5,[48.3,29.275],[49.05,28.5],[49.05,24.725]);
+  tr('B','+12V',0.3,[49.05,26.4],'C9.1');
+  via('+12V',[48.3,40]);tr('B','+12V',0.4,[48.3,40],[55.2,40],[55.2,20.75],'M1.7');       // hall supply (42BLF01: 5–20 V)
+  // DRV8313 charge pump caps on the bottom side
+  tr('T','DRV_CPL',0.3,'U3.1',[48.25,22.775]);tr('T','DRV_CPH',0.3,'U3.2',[49.05,23.425]);tr('T','DRV_VCP',0.3,'U3.3',[48.25,24.075]);
+  via5('DRV_CPL',[48.25,22.775]);via5('DRV_CPH',[49.05,23.425]);via5('DRV_VCP',[48.25,24.075]);
+  tr('B','DRV_CPL',0.3,[48.25,22.775],'C8.2');tr('B','DRV_CPH',0.3,[49.05,23.425],'C8.1');tr('B','DRV_VCP',0.3,[48.25,24.075],[49.8,24.075],'C9.2');
+  // 3.3 V: LDO → VDD (1), VDDA (5), VDDIO2 (17, via bottom), nFAULT pull-up
+  tr('T','+3V3',0.6,'U2.4',[16,25.75],'U1.5');tr('T','+3V3',0.6,'U2.2','U2.4');tr('T','+3V3',0.3,[16,27.75],'U1.1');
+  tr('T','+3V3',0.4,'C2.2',[16,38]);tr('T','+3V3',0.3,'C3.1',[16,30.4]);tr('T','+3V3',0.3,'R3.2',[13,34],'C2.2');
+  via('+3V3',[16,32]);tr('B','+3V3',0.4,[16,32],[16,34.5],[36,34.5]);
+  tr('T','+3V3',0.3,'U1.17',[25.5,23.2]);via('+3V3',[25.5,23.2]);tr('B','+3V3',0.3,[25.5,23.2],[26.2,23.9],[26.2,34.5]);
+  tr('T','+3V3',0.3,'R10.1',[35.2,32.7]);via('+3V3',[35.2,32.7]);tr('B','+3V3',0.3,[35.2,32.7],[35.2,34.5]);
   tr('T','PWR_A',0.3,'R3.1',[7.2,31.6],'D2.2');
-  // MCU → driver: monotonic fan-out (no crossings)
-  [[17,7,'NFAULT'],[18,6,'EN_W'],[19,5,'IN_W'],[20,4,'EN_V'],[21,3,'IN_V'],[22,2,'EN_U'],[23,1,'IN_U']].forEach(([mp,dp,net])=>{
-    const ym=26-1.75+0.5*(mp-17),yd=27+2.925-0.65*(dp-1);tr('T',net,0.25,'U1.'+mp,[28,ym],[36,yd],'U3.'+dp);});
-  tr('T','NFAULT',0.25,'R10.2',[38,26.025]);
-  // driver → motor phases
-  tr('T','PH_U',0.5,'U3.19',[48.5,29.275],[52,35.75],'M1.1');
-  tr('T','PH_V',0.5,'U3.17',[50,27.975],[53,33.25],'M1.2');
-  tr('T','PH_W',0.5,'U3.15',[51.5,26.675],[54,30.75],'M1.3');
+  // MCU → DRV8313: TIM1 CH1/CH3/CH4 on PA8/PA10/PA11 drive IN1/IN2/IN3, GPIOs drive EN1–EN3
+  [[18,27,'IN_W'],[19,26,'EN_W'],[20,25,'IN_V'],[21,23,'IN_U']].forEach(([mp,dp,net])=>{
+    const ym=26-1.75+0.5*(mp-17),yd=27-4.225+0.65*(28-dp);tr('T',net,0.25,'U1.'+mp,[28,ym],[36,yd],'U3.'+dp);});
+  tr('T','EN_V',0.25,'U1.22',[26.6,26.75],[27.2,27.4]);via5('EN_V',[27.2,27.4],[38.6,25.375]);tr('B','EN_V',0.25,[27.2,27.4],[37.4,27.4],[38.6,25.375]);tr('T','EN_V',0.25,[38.6,25.375],'U3.24');
+  tr('T','EN_U',0.25,'U1.25',[23.75,29.4],[37,29.4],[39.2,26.675],'U3.22');
+  tr('T','NFAULT',0.25,'U1.26',[23.25,30.2],[38.6,30.2],[39.6,29.275],'U3.18');tr('T','NFAULT',0.25,'R10.2',[36.8,30.2]);
+  // DRV8313 nSLEEP / nRESET tied to its own V3P3 regulator
+  tr('T','DRV_V3P3',0.3,'U3.17',[40,29.925],[40,31.225],'U3.15');tr('T','DRV_V3P3',0.3,'U3.16',[40,30.575]);tr('T','DRV_V3P3',0.3,[40,31.225],'C10.1');
+  // DRV8313 → motor phases (OUT3 → U, OUT2 → V, OUT1 → W)
+  tr('T','PH_U',0.5,'U3.9',[49.5,27.975],[52,35.75],'M1.1');
+  tr('T','PH_V',0.5,'U3.8',[50.5,27.325],[53,33.25],'M1.2');
+  tr('T','PH_W',0.5,'U3.5',[51.5,25.375],[54,30.75],'M1.3');
   // hall sensors back to the MCU (bottom layer)
   tr('T','HALL1',0.25,'M1.4',[53.8,28.25]);via('HALL1',[53.8,28.25],[20.9,17.5]);tr('B','HALL1',0.25,[53.8,28.25],[53.8,17.5],[20.9,17.5]);tr('T','HALL1',0.25,[20.9,17.5],[21.75,19],'U1.12');
   tr('T','HALL2',0.25,'M1.5',[53,25.75]);via('HALL2',[53,25.75],[22.25,16]);tr('B','HALL2',0.25,[53,25.75],[53,16],[22.25,16]);tr('T','HALL2',0.25,[22.25,16],'U1.13');
   tr('T','HALL3',0.25,'M1.6',[52.2,23.25]);via('HALL3',[52.2,23.25],[23.6,14.5]);tr('B','HALL3',0.25,[52.2,23.25],[52.2,14.5],[23.6,14.5]);tr('T','HALL3',0.25,[23.6,14.5],[22.75,19.5],'U1.14');
   // status LED
   tr('T','LED_ST',0.3,'U1.10',[20.75,22],[18,19.25],'R4.2');tr('T','STAT_A',0.3,'R4.1','D3.2');
-  // ground
-  [['U2.1',[20.6,49.15]],['C1.2',[14.6,51.6]],['C2.1',[11,36.3]],['C3.2',[29.3,32]],['C5.2',[55,44]],['D2.1',[8,27.7]],['D3.1',[18,11.7]],['M1.8',[55.6,17.2]]]
+  // ground: stubs to vias, DRV8313 GND/PGND pins into its thermal pad
+  [['U2.1',[20.6,49.15]],['C1.2',[14.6,51.6]],['C2.1',[11,36.3]],['C3.2',[18.4,31.6]],['C5.2',[55,44]],['D2.1',[8,27.7]],['D3.1',[18,11.7]],['M1.8',[55.6,17.2]],['C10.2',[39.8,33.4]]]
     .forEach(([a,b])=>{tr('T','GND',0.5,a,b);via('GND',b);});
-  tr('T','GND',0.4,'U1.6',[17.6,25.25],[17.6,24.25],'U1.8');via('GND',[17.6,24.75],[22,26],[44,26],[44,28]);
-  tr('T','GND',0.5,'U3.13',[45,25.375]);tr('T','GND',0.4,'U3.10',[42.9,25.2]);
+  via('GND',[22,26],[44,25.5],[44,27],[44,28.5]);
+  [['U3.28',[43,24.6]],['U3.20',[42.9,27.975]],['U3.6',[45.1,26.025]],['U3.7',[45.1,26.675]],['U3.10',[45.1,28.625]],['U3.14',[45,29.3]]].forEach(([a,b])=>tr('T','GND',0.3,a,b));
   return{
     _source:'예제',_demo:'bldc',
     board:{name:'MOTION-32 BLDC v1.0',width:100,height:55,thickness:1.6,corner:2,holes:[[3.5,3.5,3.2],[96.5,3.5,3.2],[3.5,51.5,3.2],[96.5,51.5,3.2]]},
     components:[
-      {ref:'J1',value:'12V 입력',footprint:'HDR-1x2',side:'top',x:5,y:44,rotation:0,mpn:'PH-2.54-1x2',description:'12 V 모터 전원 입력',pins:{1:'+12V',2:'GND'},pinNames:{1:'12V',2:'GND'}},
-      {ref:'U2',value:'AMS1117-3.3',footprint:'SOT-223',side:'top',x:16,y:46,rotation:180,mpn:'AMS1117-3.3',description:'3.3 V LDO (MCU·홀 센서 전원)',pins:{1:'GND',2:'+3V3',3:'+12V',4:'+3V3'},pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'VOUT'},label:[16,41]},
-      {ref:'C1',value:'10µF',footprint:'0805',side:'top',x:12,y:51.6,rotation:0,mpn:'CL21A106KAYNNNE',description:'LDO 입력 커패시터',pins:{1:'+12V',2:'GND'}},
+      {ref:'J1',value:'12V 입력',footprint:'HDR-1x2',side:'top',x:5,y:44,rotation:0,mpn:'61300211121',description:'12 V 모터 전원 입력 (Würth WR-PHD 2.54 mm)',pins:{1:'+12V',2:'GND'},pinNames:{1:'12V',2:'GND'}},
+      {ref:'U2',value:'AMS1117-3.3',footprint:'SOT-223',side:'top',x:16,y:46,rotation:180,mpn:'AMS1117-3.3',description:'3.3 V LDO (MCU 전원) · 입력 최대 15 V',pins:{1:'GND',2:'+3V3',3:'+12V',4:'+3V3'},pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'VOUT'},label:[16,41]},
+      {ref:'C1',value:'10µF',footprint:'0805',side:'top',x:12,y:51.6,rotation:0,mpn:'CL21A106KAYNNNE',description:'LDO 입력 커패시터 · X5R 25 V',pins:{1:'+12V',2:'GND'}},
       {ref:'C2',value:'10µF',footprint:'0805',side:'top',x:12,y:38,rotation:0,mpn:'CL21A106KAYNNNE',description:'LDO 출력 커패시터',pins:{1:'GND',2:'+3V3'}},
-      {ref:'C3',value:'100nF',footprint:'0603',side:'top',x:27,y:32,rotation:0,mpn:'CL10B104KB8NNNC',description:'MCU 디커플링',pins:{1:'+3V3',2:'GND'}},
-      {ref:'C5',value:'220µF',footprint:'1206',side:'top',x:52,y:44,rotation:0,mpn:'EEE-FK1E221P (예시)',description:'모터 전원 벌크 커패시터',pins:{1:'+12V',2:'GND'}},
-      {ref:'U1',value:'MCU-Q32',footprint:'QFN-32',side:'top',x:22,y:26,rotation:0,mpn:'MCU-Q32 (예시 부품)',description:'32비트 MCU · 홀 센서로 6스텝 정류, 3상 PWM 출력 (부품을 클릭해 펌웨어 편집)',
-        pins:{1:'+3V3',6:'GND',8:'GND',10:'LED_ST',12:'HALL1',13:'HALL2',14:'HALL3',17:'NFAULT',18:'EN_W',19:'IN_W',20:'EN_V',21:'IN_V',22:'EN_U',23:'IN_U',24:'+3V3',33:'GND'},
-        pinNames:MCU_Q32_PINS,firmware:SAMPLE_BLDC_FW,label:[22,21.2]},
-      {ref:'U3',value:'BLDC-DRV3',footprint:'HTSSOP-20',side:'top',x:44,y:27,rotation:0,mpn:'BLDC-DRV3 (예시 부품)',description:'3상 하프브리지 드라이버 · 상별 IN(PWM)/EN, RDS(on) 0.3 Ω, 바디 다이오드',
-        pins:{1:'IN_U',2:'EN_U',3:'IN_V',4:'EN_V',5:'IN_W',6:'EN_W',7:'NFAULT',10:'GND',13:'GND',15:'PH_W',17:'PH_V',19:'PH_U',20:'+12V',21:'GND'},
-        pinNames:{1:'IN1',2:'EN1',3:'IN2',4:'EN2',5:'IN3',6:'EN3',7:'nFAULT',8:'NC',9:'NC',10:'GND',11:'NC',12:'NC',13:'PGND',14:'NC',15:'OUT3',16:'NC',17:'OUT2',18:'NC',19:'OUT1',20:'VM',21:'EP'},
-        model:{type:'bridge3',ron:0.3},label:[44,22]},
-      {ref:'R10',value:'10kΩ',footprint:'0603',side:'top',x:38,y:22,rotation:90,mpn:'RC0603FR-0710KL',description:'nFAULT 풀업 (오픈 드레인)',pins:{1:'+3V3',2:'NFAULT'},label:[39.8,22]},
-      {ref:'M1',value:'BLDC 2418',footprint:'BLDC-2418',side:'top',x:76,y:27,rotation:0,mpn:'BL2418-12V-2P (예시)',description:'3상 BLDC 모터 · 12 V · 2극쌍 · 홀 센서 내장, 직결 팬',
-        pins:{1:'PH_U',2:'PH_V',3:'PH_W',4:'HALL1',5:'HALL2',6:'HALL3',7:'+3V3',8:'GND'},pinNames:{1:'U',2:'V',3:'W',4:'H1',5:'H2',6:'H3',7:'VCC',8:'GND'},label:[76,13.5],
-        model:{R:1.2,L:6e-4,ke:0.02,kt:0.02,J:3e-5,b:1e-5,tf:2e-3,tl:0,poles:2,gear:1,hallV:3.3}},
+      {ref:'C3',value:'100nF',footprint:'0603',side:'top',x:17.6,y:30.4,rotation:0,mpn:'CL10B104KB8NNNC',description:'MCU 디커플링 (VDD)',pins:{1:'+3V3',2:'GND'},label:[17.6,31.5]},
+      {ref:'C5',value:'22µF',footprint:'1210',side:'top',x:52,y:44,rotation:0,mpn:'GRM32ER61E226KE15',description:'VM 벌크 커패시터 · X5R 25 V 1210',pins:{1:'+12V',2:'GND'}},
+      {ref:'U1',value:'STM32F042K6U6',footprint:'QFN-32',side:'top',x:22,y:26,rotation:0,mpn:'STM32F042K6U6',description:'Arm Cortex-M0 48 MHz · TIM1 3상 PWM, 홀 센서 6스텝 정류 (부품을 클릭해 펌웨어 편집)',
+        pins:{1:'+3V3',5:'+3V3',10:'LED_ST',12:'HALL1',13:'HALL2',14:'HALL3',17:'+3V3',18:'IN_W',19:'EN_W',20:'IN_V',21:'IN_U',22:'EN_V',25:'EN_U',26:'NFAULT',33:'GND'},
+        pinNames:STM32F042K6U6_PINS,firmware:SAMPLE_BLDC_FW,label:[22,21.2]},
+      {ref:'U3',value:'DRV8313',footprint:'HTSSOP-28',side:'top',x:44,y:27,rotation:180,mpn:'DRV8313PWPR',description:'TI 3상 하프브리지 드라이버 · VM 8–60 V · 2.5 A 피크 · RDS(on) 0.24 Ω · INx/ENx 입력',
+        pins:{1:'DRV_CPL',2:'DRV_CPH',3:'DRV_VCP',4:'+12V',5:'PH_W',6:'GND',7:'GND',8:'PH_V',9:'PH_U',10:'GND',11:'+12V',14:'GND',15:'DRV_V3P3',16:'DRV_V3P3',17:'DRV_V3P3',18:'NFAULT',20:'GND',22:'EN_U',23:'IN_U',24:'EN_V',25:'IN_V',26:'EN_W',27:'IN_W',28:'GND',29:'GND'},
+        pinNames:{1:'CPL',2:'CPH',3:'VCP',4:'VM',5:'OUT1',6:'PGND1',7:'PGND2',8:'OUT2',9:'OUT3',10:'PGND3',11:'VM',12:'COMPP',13:'COMPN',14:'GND',15:'V3P3',16:'nRESET',17:'nSLEEP',18:'nFAULT',19:'nCOMPO',20:'GND',21:'NC',22:'EN3',23:'IN3',24:'EN2',25:'IN2',26:'EN1',27:'IN1',28:'GND',29:'PAD'},
+        model:{type:'bridge3',ron:0.24},label:[44,20.6]},
+      {ref:'C8',value:'10nF',footprint:'0603',side:'bottom',x:50.6,y:23.1,rotation:90,mpn:'CL10B103KB8NNNC',description:'DRV8313 차지 펌프 (CPH–CPL)',pins:{1:'DRV_CPH',2:'DRV_CPL'},label:[52.4,23.1]},
+      {ref:'C9',value:'100nF',footprint:'0603',side:'bottom',x:50.6,y:25.6,rotation:90,mpn:'CL10B104KB8NNNC',description:'DRV8313 VCP–VM 커패시터',pins:{1:'+12V',2:'DRV_VCP'},label:[52.4,25.6]},
+      {ref:'C10',value:'470nF',footprint:'0603',side:'top',x:38.6,y:32.6,rotation:90,mpn:'GRM188R71C474KA88D',description:'DRV8313 V3P3 바이패스',pins:{1:'DRV_V3P3',2:'GND'},label:[37,32.6]},
+      {ref:'R10',value:'10kΩ',footprint:'0603',side:'top',x:36,y:31.6,rotation:0,mpn:'RC0603FR-0710KL',description:'nFAULT 풀업 (오픈 드레인)',pins:{1:'+3V3',2:'NFAULT'},label:[36,32.7]},
+      {ref:'M1',value:'42BLF01',footprint:'BLDC-2418',side:'top',x:76,y:27,rotation:0,mpn:'42BLF01 (MIKROE-4455)',description:'3상 BLDC 모터 · 정격 24 V/4000 rpm (예제는 12 V 구동) · 8극 · 홀 센서 120° · 팬 장착',
+        pins:{1:'PH_U',2:'PH_V',3:'PH_W',4:'HALL1',5:'HALL2',6:'HALL3',7:'+12V',8:'GND'},pinNames:{1:'U',2:'V',3:'W',4:'H1',5:'H2',6:'H3',7:'VCC',8:'GND'},label:[76,13.5],
+        model:{R:0.9,L:1.3e-3,ke:0.0177,kt:0.0175,J:7.4e-6,b:2e-6,tf:4e-3,tl:0,poles:4,gear:1,hallV:3.3}},
       {ref:'R3',value:'330Ω',footprint:'0603',side:'top',x:8,y:34,rotation:0,mpn:'RC0603FR-07330RL',description:'전원 LED 전류 제한',pins:{1:'PWR_A',2:'+3V3'}},
-      {ref:'D2',value:'LED 빨강',footprint:'LED-0603',side:'top',x:8,y:30,rotation:90,mpn:'19-217/R6C',description:'3.3 V 전원 표시 LED',pins:{1:'GND',2:'PWR_A'},pinNames:{1:'K',2:'A'},label:[5.8,30]},
+      {ref:'D2',value:'LED 빨강',footprint:'LED-0603',side:'top',x:8,y:30,rotation:90,mpn:'APT1608EC',description:'3.3 V 전원 표시 LED (Kingbright)',pins:{1:'GND',2:'PWR_A'},pinNames:{1:'K',2:'A'},label:[5.8,30]},
       {ref:'R4',value:'330Ω',footprint:'0603',side:'top',x:18,y:18,rotation:90,mpn:'RC0603FR-07330RL',description:'상태 LED 전류 제한',pins:{1:'STAT_A',2:'LED_ST'},label:[16.2,18]},
-      {ref:'D3',value:'LED 녹색',footprint:'LED-0603',side:'top',x:18,y:14,rotation:90,mpn:'19-217/GHC',description:'MCU 상태 LED (PB3) · 회전마다 토글',pins:{1:'GND',2:'STAT_A'},pinNames:{1:'K',2:'A'},label:[16.2,14]},
+      {ref:'D3',value:'LED 녹색',footprint:'LED-0603',side:'top',x:18,y:14,rotation:90,mpn:'APT1608SGC',description:'MCU 상태 LED (PA4) · 회전마다 토글',pins:{1:'GND',2:'STAT_A'},pinNames:{1:'K',2:'A'},label:[16.2,14]},
     ],
     tracks:T,vias:V,
     pours:[{layer:'bottom',net:'GND',clearance:0.4,inset:0.5}],
@@ -2343,7 +2370,7 @@ const SAMPLE_BLDC=(function(){
       {side:'top',text:'MOTION-32 BLDC',x:40,y:4,size:1.2},{side:'top',text:'v1.0',x:48.6,y:4,size:0.8,align:'left'},
       {side:'top',text:'12V',x:2.6,y:47.6,size:0.8},{side:'top',text:'PWR',x:8,y:25.6,size:0.6},{side:'top',text:'STAT',x:20,y:12,size:0.6,align:'left'},
       {side:'top',text:'U V W H1 H2 H3 + -',x:59,y:11.5,size:0.55},
-      {side:'bottom',text:'MOTION-32 BLDC · 6-STEP HALL',x:50,y:6,size:0.9},
+      {side:'bottom',text:'MOTION-32 BLDC · DRV8313 6-STEP',x:50,y:6,size:0.9},
     ]
   };
 })();
@@ -2354,7 +2381,7 @@ const SAMPLE_BLDC=(function(){
 const FW=(function(){
 "use strict";
 const HEADER_LINES=3; // lines before the user code: new Function()'s own header (2) + the API line (1)
-const API_NAMES=['pinMode','digitalWrite','digitalRead','pwmInit','pwmWrite','analogWrite','analogRead','analogReadVoltage','millis','log','HIGH','LOW','OUTPUT','INPUT','VDD'];
+const API_NAMES=['INPUT_PULLUP','pinMode','digitalWrite','digitalRead','pwmInit','pwmWrite','analogWrite','analogRead','analogReadVoltage','millis','log','HIGH','LOW','OUTPUT','INPUT','VDD'];
 
 // "const NAME = 123; // comment" lines become editable parameters
 const PARAM_RE=/^([ \t]*(?:const|let|var)[ \t]+)([A-Z][A-Z0-9_]*)([ \t]*=[ \t]*)(-?\d+(?:\.\d+)?)([ \t]*;?)([ \t]*\/\/[ \t]*(.*))?$/gm;
@@ -2377,12 +2404,12 @@ function compile(code,pinNames){
 // Builds a controller: run setup() to learn which pins are driven, then tick loop(ms) every millisecond during the transient.
 function controller(code,mcu){
   // mcu: {pins:{PA8:'NET',...}, gnd:'GND', vdd:3.3}
-  const logs=[],trace={t:[],out:{},adc:{}};let ms=0,guard=0;const st={};
+  const logs=[],trace={t:[],out:{},adc:{}};let ms=0,guard=0;const st={},ins={};
   const pinNet=p=>{if(!mcu.pins[p])throw new Error(`${p} 핀은 이 MCU에서 연결되어 있지 않습니다.`);return mcu.pins[p];};
   let read=()=>0;
   const api={
-    HIGH:1,LOW:0,OUTPUT:'OUTPUT',INPUT:'INPUT',VDD:mcu.vdd,
-    pinMode:(p,m)=>{pinNet(p);if(m==='OUTPUT'){st[p]=st[p]||{pwm:false,level:0,duty:0,freq:0};}},
+    HIGH:1,LOW:0,OUTPUT:'OUTPUT',INPUT:'INPUT',INPUT_PULLUP:'INPUT_PULLUP',VDD:mcu.vdd,
+    pinMode:(p,m)=>{pinNet(p);if(m==='OUTPUT'){st[p]=st[p]||{pwm:false,level:0,duty:0,freq:0};}else ins[p]=m;},
     pwmInit:(p,f)=>{pinNet(p);f=+f;if(!(f>0))throw new Error('pwmInit 주파수는 0보다 커야 합니다.');st[p]={pwm:true,level:0,duty:0,freq:f};},
     pwmWrite:(p,d)=>{const s=st[p];if(!s||!s.pwm)throw new Error(`${p}: pwmInit을 먼저 호출하세요.`);d=+d;s.duty=Math.max(0,Math.min(100,isFinite(d)?d:0))/100;},
     analogWrite:(p,v)=>{const s=st[p];if(!s||!s.pwm)throw new Error(`${p}: pwmInit을 먼저 호출하세요.`);s.duty=Math.max(0,Math.min(255,+v||0))/255;},
@@ -2403,7 +2430,7 @@ function controller(code,mcu){
   outs.forEach(p=>{trace.out[p]=[];});
   // loop period: 1 ms unless the firmware declares const LOOP_PERIOD_US (e.g. fast BLDC commutation)
   const lp=params(code).find(p=>p.name==='LOOP_PERIOD_US');const dt=lp?Math.max(10,Math.min(1e5,lp.value))*1e-6:1e-3;
-  const ctl={dt,srcs,logs,trace,error:null,errLine:null,
+  const ctl={dt,srcs,logs,trace,inputs:ins,error:null,errLine:null,
     tick(t,readNet,set){
       ms=Math.round(t*1e6)/1000;read=readNet;guard=0;
       try{inst.loop(ms);}catch(e){if(!ctl.error){ctl.error=`loop(${ms}) 오류: ${e.message}`;ctl.errLine=lineOf(e);}}
@@ -2414,9 +2441,95 @@ function controller(code,mcu){
 }
 // which pins the firmware drives (from setup) and reads (from the code), for HSIS cross-checks
 function pinUsage(code,mcu){const ctl=controller(code,mcu);const out=ctl.error?[]:ctl.srcs.map(s=>({pin:s.id.slice(3),pwm:s.pwm,freq:s.freq}));
-  const reads=[];const re=/\b(analogRead|analogReadVoltage|digitalRead)\s*\(\s*(P[A-K]\d{1,2})\s*\)/g;let m;while((m=re.exec(code)))if(!reads.some(r=>r.pin===m[2]))reads.push({pin:m[2],analog:m[1]!=='digitalRead'});
+  const reads=Object.keys(ctl.inputs||{}).map(p=>({pin:p,analog:false}));const re=/\b(analogRead|analogReadVoltage|digitalRead)\s*\(\s*(P[A-K]\d{1,2})\s*\)/g;let m;while((m=re.exec(code))){const ex=reads.find(r=>r.pin===m[2]);if(!ex)reads.push({pin:m[2],analog:m[1]!=='digitalRead'});else if(m[1]!=='digitalRead')ex.analog=true;}
   const lp=params(code).find(p=>p.name==='LOOP_PERIOD_US');return{error:ctl.error||null,out,reads,loopUs:lp?lp.value:1000};}
 return{params,setParam,compile,controller,pinUsage,API_NAMES};
+})();
+
+
+</script>
+<script>
+/* Part database for the built-in examples: manufacturer, datasheet links and key specs.
+   Links point to the manufacturer (or, where noted, an authorised distributor) — PDFs are not bundled; run
+   `node scripts/datasheets.mjs --download` to save local copies under datasheets/pdf/. */
+const PARTS=(function(){
+"use strict";
+const P={
+  'STM32F042K6U6':{mfr:'STMicroelectronics',title:'STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN',cat:'MCU',
+    pdf:'https://www.st.com/resource/en/datasheet/stm32f042k6.pdf',page:'https://www.st.com/en/microcontrollers-microprocessors/stm32f042k6.html',file:'STM32F042K6_datasheet.pdf',
+    specs:[['코어','Arm Cortex-M0, 최대 48 MHz'],['메모리','플래시 32 KB · SRAM 6 KB'],['전원','VDD 2.0–3.6 V · VDDA ≤ 3.6 V (ADC 사용 시 ≥ 2.4 V) · VDDIO2 1.65–3.6 V'],
+      ['USB','USB 2.0 FS, 크리스털리스 (HSI48 + CRS) · PA11 DM / PA12 DP'],['타이머','TIM1 고급 제어 (CH1–CH4: PA8–PA11) 외'],['ADC','12비트, ADC_IN0–9 (PA0–PA7, PB0, PB1)'],
+      ['패키지','UFQFPN32 5×5 mm · 노출 패드 = VSS · 31번 BOOT0'],['디버그','SWD: PA13 SWDIO / PA14 SWCLK']]},
+  'DRV8313PWPR':{mfr:'Texas Instruments',title:'DRV8313 — 2.5 A triple half-bridge driver',cat:'모터 드라이버',
+    pdf:'https://www.ti.com/lit/ds/symlink/drv8313.pdf',page:'https://www.ti.com/product/DRV8313',file:'DRV8313_datasheet.pdf',
+    specs:[['VM','8–60 V (절대 최대 65 V)'],['출력','상당 2.5 A 피크 · 과전류 3 A 최소'],['RDS(on)','0.24 Ω typ (상단·하단 각, 25 °C)'],
+      ['입력 논리','ENx=0 → OUTx 하이 임피던스 · ENx=1, INx=1 → H · INx=0 → L'],['보호','과전류·과열·저전압 → nFAULT (오픈 드레인, 외부 풀업)'],
+      ['기타','nSLEEP·nRESET 내부 풀다운 · V3P3 3.3 V 10 mA · 차지 펌프 (CPH–CPL 0.01 µF, VCP–VM 0.1 µF)'],['패키지','HTSSOP-28 (PWP), 써멀 패드 GND']]},
+  'AMS1117-3.3':{mfr:'Advanced Monolithic Systems',title:'AMS1117 — 1 A low-dropout regulator',cat:'전원',
+    pdf:'http://www.advanced-monolithic.com/pdf/ds1117.pdf',page:'http://www.advanced-monolithic.com/',file:'AMS1117_datasheet.pdf',
+    specs:[['출력','3.3 V 고정, 최대 1 A'],['드롭아웃','약 1.1 V (1 A)'],['입력','최대 15 V'],['패키지','SOT-223: 1 GND · 2 VOUT · 3 VIN · 탭 VOUT']]},
+  'W25Q32JVSSIQ':{mfr:'Winbond',title:'W25Q32JV — 3 V 32 Mbit serial NOR flash',cat:'메모리',
+    page:'https://www.winbond.com/hq/product/code-storage-flash-memory/serial-nor-flash/?__locale=en&partNo=W25Q32JV',file:'W25Q32JV_datasheet.pdf',
+    specs:[['용량','32 Mbit (4 MB)'],['전원','2.7–3.6 V'],['인터페이스','SPI / Dual / Quad SPI, 최대 133 MHz'],['패키지','SOIC-8 208 mil: 1 /CS · 2 DO · 3 /WP · 4 GND · 5 DI · 6 CLK · 7 /HOLD · 8 VCC']]},
+  'AO3400A':{mfr:'Alpha & Omega Semiconductor',title:'AO3400A — 30 V N-channel MOSFET',cat:'트랜지스터',
+    pdf:'https://www.aosmd.com/res/datasheets/AO3400A.pdf',page:'https://www.aosmd.com/products/mosfets/low-voltage-mosfets/AO3400A',file:'AO3400A_datasheet.pdf',
+    specs:[['VDS','30 V'],['ID','5.7 A (VGS 10 V)'],['RDS(on)','19 mΩ typ @ 4.5 V · 24 mΩ typ @ 2.5 V'],['VGS(th)','1.05 V typ (0.65–1.45 V)'],['패키지','SOT-23: 1 G · 2 S · 3 D']]},
+  'SS14':{mfr:'Vishay',title:'SS12–SS16 — 1 A surface-mount Schottky rectifier',cat:'다이오드',
+    pdf:'https://www.vishay.com/docs/88746/ss12.pdf',file:'SS14_Vishay_datasheet.pdf',
+    specs:[['VRRM','40 V (SS14)'],['IF(AV)','1.0 A'],['패키지','SMA (DO-214AC), 띠 = 캐소드']]},
+  'APT1608SGC':{mfr:'Kingbright',title:'APT1608SGC — 0603 super bright green LED',cat:'LED',
+    pdf:'https://www.kingbrightusa.com/images/catalog/SPEC/APT1608SGC.pdf',file:'APT1608SGC_datasheet.pdf',
+    specs:[['색','녹색 568 nm (dominant)'],['VF','2.2 V typ @ 20 mA'],['IF','최대 25 mA DC'],['패키지','0603 (1.6×0.8 mm)']]},
+  'APT1608EC':{mfr:'Kingbright',title:'APT1608EC — 0603 high-efficiency red LED',cat:'LED',
+    pdf:'https://www.kingbrightusa.com/images/catalog/SPEC/APT1608EC.pdf',file:'APT1608EC_datasheet.pdf',
+    specs:[['색','적색 617 nm (dominant)'],['VF','2.0 V typ @ 20 mA'],['IF','최대 30 mA DC'],['패키지','0603']]},
+  'APT1608QBC/D':{mfr:'Kingbright',title:'APT1608QBC/D — 0603 blue LED',cat:'LED',
+    pdf:'https://www.kingbrightusa.com/images/catalog/SPEC/APT1608QBC-D.pdf',file:'APT1608QBC-D_datasheet.pdf',
+    specs:[['색','청색 465 nm (dominant)'],['VF','3.3 V typ @ 20 mA (최대 4.0 V)'],['패키지','0603']]},
+  'B3FS-1000P':{mfr:'Omron',title:'B3FS — 6×6 mm SMT tactile switch',cat:'스위치',
+    pdf:'https://omronfs.omron.com/en_US/ecb/products/pdf/en-b3fs.pdf',file:'Omron_B3FS_datasheet.pdf',
+    specs:[['크기','6×6 mm, 플런저 3.1 mm'],['작동력','0.98 N (100 gf)'],['정격','1–50 mA, 3–24 VDC']]},
+  '61300411121':{mfr:'Würth Elektronik',title:'WR-PHD 2.54 mm pin header, 4 pins',cat:'커넥터',
+    pdf:'https://www.we-online.com/components/products/datasheet/61300411121.pdf',file:'Wurth_61300411121.pdf',
+    specs:[['피치','2.54 mm'],['핀','1×4, 스루홀'],['정격','3 A, 250 V AC']]},
+  '61300211121':{mfr:'Würth Elektronik',title:'WR-PHD 2.54 mm pin header, 2 pins',cat:'커넥터',
+    pdf:'https://www.we-online.com/components/products/datasheet/61300211121.pdf',file:'Wurth_61300211121.pdf',
+    specs:[['피치','2.54 mm'],['핀','1×2, 스루홀'],['정격','3 A, 250 V AC']]},
+  'USB4105-GF-A':{mfr:'GCT',title:'USB4105 — USB Type-C 2.0 receptacle',cat:'커넥터',
+    page:'https://gct.co/connector/usb4105',file:'GCT_USB4105.pdf',
+    specs:[['규격','USB Type-C, USB 2.0 데이터 + 전원'],['비고','뷰어 풋프린트는 사용 핀(CC1, VBUS, D−, D+, GND, 실드)만 단순화']]},
+  'FA-130RA':{mfr:'Mabuchi Motor (Tamiya 판매)',title:'FA-130 brushed DC motor + Tamiya 70097 gearbox',cat:'모터',
+    page:'https://www.pololu.com/product/77/specs',page2:'https://www.pololu.com/product/61',file:'Mabuchi_FA-130.pdf',
+    specs:[['정격','3 V'],['무부하','12,300 rpm, 150 mA (3 V)'],['구속','2.1 A, 0.5 oz·in ≈ 3.5 mN·m (3 V)'],['기어박스','Tamiya 70097 Twin-Motor Gearbox, 58:1 또는 203:1 (예제는 58:1)'],
+      ['시뮬레이션 값','R 1.43 Ω, ke = kt 2.16 mV/(rad/s), 마찰 0.32 mN·m — 위 정격에서 계산']],note:'제조사 PDF 대신 Pololu 사양 페이지(유통사) 링크입니다.'},
+  '42BLF01 (MIKROE-4455)':{mfr:'MIKROE (42BLF 시리즈)',title:'42BLF01 — 3-phase BLDC motor with hall sensors',cat:'모터',
+    pdf:'https://mouser.com/datasheet/2/272/BLDC_Motor_BLDC_Motor_with_Hall_sensor_Datasheet-3217747.pdf',page:'https://www.mikroe.com/motor-bldc-42blf01-with-hall-sensor',file:'42BLF_datasheet.pdf',
+    specs:[['정격','24 V, 4000 rpm, 1.9 A'],['극수','8극 (4극쌍), Y결선'],['토크 상수','0.035 N·m/A'],['역기전력 상수','3.7 V/krpm'],['회전자 관성','24 g·cm²'],['홀 센서','120°, 전원 5–20 V'],
+      ['시뮬레이션 값','상 저항 0.9 Ω·인덕턴스 1.3 mH는 추정값 (데이터시트에 없음), 예제는 12 V 구동']],note:'Mouser가 호스팅한 데이터시트 PDF입니다.'},
+  'CL21A106KAYNNNE':{mfr:'Samsung Electro-Mechanics',title:'MLCC 10 µF 25 V X5R 0805',cat:'커패시터',page:'https://product.samsungsem.com/mlcc/CL21A106KAYNNN.do',specs:[['값','10 µF ±10 %, 25 V, X5R'],['크기','0805']]},
+  'CL10B104KB8NNNC':{mfr:'Samsung Electro-Mechanics',title:'MLCC 100 nF 50 V X7R 0603',cat:'커패시터',page:'https://product.samsungsem.com/mlcc/CL10B104KB8NNN.do',specs:[['값','100 nF ±10 %, 50 V, X7R'],['크기','0603']]},
+  'CL10B103KB8NNNC':{mfr:'Samsung Electro-Mechanics',title:'MLCC 10 nF 50 V X7R 0603',cat:'커패시터',page:'https://product.samsungsem.com/mlcc/CL10B103KB8NNN.do',specs:[['값','10 nF ±10 %, 50 V, X7R'],['크기','0603']]},
+  'CL10A105KB8NNNC':{mfr:'Samsung Electro-Mechanics',title:'MLCC 1 µF 50 V X5R 0603',cat:'커패시터',page:'https://product.samsungsem.com/mlcc/CL10A105KB8NNN.do',specs:[['값','1 µF ±10 %, 50 V, X5R'],['크기','0603']]},
+  'GRM31CR60J107ME39':{mfr:'Murata',title:'MLCC 100 µF 6.3 V X5R 1206',cat:'커패시터',page:'https://www.murata.com/en-us/products/productdetail?partno=GRM31CR60J107ME39L',specs:[['값','100 µF ±20 %, 6.3 V, X5R'],['크기','1206']]},
+  'GRM32ER61E226KE15':{mfr:'Murata',title:'MLCC 22 µF 25 V X5R 1210',cat:'커패시터',page:'https://www.murata.com/en-us/products/productdetail?partno=GRM32ER61E226KE15L',specs:[['값','22 µF ±10 %, 25 V, X5R'],['크기','1210']]},
+  'GRM188R71C474KA88D':{mfr:'Murata',title:'MLCC 0.47 µF 16 V X7R 0603',cat:'커패시터',page:'https://www.murata.com/en-us/products/productdetail?partno=GRM188R71C474KA88D',specs:[['값','0.47 µF ±10 %, 16 V, X7R'],['크기','0603']]},
+  'RL1206FR-070R1L':{mfr:'Yageo',title:'RL series low-ohm chip resistor 0.1 Ω 1206',cat:'저항',specs:[['값','0.1 Ω ±1 %'],['크기','1206, 1/4 W']]},
+};
+// families resolved by prefix
+const rval=c=>{let m=c.match(/^(\d+)([KRM])(\d*)$/);if(!m)return c;return m[1]+(m[3]?'.'+m[3]:'')+' '+({K:'kΩ',R:'Ω',M:'MΩ'})[m[2]];};
+const FAMILY=[
+  [/^RC0603FR-07(.+)L$/,m=>({mfr:'Yageo',title:'RC series thick-film chip resistor 0603',cat:'저항',specs:[['값',rval(m[1])],['정밀도','±1 %'],['크기','0603, 1/10 W']]})],
+];
+const search=mpn=>'https://octopart.com/search?q='+encodeURIComponent(mpn);
+function find(mpn){
+  if(!mpn)return null;const k=String(mpn).trim();
+  if(P[k])return Object.assign({mpn:k},P[k]);
+  const base=k.replace(/\s*\(.*\)$/,'');if(P[base])return Object.assign({mpn:base},P[base]);
+  for(const[re,f]of FAMILY){const m=base.match(re);if(m)return Object.assign({mpn:base},f(m));}
+  return null;
+}
+function links(info,mpn){const l=[];if(info&&info.pdf)l.push(['데이터시트 PDF',info.pdf]);if(info&&info.page)l.push([info.pdf?'제품 페이지':'제품·데이터시트 페이지',info.page]);if(info&&info.page2)l.push(['관련 페이지',info.page2]);l.push(['부품 검색 (Octopart)',search(mpn)]);return l;}
+return{P,find,links,search};
 })();
 
 
@@ -2611,22 +2724,20 @@ const SAMPLE_HSIS={
   meta:{docId:'HSIS-SENSE32',title:'SENSE-32 HW/SW 인터페이스 사양',version:'0.3',mcuRef:'U1',date:'2026-10-11',file:'SENSE-32_HSIS.xlsx (예제)'},
   header:['ID','신호명','분류','MCU 핀','포트','핀 기능','주변장치','방향','초기값','활성 레벨','풀업/풀다운','회로도 넷','HW 연결','전기적 특성','변환식','타이밍','SW 모듈','SW 설정 ID','API','요구사항 ID','테스트 ID','ASIL','상태','비고'],
   rows:[
-    ['HSIS-001','VDD','전원','1, 24, 32','','VDD','PWR','전원','','','','+3V3','U2.2 (LDO 출력)','3.3 V ±3%, 최대 40 mA','','','','','','SYS-REQ-001','TC-PWR-01','QM','승인','디커플링 C3, C4 100 nF'],
-    ['HSIS-002','VSS','접지','6, 8, 11, 30, 33','','VSS / EP','PWR','접지','','','','GND','J1.3','','','','','','','SYS-REQ-001','TC-PWR-01','QM','승인','노출 패드(33) 포함'],
-    ['HSIS-003','OSC_IN','클럭','12','PF0','RCC_OSC_IN','RCC','입력','','','','XIN','Y1.1','HSE 크리스털','','16 MHz, CL 8 pF','Mcu','McuClockSettingConfig_HSE','Mcu_InitClock','SYS-REQ-005','TC-CLK-01','QM','승인',''],
-    ['HSIS-004','OSC_OUT','클럭','13','PF1','RCC_OSC_OUT','RCC','출력','','','','XOUT','Y1.3','','','16 MHz','Mcu','McuClockSettingConfig_HSE','','SYS-REQ-005','TC-CLK-01','QM','승인',''],
-    ['HSIS-005','NRST','리셋·부트','25','NRST','NRST','RCC','입력','','Low','외부 풀업 10kΩ','NRST','SW1.1','','','최소 펄스 20 µs','','','','SYS-REQ-006','TC-RST-01','QM','승인','리셋 버튼 SW1'],
+    ['HSIS-001','VDD','전원','1, 5, 17','','VDD / VDDA / VDDIO2','PWR','전원','','','','+3V3','U2.2 (LDO 출력)','3.3 V ±3%, 최대 40 mA','','','','','','SYS-REQ-001','TC-PWR-01','QM','승인','디커플링 C3(VDD), C4(VDDA) 100 nF'],
+    ['HSIS-002','VSS','접지','33','','VSS (노출 패드)','PWR','접지','','','','GND','J1.3','','','','','','','SYS-REQ-001','TC-PWR-01','QM','승인','노출 패드(33) 포함'],
+    ['HSIS-005','NRST','리셋·부트','4','NRST','NRST','RCC','입력','','Low','외부 풀업 10kΩ','NRST','SW1.1','','','최소 펄스 20 µs','','','','SYS-REQ-006','TC-RST-01','QM','승인','리셋 버튼 SW1'],
     ['HSIS-006','BOOT0','리셋·부트','31','BOOT0','BOOT0','SYSCFG','입력','','High','외부 풀다운 10kΩ','BOOT0','','','','','','','','SYS-REQ-006','TC-BOOT-01','QM','리뷰 중','플래시 부팅 고정'],
-    ['HSIS-007','USB_DP','통신','10','PA12','USB_DP','USB','양방향','','','','USB_DP','J1.5','USB 2.0 FS, 차동 90 Ω','','12 Mbps','Usb','UsbGeneral','','SYS-REQ-010','TC-USB-01','QM','승인',''],
-    ['HSIS-008','USB_DM','통신','9','PA11','USB_DM','USB','양방향','','','','USB_DM','J1.4','USB 2.0 FS, 차동 90 Ω','','12 Mbps','Usb','UsbGeneral','','SYS-REQ-010','TC-USB-01','QM','승인',''],
-    ['HSIS-009','LED_STATUS','디지털 출력','15','PB3','GPIO','Dio','출력','Low','High','없음','LED','R2.1','4.4 mA @ 3.3 V','','1 Hz 점멸','Dio','DioConf_DioChannel_LED_STATUS','Dio_WriteChannel','SYS-REQ-030','TC-LED-01','QM','승인','R2 330 Ω → D1'],
-    ['HSIS-010','I2C1_SCL','통신','18','PB6','I2C1_SCL','I2C1','양방향(오픈 드레인)','','','외부 풀업 4.7kΩ','I2C_SCL','J2.3','','','400 kHz','I2c','I2cChannel_0','I2c_AsyncTransmit','SYS-REQ-020','','QM','승인','센서 확장 헤더'],
-    ['HSIS-011','I2C1_SDA','통신','19','PB7','I2C1_SDA','I2C1','양방향(오픈 드레인)','','','외부 풀업 4.7kΩ','I2C_SDA','J2.2','','','400 kHz','I2c','I2cChannel_0','I2c_AsyncTransmit','SYS-REQ-020','TC-I2C-01','QM','승인',''],
-    ['HSIS-012','FLASH_CS','디지털 출력','2','PA4','GPIO','Dio','출력','High','Low','없음','FLASH_CS','U3.1','','','','Dio','DioConf_DioChannel_FLASH_CS','Dio_WriteChannel','SYS-REQ-040','TC-FLASH-01','QM','승인','SPI 플래시 칩 선택'],
-    ['HSIS-013','SPI1_SCK','통신','5','PA5','SPI1_SCK','SPI1','출력','','','','FLASH_CLK','U3.6','','','최대 20 MHz','Spi','SpiExternalDevice_Flash','Spi_AsyncTransmit','SYS-REQ-040','TC-FLASH-01','QM','승인',''],
-    ['HSIS-014','SPI1_MISO','통신','3','PA6','SPI1_MISO','SPI1','입력','','','','FLASH_MISO','U3.2','','','최대 20 MHz','Spi','SpiExternalDevice_Flash','','','TC-FLASH-01','QM','승인',''],
-    ['HSIS-015','SPI1_MOSI','통신','4','PA7','SPI1_MOSI','SPI1','출력','','','','FLASH_MOSI','U3.5','','','최대 20 MHz','Spi','SpiExternalDevice_Flash','','SYS-REQ-040','TC-FLASH-01','QM','승인',''],
-    ['HSIS-016','VBUS_MON','아날로그','26','PA0','ADC1_IN0','ADC1','아날로그 입력','','','','VBUS_MON','R6/R7 분압 (10k/10k)','0–6.6 V','VBUS = ADC × 3.3 / 4095 × 2.0','1 kHz 샘플링','Adc','AdcGroup_VbusMon','Adc_ReadGroup','SYS-REQ-050','TC-ADC-01','QM','초안','HW rev B에서 추가 예정'],
+    ['HSIS-007','USB_DP','통신','22','PA12','USB_DP','USB','양방향','','','','USB_DP','J1.5','USB 2.0 FS, 차동 90 Ω','','12 Mbps','Usb','UsbGeneral','','SYS-REQ-010','TC-USB-01','QM','승인',''],
+    ['HSIS-008','USB_DM','통신','21','PA11','USB_DM','USB','양방향','','','','USB_DM','J1.4','USB 2.0 FS, 차동 90 Ω','','12 Mbps','Usb','UsbGeneral','','SYS-REQ-010','TC-USB-01','QM','승인',''],
+    ['HSIS-009','LED_STATUS','디지털 출력','26','PB3','GPIO','Dio','출력','Low','High','없음','LED','R2.1','4.4 mA @ 3.3 V','','1 Hz 점멸','Dio','DioConf_DioChannel_LED_STATUS','Dio_WriteChannel','SYS-REQ-030','TC-LED-01','QM','승인','R2 330 Ω → D1'],
+    ['HSIS-010','I2C1_SCL','통신','29','PB6','I2C1_SCL','I2C1','양방향(오픈 드레인)','','','외부 풀업 4.7kΩ','I2C_SCL','J2.3','','','400 kHz','I2c','I2cChannel_0','I2c_AsyncTransmit','SYS-REQ-020','','QM','승인','센서 확장 헤더'],
+    ['HSIS-011','I2C1_SDA','통신','30','PB7','I2C1_SDA','I2C1','양방향(오픈 드레인)','','','외부 풀업 4.7kΩ','I2C_SDA','J2.2','','','400 kHz','I2c','I2cChannel_0','I2c_AsyncTransmit','SYS-REQ-020','TC-I2C-01','QM','승인',''],
+    ['HSIS-012','FLASH_CS','디지털 출력','10','PA4','GPIO','Dio','출력','High','Low','없음','FLASH_CS','U3.1','','','','Dio','DioConf_DioChannel_FLASH_CS','Dio_WriteChannel','SYS-REQ-040','TC-FLASH-01','QM','승인','SPI 플래시 칩 선택'],
+    ['HSIS-013','SPI1_SCK','통신','11','PA5','SPI1_SCK','SPI1','출력','','','','FLASH_CLK','U3.6','','','최대 20 MHz','Spi','SpiExternalDevice_Flash','Spi_AsyncTransmit','SYS-REQ-040','TC-FLASH-01','QM','승인',''],
+    ['HSIS-014','SPI1_MISO','통신','12','PA6','SPI1_MISO','SPI1','입력','','','','FLASH_MISO','U3.2','','','최대 20 MHz','Spi','SpiExternalDevice_Flash','','','TC-FLASH-01','QM','승인',''],
+    ['HSIS-015','SPI1_MOSI','통신','13','PA7','SPI1_MOSI','SPI1','출력','','','','FLASH_MOSI','U3.5','','','최대 20 MHz','Spi','SpiExternalDevice_Flash','','SYS-REQ-040','TC-FLASH-01','QM','승인',''],
+    ['HSIS-016','VBUS_MON','아날로그','6','PA0','ADC1_IN0','ADC1','아날로그 입력','','','','VBUS_MON','R6/R7 분압 (10k/10k)','0–6.6 V','VBUS = ADC × 3.3 / 4095 × 2.0','1 kHz 샘플링','Adc','AdcGroup_VbusMon','Adc_ReadGroup','SYS-REQ-050','TC-ADC-01','QM','초안','HW rev B에서 추가 예정'],
   ]
 };
 function buildArxml(note,pins){
@@ -2659,22 +2770,22 @@ ${body}
 </AUTOSAR>
 `;})();
 }
-const SAMPLE_ARXML=buildArxml('SENSE-32 예제 Port 설정.',[['LED_STATUS',15,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH'],['FLASH_CS',2,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH'],
-    ['SPI1_SCK',5,'PORT_PIN_OUT','PORT_PIN_MODE_SPI',''],['SPI1_MISO',3,'PORT_PIN_IN','PORT_PIN_MODE_SPI',''],['SPI1_MOSI',4,'PORT_PIN_OUT','PORT_PIN_MODE_SPI',''],
-    ['I2C1_SCL',18,'PORT_PIN_INOUT','PORT_PIN_MODE_I2C',''],['I2C1_SDA',20,'PORT_PIN_INOUT','PORT_PIN_MODE_I2C',''],
-    ['USB_DP',10,'PORT_PIN_INOUT','PORT_PIN_MODE_USB',''],['USB_DM',9,'PORT_PIN_INOUT','PORT_PIN_MODE_USB',''],
-    ['VBUS_MON',26,'PORT_PIN_IN','PORT_PIN_MODE_ADC',''],['UART_TX',22,'PORT_PIN_OUT','PORT_PIN_MODE_UART','']]);
+const SAMPLE_ARXML=buildArxml('SENSE-32 예제 Port 설정 (STM32F042K6U6).',[['LED_STATUS',26,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH'],['FLASH_CS',10,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH'],
+    ['SPI1_SCK',11,'PORT_PIN_OUT','PORT_PIN_MODE_SPI',''],['SPI1_MISO',12,'PORT_PIN_IN','PORT_PIN_MODE_SPI',''],['SPI1_MOSI',13,'PORT_PIN_OUT','PORT_PIN_MODE_SPI',''],
+    ['I2C1_SCL',29,'PORT_PIN_INOUT','PORT_PIN_MODE_I2C',''],['I2C1_SDA',31,'PORT_PIN_INOUT','PORT_PIN_MODE_I2C',''],
+    ['USB_DP',22,'PORT_PIN_INOUT','PORT_PIN_MODE_USB',''],['USB_DM',21,'PORT_PIN_INOUT','PORT_PIN_MODE_USB',''],
+    ['VBUS_MON',6,'PORT_PIN_IN','PORT_PIN_MODE_ADC',''],['UART_TX',19,'PORT_PIN_OUT','PORT_PIN_MODE_UART','']]);
 
 /* HSIS for the MCU motor-control example (MOTION-32 DEV). Two deliberate findings: LED_STATUS has no test ID, and its ARXML initial level differs. */
 const SAMPLE_HSIS_MCU={
   meta:{docId:'HSIS-MOTION32',title:'MOTION-32 DEV HW/SW 인터페이스 사양',version:'0.2',mcuRef:'U1',date:'2026-10-11',file:'MOTION-32_HSIS.xlsx (예제)'},
   header:SAMPLE_HSIS.header,
   rows:[
-    ['HSIS-101','VDD','전원','1, 24','','VDD','PWR','전원','','','','+3V3','U2.2 (LDO 출력)','3.3 V ±3%, 최대 30 mA','','','','','','SYS-REQ-101','TC-PWR-01','QM','승인','디커플링 C2 10 µF, C3 100 nF'],
-    ['HSIS-102','VSS','접지','6, 8, 33','','VSS / EP','PWR','접지','','','','GND','J1.2','','','','','','','SYS-REQ-101','TC-PWR-01','QM','승인','노출 패드(33) 포함'],
-    ['HSIS-103','MOTOR_PWM','디지털 출력','18','PA8','TIM1_CH1','Pwm','출력','Low','High','없음 (게이트 풀다운 R2는 GATE 넷)','PWM_M','R1.1','3.3 V 푸시풀 · 게이트 직렬 100 Ω','듀티 0–100 % → 모터 평균 전압 0–5 V','500 Hz','Pwm','PwmChannel_MOTOR','Pwm_SetDutyCycle','SYS-REQ-110','TC-MOT-01','QM','승인','소프트 스타트 250 ms · 펌웨어 PWM_FREQ_HZ'],
-    ['HSIS-104','MOTOR_ISENSE','아날로그','15','PA1','ADC1_IN1','Adc','입력','','','','ISNS_ADC','R6.1','R5 0.1 Ω 션트 → R6·C4 RC 필터 (τ 10 ms)','I[mA] = V[V] ÷ 0.1 Ω × 1000','1 kHz 샘플','Adc','AdcGroup_MotorCurrent','Adc_ReadGroup','SYS-REQ-111','TC-MOT-02','QM','승인','전류 제한 400 mA (펌웨어 CURRENT_LIMIT_MA)'],
-    ['HSIS-105','LED_STATUS','디지털 출력','10','PB3','GPIO','Dio','출력','Low','High','없음','LED_ST','R4.2','약 4 mA @ 3.3 V (R4 330 Ω)','','가속 중 60 ms 점멸, 정속 시 점등','Dio','DioConf_DioChannel_LED_STATUS','Dio_WriteChannel','SYS-REQ-120','','QM','리뷰 중','D3 녹색 LED'],
+    ['HSIS-101','VDD','전원','1, 5, 17','','VDD / VDDA / VDDIO2','PWR','전원','','','','+3V3','U2.2 (LDO 출력)','3.3 V ±3%, 최대 30 mA','','','','','','SYS-REQ-101','TC-PWR-01','QM','승인','디커플링 C2 10 µF, C3 100 nF'],
+    ['HSIS-102','VSS','접지','33','','VSS (노출 패드)','PWR','접지','','','','GND','J1.2','','','','','','','SYS-REQ-101','TC-PWR-01','QM','승인','노출 패드(33) 포함'],
+    ['HSIS-103','MOTOR_PWM','디지털 출력','18','PA8','TIM1_CH1','Pwm','출력','Low','High','없음 (게이트 풀다운 R2는 GATE 넷)','PWM_M','R1.1','3.3 V 푸시풀 · 게이트 직렬 100 Ω','듀티 0–100 % → 모터 평균 전압 0–5 V','500 Hz','Pwm','PwmChannel_MOTOR','Pwm_SetDutyCycle','SYS-REQ-110','TC-MOT-01','QM','승인','듀티 60 % 제한 (FA-130 정격 3 V) · 펌웨어 PWM_FREQ_HZ'],
+    ['HSIS-104','MOTOR_ISENSE','아날로그','15','PB1','ADC_IN9','Adc','입력','','','','ISNS_ADC','R6.1','R5 0.1 Ω 션트 → R6·C4 RC 필터 (τ 10 ms)','I[mA] = V[V] ÷ 0.1 Ω × 1000','1 kHz 샘플','Adc','AdcGroup_MotorCurrent','Adc_ReadGroup','SYS-REQ-111','TC-MOT-02','QM','승인','전류 제한 400 mA (펌웨어 CURRENT_LIMIT_MA)'],
+    ['HSIS-105','LED_STATUS','디지털 출력','10','PA4','GPIO','Dio','출력','Low','High','없음','LED_ST','R4.2','약 4 mA @ 3.3 V (R4 330 Ω)','','가속 중 60 ms 점멸, 정속 시 점등','Dio','DioConf_DioChannel_LED_STATUS','Dio_WriteChannel','SYS-REQ-120','','QM','리뷰 중','D3 녹색 LED'],
   ]
 };
 const SAMPLE_ARXML_MCU=buildArxml('MOTION-32 DEV 예제 Port 설정.',[['MOTOR_PWM',18,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['MOTOR_ISENSE',15,'PORT_PIN_IN','PORT_PIN_MODE_ADC',''],['LED_STATUS',10,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_HIGH']]);
@@ -2682,31 +2793,31 @@ const SAMPLE_ARXML_MCU=buildArxml('MOTION-32 DEV 예제 Port 설정.',[['MOTOR_P
 /* HSIS for the BLDC example (MOTION-32 BLDC). Deliberate findings: NFAULT has no requirement, HALL2's ARXML direction is wrong. */
 const SAMPLE_HSIS_BLDC=(function(){
   const ph=(id,sig,pin,port,fn,net,hw,dir,timing,api,req,test,note)=>[id,sig,'디지털 출력',String(pin),port,fn,fn.startsWith('TIM')?'Pwm':'Dio',dir,'Low','High','없음',net,hw,'3.3 V 푸시풀',fn.startsWith('TIM')?'듀티 0–100 %':'',timing,fn.startsWith('TIM')?'Pwm':'Dio',(fn.startsWith('TIM')?'PwmChannel_':'DioConf_DioChannel_')+sig,api,req,test,'QM','승인',note];
-  const hall=(id,sig,pin,port,net,hw,test)=>[id,sig,'디지털 입력',String(pin),port,'GPIO','Dio','입력','','High','없음 (홀 IC 푸시풀 출력)',net,hw,'0 / 3.3 V','','전기각 180° 펄스, 최대 ~100 Hz','Dio','DioConf_DioChannel_'+sig,'Dio_ReadChannel','SYS-REQ-210',test,'QM','승인','6스텝 정류 입력'];
+  const hall=(id,sig,pin,port,net,hw,test)=>[id,sig,'디지털 입력',String(pin),port,'GPIO','Dio','입력','','High','내부 풀업 (MCU, 약 40 kΩ) · 홀 출력 오픈 컬렉터',net,hw,'0 / 3.3 V','','전기각 180° 펄스, 12 V에서 최대 ~170 Hz','Dio','DioConf_DioChannel_'+sig,'Dio_ReadChannel','SYS-REQ-210',test,'QM','승인','6스텝 정류 입력'];
   return{
     meta:{docId:'HSIS-MOTION32-BLDC',title:'MOTION-32 BLDC HW/SW 인터페이스 사양',version:'0.1',mcuRef:'U1',date:'2026-10-11',file:'MOTION-32-BLDC_HSIS.xlsx (예제)'},
     header:SAMPLE_HSIS.header,
     rows:[
-      ['HSIS-201','VDD','전원','1, 24','','VDD','PWR','전원','','','','+3V3','U2.2 (LDO 출력)','3.3 V ±3%','','','','','','SYS-REQ-201','TC-PWR-01','QM','승인','홀 센서 전원 공용'],
-      ['HSIS-202','VSS','접지','6, 8, 33','','VSS / EP','PWR','접지','','','','GND','J1.2','','','','','','','SYS-REQ-201','TC-PWR-01','QM','승인',''],
-      ph('HSIS-203','IN_U',23,'PA13','TIM1_CH1','IN_U','U3.1','출력','1 kHz','Pwm_SetDutyCycle','SYS-REQ-220','TC-BLDC-01','U상 상단 PWM'),
-      ph('HSIS-204','EN_U',22,'PA12','GPIO','EN_U','U3.2','출력','정류 스텝마다 변경','Dio_WriteChannel','SYS-REQ-220','TC-BLDC-01','U상 활성화'),
-      ph('HSIS-205','IN_V',21,'PA11','TIM1_CH2','IN_V','U3.3','출력','1 kHz','Pwm_SetDutyCycle','SYS-REQ-220','TC-BLDC-01','V상 상단 PWM'),
-      ph('HSIS-206','EN_V',20,'PA10','GPIO','EN_V','U3.4','출력','정류 스텝마다 변경','Dio_WriteChannel','SYS-REQ-220','TC-BLDC-01','V상 활성화'),
-      ph('HSIS-207','IN_W',19,'PA9','TIM1_CH3','IN_W','U3.5','출력','1 kHz','Pwm_SetDutyCycle','SYS-REQ-220','TC-BLDC-01','W상 상단 PWM'),
-      ph('HSIS-208','EN_W',18,'PA8','GPIO','EN_W','U3.6','출력','정류 스텝마다 변경','Dio_WriteChannel','SYS-REQ-220','TC-BLDC-01','W상 활성화'),
-      ['HSIS-209','NFAULT','디지털 입력','17','PA7','GPIO','Dio','입력(오픈 드레인)','','Low','외부 풀업 10kΩ','NFAULT','U3.7','오픈 드레인, Low = 과전류·과열','','','Dio','DioConf_DioChannel_NFAULT','Dio_ReadChannel','','TC-BLDC-03','QM','리뷰 중','Low이면 즉시 모든 상 개방'],
-      hall('HSIS-210','HALL1',12,'PB5','HALL1','M1.4','TC-BLDC-02'),
-      hall('HSIS-211','HALL2',13,'PB6','HALL2','M1.5','TC-BLDC-02'),
-      hall('HSIS-212','HALL3',14,'PB7','HALL3','M1.6','TC-BLDC-02'),
-      ['HSIS-213','LED_STATUS','디지털 출력','10','PB3','GPIO','Dio','출력','Low','High','없음','LED_ST','R4.2','약 4 mA @ 3.3 V','','기계 1회전마다 토글','Dio','DioConf_DioChannel_LED_STATUS','Dio_WriteChannel','SYS-REQ-230','TC-LED-01','QM','승인','D3 녹색 LED'],
+      ['HSIS-201','VDD','전원','1, 5, 17','','VDD / VDDA / VDDIO2','PWR','전원','','','','+3V3','U2.2 (LDO 출력)','3.3 V ±3%','','','','','','SYS-REQ-201','TC-PWR-01','QM','승인','C3 100 nF'],
+      ['HSIS-202','VSS','접지','33','','VSS (노출 패드)','PWR','접지','','','','GND','J1.2','','','','','','','SYS-REQ-201','TC-PWR-01','QM','승인',''],
+      ph('HSIS-203','IN_U',21,'PA11','TIM1_CH4','IN_U','U3.23','출력','2 kHz','Pwm_SetDutyCycle','SYS-REQ-220','TC-BLDC-01','DRV8313 IN3 → OUT3 → U상'),
+      ph('HSIS-204','EN_U',25,'PA15','GPIO','EN_U','U3.22','출력','정류 스텝마다 변경','Dio_WriteChannel','SYS-REQ-220','TC-BLDC-01','DRV8313 EN3'),
+      ph('HSIS-205','IN_V',20,'PA10','TIM1_CH3','IN_V','U3.25','출력','2 kHz','Pwm_SetDutyCycle','SYS-REQ-220','TC-BLDC-01','DRV8313 IN2 → OUT2 → V상'),
+      ph('HSIS-206','EN_V',22,'PA12','GPIO','EN_V','U3.24','출력','정류 스텝마다 변경','Dio_WriteChannel','SYS-REQ-220','TC-BLDC-01','DRV8313 EN2'),
+      ph('HSIS-207','IN_W',18,'PA8','TIM1_CH1','IN_W','U3.27','출력','2 kHz','Pwm_SetDutyCycle','SYS-REQ-220','TC-BLDC-01','DRV8313 IN1 → OUT1 → W상'),
+      ph('HSIS-208','EN_W',19,'PA9','GPIO','EN_W','U3.26','출력','정류 스텝마다 변경','Dio_WriteChannel','SYS-REQ-220','TC-BLDC-01','DRV8313 EN1'),
+      ['HSIS-209','NFAULT','디지털 입력','26','PB3','GPIO','Dio','입력(오픈 드레인)','','Low','외부 풀업 10kΩ','NFAULT','U3.18','DRV8313 오픈 드레인, Low = 과전류·과열·저전압','','','Dio','DioConf_DioChannel_NFAULT','Dio_ReadChannel','','TC-BLDC-03','QM','리뷰 중','Low이면 즉시 모든 상 개방'],
+      hall('HSIS-210','HALL1',12,'PA6','HALL1','M1.4','TC-BLDC-02'),
+      hall('HSIS-211','HALL2',13,'PA7','HALL2','M1.5','TC-BLDC-02'),
+      hall('HSIS-212','HALL3',14,'PB0','HALL3','M1.6','TC-BLDC-02'),
+      ['HSIS-213','LED_STATUS','디지털 출력','10','PA4','GPIO','Dio','출력','Low','High','없음','LED_ST','R4.2','약 4 mA @ 3.3 V','','기계 1회전마다 토글','Dio','DioConf_DioChannel_LED_STATUS','Dio_WriteChannel','SYS-REQ-230','TC-LED-01','QM','승인','D3 APT1608SGC'],
     ]};
 })();
-const SAMPLE_ARXML_BLDC=buildArxml('MOTION-32 BLDC 예제 Port 설정.',[
-  ['IN_U',23,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_U',22,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
-  ['IN_V',21,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_V',20,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
-  ['IN_W',19,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_W',18,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
-  ['NFAULT',17,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],['HALL1',12,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],['HALL2',13,'PORT_PIN_OUT','PORT_PIN_MODE_DIO',''],['HALL3',14,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],
+const SAMPLE_ARXML_BLDC=buildArxml('MOTION-32 BLDC 예제 Port 설정 (STM32F042K6U6).',[
+  ['IN_U',21,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_U',25,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
+  ['IN_V',20,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_V',22,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
+  ['IN_W',18,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_W',19,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
+  ['NFAULT',26,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],['HALL1',12,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],['HALL2',13,'PORT_PIN_OUT','PORT_PIN_MODE_DIO',''],['HALL3',14,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],
   ['LED_STATUS',10,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW']]);
 // which HSIS belongs to which built-in board
 const HSIS_SAMPLES={
@@ -2991,7 +3102,7 @@ function build3D(c){
     inner.add(rot);outer.userData.rotor=rot;
   }else if(k==='ic'){
     const st=f?(f.stand||0):(c.pads.some(p=>p.drill)?0.5:0.05);
-    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({'MCU-Q32':['MCU-Q32','2641 A'],'AMS1117-3.3':['AMS1117','3.3 2638'],'W25Q32JV':['25Q32JV','SIQ 2635'],'BLDC-DRV3':['DRV3','2640']}[c.val]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
+    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({'STM32F042K6U6':['STM32','F042K6','U6 GH24'],'AMS1117-3.3':['AMS1117','3.3 2638'],'W25Q32JV':['25Q32JV','SIQ 2635'],'DRV8313':['DRV8313','TI 2B4']}[c.val]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
       top=new THREE.MeshStandardMaterial({map:markTex(lines,bw,bh,f?!!f.dot:true),roughness:0.55});}
     inner.add(box(bw,bh,ht,[m.black,m.black,m.black,m.black,top,m.black],0,0,st));
     if(f)f.pads.forEach(p=>{
@@ -3220,6 +3331,20 @@ const filtComps=()=>BD.comps.filter(c=>!S.q||[c.ref,c.val,c.fp,c.mpn,c.desc].con
 const filtNets=()=>BD.netOrder.filter(n=>!S.q||n.toLowerCase().includes(S.q));
 const sideBadge=s=>`<span class="badge ${s}">${s==='T'?'TOP':'BOT'}</span>`;
 const fmt=(v,d)=>(+v).toFixed(d==null?2:d);
+// datasheet block: key specs from the part database, manufacturer links, and a local copy when the viewer runs from the repo
+function dsHTML(c){
+  const mpn=(c.mpn||'').trim();if(!mpn&&!c.val)return'';const info=PARTS.find(mpn)||PARTS.find(c.val);const key=mpn||c.val;
+  const local=info&&info.file&&location.protocol==='file:'?`<a class="btn sm" href="datasheets/pdf/${encodeURIComponent(info.file)}" target="_blank" rel="noopener">저장된 사본</a>`:'';
+  return`<div class="dsbox"><div class="sub">데이터시트${info?` · ${esc(info.mfr)}`:''}</div>
+    ${info?`<p class="dst">${esc(info.title)}</p><dl class="kv dskv">${info.specs.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>${info.note?`<p class="dsnote">${esc(info.note)}</p>`:''}`:`<p class="dsnote">이 부품(${esc(key)})은 내장 부품 정보에 없습니다. 아래 검색으로 데이터시트를 찾을 수 있습니다.</p>`}
+    <div class="dsl">${PARTS.links(info,key).map(([t,u],i)=>`<a class="btn sm${i===0&&info&&info.pdf?' primary':''}" href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join('')}${local}</div></div>`;
+}
+function dsTableHTML(){
+  const rows=[];const seen=new Map();BD.comps.forEach(c=>{const k=(c.mpn||c.val||'').trim();if(!k)return;if(!seen.has(k))seen.set(k,{refs:[],c});seen.get(k).refs.push(c.ref);});
+  seen.forEach((v,k)=>{const info=PARTS.find(k);const l=PARTS.links(info,k)[0];rows.push(`<tr><td class="mono">${esc(v.refs.join(', '))}</td><td><b>${esc(k)}</b><div class="cls">${esc(info?info.mfr:'')}</div></td><td><a href="${esc(l[1])}" target="_blank" rel="noopener">${esc(info&&info.pdf?'PDF':info?'페이지':'검색')} ↗</a></td></tr>`);});
+  return`<div class="card" style="margin-bottom:12px"><div class="card-h"><b>부품 데이터시트</b><span class="cls">${seen.size}종</span></div><div class="tblwrap"><table class="pins dst-t"><thead><tr><th>참조</th><th>부품 번호</th><th>링크</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+    <p class="dsnote">부품을 클릭하면 주요 사양과 링크가 정보 패널에 나옵니다. 저장소의 <span class="mono">datasheets/</span> 폴더에 링크 목록이 있고, <span class="mono">node scripts/datasheets.mjs --download</span>로 PDF를 내려받을 수 있습니다.</p></div>`;
+}
 function compCard(c){
   const rows=c.pads.map(p=>`<tr><td>${esc(p.n!=null?p.n:'')}</td><td class="pn">${esc(p.fn||'')}</td><td>${p.net?`<button class="lnk${S.hlNet===p.net?' on':''}" data-net="${esc(p.net)}">${esc(p.net)}</button>`:'<span class="cls">미연결</span>'}</td></tr>`).join('');
   const nc=c.pads.filter(p=>!p.net).length,b=c.body;
@@ -3227,6 +3352,7 @@ function compCard(c){
   <div class="val">${esc(c.val||'값 정보 없음')}</div>${c.desc?`<p class="desc">${esc(c.desc)}</p>`:'<div style="height:8px"></div>'}
   <dl class="kv"><dt>풋프린트</dt><dd>${esc(c.fp||'—')}</dd><dt>부품 번호</dt><dd>${esc(c.mpn||'—')}</dd><dt>위치</dt><dd>X ${fmt(c.x)} · Y ${fmt(c.y)} mm</dd><dt>회전</dt><dd>${fmt(c.rot,1)}°</dd>${b.w>0?`<dt>바디</dt><dd>${fmt(b.w,1)} × ${fmt(b.h,1)} × ${fmt(b.ht,1)} mm</dd>`:''}</dl>
   ${c.fw?fwCardHTML(c):''}
+  ${dsHTML(c)}
   ${c.pads.length?`<div class="sub">패드 ${c.pads.length}개${nc?` · 넷 없음 ${nc}개`:''}</div><div class="tblwrap"><table class="pins"><tbody>${rows}</tbody></table></div>`:'<div class="sub">패드 정보 없음</div><p class="desc">Pick-and-Place 위치만 있는 부품입니다.</p>'}</div>`;
 }
 function netCard(n){
@@ -3250,7 +3376,7 @@ function renderPane(){
   }else if(S.tab==='net'){
     pane.innerHTML=`<div class="list">${fn.slice(0,1500).map(n=>`<button class="row net${S.hlNet===n?' on':''}" data-net="${esc(n)}"><span class="r">${esc(n)}</span><span class="cls">${BD.netClass(n)}</span><span class="m">${BD.nets[n].pads.length}</span></button>`).join('')||`<p class="empty">${BD.hasNets?'일치하는 넷이 없습니다.':'이 보드에는 넷 정보가 없습니다.'}</p>`}</div>`;
   }else{
-    pane.innerHTML=$('#dataTpl').innerHTML;
+    pane.innerHTML=dsTableHTML()+$('#dataTpl').innerHTML;
   }
 }
 $('#pane').addEventListener('click',e=>{
@@ -3276,7 +3402,7 @@ function stats(){
   const prs=new Set();['T.cu','B.cu'].forEach(L=>BD.layers[L].forEach(p=>{if(p.t==='pad'&&!p.via)prs.add(p);}));pads=prs.size;
   $('#stats').innerHTML=`<dt>부품</dt><dd>${BD.comps.length}</dd><dt>상단 / 하단</dt><dd>${BD.comps.filter(c=>c.side==='T').length} / ${BD.comps.filter(c=>c.side==='B').length}</dd><dt>넷</dt><dd>${BD.netOrder.length}</dd><dt>패드</dt><dd>${pads}</dd><dt>비아</dt><dd>${BD.vias.length}</dd><dt>드릴</dt><dd>${BD.drills.length}</dd>${tl?`<dt>트랙 길이</dt><dd>${fmt(tl,0)} mm</dd>`:''}`;
   const src=$('#srcBox');
-  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'가상의 MCU DC 모터 예제입니다. U1 펌웨어가 PA8 PWM으로 Q1·M1 모터를, PB3로 상태 LED를 제어하고 PA1 ADC로 모터 전류를 읽습니다.':BD.demo==='bldc'?'가상의 MCU BLDC 3상 예제입니다. U1 펌웨어가 홀 센서(PB5~PB7)를 읽어 3상 드라이버 U3의 IN/EN 6개를 6스텝으로 정류합니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
+  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'MCU DC 모터 예제입니다. STM32F042K6U6 펌웨어가 PA8(TIM1) PWM으로 AO3400A·FA-130 모터를, PA4로 상태 LED를 제어하고 PB1 ADC로 모터 전류를 읽습니다.':BD.demo==='bldc'?'MCU BLDC 3상 예제입니다. STM32F042K6U6 펌웨어가 42BLF01 모터의 홀 센서(PA6·PA7·PB0)를 읽어 TI DRV8313의 IN/EN 6개를 6스텝으로 정류합니다.':'STM32F042K6U6 기반 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
     <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button>${BD.demo?'<button class="btn sm" data-fwopen>펌웨어 편집</button>':''}${Object.entries(EXAMPLES).filter(([k])=>k!==(BD.demo||'sense')).map(([k,v])=>`<button class="btn sm" data-ex="${k}">${esc(v[0])} 예제</button>`).join('')}</div>`;}
   else{src.innerHTML=`<ul class="files">${BD.files.filter(f=>f.role!=='ignore').map(f=>`<li><span class="fn">${esc(f.name.split('/').pop())}</span><span class="fr">${esc(PCB.ROLES[f.role]||f.role)}</span></li>`).join('')}</ul>`+
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
@@ -3359,7 +3485,7 @@ $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImp
 const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC]};
 function loadExample(which){const spec=(EXAMPLES[which]||EXAMPLES.sense)[1]();setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
   if(which==='mcu'){selectComp('U1',false);toast('MCU DC 모터 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다. HSIS 탭에서 펌웨어·회로 대조 결과를 볼 수 있습니다.');}
-  else if(which==='bldc'){selectComp('U1',false);toast('MCU BLDC 3상 예제입니다. U1 펌웨어가 홀 센서로 6스텝 정류를 합니다. "빌드 & 시뮬레이션"으로 3상 모터를 돌려 보세요.');}
+  else if(which==='bldc'){selectComp('U1',false);toast('MCU BLDC 3상 예제입니다. STM32F042 펌웨어가 홀 센서로 DRV8313을 6스텝 정류합니다. "빌드 & 시뮬레이션"으로 3상 모터를 돌려 보세요.');}
   else toast('예제 보드로 돌아왔습니다.');}
 $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));
@@ -3630,7 +3756,7 @@ function spConfig(){
   if(BD.demo==='bldc'){
     ck.srcs.forEach(s=>{if(s.n[0]==='+12V'){s.wave='dc';s.v=12;s.label='J1 12 V 입력 전원';}});
     ck.els.forEach(e=>{if(e.type==='LOAD'&&e.ref==='U1')e.I=0.02;});
-    tstop=400;steps=6400;
+    tstop=200;steps=6400;
   }
   else if(BD.demo==='mcu'){
     // MCU board: 5 V applied at t = 0; the firmware drives PA8 (PWM) and PB3 (LED) during the run

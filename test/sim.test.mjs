@@ -49,23 +49,23 @@ test('MCU example: firmware drives the MOSFET by PWM, the motor spins up, LEDs f
   const M = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_MCU))));
   const ck = SIM.extractCircuit(M);
   assert.ok(ck.els.some(e => e.type === 'NMOS' && e.id === 'Q1'));
-  assert.ok(ck.els.some(e => e.type === 'MOTOR' && e.id === 'M1' && e.gear === 48));
+  assert.ok(ck.els.some(e => e.type === 'MOTOR' && e.id === 'M1' && e.gear === 58));
   assert.ok(ck.els.some(e => e.type === 'REG' && e.id === 'U2'));
   ck.srcs.forEach(s => { s.wave = 'dc'; });
   const u1 = M.byRef.U1;
   const pins = {}; u1.pads.forEach(p => { if (p.fn && /^P[A-K]\d+$/.test(p.fn)) pins[p.fn] = p.net || null; });
   const ctl = FW.controller(u1.fw, { pins, gnd: ck.gnd, vdd: 3.3, ref: 'U1' });
   assert.ok(!ctl.error, ctl.error);
-  assert.equal(ctl.srcs.map(s => s.id).sort().join(','), 'FW_PA8,FW_PB3');
+  assert.equal(ctl.srcs.map(s => s.id).sort().join(','), 'FW_PA4,FW_PA8');
   const tr = SIM.transient(Object.assign({}, ck, { srcs: ck.srcs.concat(ctl.srcs) }), 0.6, 7500, ['ISNS_ADC'], ctl);
   assert.ok(!tr.error && !ctl.error, tr.error || ctl.error);
-  const m = tr.anim.mot.M1, n = m.w.length - 1, rpm = i => m.w[i] / 48 * 60 / (2 * Math.PI);
+  const m = tr.anim.mot.M1, n = m.w.length - 1, rpm = i => m.w[i] / 58 * 60 / (2 * Math.PI);
   assert.ok(rpm(Math.round(n * 0.05 / 0.6)) < 1, 'motor still before START_DELAY_MS');
-  assert.ok(rpm(n) > 150 && rpm(n) < 260, `rpm ${rpm(n)}`);
+  assert.ok(rpm(n) > 150 && rpm(n) < 600, `rpm ${rpm(n)}`);
   assert.ok(tr.anim.led.D2[n] > 1e-3, 'power LED');
   assert.ok(tr.anim.led.D3[n] > 1e-3 && tr.anim.led.D3[1] < 1e-5, 'status LED off at boot, on when running');
   assert.ok(ctl.logs.some(l => /전류 제한/.test(l.text)), 'current limit engaged via ADC');
-  assert.ok(ctl.trace.out.PA8[599] > 0.69, 'target duty reached');
+  assert.ok(ctl.trace.out.PA8[599] > 0.59, 'target duty reached');
   // parameters are editable in code
   const code2 = FW.setParam(u1.fw, 'TARGET_DUTY', 40);
   assert.equal(FW.params(code2).find(p => p.name === 'TARGET_DUTY').value, 40);

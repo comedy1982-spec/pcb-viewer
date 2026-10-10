@@ -254,7 +254,7 @@ function spConfig(){
   if(BD.demo==='bldc'){
     ck.srcs.forEach(s=>{if(s.n[0]==='+12V'){s.wave='dc';s.v=12;s.label='J1 12 V 입력 전원';}});
     ck.els.forEach(e=>{if(e.type==='LOAD'&&e.ref==='U1')e.I=0.02;});
-    tstop=400;steps=6400;
+    tstop=200;steps=6400;
   }
   else if(BD.demo==='mcu'){
     // MCU board: 5 V applied at t = 0; the firmware drives PA8 (PWM) and PB3 (LED) during the run

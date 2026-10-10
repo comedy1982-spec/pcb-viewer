@@ -2,7 +2,7 @@
 const FW=(function(){
 "use strict";
 const HEADER_LINES=3; // lines before the user code: new Function()'s own header (2) + the API line (1)
-const API_NAMES=['pinMode','digitalWrite','digitalRead','pwmInit','pwmWrite','analogWrite','analogRead','analogReadVoltage','millis','log','HIGH','LOW','OUTPUT','INPUT','VDD'];
+const API_NAMES=['INPUT_PULLUP','pinMode','digitalWrite','digitalRead','pwmInit','pwmWrite','analogWrite','analogRead','analogReadVoltage','millis','log','HIGH','LOW','OUTPUT','INPUT','VDD'];
 
 // "const NAME = 123; // comment" lines become editable parameters
 const PARAM_RE=/^([ \t]*(?:const|let|var)[ \t]+)([A-Z][A-Z0-9_]*)([ \t]*=[ \t]*)(-?\d+(?:\.\d+)?)([ \t]*;?)([ \t]*\/\/[ \t]*(.*))?$/gm;
@@ -25,12 +25,12 @@ function compile(code,pinNames){
 // Builds a controller: run setup() to learn which pins are driven, then tick loop(ms) every millisecond during the transient.
 function controller(code,mcu){
   // mcu: {pins:{PA8:'NET',...}, gnd:'GND', vdd:3.3}
-  const logs=[],trace={t:[],out:{},adc:{}};let ms=0,guard=0;const st={};
+  const logs=[],trace={t:[],out:{},adc:{}};let ms=0,guard=0;const st={},ins={};
   const pinNet=p=>{if(!mcu.pins[p])throw new Error(`${p} 핀은 이 MCU에서 연결되어 있지 않습니다.`);return mcu.pins[p];};
   let read=()=>0;
   const api={
-    HIGH:1,LOW:0,OUTPUT:'OUTPUT',INPUT:'INPUT',VDD:mcu.vdd,
-    pinMode:(p,m)=>{pinNet(p);if(m==='OUTPUT'){st[p]=st[p]||{pwm:false,level:0,duty:0,freq:0};}},
+    HIGH:1,LOW:0,OUTPUT:'OUTPUT',INPUT:'INPUT',INPUT_PULLUP:'INPUT_PULLUP',VDD:mcu.vdd,
+    pinMode:(p,m)=>{pinNet(p);if(m==='OUTPUT'){st[p]=st[p]||{pwm:false,level:0,duty:0,freq:0};}else ins[p]=m;},
     pwmInit:(p,f)=>{pinNet(p);f=+f;if(!(f>0))throw new Error('pwmInit 주파수는 0보다 커야 합니다.');st[p]={pwm:true,level:0,duty:0,freq:f};},
     pwmWrite:(p,d)=>{const s=st[p];if(!s||!s.pwm)throw new Error(`${p}: pwmInit을 먼저 호출하세요.`);d=+d;s.duty=Math.max(0,Math.min(100,isFinite(d)?d:0))/100;},
     analogWrite:(p,v)=>{const s=st[p];if(!s||!s.pwm)throw new Error(`${p}: pwmInit을 먼저 호출하세요.`);s.duty=Math.max(0,Math.min(255,+v||0))/255;},
@@ -51,7 +51,7 @@ function controller(code,mcu){
   outs.forEach(p=>{trace.out[p]=[];});
   // loop period: 1 ms unless the firmware declares const LOOP_PERIOD_US (e.g. fast BLDC commutation)
   const lp=params(code).find(p=>p.name==='LOOP_PERIOD_US');const dt=lp?Math.max(10,Math.min(1e5,lp.value))*1e-6:1e-3;
-  const ctl={dt,srcs,logs,trace,error:null,errLine:null,
+  const ctl={dt,srcs,logs,trace,inputs:ins,error:null,errLine:null,
     tick(t,readNet,set){
       ms=Math.round(t*1e6)/1000;read=readNet;guard=0;
       try{inst.loop(ms);}catch(e){if(!ctl.error){ctl.error=`loop(${ms}) 오류: ${e.message}`;ctl.errLine=lineOf(e);}}
@@ -62,7 +62,7 @@ function controller(code,mcu){
 }
 // which pins the firmware drives (from setup) and reads (from the code), for HSIS cross-checks
 function pinUsage(code,mcu){const ctl=controller(code,mcu);const out=ctl.error?[]:ctl.srcs.map(s=>({pin:s.id.slice(3),pwm:s.pwm,freq:s.freq}));
-  const reads=[];const re=/\b(analogRead|analogReadVoltage|digitalRead)\s*\(\s*(P[A-K]\d{1,2})\s*\)/g;let m;while((m=re.exec(code)))if(!reads.some(r=>r.pin===m[2]))reads.push({pin:m[2],analog:m[1]!=='digitalRead'});
+  const reads=Object.keys(ctl.inputs||{}).map(p=>({pin:p,analog:false}));const re=/\b(analogRead|analogReadVoltage|digitalRead)\s*\(\s*(P[A-K]\d{1,2})\s*\)/g;let m;while((m=re.exec(code))){const ex=reads.find(r=>r.pin===m[2]);if(!ex)reads.push({pin:m[2],analog:m[1]!=='digitalRead'});else if(m[1]!=='digitalRead')ex.analog=true;}
   const lp=params(code).find(p=>p.name==='LOOP_PERIOD_US');return{error:ctl.error||null,out,reads,loopUs:lp?lp.value:1000};}
 return{params,setParam,compile,controller,pinUsage,API_NAMES};
 })();

@@ -1,0 +1,514 @@
+[
+  {
+    "mpn": "STM32F042K6U6",
+    "manufacturer": "STMicroelectronics",
+    "title": "STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN",
+    "category": "MCU",
+    "pdf": "https://www.st.com/resource/en/datasheet/stm32f042k6.pdf",
+    "page": "https://www.st.com/en/microcontrollers-microprocessors/stm32f042k6.html",
+    "file": "STM32F042K6_datasheet.pdf",
+    "boards": [
+      "SENSE-32",
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "코어": "Arm Cortex-M0, 최대 48 MHz",
+      "메모리": "플래시 32 KB · SRAM 6 KB",
+      "전원": "VDD 2.0–3.6 V · VDDA ≤ 3.6 V (ADC 사용 시 ≥ 2.4 V) · VDDIO2 1.65–3.6 V",
+      "USB": "USB 2.0 FS, 크리스털리스 (HSI48 + CRS) · PA11 DM / PA12 DP",
+      "타이머": "TIM1 고급 제어 (CH1–CH4: PA8–PA11) 외",
+      "ADC": "12비트, ADC_IN0–9 (PA0–PA7, PB0, PB1)",
+      "패키지": "UFQFPN32 5×5 mm · 노출 패드 = VSS · 31번 BOOT0",
+      "디버그": "SWD: PA13 SWDIO / PA14 SWCLK"
+    }
+  },
+  {
+    "mpn": "DRV8313PWPR",
+    "manufacturer": "Texas Instruments",
+    "title": "DRV8313 — 2.5 A triple half-bridge driver",
+    "category": "모터 드라이버",
+    "pdf": "https://www.ti.com/lit/ds/symlink/drv8313.pdf",
+    "page": "https://www.ti.com/product/DRV8313",
+    "file": "DRV8313_datasheet.pdf",
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "VM": "8–60 V (절대 최대 65 V)",
+      "출력": "상당 2.5 A 피크 · 과전류 3 A 최소",
+      "RDS(on)": "0.24 Ω typ (상단·하단 각, 25 °C)",
+      "입력 논리": "ENx=0 → OUTx 하이 임피던스 · ENx=1, INx=1 → H · INx=0 → L",
+      "보호": "과전류·과열·저전압 → nFAULT (오픈 드레인, 외부 풀업)",
+      "기타": "nSLEEP·nRESET 내부 풀다운 · V3P3 3.3 V 10 mA · 차지 펌프 (CPH–CPL 0.01 µF, VCP–VM 0.1 µF)",
+      "패키지": "HTSSOP-28 (PWP), 써멀 패드 GND"
+    }
+  },
+  {
+    "mpn": "AMS1117-3.3",
+    "manufacturer": "Advanced Monolithic Systems",
+    "title": "AMS1117 — 1 A low-dropout regulator",
+    "category": "전원",
+    "pdf": "http://www.advanced-monolithic.com/pdf/ds1117.pdf",
+    "page": "http://www.advanced-monolithic.com/",
+    "file": "AMS1117_datasheet.pdf",
+    "boards": [
+      "SENSE-32",
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "출력": "3.3 V 고정, 최대 1 A",
+      "드롭아웃": "약 1.1 V (1 A)",
+      "입력": "최대 15 V",
+      "패키지": "SOT-223: 1 GND · 2 VOUT · 3 VIN · 탭 VOUT"
+    }
+  },
+  {
+    "mpn": "W25Q32JVSSIQ",
+    "manufacturer": "Winbond",
+    "title": "W25Q32JV — 3 V 32 Mbit serial NOR flash",
+    "category": "메모리",
+    "pdf": null,
+    "page": "https://www.winbond.com/hq/product/code-storage-flash-memory/serial-nor-flash/?__locale=en&partNo=W25Q32JV",
+    "file": "W25Q32JV_datasheet.pdf",
+    "boards": [
+      "SENSE-32"
+    ],
+    "specs": {
+      "용량": "32 Mbit (4 MB)",
+      "전원": "2.7–3.6 V",
+      "인터페이스": "SPI / Dual / Quad SPI, 최대 133 MHz",
+      "패키지": "SOIC-8 208 mil: 1 /CS · 2 DO · 3 /WP · 4 GND · 5 DI · 6 CLK · 7 /HOLD · 8 VCC"
+    }
+  },
+  {
+    "mpn": "AO3400A",
+    "manufacturer": "Alpha & Omega Semiconductor",
+    "title": "AO3400A — 30 V N-channel MOSFET",
+    "category": "트랜지스터",
+    "pdf": "https://www.aosmd.com/res/datasheets/AO3400A.pdf",
+    "page": "https://www.aosmd.com/products/mosfets/low-voltage-mosfets/AO3400A",
+    "file": "AO3400A_datasheet.pdf",
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "VDS": "30 V",
+      "ID": "5.7 A (VGS 10 V)",
+      "RDS(on)": "19 mΩ typ @ 4.5 V · 24 mΩ typ @ 2.5 V",
+      "VGS(th)": "1.05 V typ (0.65–1.45 V)",
+      "패키지": "SOT-23: 1 G · 2 S · 3 D"
+    }
+  },
+  {
+    "mpn": "SS14",
+    "manufacturer": "Vishay",
+    "title": "SS12–SS16 — 1 A surface-mount Schottky rectifier",
+    "category": "다이오드",
+    "pdf": "https://www.vishay.com/docs/88746/ss12.pdf",
+    "page": null,
+    "file": "SS14_Vishay_datasheet.pdf",
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "VRRM": "40 V (SS14)",
+      "IF(AV)": "1.0 A",
+      "패키지": "SMA (DO-214AC), 띠 = 캐소드"
+    }
+  },
+  {
+    "mpn": "APT1608SGC",
+    "manufacturer": "Kingbright",
+    "title": "APT1608SGC — 0603 super bright green LED",
+    "category": "LED",
+    "pdf": "https://www.kingbrightusa.com/images/catalog/SPEC/APT1608SGC.pdf",
+    "page": null,
+    "file": "APT1608SGC_datasheet.pdf",
+    "boards": [
+      "SENSE-32",
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "색": "녹색 568 nm (dominant)",
+      "VF": "2.2 V typ @ 20 mA",
+      "IF": "최대 25 mA DC",
+      "패키지": "0603 (1.6×0.8 mm)"
+    }
+  },
+  {
+    "mpn": "APT1608EC",
+    "manufacturer": "Kingbright",
+    "title": "APT1608EC — 0603 high-efficiency red LED",
+    "category": "LED",
+    "pdf": "https://www.kingbrightusa.com/images/catalog/SPEC/APT1608EC.pdf",
+    "page": null,
+    "file": "APT1608EC_datasheet.pdf",
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "색": "적색 617 nm (dominant)",
+      "VF": "2.0 V typ @ 20 mA",
+      "IF": "최대 30 mA DC",
+      "패키지": "0603"
+    }
+  },
+  {
+    "mpn": "APT1608QBC/D",
+    "manufacturer": "Kingbright",
+    "title": "APT1608QBC/D — 0603 blue LED",
+    "category": "LED",
+    "pdf": "https://www.kingbrightusa.com/images/catalog/SPEC/APT1608QBC-D.pdf",
+    "page": null,
+    "file": "APT1608QBC-D_datasheet.pdf",
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "색": "청색 465 nm (dominant)",
+      "VF": "3.3 V typ @ 20 mA (최대 4.0 V)",
+      "패키지": "0603"
+    }
+  },
+  {
+    "mpn": "B3FS-1000P",
+    "manufacturer": "Omron",
+    "title": "B3FS — 6×6 mm SMT tactile switch",
+    "category": "스위치",
+    "pdf": "https://omronfs.omron.com/en_US/ecb/products/pdf/en-b3fs.pdf",
+    "page": null,
+    "file": "Omron_B3FS_datasheet.pdf",
+    "boards": [
+      "SENSE-32"
+    ],
+    "specs": {
+      "크기": "6×6 mm, 플런저 3.1 mm",
+      "작동력": "0.98 N (100 gf)",
+      "정격": "1–50 mA, 3–24 VDC"
+    }
+  },
+  {
+    "mpn": "61300411121",
+    "manufacturer": "Würth Elektronik",
+    "title": "WR-PHD 2.54 mm pin header, 4 pins",
+    "category": "커넥터",
+    "pdf": "https://www.we-online.com/components/products/datasheet/61300411121.pdf",
+    "page": null,
+    "file": "Wurth_61300411121.pdf",
+    "boards": [
+      "SENSE-32"
+    ],
+    "specs": {
+      "피치": "2.54 mm",
+      "핀": "1×4, 스루홀",
+      "정격": "3 A, 250 V AC"
+    }
+  },
+  {
+    "mpn": "61300211121",
+    "manufacturer": "Würth Elektronik",
+    "title": "WR-PHD 2.54 mm pin header, 2 pins",
+    "category": "커넥터",
+    "pdf": "https://www.we-online.com/components/products/datasheet/61300211121.pdf",
+    "page": null,
+    "file": "Wurth_61300211121.pdf",
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "피치": "2.54 mm",
+      "핀": "1×2, 스루홀",
+      "정격": "3 A, 250 V AC"
+    }
+  },
+  {
+    "mpn": "USB4105-GF-A",
+    "manufacturer": "GCT",
+    "title": "USB4105 — USB Type-C 2.0 receptacle",
+    "category": "커넥터",
+    "pdf": null,
+    "page": "https://gct.co/connector/usb4105",
+    "file": "GCT_USB4105.pdf",
+    "boards": [
+      "SENSE-32"
+    ],
+    "specs": {
+      "규격": "USB Type-C, USB 2.0 데이터 + 전원",
+      "비고": "뷰어 풋프린트는 사용 핀(CC1, VBUS, D−, D+, GND, 실드)만 단순화"
+    }
+  },
+  {
+    "mpn": "FA-130RA",
+    "manufacturer": "Mabuchi Motor (Tamiya 판매)",
+    "title": "FA-130 brushed DC motor + Tamiya 70097 gearbox",
+    "category": "모터",
+    "pdf": null,
+    "page": "https://www.pololu.com/product/77/specs",
+    "file": "Mabuchi_FA-130.pdf",
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "정격": "3 V",
+      "무부하": "12,300 rpm, 150 mA (3 V)",
+      "구속": "2.1 A, 0.5 oz·in ≈ 3.5 mN·m (3 V)",
+      "기어박스": "Tamiya 70097 Twin-Motor Gearbox, 58:1 또는 203:1 (예제는 58:1)",
+      "시뮬레이션 값": "R 1.43 Ω, ke = kt 2.16 mV/(rad/s), 마찰 0.32 mN·m — 위 정격에서 계산"
+    }
+  },
+  {
+    "mpn": "42BLF01 (MIKROE-4455)",
+    "manufacturer": "MIKROE (42BLF 시리즈)",
+    "title": "42BLF01 — 3-phase BLDC motor with hall sensors",
+    "category": "모터",
+    "pdf": "https://mouser.com/datasheet/2/272/BLDC_Motor_BLDC_Motor_with_Hall_sensor_Datasheet-3217747.pdf",
+    "page": "https://www.mikroe.com/motor-bldc-42blf01-with-hall-sensor",
+    "file": "42BLF_datasheet.pdf",
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "정격": "24 V, 4000 rpm, 1.9 A",
+      "극수": "8극 (4극쌍), Y결선",
+      "토크 상수": "0.035 N·m/A",
+      "역기전력 상수": "3.7 V/krpm",
+      "회전자 관성": "24 g·cm²",
+      "홀 센서": "120°, 전원 5–20 V",
+      "시뮬레이션 값": "상 저항 0.9 Ω·인덕턴스 1.3 mH는 추정값 (데이터시트에 없음), 예제는 12 V 구동"
+    }
+  },
+  {
+    "mpn": "CL21A106KAYNNNE",
+    "manufacturer": "Samsung Electro-Mechanics",
+    "title": "MLCC 10 µF 25 V X5R 0805",
+    "category": "커패시터",
+    "pdf": null,
+    "page": "https://product.samsungsem.com/mlcc/CL21A106KAYNNN.do",
+    "file": null,
+    "boards": [
+      "SENSE-32",
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "10 µF ±10 %, 25 V, X5R",
+      "크기": "0805"
+    }
+  },
+  {
+    "mpn": "CL10B104KB8NNNC",
+    "manufacturer": "Samsung Electro-Mechanics",
+    "title": "MLCC 100 nF 50 V X7R 0603",
+    "category": "커패시터",
+    "pdf": null,
+    "page": "https://product.samsungsem.com/mlcc/CL10B104KB8NNN.do",
+    "file": null,
+    "boards": [
+      "SENSE-32",
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "100 nF ±10 %, 50 V, X7R",
+      "크기": "0603"
+    }
+  },
+  {
+    "mpn": "CL10B103KB8NNNC",
+    "manufacturer": "Samsung Electro-Mechanics",
+    "title": "MLCC 10 nF 50 V X7R 0603",
+    "category": "커패시터",
+    "pdf": null,
+    "page": "https://product.samsungsem.com/mlcc/CL10B103KB8NNN.do",
+    "file": null,
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "10 nF ±10 %, 50 V, X7R",
+      "크기": "0603"
+    }
+  },
+  {
+    "mpn": "CL10A105KB8NNNC",
+    "manufacturer": "Samsung Electro-Mechanics",
+    "title": "MLCC 1 µF 50 V X5R 0603",
+    "category": "커패시터",
+    "pdf": null,
+    "page": "https://product.samsungsem.com/mlcc/CL10A105KB8NNN.do",
+    "file": null,
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "1 µF ±10 %, 50 V, X5R",
+      "크기": "0603"
+    }
+  },
+  {
+    "mpn": "GRM31CR60J107ME39",
+    "manufacturer": "Murata",
+    "title": "MLCC 100 µF 6.3 V X5R 1206",
+    "category": "커패시터",
+    "pdf": null,
+    "page": "https://www.murata.com/en-us/products/productdetail?partno=GRM31CR60J107ME39L",
+    "file": null,
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "100 µF ±20 %, 6.3 V, X5R",
+      "크기": "1206"
+    }
+  },
+  {
+    "mpn": "GRM32ER61E226KE15",
+    "manufacturer": "Murata",
+    "title": "MLCC 22 µF 25 V X5R 1210",
+    "category": "커패시터",
+    "pdf": null,
+    "page": "https://www.murata.com/en-us/products/productdetail?partno=GRM32ER61E226KE15L",
+    "file": null,
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "22 µF ±10 %, 25 V, X5R",
+      "크기": "1210"
+    }
+  },
+  {
+    "mpn": "GRM188R71C474KA88D",
+    "manufacturer": "Murata",
+    "title": "MLCC 0.47 µF 16 V X7R 0603",
+    "category": "커패시터",
+    "pdf": null,
+    "page": "https://www.murata.com/en-us/products/productdetail?partno=GRM188R71C474KA88D",
+    "file": null,
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "0.47 µF ±10 %, 16 V, X7R",
+      "크기": "0603"
+    }
+  },
+  {
+    "mpn": "RL1206FR-070R1L",
+    "manufacturer": "Yageo",
+    "title": "RL series low-ohm chip resistor 0.1 Ω 1206",
+    "category": "저항",
+    "pdf": null,
+    "page": null,
+    "file": null,
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "0.1 Ω ±1 %",
+      "크기": "1206, 1/4 W"
+    }
+  },
+  {
+    "mpn": "RC0603FR-0710KL",
+    "manufacturer": "Yageo",
+    "title": "RC series thick-film chip resistor 0603",
+    "category": "저항",
+    "pdf": null,
+    "page": null,
+    "file": null,
+    "boards": [
+      "SENSE-32",
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "10 kΩ",
+      "정밀도": "±1 %",
+      "크기": "0603, 1/10 W"
+    }
+  },
+  {
+    "mpn": "RC0603FR-07330RL",
+    "manufacturer": "Yageo",
+    "title": "RC series thick-film chip resistor 0603",
+    "category": "저항",
+    "pdf": null,
+    "page": null,
+    "file": null,
+    "boards": [
+      "SENSE-32",
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "330 Ω",
+      "정밀도": "±1 %",
+      "크기": "0603, 1/10 W"
+    }
+  },
+  {
+    "mpn": "RC0603FR-074K7L",
+    "manufacturer": "Yageo",
+    "title": "RC series thick-film chip resistor 0603",
+    "category": "저항",
+    "pdf": null,
+    "page": null,
+    "file": null,
+    "boards": [
+      "SENSE-32"
+    ],
+    "specs": {
+      "값": "4.7 kΩ",
+      "정밀도": "±1 %",
+      "크기": "0603, 1/10 W"
+    }
+  },
+  {
+    "mpn": "RC0603FR-075K1L",
+    "manufacturer": "Yageo",
+    "title": "RC series thick-film chip resistor 0603",
+    "category": "저항",
+    "pdf": null,
+    "page": null,
+    "file": null,
+    "boards": [
+      "SENSE-32"
+    ],
+    "specs": {
+      "값": "5.1 kΩ",
+      "정밀도": "±1 %",
+      "크기": "0603, 1/10 W"
+    }
+  },
+  {
+    "mpn": "RC0603FR-07100RL",
+    "manufacturer": "Yageo",
+    "title": "RC series thick-film chip resistor 0603",
+    "category": "저항",
+    "pdf": null,
+    "page": null,
+    "file": null,
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "100 Ω",
+      "정밀도": "±1 %",
+      "크기": "0603, 1/10 W"
+    }
+  },
+  {
+    "mpn": "RC0603FR-07680RL",
+    "manufacturer": "Yageo",
+    "title": "RC series thick-film chip resistor 0603",
+    "category": "저항",
+    "pdf": null,
+    "page": null,
+    "file": null,
+    "boards": [
+      "MOTION-32 (DC·BLDC)"
+    ],
+    "specs": {
+      "값": "680 Ω",
+      "정밀도": "±1 %",
+      "크기": "0603, 1/10 W"
+    }
+  }
+]

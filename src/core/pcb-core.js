@@ -474,6 +474,10 @@ const FP={};
   // 20-pin TSSOP with exposed pad (pin 21)
   const t20=[];for(let i=0;i<10;i++)t20.push({n:''+(1+i),x:-2.9,y:2.925-0.65*i,w:1.45,h:0.4});for(let i=0;i<10;i++)t20.push({n:''+(11+i),x:2.9,y:-2.925+0.65*i,w:1.45,h:0.4});t20.push({n:'21',x:0,y:0,w:2.4,h:4.2});
   FP['HTSSOP-20']={kind:'ic',stand:0.05,body:[4.4,6.5,1.1],pads:t20,dot:[-1.6,2.6]};
+  // TI PWP (HTSSOP-28) with thermal pad (pin 29)
+  const t28=[];for(let i=0;i<14;i++)t28.push({n:''+(1+i),x:-2.85,y:4.225-0.65*i,w:1.4,h:0.4});for(let i=0;i<14;i++)t28.push({n:''+(15+i),x:2.85,y:-4.225+0.65*i,w:1.4,h:0.4});t28.push({n:'29',x:0,y:0,w:2.6,h:5.0});
+  FP['HTSSOP-28']={kind:'ic',stand:0.05,body:[4.4,9.7,1.1],pads:t28,dot:[-1.5,4.2]};
+  FP['1210']={kind:'chip',body:[3.2,2.5,1.6],pads:[{n:'1',x:-1.5,y:0,w:1.2,h:2.7},{n:'2',x:1.5,y:0,w:1.2,h:2.7}]};
   // board-mount 3-phase BLDC motor with 8-pin lead row (U V W H1 H2 H3 VCC GND)
   FP['BLDC-2418']={kind:'motor',body:[30,24,23],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:-19,y:8.75-2.5*i,w:2.0,h:2.0,round:true,drill:1.0}))};
   for(const k in FP){const f=FP[k];const[bw,bh]=f.body;let a=-bw/2,b=-bh/2,c=bw/2,d=bh/2;f.pads.forEach(p=>{a=Math.min(a,p.x-p.w/2);b=Math.min(b,p.y-p.h/2);c=Math.max(c,p.x+p.w/2);d=Math.max(d,p.y+p.h/2);});f.lbb=[a,b,c,d];}

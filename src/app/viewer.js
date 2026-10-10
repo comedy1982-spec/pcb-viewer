@@ -272,7 +272,7 @@ function build3D(c){
     inner.add(rot);outer.userData.rotor=rot;
   }else if(k==='ic'){
     const st=f?(f.stand||0):(c.pads.some(p=>p.drill)?0.5:0.05);
-    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({'MCU-Q32':['MCU-Q32','2641 A'],'AMS1117-3.3':['AMS1117','3.3 2638'],'W25Q32JV':['25Q32JV','SIQ 2635'],'BLDC-DRV3':['DRV3','2640']}[c.val]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
+    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({'STM32F042K6U6':['STM32','F042K6','U6 GH24'],'AMS1117-3.3':['AMS1117','3.3 2638'],'W25Q32JV':['25Q32JV','SIQ 2635'],'DRV8313':['DRV8313','TI 2B4']}[c.val]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
       top=new THREE.MeshStandardMaterial({map:markTex(lines,bw,bh,f?!!f.dot:true),roughness:0.55});}
     inner.add(box(bw,bh,ht,[m.black,m.black,m.black,m.black,top,m.black],0,0,st));
     if(f)f.pads.forEach(p=>{
@@ -501,6 +501,20 @@ const filtComps=()=>BD.comps.filter(c=>!S.q||[c.ref,c.val,c.fp,c.mpn,c.desc].con
 const filtNets=()=>BD.netOrder.filter(n=>!S.q||n.toLowerCase().includes(S.q));
 const sideBadge=s=>`<span class="badge ${s}">${s==='T'?'TOP':'BOT'}</span>`;
 const fmt=(v,d)=>(+v).toFixed(d==null?2:d);
+// datasheet block: key specs from the part database, manufacturer links, and a local copy when the viewer runs from the repo
+function dsHTML(c){
+  const mpn=(c.mpn||'').trim();if(!mpn&&!c.val)return'';const info=PARTS.find(mpn)||PARTS.find(c.val);const key=mpn||c.val;
+  const local=info&&info.file&&location.protocol==='file:'?`<a class="btn sm" href="datasheets/pdf/${encodeURIComponent(info.file)}" target="_blank" rel="noopener">저장된 사본</a>`:'';
+  return`<div class="dsbox"><div class="sub">데이터시트${info?` · ${esc(info.mfr)}`:''}</div>
+    ${info?`<p class="dst">${esc(info.title)}</p><dl class="kv dskv">${info.specs.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>${info.note?`<p class="dsnote">${esc(info.note)}</p>`:''}`:`<p class="dsnote">이 부품(${esc(key)})은 내장 부품 정보에 없습니다. 아래 검색으로 데이터시트를 찾을 수 있습니다.</p>`}
+    <div class="dsl">${PARTS.links(info,key).map(([t,u],i)=>`<a class="btn sm${i===0&&info&&info.pdf?' primary':''}" href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join('')}${local}</div></div>`;
+}
+function dsTableHTML(){
+  const rows=[];const seen=new Map();BD.comps.forEach(c=>{const k=(c.mpn||c.val||'').trim();if(!k)return;if(!seen.has(k))seen.set(k,{refs:[],c});seen.get(k).refs.push(c.ref);});
+  seen.forEach((v,k)=>{const info=PARTS.find(k);const l=PARTS.links(info,k)[0];rows.push(`<tr><td class="mono">${esc(v.refs.join(', '))}</td><td><b>${esc(k)}</b><div class="cls">${esc(info?info.mfr:'')}</div></td><td><a href="${esc(l[1])}" target="_blank" rel="noopener">${esc(info&&info.pdf?'PDF':info?'페이지':'검색')} ↗</a></td></tr>`);});
+  return`<div class="card" style="margin-bottom:12px"><div class="card-h"><b>부품 데이터시트</b><span class="cls">${seen.size}종</span></div><div class="tblwrap"><table class="pins dst-t"><thead><tr><th>참조</th><th>부품 번호</th><th>링크</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+    <p class="dsnote">부품을 클릭하면 주요 사양과 링크가 정보 패널에 나옵니다. 저장소의 <span class="mono">datasheets/</span> 폴더에 링크 목록이 있고, <span class="mono">node scripts/datasheets.mjs --download</span>로 PDF를 내려받을 수 있습니다.</p></div>`;
+}
 function compCard(c){
   const rows=c.pads.map(p=>`<tr><td>${esc(p.n!=null?p.n:'')}</td><td class="pn">${esc(p.fn||'')}</td><td>${p.net?`<button class="lnk${S.hlNet===p.net?' on':''}" data-net="${esc(p.net)}">${esc(p.net)}</button>`:'<span class="cls">미연결</span>'}</td></tr>`).join('');
   const nc=c.pads.filter(p=>!p.net).length,b=c.body;
@@ -508,6 +522,7 @@ function compCard(c){
   <div class="val">${esc(c.val||'값 정보 없음')}</div>${c.desc?`<p class="desc">${esc(c.desc)}</p>`:'<div style="height:8px"></div>'}
   <dl class="kv"><dt>풋프린트</dt><dd>${esc(c.fp||'—')}</dd><dt>부품 번호</dt><dd>${esc(c.mpn||'—')}</dd><dt>위치</dt><dd>X ${fmt(c.x)} · Y ${fmt(c.y)} mm</dd><dt>회전</dt><dd>${fmt(c.rot,1)}°</dd>${b.w>0?`<dt>바디</dt><dd>${fmt(b.w,1)} × ${fmt(b.h,1)} × ${fmt(b.ht,1)} mm</dd>`:''}</dl>
   ${c.fw?fwCardHTML(c):''}
+  ${dsHTML(c)}
   ${c.pads.length?`<div class="sub">패드 ${c.pads.length}개${nc?` · 넷 없음 ${nc}개`:''}</div><div class="tblwrap"><table class="pins"><tbody>${rows}</tbody></table></div>`:'<div class="sub">패드 정보 없음</div><p class="desc">Pick-and-Place 위치만 있는 부품입니다.</p>'}</div>`;
 }
 function netCard(n){
@@ -531,7 +546,7 @@ function renderPane(){
   }else if(S.tab==='net'){
     pane.innerHTML=`<div class="list">${fn.slice(0,1500).map(n=>`<button class="row net${S.hlNet===n?' on':''}" data-net="${esc(n)}"><span class="r">${esc(n)}</span><span class="cls">${BD.netClass(n)}</span><span class="m">${BD.nets[n].pads.length}</span></button>`).join('')||`<p class="empty">${BD.hasNets?'일치하는 넷이 없습니다.':'이 보드에는 넷 정보가 없습니다.'}</p>`}</div>`;
   }else{
-    pane.innerHTML=$('#dataTpl').innerHTML;
+    pane.innerHTML=dsTableHTML()+$('#dataTpl').innerHTML;
   }
 }
 $('#pane').addEventListener('click',e=>{
@@ -557,7 +572,7 @@ function stats(){
   const prs=new Set();['T.cu','B.cu'].forEach(L=>BD.layers[L].forEach(p=>{if(p.t==='pad'&&!p.via)prs.add(p);}));pads=prs.size;
   $('#stats').innerHTML=`<dt>부품</dt><dd>${BD.comps.length}</dd><dt>상단 / 하단</dt><dd>${BD.comps.filter(c=>c.side==='T').length} / ${BD.comps.filter(c=>c.side==='B').length}</dd><dt>넷</dt><dd>${BD.netOrder.length}</dd><dt>패드</dt><dd>${pads}</dd><dt>비아</dt><dd>${BD.vias.length}</dd><dt>드릴</dt><dd>${BD.drills.length}</dd>${tl?`<dt>트랙 길이</dt><dd>${fmt(tl,0)} mm</dd>`:''}`;
   const src=$('#srcBox');
-  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'가상의 MCU DC 모터 예제입니다. U1 펌웨어가 PA8 PWM으로 Q1·M1 모터를, PB3로 상태 LED를 제어하고 PA1 ADC로 모터 전류를 읽습니다.':BD.demo==='bldc'?'가상의 MCU BLDC 3상 예제입니다. U1 펌웨어가 홀 센서(PB5~PB7)를 읽어 3상 드라이버 U3의 IN/EN 6개를 6스텝으로 정류합니다.':'가상의 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
+  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'MCU DC 모터 예제입니다. STM32F042K6U6 펌웨어가 PA8(TIM1) PWM으로 AO3400A·FA-130 모터를, PA4로 상태 LED를 제어하고 PB1 ADC로 모터 전류를 읽습니다.':BD.demo==='bldc'?'MCU BLDC 3상 예제입니다. STM32F042K6U6 펌웨어가 42BLF01 모터의 홀 센서(PA6·PA7·PB0)를 읽어 TI DRV8313의 IN/EN 6개를 6스텝으로 정류합니다.':'STM32F042K6U6 기반 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
     <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button>${BD.demo?'<button class="btn sm" data-fwopen>펌웨어 편집</button>':''}${Object.entries(EXAMPLES).filter(([k])=>k!==(BD.demo||'sense')).map(([k,v])=>`<button class="btn sm" data-ex="${k}">${esc(v[0])} 예제</button>`).join('')}</div>`;}
   else{src.innerHTML=`<ul class="files">${BD.files.filter(f=>f.role!=='ignore').map(f=>`<li><span class="fn">${esc(f.name.split('/').pop())}</span><span class="fr">${esc(PCB.ROLES[f.role]||f.role)}</span></li>`).join('')}</ul>`+
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
@@ -640,7 +655,7 @@ $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImp
 const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC]};
 function loadExample(which){const spec=(EXAMPLES[which]||EXAMPLES.sense)[1]();setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
   if(which==='mcu'){selectComp('U1',false);toast('MCU DC 모터 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다. HSIS 탭에서 펌웨어·회로 대조 결과를 볼 수 있습니다.');}
-  else if(which==='bldc'){selectComp('U1',false);toast('MCU BLDC 3상 예제입니다. U1 펌웨어가 홀 센서로 6스텝 정류를 합니다. "빌드 & 시뮬레이션"으로 3상 모터를 돌려 보세요.');}
+  else if(which==='bldc'){selectComp('U1',false);toast('MCU BLDC 3상 예제입니다. STM32F042 펌웨어가 홀 센서로 DRV8313을 6스텝 정류합니다. "빌드 & 시뮬레이션"으로 3상 모터를 돌려 보세요.');}
   else toast('예제 보드로 돌아왔습니다.');}
 $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));

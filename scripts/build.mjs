@@ -33,6 +33,7 @@ ${script(stripExport(read('src/sim/sim.js')))}
 ${script(read('src/app/sample.js'))}
 ${script(read('src/app/sample-mcu.js'))}
 ${script(stripExport(read('src/fw/fw.js')))}
+${script(stripExport(read('src/parts/parts.js')))}
 ${script(stripExport(read('src/hsis/hsis.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}
