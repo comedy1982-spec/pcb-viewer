@@ -18,6 +18,8 @@
         <button role="tab" data-view="sch" aria-selected="false" id="v-sch">회로도</button>
       </div>
       <button class="btn sm splitbtn" id="splitBtn" aria-pressed="false" title="회로도와 보드를 나란히 봅니다"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M8 2.5v11"/></svg>나란히</button>
+      <div class="winpick-wrap"><button class="btn sm splitbtn" id="winBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="winPick" title="여러 보기를 격자로 배치한 새 창을 엽니다"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M8 2.5v11M1.5 8h13"/></svg>새 창</button>
+        <div class="winpick" id="winPick" role="dialog" aria-label="새 창 레이아웃" hidden></div></div>
       </div>
     </div>
   </header>

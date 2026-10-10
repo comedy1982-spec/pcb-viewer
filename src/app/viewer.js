@@ -280,7 +280,7 @@ function texSize(){const k=Math.min(4096/BD.W,4096/BD.H,48);return[Math.max(64,M
 function updateTextures(){
   if(!G3||!G3.board)return;const[TW,TH,K]=G3.ts;
   ['T','B'].forEach(side=>{const cv=G3.texCv[side],ctx=cv.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,TW,TH);ctx.setTransform(K,0,0,-K,0,TH);drawSide(ctx,side,{texture:true});G3.tex[side].needsUpdate=true;});
-  G3.dirty=true;
+  G3.dirty=true;G3.ver=(G3.ver||0)+1;
 }
 function init3D(){
   if(G3)return true;
@@ -340,15 +340,16 @@ function homeCam(an){camTo(-1.95,0.95,fitR()*1.05,an);}
 function setExplode(v,quiet){
   S.explode=v;if(!G3||!G3.board)return;const T=BD.t,lift=Math.max(6,Math.min(BD.W,BD.H)*0.25);
   BD.comps.forEach(c=>{const g=G3.comps[c.ref];if(g)g.position.z=(c.side==='B'?-1:1)*(T/2+v*lift);});
-  if(G3.sel.visible)G3.sel.update();if(!quiet)G3.dirty=true;
+  if(G3.sel.visible)G3.sel.update();G3.ver=(G3.ver||0)+1;if(!quiet)G3.dirty=true;
 }
 function sync3D(){
   if(!G3||!G3.board)return;const g=S.selRef&&G3.comps[S.selRef];
   if(g){G3.sel.setFromObject(g);G3.sel.visible=true;}else G3.sel.visible=false;
   G3.compRoot.visible=S.layers.body3d;updateTextures();
 }
-function pick3D(px,py){
-  const r=cv3.getBoundingClientRect(),v=new THREE.Vector2((px/r.width)*2-1,-(py/r.height)*2+1),rc=new THREE.Raycaster();rc.setFromCamera(v,G3.cam);
+function pick3D(px,py){const r=cv3.getBoundingClientRect();return pick3DCam(G3.cam,r.width,r.height,px,py);}
+function pick3DCam(cam,w,h,px,py){
+  const v=new THREE.Vector2((px/w)*2-1,-(py/h)*2+1),rc=new THREE.Raycaster();rc.setFromCamera(v,cam);
   const objs=(S.layers.body3d?[G3.compRoot]:[]).concat(G3.planes);
   for(const h of rc.intersectObjects(objs,true)){
     if(h.object.userData.side){if(!h.uv)return null;const r=hit(h.uv.x,h.uv.y,h.object.userData.side,0.2)||{type:'none'};r._x=h.uv.x;r._y=h.uv.y;return r;}
@@ -405,7 +406,7 @@ function setView(v){
 function tipAt(cv,x,y){const vr=vp.getBoundingClientRect(),cr=cv.getBoundingClientRect();tip.style.left=(x+cr.left-vr.left)+'px';tip.style.top=(y+cr.top-vr.top)+'px';}
 function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
 document.querySelectorAll('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
-$('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pop]')){openPop(S.view==='B'?'B':'T');return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
+$('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
 ['cuT','cuB','silk','mask','drill','ghost'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
 $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.target.checked;else S.layers.body2d=e.target.checked;refresh(false);});
