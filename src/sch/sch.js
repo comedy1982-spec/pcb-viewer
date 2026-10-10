@@ -184,7 +184,7 @@ function twoPin(c,pads){
   let p1=pads[0],p2=pads[1];if(/^(D|LED)/.test(r)){const a=pads.find(p=>/^(A|ANODE|\+)$/i.test(p.fn||''));if(a){p1=a;p2=pads.find(p=>p!==a);}else{const k=pads.find(p=>String(p.n)==='1');if(k){p2=k;p1=pads.find(p=>p!==k);}}}
   s.pins.push({num:String(p1.n),name:'',p:[-half-2.54,0],e:[-half,0],nameShow:false,numShow:false},{num:String(p2.n),name:'',p:[half+2.54,0],e:[half,0],nameShow:false,numShow:false});
   s.texts.push({s:c.ref,p:[0,-3.3],rot:0,fx:{size:1.27,h:'center',v:'middle'},role:'Reference'},{s:c.val||'',p:[0,3.3],rot:0,fx:{size:1.1,h:'center',v:'middle'},role:'Value'});
-  return finishBB(s,1.5);
+  finishBB(s,1.5);return labelRoom(s,[p1],[p2]);
 }
 function box(c){
   const s={ref:c.ref,val:c.val,fp:c.fp,lib:'auto',power:false,x:0,y:0,rot:0,mir:'',g:[],pins:[],texts:[],_c:c};
@@ -198,7 +198,12 @@ function box(c){
   L.forEach((p,i)=>s.pins.push({num:String(p.n),name:nm(p),p:[-G*1.2,(i+1)*G],e:[0,(i+1)*G],nameShow:!!nm(p),numShow:true,nameOff:0.5}));
   R.forEach((p,i)=>s.pins.push({num:String(p.n),name:nm(p),p:[W+G*1.2,(i+1)*G],e:[W,(i+1)*G],nameShow:!!nm(p),numShow:true,nameOff:0.5}));
   s.texts.push({s:c.ref,p:[0,-1.6],rot:0,fx:{size:1.4,h:'left',v:'bottom',bold:true},role:'Reference'},{s:c.val||'',p:[0,Hh+1.6],rot:0,fx:{size:1.2,h:'left',v:'top'},role:'Value'});
-  return finishBB(s,1);
+  finishBB(s,1);return labelRoom(s,L,R);
+}
+function labelRoom(s,L,R){
+  // reserve room for the net labels that will be attached at the pin ends, so neighbours do not overlap them
+  const w=list=>Math.max(0,...list.map(p=>p&&p.net?(String(p.net).length*0.95+3.5):0));
+  s.bb[0]-=w(L);s.bb[2]+=w(R);s.bw=s.bb[2]-s.bb[0];s.bh=s.bb[3]-s.bb[1];return s;
 }
 function powerSym(net,at,u,gnd){
   const s={ref:'#PWR',val:net,lib:'auto-power',power:true,x:at[0],y:at[1],rot:0,mir:'',g:[],pins:[{num:'1',name:net,p:at,e:at,nameShow:false,numShow:false}],texts:[]};

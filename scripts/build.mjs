@@ -8,7 +8,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 const stripExport = (s) => s.replace(/if\(typeof module!=='undefined'\)module\.exports=[^;]+;/, '');
 const script = (code) => `<script>\n${code}\n</script>`;
 
-const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js'));
+const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js') + '\n' + read('src/app/popui.js'));
 
 const html = `<!doctype html>
 <html lang="ko">

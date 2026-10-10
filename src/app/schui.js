@@ -1,19 +1,19 @@
 /* ---------- schematic view (shares viewer scope) ---------- */
 const cvs=$('#cvs'),sctx=cvs.getContext('2d');
-const SV={data:null,page:0,s:3,ox:0,oy:0,fitted:-1,w:0,h:0,hover:null,lastKey:'',fromSch:false};
+const SV={data:null,page:0,s:3,ox:0,oy:0,fitted:-1,w:0,h:0,hover:null,lastKey:'',fromMe:false,cv:cvs,ctx:sctx,win:window,dpr:1};
 S.sch='off';
 function schData(){
   if(!SV.data||SV.data.board!==BD){
     try{SV.data=SCH.build(BD,BD.schFiles&&BD.schFiles.length?BD.schFiles:null);}
     catch(e){console.error(e);SV.data=SCH.build(BD,null);toast('회로도를 읽지 못해 넷리스트로 만든 회로도를 보여줍니다: '+e.message);}
-    SV.data.board=BD;SV.page=0;SV.fitted=-1;renderSchOv();
+    SV.data.board=BD;SV.page=0;SV.fitted=-1;renderSchOv();if(typeof POPS!=='undefined')POPS.forEach(P=>{P.page=0;P.fitted=-1;});
   }
   return SV.data;
 }
 function schColors(){const cs=getComputedStyle(document.documentElement);const v=n=>cs.getPropertyValue(n).trim();
   return{paper:v('--sch-paper'),frame:v('--sch-frame'),wire:v('--sch-wire'),body:v('--sch-body'),fill:v('--sch-fill'),text:v('--sch-text'),pin:v('--sch-pin'),label:v('--sch-label'),power:v('--sch-power'),hl:v('--sch-hl'),sel:v('--sch-sel'),bus:v('--sch-bus')};}
-function schResize(){const r=cvs.getBoundingClientRect();const d=Math.min(window.devicePixelRatio||1,2);if(!r.width)return;SV.w=r.width;SV.h=r.height;cvs.width=Math.round(r.width*d);cvs.height=Math.round(r.height*d);SV.dpr=d;}
-function schFit(){const sh=schData().sheets[SV.page];if(!sh||!SV.w)return;SV.s=Math.min((SV.w-40)/sh.w,(SV.h-90)/sh.h);SV.ox=(SV.w-sh.w*SV.s)/2;SV.oy=(SV.h-sh.h*SV.s)/2+18;SV.fitted=SV.page;}
+function schResize(V){V=V||SV;const r=V.cv.getBoundingClientRect();const d=Math.min(V.win.devicePixelRatio||1,2);if(!r.width)return;V.w=r.width;V.h=r.height;V.cv.width=Math.round(r.width*d);V.cv.height=Math.round(r.height*d);V.dpr=d;}
+function schFit(V){V=V||SV;V.userMoved=false;const sh=schData().sheets[V.page];if(!sh||!V.w)return;const top=V===SV?18:0,pad=V===SV?90:30;V.s=Math.min((V.w-40)/sh.w,(V.h-pad)/sh.h);V.ox=(V.w-sh.w*V.s)/2;V.oy=(V.h-sh.h*V.s)/2+top;V.fitted=V.page;}
 let schRaf=0;function drawSch(){if(schRaf)return;schRaf=requestAnimationFrame(()=>{schRaf=0;paintSch();});}
 const isHL=g=>!!(S.hlNet&&g&&(g.net===S.hlNet||g.names.has(S.hlNet)));
 function tx(ctx,str,x,y,size,rot,h,v,bold){
@@ -22,17 +22,18 @@ function tx(ctx,str,x,y,size,rot,h,v,bold){
   ctx.font=(bold?700:500)+' 20px "IBM Plex Sans KR", system-ui, sans-serif';ctx.textAlign=h||'center';ctx.textBaseline=v==='top'?'top':v==='bottom'?'alphabetic':'middle';
   ctx.fillText(str,0,0);const w=ctx.measureText(str).width*k;ctx.restore();return w;
 }
-function paintSch(){
-  if(S.sch==='off'||!BD)return;const d=schData(),sh=d.sheets[SV.page];if(!sh)return;
-  if(SV.fitted!==SV.page)schFit();
-  const C=schColors(),ctx=sctx,s=SV.s,lw=w=>Math.max(w||0.15,1.1/s);
-  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cvs.width,cvs.height);
-  ctx.setTransform(SV.dpr*s,0,0,SV.dpr*s,SV.dpr*SV.ox,SV.dpr*SV.oy);ctx.lineCap='round';ctx.lineJoin='round';
+function paintSch(){if(S.sch!=='off')paintSchV(SV);}
+function paintSchV(V){
+  if(!BD)return;const d=schData(),sh=d.sheets[V.page];if(!sh)return;
+  if(V.fitted!==V.page)schFit(V);
+  const C=schColors(),ctx=V.ctx,s=V.s,lw=w=>Math.max(w||0.15,1.1/s);
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,V.cv.width,V.cv.height);
+  ctx.setTransform(V.dpr*s,0,0,V.dpr*s,V.dpr*V.ox,V.dpr*V.oy);ctx.lineCap='round';ctx.lineJoin='round';
   // paper and frame
-  ctx.save();ctx.shadowColor='rgba(0,0,0,.18)';ctx.shadowBlur=14*SV.dpr;ctx.shadowOffsetY=4*SV.dpr;ctx.fillStyle=C.paper;ctx.fillRect(0,0,sh.w,sh.h);ctx.restore();
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.18)';ctx.shadowBlur=14*V.dpr;ctx.shadowOffsetY=4*V.dpr;ctx.fillStyle=C.paper;ctx.fillRect(0,0,sh.w,sh.h);ctx.restore();
   ctx.strokeStyle=C.frame;ctx.lineWidth=lw(0.25);ctx.strokeRect(5,5,sh.w-10,sh.h-10);
   const tw=110,th=18,tx0=sh.w-5-tw,ty0=sh.h-5-th;ctx.strokeRect(tx0,ty0,tw,th);ctx.beginPath();ctx.moveTo(tx0,ty0+9);ctx.lineTo(tx0+tw,ty0+9);ctx.moveTo(tx0+70,ty0+9);ctx.lineTo(tx0+70,ty0+th);ctx.stroke();
-  ctx.fillStyle=C.text;tx(ctx,sh.title||BD.name,tx0+2,ty0+4.6,2,0,'left','middle',true);tx(ctx,(d.sheets.length>1?`시트 ${SV.page+1}/${d.sheets.length} · `:'')+(sh.name||''),tx0+2,ty0+13.6,1.5,0,'left','middle');
+  ctx.fillStyle=C.text;tx(ctx,sh.title||BD.name,tx0+2,ty0+4.6,2,0,'left','middle',true);tx(ctx,(d.sheets.length>1?`시트 ${V.page+1}/${d.sheets.length} · `:'')+(sh.name||''),tx0+2,ty0+13.6,1.5,0,'left','middle');
   tx(ctx,[sh.rev&&'Rev '+sh.rev,sh.date].filter(Boolean).join(' · ')||(sh.auto?'자동 생성':''),tx0+72,ty0+13.6,1.5,0,'left','middle');
   ctx.strokeStyle=C.frame;ctx.lineWidth=lw(0.15);ctx.setLineDash([1,1]);sh.lines.forEach(p=>{ctx.beginPath();p.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.stroke();});ctx.setLineDash([]);
   // hierarchical sheet boxes
@@ -46,7 +47,7 @@ function paintSch(){
   // symbols
   const selRef=S.selRef;
   sh.symbols.forEach(sy=>{
-    const sel=selRef&&sy.ref===selRef,hov=SV.hover&&SV.hover.s===sy;
+    const sel=selRef&&sy.ref===selRef,hov=V.hover&&V.hover.s===sy;
     if(sel||hov){const b=sy.bb;ctx.fillStyle=sel?'rgba(255,210,63,.25)':'rgba(120,140,160,.12)';ctx.fillRect(b[0]-0.8,b[1]-0.8,b[2]-b[0]+1.6,b[3]-b[1]+1.6);if(sel){ctx.strokeStyle=C.sel;ctx.lineWidth=lw(0.35);ctx.setLineDash([1.2,0.8]);ctx.strokeRect(b[0]-0.8,b[1]-0.8,b[2]-b[0]+1.6,b[3]-b[1]+1.6);ctx.setLineDash([]);}}
     const bodyC=sy.power?(isHL(sy.pins[0]&&sy.pins[0].g)?C.hl:C.power):C.body;
     sy.g.forEach(g=>{
@@ -78,9 +79,9 @@ function paintSch(){
   // texts
   ctx.fillStyle=C.text;sh.texts.forEach(t=>{String(t.s).split('\n').forEach((line,i)=>tx(ctx,line,t.p[0],t.p[1]+i*t.fx.size*1.5,t.fx.size,t.rot,t.fx.h==='center'?'left':t.fx.h,'bottom'));});
 }
-function schS2W(px,py){return[(px-SV.ox)/SV.s,(py-SV.oy)/SV.s];}
-function schHit(x,y){
-  const sh=schData().sheets[SV.page];if(!sh)return null;const tol=Math.max(0.5,5/SV.s);
+function schS2W(V,px,py){return[(px-V.ox)/V.s,(py-V.oy)/V.s];}
+function schHit(V,x,y){
+  const sh=schData().sheets[V.page];if(!sh)return null;const tol=Math.max(0.5,5/V.s);
   for(const sy of sh.symbols)for(const p of sy.pins){if(Math.hypot(p.p[0]-x,p.p[1]-y)<=tol*0.9||PCB.segDist(x,y,p.p,p.e)<=tol*0.5)return sy.power?{type:'net',g:p.g}:{type:'pin',s:sy,p,g:p.g};}
   for(const l of sh.labels){const w=l._w||l.s.length*(l.fx.size||1.27)*0.7,sz=l.fx.size||1.27;const r=((l.rot%360)+360)%360;let bb;
     if(r===0)bb=[l.p[0],l.p[1]-sz*1.4,l.p[0]+w+0.6,l.p[1]+sz*0.6];else if(r===180)bb=[l.p[0]-w-0.6,l.p[1]-sz*1.4,l.p[0],l.p[1]+sz*0.6];else if(r===90)bb=[l.p[0]-sz*1.4,l.p[1]-w-0.6,l.p[0]+sz*0.6,l.p[1]];else bb=[l.p[0]-sz*1.4,l.p[1],l.p[0]+sz*0.6,l.p[1]+w+0.6];
@@ -96,38 +97,38 @@ function schTip(h){
   if(h.type==='pin')return`<b>${esc(h.s.ref)}.${esc(h.p.num)}</b> ${esc(h.p.name&&h.p.name!=='~'?h.p.name:'')}${n}`;
   if(h.type==='net')return`넷${n}`;return'';
 }
-function schApply(h){
-  SV.fromSch=true;
+function schApply(h,V){
+  (V||SV).fromMe=true;
   if(!h){S.selRef=null;S.hlNet=null;}
   else if(h.type==='sym'){S.selRef=BD.byRef[h.s.ref]?h.s.ref:null;S.hlNet=null;if(!S.selRef)toast(`${h.s.ref}는 보드에 없는 부품입니다.`);}
   else if(h.type==='pin'){S.selRef=BD.byRef[h.s.ref]?h.s.ref:null;S.hlNet=h.g&&h.g.net||null;}
   else{S.selRef=null;S.hlNet=h.g&&h.g.net||null;}
   S.tab='sel';refresh(true);
 }
-function schFocus(){
-  const key=(S.selRef||'')+'|'+(S.hlNet||'');if(key===SV.lastKey)return;SV.lastKey=key;
-  if(SV.fromSch){SV.fromSch=false;return;}if(!S.selRef&&!S.hlNet)return;
+function schFocus(V){V=V||SV;
+  const key=(S.selRef||'')+'|'+(S.hlNet||'');if(key===V.lastKey)return;V.lastKey=key;
+  if(V.fromMe){V.fromMe=false;return;}if(!S.selRef&&!S.hlNet)return;
   const d=schData();let pg=-1,pt=null;
   const find=(i)=>{const sh=d.sheets[i];if(S.selRef){const sy=sh.symbols.find(x=>x.ref===S.selRef);if(sy)return[(sy.bb[0]+sy.bb[2])/2,(sy.bb[1]+sy.bb[3])/2];}
     if(S.hlNet){const w=sh.wires.find(x=>isHL(x.g));if(w)return w.a;const l=sh.labels.find(x=>isHL(x.g));if(l)return l.p;const p=sh.symbols.flatMap(x=>x.pins).find(x=>isHL(x.g));if(p)return p.p;}return null;};
-  pt=find(SV.page);if(pt)pg=SV.page;else for(let i=0;i<d.sheets.length&&!pt;i++){pt=find(i);if(pt)pg=i;}
-  if(!pt)return;if(pg!==SV.page){SV.page=pg;schFit();renderSchOv();}
-  const sh=d.sheets[SV.page],fitS=Math.min((SV.w-40)/sh.w,(SV.h-90)/sh.h);
-  if(SV.s<fitS*1.5){SV.s=fitS*(S.selRef?2.6:2);SV.ox=SV.w/2-pt[0]*SV.s;SV.oy=SV.h/2-pt[1]*SV.s;return;}
-  const sx=SV.ox+pt[0]*SV.s,sy=SV.oy+pt[1]*SV.s;if(sx<40||sy<60||sx>SV.w-40||sy>SV.h-40){SV.ox=SV.w/2-pt[0]*SV.s;SV.oy=SV.h/2-pt[1]*SV.s;}
+  pt=find(V.page);if(pt)pg=V.page;else for(let i=0;i<d.sheets.length&&!pt;i++){pt=find(i);if(pt)pg=i;}
+  if(!pt)return;if(pg!==V.page){V.page=pg;schFit(V);if(V===SV)renderSchOv();else if(V.sync)V.sync();}
+  const sh=d.sheets[V.page],fitS=Math.min((V.w-40)/sh.w,(V.h-90)/sh.h);
+  if(V.s<fitS*1.5){V.s=fitS*(S.selRef?2.6:2);V.ox=V.w/2-pt[0]*V.s;V.oy=V.h/2-pt[1]*V.s;return;}
+  const sx=V.ox+pt[0]*V.s,sy=V.oy+pt[1]*V.s;if(sx<40||sy<60||sx>V.w-40||sy>V.h-40){V.ox=V.w/2-pt[0]*V.s;V.oy=V.h/2-pt[1]*V.s;}
 }
 (function(){
   const pts=new Map();let start=null,moved=0,pinch=0,hq=null,hraf=0;
   const pos=e=>{const r=cvs.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
-  const zoomAt=(px,py,f)=>{const[wx,wy]=schS2W(px,py);SV.s=Math.max(0.3,Math.min(80,SV.s*f));SV.ox=px-wx*SV.s;SV.oy=py-wy*SV.s;drawSch();};
+  const zoomAt=(px,py,f)=>{SV.userMoved=true;const[wx,wy]=schS2W(SV,px,py);SV.s=Math.max(0.3,Math.min(80,SV.s*f));SV.ox=px-wx*SV.s;SV.oy=py-wy*SV.s;drawSch();};
   cvs.addEventListener('pointerdown',e=>{cvs.setPointerCapture(e.pointerId);pts.set(e.pointerId,pos(e));moved=0;start=pos(e);cvs.classList.add('drag');if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);}});
   cvs.addEventListener('pointermove',e=>{const p=pos(e);
     if(pts.has(e.pointerId)){const prev=pts.get(e.pointerId);pts.set(e.pointerId,p);
-      if(pts.size===1){SV.ox+=p[0]-prev[0];SV.oy+=p[1]-prev[1];moved+=Math.abs(p[0]-prev[0])+Math.abs(p[1]-prev[1]);drawSch();}
+      if(pts.size===1){SV.userMoved=true;SV.ox+=p[0]-prev[0];SV.oy+=p[1]-prev[1];moved+=Math.abs(p[0]-prev[0])+Math.abs(p[1]-prev[1]);drawSch();}
       else if(pts.size===2){const[a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch)zoomAt((a[0]+b[0])/2,(a[1]+b[1])/2,d/pinch);pinch=d;moved=99;}tip.hidden=true;return;}
-    hq=p;if(!hraf)hraf=requestAnimationFrame(()=>{hraf=0;if(!hq)return;const[x,y]=schS2W(hq[0],hq[1]);const h=schHit(x,y);const was=SV.hover&&SV.hover.s;SV.hover=h&&h.type==='sym'?h:null;if((SV.hover&&SV.hover.s)!==was)drawSch();
+    hq=p;if(!hraf)hraf=requestAnimationFrame(()=>{hraf=0;if(!hq)return;const[x,y]=schS2W(SV,hq[0],hq[1]);const h=schHit(SV,x,y);const was=SV.hover&&SV.hover.s;SV.hover=h&&h.type==='sym'?h:null;if((SV.hover&&SV.hover.s)!==was)drawSch();
       if(h){const vr=vp.getBoundingClientRect(),cr=cvs.getBoundingClientRect();tip.innerHTML=schTip(h);tip.hidden=false;tip.style.left=(hq[0]+cr.left-vr.left)+'px';tip.style.top=(hq[1]+cr.top-vr.top)+'px';cvs.style.cursor='pointer';}else{tip.hidden=true;cvs.style.cursor='';}});});
-  const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);cvs.classList.remove('drag');if(pts.size===0&&moved<5&&start&&e.type==='pointerup'){const[x,y]=schS2W(start[0],start[1]);schApply(schHit(x,y));}if(pts.size<2)pinch=0;};
+  const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);cvs.classList.remove('drag');if(pts.size===0&&moved<5&&start&&e.type==='pointerup'){const[x,y]=schS2W(SV,start[0],start[1]);schApply(schHit(SV,x,y),SV);}if(pts.size<2)pinch=0;};
   cvs.addEventListener('pointerup',end);cvs.addEventListener('pointercancel',end);
   cvs.addEventListener('pointerleave',()=>{hq=null;tip.hidden=true;if(SV.hover){SV.hover=null;drawSch();}});
   cvs.addEventListener('wheel',e=>{e.preventDefault();const[x,y]=pos(e);zoomAt(x,y,Math.exp(-e.deltaY*0.0015));},{passive:false});
@@ -141,6 +142,7 @@ function renderSchOv(){
 }
 $('#schPages').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(!b)return;SV.page=+b.dataset.page;schFit();renderSchOv();drawSch();});
 $('#schFitBtn').addEventListener('click',()=>{schFit();drawSch();});
+$('#schPop').addEventListener('click',()=>openPop('sch'));
 $('#schOpen').addEventListener('click',()=>$('#schFile').click());
 $('#schFile').addEventListener('change',async e=>{const files=[...e.target.files];e.target.value='';if(!files.length)return;
   try{const list=[];for(const f of files)list.push({name:f.name,text:await f.text()});const t=SCH.build(BD,list);BD.schFiles=list;SV.data=null;schData();drawSch();

@@ -23,6 +23,7 @@
   </header>
 
   <div class="main">
+    <div class="rh" id="hLeft"></div><div class="rh" id="hRight"></div>
     <aside class="panel layers" aria-label="레이어">
       <div class="grp">
         <p class="h">레이어</p>
@@ -57,9 +58,10 @@
       <canvas id="cv2" hidden></canvas>
       <canvas id="cv3"></canvas>
       <canvas id="cvs" hidden aria-label="회로도"></canvas>
+      <div id="splitter"></div>
       <div id="schOv" hidden>
         <div class="sov sov-tl" id="schPages"></div>
-        <div class="sov sov-tr"><button class="pill vbtn" id="schFitBtn">화면 맞춤</button><button class="pill vbtn" id="schOpen">회로도 불러오기</button><input type="file" id="schFile" accept=".kicad_sch" multiple hidden></div>
+        <div class="sov sov-tr"><button class="pill vbtn" id="schFitBtn">화면 맞춤</button><button class="pill vbtn" id="schPop" title="회로도를 새 창으로 엽니다">새 창</button><button class="pill vbtn" id="schOpen">회로도 불러오기</button><input type="file" id="schFile" accept=".kicad_sch" multiple hidden></div>
         <div class="sov sov-bl" id="schNote"></div>
         <div class="sov sov-br"><span class="pill hint">드래그 이동 · 휠 확대 · 클릭하면 보드와 함께 강조</span></div>
       </div>
@@ -103,6 +105,7 @@
     </aside>
   </div>
 <div class="hsis-ws" id="hsisWs" hidden>
+  <div class="rh" id="hHsL"></div><div class="rh" id="hHsR"></div>
   <aside class="panel" id="hsLeft" aria-label="HSIS 문서와 필터"></aside>
   <section class="panel hsmain" aria-label="HSIS">
     <div class="tabs" role="tablist" style="margin-top:0">

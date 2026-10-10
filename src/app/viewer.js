@@ -395,9 +395,9 @@ function setView(v){
   $('#hint').textContent=is3?'드래그 회전 · 우클릭/Shift 드래그 이동 · 휠 확대 · 클릭 선택':'드래그 이동 · 휠 확대 · 더블클릭 맞춤 · 클릭 선택';
   $('#lbl-body').textContent=is3?'3D 부품':'부품 외형 겹쳐 보기';
   $('#ly-body').checked=is3?S.layers.body3d:S.layers.body2d;
-  $('#ctl').innerHTML=is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>';
+  $('#ctl').innerHTML=(is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>')+'<button class="pill vbtn" data-pop="1" title="보드를 새 창으로 엽니다">새 창</button>';
   const lk=S.sch;const relayout=setView.lk!==lk;setView.lk=lk;
-  if(S.sch!=='off'){schResize();schData();if(relayout){schFit();SV.fromSch=false;SV.lastKey='';}renderSchOv();schFocus();paintSch();}
+  if(S.sch!=='off'){schResize();schData();if(relayout){schFit();SV.fromMe=false;SV.lastKey='';}renderSchOv();schFocus();paintSch();}
   if(full)return;
   if(is3){if(!init3D()){setView('T');return;}if(G3.board!==BD)rebuild3D();else{resize3D();if(relayout)homeCam(false);sync3D();}}
   else{measure.done=0;measure();paint2D();}
@@ -405,7 +405,7 @@ function setView(v){
 function tipAt(cv,x,y){const vr=vp.getBoundingClientRect(),cr=cv.getBoundingClientRect();tip.style.left=(x+cr.left-vr.left)+'px';tip.style.top=(y+cr.top-vr.top)+'px';}
 function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
 document.querySelectorAll('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
-$('#ctl').addEventListener('click',e=>{const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
+$('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pop]')){openPop(S.view==='B'?'B':'T');return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
 ['cuT','cuB','silk','mask','drill','ghost'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
 $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.target.checked;else S.layers.body2d=e.target.checked;refresh(false);});
@@ -486,14 +486,15 @@ function stats(){
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
 }
 $('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();});
-function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
+function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}popsRefresh();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
   BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
   header();stats();renderPane();simReset();hsisOnBoard();SV.data=null;SV.lastKey='';measure.done=0;measure();fit2();
   if(S.view==='3d'){if(G3)rebuild3D();}else paint2D();
   if(S.sch!=='off'){schData();renderSchOv();paintSch();}
+  popsRefresh(true);
 }
-new ResizeObserver(()=>{if(!BD)return;if(S.sch!=='off'){schResize();paintSch();}if(S.view==='3d')resize3D();else{measure();paint2D();}}).observe(vp);
+new ResizeObserver(()=>{if(!BD)return;if(S.sch!=='off'){schResize();if(!SV.userMoved)schFit();paintSch();}if(S.view==='3d')resize3D();else{measure();paint2D();}}).observe(vp);
 
 /* ---------- import ---------- */
 const IMP={entries:[],busy:false};let eid=0;
