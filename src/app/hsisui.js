@@ -152,12 +152,13 @@ function renderDetail(){
 }
 function miniBoard(net){
   const onT=BD.layers['T.cu'].some(p=>p.net===net),side=onT?'T':'B';
-  return`<div class="card mini"><div class="card-h"><b style="font-size:13px">보드에서 ${esc(net)} (${side==='T'?'TOP':'BOTTOM'})</b><button class="btn sm" data-goboard="${esc(net)}" data-side="${side}">보드 뷰어에서 보기</button></div><canvas id="hsMini" data-net="${esc(net)}" data-side="${side}" aria-label="보드에서 ${esc(net)} 위치"></canvas></div>`;
+  return`<div class="card mini"><div class="card-h"><b style="font-size:13px">보드에서 ${esc(net)} (${side==='T'?'TOP':'BOTTOM'})</b><span class="hgap"><button class="btn sm" data-gosch="${esc(net)}">회로도</button><button class="btn sm" data-goboard="${esc(net)}" data-side="${side}">보드</button></span></div><canvas id="hsMini" data-net="${esc(net)}" data-side="${side}" aria-label="보드에서 ${esc(net)} 위치"></canvas></div>`;
 }
 function bindDetail(){
   const cv=$('#hsMini');if(cv){const w=cv.clientWidth||340,k=w/BD.W,h=Math.round(BD.H*k),d=Math.min(window.devicePixelRatio||1,2);cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';
     const ctx=cv.getContext('2d'),side=cv.dataset.side,mir=side==='B';ctx.setTransform(d*k*(mir?-1:1),0,0,-d*k,mir?d*w:0,d*h);
     const save=[S.hlNet,S.selRef,S.panel];S.hlNet=cv.dataset.net;S.selRef=null;S.panel='info';try{drawSide(ctx,side,{texture:true});}finally{[S.hlNet,S.selRef,S.panel]=save;}}
+  document.querySelectorAll('[data-gosch]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.gosch;setWorkspace('board');S.hlNet=n;S.selRef=null;SV.fromSch=false;SV.lastKey='';setView('sch');refresh(true);}));
   document.querySelectorAll('[data-goboard]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.goboard;setWorkspace('board');setView(b.dataset.side);S.hlNet=n;S.selRef=null;S.tab='sel';refresh(true);}));
 }
 function bindHSIS(){

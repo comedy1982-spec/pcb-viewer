@@ -637,12 +637,13 @@ function finalize(B){
 }
 
 /* ---------- file role detection ---------- */
-const ROLES={kicad:'KiCad PCB',json:'뷰어 JSON',tcu:'Gerber · 상단 동박',bcu:'Gerber · 하단 동박',tsilk:'Gerber · 상단 실크',bsilk:'Gerber · 하단 실크',outline:'Gerber · 외곽선',drill:'드릴 (Excellon)',pnp:'Pick-and-Place',bom:'BOM',ipc356:'넷리스트 (IPC-D-356)',ignore:'사용 안 함'};
+const ROLES={kicad:'KiCad PCB',json:'뷰어 JSON',tcu:'Gerber · 상단 동박',bcu:'Gerber · 하단 동박',tsilk:'Gerber · 상단 실크',bsilk:'Gerber · 하단 실크',outline:'Gerber · 외곽선',drill:'드릴 (Excellon)',sch:'KiCad 회로도',pnp:'Pick-and-Place',bom:'BOM',ipc356:'넷리스트 (IPC-D-356)',ignore:'사용 안 함'};
 function detectRole(name,text){
   const n=(name||'').toLowerCase(),base=n.split('/').pop(),ext=base.includes('.')?base.split('.').pop():'',head=(text||'').slice(0,6000);
   if(text&&/\u0000/.test(text.slice(0,2000)))return{role:'ignore',note:'바이너리 파일'};
   if(ext==='kicad_pcb'||/^\s*\(kicad_pcb/.test(head))return{role:'kicad'};
-  if(ext==='kicad_sch'||ext==='sch')return{role:'ignore',note:'회로도 파일 (위치 정보 없음)'};
+  if(ext==='kicad_sch'||/^\s*\(kicad_sch/.test(head))return{role:'sch'};
+  if(ext==='sch')return{role:'ignore',note:'KiCad 5 이전 회로도는 지원하지 않습니다. KiCad 6 이상에서 저장해 주세요.'};
   if(ext==='kicad_pro'||ext==='kicad_prl')return{role:'ignore',note:'KiCad 프로젝트 설정'};
   if(/^(pcbdoc|schdoc|prjpcb|brd|pcb|dsn|max|pads|asc|cce|lbr)$/.test(ext))return{role:'ignore',note:'원본 설계 파일은 직접 읽을 수 없습니다. Gerber나 KiCad로 내보내 주세요.'};
   if(ext==='json'){try{const o=JSON.parse(text);if(o&&o.board&&o.components)return{role:'json'};}catch(e){}return{role:'ignore',note:'뷰어 형식이 아닌 JSON'};}
@@ -680,13 +681,15 @@ function build(entries){
   if(by('kicad').length){B=parseKicad(by('kicad')[0].text);if(by('kicad').length>1)B.warnings.push('KiCad 파일이 여러 개라 첫 번째만 사용했습니다.');if(by('pnp').length||by('tcu').length)B.notes.push('KiCad 파일을 기준으로 만들고 Gerber·Pick-and-Place는 사용하지 않았습니다.');}
   else if(by('json').length){B=fromSpec(JSON.parse(by('json')[0].text));}
   else if(['tcu','bcu','tsilk','bsilk','outline','drill','pnp'].some(r=>by(r).length))B=assembleGerber(entries);
+  else if(by('sch').length)throw new Error('회로도만으로는 보드를 만들 수 없습니다. 같은 프로젝트의 .kicad_pcb나 Gerber를 함께 넣어 주세요. 이미 열린 보드에 회로도만 붙이려면 회로도 보기의 "회로도 불러오기"를 쓰세요.');
   else throw new Error('보드를 만들 수 있는 파일이 없습니다. KiCad PCB, Gerber, Pick-and-Place 중 하나가 필요합니다.');
   by('bom').forEach(e=>applyBOM(B,parseBOM(e.text)));
+  B.schFiles=by('sch').map(e=>({name:e.name.split('/').pop(),text:e.text}));
   if(!B.name)B.name=baseName()||'업로드한 보드';
   B.files=entries.map(e=>({name:e.name,role:e.role}));
   return finalize(B);
 }
 
-return{parseKicad,parseGerber,parseExcellon,parsePnP,parseBOM,parseIPC356,fromSpec,assembleGerber,finalize,build,detectRole,ROLES,FP,pkgSize,inRing,segDist,arcPts,D2R};
+return{sexp,parseKicad,parseGerber,parseExcellon,parsePnP,parseBOM,parseIPC356,fromSpec,assembleGerber,finalize,build,detectRole,ROLES,FP,pkgSize,inRing,segDist,arcPts,D2R};
 })();
 if(typeof module!=='undefined')module.exports=PCB;

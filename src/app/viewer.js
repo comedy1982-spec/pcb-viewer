@@ -176,7 +176,7 @@ let dpr=1,vw=0,vh=0;const V2={s:10,ox:0,oy:0};let hover2=null,raf2=0;
 function fit2(){if(!BD||!vw)return;V2.s=Math.min((vw-48)/BD.W,(vh-96)/BD.H);V2.ox=(vw-BD.W*V2.s)/2;V2.oy=(vh-BD.H*V2.s)/2;}
 function draw2D(){if(raf2)return;raf2=requestAnimationFrame(()=>{raf2=0;paint2D();});}
 function paint2D(){
-  if(S.view==='3d'||!BD)return;
+  if(S.view==='3d'||S.sch==='full'||!BD)return;
   ctx2.setTransform(1,0,0,1,0,0);ctx2.clearRect(0,0,cv2.width,cv2.height);
   const mir=S.view==='B',s=V2.s;
   ctx2.setTransform(dpr*s*(mir?-1:1),0,0,-dpr*s,dpr*(V2.ox+(mir?BD.W*s:0)),dpr*(V2.oy+BD.H*s));
@@ -196,7 +196,7 @@ function updateScale(){const target=110/V2.s,steps=[0.1,0.2,0.5,1,2,5,10,20,50,1
     $('#coord').textContent=(wx>=0&&wx<=BD.W&&wy>=0&&wy<=BD.H)?`X ${wx.toFixed(2)} · Y ${wy.toFixed(2)} mm`:'X — · Y — mm';
     const h=hit(wx,wy,S.view,3/V2.s);const was=hover2&&hover2.type==='comp'?hover2.c:null;hover2=h;
     if((h&&h.type==='comp'?h.c:null)!==was)draw2D();
-    const extra=overlayTip(h,wx,wy);if(h||extra){tip.innerHTML=(h?tipHTML(h):'')+extra;tip.hidden=false;tip.style.left=p[0]+'px';tip.style.top=p[1]+'px';cv2.style.cursor=h?'pointer':'';}else{tip.hidden=true;cv2.style.cursor='';}};
+    const extra=overlayTip(h,wx,wy);if(h||extra){tip.innerHTML=(h?tipHTML(h):'')+extra;tip.hidden=false;tipAt(cv2,p[0],p[1]);cv2.style.cursor=h?'pointer':'';}else{tip.hidden=true;cv2.style.cursor='';}};
   cv2.addEventListener('pointermove',e=>{
     const p=pos(e);
     if(pts.has(e.pointerId)){
@@ -295,7 +295,7 @@ function init3D(){
   const sel=new THREE.BoxHelper(undefined,0xffd23f);sel.visible=false;scene.add(sel);
   G3={renderer,scene,cam,sel,dirty:true,orb:{th:-1.95,ph:0.95,r:110,t:new THREE.Vector3()},anim:null,board:null};
   bind3D();
-  (function loop(){requestAnimationFrame(loop);stepAnim();if(G3.dirty&&S.view==='3d'&&G3.board){G3.renderer.render(G3.scene,G3.cam);G3.dirty=false;}})();
+  (function loop(){requestAnimationFrame(loop);stepAnim();if(G3.dirty&&S.view==='3d'&&S.sch!=='full'&&G3.board){G3.renderer.render(G3.scene,G3.cam);G3.dirty=false;}})();
   return true;
 }
 function disposeTree(o){o.traverse(n=>{if(n.geometry)n.geometry.dispose();const ms=Array.isArray(n.material)?n.material:n.material?[n.material]:[];ms.forEach(mm=>{if(mm.map){mm.map.dispose();mm.dispose();}});});}
@@ -325,7 +325,7 @@ function rebuild3D(){
   BD.comps.forEach(c=>{if(c.kind==='none'||!(c.body.w>0.1&&c.body.h>0.1))return;const g=build3D(c);compRoot.add(g);G3.comps[c.ref]=g;});
   G3.board=BD;setExplode(S.explode,true);updateTextures();resize3D();homeCam(false);
 }
-function resize3D(){if(!G3||S.view!=='3d')return;const w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;G3.renderer.setSize(w,h,false);G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.dirty=true;}
+function resize3D(){if(!G3||S.view!=='3d'||S.sch==='full')return;const w=cv3.clientWidth,h=cv3.clientHeight;if(!w||!h)return;G3.renderer.setSize(w,h,false);G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.dirty=true;}
 function fitR(){const a=G3.cam.aspect||1.5,t=Math.tan(G3.cam.fov*D2R/2);return Math.max(BD.H*1.25/(2*t),BD.W*1.25/(2*t*a));}
 function placeCam(){const o=G3.orb,c=G3.cam;c.position.set(o.t.x+o.r*Math.sin(o.ph)*Math.cos(o.th),o.t.y+o.r*Math.sin(o.ph)*Math.sin(o.th),o.t.z+o.r*Math.cos(o.ph));c.near=Math.max(0.1,o.r/500);c.far=o.r*20;c.updateProjectionMatrix();c.lookAt(o.t);G3.dirty=true;}
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -372,7 +372,7 @@ function bind3D(){
       placeCam();tip.hidden=true;return;
     }
     hovQ=p;if(!hraf)hraf=requestAnimationFrame(()=>{hraf=0;if(!hovQ||!G3.board)return;const h=pick3D(hovQ[0],hovQ[1]);
-      const real=h&&h.type!=='none'?h:null;const extra=h?overlayTip(real,h._x,h._y):'';if(real||extra){tip.innerHTML=(real?tipHTML(real):'')+extra;tip.hidden=false;tip.style.left=hovQ[0]+'px';tip.style.top=hovQ[1]+'px';cv3.style.cursor=real?'pointer':'grab';}else{tip.hidden=true;cv3.style.cursor='grab';}});
+      const real=h&&h.type!=='none'?h:null;const extra=h?overlayTip(real,h._x,h._y):'';if(real||extra){tip.innerHTML=(real?tipHTML(real):'')+extra;tip.hidden=false;tipAt(cv3,hovQ[0],hovQ[1]);cv3.style.cursor=real?'pointer':'grab';}else{tip.hidden=true;cv3.style.cursor='grab';}});
   });
   const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);if(pts.size<2)pinch=0;if(pts.size===0&&moved<5&&start&&e.type==='pointerup'&&G3.board)applyHit(pick3D(start[0],start[1]));};
   cv3.addEventListener('pointerup',end);cv3.addEventListener('pointercancel',end);
@@ -383,19 +383,27 @@ function bind3D(){
 
 /* ---------- views & panels ---------- */
 function setView(v){
-  S.view=v;
-  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===v?'true':'false'));
-  const is3=v==='3d';cv2.hidden=is3;cv3.hidden=!is3;tip.hidden=true;
-  $('#sideBadge').textContent=is3?'3D':(v==='T'?'TOP · 위에서 본 면':'BOTTOM · 아래에서 본 면 (좌우 반전)');
+  if(v==='sch')S.sch='full';else if(v!=='__keep'){S.view=v;if(S.sch==='full')S.sch='off';}
+  const full=S.sch==='full',bv=S.view;
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-selected',(full?b.dataset.view==='sch':b.dataset.view===bv)?'true':'false'));
+  $('#splitBtn').setAttribute('aria-pressed',S.sch==='split'?'true':'false');
+  vp.classList.toggle('split',S.sch==='split');vp.classList.toggle('schfull',full);
+  cvs.hidden=S.sch==='off';$('#schOv').hidden=S.sch==='off';
+  const is3=bv==='3d';cv2.hidden=full||is3;cv3.hidden=full||!is3;tip.hidden=true;
+  $('#sideBadge').textContent=is3?'3D':(bv==='T'?'TOP · 위에서 본 면':'BOTTOM · 아래에서 본 면 (좌우 반전)');
   $('#scale').hidden=is3;$('#coord').hidden=is3;
   $('#hint').textContent=is3?'드래그 회전 · 우클릭/Shift 드래그 이동 · 휠 확대 · 클릭 선택':'드래그 이동 · 휠 확대 · 더블클릭 맞춤 · 클릭 선택';
   $('#lbl-body').textContent=is3?'3D 부품':'부품 외형 겹쳐 보기';
   $('#ly-body').checked=is3?S.layers.body3d:S.layers.body2d;
   $('#ctl').innerHTML=is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>';
-  if(is3){if(!init3D()){setView('T');return;}if(G3.board!==BD)rebuild3D();else{resize3D();sync3D();}}
-  else{measure();paint2D();}
+  const lk=S.sch;const relayout=setView.lk!==lk;setView.lk=lk;
+  if(S.sch!=='off'){schResize();schData();if(relayout){schFit();SV.fromSch=false;SV.lastKey='';}renderSchOv();schFocus();paintSch();}
+  if(full)return;
+  if(is3){if(!init3D()){setView('T');return;}if(G3.board!==BD)rebuild3D();else{resize3D();if(relayout)homeCam(false);sync3D();}}
+  else{measure.done=0;measure();paint2D();}
 }
-function measure(){const r=vp.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
+function tipAt(cv,x,y){const vr=vp.getBoundingClientRect(),cr=cv.getBoundingClientRect();tip.style.left=(x+cr.left-vr.left)+'px';tip.style.top=(y+cr.top-vr.top)+'px';}
+function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
 document.querySelectorAll('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 $('#ctl').addEventListener('click',e=>{const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
@@ -460,7 +468,7 @@ document.addEventListener('keydown',e=>{
   if(!$('#imp').hidden){if(e.key==='Escape')closeImport();return;}
   if(e.target.matches('input,select,textarea'))return;
   if(HS.ws==='hsis')return;
-  if(e.key==='1')setView('3d');else if(e.key==='2')setView('T');else if(e.key==='3')setView('B');
+  if(e.key==='1')setView('3d');else if(e.key==='2')setView('T');else if(e.key==='3')setView('B');else if(e.key==='4')setView('sch');
   else if(e.key==='Escape'){S.selRef=null;S.hlNet=null;refresh(true);}
 });
 function header(){
@@ -478,13 +486,14 @@ function stats(){
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
 }
 $('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();});
-function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
+function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
   BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
-  header();stats();renderPane();simReset();hsisOnBoard();measure.done=0;measure();fit2();
+  header();stats();renderPane();simReset();hsisOnBoard();SV.data=null;SV.lastKey='';measure.done=0;measure();fit2();
   if(S.view==='3d'){if(G3)rebuild3D();}else paint2D();
+  if(S.sch!=='off'){schData();renderSchOv();paintSch();}
 }
-new ResizeObserver(()=>{if(!BD)return;if(S.view==='3d')resize3D();else{measure();paint2D();}}).observe(vp);
+new ResizeObserver(()=>{if(!BD)return;if(S.sch!=='off'){schResize();paintSch();}if(S.view==='3d')resize3D();else{measure();paint2D();}}).observe(vp);
 
 /* ---------- import ---------- */
 const IMP={entries:[],busy:false};let eid=0;
@@ -534,6 +543,7 @@ function plan(){
     if(!has('pnp'))out.push(['info','Pick-and-Place를 넣으면 부품 위치와 3D 부품이 표시됩니다.']);
   }else if(IMP.entries.length)out.push(['warn','보드를 만들 수 있는 파일이 아직 없습니다. KiCad PCB, Gerber, Pick-and-Place 중 하나가 필요합니다.']);
   if(has('bom'))out.push(['ok','BOM의 값·부품 번호를 부품에 합칩니다.']);
+  if(has('sch'))out.push(['ok',`KiCad 회로도 ${IMP.entries.filter(e=>e.role==='sch').length}장을 보드와 연동합니다.`]);
   return out;
 }
 function renderImport(){

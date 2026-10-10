@@ -190,3 +190,32 @@
 @media (max-width:1180px){.hsis-ws{grid-template-columns:220px minmax(0,1fr)}#hsDetail{grid-column:1/-1}}
 @media (max-width:820px){.hsis-ws{grid-template-columns:1fr}.app{height:auto}.pinmap{max-height:none}}
 </style>
+<style>
+/* schematic view */
+:root{--sch-paper:#fdfdfb;--sch-frame:#8f8676;--sch-wire:#1d7a46;--sch-body:#8e2a1c;--sch-fill:#fbf3d5;--sch-text:#1d3f6e;--sch-pin:#8e2a1c;--sch-label:#1a1d21;--sch-power:#8e2a1c;--sch-hl:#d9480f;--sch-sel:#e0a100;--sch-bus:#2a5db0}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--sch-paper:#171c20;--sch-frame:#5d6670;--sch-wire:#47c07f;--sch-body:#e48a74;--sch-fill:#2a2617;--sch-text:#8fb6ea;--sch-pin:#e48a74;--sch-label:#e4e8eb;--sch-power:#e48a74;--sch-hl:#ffb02e;--sch-sel:#ffd23f;--sch-bus:#6f9be8}}
+:root[data-theme="dark"]{--sch-paper:#171c20;--sch-frame:#5d6670;--sch-wire:#47c07f;--sch-body:#e48a74;--sch-fill:#2a2617;--sch-text:#8fb6ea;--sch-pin:#e48a74;--sch-label:#e4e8eb;--sch-power:#e48a74;--sch-hl:#ffb02e;--sch-sel:#ffd23f;--sch-bus:#6f9be8}
+#cvs{cursor:grab}#cvs.drag{cursor:grabbing}
+#schOv{position:absolute;inset:0;pointer-events:none}
+.sov{position:absolute;display:flex;gap:6px;align-items:center;flex-wrap:wrap;pointer-events:none}
+.sov>*{pointer-events:auto}
+.sov-tl{left:12px;top:12px;right:200px}.sov-tr{right:12px;top:12px;justify-content:flex-end}.sov-bl{left:12px;bottom:12px;right:40%}.sov-br{right:12px;bottom:12px}
+.vbtn.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.hint2{color:var(--muted);font-size:12px}
+.splitbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.splitbtn svg{width:14px;height:14px}
+.viewport.split #cvs,.viewport.split #schOv{right:auto;width:50%}
+.viewport.split #cv2,.viewport.split #cv3{left:50%;width:50%}
+.viewport.split::after{content:"";position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--line);pointer-events:none}
+.viewport.split>.ov-tl,.viewport.split>.ov-bl{left:calc(50% + 12px)}
+.viewport.split .ov-br .hint,.viewport.split .sov-br{display:none}
+.viewport.schfull>.ov{display:none}
+@media (max-width:760px){
+  .viewport.split #cvs,.viewport.split #schOv{width:100%;height:50%;bottom:auto}
+  .viewport.split #cv2,.viewport.split #cv3{left:0;width:100%;top:50%;height:50%}
+  .viewport.split::after{left:0;right:0;top:50%;bottom:auto;width:auto;height:1px}
+  .viewport.split>.ov-tl{left:12px;top:calc(50% + 12px)}.viewport.split>.ov-bl{left:12px}
+  .viewport.split>.ov-tr{top:calc(50% + 12px)}
+  .sov-tl{right:12px}
+}
+</style>

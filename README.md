@@ -9,6 +9,7 @@
 | 입력 | 표시되는 내용 |
 |---|---|
 | KiCad `.kicad_pcb` (v5–v10) | 동박·채워진 존·실크·외곽선·부품·핀 기능·넷 |
+| KiCad `.kicad_sch` (v6 이상) | 회로도와 보드 연동 |
 | Gerber RS-274X + Excellon (zip 가능) | 레이어 형상, 드릴. X2 속성이 있으면 넷·부품 |
 | Pick-and-Place CSV/.pos | 부품 위치와 3D 바디 |
 | BOM CSV | 값, 부품 번호, 설명 |
@@ -16,6 +17,14 @@
 | 뷰어 JSON | 데이터 탭의 구조 참고 |
 
 ODB++, IPC-2581, Altium/Eagle 원본 파일은 아직 읽지 못합니다.
+
+## 회로도
+
+보기 전환의 **회로도**로 회로도를 보고, **나란히**를 누르면 회로도와 보드(3D·TOP·BOTTOM)를 함께 봅니다. 한쪽에서 부품이나 넷을 고르면 다른 쪽에서도 같이 강조되고, 그 위치로 이동합니다(크로스 프로빙).
+
+- **KiCad 회로도**: `.kicad_sch`(KiCad 6 이상)를 보드와 함께 불러오거나, 회로도 보기의 **회로도 불러오기**로 열린 보드에 붙입니다. 계층 시트는 시트 탭으로 나뉘고, 심볼 핀을 보드 패드에 맞춰 넷을 연결합니다.
+- **자동 생성 회로도**: 회로도 파일이 없으면 보드 넷리스트로 넷 라벨 방식의 회로도를 만듭니다. IC·커넥터를 중심으로 연결된 수동 소자를 묶어 배치합니다.
+- HSIS 신호 상세에서 **회로도** 버튼을 누르면 해당 넷을 강조한 회로도로 이동합니다.
 
 ## 시뮬레이션
 
@@ -39,13 +48,14 @@ ODB++, IPC-2581, Altium/Eagle 원본 파일은 아직 읽지 못합니다.
 
 ```sh
 npm run build   # src/ → dist/index.html (외부 의존성 없음, Node 18+)
-npm test        # 파서·시뮬레이션·HSIS 테스트
+npm test        # 파서·회로도·시뮬레이션·HSIS 테스트
 npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 ```
 
 | 경로 | 내용 |
 |---|---|
 | `src/core/pcb-core.js` | 파서(KiCad, Gerber, Excellon, CSV, IPC-D-356)와 공통 보드 모델 |
+| `src/sch/sch.js` | KiCad 회로도 파서, 연결성, 보드 넷 매핑, 자동 생성 회로도 |
 | `src/sim/sim.js` | 전압 강하, 신호 무결성, 열, MNA 회로 해석 엔진 |
 | `src/app/viewer.js` | 2D/3D 렌더러, 선택·검색, 파일 불러오기 UI |
 | `src/app/simui.js` | 시뮬레이션 패널과 보드 오버레이 (빌드 시 viewer.js에 삽입) |
@@ -53,4 +63,5 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/hsis/hsis.js` | HSIS 열 매핑, ARXML Port 파서, 일관성 검사, 추적성 |
 | `src/hsis/sample-hsis.js` | 예제 HSIS와 ARXML |
 | `src/app/hsisui.js` | HSIS 작업 공간 UI (빌드 시 viewer.js에 삽입) |
+| `src/app/schui.js` | 회로도 보기, 나란히 보기, 크로스 프로빙 (빌드 시 viewer.js에 삽입) |
 | `src/app/body.html`, `src/styles/` | 마크업과 스타일 |
