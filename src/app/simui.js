@@ -22,7 +22,7 @@ function envSync(){
 
 function simReset(){
   ENV.h=Math.max(0.1,BD.t-2*ENV.cu*1e-3);SR.ir=SR.si=SR.th=SR.sp=null;SR.stale={};SR.cfg={ir:null,th:null,sp:null,si:{z:50,zd:90}};
-  if(S.panel==='sim')renderSim();updateLegend();
+  if(S.panel==='sim')renderSim();else simCellsDirty();updateLegend();
 }
 function setPanel(p){
   S.panel=p;document.querySelectorAll('.pmode button').forEach(b=>b.setAttribute('aria-selected',b.dataset.panel===p?'true':'false'));
@@ -32,7 +32,11 @@ function setPanel(p){
 }
 document.querySelectorAll('.pmode button').forEach(b=>b.addEventListener('click',()=>setPanel(b.dataset.panel)));
 document.querySelectorAll('.stabs button').forEach(b=>b.addEventListener('click',()=>{SR.tab=b.dataset.stab;if(SR.tab==='si'&&!SR.si)runSI();renderSim();updateLegend();refresh(false);}));
-const ovKey=()=>S.panel==='sim'&&SR[SR.tab]&&!SR[SR.tab].error?SR.tab:null;
+// which result is drawn over the board: the main sim panel's tab, unless a window cell sets OV_FORCE while it paints (null = none)
+let OV_FORCE;
+const ovKey=()=>{const t=OV_FORCE!==undefined?OV_FORCE:(S.panel==='sim'?SR.tab:null);return t&&SR[t]&&!SR[t].error?t:null;};
+// window cells showing simulation panels re-render on the next paint
+function simCellsDirty(){if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv&&isS(C.kind)){C.simDirty=true;C.draw();}});}
 
 /* ---------- overlays ---------- */
 function drawOverlay(ctx,side){
@@ -67,8 +71,9 @@ function overlayTip(h,x,y){
   if(k==='sp'&&h.net&&SR.sp.nets[h.net]!=null)return`<div>${f(SR.sp.nets[h.net],'V',3)}</div>`;
   return'';
 }
-function updateLegend(){
-  const el=$('#legend'),k=ovKey();if(!k){el.hidden=true;return;}el.hidden=false;
+function updateLegend(){const el=$('#legend'),html=legendHTML(ovKey());el.hidden=!html;if(html)el.innerHTML=html;}
+function legendHTML(k){
+  if(!k)return'';let html='';const el={set innerHTML(v){html=v;}};
   const bar=arr=>`<div class="bar" style="background:linear-gradient(90deg,${arr.slice(1).join(',')})"></div>`;
   if(k==='ir'){const R=SR.ir,v=SR.irView;const md=Math.max(0,R.Vs-R.vmin,...R.pads.map(p=>R.Vs-p.v).filter(isFinite));
     const [t,arr,hi]=v==='v'?['전압 강하 · '+R.net,BLUE,SIM.fmtSI(md,'V')]:v==='i'?['트랙 전류 · '+R.net,BLUE,SIM.fmtSI(R.maxI,'A')]:['온도 상승 (IPC-2221) · '+R.net,ORANGE,Math.max(R.maxDT,1).toFixed(1)+' °C'];
@@ -76,6 +81,7 @@ function updateLegend(){
   else if(k==='th'){const R=SR.th;el.innerHTML=`<span class="lt">보드 온도</span>${bar(ORANGE)}<div class="lr"><span>${R.tmin.toFixed(1)} °C</span><span>${R.tmax.toFixed(1)} °C</span></div>`;}
   else if(k==='si'){el.innerHTML=`<span class="lt">특성 임피던스 · 목표 ${SR.cfg.si.z} Ω</span><div class="chips"><span><i style="background:${STATUS.good}"></i>±10% 이내</span><span><i style="background:${STATUS.warn}"></i>±25% 이내</span><span><i style="background:${STATUS.crit}"></i>벗어남</span></div>`;}
   else if(k==='sp'){const vmax=Math.max(0.1,...Object.values(SR.sp.nets).map(Math.abs));el.innerHTML=`<span class="lt">넷 전압 · ${esc(SR.sp.label)}</span>${bar(BLUE)}<div class="lr"><span>0 V</span><span>${vmax.toFixed(2)} V</span></div>`;}
+  return html;
 }
 
 /* ---------- IR drop ---------- */
@@ -326,6 +332,7 @@ function drawChart(host,cfg){
 }
 
 function renderSim(){
+  simCellsDirty();
   if(S.panel!=='sim'||!BD)return;
   document.querySelectorAll('.stabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.stab===SR.tab?'true':'false'));
   const b=$('#simBody');const sc=b.scrollTop;
