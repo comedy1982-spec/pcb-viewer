@@ -459,6 +459,7 @@ $('#pane').addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{
   if(!$('#imp').hidden){if(e.key==='Escape')closeImport();return;}
   if(e.target.matches('input,select,textarea'))return;
+  if(HS.ws==='hsis')return;
   if(e.key==='1')setView('3d');else if(e.key==='2')setView('T');else if(e.key==='3')setView('B');
   else if(e.key==='Escape'){S.selRef=null;S.hlNet=null;refresh(true);}
 });
@@ -480,7 +481,7 @@ $('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))ope
 function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
   BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
-  header();stats();renderPane();simReset();measure.done=0;measure();fit2();
+  header();stats();renderPane();simReset();hsisOnBoard();measure.done=0;measure();fit2();
   if(S.view==='3d'){if(G3)rebuild3D();}else paint2D();
 }
 new ResizeObserver(()=>{if(!BD)return;if(S.view==='3d')resize3D();else{measure();paint2D();}}).observe(vp);
@@ -495,10 +496,10 @@ $('#drop').addEventListener('click',()=>$('#file').click());
 $('#drop').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#file').click();}});
 $('#file').addEventListener('change',e=>{addFiles([...e.target.files]);e.target.value='';});
 let dragDepth=0;
-window.addEventListener('dragenter',e=>{if(!e.dataTransfer||![...e.dataTransfer.types].includes('Files'))return;e.preventDefault();dragDepth++;$('#imp').hidden=false;$('#drop').classList.add('over');renderImport();});
+window.addEventListener('dragenter',e=>{if(!e.dataTransfer||![...e.dataTransfer.types].includes('Files'))return;e.preventDefault();if(HS.ws==='hsis')return;dragDepth++;$('#imp').hidden=false;$('#drop').classList.add('over');renderImport();});
 window.addEventListener('dragover',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){e.preventDefault();e.dataTransfer.dropEffect='copy';}});
 window.addEventListener('dragleave',()=>{dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)$('#drop').classList.remove('over');});
-window.addEventListener('drop',e=>{if(!e.dataTransfer||!e.dataTransfer.files.length)return;e.preventDefault();dragDepth=0;$('#drop').classList.remove('over');addFiles([...e.dataTransfer.files]);});
+window.addEventListener('drop',e=>{if(!e.dataTransfer||!e.dataTransfer.files.length)return;e.preventDefault();if(HS.ws==='hsis'){hsisFiles([...e.dataTransfer.files]);return;}dragDepth=0;$('#drop').classList.remove('over');addFiles([...e.dataTransfer.files]);});
 const fsize=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(0)+' KB':(n/1048576).toFixed(1)+' MB';
 async function addFiles(files){
   IMP.busy=true;setMsg('파일을 읽는 중…');renderImport();

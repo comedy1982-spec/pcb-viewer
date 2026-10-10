@@ -8,11 +8,14 @@
       </div>
     </div>
     <div class="top-r">
+      <div class="seg ws" role="tablist" aria-label="작업 공간"><button role="tab" data-ws="board" aria-selected="true" id="ws-board">보드 뷰어</button><button role="tab" data-ws="hsis" aria-selected="false" id="ws-hsis">HSIS</button></div>
+      <div class="top-r" id="boardCtl">
       <button class="btn primary" id="openImp"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.6 8 2.4l3.2 3.2M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>파일 불러오기</button>
       <div class="seg" role="tablist" aria-label="보기 전환">
         <button role="tab" data-view="3d" aria-selected="true" id="v-3d">3D</button>
         <button role="tab" data-view="T" aria-selected="false" id="v-top">TOP</button>
         <button role="tab" data-view="B" aria-selected="false" id="v-bot">BOTTOM</button>
+      </div>
       </div>
     </div>
   </header>
@@ -90,6 +93,19 @@
       </div>
     </aside>
   </div>
+<div class="hsis-ws" id="hsisWs" hidden>
+  <aside class="panel" id="hsLeft" aria-label="HSIS 문서와 필터"></aside>
+  <section class="panel hsmain" aria-label="HSIS">
+    <div class="tabs" role="tablist" style="margin-top:0">
+      <button role="tab" data-htab="table" aria-selected="true" id="htab-table">신호 표</button>
+      <button role="tab" data-htab="pins" aria-selected="false" id="htab-pins">MCU 핀 맵</button>
+      <button role="tab" data-htab="trace" aria-selected="false" id="htab-trace">추적성</button>
+      <button role="tab" data-htab="checks" aria-selected="false" id="htab-chk">검사 결과</button>
+    </div>
+    <div id="hsBody"></div>
+  </section>
+  <aside class="panel" id="hsDetail" aria-label="신호 상세"></aside>
+</div>
 </div>
 
 <div class="modal" id="imp" hidden>

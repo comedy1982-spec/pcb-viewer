@@ -5,10 +5,10 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
-const stripExport = (s) => s.replace(/if\(typeof module!=='undefined'\)module\.exports=\w+;/, '');
+const stripExport = (s) => s.replace(/if\(typeof module!=='undefined'\)module\.exports=[^;]+;/, '');
 const script = (code) => `<script>\n${code}\n</script>`;
 
-const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', read('src/app/simui.js'));
+const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/hsisui.js'));
 
 const html = `<!doctype html>
 <html lang="ko">
@@ -26,9 +26,12 @@ ${read('src/styles/extra.css')}
 ${read('src/app/body.html')}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 ${script(stripExport(read('src/core/pcb-core.js')))}
 ${script(stripExport(read('src/sim/sim.js')))}
 ${script(read('src/app/sample.js'))}
+${script(stripExport(read('src/hsis/hsis.js')))}
+${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}
 </body>
 </html>
