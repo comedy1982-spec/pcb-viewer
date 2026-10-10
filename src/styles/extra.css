@@ -160,8 +160,9 @@
 .pinmap .pad.undoc{stroke:var(--muted);stroke-dasharray:.12 .08;stroke-width:.06}
 .pinmap .pad.err{stroke:var(--critical);stroke-width:.14}
 .pinmap .pad.warn{stroke:var(--warning);stroke-width:.12}
-.pinmap .pad.on{stroke:var(--fg);stroke-width:.16}
-.pinmap .pg:focus-visible{outline:none}.pinmap .pg:focus-visible .pad{stroke:var(--accent);stroke-width:.18}
+.pinmap .pad.on{stroke:var(--accent);stroke-width:.14;paint-order:stroke}
+/* SVG outlines scale with the viewBox and would swallow the whole pin, so focus is shown by the pad stroke instead */
+.pinmap .pg,.pinmap .pg:focus,.pinmap .pg:focus-visible{outline:none}.pinmap .pg:focus-visible .pad{stroke:var(--accent);stroke-width:.18}
 .pinmap .plab{fill:var(--fg);font-family:var(--f-mono);cursor:pointer}
 .pinmap .plab.m{fill:var(--muted)}
 .pinmap .plab.c{font-weight:600}
