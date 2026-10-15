@@ -2,8 +2,8 @@
 const POPS=new Set();   // every live cell, across all windows
 const WINS=new Set();
 const HKINDS={'h-table':['신호 표','table'],'h-pins':['핀 맵','pins'],'h-trace':['추적성','trace'],'h-checks':['검사 결과','checks'],'h-detail':['신호 상세','detail']};
-const SKINDS={'s-ir':['전압 강하','ir'],'s-si':['신호 무결성','si'],'s-th':['열 분포','th'],'s-sp':['회로 동작','sp']};
-const OV_LABEL={auto:'자동',none:'없음',ir:'전압 강하',si:'신호 무결성',th:'열 분포',sp:'회로 동작'};
+const SKINDS={'s-ir':['전압 강하','ir'],'s-si':['신호 무결성','si'],'s-th':['열 분포','th'],'s-sp':['회로 동작','sp'],'s-emc':['EMC/EMI','emc']};
+const OV_LABEL={auto:'자동',none:'없음',ir:'전압 강하',si:'신호 무결성',th:'열 분포',sp:'회로 동작',emc:'EMC/EMI'};
 const KINDS=['T','B','3d','sch'].concat(Object.keys(HKINDS),Object.keys(SKINDS));
 const KIND_LABEL=Object.assign({T:'TOP',B:'BOTTOM',sch:'회로도','3d':'3D'},Object.fromEntries(Object.entries(HKINDS).map(([k,v])=>[k,'HSIS '+v[0]])),Object.fromEntries(Object.entries(SKINDS).map(([k,v])=>[k,'시뮬 '+v[0]])));
 const isH=k=>k&&k[0]==='h'&&k[1]==='-';
@@ -214,8 +214,8 @@ function paintSimCell(C){
   const hv=C.hv,st=hv.scrollTop,hadRes=!!hv.querySelector('.res,.errline,#spChart svg');
   try{if(tab==='si'&&!SR.si)runSI();
     const env=`<p class="simenv">기판 조건: 동박 ${ENV.cu} µm · 유전체 ${ENV.h.toFixed(2)} mm · εr ${ENV.er} · 주변 ${ENV.Ta} °C — 원래 창의 시뮬레이션 패널에서 바꿉니다.</p>`;
-    hv.innerHTML=env+(tab==='ir'?irHTML():tab==='si'?siHTML():tab==='th'?thHTML():spHTML());
-    (tab==='ir'?irBind:tab==='si'?siBind:tab==='th'?thBind:spBind)(hv);}
+    hv.innerHTML=env+(tab==='ir'?irHTML():tab==='si'?siHTML():tab==='th'?thHTML():tab==='emc'?emcHTML():spHTML());
+    (tab==='ir'?irBind:tab==='si'?siBind:tab==='th'?thBind:tab==='emc'?emcBind:spBind)(hv);}
   catch(e){console.error(e);hv.innerHTML=`<p class="errline">시뮬레이션 화면을 그리지 못했습니다: ${esc(e.message)}</p>`;}
   hv.scrollTop=st;
   // a run just produced results: bring them into view

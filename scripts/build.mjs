@@ -31,6 +31,7 @@ ${script(stripExport(read('src/core/pcb-core.js')))}
 ${script(stripExport(read('src/parts/mcu-pins.js')))}
 ${script(stripExport(read('src/sch/sch.js')))}
 ${script(stripExport(read('src/sim/sim.js')))}
+${script(stripExport(read('src/sim/emc.js')))}
 ${script(read('src/app/sample.js'))}
 ${script(read('src/app/sample-mcu.js'))}
 ${script(read('src/app/sample-tc364.js'))}

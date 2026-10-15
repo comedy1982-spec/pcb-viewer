@@ -31,7 +31,7 @@ function hsisSelect(id,pin){
   if(net){S.hlNet=net;S.selRef=null;}
   renderHSIS();refresh(HS.ws==='board');
 }
-function hsisOnBoard(){if(!HS.H||(HS.sample&&HS.sample!==hsisSampleKey()))hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();}
+function hsisOnBoard(){if(!HS.H||(HS.sample&&HS.sample!==hsisSampleKey()))hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();if(typeof SR!=='undefined'&&SR.tab==='emc'){if(S.panel==='sim')renderSim();else simCellsDirty();}}
 // firmware edits change what the HSIS cross-check sees
 function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')renderHSIS();else if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});}
 function setWorkspace(w){

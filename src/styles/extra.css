@@ -430,4 +430,26 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .thcurve .lbl{fill:var(--critical);font-size:9px}
 .thcurve .ax{fill:var(--muted);font-size:9px;font-family:var(--f-mono)}
 .chkl{display:flex;gap:6px;align-items:center;font-size:12.5px}
+/* EMC / EMI */
+.emc .kpi.emck{border:1px solid var(--line);border-left-width:4px;border-radius:9px;padding:7px 9px;background:var(--surface);min-width:0}
+.emc .kpi.emck.ok{border-left-color:var(--good)}.emc .kpi.emck.warn{border-left-color:var(--warning)}.emc .kpi.emck.err{border-left-color:var(--critical)}.emc .kpi.emck.info{border-left-color:var(--line)}
+.emc .kpi.emck b{font-size:13.5px;overflow-wrap:anywhere}.emc .kpi .kt{color:var(--fg);font-weight:600;font-size:12px}
+.emcsum{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:12px}
+.emctbl td{vertical-align:top}.emctbl td:nth-child(3){white-space:nowrap}.emctbl .fix{color:var(--muted);font-size:11.5px;margin-top:2px}
+.emctbl tr.on td{background:var(--accent-soft)}
+.emcspec{width:100%;height:auto}
+.emcspec .sp{fill:none;stroke-width:1.8}.emcspec .gl{stroke:var(--line);stroke-width:.6}
+.emcspec .ax{fill:var(--muted);font-size:8.5px;font-family:var(--f-mono)}
+.emcspec .band{fill:var(--warning);opacity:.10}.emcspec .bl{fill:var(--muted);font-size:8px}
+.emcspec .fr{stroke:var(--critical);stroke-dasharray:2 2}.emcspec .frl{fill:var(--critical);font-size:8px}
+.emcspec .tk{stroke:var(--muted)}.emcspec .cn{fill:var(--muted);font-size:7.5px}
+.emcspec .lim{stroke:var(--fg);stroke-dasharray:5 3}.emcspec .ll{fill:var(--fg);font-size:8px}
+.emclg{flex-wrap:wrap}
+@media (max-width:560px){.emctbl td:nth-child(3){white-space:normal}}
+.emcchk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.emcchk li{border:1px solid var(--line);border-radius:9px;padding:7px 9px;background:var(--surface);cursor:pointer;font-size:12px}
+.emcchk li.on{border-color:var(--accent);background:var(--accent-soft)}
+.emcchk .eh{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}.emcchk .eh .mono{margin-left:auto;font-size:11.5px}
+.emcchk .em{margin-top:3px;color:var(--fg);line-height:1.45}.emcchk .fix{color:var(--muted);font-size:11.5px;margin-top:2px}
+.emc .kpi.emck b{font-size:15px}
 </style>

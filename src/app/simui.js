@@ -6,7 +6,7 @@ function ramp(arr,t){t=Math.max(0,Math.min(1,isFinite(t)?t:0));const f=t*(arr.le
   const a=parseInt(arr[i].slice(1),16),b=parseInt(arr[i+1].slice(1),16);const m=(s)=>Math.round(((a>>s)&255)*(1-k)+((b>>s)&255)*k);return`rgb(${m(16)},${m(8)},${m(0)})`;}
 function rampRGB(arr,t){const s=ramp(arr,t).match(/\d+/g).map(Number);return s;}
 const ENV={cu:35,er:4.3,h:1.53,Ta:25,hconv:10};
-const SR={tab:'ir',ir:null,si:null,th:null,sp:null,irView:'v',cfg:null,stale:{}};
+const SR={tab:'ir',ir:null,si:null,th:null,sp:null,emc:null,irView:'v',cfg:null,stale:{}};
 S.panel='info';
 const num=(v,d)=>{const x=parseFloat(v);return isFinite(x)?x:d;};
 const padKey=p=>(p.ref||'?')+'.'+(p.n!=null?p.n:'');
@@ -18,10 +18,10 @@ function envSync(){
 }
 ['env-cu','env-h','env-er','env-ta','env-hc'].forEach(id=>$('#'+id).addEventListener('change',()=>{
   ENV.cu=num($('#env-cu').value,35);ENV.h=Math.max(0.05,num($('#env-h').value,1.5));ENV.er=Math.max(1,num($('#env-er').value,4.3));ENV.Ta=num($('#env-ta').value,25);ENV.hconv=num($('#env-hc').value,10);
-  envSync();if(SR.ir)SR.stale.ir=true;if(SR.th)SR.stale.th=true;if(SR.si)runSI();renderSim();refresh(false);}));
+  envSync();if(SR.emc)SR.stale.emc=true;if(SR.ir)SR.stale.ir=true;if(SR.th)SR.stale.th=true;if(SR.si)runSI();renderSim();refresh(false);}));
 
 function simReset(){
-  ENV.h=Math.max(0.1,BD.t-2*ENV.cu*1e-3);SR.ir=SR.si=SR.th=SR.sp=null;SR.fw=null;SR.stale={};SR.cfg={ir:null,th:null,sp:null,si:{z:50,zd:90}};
+  ENV.h=Math.max(0.1,BD.t-2*ENV.cu*1e-3);SR.ir=SR.si=SR.th=SR.sp=SR.emc=null;SR.fw=null;SR.stale={};SR.cfg={ir:null,th:null,sp:null,emc:null,si:{z:50,zd:90}};
   if(S.panel==='sim')renderSim();else simCellsDirty();updateLegend();
 }
 function setPanel(p){
@@ -44,6 +44,7 @@ function drawOverlay(ctx,side){
   if(k==='th'){const R=SR.th;const im=R.imgs?R.imgs[side]:R.img;ctx.save();ctx.globalAlpha=0.92;ctx.imageSmoothingEnabled=true;ctx.translate(0,R.ny*R.cell);ctx.scale(R.cell,-R.cell);ctx.drawImage(im,0,0);ctx.restore();
     ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(0.08,BD.W/700);BD.comps.forEach(c=>{if(c.side!==side||c.kind==='none'||!(c.body.w>0))return;const b=c.body;ctx.save();ctx.translate(b.cx,b.cy);ctx.rotate(b.ang*D2R);ctx.strokeRect(-b.w/2,-b.h/2,b.w,b.h);ctx.restore();});return;}
   outlinePath(ctx);ctx.fillStyle='rgba(6,10,12,.62)';ctx.fill('evenodd');ctx.lineCap='round';ctx.lineJoin='round';
+  if(k==='emc'){emcDraw(ctx,side);return;}
   if(k==='ir'){const R=SR.ir,v=SR.irView;const md=Math.max(1e-6,R.Vs-R.vmin,...R.pads.map(p=>R.Vs-p.v).filter(isFinite));
     const val=s=>v==='v'?(R.Vs-(s.va+s.vb)/2)/md:v==='i'?s.I/Math.max(R.maxI,1e-9):s.dT/Math.max(R.maxDT,1);
     const arr=v==='t'?ORANGE:BLUE;
@@ -64,6 +65,9 @@ function overlayTip(h,x,y){
   const k=ovKey();if(!k)return'';const f=SIM.fmtSI;
   if(k==='th'){const R=SR.th;const i=Math.floor(x/R.cell),j=Math.floor(y/R.cell);if(i<0||j<0||i>=R.nx||j>=R.ny)return'';const T=R.T[j*R.nx+i],Tb=R.Tb?R.Tb[j*R.nx+i]:NaN;const c=h&&h.c&&R.hot&&R.hot.find(o=>o.ref===h.c.ref&&o.Tj!=null);return isFinite(T)?`<div>${S.view==='B'?'하단':'상단'} <b>${(S.view==='B'&&isFinite(Tb)?Tb:T).toFixed(1)} °C</b>${isFinite(Tb)?` · ${S.view==='B'?'상단':'하단'} ${(S.view==='B'?T:Tb).toFixed(1)} °C`:''}</div>${c?`<div>${esc(c.ref)} Tj <b>${c.Tj.toFixed(1)} °C</b> · 마진 ${c.margin.toFixed(1)} °C</div>`:''}`:'';}
   if(!h)return'';
+  if(k==='emc'){const R=SR.emc;const n=h.net;if(!n)return'';const o=[];if(R.ps.switchNets.includes(n))o.push(`스위칭 노드 · dV/dt ${(R.ps.dvdt/1e9).toFixed(2)} V/ns`);
+    R.xt.filter(x=>x.vict===n||x.aggr===n).slice(0,2).forEach(x=>o.push(`${esc(x.aggr)} → ${esc(x.vict)} <b>${(x.V*1e3).toFixed(1)} mV</b>`));const l=R.loops.find(x=>x.net===n);if(l)o.push(`리턴 루프 ${l.area.toFixed(0)} mm²`);
+    const d=h.c&&R.dc.find(x=>x.ref===h.c.ref);if(d)o.push(`${esc(d.ref)} SRF <b>${fHz(d.srf)}</b> · L ${d.L.toFixed(1)} nH`);return o.map(x=>`<div>${x}</div>`).join('');}
   if(k==='ir'){const R=SR.ir;if(h.net!==R.net)return'';
     if(h.type==='track'){let best=null,bd=1e9;R.segs.forEach(s=>{if(s.L!==h.side)return;const d=PCB.segDist(x,y,s.a,s.b);if(d<bd){bd=d;best=s;}});if(best)return`<div>${f((best.va+best.vb)/2,'V',3)} · ${f(best.I,'A')} · ΔT ${best.dT.toFixed(1)} °C</div>`;}
     if(h.type==='pad'){const p=R.pads.find(q=>q.pad===h.p);if(p)return`<div>${f(p.v,'V',4)} (강하 ${f(R.Vs-p.v,'V')})</div>`;}return'';}
@@ -80,6 +84,7 @@ function legendHTML(k){
     el.innerHTML=`<span class="lt">${esc(t)}</span>${bar(arr)}<div class="lr"><span>0</span><span>${hi}</span></div>`;}
   else if(k==='th'){const R=SR.th;el.innerHTML=`<span class="lt">보드 온도 · ${S.view==='B'?'하단':'상단'} 동박층</span>${bar(ORANGE)}<div class="lr"><span>${R.tmin.toFixed(1)} °C</span><span>${R.tmax.toFixed(1)} °C</span></div>`;}
   else if(k==='si'){el.innerHTML=`<span class="lt">특성 임피던스 · 목표 ${SR.cfg.si.z} Ω</span><div class="chips"><span><i style="background:${STATUS.good}"></i>±10% 이내</span><span><i style="background:${STATUS.warn}"></i>±25% 이내</span><span><i style="background:${STATUS.crit}"></i>벗어남</span></div>`;}
+  else if(k==='emc'){el.innerHTML=`<span class="lt">EMC 결합 경로${SR.cfg.emc&&SR.cfg.emc.focus!=null&&SR.emc.checks[SR.cfg.emc.focus]?' · '+esc(SR.emc.checks[SR.cfg.emc.focus].item):''}</span><div class="chips"><span><i style="background:#eb6834"></i>스위칭 노드</span><span><i style="background:#d03b3b"></i>커뮤테이션 루프</span><span><i style="background:#3987e5"></i>크로스토크 피해선</span><span><i style="background:#a77bf3"></i>게이트</span><span><i style="background:#fab219"></i>ESL 큰 캡</span><span>✕ 기준면 슬롯</span></div>`;}
   else if(k==='sp'){const vmax=Math.max(0.1,...Object.values(SR.sp.nets).map(Math.abs));el.innerHTML=`<span class="lt">넷 전압 · ${esc(SR.sp.label)}</span>${bar(BLUE)}<div class="lr"><span>0 V</span><span>${vmax.toFixed(2)} V</span></div>`;}
   return html;
 }
@@ -374,6 +379,109 @@ function thBind(b){
 }
 function importPower(){const cfg=thConfig();if(!SR.sp||!SR.sp.parts)return;Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);SR.sp.parts.forEach(p=>{if(p.ref&&cfg.P[p.ref]!=null&&p.P>0)cfg.P[p.ref]=+(cfg.P[p.ref]+p.P).toFixed(4);});}
 
+/* ---------- EMC / EMI ---------- */
+const EMC_SEV={ok:'ok',warn:'warn',err:'err',info:'info'};
+function emcConfig(){
+  if(SR.cfg.emc)return SR.cfg.emc;
+  SR.cfg.emc={p:Object.assign({},EMC.DEF),open:{ps:true,spec:true,xt:false,dc:false,sys:false},focus:null,limit:'',trx:4};return SR.cfg.emc;
+}
+function runEMC(){
+  const c=emcConfig();const p=Object.assign({},c.p);['Vbus','fsw','Vabs'].forEach(k=>{if(!(p[k]>0))p[k]=null;});
+  const H=typeof HS!=='undefined'&&HS.H&&BD&&HS.res?HS.H:null;
+  SR.emc=EMC.analyze(BD,{cfg:p,env:{t:BD.t,er:ENV.er,cu:ENV.cu},H});SR.emc._H=H;SR.emc._B=BD;SR.stale.emc=false;
+  if(!c.p.fsw)c.auto={fsw:SR.emc.cfg.fsw};if(!c.p.Vbus&&SR.emc.ps.Vbus)c.auto=Object.assign(c.auto||{},{Vbus:SR.emc.ps.Vbus});
+}
+const emcPill=s=>pill(EMC_SEV[s]||'info');
+const fHz=f=>f>=1e9?(f/1e9).toFixed(2)+' GHz':f>=1e6?(f/1e6).toFixed(f>=1e8?0:1)+' MHz':(f/1e3).toFixed(0)+' kHz';
+function emcSpecSVG(R,c){
+  const S0=R.spec;if(!S0)return'<p class="lead">파워 스테이지(VM·OUT 핀을 가진 드라이버)가 없어 스위칭 스펙트럼을 만들 수 없습니다.</p>';
+  const cfg=R.cfg;const slow=EMC.spectra(R,Object.assign({},cfg,{tr:cfg.tr*c.trx,tf:cfg.tf*c.trx}),R.freqs);
+  const W=340,H=170,L=34,Bm=20,T=8,Rm=8;const f0=Math.log10(150e3),f1=Math.log10(1e9);
+  const ser=[['V','스위칭 노드 V(f) · tr '+cfg.tr+' ns','s1',S0],['V','tr ×'+c.trx+' ('+(cfg.tr*c.trx)+' ns)','s6',slow],['Vlisn','전도 CE · LISN 25 Ω (CM)','s2',S0],['Ecm','방사 RE · 하네스 CM','s4',S0],['Edm','방사 RE · 루프 DM','s3',S0]];
+  const all=ser.flatMap(s=>s[3].map(p=>p[s[0]])).filter(isFinite);const lim=parseFloat(c.limit);
+  let y1=Math.ceil((Math.max(...all,isFinite(lim)?lim:-1e9)+5)/20)*20,y0=Math.max(y1-160,Math.floor(Math.min(...all)/20)*20);
+  const X=f=>L+(Math.log10(f)-f0)/(f1-f0)*(W-L-Rm),Y=v=>T+(y1-Math.max(y0,Math.min(y1,v)))/(y1-y0)*(H-T-Bm);
+  const path=(arr,k)=>arr.map((p,i)=>`${i?'L':'M'}${X(p.f).toFixed(1)},${Y(p[k]).toFixed(1)}`).join('');
+  const band=`<rect x="${X(30e6)}" y="${T}" width="${X(200e6)-X(30e6)}" height="${H-T-Bm}" class="band"/><text x="${(X(30e6)+X(200e6))/2}" y="${T+10}" text-anchor="middle" class="bl">L_loop 링잉 대역</text>`;
+  const ps=R.ps;const fr=ps.fring&&ps.fring>150e3&&ps.fring<1e9?`<line x1="${X(ps.fring)}" x2="${X(ps.fring)}" y1="${T}" y2="${H-Bm}" class="fr"/><text x="${X(ps.fring)+3}" y="${H-Bm-4}" class="frl">f_ring ${fHz(ps.fring)}</text>`:'';
+  const tau=0.5/cfg.fsw,c1=1/(Math.PI*tau),c2=1/(Math.PI*cfg.tr*1e-9);
+  const corner=[c1,c2].filter(f=>f>150e3&&f<1e9).map((f,i)=>`<line x1="${X(f)}" x2="${X(f)}" y1="${H-Bm}" y2="${H-Bm+4}" class="tk"/><text x="${X(f)+3}" y="${H-Bm-14}" class="cn">${f===c2?'f₂':'f₁'} ${fHz(f)}</text>`).join('');
+  const grid=[0,1,2,3,4,5,6,7].map(k=>y0+k*20).filter(v=>v<=y1).map(v=>`<line x1="${L}" x2="${W-Rm}" y1="${Y(v)}" y2="${Y(v)}" class="gl"/><text x="${L-3}" y="${Y(v)+3}" text-anchor="end" class="ax">${v}</text>`).join('');
+  const xt=[150e3,1e6,10e6,100e6,1e9].map(f=>`<text x="${X(f)}" y="${H-3}" text-anchor="middle" class="ax">${fHz(f).replace(' ','')}</text>`).join('');
+  const limL=isFinite(lim)?`<line x1="${L}" x2="${W-Rm}" y1="${Y(lim)}" y2="${Y(lim)}" class="lim"/><text x="${W-Rm-2}" y="${Y(lim)-3}" text-anchor="end" class="ll">사용자 한도 ${lim}</text>`:'';
+  return`<svg class="emcspec" viewBox="0 0 ${W} ${H}" role="img" aria-label="스위칭 스펙트럼과 방출 추정">${band}${grid}${xt}${corner}${fr}${limL}
+    ${ser.map(s=>`<path d="${path(s[3],s[0])}" class="sp" style="stroke:var(--${s[2]})${s[3]===slow?';stroke-dasharray:4 3':''}"/>`).join('')}</svg>
+    <div class="thlg emclg">${ser.map(s=>`<span><i style="background:var(--${s[2]})"></i>${esc(s[1])}</span>`).join('')}</div>
+    <p class="lead" style="margin:0">세로축 dBµV (전압·LISN) / dBµV/m (전계, 거리 ${cfg.dist} m). 사다리꼴 포락선: 평탄 2·V·D → f₁=1/πτ 부터 −20 dB/dec → f₂=1/πt<sub>r</sub> 부터 −40 dB/dec. t<sub>r</sub>를 늘리면 f₂가 내려가 고주파 성분이 줄어듭니다.</p>`;
+}
+function emcHTML(){
+  const c=emcConfig();const curH=typeof HS!=='undefined'&&HS.H&&HS.res?HS.H:null;if(!SR.emc||SR.stale.emc||SR.emc._H!==curH||SR.emc._B!==BD)runEMC();const R=SR.emc,ps=R.ps,p=c.p,a=c.auto||{};
+  const by=area=>R.checks.filter(x=>x.area.startsWith(area));
+  const worst=arr=>arr.some(x=>x.sev==='err')?'err':arr.some(x=>x.sev==='warn')?'warn':arr.length&&arr.every(x=>x.sev==='info')?'info':'ok';
+  const kL=R.checks.find(x=>x.item==='L_loop'),kC=R.checks.find(x=>x.item==='C_p,heatsink');
+  const kK=R.checks.filter(x=>/L_gate|ESL\/SRF|고주파 바이패스/.test(x.item));
+  const kpi=(t,ck)=>{if(!ck)return`<div class="kpi emck info"><span class="kt">${t}</span><b>—</b><span>해당 없음</span></div>`;const m=String(ck.val).match(/^(.*?)\s*\((.*)\)$/);const v=m?m[1]:ck.val,sub=[ck.sub,m&&m[2]].filter(Boolean).join(' · ');
+    return`<div class="kpi emck ${ck.sev}"><span class="kt">${t}</span><b>${esc(v)}</b><span>${esc(sub)}</span></div>`;};
+  const rank={err:3,warn:2,info:1,ok:0};const kw=kK.slice().sort((x,y)=>rank[y.sev]-rank[x.sev])[0];const kk=kw&&{sev:kw.sev,val:kw.sev==='ok'?'정상':kw.val,sub:kw.item};
+  const nCnt=s=>R.checks.filter(x=>x.sev===s).length;
+  const chk=R.checks.map((x,i)=>`<li class="click${c.focus===i?' on':''}" data-emcf="${i}" tabindex="0"><div class="eh">${emcPill(x.sev)}<b>${esc(x.item)}</b><span class="mono">${esc(x.val)}</span></div><div class="em">${esc(x.msg)}</div>${x.fix?`<div class="fix">대책: ${esc(x.fix)}</div>`:''}</li>`);
+  const inp=(k,lab,unit,step,ph)=>`<label class="fld"><span>${lab}${unit?` (${unit})`:''}</span><input type="number" step="${step}" data-emc="${k}" value="${p[k]!=null?p[k]:''}" ${ph!=null?`placeholder="${ph}"`:''}></label>`;
+  const sec=(k,title,sum,body)=>`<details class="thsec" data-esec="${k}" ${c.open[k]?'open':''}><summary><b>${title}</b><span>${sum}</span></summary>${body}</details>`;
+  const loops=ps.loops.map(l=>`<tr><td class="mono">${esc(l.cap)} <span class="cls">${esc(l.val)} ${l.pkg||''}</span></td><td class="r mono">${l.lf.toFixed(1)}</td><td class="r mono">${l.Lfwd.toFixed(1)}</td><td class="r mono">${l.Lvia.toFixed(1)}</td><td class="r mono">${l.esl.toFixed(1)}</td><td class="r mono"><b>${l.L.toFixed(1)}</b></td></tr>`).join('');
+  const gates=ps.gates.map(g=>`<tr><td class="mono">${esc(g.ref)} <span class="cls">${esc(g.val||'')}</span></td><td class="r mono">${g.len.toFixed(1)}</td><td class="r mono">${g.Lg.toFixed(1)}</td><td class="r mono">${g.Lcsi.toFixed(1)}</td><td class="r mono">${g.bounce.toFixed(2)} V</td><td class="r mono">${fHz(g.fg)}</td></tr>`).join('');
+  const xt=R.xt.slice(0,12).map(x=>`<tr><td class="mono">${esc(x.aggr)}<div class="cls">${esc(x.akind)}</div></td><td class="mono">${esc(x.vict)}<div class="cls">${esc(x.vkind)}</div></td><td class="r mono">${x.len.toFixed(1)} / ${x.d.toFixed(2)}</td><td class="r mono">${(x.Cm*1e15).toFixed(0)} fF · ${(x.Lm*1e9).toFixed(2)} nH</td><td class="r mono"><b>${x.V*1e3<10?(x.V*1e3).toFixed(2):(x.V*1e3).toFixed(0)} mV</b></td><td>${emcPill(x.ratio<0.5?'ok':x.ratio<1?'warn':'err')}</td></tr>`).join('');
+  const dc=R.dc.map(d=>`<tr><td class="mono">${esc(d.ref)} <span class="cls">${esc(d.val)} ${d.pkg||''}</span></td><td class="mono cls">${esc(d.net)}</td><td class="r mono">${d.esl.toFixed(1)} + ${d.Lm.toFixed(1)}</td><td class="r mono">${d.vias}</td><td class="r mono"><b>${fHz(d.srf)}</b></td><td class="r mono">${d.Z100.toFixed(2)} Ω</td></tr>`).join('');
+  const ex=s=>s?'추정':'';
+  return`<div class="sim emc">
+  <p class="lead">레이아웃에서 기생 성분을 뽑아 모터 제어기 EMC 핵심 파라미터(L<sub>loop</sub>, Q<sub>rr</sub>·t<sub>rr</sub>, t<sub>r</sub>/t<sub>f</sub>, L<sub>gate</sub>·L<sub>CSI</sub>, C<sub>m</sub>·L<sub>m</sub>, ESL·SRF, C<sub>p,heatsink</sub>, 리턴 루프 면적, 하네스)를 추정하고 판정합니다. 클릭한 항목은 보드 위에 표시됩니다.</p>
+  <div class="kpis kp3">${kpi('L<sub>loop</sub> 최소화',kL)}${kpi('C<sub>p,heatsink</sub> 관리',kC&&Object.assign({},kC,{val:kC.val.replace(' → ',' (')+')'}))}${kpi('켈빈 소스 · 고주파 ESL',kk)}</div>
+  <div class="emcsum"><span>${pill('err')} ${nCnt('err')}</span><span>${pill('warn')} ${nCnt('warn')}</span><span>${pill('ok')} ${nCnt('ok')}</span><span class="cls">스위칭 ${fHz(R.cfg.fsw)}${a.fsw&&!p.fsw?' (HSIS/기본)':''} · V<sub>bus</sub> ${ps.Vbus||'—'} V · dV/dt ${ps.dvdt?(ps.dvdt/1e9).toFixed(2)+' V/ns':'—'} · dI/dt ${ps.didt?(ps.didt/1e6).toFixed(0)+' A/µs':'—'}</span></div>
+  ${['1. 파워 스테이지','2. ','3. ','4. '].map((a,j)=>{const ids=R.checks.map((x,i)=>x.area.startsWith(a)?i:-1).filter(i=>i>=0);if(!ids.length)return'';return`<div class="sub">${['① 파워 스테이지','② 게이트 구동 · 크로스토크','③ 수동 소자 기생','④ 시스템 결합 · 접지 · 하네스'][j]}</div><ul class="emcchk">${ids.map(i=>chk[i]).join('')}</ul>`;}).join('')}
+  ${sec('ps','① 파워 스테이지 · 게이트 루프',ps.drivers.length?`${ps.drivers.join(', ')} · L ${isFinite(ps.Lbest)?ps.Lbest.toFixed(1)+' nH':'—'} · 스파이크 ${ps.Vpk?ps.Vpk.toFixed(1)+' V':'—'}`:ps.fets.length?`FET ${ps.fets.join(', ')}`:'없음',`
+    <div class="thgrid">${inp('Vbus','V<sub>bus</sub>','V',1,a.Vbus||'VM 넷')}${inp('fsw','스위칭 주파수','Hz',1000,a.fsw||'HSIS')}${inp('Ipk','상 전류 피크','A',0.1)}${inp('tr','t<sub>r</sub> (dV/dt)','ns',5)}${inp('tf','t<sub>f</sub> (dI/dt)','ns',5)}${inp('Coss','C<sub>oss</sub>','pF',10)}${inp('Qrr','바디 다이오드 Q<sub>rr</sub>','nC',1)}${inp('trr','t<sub>rr</sub>','ns',1)}${inp('Vabs','절대 최대 전압','V',1,ps.Vabs||'')}${inp('Ciss','C<sub>iss</sub> (개별 FET)','pF',10)}</div>
+    <p class="lead">t<sub>r</sub>·t<sub>f</sub>·C<sub>oss</sub>·Q<sub>rr</sub>·t<sub>rr</sub>는 게이트 저항 R<sub>g</sub>와 밀러 용량 C<sub>gd</sub>로 정해지는 값이라 데이터시트·실측 값을 넣어야 정확합니다 (기본값은 소형 드라이버 추정치). 절대 최대 전압은 부품 DB(${ps.drivers.map(esc).join(', ')||'—'})에서 가져왔습니다.</p>
+    ${ps.drivers.length?`${ps.loops.length?`<div class="sub">커뮤테이션 루프 (DC-Link 캡 → ${esc(ps.vmNet)} → 하프브리지 → PGND)</div><div class="scroll"><table class="stbl"><thead><tr><th>캡</th><th class="r">거리 mm</th><th class="r">배선 nH</th><th class="r">비아 nH</th><th class="r">ESL nH</th><th class="r">L<sub>loop</sub></th></tr></thead><tbody>${loops}</tbody></table></div>`:''}
+    <div class="kv2"><span>ΔV = L·dI/dt</span><b>${ps.dV.toFixed(1)} V</b><span>역회복 I<sub>rr</sub> ≈ 2Q<sub>rr</sub>/t<sub>rr</sub></span><b>${ps.Irr.toFixed(2)} A → ${ps.dVrr.toFixed(1)} V</b><span>피크 전압</span><b>${ps.Vpk.toFixed(1)} V / ${ps.Vabs} V</b><span>링잉 f = 1/2π√(L·C<sub>oss</sub>)</span><b>${fHz(ps.fring)}</b></div>
+    <p class="lead" style="margin:0">L은 배선(기준면 위 마이크로스트립 Z₀·지연), 비아 0.2·h·(ln(4h/d)+1) nH, 캡 ESL, 패키지 1 nH의 합입니다. 드라이버 내부(IC 패키지 안)의 루프는 포함하지 않습니다.</p>`:''}
+    ${gates?`<div class="sub">게이트 루프 · 공통 소스 인덕턴스 (개별 FET)</div><div class="scroll"><table class="stbl"><thead><tr><th>FET</th><th class="r">게이트 경로 mm</th><th class="r">L<sub>gate</sub> nH</th><th class="r">L<sub>CSI</sub> nH</th><th class="r">바운스 L·dI/dt</th><th class="r">게이트 공진</th></tr></thead><tbody>${gates}</tbody></table></div><p class="lead" style="margin:0">L<sub>CSI</sub>는 파워 전류와 게이트 리턴이 공유하는 소스 경로입니다. 션트를 공유하면 di/dt가 게이트 전압을 흔들어 링잉·오동작을 일으키므로 켈빈 소스로 분리합니다.</p>`:ps.drivers.length?'<p class="lead" style="margin:0">게이트 드라이브가 드라이버 IC 안에 통합되어 있어 L<sub>gate</sub>·L<sub>CSI</sub>는 IC 패키지에 포함됩니다.</p>':''}`)}
+  ${sec('spec','② 스위칭 스펙트럼 · 방출 추정',R.spec?`f₂ ${fHz(1/(Math.PI*R.cfg.tr*1e-9))}`:'파워 스테이지 없음',`<div class="row2"><label class="fld"><span>비교 t<sub>r</sub> 배수</span><select id="emc-trx">${[2,4,10].map(v=>`<option value="${v}"${c.trx==v?' selected':''}>×${v}</option>`).join('')}</select></label><label class="fld"><span>사용자 한도선 (dBµV/m, 선택)</span><input type="number" step="1" id="emc-lim" value="${esc(String(c.limit))}" placeholder="예: 시험 계획의 한도"></label></div>${emcSpecSVG(R,c)}`)}
+  ${sec('xt','③ 크로스토크 (C<sub>m</sub>, L<sub>m</sub>)',R.xt.length?`${R.xt.length}쌍 · 최대 ${(R.xt[0].V*1e3).toFixed(1)} mV`:'평행 구간 없음',`${xt?`<div class="scroll"><table class="stbl"><thead><tr><th>가해 (dV/dt)</th><th>피해</th><th class="r">평행 mm / 간격 mm</th><th class="r">C<sub>m</sub> · L<sub>m</sub></th><th class="r">유기 노이즈</th><th></th></tr></thead><tbody>${xt}</tbody></table></div>`:'<p class="lead">스위칭 노드·PWM 선과 같은 층에서 5 mm 이내로 나란한 민감 신호가 없습니다.</p>'}
+    <p class="lead" style="margin:0">가해: 상 출력(dV/dt = V<sub>bus</sub>/t<sub>r</sub>) · PWM 제어선(${R.cfg.Vdig} V/${R.cfg.trDig} ns). 피해: HSIS 분류 또는 넷 이름으로 아날로그(ADC, 허용 4 LSB) · 통신(0.2 V) · 디지털 입력(VIL 30 %). 기준면 위 두 선의 영상법 C<sub>m</sub>, L<sub>m</sub>으로 V = C<sub>m</sub>·dV/dt·Z<sub>v</sub> + L<sub>m</sub>·dI/dt (Z<sub>v</sub>: 아날로그 ${R.cfg.Zana} Ω · 디지털 ${R.cfg.Zdig} Ω · 통신 ${R.cfg.Zcom} Ω).</p>`)}
+  ${sec('dc','④ 디커플링 ESL · SRF',`${R.dc.length}개${R.filt.length?' · 필터 '+R.filt.map(f=>f.ref).join(','):''}`,`<div class="scroll"><table class="stbl"><thead><tr><th>캡</th><th>넷</th><th class="r">ESL + 실장 nH</th><th class="r">GND 비아</th><th class="r">f<sub>SRF</sub></th><th class="r">|Z| @100 MHz</th></tr></thead><tbody>${dc}</tbody></table></div>
+    <p class="lead" style="margin:0">f<sub>SRF</sub> = 1/2π√(L·C). 그 위에서는 커패시터가 인덕터로 동작해 고주파 전도 노이즈(CE)를 통과시킵니다. ESL은 패키지 크기 일반값(0402 0.4 · 0603 0.6 · 0805 0.8 · 1210 1.1 nH), 실장은 GND 비아까지 인출선 + 비아로 계산합니다. 공통 모드 초크·필터의 기생 병렬 C<sub>p</sub>는 부품 SRF 데이터로 확인해야 합니다.</p>`)}
+  ${sec('sys','⑤ 방열판 결합 · 리턴 경로 · 하네스',R.hs?`C<sub>p</sub> ${(R.hs.C*1e12).toFixed(1)} pF · 슬롯 ${R.slots.length}`:`슬롯 ${R.slots.length}`,`<div class="thgrid">
+    <label class="fld"><span>방열판 위치</span><select data-emcs="hsPos"><option value="below"${p.hsPos==='below'?' selected':''}>보드 아래 (BOTTOM 면 + TIM)</option><option value="above"${p.hsPos==='above'?' selected':''}>보드 위 (TOP 면 + TIM)</option></select></label>
+    ${inp('timT','TIM 두께','mm',0.1)}${inp('timEr','TIM εr','',0.5)}${inp('harness','하네스 길이','m',0.1)}
+    <label class="fld"><span>실드</span><select data-emcs="shield"><option value="0"${!p.shield?' selected':''}>비실드</option><option value="1"${p.shield?' selected':''}>실드 (360° 접지)</option></select></label>${inp('shieldDb','실드 감쇠','dB',1)}${inp('dist','측정 거리','m',0.5)}</div>
+    ${R.hs?`<div class="kv2"><span>스위칭 노드 동박</span><b>TOP ${R.hs.aT.toFixed(0)} · BOTTOM ${R.hs.aB.toFixed(0)} mm²</b><span>C<sub>p,heatsink</sub> = ε₀ε<sub>r</sub>A/d</span><b>${(R.hs.C*1e12).toFixed(2)} pF</b><span>I<sub>cm</sub> = C<sub>p</sub>·dV/dt</span><b>${(R.hs.Icm*1e3).toFixed(2)} mA (피크)</b><span>보드 GND면 결합</span><b>${(R.hs.Cgnd*1e12).toFixed(1)} pF</b></div>`:''}
+    <div class="sub">신호 리턴 루프 (상위 5)</div><div class="scroll"><table class="stbl"><thead><tr><th>넷</th><th class="r">길이 mm</th><th class="r">루프 mm²</th><th>기준면</th></tr></thead><tbody>${R.loops.slice(0,5).map(l=>`<tr><td class="mono">${esc(l.net)}</td><td class="r mono">${l.len.toFixed(1)}</td><td class="r mono">${l.area.toFixed(0)}</td><td>${l.plane?'있음':'없음'}</td></tr>`).join('')}</tbody></table></div>
+    <p class="lead" style="margin:0">방사 전계는 차동 모드 E ≈ 1.316×10⁻¹⁴·f²·A·I/r, 공통 모드 E ≈ 1.257×10⁻⁶·f·L·I<sub>cm</sub>/r (Ott). 하네스 길이는 λ/2에서 제한합니다. 슬롯 교차 ${R.slots.length}곳은 보드 위에 ✕로 표시됩니다.</p>`)}
+  <p class="lead">모든 값은 레이아웃 기하 + 일반 패키지 값에 기반한 1차 추정(Pre-compliance)입니다. 규격(CISPR 25 등) 한도선은 넣지 않았습니다. 시험 계획의 한도를 ② 사용자 한도선에 입력해 비교하고, 최종 판정은 3D 전자기 해석과 챔버 시험으로 확인하세요.</p></div>`;
+}
+function emcBind(b){
+  const c=emcConfig();const upd=()=>{runEMC();renderSim();updateLegend();refresh(false);};
+  b.querySelectorAll('details.thsec').forEach(d=>d.addEventListener('toggle',()=>{c.open[d.dataset.esec]=d.open;}));
+  b.querySelectorAll('[data-emc]').forEach(i=>i.addEventListener('change',()=>{const k=i.dataset.emc;const v=parseFloat(i.value);if(i.value===''&&['Vbus','fsw','Vabs'].includes(k))c.p[k]=null;else if(isFinite(v)&&v>=0)c.p[k]=v;upd();}));
+  b.querySelectorAll('[data-emcs]').forEach(i=>i.addEventListener('change',()=>{const k=i.dataset.emcs;c.p[k]=k==='shield'?i.value==='1':i.value;upd();}));
+  b.querySelector('#emc-trx')?.addEventListener('change',e=>{c.trx=+e.target.value;renderSim();});
+  b.querySelector('#emc-lim')?.addEventListener('change',e=>{c.limit=e.target.value;renderSim();});
+  b.querySelectorAll('[data-emcf]').forEach(r=>{const go=()=>{const i=+r.dataset.emcf;c.focus=c.focus===i?null:i;renderSim();updateLegend();refresh(false);};r.addEventListener('click',go);r.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});});
+}
+// which overlay layers the focused check asks for
+function emcFocus(){const c=SR.cfg&&SR.cfg.emc;if(!c||c.focus==null||!SR.emc)return null;const x=SR.emc.checks[c.focus];if(!x)return null;
+  const it=x.item;return /L_loop|스파이크|링잉|바이패스/.test(it)?'loop':/C_p/.test(it)?'sw':/→|크로스토크|dV\/dt/.test(it)||x.area.includes('크로스토크')?'xt':/리턴/.test(it)?'slot':/루프 면적/.test(it)?'big':/L_gate/.test(it)?'gate':/ESL/.test(it)?'dc':null;}
+function emcDraw(ctx,side){
+  const R=SR.emc,f=emcFocus(),ps=R.ps,lw=Math.max(0.12,BD.W/500);const dim=k=>f&&f!==k?0.25:1;
+  const net=(n,col,a)=>{ctx.globalAlpha=a;drawPrims(ctx,BD.layers[side+'.cu'],p=>p.net===n&&p.t!=='text'&&!p.clear?(p.t==='pour'||p.t==='poly'?col+'88':col):null,{clear:'rgba(6,10,12,1)'});BD.comps.forEach(cc=>cc.pads.forEach(pd=>{if(pd.net===n&&padOn(pd,side)){ctx.fillStyle=col;padPath(ctx,pd,0);}}));ctx.globalAlpha=1;};
+  ps.switchNets.forEach(n=>net(n,'#eb6834',dim('sw')));
+  ps.gates.forEach(g=>{net(g.gateNet,'#a77bf3',dim('gate'));});
+  if(f==='big'&&R.loops[0])net(R.loops[0].net,'#fab219',1);
+  R.xt.slice(0,8).forEach((x,i)=>{const a=dim('xt');net(x.vict,x.ratio>=1?'#d03b3b':'#3987e5',a*(i<3?1:0.6));ctx.globalAlpha=a;ctx.strokeStyle='#fff';ctx.lineWidth=lw*0.8;ctx.setLineDash([lw*2,lw*2]);x.marks.forEach(m=>{ctx.beginPath();ctx.moveTo(m[0][0],m[0][1]);ctx.lineTo(m[1][0],m[1][1]);ctx.stroke();});ctx.setLineDash([]);ctx.globalAlpha=1;});
+  {const l=ps.loops[0];const lc=l&&BD.byRef[l.cap];if(l&&(!lc||lc.side===side)){ctx.globalAlpha=dim('loop');ctx.strokeStyle='#d03b3b';ctx.fillStyle='rgba(208,59,59,.18)';ctx.lineWidth=lw*1.4;ctx.setLineDash([lw*3,lw*2]);ctx.beginPath();l.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}}
+  if(f==='dc'||!f)R.dc.forEach(d=>{const cc=BD.byRef[d.ref];if(!cc||cc.side!==side)return;const bad=!d.vias||d.L>3;if(d.C>1e-6&&!bad)return;ctx.strokeStyle=bad?'#fab219':'#0ca30c';ctx.lineWidth=lw;ctx.beginPath();ctx.arc(cc.body.cx,cc.body.cy,Math.max(cc.body.w,cc.body.h)*0.7+0.3,0,TAU);ctx.stroke();});
+  ctx.globalAlpha=dim('slot');ctx.strokeStyle='#ff5a5a';ctx.lineWidth=lw*1.3;const r=Math.max(0.6,BD.W/160);R.slots.forEach(s=>{if(s.layer!==side)return;ctx.beginPath();ctx.moveTo(s.at[0]-r,s.at[1]-r);ctx.lineTo(s.at[0]+r,s.at[1]+r);ctx.moveTo(s.at[0]+r,s.at[1]-r);ctx.lineTo(s.at[0]-r,s.at[1]+r);ctx.stroke();});ctx.globalAlpha=1;
+}
+
 /* ---------- circuit ---------- */
 const TYPE_LABEL={R:'저항',C:'커패시터',L:'인덕터',D:'다이오드',SW:'스위치',LOAD:'IC 부하',REG:'레귤레이터',V:'전압 소스',NMOS:'N-MOSFET · Vth',MOTOR:'DC 모터 · 부하 토크',BLDC:'BLDC 모터 · 부하 토크',BRIDGE3:'3상 드라이버 · RDS(on)',HALL:'홀 센서'};
 function spConfig(){
@@ -501,6 +609,7 @@ function renderSim(){
     if(SR.tab==='ir'){b.innerHTML=irHTML();irBind(b);}
     else if(SR.tab==='si'){if(!SR.si)runSI();b.innerHTML=siHTML();siBind(b);}
     else if(SR.tab==='th'){b.innerHTML=thHTML();thBind(b);}
+    else if(SR.tab==='emc'){b.innerHTML=emcHTML();emcBind(b);}
     else{b.innerHTML=spHTML();spBind(b);}
   }catch(e){console.error(e);b.innerHTML=`<p class="errline">시뮬레이션 화면을 그리지 못했습니다: ${esc(e.message)}</p>`;}
 }
