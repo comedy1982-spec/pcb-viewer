@@ -117,6 +117,7 @@ HSIS 작업 공간의 **핀 추천** 탭은 HSIS의 신호마다 MCU 데이터�
   4. 보드에서 상대 핀까지 거리와, 다른 신호가 필요로 하는 드문 기능을 빼앗는 정도를 비용으로 삼아 헝가리안 매칭으로 고릅니다. 버스 묶음끼리는 처리 순서를 모두 시험해 합이 가장 작은 조합을 씁니다.
 - **두 가지 범위**: "빈 핀·오류만"은 맞게 배정된 핀은 두고 빈 핀과 기능이 맞지 않는 핀만 추천합니다. "전체 다시 배정"은 모든 신호를 다시 배치합니다.
 - **적용**: 고른 추천을 적용하면 HSIS의 MCU 핀·포트·핀 기능이 바뀌고, 보드에서 MCU 패드가 신호 넷에 연결됩니다. 아직 배선되지 않은 연결은 TOP 보기에 점선으로 나옵니다. 적용 취소와 갱신된 HSIS CSV 내려받기를 지원합니다. 대안 핀 버튼으로 추천을 직접 바꿀 수 있습니다.
+- **자동 배선**: 핀 추천 탭의 "자동 배선" 버튼은 HSIS 신호 중 아직 동박으로 이어지지 않은 넷(적용한 추천 포함)을 2층으로 배선합니다. 0.1 mm 격자(가장 촘촘한 패드 피치에 맞춤)에서 다른 넷의 패드·트랙·비아·구멍과 보드 가장자리(0.4 mm)를 트랙 폭·간격만큼 피해 A* 탐색으로 경로를 찾고, 층을 바꿀 때 비아(0.6/0.3 mm)를 넣습니다. 짧은 넷부터 그리고, 실패한 넷은 앞으로 옮겨 최대 3번 다시 시도해 가장 좋은 결과를 남깁니다. 신호·전원 트랙 폭과 간격을 바꿀 수 있고, 전원 넷(GND·동박면 넷 제외)을 포함할 수 있습니다. 결과는 보드의 트랙·비아로 들어가 TOP/BOTTOM/3D와 시뮬레이션에 반영되며, 실제 형상으로 간격을 다시 검사해 위반 건수를 보여 줍니다. "자동 배선 지우기"로 되돌립니다. 차동 쌍·길이 맞춤·임피던스는 다루지 않으므로 검토용 초안으로 쓰세요. AURIX-364 예제는 추천 적용 뒤 25개 넷이 모두 간격 위반 없이 배선됩니다.
 - **MCAL 설정 출력**:
   - `*_Mcal.arxml`: AUTOSAR ECUC 값(Port, Dio, Pwm, Adc, Icu, Spi, Can). PortPinId는 패키지 핀 번호이고, PortPinMode는 TC364는 ALT1–ALT7/GPIO, STM32는 AF0–AF7/DIO로 적습니다. "이 ARXML로 HSIS 검사"를 누르면 HSIS 검사기로 바로 대조합니다.
   - MCAL C 설정: `Port_Cfg.h`, `Port_PBcfg.c`(TC3xx `Pn_IOCR`·`OMR`·`PDISC` 값, STM32 `MODER`·`OTYPER`·`PUPDR`·`AFR`·`ODR` 값), `Dio_Cfg.h`, `Pwm_Cfg.h`/`Pwm_PBcfg.c`, `Adc_Cfg.h`, `Icu_Cfg.h`, `Spi_Cfg.h`, `Can_Cfg.h`. MCAL 관례를 따른 예시라 벤더 MCAL 구조체와 1:1로 같지는 않습니다.
@@ -157,6 +158,7 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/parts/mcu-pins.js` | MCU 핀 기능 DB (TC364DP, STM32F042K6U6)와 상대 IC 핀 역할 |
 | `src/hsis/pinrec.js` | HSIS 기반 핀 배정 추천 (역할 판정, 주변장치 묶음, 헝가리안 매칭, 적용) |
 | `src/hsis/mcal.js` | MCAL 설정 생성 (ECUC ARXML, C 설정, STM32 HAL/LL) |
+| `src/route/autoroute.js` | 2층 격자 자동 배선 (A*, 비아, 다중 시도, 간격 검사) |
 | `src/app/sample-tc364.js` | AURIX TC364 예제 보드 |
 | `src/hsis/hsis.js` | HSIS 열 매핑, ARXML Port 파서, 일관성 검사, 추적성 |
 | `src/hsis/sample-hsis.js` | 예제 HSIS와 ARXML |

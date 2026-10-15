@@ -250,7 +250,7 @@ function recColor(st){const cs=getComputedStyle(document.documentElement);return
 function recDraw(ctx,side,o){
   const R=HS.rec;if(!R||!R.show||!BD||!HS.H)return;if(!R.res&&R.touched)recEnsure();if(!R.res||!R.res.recs||R.res.mcu!==HS.mcu||!BD.byRef[R.res.mcu])return;
   const w=Math.max(0.14,BD.W/(o&&o.preview?380:520));
-  R.res.recs.forEach(r=>{if(!r.line||r.status==='none'||r.line.side!==side)return;if(r.status==='keep'&&!(o&&o.preview)){const pad=BD.byRef[R.res.mcu].pads.find(p=>String(p.n)===r.rec.pin);const nn=pad&&pad.net&&BD.nets[pad.net];if(!nn||nn.tracks.length)return;}
+  R.res.recs.forEach(r=>{if(!r.line||r.status==='none'||r.line.side!==side)return;if(r.status==='keep'){const pad=BD.byRef[R.res.mcu].pads.find(p=>String(p.n)===r.rec.pin);const nn=pad&&pad.net&&BD.nets[pad.net];if(!nn||nn.tracks.length)return;}
     const on=R.hi===r.id||HS.sel===r.id,col=recColor(r.status);
     ctx.save();ctx.globalAlpha=R.hi&&!on?0.35:1;ctx.strokeStyle=col;ctx.lineWidth=on?w*2.2:w;ctx.setLineDash(r.status==='keep'?[w*1.5,w*2.5]:[w*5,w*3]);
     ctx.beginPath();ctx.moveTo(r.line.a[0],r.line.a[1]);ctx.lineTo(r.line.b[0],r.line.b[1]);ctx.stroke();ctx.setLineDash([]);
@@ -281,7 +281,8 @@ function recHTML(){
     <div class="recgrid"><div class="recprevw"><canvas id="recPrev" aria-label="추천 연결선 미리보기"></canvas>
       <div class="reclg"><span><i style="background:${recColor('new')}"></i>새 배정</span><span><i style="background:${recColor('change')}"></i>변경</span><span><i class="lgk"></i>유지</span><label><input type="checkbox" id="recShow" ${R.show?'checked':''}> 보드 보기에도 표시</label></div></div>
       <div class="recact"><button class="btn primary sm" id="recApply" ${R.checked.size?'':'disabled'}>선택한 ${R.checked.size}개 적용</button><button class="btn sm" id="recAll" ${sm.change+sm.new?'':'disabled'}>모두 선택</button>${R.undo?'<button class="btn ghost sm" id="recUndo">적용 취소</button>':''}<button class="btn sm" id="recBoard">보드에서 보기</button><button class="btn sm" id="recCsv">HSIS CSV 내려받기</button><button class="btn sm" id="recMcal">MCAL 설정으로 →</button>
-        <p class="lead">적용하면 HSIS의 MCU 핀·포트·핀 기능이 바뀌고, 보드에서 해당 MCU 패드가 신호 넷에 연결됩니다(배선 전 연결선). 대안 핀을 누르면 추천을 바꿉니다.</p></div></div>
+        <p class="lead">적용하면 HSIS의 MCU 핀·포트·핀 기능이 바뀌고, 보드에서 해당 MCU 패드가 신호 넷에 연결됩니다(배선 전 연결선). 대안 핀을 누르면 추천을 바꿉니다.</p>
+        ${arHTML()}</div></div>
     <div class="tscroll"><table class="stbl recs"><thead><tr><th></th><th>신호 · 판정</th><th>필요한 기능 · 상대 IC 핀</th><th>현재 → 추천 (MCU 핀 · 기능)</th><th>대안 · 근거</th></tr></thead><tbody>${rows}</tbody></table></div>
     <p class="lead">추천 기준: ① HSIS 핀 기능·방향과 상대 IC 핀 기능에서 필요한 역할(PWM, 캡처, ADC, SPI, CAN, UART, I2C, 인터럽트, GPIO)을 정합니다. ② MCU 데이터시트의 ALT/AF 표에서 그 역할이 가능한 핀만 후보로 둡니다. ③ SPI·CAN·UART·I2C 신호는 같은 주변장치 인스턴스로, 홀 캡처는 같은 타이머로 묶습니다. ④ 보드에서 상대 핀까지 거리가 짧고, 다른 신호가 필요로 하는 드문 기능을 덜 빼앗는 조합을 헝가리안 매칭으로 고릅니다. 전원·디버그·EVR 핀은 제외하고, 부트 설정(HWCFG) 핀은 감점합니다.</p></div>`;
 }
@@ -327,6 +328,7 @@ function bindRec(B){
   B.querySelector('#recBoard')?.addEventListener('click',()=>{R.show=true;setWorkspace('board');setView('T');S.selRef=HS.mcu;S.hlNet=null;refresh(true);});
   B.querySelector('#recCsv')?.addEventListener('click',async()=>{if(await offerFile(`${(HS.H.meta.docId||'HSIS')}_updated.csv`,hsisCsv(),'text/csv;charset=utf-8'))toast('현재 HSIS를 CSV로 내려받았습니다. 엑셀에서 열 수 있습니다.');});
   B.querySelector('#recMcal')?.addEventListener('click',()=>{HS.tab='mcal';renderHSIS();});
+  bindAr(B);
 }
 
 /* ---------- MCAL export ---------- */
@@ -363,4 +365,46 @@ function bindMcal(B){
     z.file('README.txt',`${BD.name} · ${G.model.mpn}\n생성: PCB 뷰어 HSIS 핀 추천\n\narxml/  AUTOSAR ECUC 설정 (Port, Dio, Pwm, Adc, Icu, Spi, Can)\nmcal/   MCAL 관례 C 설정 예시\n${G.model.fam==='stm32'?'stm32/  STM32 HAL·LL 초기화 코드\n':''}\n주의: 벤더 MCAL 도구로 가져올 때 해당 벤더 파라미터 정의에 맞춰 확인하세요.\n${G.model.warn.length?'\n경고:\n'+G.model.warn.join('\n')+'\n':''}`);
     try{const b=await z.generateAsync({type:'blob'});if(await offerFile(`${(BD.name||'board').replace(/[^\w.-]+/g,'_')}_MCAL.zip`,b,'application/zip'))toast('MCAL 설정 파일을 zip으로 내려받았습니다.');}catch(e){toast('zip을 만들지 못했습니다: '+(e.message||e));}});
   B.querySelector('#mcalUse')?.addEventListener('click',()=>{const ax=G.files.find(x=>x.kind==='arxml');HS.arxml=HSIS.parseARXML(ax.text);HS.arxmlFile=ax.name+' (생성)';hsisRun();HS.tab='checks';renderHSIS();toast('생성한 ARXML로 HSIS를 다시 검사했습니다.');});
+}
+
+/* ---------- auto-routing (2-layer grid router, src/route/autoroute.js) ---------- */
+HS.ar={power:false,running:false,last:null,prog:'',sig:0.2,pwr:0.3,clr:0.2};
+function arNets(){
+  if(!HS.H||!BD)return[];const A=HS.ar;
+  const sig=new Set(HS.H.items.filter(i=>!/전원|접지/.test(i._cat||i.cat||'')).map(i=>hsisNetOf(i)).filter(Boolean));
+  return AUTOROUTE.openNets(BD,n=>BD.netClass(n)==='전원'?A.power:sig.has(n)).map(o=>o.net);
+}
+function arHTML(){
+  const A=HS.ar,open=arNets(),pending=HS.rec.res&&HS.rec.res.recs?HS.rec.res.recs.filter(r=>r.status==='change'||r.status==='new').length:0;
+  const L=A.last;const auto=BD.vias.some(v=>v.auto)||['T','B'].some(s=>BD.layers[s+'.cu'].some(p=>p.auto));
+  return`<div class="arbox"><div class="arh"><b>자동 배선</b><span class="rid">2층 · 격자 0.1 mm · 비아 0.6/0.3 mm</span></div>
+    <div class="arset"><label>신호 폭<input type="number" step="0.05" min="0.1" max="1" id="arSig" value="${A.sig}"> mm</label><label>전원 폭<input type="number" step="0.05" min="0.1" max="1.5" id="arPwr" value="${A.pwr}"> mm</label><label>간격<input type="number" step="0.05" min="0.1" max="1" id="arClr" value="${A.clr}"> mm</label>
+      <label class="chkl"><input type="checkbox" id="arPower" ${A.power?'checked':''}> 전원 넷 포함 (GND·동박면 넷 제외)</label></div>
+    <div class="acts"><button class="btn primary sm" id="arRun" ${A.running||!open.length?'disabled':''}>${A.running?'배선 중…':`자동 배선 (${open.length}개 넷)`}</button>${auto&&!A.running?'<button class="btn ghost sm" id="arClear">자동 배선 지우기</button><button class="btn sm" id="arView">보드에서 보기</button>':''}</div>
+    <p class="lead" id="arProg">${A.running?esc(A.prog):pending?`아직 적용하지 않은 추천이 ${pending}개 있습니다. 먼저 적용하면 그 신호도 함께 배선합니다.`:open.length?'HSIS 신호 중 아직 동박으로 이어지지 않은 넷을 배선합니다. 짧은 넷부터 그리고, 실패한 넷은 순서를 바꿔 최대 3번 다시 시도합니다.':'배선할 열린 넷이 없습니다.'}</p>
+    ${L&&!A.running?`<div class="arres"><span class="sv ${L.fail.length?'warn':'ok'}"><i aria-hidden="true">${L.fail.length?'!':'✓'}</i>${L.ok}/${L.results.length} 넷 완료</span><span>트랙 ${L.len.toFixed(0)} mm</span><span>비아 ${L.vias}</span><span>간격 위반 ${L.drc}건</span><span>${L.attempt}번째 시도 · ${(L.ms/1000).toFixed(1)} s</span></div>
+      ${L.fail.length?`<ul class="chk">${L.fail.map(f=>`<li>${pill('warn')}<div><b class="mono">${esc(f.net)}</b><span>${esc(f.why)} — 다른 배선을 지우고 핀 추천을 바꾸거나 간격·폭을 줄여 다시 시도해 보세요.</span></div></li>`).join('')}</ul>`:''}`:''}
+    <p class="lead">설계 규칙: 트랙 폭과 간격을 지키도록 격자에서 경로를 찾고, 다른 넷의 패드·트랙·비아·구멍·보드 가장자리(0.4 mm)를 피합니다. 결과는 검토용 초안입니다(차동 쌍·길이 맞춤·임피던스는 다루지 않음).</p></div>`;
+}
+function arAfter(){if(typeof SV!=='undefined')SV.data=null;stats();if(typeof updateTextures==='function'&&G3)updateTextures();refresh(false);renderHSIS();}
+async function arRun(){
+  const A=HS.ar;if(A.running)return;const nets=arNets();if(!nets.length)return;
+  A.running=true;A.prog='배선 준비 중…';renderHSIS();await new Promise(r=>setTimeout(r,30));
+  const t0=performance.now();const it=AUTOROUTE.job(BD,nets,{width:{signal:A.sig,power:A.pwr},clear:A.clr});let r,last=performance.now();
+  try{
+    for(;;){r=it.next();if(r.done)break;const p=r.value;A.prog=`자동 배선 중… ${p.att+1}번째 시도 · ${p.i+1}/${p.total} · ${p.net}`;
+      if(performance.now()-last>60){const el=$('#arProg');if(el)el.textContent=A.prog;await new Promise(res=>setTimeout(res,0));last=performance.now();}}
+    const res=r.value;res.ms=performance.now()-t0;res.drc=AUTOROUTE.drc(BD,{clear:A.clr}).length;A.last=res;A.added=res.added;
+    toast(`자동 배선: ${res.ok}/${res.results.length} 넷 완료, 트랙 ${res.len.toFixed(0)} mm, 비아 ${res.vias}개${res.fail.length?` · 실패 ${res.fail.length}개`:''}.`);
+  }catch(e){console.error(e);toast('자동 배선 중 오류: '+(e.message||e));}
+  A.running=false;arAfter();
+}
+function bindAr(B){
+  const A=HS.ar;
+  const num=(id,k,min,max)=>B.querySelector(id)?.addEventListener('change',e=>{const v=parseFloat(e.target.value);if(isFinite(v))A[k]=Math.max(min,Math.min(max,v));e.target.value=A[k];});
+  num('#arSig','sig',0.1,1);num('#arPwr','pwr',0.1,1.5);num('#arClr','clr',0.1,1);
+  B.querySelector('#arPower')?.addEventListener('change',e=>{A.power=e.target.checked;renderHSIS();});
+  B.querySelector('#arRun')?.addEventListener('click',arRun);
+  B.querySelector('#arClear')?.addEventListener('click',()=>{AUTOROUTE.unroute(BD);A.last=null;arAfter();toast('자동 배선한 트랙과 비아를 지웠습니다.');});
+  B.querySelector('#arView')?.addEventListener('click',()=>{setWorkspace('board');setView('T');S.selRef=null;S.hlNet=null;refresh(true);});
 }

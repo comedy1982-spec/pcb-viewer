@@ -92,3 +92,20 @@ test('STM32 BLDC: existing pins stay, HAL/LL use the datasheet AF numbers', () =
   assert.equal(pa.afr[1] & 0xf, 2);      // PA8 AF2
   assert.equal((pa.moder >> 8) & 3, 1);  // PA4 output (LED)
 });
+
+test('TC364: auto-routing joins every applied signal net without clearance violations', () => {
+  const { AUTOROUTE } = load();
+  const B = board(SAMPLE_TC364), H = hsis('tc364'); HSIS.check(B, H, null, 'U1');
+  PINREC.apply(B, H, PINREC.recommend(B, H, 'U1', { mode: 'keep' }));
+  const sig = new Set(H.items.filter((i) => !/전원|접지|클럭|리셋|부트/.test(i._cat)).map((i) => i.net));
+  const nets = AUTOROUTE.openNets(B, (n) => sig.has(n) && B.netClass(n) !== '전원').map((o) => o.net);
+  assert.ok(nets.length >= 20);
+  const R = AUTOROUTE.route(B, nets, {});
+  assert.equal(R.fail.length, 0, R.fail.map((f) => f.net).join());
+  assert.equal(AUTOROUTE.openNets(B, (n) => nets.includes(n)).length, 0);
+  assert.equal(AUTOROUTE.drc(B).length, 0);
+  assert.ok(B.nets.IN_W.tracks.some((t) => t.auto));
+  AUTOROUTE.unroute(B);
+  assert.ok(!B.vias.some((v) => v.auto) && !B.layers['T.cu'].some((p) => p.auto));
+  assert.equal(AUTOROUTE.openNets(B, (n) => nets.includes(n)).length, nets.length);
+});
