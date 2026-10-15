@@ -177,6 +177,48 @@ function thermalSolve(grid,env,P){
   return{T,tmax,tmin,iters:sol.it};
 }
 
+/* ---------- thermal, 2-layer board (top/bottom copper sheets coupled through FR-4 and thermal vias) ----------
+   grid: {nx,ny,a(m),mask,covT,covB,viaG(W/K per cell, vertical via conductance), pkgT/pkgB (extra sheet conductance of package
+         lead frames / exposed pads that spread heat over the footprint)}
+   env:  {t(mm), cuT, cuB (µm), kxy, kz (FR-4 W/m·K), kcu, hT, hB (convection W/m²K), eps, Ta}
+   Radiation is linearised around the mean board temperature and refined over a few outer passes. */
+const SIGMA=5.670e-8;
+function hRad(eps,Ta,Tm){const a=Ta+273.15,b=Tm+273.15;return eps*SIGMA*(a*a+b*b)*(a+b);}
+function thermalSolve2(grid,env,Pt,Pb,extra){
+  // extra: junction nodes [{cells:[k], layer:'T'|'B', gB (W/K junction→board), gA (W/K junction→ambient via TIM/housing), P}]
+  extra=extra||[];
+  const{nx,ny,a,mask,covT,covB,viaG}=grid;const n=nx*ny;
+  const tb=env.t*1e-3,kcu=env.kcu||390,kxy=env.kxy||0.3,kz=env.kz||0.3;
+  const GsT=new Float64Array(n),GsB=new Float64Array(n),Gz=new Float64Array(n);
+  const pT=grid.pkgT,pB=grid.pkgB;
+  for(let i=0;i<n;i++)if(mask[i]){GsT[i]=kcu*env.cuT*1e-6*covT[i]+kxy*tb/2+(pT?pT[i]:0);GsB[i]=kcu*env.cuB*1e-6*covB[i]+kxy*tb/2+(pB?pB[i]:0);Gz[i]=kz*a*a/tb+(viaG?viaG[i]:0);}
+  const id=new Int32Array(n).fill(-1);let m=0;for(let i=0;i<n;i++)if(mask[i])id[i]=m++;
+  const gh=(x,y)=>2*x*y/(x+y);const nb=[];
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(!mask[k])continue;const u=id[k];
+    if(i+1<nx&&mask[k+1]){nb.push(u,id[k+1],gh(GsT[k],GsT[k+1]),m+u,m+id[k+1],gh(GsB[k],GsB[k+1]));}
+    if(j+1<ny&&mask[k+nx]){nb.push(u,id[k+nx],gh(GsT[k],GsT[k+nx]),m+u,m+id[k+nx],gh(GsB[k],GsB[k+nx]));}
+    nb.push(u,m+u,Gz[k]);}
+  extra.forEach((e,q)=>{const node=2*m+q;const cs=e.cells.filter(k=>id[k]>=0);const g=e.gB/Math.max(1,cs.length);cs.forEach(k=>nb.push(node,(e.layer==='B'?m:0)+id[k],g));});
+  const NB=Float64Array.from(nb),L=NB.length,NN=2*m+extra.length;let Tm=env.Ta+10,sol=null,hrT=0,hrB=0;
+  for(let pass=0;pass<3;pass++){
+    hrT=hRad(env.eps,env.Ta,Tm);hrB=hrT;const gT=(env.hT+hrT)*a*a,gB=(env.hB+hrB)*a*a;
+    const diag=new Float64Array(NN),bb=new Float64Array(NN);extra.forEach((e,q)=>{diag[2*m+q]+=e.gA;bb[2*m+q]+=e.P+e.gA*env.Ta;});
+    for(let k=0;k<n;k++){const u=id[k];if(u<0)continue;diag[u]+=gT;diag[m+u]+=gB;bb[u]+=Pt[k]+gT*env.Ta;bb[m+u]+=Pb[k]+gB*env.Ta;}
+    for(let q=0;q<L;q+=3){diag[NB[q]]+=NB[q+2];diag[NB[q+1]]+=NB[q+2];}
+    const mul=(x,y)=>{for(let i=0;i<NN;i++)y[i]=diag[i]*x[i];for(let q=0;q<L;q+=3){const u=NB[q],v=NB[q+1],g=NB[q+2];y[u]-=g*x[v];y[v]-=g*x[u];}};
+    sol=cg(NN,mul,bb,diag,1e-10,8000);let s=0;for(let i=0;i<2*m;i++)s+=sol.x[i];const nm=s/(2*m);if(Math.abs(nm-Tm)<0.2){Tm=nm;break;}Tm=nm;}
+  const T=new Float32Array(n).fill(NaN),Tb=new Float32Array(n).fill(NaN);let tmax=-1e9,tmin=1e9,qc=0,qr=0;
+  for(let k=0;k<n;k++){const u=id[k];if(u<0)continue;const t1=sol.x[u],t2=sol.x[m+u];T[k]=t1;Tb[k]=t2;tmax=Math.max(tmax,t1,t2);tmin=Math.min(tmin,t1,t2);
+    qc+=env.hT*a*a*(t1-env.Ta)+env.hB*a*a*(t2-env.Ta);qr+=hrT*a*a*(t1-env.Ta)+hrB*a*a*(t2-env.Ta);}
+  const Tj=extra.map((e,q)=>sol.x[2*m+q]),qTop=extra.reduce((a,e,q)=>a+e.gA*(sol.x[2*m+q]-env.Ta),0);
+  return{T,Tb,tmax,tmin,iters:sol.it,qConv:qc,qRad:qr,qTop,hRad:hrT,Tmean:Tm,Tj};
+}
+/* convection coefficient presets (W/m²K): natural convection depends on mounting, forced from air speed (flat-plate fit) */
+function hConv(mode,v){if(mode==='forced'){const s=Math.max(0,v||0);return{hT:7+15*Math.sqrt(s),hB:7+15*Math.sqrt(s)};}
+  if(mode==='nat_h')return{hT:10,hB:5};return{hT:9,hB:9};}
+/* vertical conductance of one plated through hole (barrel ring of plating thickness tp) */
+function viaG(drill,tp,t,kcu){const r=drill*1e-3/2,R=r+tp*1e-6;return(kcu||390)*Math.PI*(R*R-r*r)/(t*1e-3);}
+
 /* ---------- circuit extraction ---------- */
 const REG_RE=/1117|LDO|78L?\d\d|LM317|REGUL|AP2112|XC62|MCP1700|TLV7|LD39|NCP11|SPX|RT9|ME62|HT7|LP29|LM1117|TPS7|MIC52/i;
 function extractCircuit(B){
@@ -388,6 +430,6 @@ function transient(ckt,tstop,steps,probes,ctl){
   return Object.assign({time,data,final:report(C,x,tstop,st),anim:an},{C});
 }
 
-return{parseVal,fmtSI,nominalV,irSolve,siAnalyze,microstrip,thermalSolve,extractCircuit,dcop,transient,IPCmax,IPC};
+return{parseVal,fmtSI,nominalV,irSolve,siAnalyze,microstrip,thermalSolve,thermalSolve2,hConv,hRad,viaG,RHO20,ALPHA,extractCircuit,dcop,transient,IPCmax,IPC};
 })();
 if(typeof module!=='undefined')module.exports=SIM;

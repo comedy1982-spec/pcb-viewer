@@ -542,6 +542,40 @@ body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
 .tcrule>div{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--muted);background:var(--surface)}
 .tcrule>div b{color:var(--fg);font-size:12.5px}
 .tcrule>div.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--fg)}
+/* thermal workflow */
+.thsteps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.thsteps li{border:1px solid var(--line);border-radius:8px;padding:5px 6px;display:flex;flex-direction:column;gap:1px;font-size:11.5px;background:var(--raised);min-width:0}
+.thsteps li b{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.thsteps li span{font-weight:600}
+.thsteps li small{color:var(--muted);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thsteps li.ok{border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
+.thsteps li.ok b{color:var(--good)}
+details.thsec{border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+details.thsec>summary{cursor:pointer;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;font-size:12.5px;list-style:none}
+details.thsec>summary::-webkit-details-marker{display:none}
+details.thsec>summary span{color:var(--muted);font-size:11.5px;text-align:right}
+details.thsec>*:not(summary){margin:0 10px 10px}
+.thgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
+.thgrid .fld input,.thgrid .fld select{width:100%}
+.stbl.thsrc input[type=number]{width:58px}
+.src{font-size:10.5px;border-radius:99px;padding:1px 6px;background:var(--raised);color:var(--muted);white-space:nowrap}
+.src.ds{background:color-mix(in srgb,var(--good) 14%,transparent);color:color-mix(in srgb,var(--good) 70%,var(--fg))}
+.thd{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.kv2{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:2px 8px;font-size:12.5px;align-items:baseline}
+.kv2 span{color:var(--muted)}
+.thstack{display:flex;height:22px;border-radius:6px;overflow:hidden;font-size:10.5px;color:#fff}
+.thstack span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;padding:0 3px}
+.thstack .s1,.thlg .s1{background:#d95926}.thstack .s2,.thlg .s2{background:#ab4017}.thstack .s3,.thlg .s3{background:#4a1c0b}
+.thlg{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--muted)}
+.thlg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.thcurve{width:100%;height:auto}
+.thcurve .ln{fill:none;stroke:var(--accent);stroke-width:2}
+.thcurve .pt{fill:var(--accent)}
+.thcurve .cur{fill:none;stroke:var(--fg);stroke-width:2}
+.thcurve .lim{stroke:var(--critical);stroke-dasharray:4 3}
+.thcurve .lbl{fill:var(--critical);font-size:9px}
+.thcurve .ax{fill:var(--muted);font-size:9px;font-family:var(--f-mono)}
+.chkl{display:flex;gap:6px;align-items:center;font-size:12.5px}
 </style>
 
 </head>
@@ -2077,6 +2111,48 @@ function thermalSolve(grid,env,P){
   return{T,tmax,tmin,iters:sol.it};
 }
 
+/* ---------- thermal, 2-layer board (top/bottom copper sheets coupled through FR-4 and thermal vias) ----------
+   grid: {nx,ny,a(m),mask,covT,covB,viaG(W/K per cell, vertical via conductance), pkgT/pkgB (extra sheet conductance of package
+         lead frames / exposed pads that spread heat over the footprint)}
+   env:  {t(mm), cuT, cuB (µm), kxy, kz (FR-4 W/m·K), kcu, hT, hB (convection W/m²K), eps, Ta}
+   Radiation is linearised around the mean board temperature and refined over a few outer passes. */
+const SIGMA=5.670e-8;
+function hRad(eps,Ta,Tm){const a=Ta+273.15,b=Tm+273.15;return eps*SIGMA*(a*a+b*b)*(a+b);}
+function thermalSolve2(grid,env,Pt,Pb,extra){
+  // extra: junction nodes [{cells:[k], layer:'T'|'B', gB (W/K junction→board), gA (W/K junction→ambient via TIM/housing), P}]
+  extra=extra||[];
+  const{nx,ny,a,mask,covT,covB,viaG}=grid;const n=nx*ny;
+  const tb=env.t*1e-3,kcu=env.kcu||390,kxy=env.kxy||0.3,kz=env.kz||0.3;
+  const GsT=new Float64Array(n),GsB=new Float64Array(n),Gz=new Float64Array(n);
+  const pT=grid.pkgT,pB=grid.pkgB;
+  for(let i=0;i<n;i++)if(mask[i]){GsT[i]=kcu*env.cuT*1e-6*covT[i]+kxy*tb/2+(pT?pT[i]:0);GsB[i]=kcu*env.cuB*1e-6*covB[i]+kxy*tb/2+(pB?pB[i]:0);Gz[i]=kz*a*a/tb+(viaG?viaG[i]:0);}
+  const id=new Int32Array(n).fill(-1);let m=0;for(let i=0;i<n;i++)if(mask[i])id[i]=m++;
+  const gh=(x,y)=>2*x*y/(x+y);const nb=[];
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(!mask[k])continue;const u=id[k];
+    if(i+1<nx&&mask[k+1]){nb.push(u,id[k+1],gh(GsT[k],GsT[k+1]),m+u,m+id[k+1],gh(GsB[k],GsB[k+1]));}
+    if(j+1<ny&&mask[k+nx]){nb.push(u,id[k+nx],gh(GsT[k],GsT[k+nx]),m+u,m+id[k+nx],gh(GsB[k],GsB[k+nx]));}
+    nb.push(u,m+u,Gz[k]);}
+  extra.forEach((e,q)=>{const node=2*m+q;const cs=e.cells.filter(k=>id[k]>=0);const g=e.gB/Math.max(1,cs.length);cs.forEach(k=>nb.push(node,(e.layer==='B'?m:0)+id[k],g));});
+  const NB=Float64Array.from(nb),L=NB.length,NN=2*m+extra.length;let Tm=env.Ta+10,sol=null,hrT=0,hrB=0;
+  for(let pass=0;pass<3;pass++){
+    hrT=hRad(env.eps,env.Ta,Tm);hrB=hrT;const gT=(env.hT+hrT)*a*a,gB=(env.hB+hrB)*a*a;
+    const diag=new Float64Array(NN),bb=new Float64Array(NN);extra.forEach((e,q)=>{diag[2*m+q]+=e.gA;bb[2*m+q]+=e.P+e.gA*env.Ta;});
+    for(let k=0;k<n;k++){const u=id[k];if(u<0)continue;diag[u]+=gT;diag[m+u]+=gB;bb[u]+=Pt[k]+gT*env.Ta;bb[m+u]+=Pb[k]+gB*env.Ta;}
+    for(let q=0;q<L;q+=3){diag[NB[q]]+=NB[q+2];diag[NB[q+1]]+=NB[q+2];}
+    const mul=(x,y)=>{for(let i=0;i<NN;i++)y[i]=diag[i]*x[i];for(let q=0;q<L;q+=3){const u=NB[q],v=NB[q+1],g=NB[q+2];y[u]-=g*x[v];y[v]-=g*x[u];}};
+    sol=cg(NN,mul,bb,diag,1e-10,8000);let s=0;for(let i=0;i<2*m;i++)s+=sol.x[i];const nm=s/(2*m);if(Math.abs(nm-Tm)<0.2){Tm=nm;break;}Tm=nm;}
+  const T=new Float32Array(n).fill(NaN),Tb=new Float32Array(n).fill(NaN);let tmax=-1e9,tmin=1e9,qc=0,qr=0;
+  for(let k=0;k<n;k++){const u=id[k];if(u<0)continue;const t1=sol.x[u],t2=sol.x[m+u];T[k]=t1;Tb[k]=t2;tmax=Math.max(tmax,t1,t2);tmin=Math.min(tmin,t1,t2);
+    qc+=env.hT*a*a*(t1-env.Ta)+env.hB*a*a*(t2-env.Ta);qr+=hrT*a*a*(t1-env.Ta)+hrB*a*a*(t2-env.Ta);}
+  const Tj=extra.map((e,q)=>sol.x[2*m+q]),qTop=extra.reduce((a,e,q)=>a+e.gA*(sol.x[2*m+q]-env.Ta),0);
+  return{T,Tb,tmax,tmin,iters:sol.it,qConv:qc,qRad:qr,qTop,hRad:hrT,Tmean:Tm,Tj};
+}
+/* convection coefficient presets (W/m²K): natural convection depends on mounting, forced from air speed (flat-plate fit) */
+function hConv(mode,v){if(mode==='forced'){const s=Math.max(0,v||0);return{hT:7+15*Math.sqrt(s),hB:7+15*Math.sqrt(s)};}
+  if(mode==='nat_h')return{hT:10,hB:5};return{hT:9,hB:9};}
+/* vertical conductance of one plated through hole (barrel ring of plating thickness tp) */
+function viaG(drill,tp,t,kcu){const r=drill*1e-3/2,R=r+tp*1e-6;return(kcu||390)*Math.PI*(R*R-r*r)/(t*1e-3);}
+
 /* ---------- circuit extraction ---------- */
 const REG_RE=/1117|LDO|78L?\d\d|LM317|REGUL|AP2112|XC62|MCP1700|TLV7|LD39|NCP11|SPX|RT9|ME62|HT7|LP29|LM1117|TPS7|MIC52/i;
 function extractCircuit(B){
@@ -2288,7 +2364,7 @@ function transient(ckt,tstop,steps,probes,ctl){
   return Object.assign({time,data,final:report(C,x,tstop,st),anim:an},{C});
 }
 
-return{parseVal,fmtSI,nominalV,irSolve,siAnalyze,microstrip,thermalSolve,extractCircuit,dcop,transient,IPCmax,IPC};
+return{parseVal,fmtSI,nominalV,irSolve,siAnalyze,microstrip,thermalSolve,thermalSolve2,hConv,hRad,viaG,RHO20,ALPHA,extractCircuit,dcop,transient,IPCmax,IPC};
 })();
 
 
@@ -2808,16 +2884,19 @@ const PARTS=(function(){
 const P={
   'STM32F042K6U6':{mfr:'STMicroelectronics',title:'STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN',cat:'MCU',
     pdf:'https://www.st.com/resource/en/datasheet/stm32f042k6.pdf',page:'https://www.st.com/en/microcontrollers-microprocessors/stm32f042k6.html',file:'STM32F042K6_datasheet.pdf',
+    therm:{tjmax:105,src:'STM32F042 데이터시트 Table 2 (온도 등급 6: TJ 최대 105 °C) · 열저항은 패키지 일반값'},
     specs:[['코어','Arm Cortex-M0, 최대 48 MHz'],['메모리','플래시 32 KB · SRAM 6 KB'],['전원','VDD 2.0–3.6 V · VDDA ≤ 3.6 V (ADC 사용 시 ≥ 2.4 V) · VDDIO2 1.65–3.6 V'],
       ['USB','USB 2.0 FS, 크리스털리스 (HSI48 + CRS) · PA11 DM / PA12 DP'],['타이머','TIM1 고급 제어 (CH1–CH4: PA8–PA11) 외'],['ADC','12비트, ADC_IN0–9 (PA0–PA7, PB0, PB1)'],
       ['패키지','UFQFPN32 5×5 mm · 노출 패드 = VSS · 31번 BOOT0'],['디버그','SWD: PA13 SWDIO / PA14 SWCLK']]},
   'DRV8313PWPR':{mfr:'Texas Instruments',title:'DRV8313 — 2.5 A triple half-bridge driver',cat:'모터 드라이버',
     pdf:'https://www.ti.com/lit/ds/symlink/drv8313.pdf',page:'https://www.ti.com/product/DRV8313',file:'DRV8313_datasheet.pdf',
+    therm:{thJB:5.6,thJC:15.9,psiJT:0.2,tjmax:150,src:'TI DRV8313 데이터시트 Thermal Information (PWP)'},
     specs:[['VM','8–60 V (절대 최대 65 V)'],['출력','상당 2.5 A 피크 · 과전류 3 A 최소'],['RDS(on)','0.24 Ω typ (상단·하단 각, 25 °C)'],
       ['입력 논리','ENx=0 → OUTx 하이 임피던스 · ENx=1, INx=1 → H · INx=0 → L'],['보호','과전류·과열·저전압 → nFAULT (오픈 드레인, 외부 풀업)'],
       ['기타','nSLEEP·nRESET 내부 풀다운 · V3P3 3.3 V 10 mA · 차지 펌프 (CPH–CPL 0.01 µF, VCP–VM 0.1 µF)'],['패키지','HTSSOP-28 (PWP), 써멀 패드 GND']]},
   'AMS1117-3.3':{mfr:'Advanced Monolithic Systems',title:'AMS1117 — 1 A low-dropout regulator',cat:'전원',
     pdf:'http://www.advanced-monolithic.com/pdf/ds1117.pdf',page:'http://www.advanced-monolithic.com/',file:'AMS1117_datasheet.pdf',
+    therm:{thJB:15,thJC:15,psiJT:3,tjmax:125,src:'AMS1117 데이터시트 (θJC 접합–탭 15 °C/W, 탭을 보드에 납땜)'},
     specs:[['출력','3.3 V 고정, 최대 1 A'],['드롭아웃','약 1.1 V (1 A)'],['입력','최대 15 V'],['패키지','SOT-223: 1 GND · 2 VOUT · 3 VIN · 탭 VOUT']]},
   'W25Q32JVSSIQ':{mfr:'Winbond',title:'W25Q32JV — 3 V 32 Mbit serial NOR flash',cat:'메모리',
     page:'https://www.winbond.com/hq/product/code-storage-flash-memory/serial-nor-flash/?__locale=en&partNo=W25Q32JV',file:'W25Q32JV_datasheet.pdf',
@@ -2876,6 +2955,7 @@ const P={
       ['패키지','PG-DSO-8: 1 TxD · 2 GND · 3 VCC · 4 RxD · 5 VIO · 6 CANL · 7 CANH · 8 STB']]},
   'AMS1117-5.0':{mfr:'Advanced Monolithic Systems',title:'AMS1117 — 1 A low-dropout regulator',cat:'전원',
     pdf:'http://www.advanced-monolithic.com/pdf/ds1117.pdf',page:'http://www.advanced-monolithic.com/',file:'AMS1117_datasheet.pdf',
+    therm:{thJB:15,thJC:15,psiJT:3,tjmax:125,src:'AMS1117 데이터시트 (θJC 접합–탭 15 °C/W)'},
     specs:[['출력','5.0 V 고정, 최대 1 A'],['드롭아웃','약 1.1 V (1 A)'],['입력','최대 15 V'],['패키지','SOT-223: 1 GND · 2 VOUT · 3 VIN · 탭 VOUT']]},
   'ABM8-20.000MHZ-B2-T':{mfr:'Abracon',title:'ABM8 — 3.2×2.5 mm SMD crystal, 20 MHz',cat:'크리스털',
     pdf:'https://abracon.com/Resonators/abm8.pdf',file:'Abracon_ABM8.pdf',specs:[['주파수','20 MHz'],['패키지','3.2×2.5 mm, 4패드 (1·3 수정, 2·4 GND)']]},
@@ -4849,7 +4929,7 @@ function simCellsDirty(){if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv&&
 /* ---------- overlays ---------- */
 function drawOverlay(ctx,side){
   const k=ovKey();if(!k)return;
-  if(k==='th'){const R=SR.th;ctx.save();ctx.globalAlpha=0.92;ctx.imageSmoothingEnabled=true;ctx.translate(0,R.ny*R.cell);ctx.scale(R.cell,-R.cell);ctx.drawImage(R.img,0,0);ctx.restore();
+  if(k==='th'){const R=SR.th;const im=R.imgs?R.imgs[side]:R.img;ctx.save();ctx.globalAlpha=0.92;ctx.imageSmoothingEnabled=true;ctx.translate(0,R.ny*R.cell);ctx.scale(R.cell,-R.cell);ctx.drawImage(im,0,0);ctx.restore();
     ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(0.08,BD.W/700);BD.comps.forEach(c=>{if(c.side!==side||c.kind==='none'||!(c.body.w>0))return;const b=c.body;ctx.save();ctx.translate(b.cx,b.cy);ctx.rotate(b.ang*D2R);ctx.strokeRect(-b.w/2,-b.h/2,b.w,b.h);ctx.restore();});return;}
   outlinePath(ctx);ctx.fillStyle='rgba(6,10,12,.62)';ctx.fill('evenodd');ctx.lineCap='round';ctx.lineJoin='round';
   if(k==='ir'){const R=SR.ir,v=SR.irView;const md=Math.max(1e-6,R.Vs-R.vmin,...R.pads.map(p=>R.Vs-p.v).filter(isFinite));
@@ -4870,7 +4950,7 @@ function drawOverlay(ctx,side){
 }
 function overlayTip(h,x,y){
   const k=ovKey();if(!k)return'';const f=SIM.fmtSI;
-  if(k==='th'){const R=SR.th;const i=Math.floor(x/R.cell),j=Math.floor(y/R.cell);if(i<0||j<0||i>=R.nx||j>=R.ny)return'';const T=R.T[j*R.nx+i];return isFinite(T)?`<div>보드 온도 <b>${T.toFixed(1)} °C</b></div>`:'';}
+  if(k==='th'){const R=SR.th;const i=Math.floor(x/R.cell),j=Math.floor(y/R.cell);if(i<0||j<0||i>=R.nx||j>=R.ny)return'';const T=R.T[j*R.nx+i],Tb=R.Tb?R.Tb[j*R.nx+i]:NaN;const c=h&&h.c&&R.hot&&R.hot.find(o=>o.ref===h.c.ref&&o.Tj!=null);return isFinite(T)?`<div>${S.view==='B'?'하단':'상단'} <b>${(S.view==='B'&&isFinite(Tb)?Tb:T).toFixed(1)} °C</b>${isFinite(Tb)?` · ${S.view==='B'?'상단':'하단'} ${(S.view==='B'?T:Tb).toFixed(1)} °C`:''}</div>${c?`<div>${esc(c.ref)} Tj <b>${c.Tj.toFixed(1)} °C</b> · 마진 ${c.margin.toFixed(1)} °C</div>`:''}`:'';}
   if(!h)return'';
   if(k==='ir'){const R=SR.ir;if(h.net!==R.net)return'';
     if(h.type==='track'){let best=null,bd=1e9;R.segs.forEach(s=>{if(s.L!==h.side)return;const d=PCB.segDist(x,y,s.a,s.b);if(d<bd){bd=d;best=s;}});if(best)return`<div>${f((best.va+best.vb)/2,'V',3)} · ${f(best.I,'A')} · ΔT ${best.dT.toFixed(1)} °C</div>`;}
@@ -4886,7 +4966,7 @@ function legendHTML(k){
   if(k==='ir'){const R=SR.ir,v=SR.irView;const md=Math.max(0,R.Vs-R.vmin,...R.pads.map(p=>R.Vs-p.v).filter(isFinite));
     const [t,arr,hi]=v==='v'?['전압 강하 · '+R.net,BLUE,SIM.fmtSI(md,'V')]:v==='i'?['트랙 전류 · '+R.net,BLUE,SIM.fmtSI(R.maxI,'A')]:['온도 상승 (IPC-2221) · '+R.net,ORANGE,Math.max(R.maxDT,1).toFixed(1)+' °C'];
     el.innerHTML=`<span class="lt">${esc(t)}</span>${bar(arr)}<div class="lr"><span>0</span><span>${hi}</span></div>`;}
-  else if(k==='th'){const R=SR.th;el.innerHTML=`<span class="lt">보드 온도</span>${bar(ORANGE)}<div class="lr"><span>${R.tmin.toFixed(1)} °C</span><span>${R.tmax.toFixed(1)} °C</span></div>`;}
+  else if(k==='th'){const R=SR.th;el.innerHTML=`<span class="lt">보드 온도 · ${S.view==='B'?'하단':'상단'} 동박층</span>${bar(ORANGE)}<div class="lr"><span>${R.tmin.toFixed(1)} °C</span><span>${R.tmax.toFixed(1)} °C</span></div>`;}
   else if(k==='si'){el.innerHTML=`<span class="lt">특성 임피던스 · 목표 ${SR.cfg.si.z} Ω</span><div class="chips"><span><i style="background:${STATUS.good}"></i>±10% 이내</span><span><i style="background:${STATUS.warn}"></i>±25% 이내</span><span><i style="background:${STATUS.crit}"></i>벗어남</span></div>`;}
   else if(k==='sp'){const vmax=Math.max(0.1,...Object.values(SR.sp.nets).map(Math.abs));el.innerHTML=`<span class="lt">넷 전압 · ${esc(SR.sp.label)}</span>${bar(BLUE)}<div class="lr"><span>0 V</span><span>${vmax.toFixed(2)} V</span></div>`;}
   return html;
@@ -4987,26 +5067,42 @@ function siBind(b){
   b.querySelectorAll('[data-sinet]').forEach(r=>r.addEventListener('click',()=>{const n=r.dataset.sinet;S.hlNet=S.hlNet===n?null:n;S.selRef=null;renderSim();refresh(false);}));
 }
 
-/* ---------- thermal ---------- */
+/* ---------- thermal: 2-layer board solver + junction network (θJB / θJC + TIM + housing), per the PCB thermal workflow ----------
+   1 stack-up (copper per layer, FR-4 k, thermal vias) → 2 heat sources (P, θ, Tj,max) → 3 boundary (Ta, h, ε, Joule heating)
+   → 4 mesh & solve → 5 Tj / hotspot margin, with measured correlation Tj = Ttop + ΨJT·P */
+const PKG_TH={'QFN-32':{thJB:12,thJC:20,psiJT:0.5,tjmax:125},'TQFP-144':{thJB:10,thJC:8,psiJT:0.3,tjmax:150},'HTSSOP-28':{thJB:6,thJC:16,psiJT:0.2,tjmax:150},'HTSSOP-20':{thJB:8,thJC:18,psiJT:0.3,tjmax:150},
+  'SOT-223':{thJB:15,thJC:15,psiJT:3,tjmax:125},'SOIC-8':{thJB:50,thJC:55,psiJT:5,tjmax:125},'SOT-23':{thJB:60,thJC:90,psiJT:5,tjmax:150},'SMA':{thJB:30,thJC:30,psiJT:5,tjmax:150},'LED-0603':{thJB:150,thJC:200,psiJT:20,tjmax:110}};
+const TH_TA=[[25,'상온'],[65,'산업·밀폐 장비'],[85,'차량 실내'],[105,'엔진룸 (경)'],[125,'엔진룸·파워트레인']];
+const TH_EPS=[[0.9,'솔더마스크 (0.85–0.90)'],[0.95,'흑색 코팅'],[0.1,'무처리 금속 (0.05–0.15)']];
+const TH_MAT=[['ADC12',96,'알루미늄 다이캐스팅 ADC12 (92–105)'],['A6063',180,'알루미늄 압출 A6061/A6063 (160–200)'],['AZ91D',73,'마그네슘 AZ91D (72–75)'],['PCABS',0.2,'PC/ABS 플라스틱 (0.18–0.25)']];
+const TH_TIM=[[3,'갭 패드 3.0 (1.5–6.0)'],[1.5,'저가 갭 패드 1.5'],[5,'써멀 그리스 5.0 (3.0–8.5)'],[10,'카본·세라믹·PCM 10 (8–15+)']];
+const TH_PRESET={tc364:{U1:0.9,U3:0.6,U2:0.84,U6:0.43,U4:0.08,U5:0.05},bldc:{U3:0.35,U2:0.18,U1:0.05},mcu:{U2:0.03,U1:0.05,Q1:0.02,D1:0.05,R5:0.01}};
+const thIsJ=c=>/^(ic|diode|led)$/.test(c.kind);
+function thDefaults(c){const db=typeof PARTS!=='undefined'?PARTS.find(c.mpn)||PARTS.find(c.val):null;const pk=PKG_TH[c.fp]||{thJB:20,thJC:25,psiJT:1,tjmax:125};const t=db&&db.therm||{};
+  const o={thJB:t.thJB!=null?t.thJB:pk.thJB,thJC:t.thJC!=null?t.thJC:pk.thJC,psiJT:t.psiJT!=null?t.psiJT:pk.psiJT,tjmax:t.tjmax!=null?t.tjmax:pk.tjmax,top:false};
+  o.src=t.thJB!=null?'DS':t.tjmax!=null?'DS·추정':'추정';o.note=t.src||`${c.fp||'패키지'} 일반값 (추정)`;return o;}
 function thConfig(){
-  if(SR.cfg.th)return SR.cfg.th;const P={};
-  BD.comps.forEach(c=>{if(c.kind!=='none')P[c.ref]=0;});
+  if(SR.cfg.th)return SR.cfg.th;const P={},J={};
+  BD.comps.forEach(c=>{if(c.kind==='none')return;P[c.ref]=0;if(thIsJ(c))J[c.ref]=thDefaults(c);});
   if(BD.source==='예제'&&!BD.demo)Object.assign(P,{U2:0.45,U1:0.12,U3:0.03,D1:0.008,R2:0.006});
-  if(BD.demo==='mcu')Object.assign(P,{M1:0.9,U2:0.03,U1:0.05,Q1:0.02,D1:0.05,R5:0.01});
-  if(BD.demo==='bldc')Object.assign(P,{M1:2.5,U3:0.35,U2:0.18,U1:0.05});
-  SR.cfg.th={P,res:160};return SR.cfg.th;
+  if(BD.demo==='bldc')P.M1=0;Object.assign(P,TH_PRESET[BD.demo]||{});
+  SR.cfg.th={P,J,res:160,Ta:ENV.Ta,conv:'nat_v',v:0,eps:0.9,cuT:ENV.cu,cuB:ENV.cu,plating:25,kz:0.3,kxy:0.3,tim:{k:3,blt:1.0},house:{mat:'ADC12',area:200,wall:2},I:{},irJ:false,meas:{},sel:null,layer:'T',open:{stack:false,src:true,tim:false,bc:true}};
+  return SR.cfg.th;
 }
-function coverageGrid(res){
+function coverageGrid(res,plating){
   const cell=Math.max(BD.W,BD.H)/res,nx=Math.ceil(BD.W/cell),ny=Math.ceil(BD.H/cell),n=nx*ny;
   const cv=document.createElement('canvas');cv.width=nx;cv.height=ny;const c=cv.getContext('2d',{willReadFrequently:true});
   const read=()=>c.getImageData(0,0,nx,ny).data;const setT=()=>{c.setTransform(1/cell,0,0,-1/cell,0,ny);};
   c.clearRect(0,0,nx,ny);setT();outlinePath(c);c.fillStyle='#fff';c.fill('evenodd');let d=read();
   const mask=new Uint8Array(n);for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){mask[j*nx+i]=d[((ny-1-j)*nx+i)*4+3]>110?1:0;}
-  const cov=new Float32Array(n);
-  ['T','B'].forEach(L=>{c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,nx,ny);setT();c.lineCap='round';c.lineJoin='round';
+  const covT=new Float32Array(n),covB=new Float32Array(n);
+  ['T','B'].forEach(L=>{const cov=L==='T'?covT:covB;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,nx,ny);setT();c.lineCap='round';c.lineJoin='round';
     drawPrims(c,BD.layers[L+'.cu'],p=>p.t==='text'||p.clear?null:'#fff',{clear:'#fff'});c.fillStyle='#fff';BD.vias.forEach(v=>circ(c,v.x,v.y,v.d/2));
-    d=read();for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)cov[j*nx+i]+=d[((ny-1-j)*nx+i)*4+3]/255;});
-  return{nx,ny,cell,a:cell*1e-3,mask,cov};
+    d=read();for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)cov[j*nx+i]=d[((ny-1-j)*nx+i)*4+3]/255;});
+  // thermal vias: every via and plated hole adds a copper barrel between the layers
+  const viaG=new Float64Array(n);let nv=0;const put=(x,y,dr)=>{const i=Math.floor(x/cell),j=Math.floor(y/cell);if(i<0||j<0||i>=nx||j>=ny)return;viaG[j*nx+i]+=SIM.viaG(dr,plating,BD.t);nv++;};
+  BD.vias.forEach(v=>put(v.x,v.y,v.drill||0.3));BD.drills.forEach(h=>{if(h.plated)put(h.x,h.y,h.d);});
+  return{nx,ny,cell,a:cell*1e-3,mask,covT,covB,cov:covT,viaG,nv};
 }
 function compCells(c,g){
   const b=c.body,out=[];const a=-b.ang*D2R,ca=Math.cos(a),sa=Math.sin(a);
@@ -5015,42 +5111,154 @@ function compCells(c,g){
   if(!out.length){const i=Math.min(g.nx-1,Math.max(0,Math.floor(b.cx/g.cell))),j=Math.min(g.ny-1,Math.max(0,Math.floor(b.cy/g.cell)));out.push(j*g.nx+i);}
   return out;
 }
+function inBody(c,x,y){const b=c.body;const a=-b.ang*D2R,dx=x-b.cx,dy=y-b.cy;const lx=dx*Math.cos(a)-dy*Math.sin(a),ly=dx*Math.sin(a)+dy*Math.cos(a);return Math.abs(lx)<=b.w/2&&Math.abs(ly)<=b.h/2;}
+// Joule heating of high-current copper: I²R per segment with the copper temperature coefficient
+function jouleMap(cfg,g,Tt,Tb){
+  const Pt=new Float64Array(g.nx*g.ny),Pb=new Float64Array(g.nx*g.ny);let tot=0;const segs=[];
+  if(cfg.irJ&&SR.ir&&SR.ir.segs)SR.ir.segs.forEach(s=>{if(s.I>0)segs.push({a:s.a,b:s.b,w:s.w,L:s.L,I:s.I});});
+  Object.entries(cfg.I).forEach(([net,I])=>{if(!(I>0)||!BD.nets[net])return;BD.nets[net].tracks.forEach(t=>{const L=BD.layers['B.cu'].includes(t)?'B':'T';const q=t.pts||[t.a,t.b];for(let i=1;i<q.length;i++)segs.push({a:q[i-1],b:q[i],w:t.w,L,I});});});
+  segs.forEach(s=>{const len=Math.hypot(s.b[0]-s.a[0],s.b[1]-s.a[1]);if(len<1e-6)return;const n=Math.max(1,Math.ceil(len/g.cell));const cu=(s.L==='B'?cfg.cuB:cfg.cuT)*1e-6;
+    for(let k=0;k<n;k++){const x=s.a[0]+(s.b[0]-s.a[0])*(k+0.5)/n,y=s.a[1]+(s.b[1]-s.a[1])*(k+0.5)/n;const i=Math.floor(x/g.cell),j=Math.floor(y/g.cell);if(i<0||j<0||i>=g.nx||j>=g.ny)continue;const id=j*g.nx+i;
+      const T=(s.L==='B'?Tb:Tt)?.[id];const rho=SIM.RHO20*(1+SIM.ALPHA*((isFinite(T)?T:cfg.Ta)-20));const p=s.I*s.I*rho*(len/n*1e-3)/(s.w*1e-3*cu);(s.L==='B'?Pb:Pt)[id]+=p;tot+=p;}});
+  return{Pt,Pb,tot,n:segs.length};
+}
+function housingR(cfg,A,h){const m=TH_MAT.find(x=>x[0]===cfg.house.mat)||TH_MAT[0];const Ah=Math.max(1e-4,cfg.house.area*1e-4);const hh=(h?h.hT:9)+SIM.hRad(cfg.eps,cfg.Ta,cfg.Ta+20);
+  return cfg.house.wall*1e-3/(m[1]*A)+1/(hh*Ah);}
 function runTH(){
-  const cfg=thConfig();const g=coverageGrid(cfg.res);const P=new Float64Array(g.nx*g.ny);let tot=0;
-  const cells={};BD.comps.forEach(c=>{const w=+cfg.P[c.ref]||0;cells[c.ref]=compCells(c,g);if(w>0){tot+=w;const cs=cells[c.ref];cs.forEach(k=>{P[k]+=w/cs.length;});}});
-  if(!(tot>0)){SR.th={error:'소비전력이 0입니다. 부품별 전력을 넣어 주세요.'};return;}
-  const r=SIM.thermalSolve(g,{t:BD.t,cu:ENV.cu,hconv:ENV.hconv,Ta:ENV.Ta},P);
-  const img=document.createElement('canvas');img.width=g.nx;img.height=g.ny;const ic=img.getContext('2d');const id=ic.createImageData(g.nx,g.ny);
-  const span=Math.max(1e-6,r.tmax-ENV.Ta);
-  for(let j=0;j<g.ny;j++)for(let i=0;i<g.nx;i++){const k=j*g.nx+i,T=r.T[k];const o=((g.ny-1-j)*g.nx+i)*4;if(!isFinite(T)){id.data[o+3]=0;continue;}const t=(T-ENV.Ta)/span;const c=rampRGB(ORANGE,t);id.data[o]=c[0];id.data[o+1]=c[1];id.data[o+2]=c[2];id.data[o+3]=Math.round(255*(0.18+0.8*Math.min(1,t*1.3)));}
-  ic.putImageData(id,0,0);
-  const hot=BD.comps.filter(c=>c.kind!=='none').map(c=>({ref:c.ref,val:c.val,P:+cfg.P[c.ref]||0,T:Math.max(...cells[c.ref].map(k=>r.T[k]).filter(isFinite))})).filter(x=>isFinite(x.T)).sort((a,b)=>b.T-a.T);
-  SR.th=Object.assign(r,{img,nx:g.nx,ny:g.ny,cell:g.cell,tot,hot,tmin:Math.min(ENV.Ta,r.tmin)});SR.stale.th=false;
+  const cfg=thConfig();const g=coverageGrid(cfg.res,cfg.plating);const n=g.nx*g.ny;const h=SIM.hConv(cfg.conv,cfg.v);
+  const cells={};BD.comps.forEach(c=>{cells[c.ref]=compCells(c,g);});
+  // package lead frame / exposed pad spreads heat over the footprint (≈ 0.2 mm copper slug)
+  g.pkgT=new Float64Array(n);g.pkgB=new Float64Array(n);BD.comps.forEach(c=>{if(!thIsJ(c))return;const arr=c.side==='B'?g.pkgB:g.pkgT;cells[c.ref].forEach(k=>{arr[k]=390*0.2e-3;});});
+  const comps=BD.comps.filter(c=>(+cfg.P[c.ref]||0)>0);let ptot=comps.reduce((a,c)=>a+(+cfg.P[c.ref]),0);
+  if(!(ptot>0)&&!Object.values(cfg.I).some(v=>v>0)&&!cfg.irJ){SR.th={error:'소비전력이 0입니다. 부품별 전력을 넣어 주세요.'};return;}
+  const env={t:BD.t,cuT:cfg.cuT,cuB:cfg.cuB,kxy:cfg.kxy,kz:cfg.kz,hT:h.hT,hB:h.hB,eps:cfg.eps,Ta:cfg.Ta};
+  // components with a top path (TIM + housing) become junction nodes of the network: P splits between board and housing
+  const topC=comps.filter(c=>cfg.J[c.ref]&&cfg.J[c.ref].top);const extra=topC.map(c=>{const J=cfg.J[c.ref];const A=Math.max(1e-6,c.body.w*c.body.h*1e-6);
+    return{ref:c.ref,cells:cells[c.ref],layer:c.side==='B'?'B':'T',gB:1/J.thJB,gA:1/(J.thJC+cfg.tim.blt*1e-3/(cfg.tim.k*A)+housingR(cfg,A,h)),P:+cfg.P[c.ref]};});
+  let r=null,jl=null;
+  for(let it=0;it<2;it++){
+    const Pt=new Float64Array(n),Pb=new Float64Array(n);
+    comps.forEach(c=>{if(topC.includes(c))return;const w=+cfg.P[c.ref];const cs=cells[c.ref];const arr=c.side==='B'?Pb:Pt;cs.forEach(k=>{arr[k]+=w/cs.length;});});
+    jl=jouleMap(cfg,g,r&&r.T,r&&r.Tb);for(let k=0;k<n;k++){Pt[k]+=jl.Pt[k];Pb[k]+=jl.Pb[k];}
+    r=SIM.thermalSolve2(g,env,Pt,Pb,extra);if(!jl.n)break;}
+  const share={};comps.forEach(c=>{share[c.ref]=1;});extra.forEach((e,q)=>{share[e.ref]=e.P>0?Math.max(0,Math.min(1,1-e.gA*(r.Tj[q]-cfg.Ta)/e.P)):1;});
+  const res=BD.comps.filter(c=>c.kind!=='none').map(c=>{const P=+cfg.P[c.ref]||0,cs=cells[c.ref];const Ton=c.side==='B'?r.Tb:r.T,Toff=c.side==='B'?r.T:r.Tb;
+    const Tb=avgT(Ton,cs),Tbmax=Math.max(...cs.map(k=>Ton[k]).filter(isFinite)),Tback=avgT(Toff,cs);const J=cfg.J[c.ref];const o={ref:c.ref,val:c.val,P,Tb,Tbmax,Tback,side:c.side};
+    if(J){const Pb=P*(share[c.ref]??1),Ptop=P-Pb;o.Pb=Pb;o.Ptop=Ptop;const q=extra.findIndex(e=>e.ref===c.ref);o.Tj=q>=0?r.Tj[q]:Tb+Pb*J.thJB;o.tjmax=J.tjmax;o.margin=J.tjmax-o.Tj;o.J=J;
+      o.dPkg=o.Tj-Tb;o.dVert=Tb-Tback;o.dSpread=Tback-cfg.Ta;o.Ttop=o.Tj-P*J.psiJT;
+      let N=0;const dr=[];BD.vias.forEach(v=>{if(inBody(c,v.x,v.y)){N++;dr.push(v.drill||0.3);}});BD.drills.forEach(d=>{if(d.plated&&inBody(c,d.x,d.y)){N++;dr.push(d.d);}});
+      const A=Math.max(1e-6,c.body.w*c.body.h*1e-6),gFr=cfg.kz*A/(BD.t*1e-3),g1=SIM.viaG(dr.length?dr.reduce((a,b)=>a+b,0)/dr.length:0.3,cfg.plating,BD.t);
+      o.vias={N,gFr,g1,Rvia:N?1/(N*g1):Infinity,Rvert:1/(gFr+N*g1)};
+      const R0=Pb>0?Math.max(1e-3,o.dVert/Pb):1/gFr,G0=Math.max(gFr*0.25,1/R0-N*g1);o.vias.Rvert=R0;
+      o.curve=[0,2,4,6,9,12,16,20,25,30,36].map(k=>({N:k,Tj:cfg.Ta+o.dSpread+o.dPkg+Pb/(G0+k*g1)}));}
+    return o;}).sort((a,b)=>(b.Tj??b.Tbmax)-(a.Tj??a.Tbmax));
+  const mk=(T)=>{const img=document.createElement('canvas');img.width=g.nx;img.height=g.ny;const ic=img.getContext('2d');const id=ic.createImageData(g.nx,g.ny);const span=Math.max(1e-6,r.tmax-cfg.Ta);
+    for(let j=0;j<g.ny;j++)for(let i=0;i<g.nx;i++){const k=j*g.nx+i,v=T[k];const o=((g.ny-1-j)*g.nx+i)*4;if(!isFinite(v)){id.data[o+3]=0;continue;}const t=(v-cfg.Ta)/span;const c=rampRGB(ORANGE,t);id.data[o]=c[0];id.data[o+1]=c[1];id.data[o+2]=c[2];id.data[o+3]=Math.round(255*(0.18+0.8*Math.min(1,t*1.3)));}
+    ic.putImageData(id,0,0);return img;};
+  const js=res.filter(x=>x.Tj!=null);const worst=js.slice().sort((a,b)=>a.margin-b.margin)[0];
+  SR.th=Object.assign(r,{imgs:{T:mk(r.T),B:mk(r.Tb)},img:null,nx:g.nx,ny:g.ny,cell:g.cell,tot:ptot+jl.tot,joule:jl.tot,hot:res,worst,h,Ta:cfg.Ta,nv:g.nv,cells:g.nx*g.ny,tmin:Math.min(cfg.Ta,r.tmin)});
+  SR.th.img=SR.th.imgs.T;SR.stale.th=false;if(!cfg.sel||!res.find(x=>x.ref===cfg.sel))cfg.sel=(worst||res[0]||{}).ref||null;
+}
+const avgT=(T,cs)=>{let s=0,n=0;cs.forEach(k=>{if(isFinite(T[k])){s+=T[k];n++;}});return n?s/n:NaN;};
+const thSt=m=>m==null?['info','—']:m<0?['err','초과']:m<15?['warn','주의']:['ok','정상'];
+const thPill=st=>`<span class="sv ${st[0]}"><i aria-hidden="true">${st[0]==='err'?'✕':st[0]==='warn'?'!':'✓'}</i>${st[1]}</span>`;
+function thCurveSVG(o){
+  const c=o.curve;const xs=c.map(p=>p.N),ys=c.map(p=>p.Tj);const y0=Math.min(...ys,o.tjmax-20),y1=Math.max(...ys,o.tjmax+2);const W=300,H=110,L=34,B=18;
+  const X=n=>L+(n-xs[0])/(xs[xs.length-1]-xs[0])*(W-L-6),Y=t=>H-B-(t-y0)/(y1-y0)*(H-B-8);
+  const path=c.map((p,i)=>`${i?'L':'M'}${X(p.N).toFixed(1)},${Y(p.Tj).toFixed(1)}`).join('');const cur=o.vias.N;const tc=c.find(p=>p.N>=cur)||c[c.length-1];
+  return`<svg class="thcurve" viewBox="0 0 ${W} ${H}" role="img" aria-label="써멀 비아 개수에 따른 정션 온도"><line x1="${L}" y1="${Y(o.tjmax)}" x2="${W-6}" y2="${Y(o.tjmax)}" class="lim"/><text x="${W-8}" y="${Y(o.tjmax)-3}" text-anchor="end" class="lbl">Tj,max ${o.tjmax}</text>
+    <path d="${path}" class="ln"/>${c.map(p=>`<circle cx="${X(p.N)}" cy="${Y(p.Tj)}" r="1.8" class="pt"/>`).join('')}<circle cx="${X(Math.min(cur,36))}" cy="${Y(o.Tj)}" r="4" class="cur"/>
+    <text x="${L-4}" y="${Y(y1)+4}" text-anchor="end" class="ax">${y1.toFixed(0)}</text><text x="${L-4}" y="${H-B}" text-anchor="end" class="ax">${y0.toFixed(0)}</text>
+    ${[0,9,16,25,36].map(n=>`<text x="${X(n)}" y="${H-4}" text-anchor="middle" class="ax">${n}</text>`).join('')}</svg>`;
+}
+function thDetail(o,cfg){
+  if(!o||o.Tj==null)return o?`<p class="lead">${esc(o.ref)}는 정션 모델이 없는 부품입니다. 보드 온도 ${o.Tbmax.toFixed(1)} °C.</p>`:'';
+  const st=thSt(o.margin);const tot=Math.max(1e-6,o.Tj-cfg.Ta);const seg=(v,cls,lab)=>v>0.05?`<span class="${cls}" style="flex:${v}" title="${lab} +${v.toFixed(1)} °C">${v/tot>0.12?`${lab} +${v.toFixed(1)}`:''}</span>`:'';
+  const m=cfg.meas[o.ref];const Tjm=m!=null&&m!==''?(+m)+o.P*o.J.psiJT:null;
+  return`<div class="thd"><div class="acts" style="justify-content:space-between"><b>${esc(o.ref)} ${esc((o.val||'').slice(0,16))}</b>${thPill(st)}</div>
+    <div class="kv2"><span>Tj</span><b>${o.Tj.toFixed(1)} °C</b><span>마진</span><b>${o.margin>=0?'+':''}${o.margin.toFixed(1)} °C</b><span>보드 아래</span><b>${o.Tb.toFixed(1)} °C</b><span>케이스 상단(추정)</span><b>${o.Ttop.toFixed(1)} °C</b></div>
+    <div class="sub">온도 상승 누적 (Ta ${cfg.Ta} °C → Tj)</div>
+    <div class="thstack">${seg(o.dSpread,'s1','확산·대류')}${seg(o.dVert,'s2','수직(FR-4·비아)')}${seg(o.dPkg,'s3','패키지')}</div>
+    <div class="thlg"><span><i class="s1"></i>확산·대류 +${o.dSpread.toFixed(1)}</span><span><i class="s2"></i>수직 +${o.dVert.toFixed(1)}</span><span><i class="s3"></i>패키지 θJB +${o.dPkg.toFixed(1)}</span></div>
+    <div class="sub">써멀 비아 (부품 아래 ${o.vias.N}개 · R<sub>via</sub> ${isFinite(o.vias.Rvia)?o.vias.Rvia.toFixed(1):'∞'} °C/W · 수직 합성 ${o.vias.Rvert.toFixed(1)} °C/W)</div>
+    ${thCurveSVG(o)}<p class="lead" style="margin:0">비아를 늘릴수록 수직 저항은 줄지만, 일정 개수 뒤에는 수평 확산·대류 저항이 병목이 되어 감소 폭이 완만해집니다 (집중 상수 근사).</p>
+    <div class="sub">실측 보정 (Correlation)</div>
+    <label class="fld"><span>측정한 상단 온도 T<sub>top</sub> (IR 카메라·열전대, °C)</span><input type="number" step="0.1" id="th-meas" value="${m!=null?esc(String(m)):''}" placeholder="${o.Ttop.toFixed(1)}"></label>
+    ${Tjm!=null?`<p class="lead" style="margin:0">Tj = T<sub>top</sub> + Ψ<sub>JT</sub>·P = ${(+m).toFixed(1)} + ${o.J.psiJT}×${o.P.toFixed(2)} = <b>${Tjm.toFixed(1)} °C</b> · 해석 대비 ${(o.Tj-Tjm>=0?'+':'')}${(o.Tj-Tjm).toFixed(1)} °C (${((o.Tj-Tjm)/Math.max(1,Tjm-cfg.Ta)*100).toFixed(0)} % of ΔT)</p>`:'<p class="lead" style="margin:0">IR 측정 시 표면 방사율 ε 보정이 필요합니다.</p>'}
+    <p class="lead" style="margin:0">열저항 출처: ${esc(o.J.note)}${o.Ptop>0.001?` · 상부 방열로 ${SIM.fmtSI(o.Ptop,'W')}이 하우징으로 빠짐`:''}</p></div>`;
 }
 function thHTML(){
-  const cfg=thConfig(),R=SR.th;
-  const comps=BD.comps.filter(c=>c.kind!=='none');
-  const rows=comps.map(c=>`<tr><td class="mono">${esc(c.ref)}</td><td>${esc((c.val||'').slice(0,18))}</td><td class="r"><input type="number" min="0" step="0.01" data-pw="${esc(c.ref)}" value="${cfg.P[c.ref]||0}" aria-label="${esc(c.ref)} 소비전력 W" id="pw-${esc(c.ref).replace(/[^\w]/g,'_')}"></td></tr>`).join('');
+  const cfg=thConfig(),R=SR.th;const comps=BD.comps.filter(c=>c.kind!=='none');const h=SIM.hConv(cfg.conv,cfg.v);
+  const ptot=comps.reduce((a,c)=>a+(+cfg.P[c.ref]||0),0),nsrc=comps.filter(c=>(+cfg.P[c.ref]||0)>0).length;
+  const oz=v=>v>=100?'3 oz':v>=60?'2 oz':v>=30?'1 oz':'0.5 oz';
+  const steps=[['1','적층',`2층 · ${oz(cfg.cuT)}/${oz(cfg.cuB)} · ${BD.t} mm`,true],['2','발열원',`${nsrc}개 · ${SIM.fmtSI(ptot,'W')}`,nsrc>0],['3','경계 조건',`Ta ${cfg.Ta} °C · h ${h.hT.toFixed(0)} · ε ${cfg.eps}`,true],
+    ['4','메싱·솔빙',R&&!R.error?`${R.cells} 셀 · ${R.iters} 반복`:`${cfg.res} 칸 격자`,!!(R&&!R.error)],['5','Tj·핫스팟',R&&R.worst?`최소 마진 ${R.worst.margin.toFixed(1)} °C`:'계산 후 판정',!!(R&&R.worst)]];
+  const srcRows=comps.filter(c=>thIsJ(c)||(+cfg.P[c.ref]||0)>0||/^(Q|M)\d/.test(c.ref)).map(c=>{const J=cfg.J[c.ref];const k=esc(c.ref).replace(/[^\w]/g,'_');
+    return`<tr><td class="mono">${esc(c.ref)}<div class="cls">${esc((c.val||'').slice(0,14))}</div></td><td class="r"><input type="number" min="0" step="0.01" data-pw="${esc(c.ref)}" value="${cfg.P[c.ref]||0}" aria-label="${esc(c.ref)} 소비전력 W" id="pw-${k}"></td>
+      ${J?`<td class="r"><input type="number" min="0.1" step="0.1" data-jb="${esc(c.ref)}" value="${J.thJB}" aria-label="${esc(c.ref)} θJB"></td><td class="r"><input type="number" step="5" data-tjm="${esc(c.ref)}" value="${J.tjmax}" aria-label="${esc(c.ref)} Tj max"></td><td><span class="src ${J.src==='DS'?'ds':''}" title="${esc(J.note)}">${esc(J.src)}</span></td><td><input type="checkbox" data-top="${esc(c.ref)}" ${J.top?'checked':''} aria-label="${esc(c.ref)} 상부 방열"></td>`:'<td colspan="4" class="cls">보드 온도만</td>'}</tr>`;}).join('');
+  const pw=BD.netOrder.filter(n=>BD.netClass(n)!=='접지'&&BD.nets[n].tracks.length&&(BD.netClass(n)==='전원'||/PH_|MOTOR|VM|BAT/i.test(n))).slice(0,10);
   let res='';
   if(R&&R.error)res=`<p class="errline">${esc(R.error)}</p>`;
-  else if(R)res=`<div class="res"><h4>결과</h4>${SR.stale.th?'<p class="stale">기판 조건이 바뀌었습니다. 다시 계산하세요.</p>':''}
-    <div class="kpis"><div class="kpi"><b>${R.tmax.toFixed(1)} °C</b><span>보드 최고 온도</span></div><div class="kpi"><b>+${(R.tmax-ENV.Ta).toFixed(1)} °C</b><span>주변 대비 상승 · 총 ${SIM.fmtSI(R.tot,'W')}</span></div></div>
-    <table class="stbl"><thead><tr><th>뜨거운 부품</th><th class="r">전력</th><th class="r">보드 온도</th></tr></thead><tbody>${R.hot.slice(0,6).map(h=>`<tr class="click" data-thref="${esc(h.ref)}"><td class="mono">${esc(h.ref)} <span class="cls">${esc((h.val||'').slice(0,14))}</span></td><td class="r mono">${SIM.fmtSI(h.P,'W')}</td><td class="r mono">${h.T.toFixed(1)} °C</td></tr>`).join('')}</tbody></table>
-    <p class="lead">보드를 얇은 판으로 보고 FR-4와 동박의 면방향 열전도, 양면 공기 냉각만으로 정상 상태를 풀었습니다. 부품 내부(접합) 온도는 여기에 부품의 열저항×전력을 더해야 합니다.</p></div>`;
-  return`<div class="sim"><p class="lead">부품별 소비전력을 넣으면 보드 위 온도 분포를 근사 계산해 열 지도로 보여줍니다. 동박이 많은 곳일수록 열이 잘 퍼집니다.</p>
-  <div class="acts">${SR.sp&&SR.sp.parts?'<button class="btn sm" id="th-imp">회로 결과의 전력 가져오기</button>':''}<button class="btn sm" id="th-ic">IC마다 0.1 W</button><button class="btn sm ghost" id="th-zero">모두 0</button></div>
-  <div class="scroll"><table class="stbl"><thead><tr><th>부품</th><th>값</th><th class="r">W</th></tr></thead><tbody>${rows}</tbody></table></div>
-  <div class="row2"><label class="fld"><span>계산 격자</span><select id="th-res"><option value="120"${cfg.res==120?' selected':''}>빠르게 (120칸)</option><option value="160"${cfg.res==160?' selected':''}>보통 (160칸)</option><option value="260"${cfg.res==260?' selected':''}>정밀 (260칸)</option></select></label><div class="fld"><span>&nbsp;</span><button class="btn primary" id="th-run">열 분포 계산</button></div></div>${res}</div>`;
+  else if(R){const w=R.worst,st=w?thSt(w.margin):['info','—'];const qs=R.qConv+R.qRad;const sel=R.hot.find(x=>x.ref===cfg.sel);
+    res=`<div class="res"><div class="acts" style="justify-content:space-between"><h4>결과</h4><div class="vt" role="group" aria-label="열 지도 층"><button data-thl="T" aria-pressed="${cfg.layer==='T'}">TOP</button><button data-thl="B" aria-pressed="${cfg.layer==='B'}">BOTTOM</button></div></div>${SR.stale.th?'<p class="stale">조건이 바뀌었습니다. 다시 계산하세요.</p>':''}
+    <div class="kpis"><div class="kpi"><b>${w?w.Tj.toFixed(1)+' °C':'—'}</b><span>최고 정션 온도${w?' · '+esc(w.ref):''}</span></div><div class="kpi"><b class="${st[0]==='err'?'c-err':st[0]==='warn'?'c-warn':''}">${w?(w.margin>=0?'+':'')+w.margin.toFixed(1)+' °C':'—'}</b><span>최소 마진 (Tj,max − Tj) · ${st[1]}</span></div>
+      <div class="kpi"><b>${R.tmax.toFixed(1)} °C</b><span>보드 최고 (+${(R.tmax-R.Ta).toFixed(1)} °C)</span></div><div class="kpi"><b>${qs>0?Math.round(R.qRad/qs*100):0} %</b><span>복사 방열 비율 · 대류 ${qs>0?Math.round(R.qConv/qs*100):0} %</span></div></div>
+    <table class="stbl thres"><thead><tr><th>부품</th><th class="r">P</th><th class="r">Tj</th><th class="r">마진</th><th>판정</th></tr></thead><tbody>${R.hot.filter(x=>x.Tj!=null||x.P>0).slice(0,12).map(x=>{const s=thSt(x.margin);return`<tr class="click${cfg.sel===x.ref?' on':''}" data-thref="${esc(x.ref)}"><td class="mono">${esc(x.ref)} <span class="cls">${esc((x.val||'').slice(0,10))}</span></td><td class="r mono">${SIM.fmtSI(x.P,'W')}</td><td class="r mono">${x.Tj!=null?x.Tj.toFixed(1):x.Tbmax.toFixed(1)+'*'}</td><td class="r mono">${x.margin!=null?(x.margin>=0?'+':'')+x.margin.toFixed(1):'—'}</td><td>${x.margin!=null?thPill(s):''}</td></tr>`;}).join('')}</tbody></table>
+    <p class="lead" style="margin:0">* 정션 모델이 없는 부품은 보드 최고 온도. 판정: 마진 15 °C 이상 정상 · 0–15 °C 주의 · 음수 초과.${R.joule>0?` 줄 히팅 ${SIM.fmtSI(R.joule,'W')} 포함.`:''}</p>
+    ${thDetail(sel,cfg)}
+    <p class="lead">모델: 상·하 동박층(면방향 k<sub>Cu</sub>·두께·피복률 + FR-4 k<sub>xy</sub>)을 FR-4 k<sub>z</sub>와 써멀 비아(도금 ${cfg.plating} µm, 보드 비아 ${R.nv}개)로 연결한 2층 판에 양면 대류(h)·선형화 복사(ε, h<sub>rad</sub> ${R.hRad.toFixed(1)} W/m²K)를 경계로 정상 상태를 풉니다. 부품은 2-저항 모델(θ<sub>JB</sub>, 상부 방열 시 θ<sub>JC</sub>+TIM+하우징). 초기 설계 탐색용 근사이며 양산 검증은 3D CFD/FEA와 실측 보정을 병행해야 합니다 (JEDEC JESD51 · IPC-2152 · IPC-2221).</p></div>`;}
+  const sec=(k,title,sum,body)=>`<details class="thsec" data-sec="${k}" ${cfg.open[k]?'open':''}><summary><b>${title}</b><span>${sum}</span></summary>${body}</details>`;
+  return`<div class="sim"><ol class="thsteps">${steps.map(([n,t,d,ok])=>`<li class="${ok?'ok':''}"><b>${n}</b><span>${t}</span><small>${esc(d)}</small></li>`).join('')}</ol>
+  ${sec('stack','① PCB 구조·재질',`${oz(cfg.cuT)}/${oz(cfg.cuB)} · 도금 ${cfg.plating} µm`,`<div class="thgrid">
+    <label class="fld"><span>상단 동박</span><select data-thk="cuT">${[[18,'0.5 oz · 17.5 µm'],[35,'1 oz · 35 µm'],[70,'2 oz · 70 µm'],[105,'3 oz · 105 µm']].map(([v,l])=>`<option value="${v}"${cfg.cuT==v?' selected':''}>${l}</option>`).join('')}</select></label>
+    <label class="fld"><span>하단 동박</span><select data-thk="cuB">${[[18,'0.5 oz · 17.5 µm'],[35,'1 oz · 35 µm'],[70,'2 oz · 70 µm'],[105,'3 oz · 105 µm']].map(([v,l])=>`<option value="${v}"${cfg.cuB==v?' selected':''}>${l}</option>`).join('')}</select></label>
+    <label class="fld"><span>비아 도금 (µm)</span><input type="number" min="10" max="50" step="1" data-thk="plating" value="${cfg.plating}"></label>
+    <label class="fld"><span>FR-4 k<sub>z</sub> (W/m·K)</span><input type="number" min="0.2" max="1" step="0.05" data-thk="kz" value="${cfg.kz}"></label></div>
+    <p class="lead">보드 두께 ${BD.t} mm (보드 데이터). 구리 390 W/m·K 대비 FR-4는 약 0.3 W/m·K로 1,300배 낮아, 수직 방향 열은 써멀 비아가 좌우합니다.</p>`)}
+  ${sec('src','② 부품 발열·열저항',`${nsrc}개 · ${SIM.fmtSI(ptot,'W')}`,`<div class="acts">${SR.sp&&SR.sp.parts?'<button class="btn sm" id="th-imp">회로 결과의 전력 가져오기</button>':''}<button class="btn sm" id="th-ic">IC마다 0.1 W</button><button class="btn sm ghost" id="th-zero">모두 0</button></div>
+    <div class="scroll"><table class="stbl thsrc"><thead><tr><th>부품</th><th class="r">P (W)</th><th class="r">θ<sub>JB</sub></th><th class="r">T<sub>j,max</sub></th><th>출처</th><th title="TIM + 하우징 상부 방열">상부</th></tr></thead><tbody>${srcRows}</tbody></table></div>
+    <p class="lead">θ<sub>JB</sub>(°C/W)·T<sub>j,max</sub>(°C)는 데이터시트 값(DS)이 있으면 그 값을, 없으면 패키지 일반값(추정)을 넣었습니다. 출처에 마우스를 올리면 근거가 보입니다.</p>
+`)}
+  ${sec('tim','③ 방열 부자재·기구물 (TIM·하우징)',Object.values(cfg.J).some(j=>j.top)?`${Object.values(cfg.J).filter(j=>j.top).length}개 부품 상부 방열`:'사용 안 함',`<p class="lead">② 표의 "상부"를 체크한 부품은 θ<sub>JC</sub> → TIM(k, 압축 두께 BLT) → 하우징 벽 → 하우징 표면 대류·복사의 두 번째 경로로도 열을 내보냅니다.</p>
+    <div class="thgrid"><label class="fld"><span>TIM 열전도율 (W/m·K)</span><select data-tim="k">${TH_TIM.map(([v,l])=>`<option value="${v}"${cfg.tim.k==v?' selected':''}>${l}</option>`).join('')}</select></label>
+      <label class="fld"><span>압축 두께 BLT (mm)</span><input type="number" min="0.02" step="0.05" data-tim="blt" value="${cfg.tim.blt}"></label>
+      <label class="fld"><span>하우징 재질</span><select data-house="mat">${TH_MAT.map(([v,k,l])=>`<option value="${v}"${cfg.house.mat===v?' selected':''}>${l} W/m·K</option>`).join('')}</select></label>
+      <label class="fld"><span>하우징 벽 두께 (mm)</span><input type="number" min="0.5" step="0.5" data-house="wall" value="${cfg.house.wall}"></label>
+      <label class="fld"><span>하우징 표면적 (cm²)</span><input type="number" min="10" step="10" data-house="area" value="${cfg.house.area}"></label></div>
+    <p class="lead">미세 공기층(k ≈ 0.026 W/m·K)을 메우는 TIM은 실제 조립 후 압축 두께가 핵심입니다. 플라스틱 하우징은 단열재에 가까워 상부 방열 효과가 거의 없습니다.</p>`)}
+  ${sec('bc','④ 환경·경계 조건',`Ta ${cfg.Ta} °C · ${cfg.conv==='forced'?'강제 대류 '+cfg.v+' m/s':'자연 대류'} · ε ${cfg.eps}${Object.values(cfg.I).some(v=>v>0)||cfg.irJ?' · 줄 히팅':''}`,`<div class="thgrid">
+    <label class="fld"><span>주변 온도 T<sub>a</sub></span><select data-thk="taPre">${TH_TA.map(([v,l])=>`<option value="${v}"${cfg.Ta==v?' selected':''}>${v} °C · ${l}</option>`).join('')}${TH_TA.some(([v])=>v==cfg.Ta)?'':`<option value="${cfg.Ta}" selected>${cfg.Ta} °C · 직접 입력</option>`}</select></label>
+    <label class="fld"><span>직접 입력 (°C)</span><input type="number" step="1" data-thk="Ta" value="${cfg.Ta}"></label>
+    <label class="fld"><span>대류</span><select data-thk="conv"><option value="nat_v"${cfg.conv==='nat_v'?' selected':''}>자연 대류 · 수직 장착</option><option value="nat_h"${cfg.conv==='nat_h'?' selected':''}>자연 대류 · 수평 장착</option><option value="forced"${cfg.conv==='forced'?' selected':''}>강제 대류 (팬)</option></select></label>
+    <label class="fld"><span>풍속 (m/s)</span><input type="number" min="0" max="10" step="0.5" data-thk="v" value="${cfg.v}" ${cfg.conv==='forced'?'':'disabled'}></label>
+    <label class="fld"><span>방사율 ε</span><select data-thk="eps">${TH_EPS.map(([v,l])=>`<option value="${v}"${cfg.eps==v?' selected':''}>${l}</option>`).join('')}</select></label>
+    <div class="fld"><span>대류 계수 h</span><b class="mono">상 ${h.hT.toFixed(0)} · 하 ${h.hB.toFixed(0)} W/m²K</b></div></div>
+    <p class="lead">자연 대류는 장착 방향(수평·수직)에 따라 h가 달라지고, 팬이 없으면 방열의 상당 부분이 복사로 빠집니다. 강제 대류 h ≈ 7 + 15·√v (평판 근사).</p>
+    <div class="sub">대전류 패턴 줄 히팅 (I²R)</div>`+`<p class="lead">넷 전류를 넣으면 트랙 저항 ρ(T)=1.72×10⁻⁸·(1+0.00393·(T−20)) Ω·m로 I²R 발열을 계산해 넣습니다 (트랙 전체에 같은 전류 가정).</p>
+    <div class="thgrid">${pw.map(n=>`<label class="fld"><span class="mono">${esc(n)}</span><input type="number" min="0" step="0.1" data-cur="${esc(n)}" value="${cfg.I[n]||''}" placeholder="A"></label>`).join('')||'<p class="lead">트랙이 있는 전원·모터 넷이 없습니다.</p>'}</div>
+    ${SR.ir&&SR.ir.segs?`<label class="chkl"><input type="checkbox" id="th-irj" ${cfg.irJ?'checked':''}> 전압 강하 해석(${esc(SR.ir.net)})의 트랙별 전류 사용</label>`:''}`)}
+  <div class="row2"><label class="fld"><span>계산 격자</span><select id="th-res"><option value="120"${cfg.res==120?' selected':''}>빠르게 (120칸)</option><option value="160"${cfg.res==160?' selected':''}>보통 (160칸)</option><option value="260"${cfg.res==260?' selected':''}>정밀 (260칸)</option></select></label><div class="fld"><span>&nbsp;</span><button class="btn primary" id="th-run">열 해석 실행</button></div></div>${res}</div>`;
 }
 function thBind(b){
-  const cfg=SR.cfg.th;
-  b.querySelectorAll('[data-pw]').forEach(i=>i.addEventListener('change',()=>{cfg.P[i.dataset.pw]=Math.max(0,num(i.value,0));}));
+  const cfg=SR.cfg.th;const stale=()=>{if(SR.th&&!SR.th.error)SR.stale.th=true;};
+  b.querySelectorAll('details.thsec').forEach(d=>d.addEventListener('toggle',()=>{cfg.open[d.dataset.sec]=d.open;}));
+  b.querySelectorAll('[data-pw]').forEach(i=>i.addEventListener('change',()=>{cfg.P[i.dataset.pw]=Math.max(0,num(i.value,0));stale();}));
+  b.querySelectorAll('[data-jb]').forEach(i=>i.addEventListener('change',()=>{const J=cfg.J[i.dataset.jb];J.thJB=Math.max(0.1,num(i.value,J.thJB));J.src='입력';J.note='사용자 입력';stale();}));
+  b.querySelectorAll('[data-tjm]').forEach(i=>i.addEventListener('change',()=>{const J=cfg.J[i.dataset.tjm];J.tjmax=num(i.value,J.tjmax);stale();}));
+  b.querySelectorAll('[data-top]').forEach(i=>i.addEventListener('change',()=>{cfg.J[i.dataset.top].top=i.checked;stale();renderSim();}));
+  b.querySelectorAll('[data-thk]').forEach(i=>i.addEventListener('change',()=>{const k=i.dataset.thk;if(k==='taPre'||k==='Ta')cfg.Ta=num(i.value,cfg.Ta);else if(k==='conv')cfg.conv=i.value;else cfg[k]=num(i.value,cfg[k]);stale();renderSim();}));
+  b.querySelectorAll('[data-tim]').forEach(i=>i.addEventListener('change',()=>{cfg.tim[i.dataset.tim]=Math.max(0.01,num(i.value,cfg.tim[i.dataset.tim]));stale();}));
+  b.querySelectorAll('[data-house]').forEach(i=>i.addEventListener('change',()=>{const k=i.dataset.house;cfg.house[k]=k==='mat'?i.value:Math.max(0.1,num(i.value,cfg.house[k]));stale();}));
+  b.querySelectorAll('[data-cur]').forEach(i=>i.addEventListener('change',()=>{const v=num(i.value,0);if(v>0)cfg.I[i.dataset.cur]=v;else delete cfg.I[i.dataset.cur];stale();}));
+  b.querySelector('#th-irj')?.addEventListener('change',e=>{cfg.irJ=e.target.checked;stale();});
   b.querySelector('#th-res')?.addEventListener('change',e=>{cfg.res=+e.target.value;});
   b.querySelector('#th-ic')?.addEventListener('click',()=>{BD.comps.forEach(c=>{if(c.kind==='ic')cfg.P[c.ref]=0.1;});renderSim();});
   b.querySelector('#th-zero')?.addEventListener('click',()=>{Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);renderSim();});
   b.querySelector('#th-imp')?.addEventListener('click',()=>{importPower();renderSim();});
   b.querySelector('#th-run')?.addEventListener('click',()=>{const btn=b.querySelector('#th-run');btn.disabled=true;btn.textContent='계산 중…';setTimeout(()=>{try{runTH();}catch(e){console.error(e);SR.th={error:'계산 중 오류: '+e.message};}renderSim();updateLegend();refresh(false);},20);});
-  b.querySelectorAll('[data-thref]').forEach(r=>r.addEventListener('click',()=>{S.selRef=r.dataset.thref;S.hlNet=null;refresh(false);}));
+  b.querySelectorAll('[data-thref]').forEach(r=>r.addEventListener('click',()=>{cfg.sel=r.dataset.thref;S.selRef=r.dataset.thref;S.hlNet=null;renderSim();refresh(false);}));
+  b.querySelectorAll('[data-thl]').forEach(x=>x.addEventListener('click',()=>{cfg.layer=x.dataset.thl;if(SR.th&&SR.th.imgs)SR.th.img=SR.th.imgs[cfg.layer];renderSim();if(S.view==='3d'||S.view!==cfg.layer)setView(cfg.layer);refresh(false);}));
+  b.querySelector('#th-meas')?.addEventListener('change',e=>{const v=e.target.value;if(v==='')delete cfg.meas[cfg.sel];else cfg.meas[cfg.sel]=num(v,null);renderSim();});
 }
 function importPower(){const cfg=thConfig();if(!SR.sp||!SR.sp.parts)return;Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);SR.sp.parts.forEach(p=>{if(p.ref&&cfg.P[p.ref]!=null&&p.P>0)cfg.P[p.ref]=+(cfg.P[p.ref]+p.P).toFixed(4);});}
 
@@ -5142,7 +5350,7 @@ function spBind(b){
   b.querySelectorAll('[data-probe]').forEach(x=>x.addEventListener('click',()=>{const p=x.dataset.probe;cfg.hidden[p]=!cfg.hidden[p];renderSim();}));
   b.querySelectorAll('[data-spnet]').forEach(r=>r.addEventListener('click',()=>{const n=r.dataset.spnet;if(!cfg.probes.includes(n)){cfg.probes.push(n);if(cfg.probes.length>8)cfg.probes.shift();}S.hlNet=n;refresh(false);renderSim();}));
   b.querySelectorAll('#sp-play,#sp-play2').forEach(x=>x.addEventListener('click',()=>{playReset();if(S.view!=='3d'||S.sch==='full'){setView('3d');}toast(SR.sp&&SR.sp.fromTran?'3D 보기에서 과도 해석을 재생합니다. 아래 재생 막대로 멈추거나 시간을 옮길 수 있습니다.':'3D 보기에서 DC 동작점의 LED 밝기와 모터 회전을 보여줍니다.');}));
-  b.querySelector('#sp-th')?.addEventListener('click',()=>{importPower();SR.tab='th';renderSim();updateLegend();refresh(false);toast('회로 해석의 소비전력을 열 해석 표에 넣었습니다. "열 분포 계산"을 누르세요.');});
+  b.querySelector('#sp-th')?.addEventListener('click',()=>{importPower();SR.tab='th';renderSim();updateLegend();refresh(false);toast('회로 해석의 소비전력을 열 해석 표에 넣었습니다. "열 해석 실행"을 누르세요.');});
   const ch=b.querySelector('#spChart');if(ch&&cfg.tran&&!cfg.tran.error)drawChart(ch,cfg);
 }
 function nice(lo,hi,n){const span=hi-lo||1;const step0=span/n;const p=Math.pow(10,Math.floor(Math.log10(step0)));const s=[1,2,2.5,5,10].map(k=>k*p).find(k=>k>=step0);const a=Math.floor(lo/s)*s,b=Math.ceil(hi/s)*s;const t=[];for(let v=a;v<=b+s*1e-6;v+=s)t.push(+v.toFixed(10));return{t,a,b};}
