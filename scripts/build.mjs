@@ -40,6 +40,7 @@ ${script(stripExport(read('src/hsis/hsis.js')))}
 ${script(stripExport(read('src/hsis/pinrec.js')))}
 ${script(stripExport(read('src/hsis/mcal.js')))}
 ${script(stripExport(read('src/route/autoroute.js')))}
+${script(stripExport(read('src/hsis/testgen.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}
 </body>

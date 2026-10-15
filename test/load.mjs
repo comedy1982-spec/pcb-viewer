@@ -6,8 +6,8 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 export function load() {
   const ctx = vm.createContext({ console });
-  for (const f of ['src/core/pcb-core.js', 'src/parts/mcu-pins.js', 'src/sch/sch.js', 'src/sim/sim.js', 'src/app/sample.js', 'src/app/sample-mcu.js', 'src/app/sample-tc364.js', 'src/fw/fw.js', 'src/parts/parts.js', 'src/hsis/hsis.js', 'src/hsis/pinrec.js', 'src/hsis/mcal.js', 'src/route/autoroute.js', 'src/hsis/sample-hsis.js'])
+  for (const f of ['src/core/pcb-core.js', 'src/parts/mcu-pins.js', 'src/sch/sch.js', 'src/sim/sim.js', 'src/app/sample.js', 'src/app/sample-mcu.js', 'src/app/sample-tc364.js', 'src/fw/fw.js', 'src/parts/parts.js', 'src/hsis/hsis.js', 'src/hsis/pinrec.js', 'src/hsis/mcal.js', 'src/route/autoroute.js', 'src/hsis/testgen.js', 'src/hsis/sample-hsis.js'])
     vm.runInContext(readFileSync(join(root, f), 'utf8').replace(/if\(typeof module[^;]+;/, ''), ctx, { filename: f });
   const g = (n) => vm.runInContext(n, ctx);
-  return { PCB: g('PCB'), SIM: g('SIM'), SAMPLE: g('SAMPLE_SPEC'), SAMPLE_MCU: g('SAMPLE_MCU'), SAMPLE_BLDC: g('SAMPLE_BLDC'), FW: g('FW'), PARTS: g('PARTS'), HSIS: g('HSIS'), SAMPLE_HSIS: g('SAMPLE_HSIS'), SAMPLE_ARXML: g('SAMPLE_ARXML'), HSIS_SAMPLES: g('HSIS_SAMPLES'), SCH: g('SCH'), MCU_PINS: g('MCU_PINS'), PINREC: g('PINREC'), MCAL: g('MCAL'), SAMPLE_TC364: g('SAMPLE_TC364'), AUTOROUTE: g('AUTOROUTE') };
+  return { PCB: g('PCB'), SIM: g('SIM'), SAMPLE: g('SAMPLE_SPEC'), SAMPLE_MCU: g('SAMPLE_MCU'), SAMPLE_BLDC: g('SAMPLE_BLDC'), FW: g('FW'), PARTS: g('PARTS'), HSIS: g('HSIS'), SAMPLE_HSIS: g('SAMPLE_HSIS'), SAMPLE_ARXML: g('SAMPLE_ARXML'), HSIS_SAMPLES: g('HSIS_SAMPLES'), SCH: g('SCH'), MCU_PINS: g('MCU_PINS'), PINREC: g('PINREC'), MCAL: g('MCAL'), SAMPLE_TC364: g('SAMPLE_TC364'), AUTOROUTE: g('AUTOROUTE'), TESTGEN: g('TESTGEN') };
 }

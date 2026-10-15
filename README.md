@@ -125,6 +125,21 @@ HSIS 작업 공간의 **핀 추천** 탭은 HSIS의 신호마다 MCU 데이터�
   - 모두 내려받기는 폴더별로 묶은 .zip입니다.
 - **예제: AURIX TC364** (`src/app/sample-tc364.js`, AURIX-364 INV): TC364DP, DRV8313, TLE9251V, W25Q32, 모터·홀 커넥터, 디버그 UART, 배터리 전압 분압을 배치하고 전원만 배선한 "배치 단계" 보드입니다. HSIS에는 미배정 신호가 대부분이고, IN_W를 아날로그 전용 핀(AN11)에 둔 오류와 CAN을 멀리 있는 CAN00에 둔 사례가 일부러 들어 있습니다. 전원부는 단순화했습니다(코어 VDD는 내부 EVR로 가정).
 
+## HSIS 기반 테스트 케이스 (SWE.6 · SYS.4)
+
+HSIS 작업 공간의 **테스트 케이스** 탭은 HSIS에서 ASPICE 두 프로세스의 시험 케이스를 **따로** 만듭니다. 위쪽 전환 버튼으로 수준을 고르고, 수준마다 엑셀(.xlsx)이나 CSV로 따로 내려받습니다.
+
+- **SWE.6 SW 적격성 시험 (SWQT)**: 통합된 SW를 대상 ECU에서 HSIS와 대조합니다.
+  - 설정·초기 상태: 포트·주변장치 설정과 초기 레벨. 지원 MCU는 예상 레지스터 값까지 적습니다(TC3xx `Pn_IOCR.PCx`, STM32 `MODER`·`AFR`).
+  - 출력 동작(Dio), PWM 주파수·듀티 경계값(0x0000/0x4000/0x8000), 입력 인식과 경계값, ICU 캡처·인터럽트 알림, ADC 변환(HSIS 변환식으로 시험 전압별 예상 원시값 계산), SPI·CAN·UART·I2C·USB 송수신.
+  - 오류 처리: 초기화 전 호출·잘못된 채널의 DET 보고, ASIL 신호의 타당성 진단·안전 반응.
+- **SYS.4 시스템 통합 시험 (SYSIT)**: HW와 SW를 단계적으로 통합합니다(S1 전원·클럭·리셋 → S2 통신 → S3 디지털·아날로그 I/O → S4 기능 체인·결함 주입).
+  - 신호 경로 연속성(HW 연결 ↔ 넷 ↔ MCU 핀 ↔ SW 값), 전기적 특성(레벨, 외부 풀업·풀다운, 부하 전류), 전원 인가·리셋 중 출력 안전 상태, 배선 위 타이밍·프로토콜 실측.
+  - ASIL 신호의 단선·GND 단락·전원 단락 결함 주입, 같은 상대 부품에 모이는 신호를 함께 시험하는 기능 체인(예: DRV8313 IN/EN/nFAULT).
+- **필수 검증 항목**: 수준별 체크리스트(SWE.6 BP2·BP5, SYS.4 BP1·BP3·BP5·BP7 관점)로 HSIS 신호마다 해당 케이스가 있는지 보여 주고, 요구사항 ID가 없는 HSIS 항목을 따로 알립니다.
+- **내보내기**: 시트 = 테스트 케이스(ID, 수준, 통합 단계, 분류, 제목, HSIS ID, 신호, 요구사항 ID, ASIL, 우선순위, 시험 기법, 환경, 사전 조건, 절차, 기대 결과, 합격 기준), 필수 검증 항목, 추적성(HSIS ↔ 요구사항 ↔ 테스트 ID), SYS.4는 통합 전략 시트 추가.
+- 허용 오차(주파수 ±2 %, 듀티 ±0.5 %, ADC ±4 LSB 등)와 시험 장비는 규칙 기반 초안 값이므로 조직의 시험 전략에 맞게 고쳐 쓰세요. 생성 규칙은 `src/hsis/testgen.js`에 있습니다.
+
 ## HSIS (HW/SW 인터페이스 사양)
 
 헤더의 **HSIS** 탭은 ASPICE HSIS 산출물을 보드와 SW 설정에 대조해 보는 작업 공간입니다. 처음에는 내장 예제 보드에 맞춘 예제 HSIS가 열립니다.
@@ -160,6 +175,7 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/hsis/mcal.js` | MCAL 설정 생성 (ECUC ARXML, C 설정, STM32 HAL/LL) |
 | `src/route/autoroute.js` | 2층 격자 자동 배선 (A*, 비아, 다중 시도, 간격 검사) |
 | `src/app/sample-tc364.js` | AURIX TC364 예제 보드 |
+| `src/hsis/testgen.js` | HSIS 기반 SWE.6(SWQT)·SYS.4(SYSIT) 테스트 케이스 생성, 필수 검증 체크리스트 |
 | `src/hsis/hsis.js` | HSIS 열 매핑, ARXML Port 파서, 일관성 검사, 추적성 |
 | `src/hsis/sample-hsis.js` | 예제 HSIS와 ARXML |
 | `src/app/hsisui.js` | HSIS 작업 공간 UI (빌드 시 viewer.js에 삽입) |

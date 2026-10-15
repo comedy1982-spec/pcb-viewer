@@ -371,4 +371,25 @@ body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
 .arset .chkl{flex-basis:100%;color:var(--fg)}
 .arres{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12.5px;color:var(--muted)}
 .arbox .lead{margin:0;font-size:12px}
+.tcck{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px}
+.tcck li{padding:6px 8px}
+.tcck li>div{flex-direction:column;align-items:flex-start;gap:1px}
+.tcck li b{font-size:12.5px}
+.tcck .rid{font-size:11.5px;color:var(--muted)}
+.tcstages{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.tcstages>div{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--raised);display:flex;flex-direction:column;font-size:12px}
+.tcstages>div span{color:var(--muted);font-size:11.5px}
+.tcstages>i{font-style:normal;color:var(--muted)}
+.tcfilter{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tcfilter .search{max-width:260px}
+.tcfilter select{max-width:200px}
+.stbl.tcs td{vertical-align:top}
+.stbl.tcs td:first-child{white-space:nowrap}
+.stbl.tcs td:nth-last-child(4){max-width:220px}
+.stbl tr.tcdet td{background:var(--surface)}
+.tcd{display:flex;flex-direction:column;gap:8px;padding:4px 2px 8px}
+.tcd .kv{margin:0}
+.stbl.tcsteps{font-size:12px}
+.stbl.tcsteps td{vertical-align:top}
+.vt .n{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-left:3px}
 </style>
