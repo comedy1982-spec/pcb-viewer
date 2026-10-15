@@ -411,30 +411,31 @@ function bindAr(B){
 
 /* ---------- test cases: SWE.6 (SW qualification) and SYS.4 (system integration), generated from the HSIS ---------- */
 HS.tc={level:'swqt',open:new Set(),q:'',kind:'all'};
-const TC_INFO={swqt:{name:'SWE.6 SW 적격성 시험 (SWQT)',file:'SWE6_SWQT',desc:'통합된 SW를 대상 ECU에서 HSIS(SW 쪽 인터페이스 사양)와 대조합니다: 포트·주변장치 설정과 초기 상태, Dio/Pwm/Adc/Icu/통신 API 동작, 경계값·타이밍, 오류 처리(DET·안전 반응). 각 케이스는 HSIS ID와 요구사항 ID로 추적됩니다.'},
-  sysit:{name:'SYS.4 시스템 통합 시험 (SYSIT)',file:'SYS4_SYSIT',desc:'HW와 SW를 단계적으로 통합하며(S1 전원·클럭·리셋 → S2 통신 → S3 I/O → S4 기능 체인·결함 주입) 인터페이스를 끝에서 끝까지 확인합니다: HW 연결 ↔ MCU 핀 ↔ SW 값, 전기적 레벨·풀업, 전원 인가·리셋 중 안전 상태, 배선 위 타이밍, 상대 부품과의 기능 체인, 단선·단락 결함 주입.'}};
+const TC_INFO={swqt:{name:'SWE.6 SW 적격성 시험 (SWQT)',file:'SWE6_SWQT',desc:'SW 관점만 봅니다. TRACE32 디버거·HIL·XCP로 물리 오차를 배제하고 수식(ADC 원시값 경계), 디바운싱·히스테리시스, 상태 전이(Safe State·래치·DTC), Duty 요청·Clamping, 통신 오류 처리(Timeout·CRC·Alive Counter), 워치독 피딩·Shutdown, MCU 리소스(RAM/Flash·스택·MPU·CPU 부하)를 검증합니다. 오실로스코프·멀티미터 계측은 포함하지 않습니다.'},
+  sysit:{name:'SYS.4 시스템 통합 시험 (SYSITS)',file:'SYS4_SYSITS',desc:'물리 장비(오실로스코프·멀티미터·파워 서플라이·버스 분석기)가 필요한 항목만 봅니다. S1 전원·클럭·리셋 → S2 통신 → S3 I/O → S4 기능 체인·안전·내구 순서로 통합하며 분압·RC 경로, PWM 주파수·슬루율·Dead-time·리셋 Glitch, FTTI 물리 지연, SPI 타이밍·CAN 전압 레벨·Sample Point, 전원 유지·워치독 리셋 파형, 풀로드 장기 러닝, 결함 주입을 실측합니다.'}};
 function tcGen(){if(!HS.H||!BD)return null;if(HS.tc.ver!==HS.ver||HS.tc.bd!==BD||!HS.tc.G){HS.tc.G=TESTGEN.generate(BD,HS.H,HS.mcu);HS.tc.ver=HS.ver;HS.tc.bd=BD;}return HS.tc.G;}
 function tcHTML(){
   const G=tcGen();if(!G)return'<p class="empty">HSIS를 먼저 불러오세요.</p>';const T=HS.tc,L=T.level,cases=G[L],info=TC_INFO[L];
-  const kinds=[...new Set(cases.map(c=>c.kind))];const q=T.q.toLowerCase();
-  const list=cases.filter(c=>(T.kind==='all'||c.kind===T.kind)&&(!q||[c.id,c.title,c.signal,c.hsis,c.req,c.kind].join(' ').toLowerCase().includes(q)));
+  const kinds=[...new Set(cases.map(c=>c.domain))].sort();const q=T.q.toLowerCase();
+  const list=cases.filter(c=>(T.kind==='all'||c.domain===T.kind)&&(!q||[c.id,c.title,c.signal,c.hsis,c.req,c.kind].join(' ').toLowerCase().includes(q)));
   const ck=G.check[L];
   const ckRows=ck.map(r=>{const st=!r.total?'info':r.ok===r.total?'ok':'warn';return`<li>${pill(st)}<div><b>${esc(r.title)} <span class="mono">${r.ok}/${r.total}</span></b><span class="rid">${esc(r.why)}</span>${r.miss.length?`<span>빠짐: ${r.miss.map(id=>`<button class="tchip" data-item="${esc(id)}">${esc(id)}</button>`).join(' ')}</span>`:''}</div></li>`;}).join('');
   const stages=L==='sysit'?`<div class="tcstages">${Object.entries(G.stages).map(([k,v])=>`<div><b>${esc(v)}</b><span>${cases.filter(c=>c.stage===k).length}건</span></div>`).join('<i aria-hidden="true">→</i>')}</div>`:'';
-  const rows=list.map(c=>{const on=T.open.has(c.id);return`<tr class="click${on?' on':''}" data-tc="${esc(c.id)}"><td class="mono"><b>${esc(c.id)}</b></td>${L==='sysit'?`<td class="mono">${esc(c.stage)}</td>`:''}<td>${esc(c.kind)}</td><td>${esc(c.title)}</td><td class="mono">${esc(c.hsis)}</td><td class="mono">${c.req?esc(c.req):'<span class="miss">없음</span>'}</td><td>${esc(c.asil)}</td><td>${esc(c.prio)}</td></tr>`+
-    (on?`<tr class="tcdet"><td colspan="${L==='sysit'?8:7}"><div class="tcd"><dl class="kv"><dt>시험 기법</dt><dd>${esc(c.method)}</dd><dt>시험 환경</dt><dd>${esc(c.env)}</dd>${c.note?`<dt>신호 경로</dt><dd class="mono">${esc(c.note)}</dd>`:''}<dt>사전 조건</dt><dd>${c.pre.map(esc).join('<br>')||'—'}</dd></dl>
+  const rows=list.map(c=>{const on=T.open.has(c.id);return`<tr class="click${on?' on':''}" data-tc="${esc(c.id)}"><td class="mono"><b>${esc(c.id)}</b></td>${L==='sysit'?`<td class="mono">${esc(c.stage)}</td>`:''}<td>${esc(c.domain||'')}<div class="rid">${esc(c.kind)}</div></td><td>${esc(c.title)}</td><td class="mono">${esc(c.hsis)}</td><td class="mono">${c.req?esc(c.req):'<span class="miss">없음</span>'}</td><td>${esc(c.asil)}</td><td>${esc(c.prio)}</td></tr>`+
+    (on?`<tr class="tcdet"><td colspan="${L==='sysit'?8:7}"><div class="tcd"><dl class="kv"><dt>시험 기법</dt><dd>${esc(c.method)}</dd><dt>측정 수단</dt><dd>${esc(c.tool||'')}</dd><dt>시험 환경</dt><dd>${esc(c.env)}</dd>${c.note?`<dt>신호 경로</dt><dd class="mono">${esc(c.note)}</dd>`:''}<dt>사전 조건</dt><dd>${c.pre.map(esc).join('<br>')||'—'}</dd></dl>
       <table class="stbl tcsteps"><thead><tr><th>#</th><th>절차</th><th>기대 결과</th></tr></thead><tbody>${c.steps.map((st,i)=>`<tr><td class="r mono">${i+1}</td><td>${esc(st.action)}</td><td>${esc(st.expected)}</td></tr>`).join('')}</tbody></table>
       <p class="lead"><b>합격 기준</b> ${esc(c.pass||'')}</p></div></td></tr>`:'');}).join('');
   return`<div class="sim" style="max-width:none">
     <div class="rechead"><div class="vt" role="group" aria-label="시험 수준">${['swqt','sysit'].map(k=>`<button data-tclevel="${k}" aria-pressed="${L===k}">${esc(TC_INFO[k].name)} <span class="n">${G[k].length}</span></button>`).join('')}</div>
       <div class="acts"><button class="btn primary sm" id="tcXlsx">${L==='swqt'?'SWE.6':'SYS.4'} 테스트 케이스 내려받기 (.xlsx)</button><button class="btn sm" id="tcCsv">CSV</button></div></div>
+    <div class="tcrule"><div class="${L==='sysit'?'on':''}"><b>SYS.4 (SYSITS)</b><span>${esc(G.rule.sys4)}</span></div><div class="${L==='swqt'?'on':''}"><b>SWE.6 (SWQT)</b><span>${esc(G.rule.swe6)}</span></div></div>
     <p class="lead" style="margin:0">${esc(info.desc)}</p>
     ${G.noReq.length?`<ul class="chk"><li>${pill('warn')}<div><span>요구사항 ID가 없는 HSIS 항목 ${G.noReq.length}개는 추적성이 끊깁니다:</span> ${G.noReq.map(id=>`<button class="tchip" data-item="${esc(id)}">${esc(id)}</button>`).join(' ')}</div></li></ul>`:''}
     <h4 class="h4">필수 검증 항목 (${L==='swqt'?'SWE.6':'SYS.4'})</h4><ul class="chk tcck">${ckRows}</ul>
     ${stages}
-    <div class="tcfilter"><input class="search" id="tcQ" type="search" placeholder="ID, 신호, 요구사항 검색" value="${esc(T.q)}"><select id="tcKind" class="fi"><option value="all">모든 분류</option>${kinds.map(k=>`<option${T.kind===k?' selected':''}>${esc(k)}</option>`).join('')}</select><span class="rid">${list.length}건 표시 · 행을 누르면 절차가 펼쳐집니다</span></div>
-    <div class="tscroll"><table class="stbl tcs"><thead><tr><th>테스트 ID</th>${L==='sysit'?'<th>단계</th>':''}<th>분류</th><th>제목</th><th>HSIS</th><th>요구사항</th><th>ASIL</th><th>우선순위</th></tr></thead><tbody>${rows||`<tr><td colspan="8">조건에 맞는 케이스가 없습니다.</td></tr>`}</tbody></table></div>
-    <p class="lead">HSIS의 분류·방향·초기값·활성 레벨·풀업·타이밍·변환식·전기적 특성·SW 모듈·API·ASIL 열에서 규칙에 따라 만든 초안입니다. 허용 오차와 시험 장비는 조직의 시험 전략에 맞게 고쳐 쓰세요. 예상 레지스터 값은 MCU 핀 기능 DB(지원 MCU)에서 계산합니다.</p></div>`;
+    <div class="tcfilter"><input class="search" id="tcQ" type="search" placeholder="ID, 신호, 요구사항 검색" value="${esc(T.q)}"><select id="tcKind" class="fi"><option value="all">모든 검증 도메인</option>${kinds.map(k=>`<option${T.kind===k?' selected':''}>${esc(k)}</option>`).join('')}</select><span class="rid">${list.length}건 표시 · 행을 누르면 절차가 펼쳐집니다</span></div>
+    <div class="tscroll"><table class="stbl tcs"><thead><tr><th>테스트 ID</th>${L==='sysit'?'<th>단계</th>':''}<th>도메인 · 분류</th><th>제목</th><th>HSIS</th><th>요구사항</th><th>ASIL</th><th>우선순위</th></tr></thead><tbody>${rows||`<tr><td colspan="8">조건에 맞는 케이스가 없습니다.</td></tr>`}</tbody></table></div>
+    <p class="lead">HSIS의 분류·방향·초기값·활성 레벨·풀업·타이밍·변환식·전기적 특성·SW 모듈·API·ASIL 열에서 규칙에 따라 만든 초안입니다. 디바운스 시간·히스테리시스·FTTI·워치독 윈도우 같은 값은 HSIS에 없으므로 SW/안전 요구사항 값으로 채우세요. 예상 레지스터 값은 MCU 핀 기능 DB(지원 MCU)에서 계산합니다.</p></div>`;
 }
 function tcBook(L){
   const G=tcGen(),T=TESTGEN,info=TC_INFO[L],cases=G[L];
@@ -454,7 +455,7 @@ function bindTc(B){
   const base=()=>`${(HS.H.meta.docId||'HSIS').replace(/[^\w.-]+/g,'_')}_${TC_INFO[T.level].file}_TestCases`;
   B.querySelector('#tcXlsx')?.addEventListener('click',async()=>{const sh=tcBook(T.level);
     if(!window.XLSX){toast('엑셀 라이브러리를 불러오지 못해 CSV로 내려받습니다.');const csv='﻿'+sh[0][1].map(r=>r.map(v=>{v=String(v==null?'':v);return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',')).join('\r\n');if(await offerFile(base()+'.csv',csv,'text/csv;charset=utf-8'))toast('CSV로 내려받았습니다.');return;}
-    const wb=XLSX.utils.book_new();sh.forEach(([name,aoa])=>{const ws=XLSX.utils.aoa_to_sheet(aoa);if(name==='테스트 케이스')ws['!cols']=[14,8,18,14,40,14,16,16,8,8,26,30,30,50,50,30,24].map(w=>({wch:w}));else ws['!cols']=aoa[0].map((_,i)=>({wch:i===1?44:22}));XLSX.utils.book_append_sheet(wb,ws,name);});
+    const wb=XLSX.utils.book_new();sh.forEach(([name,aoa])=>{const ws=XLSX.utils.aoa_to_sheet(aoa);if(name==='테스트 케이스')ws['!cols']=[14,8,16,18,16,40,14,16,16,8,8,24,26,30,30,50,50,30,24].map(w=>({wch:w}));else ws['!cols']=aoa[0].map((_,i)=>({wch:i===1?44:22}));XLSX.utils.book_append_sheet(wb,ws,name);});
     const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});if(await offerFile(base()+'.xlsx',new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})))toast(`${TC_INFO[T.level].name} 테스트 케이스를 엑셀로 내려받았습니다.`);});
   B.querySelector('#tcCsv')?.addEventListener('click',async()=>{const sh=tcBook(T.level);const csv='﻿'+sh[0][1].map(r=>r.map(v=>{v=String(v==null?'':v);return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',')).join('\r\n');if(await offerFile(base()+'.csv',csv,'text/csv;charset=utf-8'))toast('CSV로 내려받았습니다.');});
 }

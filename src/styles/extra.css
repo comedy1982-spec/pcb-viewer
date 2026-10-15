@@ -392,4 +392,8 @@ body.resizing-v,body.resizing-v *{cursor:row-resize!important;user-select:none}
 .stbl.tcsteps{font-size:12px}
 .stbl.tcsteps td{vertical-align:top}
 .vt .n{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-left:3px}
+.tcrule{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
+.tcrule>div{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--muted);background:var(--surface)}
+.tcrule>div b{color:var(--fg);font-size:12.5px}
+.tcrule>div.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--fg)}
 </style>
