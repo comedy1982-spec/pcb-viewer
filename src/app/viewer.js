@@ -114,6 +114,7 @@ function drawSide(ctx,side,o){
     if(sel.side===side)brackets(ctx,sel.bb,HL,Math.max(0.15,BD.W/400));
   }
   if(o.hover&&o.hover!==sel&&o.hover.side===side)brackets(ctx,o.hover.bb,'rgba(255,255,255,.75)',Math.max(0.1,BD.W/600));
+  if(!o.texture&&typeof recDraw==='function'&&typeof HS!=='undefined'&&HS.ws==='board')recDraw(ctx,side,o);
   ctx.restore();
   if(L.body2d&&!o.texture){
     BD.comps.forEach(c=>{if(c.side!==side||c.kind==='none')return;const b=c.body;if(!(b.w>0&&b.h>0))return;
@@ -272,7 +273,7 @@ function build3D(c){
     inner.add(rot);outer.userData.rotor=rot;
   }else if(k==='ic'){
     const st=f?(f.stand||0):(c.pads.some(p=>p.drill)?0.5:0.05);
-    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({'STM32F042K6U6':['STM32','F042K6','U6 GH24'],'AMS1117-3.3':['AMS1117','3.3 2638'],'W25Q32JV':['25Q32JV','SIQ 2635'],'DRV8313':['DRV8313','TI 2B4']}[c.val]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
+    let top=m.black;if(bw*bh>=4&&markCount<160){markCount++;const lines=f?({'STM32F042K6U6':['STM32','F042K6','U6 GH24'],'AMS1117-3.3':['AMS1117','3.3 2638'],'W25Q32JV':['25Q32JV','SIQ 2635'],'DRV8313':['DRV8313','TI 2B4'],'TC364DP':['AURIX','TC364DP','64F300F'],'TLE9251V':['TLE9251V'],'AMS1117-5.0':['AMS1117','5.0 2641']}[c.val]||[c.val]):[c.ref,(c.val||'').slice(0,12)].filter(Boolean);
       top=new THREE.MeshStandardMaterial({map:markTex(lines,bw,bh,f?!!f.dot:true),roughness:0.55});}
     inner.add(box(bw,bh,ht,[m.black,m.black,m.black,m.black,top,m.black],0,0,st));
     if(f)f.pads.forEach(p=>{
@@ -572,12 +573,12 @@ function stats(){
   const prs=new Set();['T.cu','B.cu'].forEach(L=>BD.layers[L].forEach(p=>{if(p.t==='pad'&&!p.via)prs.add(p);}));pads=prs.size;
   $('#stats').innerHTML=`<dt>부품</dt><dd>${BD.comps.length}</dd><dt>상단 / 하단</dt><dd>${BD.comps.filter(c=>c.side==='T').length} / ${BD.comps.filter(c=>c.side==='B').length}</dd><dt>넷</dt><dd>${BD.netOrder.length}</dd><dt>패드</dt><dd>${pads}</dd><dt>비아</dt><dd>${BD.vias.length}</dd><dt>드릴</dt><dd>${BD.drills.length}</dd>${tl?`<dt>트랙 길이</dt><dd>${fmt(tl,0)} mm</dd>`:''}`;
   const src=$('#srcBox');
-  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'MCU DC 모터 예제입니다. STM32F042K6U6 펌웨어가 PA8(TIM1) PWM으로 AO3400A·FA-130 모터를, PA4로 상태 LED를 제어하고 PB1 ADC로 모터 전류를 읽습니다.':BD.demo==='bldc'?'MCU BLDC 3상 예제입니다. STM32F042K6U6 펌웨어가 42BLF01 모터의 홀 센서(PA6·PA7·PB0)를 읽어 TI DRV8313의 IN/EN 6개를 6스텝으로 정류합니다.':'STM32F042K6U6 기반 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
-    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button>${BD.demo?'<button class="btn sm" data-fwopen>펌웨어 편집</button>':''}${Object.entries(EXAMPLES).filter(([k])=>k!==(BD.demo||'sense')).map(([k,v])=>`<button class="btn sm" data-ex="${k}">${esc(v[0])} 예제</button>`).join('')}</div>`;}
+  if(BD.source==='예제'){src.innerHTML=`<p class="note" style="font-size:12.5px;margin:0">${BD.demo==='mcu'?'MCU DC 모터 예제입니다. STM32F042K6U6 펌웨어가 PA8(TIM1) PWM으로 AO3400A·FA-130 모터를, PA4로 상태 LED를 제어하고 PB1 ADC로 모터 전류를 읽습니다.':BD.demo==='bldc'?'MCU BLDC 3상 예제입니다. STM32F042K6U6 펌웨어가 42BLF01 모터의 홀 센서(PA6·PA7·PB0)를 읽어 TI DRV8313의 IN/EN 6개를 6스텝으로 정류합니다.':BD.demo==='tc364'?'AURIX TC364DP 예제입니다. DRV8313·TLE9251V·W25Q32를 배치했고 MCU 신호 핀은 HSIS 핀 추천으로 정합니다. HSIS → 핀 추천 → MCAL 설정 순서로 써 보세요.':'STM32F042K6U6 기반 예제 보드입니다. 실제 보드 파일을 불러와 보세요.'}</p>
+    <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary sm" data-open>파일 불러오기</button>${BD.demo&&fwMcu()?'<button class="btn sm" data-fwopen>펌웨어 편집</button>':''}${BD.demo==='tc364'?'<button class="btn sm" data-gorec>핀 추천 열기</button>':''}${Object.entries(EXAMPLES).filter(([k])=>k!==(BD.demo||'sense')).map(([k,v])=>`<button class="btn sm" data-ex="${k}">${esc(v[0])} 예제</button>`).join('')}</div>`;}
   else{src.innerHTML=`<ul class="files">${BD.files.filter(f=>f.role!=='ignore').map(f=>`<li><span class="fn">${esc(f.name.split('/').pop())}</span><span class="fr">${esc(PCB.ROLES[f.role]||f.role)}</span></li>`).join('')}</ul>`+
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
 }
-$('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();const x=e.target.closest('[data-ex]');if(x)loadExample(x.dataset.ex);if(e.target.closest('[data-fwopen]'))fwOpen();});
+$('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();const x=e.target.closest('[data-ex]');if(x)loadExample(x.dataset.ex);if(e.target.closest('[data-fwopen]'))fwOpen();if(e.target.closest('[data-gorec]')){HS.tab='rec';setWorkspace('hsis');}});
 function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}popsRefresh();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
   BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
@@ -652,14 +653,16 @@ function renderImport(){
 $('#flist').addEventListener('change',e=>{const s=e.target.closest('[data-role]');if(!s)return;const en=IMP.entries.find(x=>x.id===+s.dataset.role);if(en){en.role=s.value;en.note=en.role===en.auto?en.note:'';}renderImport();});
 $('#flist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(!d)return;IMP.entries=IMP.entries.filter(x=>x.id!==+d.dataset.del);renderImport();});
 $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImport();});
-const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC]};
+const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC],tc364:['AURIX TC364 핀 추천',()=>SAMPLE_TC364]};
 function loadExample(which){const spec=(EXAMPLES[which]||EXAMPLES.sense)[1]();setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
   if(which==='mcu'){selectComp('U1',false);toast('MCU DC 모터 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다. HSIS 탭에서 펌웨어·회로 대조 결과를 볼 수 있습니다.');}
   else if(which==='bldc'){selectComp('U1',false);toast('MCU BLDC 3상 예제입니다. STM32F042 펌웨어가 홀 센서로 DRV8313을 6스텝 정류합니다. "빌드 & 시뮬레이션"으로 3상 모터를 돌려 보세요.');}
+  else if(which==='tc364'){HS.tab='rec';setWorkspace('hsis');toast('AURIX TC364 예제입니다. 부품은 배치됐지만 MCU 신호 핀 대부분이 미배정입니다. 핀 추천 탭에서 추천을 확인하고 적용한 뒤 MCAL 설정을 내보내 보세요.');}
   else toast('예제 보드로 돌아왔습니다.');}
 $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));
 $('#impSample3').addEventListener('click',()=>loadExample('bldc'));
+$('#impSample4').addEventListener('click',()=>loadExample('tc364'));
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{

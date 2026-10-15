@@ -392,6 +392,86 @@
     }
   },
   {
+    "mpn": "TC364DP-64F300F",
+    "manufacturer": "Infineon",
+    "title": "AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz",
+    "category": "MCU",
+    "pdf": "https://www.infineon.com/dgdl/Infineon-SAK-TC36xDP-DataSheet-v01_01-EN.pdf?fileId=5546d46274dd77260174e8c7c7bf34b1",
+    "page": null,
+    "file": "TC36x_datasheet.pdf",
+    "boards": [],
+    "specs": {
+      "코어": "TriCore, 최대 300 MHz (TC36x)",
+      "ADC": "EVADC 주 그룹 4개/32채널 + 보조 그룹 2개/32채널, EDSADC",
+      "타이머": "GTM (TOUT 출력, TIM 입력 캡처), CCU6, GPT12",
+      "통신": "MCMCAN (CAN FD) CAN0x·CAN1x, QSPI0–3, ASCLIN0–11, I2C0, E-Ray, GETH",
+      "포트 출력": "핀마다 ALT1–ALT7 출력 선택 (Pn_IOCR.PCx), 입력은 주변장치 쪽 입력 선택(A/B/…)",
+      "패키지": "TQFP-144 (SAK-TC364DP-64F300F) · 노출 패드 VSS",
+      "디버그": "JTAG/DAP: TMS 89, TCK 92, TRST 91, P21.6 TDI, P21.7 TDO"
+    }
+  },
+  {
+    "mpn": "TLE9251VSJ",
+    "manufacturer": "Infineon",
+    "title": "TLE9251V — high-speed CAN FD transceiver with VIO",
+    "category": "CAN 트랜시버",
+    "pdf": null,
+    "page": "https://www.infineon.com/cms/en/product/interface/automotive-transceiver/automotive-can-transceivers/tle9251vsj/",
+    "file": "TLE9251V_datasheet.pdf",
+    "boards": [],
+    "specs": {
+      "속도": "최대 5 Mbit/s (CAN FD)",
+      "전원": "VCC 5 V (송신부) · VIO 3.3 V/5 V (MCU 인터페이스)",
+      "모드": "STB High = 대기 (내부 풀업), Low = 정상 동작 · 대기 중 버스 웨이크업",
+      "패키지": "PG-DSO-8: 1 TxD · 2 GND · 3 VCC · 4 RxD · 5 VIO · 6 CANL · 7 CANH · 8 STB"
+    }
+  },
+  {
+    "mpn": "AMS1117-5.0",
+    "manufacturer": "Advanced Monolithic Systems",
+    "title": "AMS1117 — 1 A low-dropout regulator",
+    "category": "전원",
+    "pdf": "http://www.advanced-monolithic.com/pdf/ds1117.pdf",
+    "page": "http://www.advanced-monolithic.com/",
+    "file": "AMS1117_datasheet.pdf",
+    "boards": [],
+    "specs": {
+      "출력": "5.0 V 고정, 최대 1 A",
+      "드롭아웃": "약 1.1 V (1 A)",
+      "입력": "최대 15 V",
+      "패키지": "SOT-223: 1 GND · 2 VOUT · 3 VIN · 탭 VOUT"
+    }
+  },
+  {
+    "mpn": "ABM8-20.000MHZ-B2-T",
+    "manufacturer": "Abracon",
+    "title": "ABM8 — 3.2×2.5 mm SMD crystal, 20 MHz",
+    "category": "크리스털",
+    "pdf": "https://abracon.com/Resonators/abm8.pdf",
+    "page": null,
+    "file": "Abracon_ABM8.pdf",
+    "boards": [],
+    "specs": {
+      "주파수": "20 MHz",
+      "패키지": "3.2×2.5 mm, 4패드 (1·3 수정, 2·4 GND)"
+    }
+  },
+  {
+    "mpn": "61300811121",
+    "manufacturer": "Würth Elektronik",
+    "title": "WR-PHD 2.54 mm pin header, 8 pins",
+    "category": "커넥터",
+    "pdf": "https://www.we-online.com/components/products/datasheet/61300811121.pdf",
+    "page": null,
+    "file": "Wurth_61300811121.pdf",
+    "boards": [],
+    "specs": {
+      "피치": "2.54 mm",
+      "핀": "1×8, 스루홀",
+      "정격": "3 A, 250 V AC"
+    }
+  },
+  {
     "mpn": "RL1206FR-070R1L",
     "manufacturer": "Yageo",
     "title": "RL series low-ohm chip resistor 0.1 Ω 1206",

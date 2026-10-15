@@ -32,6 +32,11 @@ node scripts/datasheets.mjs --download
 | GRM31CR60J107ME39 | Murata | 커패시터 | MLCC 100 µF 6.3 V X5R 1206 | [페이지](https://www.murata.com/en-us/products/productdetail?partno=GRM31CR60J107ME39L) | MOTION-32 (DC·BLDC) |
 | GRM32ER61E226KE15 | Murata | 커패시터 | MLCC 22 µF 25 V X5R 1210 | [페이지](https://www.murata.com/en-us/products/productdetail?partno=GRM32ER61E226KE15L) | MOTION-32 (DC·BLDC) |
 | GRM188R71C474KA88D | Murata | 커패시터 | MLCC 0.47 µF 16 V X7R 0603 | [페이지](https://www.murata.com/en-us/products/productdetail?partno=GRM188R71C474KA88D) | MOTION-32 (DC·BLDC) |
+| TC364DP-64F300F | Infineon | MCU | AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz | [PDF](https://www.infineon.com/dgdl/Infineon-SAK-TC36xDP-DataSheet-v01_01-EN.pdf?fileId=5546d46274dd77260174e8c7c7bf34b1) |  |
+| TLE9251VSJ | Infineon | CAN 트랜시버 | TLE9251V — high-speed CAN FD transceiver with VIO | [페이지](https://www.infineon.com/cms/en/product/interface/automotive-transceiver/automotive-can-transceivers/tle9251vsj/) |  |
+| AMS1117-5.0 | Advanced Monolithic Systems | 전원 | AMS1117 — 1 A low-dropout regulator | [PDF](http://www.advanced-monolithic.com/pdf/ds1117.pdf) · [페이지](http://www.advanced-monolithic.com/) |  |
+| ABM8-20.000MHZ-B2-T | Abracon | 크리스털 | ABM8 — 3.2×2.5 mm SMD crystal, 20 MHz | [PDF](https://abracon.com/Resonators/abm8.pdf) |  |
+| 61300811121 | Würth Elektronik | 커넥터 | WR-PHD 2.54 mm pin header, 8 pins | [PDF](https://www.we-online.com/components/products/datasheet/61300811121.pdf) |  |
 | RL1206FR-070R1L | Yageo | 저항 | RL series low-ohm chip resistor 0.1 Ω 1206 | [검색](https://octopart.com/search?q=RL1206FR-070R1L) | MOTION-32 (DC·BLDC) |
 | RC0603FR-0710KL | Yageo | 저항 | RC series thick-film chip resistor 0603 | [검색](https://octopart.com/search?q=RC0603FR-0710KL) | SENSE-32, MOTION-32 (DC·BLDC) |
 | RC0603FR-07330RL | Yageo | 저항 | RC series thick-film chip resistor 0603 | [검색](https://octopart.com/search?q=RC0603FR-07330RL) | SENSE-32, MOTION-32 (DC·BLDC) |
@@ -150,6 +155,38 @@ node scripts/datasheets.mjs --download
 - **시뮬레이션 값**: 상 저항 0.9 Ω·인덕턴스 1.3 mH는 추정값 (데이터시트에 없음), 예제는 12 V 구동
 
 > Mouser가 호스팅한 데이터시트 PDF입니다.
+
+### TC364DP-64F300F — Infineon
+
+- **코어**: TriCore, 최대 300 MHz (TC36x)
+- **ADC**: EVADC 주 그룹 4개/32채널 + 보조 그룹 2개/32채널, EDSADC
+- **타이머**: GTM (TOUT 출력, TIM 입력 캡처), CCU6, GPT12
+- **통신**: MCMCAN (CAN FD) CAN0x·CAN1x, QSPI0–3, ASCLIN0–11, I2C0, E-Ray, GETH
+- **포트 출력**: 핀마다 ALT1–ALT7 출력 선택 (Pn_IOCR.PCx), 입력은 주변장치 쪽 입력 선택(A/B/…)
+- **패키지**: TQFP-144 (SAK-TC364DP-64F300F) · 노출 패드 VSS
+- **디버그**: JTAG/DAP: TMS 89, TCK 92, TRST 91, P21.6 TDI, P21.7 TDO
+
+> 두 번째 링크는 변형별 사양(패키지·메모리) 문서입니다.
+
+### TLE9251VSJ — Infineon
+
+- **속도**: 최대 5 Mbit/s (CAN FD)
+- **전원**: VCC 5 V (송신부) · VIO 3.3 V/5 V (MCU 인터페이스)
+- **모드**: STB High = 대기 (내부 풀업), Low = 정상 동작 · 대기 중 버스 웨이크업
+- **패키지**: PG-DSO-8: 1 TxD · 2 GND · 3 VCC · 4 RxD · 5 VIO · 6 CANL · 7 CANH · 8 STB
+
+### AMS1117-5.0 — Advanced Monolithic Systems
+
+- **출력**: 5.0 V 고정, 최대 1 A
+- **드롭아웃**: 약 1.1 V (1 A)
+- **입력**: 최대 15 V
+- **패키지**: SOT-223: 1 GND · 2 VOUT · 3 VIN · 탭 VOUT
+
+### 61300811121 — Würth Elektronik
+
+- **피치**: 2.54 mm
+- **핀**: 1×8, 스루홀
+- **정격**: 3 A, 250 V AC
 
 ### RC0603FR-0710KL — Yageo
 

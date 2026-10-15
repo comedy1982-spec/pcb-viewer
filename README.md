@@ -93,19 +93,43 @@ ODB++, IPC-2581, Altium/Eagle 원본 파일은 아직 읽지 못합니다.
 | AMS1117-3.3, AOS AO3400A, Vishay SS14 | 전원·스위칭 | |
 | Mabuchi FA-130RA / Tamiya 70097 | DC 모터 | 모델 R·kt·J는 공개 사양에서 산출 |
 | 42BLF01 (MIKROE-4455) | BLDC 모터 | 정격 사양 기준, R·L은 추정값 |
-| Kingbright APT1608, Omron B3FS-1000P, Würth 613002/613004, GCT USB4105-GF-A | LED·스위치·커넥터 | USB4105 풋프린트는 단순화 |
+| Infineon TC364DP-64F300F (TQFP-144) | AURIX TC364 예제 MCU | 핀 번호·포트 기능은 TC36x 데이터시트 기준 |
+| Infineon TLE9251VSJ, Abracon ABM8 20 MHz, AMS1117-5.0 | AURIX TC364 예제 | CAN FD 트랜시버(VIO 3.3 V), 크리스털, 5 V LDO |
+| Kingbright APT1608, Omron B3FS-1000P, Würth 613002/613004/613008, GCT USB4105-GF-A | LED·스위치·커넥터 | USB4105 풋프린트는 단순화 |
 | Samsung CL/Murata GRM 커패시터, Yageo RC0603/RL1206 저항 | 수동 소자 | 값으로 정확한 부품 번호 생성 |
 
 - **보기**: 부품을 클릭하면 정보 카드에 제조사, 주요 사양, 데이터시트(PDF)·제품 페이지·Octopart 링크가 나옵니다. 정보 패널의 **데이터** 탭 위쪽에 보드 전체 부품 데이터시트 목록이 있습니다. 데이터베이스에 없는 부품 번호는 검색 링크를 보여 줍니다.
 - **저장**: `datasheets/README.md`와 `datasheets/manifest.json`에 부품별 데이터시트 URL 목록이 있습니다. `npm run datasheets:download`(= `node scripts/datasheets.mjs --download`)를 실행하면 PDF를 `datasheets/pdf/`에 내려받고, 뷰어를 로컬 파일로 열면 정보 카드에 로컬 사본 링크도 나옵니다.
 - 부품 데이터는 `src/parts/parts.js`에 있습니다. 새 부품을 추가한 뒤 `npm run datasheets`로 목록을 다시 만듭니다.
 
+## HSIS 핀 추천과 MCAL 설정
+
+HSIS 작업 공간의 **핀 추천** 탭은 HSIS의 신호마다 MCU 데이터시트의 핀 기능(ALT/AF)과 상대 IC 핀 기능을 맞춰 MCU 핀을 추천합니다. **MCAL 설정** 탭은 그 배정으로 AUTOSAR 설정 파일과 초기화 코드를 만듭니다.
+
+- **지원 MCU**: Infineon AURIX TC364DP (TQFP-144), ST STM32F042K6U6 (UFQFPN32). 핀 기능 데이터는 `src/parts/mcu-pins.js`에 있습니다.
+  - TC364DP: TC36x 데이터시트 V1.1의 포트 기능 표에서 P00·P02·P10·P11·P13·P14.0–2를 넣었습니다. 나머지 포트(P14.3 이후, P15, P20–P23, P33)는 아직 기능 표가 없어 GPIO로만 추천합니다. AN0–AN31 → EVADC Gx CHy 대응은 TC3xx 관례(G = n/8, CH = n mod 8)를 따랐습니다.
+  - STM32F042K6U6: 데이터시트 Table 13–15의 AF0–AF7을 그대로 넣었습니다.
+- **상대 IC 핀**: DRV8313(IN = PWM, EN = GPIO, nFAULT = 인터럽트), W25Q32(SPI), TLE9251V(CAN TX/RX, STB)는 핀마다 MCU에 필요한 기능을 알고 있습니다. 그 밖의 부품은 HSIS의 핀 기능·방향 열로 판단합니다.
+- **추천 방식**:
+  1. HSIS 핀 기능·방향과 상대 핀에서 필요한 역할(PWM, 캡처, ADC, SPI, CAN, UART, I2C, 인터럽트, GPIO)을 정합니다.
+  2. 그 역할이 가능한 MCU 핀만 후보로 둡니다. 전원·디버그(JTAG/SWD)·EVR 핀은 빼고, 부트 설정(HWCFG) 핀은 감점합니다.
+  3. SPI·CAN·UART·I2C는 같은 주변장치 인스턴스로, 홀 캡처는 같은 타이머로 묶습니다. 타이머·ADC 채널과 인터럽트 라인은 겹치지 않게 합니다.
+  4. 보드에서 상대 핀까지 거리와, 다른 신호가 필요로 하는 드문 기능을 빼앗는 정도를 비용으로 삼아 헝가리안 매칭으로 고릅니다. 버스 묶음끼리는 처리 순서를 모두 시험해 합이 가장 작은 조합을 씁니다.
+- **두 가지 범위**: "빈 핀·오류만"은 맞게 배정된 핀은 두고 빈 핀과 기능이 맞지 않는 핀만 추천합니다. "전체 다시 배정"은 모든 신호를 다시 배치합니다.
+- **적용**: 고른 추천을 적용하면 HSIS의 MCU 핀·포트·핀 기능이 바뀌고, 보드에서 MCU 패드가 신호 넷에 연결됩니다. 아직 배선되지 않은 연결은 TOP 보기에 점선으로 나옵니다. 적용 취소와 갱신된 HSIS CSV 내려받기를 지원합니다. 대안 핀 버튼으로 추천을 직접 바꿀 수 있습니다.
+- **MCAL 설정 출력**:
+  - `*_Mcal.arxml`: AUTOSAR ECUC 값(Port, Dio, Pwm, Adc, Icu, Spi, Can). PortPinId는 패키지 핀 번호이고, PortPinMode는 TC364는 ALT1–ALT7/GPIO, STM32는 AF0–AF7/DIO로 적습니다. "이 ARXML로 HSIS 검사"를 누르면 HSIS 검사기로 바로 대조합니다.
+  - MCAL C 설정: `Port_Cfg.h`, `Port_PBcfg.c`(TC3xx `Pn_IOCR`·`OMR`·`PDISC` 값, STM32 `MODER`·`OTYPER`·`PUPDR`·`AFR`·`ODR` 값), `Dio_Cfg.h`, `Pwm_Cfg.h`/`Pwm_PBcfg.c`, `Adc_Cfg.h`, `Icu_Cfg.h`, `Spi_Cfg.h`, `Can_Cfg.h`. MCAL 관례를 따른 예시라 벤더 MCAL 구조체와 1:1로 같지는 않습니다.
+  - STM32 HAL/LL: `mcal_hal_init.c`(GPIO, TIM PWM·입력 캡처, ADC, SPI, UART, I2C, CAN 초기화), `mcal_ll_gpio.c`. STM32 보드에서만 만듭니다.
+  - 모두 내려받기는 폴더별로 묶은 .zip입니다.
+- **예제: AURIX TC364** (`src/app/sample-tc364.js`, AURIX-364 INV): TC364DP, DRV8313, TLE9251V, W25Q32, 모터·홀 커넥터, 디버그 UART, 배터리 전압 분압을 배치하고 전원만 배선한 "배치 단계" 보드입니다. HSIS에는 미배정 신호가 대부분이고, IN_W를 아날로그 전용 핀(AN11)에 둔 오류와 CAN을 멀리 있는 CAN00에 둔 사례가 일부러 들어 있습니다. 전원부는 단순화했습니다(코어 VDD는 내부 EVR로 가정).
+
 ## HSIS (HW/SW 인터페이스 사양)
 
 헤더의 **HSIS** 탭은 ASPICE HSIS 산출물을 보드와 SW 설정에 대조해 보는 작업 공간입니다. 처음에는 내장 예제 보드에 맞춘 예제 HSIS가 열립니다.
 
 - **입력**: HSIS 엑셀(.xlsx)·CSV, AUTOSAR Port 설정(.arxml). 머리글 이름으로 열을 찾습니다(ID, 신호명, MCU 핀, 포트, 핀 기능, 방향, 초기값, 풀업/풀다운, 회로도 넷, HW 연결, SW 모듈, SW 설정 ID, API, 요구사항 ID, 테스트 ID, ASIL, 상태 등, 영문 머리글도 인식). `문서 정보` 시트가 있으면 문서 ID·버전·MCU 참조를 읽습니다.
-- **화면**: 신호 표, MCU 핀 맵(풋프린트 패드 배치 그대로), 요구사항 → HSIS → 테스트 추적성, 검사 결과, 신호별 HW → MCU → SW → 추적 경로와 보드 미리보기.
+- **화면**: 신호 표, MCU 핀 맵(풋프린트 패드 배치 그대로), 요구사항 → HSIS → 테스트 추적성, 검사 결과, 핀 추천, MCAL 설정, 신호별 HW → MCU → SW → 추적 경로와 보드 미리보기.
 - **검사**: MCU 핀 ↔ 회로도 넷, 핀 이름, HW 연결 부품·핀, 외부 풀업·풀다운 저항값, 핀 중복, HSIS에 없는 연결 핀, ARXML PortPin의 핀 번호·방향·초기값, 요구사항·테스트 누락. 결과는 CSV로 복사할 수 있습니다.
 - **예제**: `examples/SENSE-32_HSIS.xlsx`, `examples/SENSE-32_Port.arxml`. BOOT0 미연결, 아직 레이아웃에 없는 VBUS_MON, ARXML의 I2C1_SDA 핀 번호 불일치 같은 검사 대상이 일부러 들어 있습니다. ARXML 예제의 PortPinId는 MCU 패키지 핀 번호를 씁니다.
 
@@ -130,6 +154,10 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/app/sample.js` | 내장 예제 보드 (뷰어 JSON 형식) |
 | `src/parts/parts.js` | 실제 부품 데이터베이스(제조사, 사양, 데이터시트 링크) |
 | `scripts/datasheets.mjs` | 데이터시트 목록 생성·PDF 내려받기 |
+| `src/parts/mcu-pins.js` | MCU 핀 기능 DB (TC364DP, STM32F042K6U6)와 상대 IC 핀 역할 |
+| `src/hsis/pinrec.js` | HSIS 기반 핀 배정 추천 (역할 판정, 주변장치 묶음, 헝가리안 매칭, 적용) |
+| `src/hsis/mcal.js` | MCAL 설정 생성 (ECUC ARXML, C 설정, STM32 HAL/LL) |
+| `src/app/sample-tc364.js` | AURIX TC364 예제 보드 |
 | `src/hsis/hsis.js` | HSIS 열 매핑, ARXML Port 파서, 일관성 검사, 추적성 |
 | `src/hsis/sample-hsis.js` | 예제 HSIS와 ARXML |
 | `src/app/hsisui.js` | HSIS 작업 공간 UI (빌드 시 viewer.js에 삽입) |

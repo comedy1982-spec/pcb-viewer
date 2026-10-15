@@ -128,7 +128,7 @@ function check(B,H,arxml,mcuRef){
       const keys=[it.signal,it.func,it.swcfg&&it.swcfg.replace(/^.*_/,'')].filter(Boolean).map(netN);
       const ap=arxml.find(a=>{const n=netN(a.name.replace(/^PortPin_?/i,''));return keys.includes(n);});
       const swPin=/Dio|Port|Spi|I2c|Usb|Adc|Pwm|Icu|Uart|Can|Lin/i.test(it.swmod||'');
-      if(!ap){if(swPin&&it._pins.length===1)add('warn','SW_MISSING',it.id,`ARXML Port 설정에 ${it.signal}에 해당하는 PortPin이 없습니다.`);return;}
+      if(!ap){if(/^AN\d+$/i.test(String(it.port||'').trim())){add('info','SW_ANALOG',it.id,`${it.port}는 전용 아날로그 핀이라 Port 설정 대상이 아닙니다 (Adc 설정에서 다룹니다).`);return;}if(swPin&&it._pins.length===1)add('warn','SW_MISSING',it.id,`ARXML Port 설정에 ${it.signal}에 해당하는 PortPin이 없습니다.`);return;}
       used.add(ap);
       if(it._pins.length===1&&ap.id&&ap.id!==it._pins[0])add('err','SW_PIN',it.id,`SW 설정 ${ap.name}은(는) ${ap.id}번 핀인데, HSIS는 ${it._pins[0]}번 핀입니다.`,{pin:it._pins[0]});
       else add('ok','SW_PIN',it.id,`SW 설정 ${ap.name} → ${ap.id}번 핀 일치`);

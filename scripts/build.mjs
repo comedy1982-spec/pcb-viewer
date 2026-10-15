@@ -28,13 +28,17 @@ ${read('src/app/body.html')}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 ${script(stripExport(read('src/core/pcb-core.js')))}
+${script(stripExport(read('src/parts/mcu-pins.js')))}
 ${script(stripExport(read('src/sch/sch.js')))}
 ${script(stripExport(read('src/sim/sim.js')))}
 ${script(read('src/app/sample.js'))}
 ${script(read('src/app/sample-mcu.js'))}
+${script(read('src/app/sample-tc364.js'))}
 ${script(stripExport(read('src/fw/fw.js')))}
 ${script(stripExport(read('src/parts/parts.js')))}
 ${script(stripExport(read('src/hsis/hsis.js')))}
+${script(stripExport(read('src/hsis/pinrec.js')))}
+${script(stripExport(read('src/hsis/mcal.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}
 </body>

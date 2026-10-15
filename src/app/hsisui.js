@@ -20,7 +20,7 @@ function hsisRun(){
   // firmware cross-check when the selected MCU carries firmware
   const fm=typeof fwMcu==='function'?fwMcu():null;HS.fw=null;
   if(fm&&fm.ref===HS.mcu){HS.fw=FW.pinUsage(fwCode(fm),fwMcuDesc(fm));HS.res=HSIS.checkFw(HS.H,HS.fw,HS.res);}
-  HS.ver=(HS.ver||0)+1;
+  HS.ver=(HS.ver||0)+1;if(HS.rec)HS.rec.res=null;
 }
 // board net for an HSIS item (exact name, else normalised match)
 function hsisNetOf(it){if(!it||!it.net||!BD)return null;return BD.nets[it.net]?it.net:(Object.keys(BD.nets).find(n=>HSIS.netN(n)===HSIS.netN(it.net))||null);}
@@ -80,9 +80,9 @@ function renderHSIS(){
   const nErr=HS.res.results.filter(r=>r.sev==='err').length,nWarn=HS.res.results.filter(r=>r.sev==='warn').length;
   document.querySelectorAll('[data-htab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.htab===HS.tab?'true':'false'));
   $('#htab-chk').innerHTML=`검사 결과 <span class="n">${nErr+nWarn}</span>`;
-  const body=$('#hsBody');
-  if(HS.tab==='table')body.innerHTML=tableHTML();else if(HS.tab==='pins')body.innerHTML=pinmapHTML();else if(HS.tab==='trace')body.innerHTML=traceHTML();else body.innerHTML=checksHTML();
-  renderDetail();bindHSIS();
+  const body=$('#hsBody');$('#hsisWs').classList.toggle('hswide',HS.tab==='rec'||HS.tab==='mcal');
+  if(HS.tab==='table')body.innerHTML=tableHTML();else if(HS.tab==='pins')body.innerHTML=pinmapHTML();else if(HS.tab==='trace')body.innerHTML=traceHTML();else if(HS.tab==='rec')body.innerHTML=recHTML();else if(HS.tab==='mcal')body.innerHTML=mcalHTML();else body.innerHTML=checksHTML();
+  renderDetail();bindHSIS();if(HS.tab==='rec')drawRecPrev();
   if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});
 }
 function tableHTML(){
@@ -95,7 +95,7 @@ function tableHTML(){
 }
 function pinmapHTML(){
   const c=BD.byRef[HS.mcu];if(!c)return'<p class="empty">MCU 부품을 고르면 핀 맵을 그립니다.</p>';
-  const owner={};HS.H.items.forEach(it=>(it._pins||[]).forEach(n=>{if(!owner[n])owner[n]=it;}));
+  const owner={};HS.H.items.forEach(it=>(it._pins||[]).forEach(n=>{if(!owner[n])owner[n]=it;}));const mdb=typeof MCU_PINS!=='undefined'?MCU_PINS.find(c.mpn)||MCU_PINS.find(c.val):null;
   const pinRes={};HS.res.results.forEach(r=>{if(r.pin&&(r.sev==='err'||r.sev==='warn')){if(r.sev==='err'||!pinRes[r.pin])pinRes[r.pin]=r.sev;}});
   const a=-c.rot*D2R,ca=Math.cos(a),sa=Math.sin(a),mir=c.side==='B'?-1:1;
   const loc=c.pads.map(p=>{const dx=p.x-c.x,dy=p.y-c.y;let lx=dx*ca-dy*sa,ly=dx*sa+dy*ca;lx*=mir;const ang=((p.ang||0)-c.rot)%180;return{p,lx,ly,ang};});
@@ -114,7 +114,8 @@ function pinmapHTML(){
     if(s==='R'){tx=o.lx+sw[0]/2+g;anchor='start';}else if(s==='L'){tx=o.lx-sw[0]/2-g;anchor='end';}
     else if(s==='T'){ty=-o.ly-sw[1]/2-g;anchor='start';rot=`rotate(-90 ${tx} ${ty})`;}else if(s==='B'){ty=-o.ly+sw[1]/2+g;anchor='end';rot=`rotate(-90 ${tx} ${ty})`;}
     const t=s==='C'?`<text x="${tx}" y="${ty+fs*0.35}" text-anchor="middle" class="plab c" font-size="${fs}">${esc(label)}</text>`:`<text x="${tx}" y="${ty+fs*0.35}" text-anchor="${anchor}" ${rot?`transform="${rot}"`:''} class="plab${it?'':' m'}" font-size="${fs}">${esc(label.length>16?label.slice(0,15)+'…':label)}</text>`;
-    return`<g class="pg" data-pin="${esc(n)}" tabindex="0" role="button" aria-label="${esc(n)}번 핀 ${esc(name)}"><title>${esc(n)}번 핀${o.p.fn?' · '+esc(o.p.fn):''}${it?' · '+esc(it.id)+' '+esc(it.signal):''}${o.p.net?' · 넷 '+esc(o.p.net):' · 미연결'}</title><rect x="${o.lx-sw[0]/2}" y="${-o.ly-sw[1]/2}" width="${sw[0]}" height="${sw[1]}" style="fill:${fill}" class="${cls}"/>${t}</g>`;}).join('');
+    const fx=mdb&&mdb.pins[n]&&mdb.pins[n].f?mdb.pins[n].f.filter(([a])=>a!=='IN'||true).slice(0,9).map(([a,b])=>`${a} ${b}`).join(', '):'';
+    return`<g class="pg" data-pin="${esc(n)}" tabindex="0" role="button" aria-label="${esc(n)}번 핀 ${esc(name)}"><title>${esc(n)}번 핀${o.p.fn?' · '+esc(o.p.fn):''}${fx?'\n기능: '+esc(fx):''}${it?' · '+esc(it.id)+' '+esc(it.signal):''}${o.p.net?' · 넷 '+esc(o.p.net):' · 미연결'}</title><rect x="${o.lx-sw[0]/2}" y="${-o.ly-sw[1]/2}" width="${sw[0]}" height="${sw[1]}" style="fill:${fill}" class="${cls}"/>${t}</g>`;}).join('');
   const usedCats=HSIS.CAT_ORDER.filter(k=>HS.H.items.some(i=>i._cat===k));
   return`<div class="pinwrap"><div class="pinhead"><b>${esc(c.ref)}</b> <span class="mono">${esc(c.val||'')} · ${esc(c.fp||'')}</span> <span class="lead">${c.side==='B'?'하단 실장 · 위에서 본 방향으로 뒤집어 표시':'위에서 본 방향'}</span></div>
     <div class="pinlegend">${usedCats.map(k=>`<span><i style="background:${catColor(k)}"></i>${esc(k)}</span>`).join('')}<span><i class="lg-undoc"></i>연결됐지만 HSIS 없음</span><span><i class="lg-nc"></i>미연결</span><span><i class="lg-err"></i>오류</span><span><i class="lg-warn"></i>경고</span></div>
@@ -198,7 +199,7 @@ function bindHSIS(){
   L.querySelectorAll('[data-sev]').forEach(b=>b.addEventListener('click',()=>{HS.sev=b.dataset.sev;renderHSIS();}));
   L.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.cat;const all=[...L.querySelectorAll('[data-cat]')].map(x=>x.dataset.cat);
     if(!HS.cats.size){HS.cats=new Set([k]);}else if(HS.cats.has(k)){HS.cats.delete(k);}else HS.cats.add(k);if(HS.cats.size===all.length)HS.cats.clear();renderHSIS();}));
-  bindHsBody($('#hsBody'));
+  bindHsBody($('#hsBody'));bindRec($('#hsBody'));bindMcal($('#hsBody'));
 }
 function bindHsBody(B){
   B.querySelectorAll('[data-item]').forEach(r=>r.addEventListener('click',()=>hsisSelect(r.dataset.item)));
@@ -233,4 +234,133 @@ async function hsisFiles(files){
     }catch(err){console.error(err);msgs.push(`${f.name}: ${err.message||err}`);}
   }
   hsisRun();renderHSIS();if(msgs.length)toast(msgs.join(' · '));
+}
+
+/* ---------- pin recommendation (HSIS × MCU datasheet functions × counterpart IC pins) ---------- */
+HS.rec={mode:'keep',res:null,checked:null,show:true,hi:null,undo:null,over:{}};
+const REC_ST={change:['변경 추천','warn'],new:['새 배정','ok'],keep:['유지','info'],none:['배정 불가','err']};
+function recEnsure(){
+  if(!HS.H||!BD)return null;const R=HS.rec;
+  if(!R.res){R.res=PINREC.recommend(BD,HS.H,HS.mcu,{mode:R.mode});R.over={};
+    R.checked=new Set((R.res.recs||[]).filter(r=>r.status==='change'||r.status==='new').map(r=>r.id));}
+  return R.res;
+}
+function recColor(st){const cs=getComputedStyle(document.documentElement);return st==='change'?(cs.getPropertyValue('--warning').trim()||'#e8a33a'):st==='new'?(cs.getPropertyValue('--accent').trim()||'#d9622b'):'rgba(255,255,255,.55)';}
+// dashed MCU-pad → counterpart-pin lines, drawn on the board views (2D) and the preview in the 핀 추천 tab
+function recDraw(ctx,side,o){
+  const R=HS.rec;if(!R||!R.show||!BD||!HS.H)return;if(!R.res&&R.touched)recEnsure();if(!R.res||!R.res.recs||R.res.mcu!==HS.mcu||!BD.byRef[R.res.mcu])return;
+  const w=Math.max(0.14,BD.W/(o&&o.preview?380:520));
+  R.res.recs.forEach(r=>{if(!r.line||r.status==='none'||r.line.side!==side)return;if(r.status==='keep'&&!(o&&o.preview)){const pad=BD.byRef[R.res.mcu].pads.find(p=>String(p.n)===r.rec.pin);const nn=pad&&pad.net&&BD.nets[pad.net];if(!nn||nn.tracks.length)return;}
+    const on=R.hi===r.id||HS.sel===r.id,col=recColor(r.status);
+    ctx.save();ctx.globalAlpha=R.hi&&!on?0.35:1;ctx.strokeStyle=col;ctx.lineWidth=on?w*2.2:w;ctx.setLineDash(r.status==='keep'?[w*1.5,w*2.5]:[w*5,w*3]);
+    ctx.beginPath();ctx.moveTo(r.line.a[0],r.line.a[1]);ctx.lineTo(r.line.b[0],r.line.b[1]);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=col;ctx.beginPath();ctx.arc(r.line.a[0],r.line.a[1],w*1.6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(r.line.b[0],r.line.b[1],w*1.6,0,Math.PI*2);ctx.fill();ctx.restore();});
+}
+function drawRecPrev(){const cv=$('#recPrev');if(!cv||!BD)return;const w=cv.clientWidth||600,k=w/BD.W,h=Math.round(BD.H*k),d=Math.min(window.devicePixelRatio||1,2);
+  cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';const ctx=cv.getContext('2d');ctx.setTransform(d*k,0,0,-d*k,0,d*h);
+  const save=[S.hlNet,S.selRef];S.hlNet=null;S.selRef=HS.mcu;try{drawSide(ctx,'T',{texture:true});recDraw(ctx,'T',{preview:true});}finally{[S.hlNet,S.selRef]=save;}}
+function recHTML(){
+  const R=HS.rec;R.touched=true;const res=recEnsure();
+  if(!res)return'<p class="empty">HSIS를 먼저 불러오세요.</p>';
+  if(res.error)return`<div class="sim" style="max-width:none"><p class="empty" style="text-align:left">${esc(res.error)}</p><p class="lead">핀 추천은 MCU 데이터시트의 핀 기능 표가 필요합니다. 지금은 Infineon TC364DP(TQFP-144)와 ST STM32F042K6U6(UFQFPN32)를 지원합니다. <button class="lnk" data-ex-tc>AURIX TC364 예제 열기</button></p></div>`;
+  const db=res.db,sm=res.sum,mcu=BD.byRef[res.mcu];
+  const rows=res.recs.map(r=>{const st=REC_ST[r.status];const pr=r.peer;const cur=r.cur?`<span class="mono">${esc(r.cur)}</span> ${esc((db.pins[r.cur]||{}).port||(db.pins[r.cur]||{}).name||'')}`:'<span class="miss">미배정</span>';
+    const curBad=r.curCheck&&!r.curCheck.ok?`<div class="rwhy err">${esc(r.curCheck.why)}</div>`:'';
+    const rec=r.rec?`<b class="mono">${esc(r.rec.pin)}</b> <b class="mono">${esc(r.rec.port)}</b><div class="rsig mono">${esc(r.rec.sel)} · ${esc(r.rec.sig)}${r.rec.insel!=null?` · 입력 ${esc(r.rec.insel)}`:''}</div>`:'—';
+    const alts=(r.alts||[]).map(a=>`<button class="altc" data-alt="${esc(r.id)}" data-pin="${esc(a.pin)}" title="${esc(a.sig)}${a.dist!=null?' · '+a.dist.toFixed(1)+' mm':''}">${esc(a.pin)} ${esc(a.port||'')}</button>`).join('');
+    const can=r.status==='change'||r.status==='new';
+    return`<tr class="click${HS.sel===r.id?' on':''}" data-rec="${esc(r.id)}"><td>${can?`<input type="checkbox" data-chk="${esc(r.id)}" ${R.checked.has(r.id)?'checked':''} aria-label="${esc(r.signal)} 적용">`:''}</td>
+      <td><b class="mono">${esc(r.signal)}</b><div class="rid">${esc(r.id)}</div><span class="sv ${st[1]}"><i aria-hidden="true">${r.status==='change'?'!':r.status==='new'?'+':r.status==='none'?'✕':'='}</i>${st[0]}</span></td>
+      <td>${esc(r.roleName)}<div class="rid mono">${pr?`${esc(pr.ref)}.${esc(pr.pin)} ${esc(pr.name||'')}`:'상대 핀 없음'}</div>${pr&&pr.note?`<div class="rid">${esc(pr.note)}</div>`:''}</td>
+      <td><div class="rcur">${cur}</div>${curBad}<div class="rto">${r.rec&&r.status!=='keep'?'→ ':''}${rec}${r.rec&&r.rec.dist!=null?`<span class="rid"> · ${r.rec.dist.toFixed(1)} mm</span>`:''}</div></td>
+      <td><div class="alts">${alts||'<span class="rid">대안 없음</span>'}</div><div class="rwhy">${esc(r.why||'')}</div></td></tr>`;}).join('');
+  return`<div class="sim recw" style="max-width:none">
+    <div class="rechead"><div><b>${esc(mcu.ref)} · ${esc(db.mpn)}</b> <span class="mono">${esc(db.pkg)}</span><p class="lead" style="margin:2px 0 0">${esc(db.note)}</p></div>
+      <div class="vt" role="group" aria-label="추천 범위"><button data-recmode="keep" aria-pressed="${R.mode==='keep'}">빈 핀·오류만</button><button data-recmode="all" aria-pressed="${R.mode==='all'}">전체 다시 배정</button></div></div>
+    <div class="recsum"><span><b class="c-warn">${sm.change}</b> 변경 추천</span><span><b>${sm.new}</b> 새 배정</span><span><b>${sm.keep}</b> 유지</span><span><b class="${sm.none?'c-err':''}">${sm.none}</b> 배정 불가</span></div>
+    <div class="recgrid"><div class="recprevw"><canvas id="recPrev" aria-label="추천 연결선 미리보기"></canvas>
+      <div class="reclg"><span><i style="background:${recColor('new')}"></i>새 배정</span><span><i style="background:${recColor('change')}"></i>변경</span><span><i class="lgk"></i>유지</span><label><input type="checkbox" id="recShow" ${R.show?'checked':''}> 보드 보기에도 표시</label></div></div>
+      <div class="recact"><button class="btn primary sm" id="recApply" ${R.checked.size?'':'disabled'}>선택한 ${R.checked.size}개 적용</button><button class="btn sm" id="recAll" ${sm.change+sm.new?'':'disabled'}>모두 선택</button>${R.undo?'<button class="btn ghost sm" id="recUndo">적용 취소</button>':''}<button class="btn sm" id="recBoard">보드에서 보기</button><button class="btn sm" id="recCsv">HSIS CSV 내려받기</button><button class="btn sm" id="recMcal">MCAL 설정으로 →</button>
+        <p class="lead">적용하면 HSIS의 MCU 핀·포트·핀 기능이 바뀌고, 보드에서 해당 MCU 패드가 신호 넷에 연결됩니다(배선 전 연결선). 대안 핀을 누르면 추천을 바꿉니다.</p></div></div>
+    <div class="tscroll"><table class="stbl recs"><thead><tr><th></th><th>신호 · 판정</th><th>필요한 기능 · 상대 IC 핀</th><th>현재 → 추천 (MCU 핀 · 기능)</th><th>대안 · 근거</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="lead">추천 기준: ① HSIS 핀 기능·방향과 상대 IC 핀 기능에서 필요한 역할(PWM, 캡처, ADC, SPI, CAN, UART, I2C, 인터럽트, GPIO)을 정합니다. ② MCU 데이터시트의 ALT/AF 표에서 그 역할이 가능한 핀만 후보로 둡니다. ③ SPI·CAN·UART·I2C 신호는 같은 주변장치 인스턴스로, 홀 캡처는 같은 타이머로 묶습니다. ④ 보드에서 상대 핀까지 거리가 짧고, 다른 신호가 필요로 하는 드문 기능을 덜 빼앗는 조합을 헝가리안 매칭으로 고릅니다. 전원·디버그·EVR 핀은 제외하고, 부트 설정(HWCFG) 핀은 감점합니다.</p></div>`;
+}
+function recApply(ids){
+  const R=HS.rec,res=R.res;if(!res||!ids.length)return;
+  R.undo={items:HS.H.items.map(it=>Object.assign({},it)),pads:BD.comps.map(c=>c.pads.map(p=>p.net))};
+  const ch=PINREC.apply(BD,HS.H,res,ids);
+  hsisRun();R.res=null;if(typeof SV!=='undefined')SV.data=null;
+  renderHSIS();refresh(false);toast(`${ch.length}개 신호를 적용했습니다. HSIS의 MCU 핀과 보드 연결이 바뀌었습니다.`);
+}
+function recUndo(){const R=HS.rec,u=R.undo;if(!u)return;HS.H.items.forEach((it,i)=>{Object.keys(it).forEach(k=>delete it[k]);Object.assign(it,u.items[i]);});
+  BD.comps.forEach((c,i)=>c.pads.forEach((p,j)=>{p.net=u.pads[i][j];}));PINREC.relink(BD);if(typeof SV!=='undefined')SV.data=null;R.undo=null;hsisRun();R.res=null;renderHSIS();refresh(false);toast('적용을 취소했습니다.');}
+function hsisCsv(){const H=HS.H,cols=Object.keys(HSIS.LABEL);const q=v=>{v=v==null?'':String(v);return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  return'﻿'+[cols.map(k=>HSIS.LABEL[k]).join(',')].concat(H.items.map(it=>cols.map(k=>q(it[k])).join(','))).join('\r\n');}
+// downloads: the claude.ai artifact viewer offers files through its downloads capability (allowlisted extensions only);
+// a plain browser/local copy uses a blob link
+let DLNS;const dlNs=()=>{if(DLNS===undefined)DLNS=window.claude&&typeof window.claude.use==='function'?window.claude.use('downloads').catch(()=>null):Promise.resolve(null);return DLNS;};
+const DL_OK=/\.(txt|json|md|csv|zip|html|svg|pdf|xlsx|docx)$/i;
+async function offerFile(name,data,type){const ns=await dlNs();
+  if(ns){const fn=DL_OK.test(name)?name:name+'.txt';try{await ns.save({filename:fn,data});return fn;}catch(e){if(e&&e.code==='declined')return null;toast('파일을 저장하지 못했습니다'+(e&&e.code?` (${e.code})`:'')+'. 복사 버튼을 쓰세요.');return null;}}
+  return saveText(name,data,type)?name:null;}
+function saveText(name,text,type){try{const b=new Blob([text],{type:type||'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);return true;}catch(e){toast('내려받지 못했습니다: '+(e.message||e));return false;}}
+function bindRec(B){
+  if(HS.tab!=='rec')return;const R=HS.rec;
+  B.querySelector('[data-ex-tc]')?.addEventListener('click',()=>loadExample('tc364'));
+  B.querySelectorAll('[data-recmode]').forEach(b=>b.addEventListener('click',()=>{R.mode=b.dataset.recmode;R.res=null;renderHSIS();}));
+  B.querySelectorAll('[data-chk]').forEach(c=>{c.addEventListener('click',e=>e.stopPropagation());c.addEventListener('change',()=>{if(c.checked)R.checked.add(c.dataset.chk);else R.checked.delete(c.dataset.chk);const n=$('#recApply');if(n){n.textContent=`선택한 ${R.checked.size}개 적용`;n.disabled=!R.checked.size;}});});
+  B.querySelectorAll('[data-rec]').forEach(tr=>{tr.addEventListener('click',e=>{if(e.target.closest('.altc,input'))return;R.hi=tr.dataset.rec;hsisSelect(tr.dataset.rec);});
+    tr.addEventListener('mouseenter',()=>{R.hi=tr.dataset.rec;drawRecPrev();});tr.addEventListener('mouseleave',()=>{R.hi=null;drawRecPrev();});});
+  B.querySelectorAll('.altc').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const r=R.res.recs.find(x=>x.id===b.dataset.alt);const n=b.dataset.pin;
+    const db=R.res.db,o=MCU_PINS.options(db,n).filter(x=>x.role===r.role&&(!r.rec||!r.group||!/^(spi|uart|can|i2c|cap)/.test(r.group)||x.inst===r.rec.inst))[0]||MCU_PINS.options(db,n).find(x=>x.role===r.role);if(!o)return;
+    const pad=BD.byRef[R.res.mcu].pads.find(p=>String(p.n)===n);const prev=r.rec;
+    r.rec={pin:n,port:db.pins[n].port||db.pins[n].name,sel:o.sel,sig:o.sig,inst:o.inst,ch:o.ch,insel:o.insel,tim:o.tim,dist:pad&&r.peer?Math.hypot(pad.x-r.peer.x,pad.y-r.peer.y):null};
+    if(prev){r.alts=[{pin:prev.pin,port:prev.port,sig:prev.sig,sel:prev.sel,dist:prev.dist}].concat(r.alts.filter(a=>a.pin!==n)).slice(0,3);}
+    r.status=r.cur===n?'keep':r.cur?'change':'new';r.why='직접 고른 대안 핀입니다.';if(r.status!=='keep')R.checked.add(r.id);
+    r.line=pad&&r.peer?{a:[pad.x,pad.y],b:[r.peer.x,r.peer.y],side:'T'}:null;
+    const clash=R.res.recs.find(x=>x!==r&&x.rec&&x.rec.pin===n);if(clash)toast(`${n}번 핀은 ${clash.signal}에도 추천돼 있습니다. 둘 중 하나를 바꾸세요.`);
+    renderHSIS();}));
+  B.querySelector('#recShow')?.addEventListener('change',e=>{R.show=e.target.checked;refresh(false);});
+  B.querySelector('#recAll')?.addEventListener('click',()=>{R.res.recs.forEach(r=>{if(r.status==='change'||r.status==='new')R.checked.add(r.id);});renderHSIS();});
+  B.querySelector('#recApply')?.addEventListener('click',()=>recApply([...R.checked]));
+  B.querySelector('#recUndo')?.addEventListener('click',recUndo);
+  B.querySelector('#recBoard')?.addEventListener('click',()=>{R.show=true;setWorkspace('board');setView('T');S.selRef=HS.mcu;S.hlNet=null;refresh(true);});
+  B.querySelector('#recCsv')?.addEventListener('click',async()=>{if(await offerFile(`${(HS.H.meta.docId||'HSIS')}_updated.csv`,hsisCsv(),'text/csv;charset=utf-8'))toast('현재 HSIS를 CSV로 내려받았습니다. 엑셀에서 열 수 있습니다.');});
+  B.querySelector('#recMcal')?.addEventListener('click',()=>{HS.tab='mcal';renderHSIS();});
+}
+
+/* ---------- MCAL export ---------- */
+HS.mcal={file:0,kind:'all'};
+function mcalHTML(){
+  if(!HS.H||!BD)return'<p class="empty">HSIS를 먼저 불러오세요.</p>';
+  const G=MCAL.generate(BD,HS.H,HS.mcu);HS.mcal.gen=G;
+  if(G.error)return`<div class="sim" style="max-width:none"><p class="empty" style="text-align:left">${esc(G.error)}</p></div>`;
+  const M=G.model,fam=M.fam;const files=G.files;if(HS.mcal.file>=files.length)HS.mcal.file=0;const f=files[HS.mcal.file];
+  const kindL={arxml:'AUTOSAR ECUC',c:'MCAL C 설정',hal:'STM32 HAL/LL'};
+  const list=['arxml','c','hal'].map(k=>{const fs=files.map((x,i)=>[x,i]).filter(([x])=>x.kind===k);
+    return`<div class="mfg"><p class="h">${kindL[k]}</p>${fs.length?fs.map(([x,i])=>`<button class="mfile${i===HS.mcal.file?' on':''}" data-mfile="${i}"><span class="mono">${esc(x.name)}</span><span class="rid">${(x.text.length/1024).toFixed(1)} KB</span></button>`).join(''):`<p class="rid" style="margin:2px 0 0">${k==='hal'?'STM32 보드에서만 만듭니다 (TC364는 Infineon MCAL/iLLD 사용).':'없음'}</p>`}</div>`;}).join('');
+  const prow=M.pins.map(x=>`<tr><td class="r mono">${x.n}</td><td class="mono">${esc(x.port)}</td><td class="mono"><b>${esc(x.sig)}</b></td><td class="mono">${esc(x.o.sel)}</td><td class="mono">${esc(x.o.sig)}${x.o.insel!=null?` <span class="rid">입력 ${esc(x.o.insel)}</span>`:''}</td><td>${x.dir==='OUT'?'출력':x.dir==='IO'?'양방향':'입력'}</td><td>${x.level?esc(x.level==='HIGH'?'High':'Low'):'—'}</td><td>${x.pull==='UP'?'풀업':x.pull==='DOWN'?'풀다운':'—'}${x.od?' · OD':''}</td>
+    <td class="mono">${fam==='aurix'?(x.pi?'PC '+'0x'+MCAL.aurixPC(x).toString(16).toUpperCase().padStart(2,'0'):'전용 AN'):(x.r?`MODER ${x.r.mode} · AF${x.r.af}`:'')}</td><td>${esc(x.swmod)}</td></tr>`).join('');
+  return`<div class="sim" style="max-width:none">
+    <div class="rechead"><div><b>${esc(M.mcu)} · ${esc(M.mpn)}</b> <span class="lead">현재 HSIS의 핀 배정으로 만든 설정입니다. 핀 추천을 적용하면 바로 반영됩니다.</span></div>
+      <div class="acts"><button class="btn primary sm" id="mcalZip">모두 내려받기 (.zip)</button><button class="btn sm" id="mcalUse">이 ARXML로 HSIS 검사</button></div></div>
+    ${M.warn.length?`<ul class="chk">${M.warn.map(w=>`<li>${pill('warn')}<div><span>${esc(w)}</span></div></li>`).join('')}</ul>`:''}
+    <div class="mcalw"><nav class="mfiles" aria-label="생성 파일">${list}</nav>
+      <div class="mprev"><div class="mprevh"><b class="mono">${esc(f.name)}</b><span class="hgap"><button class="btn sm" id="mcalCopy">복사</button><button class="btn sm" id="mcalSave">내려받기</button></span></div><pre class="codepre" tabindex="0">${esc(f.text)}</pre></div></div>
+    <h4 class="h4">포트 설정 요약 (${M.pins.length}핀)</h4>
+    <div class="tscroll"><table class="stbl"><thead><tr><th class="r">핀</th><th>포트</th><th>신호</th><th>모드</th><th>기능</th><th>방향</th><th>초기값</th><th>풀</th><th>${fam==='aurix'?'IOCR.PCx':'레지스터'}</th><th>SW 모듈</th></tr></thead><tbody>${prow}</tbody></table></div>
+    <p class="lead">ARXML은 Port·Dio·Pwm·Adc·Icu·Spi·Can 모듈의 ECUC 값(AUTOSAR 4.x 정의 경로)입니다. C 설정은 MCAL 관례를 따른 예시라 벤더 MCAL 구조체와 1:1로 같지 않습니다. ${fam==='aurix'?'TC3xx IOCR 값은 PCx 코드(입력 0x00–0x02, 푸시풀 0x10+ALTk, 오픈 드레인 0x18+ALTk)를 바이트 비트 7:3에 넣은 값입니다.':'STM32 레지스터 값과 HAL/LL 코드는 데이터시트 AF 표의 번호를 씁니다.'}</p></div>`;
+}
+function bindMcal(B){
+  if(HS.tab!=='mcal')return;const G=HS.mcal.gen;if(!G||G.error)return;
+  B.querySelectorAll('[data-mfile]').forEach(b=>b.addEventListener('click',()=>{HS.mcal.file=+b.dataset.mfile;renderHSIS();}));
+  const f=G.files[HS.mcal.file];
+  B.querySelector('#mcalCopy')?.addEventListener('click',()=>{const done=()=>toast(`${f.name}을(를) 복사했습니다.`);try{navigator.clipboard.writeText(f.text).then(done,()=>fallbackCopy(f.text,done));}catch(e){fallbackCopy(f.text,done);}});
+  B.querySelector('#mcalSave')?.addEventListener('click',async()=>{const fn=await offerFile(f.name,f.text);if(fn)toast(`${fn}을(를) 내려받았습니다.`);});
+  B.querySelector('#mcalZip')?.addEventListener('click',async()=>{
+    if(!window.JSZip){toast('zip 라이브러리를 불러오지 못했습니다. 파일마다 복사하거나 내려받으세요.');return;}
+    const z=new JSZip();G.files.forEach(x=>z.file((x.kind==='arxml'?'arxml/':x.kind==='hal'?'stm32/':'mcal/')+x.name,x.text));
+    z.file('README.txt',`${BD.name} · ${G.model.mpn}\n생성: PCB 뷰어 HSIS 핀 추천\n\narxml/  AUTOSAR ECUC 설정 (Port, Dio, Pwm, Adc, Icu, Spi, Can)\nmcal/   MCAL 관례 C 설정 예시\n${G.model.fam==='stm32'?'stm32/  STM32 HAL·LL 초기화 코드\n':''}\n주의: 벤더 MCAL 도구로 가져올 때 해당 벤더 파라미터 정의에 맞춰 확인하세요.\n${G.model.warn.length?'\n경고:\n'+G.model.warn.join('\n')+'\n':''}`);
+    try{const b=await z.generateAsync({type:'blob'});if(await offerFile(`${(BD.name||'board').replace(/[^\w.-]+/g,'_')}_MCAL.zip`,b,'application/zip'))toast('MCAL 설정 파일을 zip으로 내려받았습니다.');}catch(e){toast('zip을 만들지 못했습니다: '+(e.message||e));}});
+  B.querySelector('#mcalUse')?.addEventListener('click',()=>{const ax=G.files.find(x=>x.kind==='arxml');HS.arxml=HSIS.parseARXML(ax.text);HS.arxmlFile=ax.name+' (생성)';hsisRun();HS.tab='checks';renderHSIS();toast('생성한 ARXML로 HSIS를 다시 검사했습니다.');});
 }

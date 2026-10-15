@@ -477,6 +477,12 @@ const FP={};
   // TI PWP (HTSSOP-28) with thermal pad (pin 29)
   const t28=[];for(let i=0;i<14;i++)t28.push({n:''+(1+i),x:-2.85,y:4.225-0.65*i,w:1.4,h:0.4});for(let i=0;i<14;i++)t28.push({n:''+(15+i),x:2.85,y:-4.225+0.65*i,w:1.4,h:0.4});t28.push({n:'29',x:0,y:0,w:2.6,h:5.0});
   FP['HTSSOP-28']={kind:'ic',stand:0.05,body:[4.4,9.7,1.1],pads:t28,dot:[-1.5,4.2]};
+  // TQFP-144 20×20 mm, 0.5 mm pitch, exposed pad 145 (pin 1 at the top of the left row, counter-clockwise)
+  const t144=[];for(let i=0;i<36;i++){t144.push({n:''+(1+i),x:-10.75,y:8.75-0.5*i,w:1.5,h:0.28});t144.push({n:''+(37+i),x:-8.75+0.5*i,y:-10.75,w:0.28,h:1.5});
+    t144.push({n:''+(73+i),x:10.75,y:-8.75+0.5*i,w:1.5,h:0.28});t144.push({n:''+(109+i),x:8.75-0.5*i,y:10.75,w:0.28,h:1.5});}
+  t144.push({n:'145',x:0,y:0,w:7,h:7});t144.sort((a,b)=>a.n-b.n);
+  FP['TQFP-144']={kind:'ic',stand:0.05,body:[20,20,1.2],pads:t144,dot:[-8.6,8.6]};
+  FP['HDR-1x8']={kind:'hdr',body:[2.54,20.32,2.5],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:0,y:8.89-2.54*i,w:1.7,h:1.7,round:true,drill:1.0}))};
   FP['1210']={kind:'chip',body:[3.2,2.5,1.6],pads:[{n:'1',x:-1.5,y:0,w:1.2,h:2.7},{n:'2',x:1.5,y:0,w:1.2,h:2.7}]};
   // board-mount 3-phase BLDC motor with 8-pin lead row (U V W H1 H2 H3 VCC GND)
   FP['BLDC-2418']={kind:'motor',body:[30,24,23],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:-19,y:8.75-2.5*i,w:2.0,h:2.0,round:true,drill:1.0}))};

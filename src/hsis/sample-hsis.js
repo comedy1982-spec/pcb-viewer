@@ -98,9 +98,51 @@ const SAMPLE_ARXML_BLDC=buildArxml('MOTION-32 BLDC 예제 Port 설정 (STM32F042
   ['IN_W',18,'PORT_PIN_OUT','PORT_PIN_MODE_PWM','PORT_PIN_LEVEL_LOW'],['EN_W',19,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW'],
   ['NFAULT',26,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],['HALL1',12,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],['HALL2',13,'PORT_PIN_OUT','PORT_PIN_MODE_DIO',''],['HALL3',14,'PORT_PIN_IN','PORT_PIN_MODE_DIO',''],
   ['LED_STATUS',10,'PORT_PIN_OUT','PORT_PIN_MODE_DIO','PORT_PIN_LEVEL_LOW']]);
+/* HSIS for the AURIX-364 INV board (TC364DP). Most signal rows have no MCU pin yet — the pin recommender fills them in.
+   Deliberate findings: IN_W is put on pin 45 (AN11, analog-only), CAN uses CAN00 on P02.0/P02.1 although CAN01 is closer. */
+const SAMPLE_HSIS_TC364=(function(){
+  const H=SAMPLE_HSIS.header;
+  const r=(id,sig,cat,pins,port,fn,per,dir,init,act,pull,net,hw,elec,scale,timing,swmod,swcfg,api,req,test,asil,st,note)=>[id,sig,cat,pins,port,fn,per,dir,init,act,pull,net,hw,elec,scale,timing,swmod,swcfg,api,req,test,asil,st,note];
+  const pwm=(id,sig,pin,hw,note)=>r(id,sig,'디지털 출력',pin,'',pin?'GTM_TOUT':'GTM TOUT (PWM)','GTM','출력','Low','High','없음',sig,hw,'3.3 V 푸시풀','듀티 0–100 %','20 kHz, 센터 정렬','Pwm','PwmChannel_'+sig,'Pwm_SetDutyCycle','SYS-REQ-320','TC-INV-01','ASIL B','초안',note);
+  const en=(id,sig,hw,note)=>r(id,sig,'디지털 출력','','','GPIO','Dio','출력','Low','High','없음',sig,hw,'3.3 V 푸시풀','','정류 스텝마다','Dio','DioConf_DioChannel_'+sig,'Dio_WriteChannel','SYS-REQ-320','TC-INV-01','ASIL B','초안',note);
+  const hall=(id,sig,hw)=>r(id,sig,'디지털 입력','','','GTM TIM 캡처 (ICU)','GTM','입력','','High','내부 풀업 · 홀 출력 오픈 컬렉터',sig,hw,'0 / 5 V → 3.3 V 클램프 필요','','전기각 펄스, 최대 1 kHz','Icu','IcuChannel_'+sig,'Icu_GetTimeElapsed','SYS-REQ-321','TC-INV-02','ASIL B','초안','');
+  return{
+    meta:{docId:'HSIS-AURIX364',title:'AURIX-364 INV HW/SW 인터페이스 사양',version:'0.1',mcuRef:'U1',date:'2026-10-15',file:'AURIX-364_HSIS.xlsx (예제)'},
+    header:H,
+    rows:[
+      r('HSIS-301','VEXT','전원','23, 42, 44, 52, 69, 78, 83, 125, 126','','VEXT / VDDP3 / VDDM / VAREF1 / VEVRSB','PWR','전원','','','','+3V3','U6.2 (LDO 출력)','3.3 V ±5 %, 단일 공급','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인','코어 VDD는 내부 EVR13'),
+      r('HSIS-302','VDD','전원','10, 22, 72, 79, 99, 127','','VDD (EVR13 출력)','PWR','전원','','','','VDD','C5.2','1.25 V 내부 생성','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인',''),
+      r('HSIS-303','VSS','접지','41, 43, 80, 145','','VSS / VSSM / VAGND1','PWR','접지','','','','GND','J1.2','','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인','노출 패드(145) 포함'),
+      r('HSIS-304','PORST','리셋·부트','97','PORST','PORST','SCU','입력','','Low','외부 풀업 10kΩ','PORST','R8.1','','','','','','','SYS-REQ-302','TC-RST-01','QM','승인',''),
+      r('HSIS-305','XTAL1','클럭','81','XTAL1','XTAL1','SCU','입력','','','','XTAL1','Y1.1','20 MHz','','','Mcu','McuClockSettingConfig_0','','SYS-REQ-303','TC-CLK-01','QM','승인',''),
+      r('HSIS-306','XTAL2','클럭','82','XTAL2','XTAL2','SCU','출력','','','','XTAL2','Y1.3','20 MHz','','','Mcu','McuClockSettingConfig_0','','SYS-REQ-303','TC-CLK-01','QM','승인',''),
+      r('HSIS-307','ESR0','리셋·부트','98','ESR0','ESR0','SCU','양방향(오픈 드레인)','','Low','외부 풀업 10kΩ','ESR0','R9.1','','','','','','','SYS-REQ-302','TC-RST-01','QM','승인','외부 리셋 요청'),
+      pwm('HSIS-310','IN_U','','U3.23','DRV8313 IN3 → OUT3 → U상'),
+      pwm('HSIS-311','IN_V','','U3.25','DRV8313 IN2 → OUT2 → V상'),
+      pwm('HSIS-312','IN_W','45','U3.27','DRV8313 IN1 → OUT1 → W상 (임시 배정)'),
+      en('HSIS-313','EN_U','U3.22','DRV8313 EN3'),en('HSIS-314','EN_V','U3.24','DRV8313 EN2'),en('HSIS-315','EN_W','U3.26','DRV8313 EN1'),
+      r('HSIS-316','DRV_NSLEEP','디지털 출력','','','GPIO','Dio','출력','Low','High','없음','DRV_NSLEEP','U3.17','','','','Dio','DioConf_DioChannel_DRV_NSLEEP','Dio_WriteChannel','SYS-REQ-322','TC-INV-03','ASIL B','초안','Low = 슬립 (내부 풀다운)'),
+      r('HSIS-317','DRV_NFAULT','디지털 입력','','','ERU 외부 인터럽트 (하강 에지)','ERU','입력(오픈 드레인)','','Low','외부 풀업 10kΩ','NFAULT','U3.18','','','','Icu','IcuChannel_DRV_NFAULT','Icu_EnableNotification','SYS-REQ-322','TC-INV-03','ASIL B','초안','과전류·과열·저전압'),
+      hall('HSIS-320','HALL_A','J3.4'),hall('HSIS-321','HALL_B','J3.5'),hall('HSIS-322','HALL_C','J3.6'),
+      r('HSIS-330','FLASH_CS','통신','','','QSPI SLSO (CS)','QSPI','출력','High','Low','없음','FLASH_CS','U5.1','','','','Spi','SpiExternalDevice_Flash','Spi_AsyncTransmit','SYS-REQ-340','TC-FLASH-01','QM','초안',''),
+      r('HSIS-331','FLASH_SCLK','통신','','','QSPI SCLK','QSPI','출력','','','','FLASH_SCLK','U5.6','','','20 MHz','Spi','SpiExternalDevice_Flash','Spi_AsyncTransmit','SYS-REQ-340','TC-FLASH-01','QM','초안',''),
+      r('HSIS-332','FLASH_MOSI','통신','','','QSPI MTSR','QSPI','출력','','','','FLASH_MOSI','U5.5','','','20 MHz','Spi','SpiExternalDevice_Flash','','SYS-REQ-340','TC-FLASH-01','QM','초안',''),
+      r('HSIS-333','FLASH_MISO','통신','','','QSPI MRST','QSPI','입력','','','','FLASH_MISO','U5.2','','','20 MHz','Spi','SpiExternalDevice_Flash','','SYS-REQ-340','TC-FLASH-01','QM','초안',''),
+      r('HSIS-340','CAN_TX','통신','1','P02.0','CAN00_TXD','CAN00','출력','','','','CAN_TX','U4.1','','','500 kbit/s · 데이터 2 Mbit/s (CAN FD)','Can','CanController_0','Can_Write','SYS-REQ-350','TC-CAN-01','ASIL B','승인',''),
+      r('HSIS-341','CAN_RX','통신','2','P02.1','CAN00_RXDA','CAN00','입력','','','','CAN_RX','U4.4','','','500 kbit/s · 데이터 2 Mbit/s (CAN FD)','Can','CanController_0','','SYS-REQ-350','TC-CAN-01','ASIL B','승인',''),
+      r('HSIS-342','CAN_STB','디지털 출력','','','GPIO','Dio','출력','High','High','없음','CAN_STB','U4.8','','','','Dio','DioConf_DioChannel_CAN_STB','Dio_WriteChannel','SYS-REQ-350','TC-CAN-02','QM','초안','High = 대기, 초기화 뒤 Low'),
+      r('HSIS-350','DBG_TX','통신','','','ASCLIN TX (UART)','ASCLIN','출력','','','','DBG_TX','J4.1','','','115200 bit/s','Uart','UartChannel_Debug','Uart_Write','SYS-REQ-360','TC-DBG-01','QM','초안',''),
+      r('HSIS-351','DBG_RX','통신','','','ASCLIN RX (UART)','ASCLIN','입력','','','','DBG_RX','J4.2','','','115200 bit/s','Uart','UartChannel_Debug','Uart_Read','SYS-REQ-360','TC-DBG-01','QM','초안',''),
+      r('HSIS-360','VBAT_MON','아날로그','51','AN0','EVADC_G0CH0','EVADC','아날로그 입력','','','','VBAT_MON','R6.2','0–16.3 V (100k/22k)','VBAT = ADC × 3.3 / 4095 × 5.545','1 kHz 샘플링','Adc','AdcGroup_VbatMon','Adc_ReadGroup','SYS-REQ-370','TC-ADC-01','QM','승인',''),
+      r('HSIS-370','LED_STATUS','디지털 출력','','','GPIO','Dio','출력','Low','High','없음','LED_ST','R7.2','약 4 mA','','1 Hz 점멸','Dio','DioConf_DioChannel_LED_STATUS','Dio_WriteChannel','SYS-REQ-380','TC-LED-01','QM','초안','D2 APT1608SGC'),
+    ]};
+})();
+const SAMPLE_ARXML_TC364=buildArxml('AURIX-364 INV 예제 Port 설정 (TC364DP, 일부만 작성됨).',[
+  ['CAN_TX',1,'PORT_PIN_OUT','PORT_PIN_MODE_ALT5','PORT_PIN_LEVEL_HIGH'],['CAN_RX',2,'PORT_PIN_IN','PORT_PIN_MODE_GPIO',''],['VBAT_MON',51,'PORT_PIN_IN','PORT_PIN_MODE_ADC','']]);
 // which HSIS belongs to which built-in board
 const HSIS_SAMPLES={
   sense:{hsis:SAMPLE_HSIS,arxml:SAMPLE_ARXML,file:'SENSE-32_Port.arxml (예제)'},
   mcu:{hsis:SAMPLE_HSIS_MCU,arxml:SAMPLE_ARXML_MCU,file:'MOTION-32_Port.arxml (예제)'},
-  bldc:{hsis:SAMPLE_HSIS_BLDC,arxml:SAMPLE_ARXML_BLDC,file:'MOTION-32-BLDC_Port.arxml (예제)'}};
+  bldc:{hsis:SAMPLE_HSIS_BLDC,arxml:SAMPLE_ARXML_BLDC,file:'MOTION-32-BLDC_Port.arxml (예제)'},
+  tc364:{hsis:SAMPLE_HSIS_TC364,arxml:SAMPLE_ARXML_TC364,file:'AURIX-364_Port.arxml (예제)'}};
 if(typeof module!=='undefined')module.exports={SAMPLE_HSIS,SAMPLE_ARXML,HSIS_SAMPLES};
