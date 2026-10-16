@@ -518,9 +518,9 @@ function autoSchematic(B){
   // unused pins of large ICs
   blocks.forEach(b=>{if(!b.a)return;const un=uniq(b.a).filter(p=>!p.net).sort(cmpPin);if(uniq(b.a).length<=64||!un.length)return;
     const chunks=[];for(let i=0;i<un.length;i+=80)chunks.push(un.slice(i,i+80));const lay={groups:[],w:0,h:0};let x=15;
-    chunks.forEach((ch,k)=>{const half=Math.ceil(ch.length/2);const c={ref:b.a.ref,val:(b.a.val||'')+' · 미사용 핀'+(chunks.length>1?` ${k+1}/${chunks.length}`:''),fp:b.a.fp,pads:ch};
-      const bx=boxSym(c,{L:ch.slice(0,half),R:ch.slice(half),T:[],B:[]},()=>null);const gr=newGrp();grpAdd(gr,bx.s);gr.nocon.push(...bx.nocon);grpBB(gr);grpMove(gr,x-gr.bb[0],15-gr.bb[1]);x=gr.bb[2]+15;lay.groups.push(gr);lay.w=Math.max(lay.w,gr.bb[2]-15);lay.h=Math.max(lay.h,gr.bb[3]-15);});
-    const sh=mkSheet(B,lay,`${b.a.ref} 미사용 핀`);lay.groups.forEach(gr=>{sh.symbols.push(...gr.syms);sh.nocon.push(...gr.nocon);});sheets.push(sh);});
+    chunks.forEach((ch,k)=>{const half=Math.ceil(ch.length/2);const c={ref:b.a.ref,val:b.a.val||'',fp:b.a.fp,pads:ch};
+      const bx=boxSym(c,{L:ch.slice(0,half),R:ch.slice(half),T:[],B:[]},()=>null);const gr=newGrp();grpAdd(gr,bx.s);gr.nocon.push(...bx.nocon);grpBB(gr);grpMove(gr,x-gr.bb[0],22-gr.bb[1]);gr.note={s:`${b.a.ref} 미사용 핀${chunks.length>1?` ${k+1}/${chunks.length}`:''} (NC)`,p:[gr.bb[0],gr.bb[1]-4],rot:0,fx:{size:1.5,h:'left',v:'bottom'}};x=gr.bb[2]+15;lay.groups.push(gr);lay.w=Math.max(lay.w,gr.bb[2]-15);lay.h=Math.max(lay.h,gr.bb[3]-15);});
+    const sh=mkSheet(B,lay,`${b.a.ref} 미사용 핀`);lay.groups.forEach(gr=>{sh.symbols.push(...gr.syms);sh.nocon.push(...gr.nocon);if(gr.note)sh.texts.push(gr.note);});sheets.push(sh);});
   sheets.forEach((s,i)=>{s.name=`${i+1}. ${s.name}`;});
   sheets.meta=meta;
   return sheets;
@@ -539,6 +539,6 @@ function build(B,files){
   const c=connect(sheets,B);
   return{sheets,auto,groups:c.groups,matched:c.matched,total:c.total};
 }
-return{parseKicadSch,autoSchematic,connect,build};
+return{parseKicadSch,autoSchematic,connect,build,twoPin,powerSym,boxSym,finishBB,moveSym};
 })();
 if(typeof module!=='undefined')module.exports=SCH;

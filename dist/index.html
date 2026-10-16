@@ -598,6 +598,21 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .emcchk .eh{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}.emcchk .eh .mono{margin-left:auto;font-size:11.5px}
 .emcchk .em{margin-top:3px;color:var(--fg);line-height:1.45}.emcchk .fix{color:var(--muted);font-size:11.5px;margin-top:2px}
 .emc .kpi.emck b{font-size:15px}
+/* schematic editor */
+.sov-ed{left:12px;top:52px;right:330px;flex-direction:column;align-items:flex-start;gap:6px}
+@media (max-width:900px){.sov-ed{right:12px;top:96px}}
+.setools{display:flex;flex-wrap:wrap;gap:4px;pointer-events:auto}
+.setools .vbtn{display:inline-flex;align-items:center;gap:5px;font-size:12px}
+.setools .vbtn[disabled]{opacity:.45;cursor:default}
+.setools .vbtn.warn{border-color:var(--warning);color:var(--warn-fg);font-weight:600}
+.setools kbd{font-family:var(--f-mono);font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 3px;line-height:14px}
+.sedlg{position:absolute;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 40%,transparent);pointer-events:auto;z-index:5}
+.sedlg[hidden]{display:none}
+.sedlg-in{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:min(340px,calc(100vw - 32px));max-width:min(560px,calc(100vw - 32px));max-height:80%;overflow:auto;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 32px rgba(0,0,0,.22)}
+.sepal{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto}
+.sepal label{display:flex;gap:6px;align-items:center;font-size:13px}
+.sediff{margin:0;padding-left:18px;max-height:280px;overflow:auto;font-size:12.5px;display:flex;flex-direction:column;gap:2px}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit}
 </style>
 
 </head>
@@ -667,7 +682,7 @@ details.thsec>*:not(summary){margin:0 10px 10px}
       <div id="splitter"></div>
       <div id="schOv" hidden>
         <div class="sov sov-tl" id="schPages"></div>
-        <div class="sov sov-tr"><button class="pill vbtn" id="schFitBtn">화면 맞춤</button><button class="pill vbtn" id="schPop" title="회로도를 새 창으로 엽니다">새 창</button><button class="pill vbtn" id="schOpen">회로도 불러오기</button><input type="file" id="schFile" accept=".kicad_sch" multiple hidden></div>
+        <div class="sov sov-tr"><button class="pill vbtn" id="schFitBtn">화면 맞춤</button><button class="pill vbtn" id="schPop" title="회로도를 새 창으로 엽니다">새 창</button><button class="pill vbtn" id="schEdit" title="회로도를 편집합니다 (Eeschema 단축키)">회로 편집</button><button class="pill vbtn" id="schOpen">회로도 불러오기</button><input type="file" id="schFile" accept=".kicad_sch" multiple hidden></div>
         <div class="sov sov-bl" id="schNote"></div>
         <div class="sov sov-br"><span class="pill hint">드래그 이동 · 휠 확대 · 클릭하면 보드와 함께 강조</span></div>
       </div>
@@ -2246,9 +2261,9 @@ function autoSchematic(B){
   // unused pins of large ICs
   blocks.forEach(b=>{if(!b.a)return;const un=uniq(b.a).filter(p=>!p.net).sort(cmpPin);if(uniq(b.a).length<=64||!un.length)return;
     const chunks=[];for(let i=0;i<un.length;i+=80)chunks.push(un.slice(i,i+80));const lay={groups:[],w:0,h:0};let x=15;
-    chunks.forEach((ch,k)=>{const half=Math.ceil(ch.length/2);const c={ref:b.a.ref,val:(b.a.val||'')+' · 미사용 핀'+(chunks.length>1?` ${k+1}/${chunks.length}`:''),fp:b.a.fp,pads:ch};
-      const bx=boxSym(c,{L:ch.slice(0,half),R:ch.slice(half),T:[],B:[]},()=>null);const gr=newGrp();grpAdd(gr,bx.s);gr.nocon.push(...bx.nocon);grpBB(gr);grpMove(gr,x-gr.bb[0],15-gr.bb[1]);x=gr.bb[2]+15;lay.groups.push(gr);lay.w=Math.max(lay.w,gr.bb[2]-15);lay.h=Math.max(lay.h,gr.bb[3]-15);});
-    const sh=mkSheet(B,lay,`${b.a.ref} 미사용 핀`);lay.groups.forEach(gr=>{sh.symbols.push(...gr.syms);sh.nocon.push(...gr.nocon);});sheets.push(sh);});
+    chunks.forEach((ch,k)=>{const half=Math.ceil(ch.length/2);const c={ref:b.a.ref,val:b.a.val||'',fp:b.a.fp,pads:ch};
+      const bx=boxSym(c,{L:ch.slice(0,half),R:ch.slice(half),T:[],B:[]},()=>null);const gr=newGrp();grpAdd(gr,bx.s);gr.nocon.push(...bx.nocon);grpBB(gr);grpMove(gr,x-gr.bb[0],22-gr.bb[1]);gr.note={s:`${b.a.ref} 미사용 핀${chunks.length>1?` ${k+1}/${chunks.length}`:''} (NC)`,p:[gr.bb[0],gr.bb[1]-4],rot:0,fx:{size:1.5,h:'left',v:'bottom'}};x=gr.bb[2]+15;lay.groups.push(gr);lay.w=Math.max(lay.w,gr.bb[2]-15);lay.h=Math.max(lay.h,gr.bb[3]-15);});
+    const sh=mkSheet(B,lay,`${b.a.ref} 미사용 핀`);lay.groups.forEach(gr=>{sh.symbols.push(...gr.syms);sh.nocon.push(...gr.nocon);if(gr.note)sh.texts.push(gr.note);});sheets.push(sh);});
   sheets.forEach((s,i)=>{s.name=`${i+1}. ${s.name}`;});
   sheets.meta=meta;
   return sheets;
@@ -2267,7 +2282,308 @@ function build(B,files){
   const c=connect(sheets,B);
   return{sheets,auto,groups:c.groups,matched:c.matched,total:c.total};
 }
-return{parseKicadSch,autoSchematic,connect,build};
+return{parseKicadSch,autoSchematic,connect,build,twoPin,powerSym,boxSym,finishBB,moveSym};
+})();
+
+
+</script>
+<script>
+/* Schematic editing engine (Eeschema-style): operations on the sheet model used by the viewer, connectivity-driven
+   netlist, back-annotation to the board ("Update PCB from Schematic"), a light ERC and a .kicad_sch writer.
+   The sheet model is the one SCH.parseKicadSch / SCH.autoSchematic produce: symbols (absolute graphics, pins p=connection
+   point / e=body side), wires {a,b}, labels, junctions, nocon. Needs SCH (twoPin, powerSym, finishBB, moveSym, connect). */
+const SCHEDIT=(function(){
+"use strict";
+const GR=1.27,EPS=1e-6;
+const snap=v=>Math.round(v/GR)*GR;
+const sp=p=>[snap(p[0]),snap(p[1])];
+const same=(a,b)=>Math.abs(a[0]-b[0])<1e-3&&Math.abs(a[1]-b[1])<1e-3;
+const key=p=>Math.round(p[0]*100)+','+Math.round(p[1]*100);
+const onSeg=(p,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy;if(!l)return false;const t=((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l;if(t<=EPS||t>=1-EPS)return false;return Math.abs((p[0]-a[0])*dy-(p[1]-a[1])*dx)/Math.sqrt(l)<0.01;};
+
+/* ---- undo snapshots: geometry only (runtime connectivity fields are rebuilt by SCH.connect) ---- */
+const SKIP=new Set(['node','na','nb','_pad','_w','_c','board']);
+function snapshot(sheets){return JSON.stringify(sheets,(k,v)=>{if(SKIP.has(k))return undefined;if(k==='g'&&v&&!Array.isArray(v))return undefined;return v;});}
+function restore(json){return JSON.parse(json);}
+
+/* ---- symbol transforms ---- */
+function anchor(s){const b=s._body||s.bb;return sp([(b[0]+b[2])/2,(b[1]+b[3])/2]);}
+function xform(s,f,textToo){
+  s.g.forEach(g=>{if(g.pts)g.pts=g.pts.map(f);if(g.c)g.c=f(g.c);if(g.p)g.p=f(g.p);});
+  s.pins.forEach(p=>{p.p=f(p.p);p.e=f(p.e);if(p.side)p.side=null;});
+  if(textToo!==false)s.texts.forEach(t=>{t.p=f(t.p);});
+  if(s._body){const a=f([s._body[0],s._body[1]]),b=f([s._body[2],s._body[3]]);s._body=[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])];}
+  const xy=f([s.x,s.y]);s.x=xy[0];s.y=xy[1];
+  SCH.finishBB(s,0.3);
+}
+function moveSym(s,dx,dy){xform(s,q=>[q[0]+dx,q[1]+dy]);}
+// 90° counter-clockwise on screen (y grows downwards); field texts move with the part but stay upright
+function rotate(s){const[ax,ay]=anchor(s);xform(s,q=>[ax+(q[1]-ay),ay-(q[0]-ax)]);s.rot=((s.rot||0)+90)%360;}
+function mirror(s,axis){const[ax,ay]=anchor(s);xform(s,axis==='y'?q=>[q[0],2*ay-q[1]]:q=>[2*ax-q[0],q[1]]);
+  s.texts.forEach(t=>{if(axis!=='y'&&t.fx.h!=='center')t.fx.h=t.fx.h==='left'?'right':'left';});}
+// pins of a symbol that touch wire ends, for drag (G) that keeps connections
+function attached(sh,s){const out=[];s.pins.forEach(p=>sh.wires.forEach(w=>{if(same(w.a,p.p))out.push({w,end:'a',pin:p});else if(same(w.b,p.p))out.push({w,end:'b',pin:p});}));return out;}
+// would a new segment a→b touch anything it should not (overlap a wire, run over a wire end, pin or label)?
+function segBad(sh,a,b,skip){
+  if(same(a,b))return false;const h=Math.abs(a[1]-b[1])<1e-3,v=Math.abs(a[0]-b[0])<1e-3;
+  const ov=(w)=>{const wh=Math.abs(w.a[1]-w.b[1])<1e-3,wv=Math.abs(w.a[0]-w.b[0])<1e-3;
+    if(h&&wh&&Math.abs(w.a[1]-a[1])<1e-3)return Math.min(Math.max(a[0],b[0]),Math.max(w.a[0],w.b[0]))-Math.max(Math.min(a[0],b[0]),Math.min(w.a[0],w.b[0]))>1e-3;
+    if(v&&wv&&Math.abs(w.a[0]-a[0])<1e-3)return Math.min(Math.max(a[1],b[1]),Math.max(w.a[1],w.b[1]))-Math.max(Math.min(a[1],b[1]),Math.min(w.a[1],w.b[1]))>1e-3;return false;};
+  for(const w of sh.wires){if(skip.has(w))continue;if(ov(w)||onSeg(w.a,a,b)||onSeg(w.b,a,b))return true;}
+  for(const s of sh.symbols)for(const p of s.pins)if(onSeg(p.p,a,b))return true;
+  for(const l of sh.labels)if(onSeg(l.p,a,b))return true;
+  return false;
+}
+// drag (G): the part moves with the power symbols / labels / NC flags sitting on its pins, and connected wires are re-routed
+// with one bend (whichever corner does not touch anything else; a straight diagonal as the last resort)
+function drag(sh,s,dx,dy){keep(sh,s,()=>moveSym(s,dx,dy));}
+function rotateKeep(sh,s){keep(sh,s,()=>rotate(s));}
+function mirrorKeep(sh,s,axis){keep(sh,s,()=>mirror(s,axis));}
+// apply a transform to a part and keep everything that was connected to its pins connected
+function keep(sh,s,op){
+  // split wires touching the part at their branch points first, so only the last piece to each pin gets re-routed
+  attached(sh,s).forEach(({w})=>{const i=sh.wires.indexOf(w);if(i<0)return;
+    const pts=[];sh.symbols.forEach(o=>o.pins.forEach(p=>pts.push(p.p)));sh.labels.forEach(l=>pts.push(l.p));sh.junctions.forEach(j=>pts.push(j));sh.wires.forEach(x=>{if(x!==w)pts.push(x.a,x.b);});
+    const cut=pts.filter(p=>onSeg(p,w.a,w.b));if(!cut.length)return;const k=Math.abs(w.a[0]-w.b[0])>Math.abs(w.a[1]-w.b[1])?0:1;
+    const all=[w.a,...cut,w.b].sort((p,q)=>(p[k]-q[k])*(w.b[k]>=w.a[k]?1:-1));const parts=[];for(let j=1;j<all.length;j++)if(!same(all[j-1],all[j]))parts.push({a:all[j-1].slice(),b:all[j].slice()});
+    sh.wires.splice(i,1,...parts);});
+  const att=attached(sh,s);const pinPts=s.pins.map(p=>p.p.slice());const idx=q=>pinPts.findIndex(p=>same(p,q));
+  const riders=sh.symbols.filter(o=>o!==s&&o.power&&o.pins.some(p=>idx(p.p)>=0)).map(o=>({o,i:idx(o.pins[0].p)}));
+  const labels=sh.labels.map(l=>({l,i:idx(l.p)})).filter(x=>x.i>=0),ncs=sh.nocon.map(p=>({p,i:idx(p)})).filter(x=>x.i>=0);
+  const both=new Set(att.filter(x=>att.filter(y=>y.w===x.w).length>1).map(x=>x.w));
+  const ends=att.map(x=>({w:x.w,end:x.end,i:idx(x.pin.p)}));
+  op();
+  const d=i=>[s.pins[i].p[0]-pinPts[i][0],s.pins[i].p[1]-pinPts[i][1]];
+  riders.forEach(({o,i})=>{const v=d(i);if(o.pins[0])moveSym(o,v[0],v[1]);});labels.forEach(({l,i})=>{l.p=s.pins[i].p.slice();});ncs.forEach(({p,i})=>{p[0]=s.pins[i].p[0];p[1]=s.pins[i].p[1];});
+  both.forEach(w=>{const ea=ends.find(e=>e.w===w&&e.end==='a'),eb=ends.find(e=>e.w===w&&e.end==='b');w.a=s.pins[ea.i].p.slice();w.b=s.pins[eb.i].p.slice();});
+  ends.filter(x=>!both.has(x.w)).forEach(({w,end,i})=>{
+    const far=(end==='a'?w.b:w.a).slice(),np=s.pins[i].p.slice();const k=sh.wires.indexOf(w);if(k<0)return;sh.wires.splice(k,1);
+    const skip=new Set();const cands=[];
+    if(Math.abs(far[0]-np[0])<1e-3||Math.abs(far[1]-np[1])<1e-3)cands.push([[far,np]]);
+    else{const cA=[np[0],far[1]],cB=[far[0],np[1]];const horiz=Math.abs(w.a[1]-w.b[1])<1e-3;(horiz?[cA,cB]:[cB,cA]).forEach(c=>cands.push([[far,c],[c,np]]));}
+    // Z-shaped detours (two bends) through a free column / row, nearest first
+    const zs=[];for(let k=-24;k<=24;k++){const mx=snap((far[0]+np[0])/2)+k*GR,my=snap((far[1]+np[1])/2)+k*GR;
+      zs.push([Math.abs(k),[[far,[mx,far[1]]],[[mx,far[1]],[mx,np[1]]],[[mx,np[1]],np]]],[Math.abs(k)+0.5,[[far,[far[0],my]],[[far[0],my],[np[0],my]],[[np[0],my],np]]]);}
+    zs.sort((a,b)=>a[0]-b[0]).forEach(z=>cands.push(z[1]));
+    cands.push([[far,np]]);
+    const ptBad=c=>sh.symbols.some(o=>o.pins.some(p=>same(p.p,c)))||sh.labels.some(l=>same(l.p,c))||sh.wires.some(x=>same(x.a,c)||same(x.b,c)||onSeg(c,x.a,x.b));
+    const ok=path=>path.every(([p,q])=>!segBad(sh,p,q,skip))&&path.slice(1).every(([p])=>!ptBad(p));
+    const pick=cands.find(ok)||[[far,np]];
+    pick.forEach(([p,q])=>{if(!same(p,q))sh.wires.push({a:p.slice(),b:q.slice()});});});
+  cleanWires(sh);
+}
+function moveLabel(l,dx,dy){l.p=[l.p[0]+dx,l.p[1]+dy];}
+
+/* ---- wires, labels, junctions ---- */
+// orthogonal path between two points: horizontal first unless vfirst
+function lpath(a,b,vfirst){a=sp(a);b=sp(b);if(Math.abs(a[0]-b[0])<1e-3||Math.abs(a[1]-b[1])<1e-3)return[[a,b]];const c=vfirst?[a[0],b[1]]:[b[0],a[1]];return[[a,c],[c,b]];}
+function addWire(sh,a,b,vfirst){lpath(a,b,vfirst).forEach(([p,q])=>{if(!same(p,q))sh.wires.push({a:p,b:q});});cleanWires(sh);}
+// merge collinear touching segments of the same run, drop zero-length ones, then recompute junction dots
+function cleanWires(sh){
+  sh.wires=sh.wires.filter(w=>!same(w.a,w.b));
+  const pins=new Set();sh.symbols.forEach(s=>s.pins.forEach(p=>pins.add(key(p.p))));sh.labels.forEach(l=>pins.add(key(l.p)));
+  for(let changed=true,guard=0;changed&&guard<200;guard++){changed=false;
+    outer:for(let i=0;i<sh.wires.length;i++)for(let j=i+1;j<sh.wires.length;j++){const u=sh.wires[i],v=sh.wires[j];
+      const hu=Math.abs(u.a[1]-u.b[1])<1e-3,hv=Math.abs(v.a[1]-v.b[1])<1e-3;if(hu!==hv)continue;
+      if(hu&&Math.abs(u.a[1]-v.a[1])>1e-3)continue;if(!hu&&Math.abs(u.a[0]-v.a[0])>1e-3)continue;
+      const ends=[[u.a,v.a],[u.a,v.b],[u.b,v.a],[u.b,v.b]];const sharedEnd=ends.find(([p,q])=>same(p,q));
+      const k=hu?0:1;const lo=x=>Math.min(x.a[k],x.b[k]),hi=x=>Math.max(x.a[k],x.b[k]);
+      const overlap=Math.min(hi(u),hi(v))-Math.max(lo(u),lo(v));
+      if(overlap>1e-3||sharedEnd){const p=sharedEnd&&sharedEnd[0];
+        if(!overlap&&p){const k2=key(p);const deg=sh.wires.filter(w=>same(w.a,p)||same(w.b,p)).length;if(deg!==2||pins.has(k2))continue;}
+        const a=Math.min(lo(u),lo(v)),b=Math.max(hi(u),hi(v));const c=hu?u.a[1]:u.a[0];
+        sh.wires[i]=hu?{a:[a,c],b:[b,c]}:{a:[c,a],b:[c,b]};sh.wires.splice(j,1);changed=true;break outer;}}}
+  junctions(sh);
+}
+function junctions(sh){
+  const cnt=new Map();const bump=(p,n)=>{const k=key(p);const e=cnt.get(k)||{p,n:0,w:0};e.n+=n;cnt.set(k,e);return e;};
+  sh.wires.forEach(w=>{bump(w.a,1).w++;bump(w.b,1).w++;});
+  const pts=[...cnt.values()].map(e=>e.p);
+  sh.symbols.forEach(s=>s.pins.forEach(p=>{const e=cnt.get(key(p.p));if(e)e.n++;else pts.push(p.p);}));
+  // a wire end (or pin) landing inside another wire makes a T
+  const inner=new Map();pts.forEach(p=>sh.wires.forEach(w=>{if(onSeg(p,w.a,w.b)){const k=key(p);inner.set(k,(inner.get(k)||0)+2);}}));
+  const out=[];cnt.forEach((e,k)=>{if(e.w&&e.n+(inner.get(k)||0)>=3)out.push(e.p);});
+  inner.forEach((v,k)=>{if(!cnt.has(k)){const p=pts.find(q=>key(q)===k);const isPin=sh.symbols.some(s=>s.pins.some(x=>key(x.p)===k));if(p&&isPin)out.push(p);}});
+  sh.junctions=out;
+}
+function addLabel(sh,kind,name,p,rot){const l={kind:kind||'local',s:name,p:sp(p),rot:rot||0,fx:{size:1.27,h:(rot===180?'right':'left'),v:'bottom'}};if(kind==='global')l.shape='bidirectional';sh.labels.push(l);return l;}
+function addPower(sh,net,p,dir,gnd){const s=SCH.powerSym(net,sp(p),dir==null?(gnd?1:3):dir,!!gnd);sh.symbols.push(s);return s;}
+function addNoConnect(sh,p){p=sp(p);if(!sh.nocon.some(q=>same(q,p)))sh.nocon.push(p);}
+
+/* ---- parts ---- */
+const LIB=[
+  {id:'R',label:'저항',prefix:'R',val:'10kΩ',fp:'0603',pins:[['1',''],['2','']]},
+  {id:'C',label:'커패시터',prefix:'C',val:'100nF',fp:'0603',pins:[['1',''],['2','']]},
+  {id:'CP',label:'전해 커패시터',prefix:'C',val:'470µF',fp:'CP-SMD-10x10',kind:'elcap',pins:[['1','+'],['2','−']]},
+  {id:'L',label:'인덕터',prefix:'L',val:'10µH',fp:'1210',pins:[['1',''],['2','']]},
+  {id:'FB',label:'페라이트 비드',prefix:'FB',val:'600Ω@100MHz',fp:'0603',pins:[['1',''],['2','']]},
+  {id:'D',label:'다이오드',prefix:'D',val:'SS14',fp:'SMA',pins:[['1','K'],['2','A']]},
+  {id:'LED',label:'LED',prefix:'D',val:'LED',fp:'LED-0603',kind:'led',pins:[['1','K'],['2','A']]},
+];
+function nextRef(sheets,prefix,B){const used=new Set();sheets.forEach(sh=>sh.symbols.forEach(s=>{if(!s.power)used.add(s.ref);}));if(B)B.comps.forEach(c=>used.add(c.ref));
+  for(let i=1;;i++)if(!used.has(prefix+i))return prefix+i;}
+function newPart(type,ref,at,vert){
+  const L=LIB.find(x=>x.id===type)||LIB[0];
+  const pads=L.pins.map(([n,fn])=>({n,fn,net:null}));
+  const c={ref,val:L.val,fp:L.fp,kind:L.kind||(type==='LED'?'led':''),pads};
+  // diodes: anode left (pin 2), cathode right (pin 1) as drawn
+  const order=/^(D|LED)$/.test(type)?[pads[1],pads[0]]:pads;
+  const s=SCH.twoPin(c,order,!!vert);delete s._c;s.lib='auto';s.fp=L.fp;s.kind=c.kind;s._new=true;
+  const a=anchor(s);moveSym(s,snap(at[0])-a[0],snap(at[1])-a[1]);
+  return s;
+}
+// a board part that has no symbol yet, as a generic box (or 2-pin symbol)
+function boardPart(c,at){
+  const uniq=[...new Map(c.pads.map(p=>[String(p.n),p])).values()];let s;
+  if(uniq.length===2&&/^(R|C|L|FB|D|LED|F|Y|X)\d/i.test(c.ref))s=SCH.twoPin(c,uniq,false);
+  else{const half=Math.ceil(uniq.length/2);s=SCH.boxSym(c,{L:uniq.slice(0,half),R:uniq.slice(half),T:[],B:[]},()=>null).s;}
+  delete s._c;const a=anchor(s);moveSym(s,snap(at[0])-a[0],snap(at[1])-a[1]);return s;
+}
+
+/* ---- hit testing ---- */
+function hitWire(sh,x,y,tol){let best=null,bd=tol;sh.wires.forEach(w=>{const d=PCB.segDist(x,y,w.a,w.b);if(d<bd){bd=d;best=w;}});return best;}
+function hitPinEnd(sh,p,tol){for(const s of sh.symbols)for(const q of s.pins)if(Math.hypot(q.p[0]-p[0],q.p[1]-p[1])<=tol)return{s,pin:q};return null;}
+// points where a wire may end (pins, wire ends and interiors, labels)
+function isConnPoint(sh,p){p=sp(p);return sh.symbols.some(s=>s.pins.some(q=>same(q.p,p)))||sh.wires.some(w=>same(w.a,p)||same(w.b,p)||onSeg(p,w.a,w.b))||sh.labels.some(l=>same(l.p,p));}
+
+/* ---- delete ---- */
+function remove(sh,item){
+  if(!item)return false;
+  const del=(arr,o)=>{const i=arr.indexOf(o);if(i>=0){arr.splice(i,1);return true;}return false;};
+  const ok=del(sh.symbols,item)||del(sh.wires,item)||del(sh.labels,item)||del(sh.junctions,item)||del(sh.nocon,item);
+  if(ok)cleanWires(sh);return ok;
+}
+
+/* ---- netlist from the schematic (labels / power names first, then the board's current name, then Net-(REF-PadN)) ---- */
+function netlist(sheets,B){
+  const c=SCH.connect(sheets,null);const used=new Set();const pinNet=new Map();const conflicts=[];
+  const named=c.groups.filter(g=>g.names.size),anon=c.groups.filter(g=>!g.names.size&&g.pins.length);
+  named.forEach(g=>{const nm=[...g.names];if(nm.length>1)conflicts.push(nm);const n=nm.sort((a,b)=>a.length-b.length||a.localeCompare(b))[0];used.add(n);g.pins.forEach(p=>pinNet.set(p.ref+'.'+p.num,n));});
+  // keep board names for wired-only nets when they are unambiguous
+  const vote=g=>{const m=new Map();g.pins.forEach(p=>{const cc=B&&B.byRef[p.ref];const pad=cc&&cc.pads.find(q=>String(q.n)===String(p.num));if(pad&&pad.net)m.set(pad.net,(m.get(pad.net)||0)+1);});return[...m.entries()].sort((a,b)=>b[1]-a[1]);};
+  anon.sort((a,b)=>b.pins.length-a.pins.length).forEach(g=>{
+    const v=vote(g);let n=v.length&&!used.has(v[0][0])&&(v.length===1||v[0][1]>v[1][1])?v[0][0]:null;
+    if(!n&&g.pins.length<2)return; // a lone pin with nothing attached: unconnected
+    if(!n){const p=g.pins.slice().sort((a,b)=>a.ref.localeCompare(b.ref,undefined,{numeric:true}))[0];n=`Net-(${p.ref}-Pad${p.num})`;}
+    used.add(n);g.pins.forEach(p=>pinNet.set(p.ref+'.'+p.num,n));});
+  return{pinNet,conflicts,groups:c.groups};
+}
+// differences between schematic and board, like Eeschema's Update PCB from Schematic
+function annotate(sheets,B){
+  const nl=netlist(sheets,B);const changes=[];const seen=new Set();const sym=new Map();
+  sheets.forEach(sh=>sh.symbols.forEach(s=>{if(s.power)return;if(!sym.has(s.ref))sym.set(s.ref,[]);sym.get(s.ref).push(s);}));
+  sym.forEach((ss,ref)=>{const c=B.byRef[ref];const s=ss[0];
+    if(!c){changes.push({kind:'add',ref,val:s.val,fp:s.fp,sym:s,pins:ss.flatMap(x=>x.pins.map(p=>({num:p.num,name:p.name,net:nl.pinNet.get(ref+'.'+p.num)||null})))});return;}
+    if((s.val||'')!==(c.val||''))changes.push({kind:'value',ref,from:c.val,to:s.val});
+    const nums=new Set(ss.flatMap(x=>x.pins.map(p=>String(p.num))));
+    c.pads.forEach(p=>{const k=ref+'.'+p.n;if(!nums.has(String(p.n))||seen.has(k+'|'+p.x+','+p.y))return;seen.add(k+'|'+p.x+','+p.y);
+      const to=nl.pinNet.get(k)||null;if((p.net||null)!==to)changes.push({kind:'net',ref,pin:String(p.n),from:p.net||null,to});});});
+  const missing=B.comps.filter(c=>!sym.has(c.ref)&&c.pads.some(p=>p.net)).map(c=>c.ref);
+  return{changes,missing,conflicts:nl.conflicts};
+}
+function applyAnnotation(B,res,addPart){
+  let n=0;res.changes.forEach(ch=>{
+    if(ch.kind==='value'){B.byRef[ch.ref].val=ch.to;n++;}
+    else if(ch.kind==='net'){B.byRef[ch.ref].pads.forEach(p=>{if(String(p.n)===ch.pin){p.net=ch.to;}});n++;}
+    else if(ch.kind==='add'&&addPart){if(addPart(ch))n++;}});
+  return n;
+}
+
+/* ---- electrical rules (light) ---- */
+function erc(sheets){
+  const out=[];SCH.connect(sheets,null);
+  sheets.forEach((sh,pi)=>{
+    const wireEnds=new Map();sh.wires.forEach(w=>[w.a,w.b].forEach(p=>{const k=key(p);wireEnds.set(k,(wireEnds.get(k)||0)+1);}));
+    const touches=p=>sh.symbols.some(s=>s.pins.some(q=>same(q.p,p)))||sh.labels.some(l=>same(l.p,p))||sh.wires.some(w=>onSeg(p,w.a,w.b))||(wireEnds.get(key(p))||0)>1||sh.nocon.some(q=>same(q,p));
+    sh.wires.forEach(w=>[w.a,w.b].forEach(p=>{if(!touches(p))out.push({page:pi,p,code:'dangling',msg:'끝이 아무 데도 연결되지 않은 배선'});}));
+    sh.symbols.forEach(s=>{if(s.power)return;s.pins.forEach(p=>{const g=p.g;if(sh.nocon.some(q=>same(q,p.p)))return;
+      if(g&&g.pins.length<=1&&!g.names.size)out.push({page:pi,p:p.p,code:'unconnected',msg:`${s.ref}.${p.num}${p.name?' ('+p.name+')':''} 핀이 연결되지 않음`});});});
+    sh.labels.forEach(l=>{const g=l.g;if(g&&!g.pins.length)out.push({page:pi,p:l.p,code:'label',msg:`라벨 ${l.s}에 연결된 핀이 없음`});});
+  });
+  return out;
+}
+
+/* ---- .kicad_sch writer (KiCad 6+ S-expression; one lib symbol per placed part keeps auto-drawn symbols exact) ---- */
+const q=s=>'"'+String(s==null?'':s).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"';
+const n=v=>(Math.round(v*10000)/10000).toString();
+let uu=0;const uuid=seed=>{uu++;const h=(x)=>{let a=2166136261^x;for(const ch of String(seed)+':'+uu){a^=ch.charCodeAt(0);a=Math.imul(a,16777619)>>>0;}return a.toString(16).padStart(8,'0');};
+  const s=h(1)+h(2)+h(3)+h(4);return`${s.slice(0,8)}-${s.slice(8,12)}-4${s.slice(13,16)}-a${s.slice(17,20)}-${s.slice(20,32)}`;};
+const fx=(size,h,v)=>`(effects (font (size ${n(size)} ${n(size)}))${h&&h!=='center'||v&&v!=='middle'?` (justify${h&&h!=='center'?' '+h:''}${v&&v!=='middle'?' '+v:''})`:''})`;
+function libName(s){return(s.power?'power:':'pcbviewer:')+(s.power?s.val:s.ref).replace(/[^\w+\-.]/g,'_');}
+function libSym(s){
+  const out=[];const name=libName(s);const units=s._units||[s];
+  out.push(`  (symbol ${q(name)}${s.power?' (power)':''} (pin_names (offset 0.508)) (in_bom ${s.power?'no':'yes'}) (on_board ${s.power?'no':'yes'})`);
+  out.push(`   (property "Reference" ${q(s.power?'#PWR':s.ref.replace(/\d+$/,''))} (at 0 0 0) ${fx(1.27)})`,`   (property "Value" ${q(s.val)} (at 0 0 0) ${fx(1.27)})`);
+  units.forEach((u,k)=>{const L=(p)=>[p[0]-u.x,-(p[1]-u.y)];
+    out.push(`   (symbol ${q(name.split(':')[1]+'_'+(units.length>1?k+1:1)+'_1')}`);
+    u.g.forEach(g=>{if(g.t==='poly')out.push(`    (polyline (pts ${g.pts.map(p=>{const l=L(p);return`(xy ${n(l[0])} ${n(l[1])})`;}).join(' ')}) (stroke (width ${n(g.w||0.254)}) (type default)) (fill (type ${g.fill==='background'?'background':g.fill==='outline'?'outline':'none'})))`);
+      else if(g.t==='circle'){const l=L(g.c);out.push(`    (circle (center ${n(l[0])} ${n(l[1])}) (radius ${n(g.r)}) (stroke (width ${n(g.w||0.254)}) (type default)) (fill (type none)))`);}
+      else if(g.t==='text'){const l=L(g.p);out.push(`    (text ${q(g.s)} (at ${n(l[0])} ${n(l[1])} ${n((g.rot||0)*10)}) ${fx(g.fx.size)})`);}});
+    u.pins.forEach(p=>{const a=L(p.p),b=L(p.e);const len=Math.hypot(b[0]-a[0],b[1]-a[1]);const ang=Math.round(Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI+360)%360;
+      out.push(`    (pin ${s.power?'power_in':'passive'} line (at ${n(a[0])} ${n(a[1])} ${ang}) (length ${n(len)})${s.power?' hide':''} (name ${q(p.name||'~')} ${fx(1.27)}) (number ${q(p.num)} ${fx(1.27)}))`);});
+    out.push('   )');});
+  out.push('  )');return out.join('\n');
+}
+function sheetText(sh,opt){
+  const o=[];const pap=sh.paper&&/^A[0-5]$/.test(sh.paper)?`(paper ${q(sh.paper)})`:`(paper "User" ${n(sh.w)} ${n(sh.h)})`;
+  o.push(`(kicad_sch (version 20230121) (generator pcb_viewer)`,` (uuid ${q(opt.selfUuid||uuid(sh.name))})`,` ${pap}`,
+    ` (title_block (title ${q(sh.title||opt.title||'')}) (date ${q(opt.date||'')}) (rev ${q(sh.rev||'')}) (company ${q(sh.company||'')}) (comment 1 ${q(sh.name||'')}))`);
+  const libs=new Map();sh.symbols.forEach(s=>{const k=libName(s);if(!libs.has(k))libs.set(k,libSym(s));});
+  o.push(' (lib_symbols',...libs.values(),' )');
+  sh.junctions.forEach(j=>o.push(` (junction (at ${n(j[0])} ${n(j[1])}) (diameter 0) (color 0 0 0 0) (uuid ${q(uuid('j'))}))`));
+  sh.nocon.forEach(p=>o.push(` (no_connect (at ${n(p[0])} ${n(p[1])}) (uuid ${q(uuid('nc'))}))`));
+  sh.wires.forEach(w=>o.push(` (wire (pts (xy ${n(w.a[0])} ${n(w.a[1])}) (xy ${n(w.b[0])} ${n(w.b[1])})) (stroke (width 0) (type default)) (uuid ${q(uuid('w'))}))`));
+  (sh.buses||[]).forEach(w=>o.push(` (bus (pts (xy ${n(w.a[0])} ${n(w.a[1])}) (xy ${n(w.b[0])} ${n(w.b[1])})) (stroke (width 0) (type default)) (uuid ${q(uuid('b'))}))`));
+  sh.labels.forEach(l=>{const r=((l.rot||0)%360+360)%360;const j=r===180||r===270?'right':'left';
+    if(l.kind==='global')o.push(` (global_label ${q(l.s)} (shape ${l.shape||'bidirectional'}) (at ${n(l.p[0])} ${n(l.p[1])} ${r}) (fields_autoplaced) ${fx(1.27,j)} (uuid ${q(uuid('gl'))}))`);
+    else if(l.kind==='hier')o.push(` (hierarchical_label ${q(l.s)} (shape ${l.shape||'bidirectional'}) (at ${n(l.p[0])} ${n(l.p[1])} ${r}) ${fx(1.27,j)} (uuid ${q(uuid('hl'))}))`);
+    else o.push(` (label ${q(l.s)} (at ${n(l.p[0])} ${n(l.p[1])} ${r}) (fields_autoplaced) ${fx(1.27,j,'bottom')} (uuid ${q(uuid('l'))}))`);});
+  (sh.texts||[]).forEach(t=>o.push(` (text ${q(t.s)} (at ${n(t.p[0])} ${n(t.p[1])} ${n(t.rot||0)}) ${fx(t.fx.size||1.27,'left','bottom')} (uuid ${q(uuid('t'))}))`));
+  opt.pw=opt.pw||{n:0};
+  sh.symbols.forEach(s=>{const ref=s.power?`#PWR0${String(++opt.pw.n).padStart(2,'0')}`:s.ref;const tx=s.texts.find(t=>t.role==='Reference')||{p:[s.x,s.y-2.54],fx:{size:1.27}},tv=s.texts.find(t=>t.role==='Value')||{p:[s.x,s.y+2.54],fx:{size:1.27}};
+    o.push(` (symbol (lib_id ${q(libName(s))}) (at ${n(s.x)} ${n(s.y)} 0) (unit ${s._unit||1}) (in_bom ${s.power?'no':'yes'}) (on_board ${s.power?'no':'yes'}) (uuid ${q(uuid(ref))})`,
+      `  (property "Reference" ${q(ref)} (at ${n(tx.p[0])} ${n(tx.p[1])} 0) ${s.power?'(effects (font (size 1.27 1.27)) hide)':fx(tx.fx.size||1.27,tx.fx.h,tx.fx.v)})`,
+      `  (property "Value" ${q(s.val)} (at ${n(tv.p[0])} ${n(tv.p[1])} 0) ${fx(tv.fx.size||1.27,tv.fx.h,tv.fx.v)})`,
+      `  (property "Footprint" ${q(s.fp||'')} (at ${n(s.x)} ${n(s.y)} 0) (effects (font (size 1.27 1.27)) hide))`,
+      ...s.pins.map(p=>`  (pin ${q(p.num)} (uuid ${q(uuid(ref+p.num))}))`),
+      `  (instances (project ${q(opt.project||'pcb_viewer')} (path ${q(opt.path||'/'+(opt.rootUuid||''))} (reference ${q(ref)}) (unit ${s._unit||1})))))`);});
+  if(opt.children){let y=20;opt.children.forEach((c,i)=>{o.push(` (sheet (at 20 ${y}) (size 60 12) (fields_autoplaced) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid ${q(c.uuid)})`,
+    `  (property "Sheetname" ${q(c.name)} (at 20 ${n(y-0.7)} 0) ${fx(1.27,'left','bottom')})`,`  (property "Sheetfile" ${q(c.file)} (at 20 ${n(y+12.6)} 0) ${fx(1.27,'left','top')})`,
+    `  (instances (project ${q(opt.project||'pcb_viewer')} (path ${q('/'+(opt.rootUuid||''))} (page ${q(String(i+2))})))))`);y+=20;});}
+  o.push(` (sheet_instances (path "/" (page "1")))`,')');return o.join('\n')+'\n';
+}
+// KiCad joins wires only at end points: split every wire at pins, labels, junctions and other wire ends on its interior
+function splitWires(sh){
+  const pts=[];sh.symbols.forEach(s=>s.pins.forEach(p=>pts.push(p.p)));sh.labels.forEach(l=>pts.push(l.p));sh.junctions.forEach(j=>pts.push(j));sh.wires.forEach(w=>pts.push(w.a,w.b));
+  const out=[];sh.wires.forEach(w=>{const cut=pts.filter(p=>onSeg(p,w.a,w.b));if(!cut.length){out.push(w);return;}
+    const k=Math.abs(w.a[0]-w.b[0])>Math.abs(w.a[1]-w.b[1])?0:1;const all=[w.a,...cut,w.b].sort((p,q)=>(p[k]-q[k])*(w.b[k]>=w.a[k]?1:-1));
+    for(let i=1;i<all.length;i++)if(!same(all[i-1],all[i]))out.push({a:all[i-1],b:all[i]});});
+  sh.wires=out;
+}
+// name wired-only nets with a local label so KiCad keeps the board's net names
+function nameNets(sheets,B){
+  const c=SCH.connect(sheets,B);
+  sheets.forEach(sh=>{const done=new Set();
+    sh.wires.forEach(w=>{const g=w.g;if(!g||g.names.size||!g.net||done.has(g)||/^Net-\(/.test(g.net))return;
+      const hs=sh.wires.filter(x=>x.g===g&&Math.abs(x.a[1]-x.b[1])<1e-3&&Math.abs(x.a[0]-x.b[0])>=2*GR-1e-3).sort((a,b)=>Math.abs(b.a[0]-b.b[0])-Math.abs(a.a[0]-a.b[0]));
+      const h=hs[0];if(!h)return;const x0=Math.min(h.a[0],h.b[0]),x1=Math.max(h.a[0],h.b[0]);
+      const len=String(g.net).length*1.15+1;let x=x1-x0>len+2*GR?x0+GR:snap((x0+x1)/2);x=snap(x);if(x<=x0+1e-3)x=x0+GR;
+      sh.labels.push({kind:'local',s:g.net,p:[x,h.a[1]],rot:0,fx:{size:1.27,h:'left',v:'bottom'}});done.add(g);});});
+  return c;
+}
+function toKicad(sheets,meta){
+  meta=meta||{};sheets=restore(snapshot(sheets));if(meta.board)nameNets(sheets,meta.board);sheets.forEach(splitWires);
+  const byRef=new Map();sheets.forEach(sh=>sh.symbols.forEach(x=>{if(x.power)return;if(!byRef.has(x.ref))byRef.set(x.ref,[]);byRef.get(x.ref).push(x);}));
+  byRef.forEach(list=>{if(list.length>1)list.forEach((x,k)=>{x._unit=k+1;x._units=list;});});const base=String(meta.name||'schematic').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'')||'schematic';uu=0;
+  const rootUuid=uuid('root');const opt={title:meta.title||'',project:base,date:meta.date||'',rootUuid,selfUuid:rootUuid,pw:{n:0}};
+  if(sheets.length===1)return[{name:base+'.kicad_sch',text:sheetText(sheets[0],opt)}];
+  const kids=sheets.map((sh,i)=>({name:(sh.name||`page${i+1}`).replace(/^\d+\.\s*/,''),file:`${base}_${i+1}.kicad_sch`,sh,uuid:uuid('sheet'+i)}));
+  const root={name:'root',title:meta.title||'',symbols:[],wires:[],junctions:[],nocon:[],labels:[],texts:[{s:'자동 생성 회로도 · 하위 시트로 나뉨',p:[20,12],rot:0,fx:{size:1.5}}],w:297,h:210,paper:'A4'};
+  return[{name:base+'.kicad_sch',text:sheetText(root,Object.assign({},opt,{children:kids}))}].concat(kids.map(k=>({name:k.file,text:sheetText(k.sh,Object.assign({},opt,{selfUuid:uuid(k.file),path:'/'+rootUuid+'/'+k.uuid}))})));
+}
+
+return{GR,snap,sp,same,snapshot,restore,anchor,rotate,mirror,moveSym,drag,rotateKeep,mirrorKeep,keep,moveLabel,lpath,addWire,cleanWires,junctions,addLabel,addPower,addNoConnect,
+  LIB,nextRef,newPart,boardPart,splitWires,nameNets,hitWire,hitPinEnd,isConnPoint,remove,netlist,annotate,applyAnnotation,erc,toKicad,onSeg};
 })();
 
 
@@ -6515,8 +6831,10 @@ function bindTc(B){
 const cvs=$('#cvs'),sctx=cvs.getContext('2d');
 const SV={data:null,page:0,s:3,ox:0,oy:0,fitted:-1,w:0,h:0,hover:null,lastKey:'',fromMe:false,cv:cvs,ctx:sctx,win:window,dpr:1};
 S.sch='off';
+const SE={on:false,tool:'sel',sel:null,cursor:null,wire:null,vfirst:false,ghost:null,ghostType:null,ghostBoard:null,drag:null,undo:[],redo:[],erc:[],dirty:false};
 function schData(){
   if(!SV.data||SV.data.board!==BD){
+    if(BD.schSheets){const c=SCH.connect(BD.schSheets,BD);SV.data={sheets:BD.schSheets,auto:false,edited:true,groups:c.groups,matched:c.matched,total:c.total,board:BD};SV.page=Math.min(SV.page,BD.schSheets.length-1);SV.fitted=-1;renderSchOv();return SV.data;}
     try{SV.data=SCH.build(BD,BD.schFiles&&BD.schFiles.length?BD.schFiles:null);}
     catch(e){console.error(e);SV.data=SCH.build(BD,null);toast('회로도를 읽지 못해 넷리스트로 만든 회로도를 보여줍니다: '+e.message);}
     SV.data.board=BD;SV.page=0;SV.fitted=-1;renderSchOv();if(typeof POPS!=='undefined')POPS.forEach(P=>{P.page=0;P.fitted=-1;});
@@ -6559,7 +6877,7 @@ function paintSchV(V){
   ctx.strokeStyle=C.wire;ctx.lineWidth=lw(0.16);wires(false);
   // symbols
   const selRef=S.selRef;
-  sh.symbols.forEach(sy=>{
+  const drawSy=sy=>{
     const sel=selRef&&sy.ref===selRef,hov=V.hover&&V.hover.s===sy;
     if(sel||hov){const b=sy.bb;ctx.fillStyle=sel?'rgba(255,210,63,.25)':'rgba(120,140,160,.12)';ctx.fillRect(b[0]-0.8,b[1]-0.8,b[2]-b[0]+1.6,b[3]-b[1]+1.6);if(sel){ctx.strokeStyle=C.sel;ctx.lineWidth=lw(0.35);ctx.setLineDash([1.2,0.8]);ctx.strokeRect(b[0]-0.8,b[1]-0.8,b[2]-b[0]+1.6,b[3]-b[1]+1.6);ctx.setLineDash([]);}}
     const bodyC=sy.power?(isHL(sy.pins[0]&&sy.pins[0].g)?C.hl:C.power):C.body;
@@ -6576,7 +6894,8 @@ function paintSchV(V){
         if(off>0){const ax=p.e[0]-ux*(off+0.2),ay=p.e[1]-uy*(off+0.2);if(horiz)tx(ctx,p.name,ax,ay,1.15,0,ux<0?'left':'right','middle');else tx(ctx,p.name,ax,ay,1.15,90,uy>0?'left':'right','middle');}
         else{if(horiz)tx(ctx,p.name,mx,my+0.35,1.0,0,'center','top');else tx(ctx,p.name,mx+0.35,my,1.0,90,'center','top');}}});
     sy.texts.forEach(t=>{ctx.fillStyle=sy.power?bodyC:t.role==='Reference'?C.text:C.text;let r=((t.rot%180)+180)%180;tx(ctx,t.s,t.p[0],t.p[1],t.fx.size,r===90?90:0,t.fx.h,t.fx.v,t.role==='Reference'&&!sy.power);});
-  });
+  };
+  sh.symbols.forEach(drawSy);
   // highlighted wires on top
   ctx.strokeStyle=C.hl;ctx.lineWidth=lw(0.4);wires(true);
   // junctions & no-connects
@@ -6592,6 +6911,7 @@ function paintSchV(V){
       if(l.xr){ctx.font='500 16px "IBM Plex Sans KR", system-ui, sans-serif';const t='['+l.xr+']';xw=ctx.measureText(t).width*k+0.6;ctx.fillText(t,sg*(tip+w+pad*2+0.6)/k,0);}ctx.restore();l._w=w+tip+pad*2+xw;}});
   // texts
   ctx.fillStyle=C.text;sh.texts.forEach(t=>{String(t.s).split('\n').forEach((line,i)=>tx(ctx,line,t.p[0],t.p[1]+i*t.fx.size*1.5,t.fx.size,t.rot,t.fx.h==='center'?'left':t.fx.h,'bottom'));});
+  if(V===SV&&typeof SE!=='undefined'&&SE.on)seOverlay(ctx,sh,V,C,lw,drawSy);
 }
 function schS2W(V,px,py){return[(px-V.ox)/V.s,(py-V.oy)/V.s];}
 function schHit(V,x,y){
@@ -6632,26 +6952,28 @@ function schFocus(V){V=V||SV;
   const sx=V.ox+pt[0]*V.s,sy=V.oy+pt[1]*V.s;if(sx<40||sy<60||sx>V.w-40||sy>V.h-40){V.ox=V.w/2-pt[0]*V.s;V.oy=V.h/2-pt[1]*V.s;}
 }
 (function(){
-  const pts=new Map();let start=null,moved=0,pinch=0,hq=null,hraf=0;
+  const pts=new Map();let start=null,moved=0,pinch=0,hq=null,hraf=0,edPtr=null;
   const pos=e=>{const r=cvs.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
   const zoomAt=(px,py,f)=>{SV.userMoved=true;const[wx,wy]=schS2W(SV,px,py);SV.s=Math.max(0.3,Math.min(80,SV.s*f));SV.ox=px-wx*SV.s;SV.oy=py-wy*SV.s;drawSch();};
-  cvs.addEventListener('pointerdown',e=>{cvs.setPointerCapture(e.pointerId);pts.set(e.pointerId,pos(e));moved=0;start=pos(e);cvs.classList.add('drag');if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);}});
+  cvs.addEventListener('pointerdown',e=>{cvs.setPointerCapture(e.pointerId);
+    if(SE.on&&e.button===0&&pts.size===0){const[px,py]=pos(e);if(seDown(...schS2W(SV,px,py))){edPtr=e.pointerId;return;}}pts.set(e.pointerId,pos(e));moved=0;start=pos(e);cvs.classList.add('drag');if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);}});
   cvs.addEventListener('pointermove',e=>{const p=pos(e);
+    if(SE.on){const w=schS2W(SV,p[0],p[1]);if(edPtr===e.pointerId){seDragMove(w);return;}seCursor(w);}
     if(pts.has(e.pointerId)){const prev=pts.get(e.pointerId);pts.set(e.pointerId,p);
       if(pts.size===1){SV.userMoved=true;SV.ox+=p[0]-prev[0];SV.oy+=p[1]-prev[1];moved+=Math.abs(p[0]-prev[0])+Math.abs(p[1]-prev[1]);drawSch();}
       else if(pts.size===2){const[a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch)zoomAt((a[0]+b[0])/2,(a[1]+b[1])/2,d/pinch);pinch=d;moved=99;}tip.hidden=true;return;}
     hq=p;if(!hraf)hraf=requestAnimationFrame(()=>{hraf=0;if(!hq)return;const[x,y]=schS2W(SV,hq[0],hq[1]);const h=schHit(SV,x,y);const was=SV.hover&&SV.hover.s;SV.hover=h&&h.type==='sym'?h:null;if((SV.hover&&SV.hover.s)!==was)drawSch();
       if(h){const vr=vp.getBoundingClientRect(),cr=cvs.getBoundingClientRect();tip.innerHTML=schTip(h);tip.hidden=false;tip.style.left=(hq[0]+cr.left-vr.left)+'px';tip.style.top=(hq[1]+cr.top-vr.top)+'px';cvs.style.cursor='pointer';}else{tip.hidden=true;cvs.style.cursor='';}});});
-  const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);cvs.classList.remove('drag');if(pts.size===0&&moved<5&&start&&e.type==='pointerup'){const[x,y]=schS2W(SV,start[0],start[1]);schApply(schHit(SV,x,y),SV);}if(pts.size<2)pinch=0;};
+  const end=e=>{if(edPtr===e.pointerId){edPtr=null;seUp();return;}if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);cvs.classList.remove('drag');if(pts.size===0&&moved<5&&start&&e.type==='pointerup'){const[x,y]=schS2W(SV,start[0],start[1]);if(SE.on)seClick([x,y]);else schApply(schHit(SV,x,y),SV);}if(pts.size<2)pinch=0;};
   cvs.addEventListener('pointerup',end);cvs.addEventListener('pointercancel',end);
   cvs.addEventListener('pointerleave',()=>{hq=null;tip.hidden=true;if(SV.hover){SV.hover=null;drawSch();}});
   cvs.addEventListener('wheel',e=>{e.preventDefault();const[x,y]=pos(e);zoomAt(x,y,Math.exp(-e.deltaY*0.0015));},{passive:false});
-  cvs.addEventListener('dblclick',()=>{schFit();drawSch();});
+  cvs.addEventListener('dblclick',e=>{if(SE.on){const[px,py]=pos(e);seDbl(schS2W(SV,px,py));return;}schFit();drawSch();});
 })();
 function renderSchOv(){
   if(!SV.data)return;const d=SV.data;
   $('#schPages').innerHTML=`<span class="pill side-badge">회로도</span>`+(d.sheets.length>1?d.sheets.map((s,i)=>`<button class="pill vbtn${i===SV.page?' on':''}" data-page="${i}">${esc(s.name||'시트 '+(i+1))}</button>`).join(''):'');
-  $('#schNote').innerHTML=d.auto?'<span class="pill hint2">넷리스트로 자동 생성한 회로도입니다. .kicad_sch를 불러오면 실제 회로도를 보여줍니다.</span>'
+  $('#schNote').innerHTML=d.edited?`<span class="pill hint2">편집한 회로도입니다${SE.dirty?' · 보드와 다름 — 보드에 반영(F8)':''}.</span>`:d.auto?'<span class="pill hint2">넷리스트로 자동 생성한 회로도입니다. .kicad_sch를 불러오면 실제 회로도를 보여줍니다.</span>'
     :(d.matched<d.total?`<span class="pill hint2">보드 부품과 연결된 넷 ${d.matched}/${d.total}개</span>`:'');
 }
 $('#schPages').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(!b)return;SV.page=+b.dataset.page;schFit();renderSchOv();drawSch();});
@@ -6659,10 +6981,228 @@ $('#schFitBtn').addEventListener('click',()=>{schFit();drawSch();});
 $('#schPop').addEventListener('click',()=>openPop('sch'));
 $('#schOpen').addEventListener('click',()=>$('#schFile').click());
 $('#schFile').addEventListener('change',async e=>{const files=[...e.target.files];e.target.value='';if(!files.length)return;
-  try{const list=[];for(const f of files)list.push({name:f.name,text:await f.text()});const t=SCH.build(BD,list);BD.schFiles=list;SV.data=null;schData();drawSch();
+  try{const list=[];for(const f of files)list.push({name:f.name,text:await f.text()});const t=SCH.build(BD,list);BD.schFiles=list;BD.schSheets=null;if(SE.on)seEnd();SE.undo=[];SE.redo=[];SV.data=null;schData();drawSch();
     toast(`회로도 ${t.sheets.length}장을 붙였습니다 · 보드 부품과 연결된 넷 ${t.matched}/${t.total}개`+(t.matched<t.total*0.5?' · 부품 참조가 보드와 많이 다릅니다.':''));}
   catch(err){console.error(err);toast('회로도를 읽지 못했습니다: '+(err.message||err));}});
 $('#splitBtn').addEventListener('click',()=>{S.sch=S.sch==='split'?'off':'split';setView('__keep');});
+
+/* ---------- schematic editing (Eeschema-style tools and hotkeys) ---------- */
+const SE_TOOLS=[['sel','선택','Esc'],['move','이동','M'],['drag','끌기','G'],['wire','배선','W'],['label','라벨','L'],['glabel','글로벌 라벨','Ctrl+L'],['power','전원','P'],['add','부품','A'],['nc','NC','Q'],['del','삭제','Del']];
+const SE_ACTS=[['rot','회전','R'],['mirx','좌우 반전','X'],['miry','상하 반전','Y'],['props','속성','E'],['undo','실행 취소','Ctrl+Z'],['redo','다시 실행','Ctrl+Y']];
+const seSheets=()=>BD.schSheets;
+const seSh=()=>BD.schSheets&&BD.schSheets[SV.page];
+function seBegin(){
+  const d=schData();if(!BD.schSheets){BD.schSheets=d.sheets;d.auto=false;d.edited=true;}
+  SE.on=true;SE.tool='sel';SE.sel=null;seRefresh(false);seBar();renderSchOv();drawSch();
+}
+function seEnd(){SE.on=false;SE.wire=null;SE.ghost=null;SE.drag=null;seBar();renderSchOv();drawSch();}
+// recompute connectivity, ERC and the board-difference count after every change
+function seRefresh(changed){
+  const sh=seSheets();if(!sh)return;if(!SV.data)schData();
+  SE.erc=SCHEDIT.erc(sh);const c=SCH.connect(sh,BD);Object.assign(SV.data,{sheets:sh,groups:c.groups,matched:c.matched,total:c.total,auto:false,edited:true,board:BD});
+  if(changed){SE.dirty=true;SE.diff=null;}
+  if(typeof POPS!=='undefined')POPS.forEach(P=>{if(P.kind==='sch'&&P.draw)P.draw();});
+  seStat();
+}
+function seCommit(fn){const before=SCHEDIT.snapshot(seSheets());const r=fn(seSh());if(r===false)return false;SE.undo.push(before);if(SE.undo.length>80)SE.undo.shift();SE.redo=[];seRefresh(true);drawSch();return true;}
+function seSwap(from,to){if(!from.length)return;to.push(SCHEDIT.snapshot(seSheets()));BD.schSheets=SCHEDIT.restore(from.pop());SE.sel=null;seRefresh(true);drawSch();}
+const seTol=()=>Math.max(0.6,6/SV.s);
+// item under a point: label, wire, junction / NC, symbol (smallest box)
+function seHit(p){
+  const sh=seSh();if(!sh)return null;const[x,y]=p,tol=seTol();
+  for(const l of sh.labels){const w=l._w||l.s.length*1.27*0.95,sz=1.27;const r=((l.rot%360)+360)%360;let bb;
+    if(r===0)bb=[l.p[0],l.p[1]-sz*1.4,l.p[0]+w+0.6,l.p[1]+sz*0.6];else if(r===180)bb=[l.p[0]-w-0.6,l.p[1]-sz*1.4,l.p[0],l.p[1]+sz*0.6];else if(r===90)bb=[l.p[0]-sz*1.4,l.p[1]-w-0.6,l.p[0]+sz*0.6,l.p[1]];else bb=[l.p[0]-sz*1.4,l.p[1],l.p[0]+sz*0.6,l.p[1]+w+0.6];
+    if(x>=bb[0]&&x<=bb[2]&&y>=bb[1]&&y<=bb[3])return{type:'label',o:l};}
+  const nc=sh.nocon.find(q=>Math.hypot(q[0]-x,q[1]-y)<tol);if(nc)return{type:'nc',o:nc};
+  const w=SCHEDIT.hitWire(sh,x,y,tol*0.7);if(w)return{type:'wire',o:w};
+  let best=null,ba=1e18;for(const s of sh.symbols){const b=s.bb;if(x>=b[0]&&x<=b[2]&&y>=b[1]&&y<=b[3]){const a=(b[2]-b[0])*(b[3]-b[1]);if(a<ba){ba=a;best=s;}}}
+  return best?{type:'sym',o:best}:null;
+}
+const seTarget=()=>SE.sel||(SE.cursor&&seHit(SE.cursor));
+function seSetTool(t){
+  SE.tool=t;SE.wire=null;SE.drag=null;if(t!=='add'){SE.ghost=null;}
+  if((t==='move'||t==='drag')){const h=seTarget();if(h&&(h.type==='sym'||h.type==='label')){seStartDrag(h,SE.cursor||[0,0],t);}else{toast('옮길 부품이나 라벨 위에 마우스를 두고 누르세요.');SE.tool='sel';}}
+  if(t==='add')sePalette();
+  seBar();drawSch();
+}
+/* drag / move: restore the snapshot and re-apply the whole offset each frame */
+function seStartDrag(h,at,mode){const sh=seSh();const list=h.type==='sym'?sh.symbols:sh.labels;SE.drag={json:SCHEDIT.snapshot(seSheets()),page:SV.page,kind:h.type,idx:list.indexOf(h.o),from:SCHEDIT.sp(at),d:[0,0],mode:mode||'drag',moved:false};}
+function seDragMove(w){const D=SE.drag;if(!D)return;const p=SCHEDIT.sp(w);const d=[p[0]-D.from[0],p[1]-D.from[1]];if(SCHEDIT.same(d,D.d))return;D.d=d;D.moved=true;
+  const sheets=SCHEDIT.restore(D.json);const sh=sheets[D.page];
+  if(D.kind==='sym'){const s=sh.symbols[D.idx];if(D.mode==='move')SCHEDIT.moveSym(s,d[0],d[1]);else SCHEDIT.drag(sh,s,d[0],d[1]);SE.sel={type:'sym',o:s};}
+  else{const l=sh.labels[D.idx];SCHEDIT.moveLabel(l,d[0],d[1]);SE.sel={type:'label',o:l};}
+  BD.schSheets=sheets;seRefresh(false);drawSch();}
+function seDropDrag(){const D=SE.drag;if(!D)return;SE.drag=null;if(D.moved){SE.undo.push(D.json);SE.redo=[];SCHEDIT.cleanWires(seSh());seRefresh(true);}if(SE.tool==='move'||SE.tool==='drag')SE.tool='sel';seBar();drawSch();}
+function seDown(x,y){
+  if(SE.tool==='sel'){const h=seHit([x,y]);if(h&&(h.type==='sym'||h.type==='label')){SE.sel=h;seStartDrag(h,[x,y],'drag');SE.drag.press=true;drawSch();return true;}}
+  return false;
+}
+function seUp(){const D=SE.drag;if(D&&D.press&&!D.moved){SE.drag=null;drawSch();return;}seDropDrag();}
+function seCursor(w){SE.cursor=w;if(SE.drag&&!SE.drag.press){seDragMove(w);return;}if(SE.ghost){const a=SCHEDIT.anchor(SE.ghost),p=SCHEDIT.sp(w);SCHEDIT.moveSym(SE.ghost,p[0]-a[0],p[1]-a[1]);}drawSch();}
+async function seClick(w){
+  const p=SCHEDIT.sp(w);const sh=seSh();if(!sh)return;
+  if(SE.drag){seDropDrag();return;}
+  switch(SE.tool){
+    case'sel':{SE.sel=seHit(w);const h=SE.sel;if(h&&h.type==='sym'&&!h.o.power&&BD.byRef[h.o.ref]){S.selRef=h.o.ref;S.hlNet=null;SV.fromMe=true;refresh(true);}drawSch();break;}
+    case'wire':{
+      if(!SE.wire){SE.wire={from:p};drawSch();break;}
+      const a=SE.wire.from;if(SCHEDIT.same(a,p)){SE.wire=null;drawSch();break;}
+      seCommit(s=>{SCHEDIT.addWire(s,a,p,SE.vfirst);});
+      // finishing on a pin / wire / label ends the wire, like Eeschema
+      const hitEnd=sh.symbols.some(s=>s.pins.some(q=>SCHEDIT.same(q.p,p)))||sh.labels.some(l=>SCHEDIT.same(l.p,p))||seSh().wires.filter(x=>SCHEDIT.same(x.a,p)||SCHEDIT.same(x.b,p)||SCHEDIT.onSeg(p,x.a,x.b)).length>1;
+      SE.wire=hitEnd?null:{from:p};drawSch();break;}
+    case'label':case'glabel':{const g=seGroupAt(p);const name=await seAsk(SE.tool==='glabel'?'글로벌 라벨 이름':'넷 라벨 이름',g&&g.net&&!/^Net-/.test(g.net)?g.net:'',seNetNames());if(!name)break;
+      const w2=SCHEDIT.hitWire(sh,p[0],p[1],0.2);const rot=w2&&Math.abs(w2.a[0]-w2.b[0])<1e-3?90:0;seCommit(s=>{SCHEDIT.addLabel(s,SE.tool==='glabel'?'global':'local',name,p,rot);});break;}
+    case'power':{const name=await seAsk('전원 넷 (예: +3V3, +12V, GND)','+3V3',seNetNames().filter(n=>BD.netClass(n)!=='신호').concat(['GND','+3V3','+5V','+12V']));if(!name)break;
+      const gnd=/^(GND|AGND|DGND|PGND|VSS|0V)$/i.test(name);seCommit(s=>{SCHEDIT.addPower(s,name,p,gnd?1:3,gnd);});break;}
+    case'nc':{const pe=SCHEDIT.hitPinEnd(sh,p,seTol());if(!pe){toast('NC는 핀 끝에 놓습니다.');break;}seCommit(s=>{SCHEDIT.addNoConnect(s,pe.pin.p);});break;}
+    case'del':{const h=seHit(w);if(h)seCommit(s=>SCHEDIT.remove(s,h.o));break;}
+    case'add':{if(!SE.ghost)break;const g=SE.ghost;SE.ghost=null;seCommit(s=>{s.symbols.push(g);});SE.sel={type:'sym',o:g};
+      if(SE.ghostBoard){SE.tool='sel';}else{SE.ghost=SCHEDIT.newPart(SE.ghostType,SCHEDIT.nextRef(seSheets(),SCHEDIT.LIB.find(x=>x.id===SE.ghostType).prefix,BD),p,SE.ghostVert);}
+      seBar();drawSch();break;}
+    case'move':case'drag':break;
+  }
+}
+function seDbl(w){if(SE.tool==='wire'){SE.wire=null;drawSch();return;}const h=seHit(w);if(h){SE.sel=h;seProps();}}
+function seGroupAt(p){const sh=seSh();const w=SCHEDIT.hitWire(sh,p[0],p[1],0.3);if(w)return w.g;const pe=SCHEDIT.hitPinEnd(sh,p,0.3);return pe&&pe.pin.g;}
+function seNetNames(){return BD.netOrder.slice();}
+// one-line prompt / small forms inside the schematic overlay
+function seDialog(html,onOk){
+  let el=$('#seDlg');if(!el){el=document.createElement('div');el.id='seDlg';el.className='sedlg';$('#schOv').appendChild(el);}
+  el.innerHTML=`<form class="sedlg-in">${html}<div class="acts"><button type="submit" class="btn primary sm">확인</button><button type="button" class="btn sm ghost" data-x>취소</button></div></form>`;el.hidden=false;
+  return new Promise(res=>{const f=el.querySelector('form');const close=v=>{el.hidden=true;res(v);};
+    f.addEventListener('submit',e=>{e.preventDefault();close(onOk(f));});f.querySelector('[data-x]').addEventListener('click',()=>close(null));
+    f.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();close(null);}});
+    const fi=f.querySelector('input,select');if(fi){fi.focus();if(fi.select)fi.select();}});
+}
+function seAsk(label,def,opts){const id='seo'+Math.random().toString(36).slice(2,7);
+  return seDialog(`<label class="fld"><span>${esc(label)}</span><input name="v" value="${esc(def||'')}" list="${id}" autocomplete="off"></label><datalist id="${id}">${[...new Set(opts||[])].map(o=>`<option value="${esc(o)}">`).join('')}</datalist>`,f=>f.v.value.trim()||null);}
+function sePalette(){
+  const sh=seSheets();const placed=new Set(sh.flatMap(s=>s.symbols.map(x=>x.ref)));const loose=BD.comps.filter(c=>!placed.has(c.ref)&&c.pads.length);
+  seDialog(`<b>부품 추가</b><div class="sepal">${SCHEDIT.LIB.map(l=>`<label><input type="radio" name="t" value="${l.id}"${l.id==='R'?' checked':''}> ${esc(l.label)} <span class="cls">${esc(l.val)} · ${esc(l.fp)}</span></label>`).join('')}
+    ${loose.length?`<div class="sub">보드에만 있는 부품</div>`+loose.map(c=>`<label><input type="radio" name="t" value="@${esc(c.ref)}"> ${esc(c.ref)} <span class="cls">${esc(c.val)}</span></label>`).join(''):''}</div>
+    <label class="chkl"><input type="checkbox" name="vert"> 세로로 놓기</label>`,f=>({t:f.t.value,vert:f.vert.checked})).then(r=>{
+    if(!r){SE.tool='sel';seBar();return;}const at=SE.cursor||[SV.data.sheets[SV.page].w/2,SV.data.sheets[SV.page].h/2];
+    if(r.t[0]==='@'){const c=BD.byRef[r.t.slice(1)];SE.ghost=SCHEDIT.boardPart(c,at);SE.ghostBoard=c.ref;}
+    else{SE.ghostType=r.t;SE.ghostVert=r.vert;SE.ghostBoard=null;SE.ghost=SCHEDIT.newPart(r.t,SCHEDIT.nextRef(sh,SCHEDIT.LIB.find(x=>x.id===r.t).prefix,BD),at,r.vert);}
+    SE.tool='add';seBar();drawSch();});
+}
+function seProps(){
+  const h=seTarget();if(!h){toast('속성을 볼 항목 위에 마우스를 두거나 선택하세요.');return;}
+  if(h.type==='label')return seAsk('라벨 이름',h.o.s,seNetNames()).then(v=>{if(v&&v!==h.o.s){const i=seSh().labels.indexOf(h.o);seCommit(s=>{s.labels[i].s=v;});}});
+  if(h.type!=='sym')return;const s=h.o;
+  if(s.power)return seAsk('전원 넷 이름',s.val,seNetNames()).then(v=>{if(v&&v!==s.val){const i=seSh().symbols.indexOf(s);seCommit(sh=>{const o=sh.symbols[i];o.val=v;o.pins[0].name=v;o.texts.forEach(t=>{t.s=v;});});}});
+  const fps=Object.keys(PCB.FP);
+  seDialog(`<b>${esc(s.ref)} 속성</b><div class="thgrid"><label class="fld"><span>참조 (Reference)</span><input name="ref" value="${esc(s.ref)}"></label><label class="fld"><span>값 (Value)</span><input name="val" value="${esc(s.val||'')}"></label>
+    <label class="fld"><span>풋프린트</span><select name="fp"><option value="">(없음)</option>${fps.map(f=>`<option${f===(s.fp||'')?' selected':''}>${esc(f)}</option>`).join('')}</select></label></div>
+    ${BD.byRef[s.ref]?'<p class="lead" style="margin:0">값을 바꾸면 "보드에 반영"할 때 보드 부품 값도 바뀝니다. 참조를 바꾸면 보드 부품과의 연결이 끊어집니다.</p>':'<p class="lead" style="margin:0">보드에 없는 새 부품입니다. "보드에 반영"하면 이 풋프린트로 보드 밖 오른쪽에 놓입니다.</p>'}`,
+    f=>({ref:f.ref.value.trim(),val:f.val.value.trim(),fp:f.fp.value})).then(r=>{if(!r)return;const i=seSh().symbols.indexOf(s);
+      if(r.ref!==s.ref&&seSheets().some(x=>x.symbols.some(y=>y.ref===r.ref&&y!==s))){toast(`${r.ref}는 이미 있는 참조입니다.`);return;}
+      seCommit(sh=>{const o=sh.symbols[i];o.texts.forEach(t=>{if(t.role==='Reference'&&t.s===o.ref)t.s=r.ref;if(t.role==='Value')t.s=r.val;});o.ref=r.ref;o.val=r.val;o.fp=r.fp;});});
+}
+function seAction(a){
+  if(a==='undo')return seSwap(SE.undo,SE.redo);if(a==='redo')return seSwap(SE.redo,SE.undo);
+  if(a==='props')return seProps();
+  if(SE.ghost&&(a==='rot'||a==='mirx'||a==='miry')){if(a==='rot')SCHEDIT.rotate(SE.ghost);else SCHEDIT.mirror(SE.ghost,a==='miry'?'y':'x');SE.ghostVert=!SE.ghostVert;drawSch();return;}
+  const h=seTarget();if(!h||h.type!=='sym'){if(h&&h.type==='label'&&a==='rot'){const i=seSh().labels.indexOf(h.o);seCommit(s=>{const l=s.labels[i];l.rot=((l.rot||0)+90)%360;l.fx.h=l.rot===180||l.rot===270?'right':'left';});}return;}
+  const i=seSh().symbols.indexOf(h.o);
+  seCommit(s=>{const o=s.symbols[i];if(a==='rot')SCHEDIT.rotateKeep(s,o);else SCHEDIT.mirrorKeep(s,o,a==='miry'?'y':'x');SE.sel={type:'sym',o};});
+}
+/* back-annotation: Update PCB from Schematic (F8) */
+function seAnnotate(){
+  const res=SCHEDIT.annotate(seSheets(),BD);const ch=res.changes;
+  const nets=ch.filter(c=>c.kind==='net'),vals=ch.filter(c=>c.kind==='value'),adds=ch.filter(c=>c.kind==='add');
+  const row=c=>c.kind==='net'?`<li><span class="mono">${esc(c.ref)}.${esc(c.pin)}</span> ${esc(c.from||'(연결 없음)')} → <b>${esc(c.to||'(연결 없음)')}</b></li>`:c.kind==='value'?`<li><span class="mono">${esc(c.ref)}</span> 값 ${esc(c.from)} → <b>${esc(c.to)}</b></li>`:`<li><span class="mono">${esc(c.ref)}</span> 새 부품 <b>${esc(c.val)}</b> · ${esc(c.fp||'풋프린트 없음')}</li>`;
+  seDialog(`<b>보드에 반영 (Update PCB from Schematic)</b>
+    <p class="lead" style="margin:0">핀 넷 ${nets.length}건 · 값 ${vals.length}건 · 새 부품 ${adds.length}개${res.missing.length?` · 회로도에 없는 보드 부품 ${res.missing.length}개(${esc(res.missing.slice(0,6).join(', '))}) 유지`:''}${res.conflicts.length?` · 이름이 둘 이상인 넷 ${res.conflicts.length}개(첫 이름 사용)`:''}</p>
+    ${ch.length?`<ul class="sediff">${ch.slice(0,60).map(row).join('')}${ch.length>60?`<li>… 외 ${ch.length-60}건</li>`:''}</ul>`:'<p class="lead">보드와 회로도가 같습니다.</p>'}
+    <p class="lead" style="margin:0">트랙·비아는 그대로 두므로 넷이 바뀐 동박은 래츠네스트와 DRC로 확인하세요.</p>`,()=>true).then(ok=>{
+    if(!ok||!ch.length)return;
+    let k=0;const n=SCHEDIT.applyAnnotation(BD,res,c=>seAddBoardPart(c,k++));
+    PINREC.relink(BD);const added=adds.map(a=>a.ref).filter(r=>BD.byRef[r]);if(added.length){S.selRef=added[0];SV.fromMe=true;}seBoardChanged();SE.dirty=false;seRefresh(false);renderSchOv();
+    const out=adds.filter(a=>a.placed==='outside').map(a=>a.ref);
+    toast(`보드에 ${n}건을 반영했습니다.`+(added.length?` 새 부품 ${added.join(', ')}을 ${out.length?'보드 오른쪽 바깥(빈 자리 없음)':'보드의 빈 자리'}에 놓았습니다. 배선은 래츠네스트로 표시됩니다.`:''));});
+}
+// a new schematic part becomes a board footprint parked to the right of the board (like Eeschema → Pcbnew)
+function seAddBoardPart(c,k){
+  const lib=PCB.FP[c.fp];const xs=BD.outline.flat().map(p=>p[0]).concat(BD.comps.map(o=>o.bb[2]));const ys=BD.outline.flat().map(p=>p[1]);
+  const x=Math.max(...xs)+8+(k%4)*8,y=Math.min(...ys)+6+Math.floor(k/4)*8;
+  const pins={};c.pins.forEach(p=>{if(p.net)pins[p.num]=p.net;});const pn={};c.pins.forEach(p=>{if(p.name)pn[p.num]=p.name;});
+  const cs={ref:c.ref,value:c.val,footprint:c.fp||'',side:'top',x,y,rotation:0,pins,pinNames:pn,description:'회로도에서 추가'};
+  if(!lib)cs.pads=c.pins.map((p,i)=>({n:p.num,x:i*2.54,y:0,w:1.6,h:1.6}));
+  // look for a free spot on the board (no part bodies, no copper of other nets under the pads); otherwise park it outside
+  const free=(px,py)=>{const m=PCB.finalize(PCB.fromSpec({board:{width:10,height:10},components:[Object.assign({},cs,{x:px,y:py})]}));const c=m.comps[0];const b=c.bb,g=0.6;
+    if(!BD.outline[0]||![[b[0],b[1]],[b[2],b[1]],[b[2],b[3]],[b[0],b[3]]].every(q=>PCB.inRing(q[0],q[1],BD.outline[0])))return null;
+    if(BD.comps.some(o=>o.bb[0]-g<b[2]&&b[0]<o.bb[2]+g&&o.bb[1]-g<b[3]&&b[1]<o.bb[3]+g))return null;
+    if(BD.drills.some(d=>d.x>b[0]-d.d&&d.x<b[2]+d.d&&d.y>b[1]-d.d&&d.y<b[3]+d.d))return null;
+    const cu=BD.layers['T.cu'];for(const p of c.pads){for(const q of cu){if(q.t==='seg'&&PCB.segDist(p.x,p.y,q.a,q.b)<Math.max(p.w,p.h)/2+q.w/2+0.3)return null;if(q.t==='path'){for(let i=1;i<q.pts.length;i++)if(PCB.segDist(p.x,p.y,q.pts[i-1],q.pts[i])<Math.max(p.w,p.h)/2+q.w/2+0.3)return null;}}
+      if(BD.vias.some(v=>Math.hypot(v.x-p.x,v.y-p.y)<v.d/2+Math.max(p.w,p.h)/2+0.3))return null;}
+    return m;};
+  let mini=null;const ob=[Math.min(...BD.outline[0].map(p=>p[0])),Math.min(...ys),Math.max(...BD.outline[0].map(p=>p[0])),Math.max(...ys)];
+  for(let py=ob[3]-4;py>ob[1]+3&&!mini;py-=1)for(let px=ob[2]-4;px>ob[0]+3&&!mini;px-=1)mini=free(px,py);
+  if(mini)c.placed='board';else{mini=PCB.finalize(PCB.fromSpec({board:{width:10,height:10},components:[cs]}));c.placed='outside';}
+  const comp=mini.comps[0];
+  BD.comps.push(comp);BD.byRef[comp.ref]=comp;comp.pads.forEach(p=>{if(p.side!=='B')BD.layers['T.cu'].push(p);if(p.side!=='T')BD.layers['B.cu'].push(p);});
+  (mini.layers['T.silk']||[]).forEach(p=>BD.layers['T.silk'].push(p));
+  return true;
+}
+function seBoardChanged(){
+  try{stats();header();renderPane();if(typeof rebuild3D==='function'&&G3)rebuild3D();if(typeof hsisRun==='function'&&HS.H){hsisRun();if(HS.ws==='hsis')renderHSIS();}if(typeof simReset==='function')simReset();}catch(e){console.error(e);}
+  measure.done=0;refresh(true);
+}
+async function seExport(){
+  const files=SCHEDIT.toKicad(seSheets()||schData().sheets,{name:BD.name||'board',title:BD.name,board:BD,date:new Date().toISOString().slice(0,10)});
+  if(files.length===1)return offerFile(files[0].name,files[0].text,'text/plain');
+  const z=new JSZip();files.forEach(f=>z.file(f.name,f.text));const blob=await z.generateAsync({type:'uint8array'});
+  offerFile(files[0].name.replace(/\.kicad_sch$/,'')+'_schematic.zip',blob,'application/zip');
+}
+function seBar(){
+  let el=$('#seBar');if(!el){el=document.createElement('div');el.id='seBar';el.className='sov sov-ed';$('#schOv').appendChild(el);
+    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.tool)seSetTool(b.dataset.tool);else if(b.dataset.act)seAction(b.dataset.act);else if(b.id==='seAnn')seAnnotate();else if(b.id==='seErc')seErcList();else if(b.id==='seExp')seExport();});}
+  el.hidden=!SE.on;const eb=$('#schEdit');if(eb){eb.classList.toggle('on',SE.on);eb.textContent=SE.on?'편집 끝내기':'회로 편집';}
+  if(!SE.on)return;
+  el.innerHTML=`<div class="setools" role="toolbar" aria-label="회로 편집 도구">${SE_TOOLS.map(([t,l,k])=>`<button class="pill vbtn${SE.tool===t?' on':''}" data-tool="${t}" title="${l} (${k})">${l}<kbd>${k}</kbd></button>`).join('')}</div>
+    <div class="setools">${SE_ACTS.map(([a,l,k])=>`<button class="pill vbtn" data-act="${a}" title="${l} (${k})"${(a==='undo'&&!SE.undo.length)||(a==='redo'&&!SE.redo.length)?' disabled':''}>${l}<kbd>${k}</kbd></button>`).join('')}
+    <button class="pill vbtn" id="seErc" title="전기 규칙 검사 결과">ERC <b id="seErcN">${SE.erc.length}</b></button><button class="pill vbtn${SE.dirty?' warn':''}" id="seAnn" title="회로도 연결을 보드 패드 넷에 반영 (F8)">보드에 반영<kbd>F8</kbd></button><button class="pill vbtn" id="seExp" title="KiCad 회로도(.kicad_sch)로 저장">.kicad_sch 저장</button></div>
+    <span class="pill hint2" id="seStat"></span>`;
+  seStat();
+}
+function seStat(){const el=$('#seStat');if(!el)return;const hint={sel:'클릭으로 선택 · 끌어서 이동(연결 유지) · 더블클릭 속성',move:'클릭하면 내려놓기 (연결 끊김)',drag:'클릭하면 내려놓기 (배선 따라옴)',wire:SE.wire?'클릭으로 꺾기 · 핀/배선에 닿으면 끝 · / 꺾는 방향 · Esc 끝':'시작점을 클릭하세요',
+  label:'라벨을 붙일 배선·핀 끝을 클릭',glabel:'다른 페이지와 이어질 지점을 클릭',power:'전원 심볼을 놓을 곳을 클릭',add:'클릭해서 놓기 · R 회전',nc:'연결하지 않을 핀 끝을 클릭',del:'지울 항목을 클릭'}[SE.tool]||'';
+  el.textContent=hint+(SE.dirty?' · 보드와 다름':'');const n=$('#seErcN');if(n)n.textContent=SE.erc.length;
+  const ann=$('#seAnn');if(ann)ann.classList.toggle('warn',SE.dirty);}
+function seErcList(){const e=SE.erc;if(!e.length){toast('ERC 문제 없음');return;}
+  seDialog(`<b>ERC ${e.length}건</b><ul class="sediff">${e.slice(0,80).map((x,i)=>`<li><button type="button" class="linkbtn" data-erc="${i}">${x.page+1}쪽</button> ${esc(x.msg)}</li>`).join('')}</ul>`,()=>true);
+  $('#seDlg').querySelectorAll('[data-erc]').forEach(b=>b.addEventListener('click',()=>{const x=e[+b.dataset.erc];SV.page=x.page;renderSchOv();SV.s=Math.max(SV.s,8);SV.ox=SV.w/2-x.p[0]*SV.s;SV.oy=SV.h/2-x.p[1]*SV.s;drawSch();}));}
+// overlay: grid, selection, previews, ghost part, ERC marks, snapped cursor
+function seOverlay(ctx,sh,V,C,lw,drawSy){
+  if(V.s>5){ctx.fillStyle=C.frame;const s=2.54,x0=Math.max(0,Math.floor(-V.ox/V.s/s)*s),y0=Math.max(0,Math.floor(-V.oy/V.s/s)*s),x1=Math.min(sh.w,(V.w-V.ox)/V.s),y1=Math.min(sh.h,(V.h-V.oy)/V.s);const r=Math.max(0.06,0.9/V.s);
+    for(let x=x0;x<=x1;x+=s)for(let y=y0;y<=y1;y+=s)ctx.fillRect(x-r,y-r,2*r,2*r);}
+  const h=SE.sel;ctx.save();ctx.strokeStyle=C.sel;ctx.lineWidth=lw(0.3);ctx.setLineDash([1,0.7]);
+  if(h&&h.type==='sym'&&sh.symbols.includes(h.o)){const b=h.o.bb;ctx.strokeRect(b[0]-0.8,b[1]-0.8,b[2]-b[0]+1.6,b[3]-b[1]+1.6);}
+  if(h&&h.type==='wire'&&sh.wires.includes(h.o)){ctx.setLineDash([]);ctx.lineWidth=lw(0.6);ctx.beginPath();ctx.moveTo(h.o.a[0],h.o.a[1]);ctx.lineTo(h.o.b[0],h.o.b[1]);ctx.stroke();}
+  if(h&&h.type==='label'&&sh.labels.includes(h.o)){ctx.beginPath();ctx.arc(h.o.p[0],h.o.p[1],1.2,0,TAU);ctx.stroke();}
+  ctx.restore();
+  if(SE.wire&&SE.cursor){ctx.save();ctx.strokeStyle=C.wire;ctx.lineWidth=lw(0.2);ctx.setLineDash([0.8,0.5]);SCHEDIT.lpath(SE.wire.from,SE.cursor,SE.vfirst).forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();});ctx.restore();}
+  if(SE.ghost){ctx.save();ctx.globalAlpha=0.55;drawSy(SE.ghost);ctx.restore();}
+  ctx.save();ctx.strokeStyle=C.critical||'#d03b3b';ctx.lineWidth=lw(0.25);SE.erc.forEach(e=>{if(e.page!==SV.page)return;ctx.beginPath();ctx.arc(e.p[0],e.p[1],1.0,0,TAU);ctx.stroke();ctx.beginPath();ctx.moveTo(e.p[0]-0.5,e.p[1]-0.5);ctx.lineTo(e.p[0]+0.5,e.p[1]+0.5);ctx.stroke();});ctx.restore();
+  if(SE.cursor&&SE.tool!=='sel'){const p=SCHEDIT.sp(SE.cursor);ctx.save();ctx.strokeStyle=C.hl;ctx.lineWidth=lw(0.12);ctx.beginPath();ctx.moveTo(p[0]-1.6,p[1]);ctx.lineTo(p[0]+1.6,p[1]);ctx.moveTo(p[0],p[1]-1.6);ctx.lineTo(p[0],p[1]+1.6);ctx.stroke();ctx.restore();}
+}
+// Eeschema hotkeys while the schematic is shown in edit mode
+document.addEventListener('keydown',e=>{
+  if(!SE.on||S.sch==='off')return;if(e.target.matches('input,select,textarea'))return;if($('#seDlg')&&!$('#seDlg').hidden)return;
+  const k=e.key,ctl=e.ctrlKey||e.metaKey;let done=true;
+  if(ctl&&(k==='z'||k==='Z')&&!e.shiftKey)seAction('undo');else if(ctl&&(k==='y'||k==='Y'||((k==='z'||k==='Z')&&e.shiftKey)))seAction('redo');
+  else if(ctl&&(k==='l'||k==='L'))seSetTool('glabel');
+  else if(ctl)done=false;
+  else if(k==='Escape'){if(SE.wire)SE.wire=null;else if(SE.drag){const D=SE.drag;SE.drag=null;BD.schSheets=SCHEDIT.restore(D.json);seRefresh(false);}else{SE.ghost=null;SE.sel=null;}SE.tool='sel';seBar();drawSch();}
+  else if(k==='Delete'||k==='Backspace'){const h=seTarget();if(h)seCommit(s=>SCHEDIT.remove(s,h.o));SE.sel=null;}
+  else if(k==='F8')seAnnotate();
+  else{const m={m:'move',g:'drag',w:'wire',l:'label',p:'power',a:'add',q:'nc'}[k.toLowerCase()];const act={r:'rot',x:'mirx',y:'miry',e:'props'}[k.toLowerCase()];
+    if(m)seSetTool(m);else if(act)seAction(act);else if(k==='/'){SE.vfirst=!SE.vfirst;drawSch();}else done=false;}
+  if(done){e.preventDefault();e.stopImmediatePropagation();}
+},true);
+$('#schEdit').addEventListener('click',()=>{if(SE.on)seEnd();else seBegin();});
 
 /* ---------- multi-view windows: a grid of cells (TOP / BOTTOM / 회로도 / 3D) in a browser window, or floating in-page when popups are blocked ---------- */
 const POPS=new Set();   // every live cell, across all windows

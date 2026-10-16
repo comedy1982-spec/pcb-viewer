@@ -452,4 +452,19 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .emcchk .eh{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}.emcchk .eh .mono{margin-left:auto;font-size:11.5px}
 .emcchk .em{margin-top:3px;color:var(--fg);line-height:1.45}.emcchk .fix{color:var(--muted);font-size:11.5px;margin-top:2px}
 .emc .kpi.emck b{font-size:15px}
+/* schematic editor */
+.sov-ed{left:12px;top:52px;right:330px;flex-direction:column;align-items:flex-start;gap:6px}
+@media (max-width:900px){.sov-ed{right:12px;top:96px}}
+.setools{display:flex;flex-wrap:wrap;gap:4px;pointer-events:auto}
+.setools .vbtn{display:inline-flex;align-items:center;gap:5px;font-size:12px}
+.setools .vbtn[disabled]{opacity:.45;cursor:default}
+.setools .vbtn.warn{border-color:var(--warning);color:var(--warn-fg);font-weight:600}
+.setools kbd{font-family:var(--f-mono);font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 3px;line-height:14px}
+.sedlg{position:absolute;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 40%,transparent);pointer-events:auto;z-index:5}
+.sedlg[hidden]{display:none}
+.sedlg-in{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:min(340px,calc(100vw - 32px));max-width:min(560px,calc(100vw - 32px));max-height:80%;overflow:auto;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 32px rgba(0,0,0,.22)}
+.sepal{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto}
+.sepal label{display:flex;gap:6px;align-items:center;font-size:13px}
+.sediff{margin:0;padding-left:18px;max-height:280px;overflow:auto;font-size:12.5px;display:flex;flex-direction:column;gap:2px}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit}
 </style>
