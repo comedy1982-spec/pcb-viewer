@@ -44,7 +44,7 @@ function powerStage(B,cfg,env){
     caps.forEach(c=>{const pv=c.pads.find(p=>p.net===vmNet),pg=c.pads.find(p=>isGnd(p.net));
       const vmP=D.vm.slice().sort((a,b)=>dist([a.x,a.y],[pv.x,pv.y])-dist([b.x,b.y],[pv.x,pv.y]))[0];const gP=D.pg.slice().sort((a,b)=>dist([a.x,a.y],[pg.x,pg.y])-dist([b.x,b.y],[pg.x,pg.y]))[0]||vmP;
       const lf=dist([pv.x,pv.y],[vmP.x,vmP.y])*1.2,lr=dist([pg.x,pg.y],[gP.x,gP.y])*1.2;const w=0.5;const layer=pv.side==='B'?'B':'T';
-      const pkg=pkgOf(c.fp);const esl=pkg?ESL_PKG[pkg]:/(µ|u)F/.test(c.val)&&parseFloat(c.val)>=47?5:1.0;
+      const pkg=pkgOf(c.fp);const cp=capPar(c);const esl=cp&&cp.esl?cp.esl:pkg?ESL_PKG[pkg]:/(µ|u)F/.test(c.val)&&parseFloat(c.val)>=47?5:1.0;
       const Lfwd=Lpm(B,w,layer,env)*lf,Lv=2*Lvia(h,dvia),Lpkg=1.0;const Ltot=Lfwd+Lv+esl+Lpkg;
       const area=(lf+lr)/2*h+dist([pv.x,pv.y],[pg.x,pg.y])*h; // mm² (forward over plane + cap body)
       res.loops.push({cap:c.ref,val:c.val,pkg,lf,lr,esl,Lfwd,Lvia:Lv,Lpkg,L:Ltot,area,pts:[[pv.x,pv.y],[vmP.x,vmP.y],[gP.x,gP.y],[pg.x,pg.y]]});});
@@ -108,13 +108,14 @@ function crosstalk(B,aggr,vict,env){
 
 /* ---------- 3. decoupling caps ---------- */
 function parseC(v){const m=String(v||'').replace(/[µμ]/g,'u').match(/(\d+(?:\.\d+)?)\s*([pnu])?F/i);if(!m)return null;return parseFloat(m[1])*({p:1e-12,n:1e-9,u:1e-6}[(m[2]||'').toLowerCase()]||1);}
+function capPar(c){if(typeof PARTS==='undefined')return null;const i=PARTS.find(c.mpn);return i&&i.elec?i.elec:null;}
 function decaps(B,env){
   return B.comps.filter(c=>/^C\d/.test(c.ref)&&c.pads.length===2&&c.pads.some(p=>isGnd(p.net))&&c.pads.some(p=>p.net&&!isGnd(p.net))).map(c=>{const C=parseC(c.val);if(!C)return null;
-    const pkg=pkgOf(c.fp);const esl=pkg?ESL_PKG[pkg]:1.0;const pg=c.pads.find(p=>isGnd(p.net));
+    const pkg=pkgOf(c.fp);const cp=capPar(c);const esl=cp&&cp.esl?cp.esl:pkg?ESL_PKG[pkg]:1.0,esr=cp&&cp.esr?cp.esr:0.01;const pg=c.pads.find(p=>isGnd(p.net));
     const vias=B.vias.filter(v=>isGnd(v.net)&&dist([v.x,v.y],[pg.x,pg.y])<2.5);const near=vias.length?Math.min(...vias.map(v=>dist([v.x,v.y],[pg.x,pg.y]))):null;
     const Lm=vias.length?Lpm(B,0.4,'T',env)*near+Lvia(env.t,0.4)/vias.length:Lpm(B,0.4,'T',env)*5+Lvia(env.t,0.4);
-    const L=esl+Lm;const srf=1/(2*Math.PI*Math.sqrt(L*1e-9*C));const Z=f=>Math.hypot(0.01,2*Math.PI*f*L*1e-9-1/(2*Math.PI*f*C));
-    return{ref:c.ref,val:c.val,C,pkg,esl,Lm,L,srf,vias:vias.length,net:c.pads.find(p=>!isGnd(p.net)).net,Z30:Z(30e6),Z100:Z(100e6)};}).filter(Boolean).sort((a,b)=>a.srf-b.srf);
+    const L=esl+Lm;const srf=1/(2*Math.PI*Math.sqrt(L*1e-9*C));const Z=f=>Math.hypot(esr,2*Math.PI*f*L*1e-9-1/(2*Math.PI*f*C));
+    return{ref:c.ref,val:c.val,C,pkg:pkg||(c.kind==='elcap'?'전해':null),esl,esr,elec:c.kind==='elcap',Lm,L,srf,vias:vias.length,net:c.pads.find(p=>!isGnd(p.net)).net,Z30:Z(30e6),Z100:Z(100e6)};}).filter(Boolean).sort((a,b)=>a.srf-b.srf);
 }
 
 /* ---------- spectra ---------- */

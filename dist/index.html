@@ -1302,6 +1302,8 @@ const FP={};
   t144.push({n:'145',x:0,y:0,w:7,h:7});t144.sort((a,b)=>a.n-b.n);
   FP['TQFP-144']={kind:'ic',stand:0.05,body:[20,20,1.2],pads:t144,dot:[-8.6,8.6]};
   FP['HDR-1x8']={kind:'hdr',body:[2.54,20.32,2.5],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:0,y:8.89-2.54*i,w:1.7,h:1.7,round:true,drill:1.0}))};
+  // SMD aluminium electrolytic (V-chip), Panasonic FK case G ø10 × 10.2: land a 4.6 (gap) · b 4.1 · c 2.0, pad 1 = +
+  FP['CP-SMD-10x10']={kind:'elcap',body:[10.3,10.3,10.2],pads:[{n:'1',x:-4.35,y:0,w:4.1,h:2.0},{n:'2',x:4.35,y:0,w:4.1,h:2.0}]};
   FP['1210']={kind:'chip',body:[3.2,2.5,1.6],pads:[{n:'1',x:-1.5,y:0,w:1.2,h:2.7},{n:'2',x:1.5,y:0,w:1.2,h:2.7}]};
   // board-mount 3-phase BLDC motor with 8-pin lead row (U V W H1 H2 H3 VCC GND)
   FP['BLDC-2418']={kind:'motor',body:[30,24,23],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:-19,y:8.75-2.5*i,w:2.0,h:2.0,round:true,drill:1.0}))};
@@ -1345,6 +1347,9 @@ function fromSpec(spec){
     const xf=(lx,ly)=>{const xx=mir?-lx:lx,a=c.rot*D2R;return[c.x+xx*Math.cos(a)-ly*Math.sin(a),c.y+xx*Math.sin(a)+ly*Math.cos(a)];};
     const kind=c.kind||'box';
     if(f&&kind==='hdr'){const[bw,bh]=f.body;const r=[[-bw/2,-bh/2],[bw/2,-bh/2],[bw/2,bh/2],[-bw/2,bh/2],[-bw/2,-bh/2]].map(p=>xf(p[0],p[1]));S.push({t:'path',pts:r,w:0.13});S.push({t:'seg',a:xf(-bw/2,bh/2-2.54),b:xf(bw/2,bh/2-2.54),w:0.13});}
+    else if(f&&kind==='elcap'){const[bw,bh]=f.body,x0=-bw/2-0.15,y0=-bh/2-0.15,x1=bw/2+0.15,y1=bh/2+0.15,ch=bw*0.28,g=1.25;
+      S.push({t:'path',pts:[[x0+ch,y0],[x1,y0],[x1,-g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x1,g],[x1,y1],[x0+ch,y1],[x0,y1-ch],[x0,g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x0,-g],[x0,y0+ch],[x0+ch,y0]].map(p=>xf(p[0],p[1])),w:0.13});
+      const pl=[x0-0.9,y0+0.9];S.push({t:'seg',a:xf(pl[0]-0.5,pl[1]),b:xf(pl[0]+0.5,pl[1]),w:0.15},{t:'seg',a:xf(pl[0],pl[1]-0.5),b:xf(pl[0],pl[1]+0.5),w:0.15});}
     else if(f&&kind!=='chip'&&kind!=='led'){const m=0.3,[a,b,cc,d]=f.lbb,x0=a-m,y0=b-m,x1=cc+m,y1=d+m,L=Math.min(1.1,(x1-x0)/3,(y1-y0)/3);
       [[x0,y0,1,1],[x1,y0,-1,1],[x1,y1,-1,-1],[x0,y1,1,-1]].forEach(([px,py,sx,sy])=>S.push({t:'path',pts:[xf(px+sx*L,py),xf(px,py),xf(px,py+sy*L)],w:0.13}));
       if(f.dot){const[dx,dy]=xf(f.dot[0],f.dot[1]);S.push({t:'circle',x:dx,y:dy,r:0.25});}}
@@ -1873,6 +1878,8 @@ function twoPin(c,pads,vert){
   const r=c.ref.toUpperCase(),poly=(pts,fill)=>s.g.push({t:'poly',pts,fill:fill||'none',w:0.254});
   let half=2.54;
   if(/^R/.test(r)||/^F\d/.test(r)){poly([[-2.54,-1],[2.54,-1],[2.54,1],[-2.54,1],[-2.54,-1]]);}
+  else if(/^C/.test(r)&&c.kind==='elcap'){half=1.27;poly([[-0.5,-2],[-0.5,2]]);const a=[];for(let i=0;i<=12;i++){const t=-0.9+1.8*i/12;a.push([0.5+0.55*(1-Math.cos(t))*1.6,2.2*Math.sin(t)/Math.sin(0.9)]);}poly(a);
+    poly([[-1.27,0],[-0.5,0]]);poly([[0.5,0],[1.27,0]]);poly([[-1.9,-1.9],[-1.1,-1.9]]);poly([[-1.5,-2.3],[-1.5,-1.5]]);}
   else if(/^C/.test(r)){half=1.27;poly([[-0.5,-2],[-0.5,2]]);poly([[0.5,-2],[0.5,2]]);poly([[-1.27,0],[-0.5,0]]);poly([[0.5,0],[1.27,0]]);}
   else if(/^(L|FB)/.test(r)){const p=[];for(let k=0;k<4;k++){for(let i=0;i<=8;i++){const a=Math.PI-Math.PI*i/8;p.push([-2.54+k*1.27+0.635+0.635*Math.cos(a),-0.635*Math.sin(a)]);}}poly(p);}
   else if(/^(D|LED)/.test(r)){poly([[-1.27,-1.27],[1.27,0],[-1.27,1.27],[-1.27,-1.27]]);poly([[1.27,-1.27],[1.27,1.27]]);poly([[-2.54,0],[-1.27,0]]);poly([[1.27,0],[2.54,0]]);
@@ -1881,6 +1888,7 @@ function twoPin(c,pads,vert){
   else if(/^(Y|X)/.test(r)){poly([[-0.8,-1.6],[0.8,-1.6],[0.8,1.6],[-0.8,1.6],[-0.8,-1.6]]);poly([[-1.6,-1.6],[-1.6,1.6]]);poly([[1.6,-1.6],[1.6,1.6]]);poly([[-2.54,0],[-1.6,0]]);poly([[1.6,0],[2.54,0]]);}
   else poly([[-2.54,-1.27],[2.54,-1.27],[2.54,1.27],[-2.54,1.27],[-2.54,-1.27]]);
   const [p1,p2]=pads;
+  if(c.kind==='elcap'){const neg=p=>/^(-|−|N|NEG)$/i.test(p.fn||'')||(!p.fn&&String(p.n)==='2');if(neg(p1))s.g.forEach(g=>{g.pts=g.pts.map(q=>[-q[0],q[1]]);});}
   if(/^(D|LED)/.test(r)){const isK=p=>/^(K|KA|CATHODE|-)$/i.test(p.fn||'');const isA=p=>/^(A|ANODE|\+)$/i.test(p.fn||'');if(isK(p1)||isA(p2))s.g.forEach(g=>{g.pts=g.pts.map(q=>[-q[0],q[1]]);});}
   s.pins.push({num:String(p1.n),name:'',p:[-half-2.54,0],e:[-half,0],nameShow:false,numShow:false,_pad:p1},{num:String(p2.n),name:'',p:[half+2.54,0],e:[half,0],nameShow:false,numShow:false,_pad:p2});
   if(vert){const R=q=>[-q[1],q[0]];s.g.forEach(g=>{g.pts=g.pts.map(R);});s.pins.forEach(p=>{p.p=R(p.p);p.e=R(p.e);});
@@ -2749,7 +2757,7 @@ function powerStage(B,cfg,env){
     caps.forEach(c=>{const pv=c.pads.find(p=>p.net===vmNet),pg=c.pads.find(p=>isGnd(p.net));
       const vmP=D.vm.slice().sort((a,b)=>dist([a.x,a.y],[pv.x,pv.y])-dist([b.x,b.y],[pv.x,pv.y]))[0];const gP=D.pg.slice().sort((a,b)=>dist([a.x,a.y],[pg.x,pg.y])-dist([b.x,b.y],[pg.x,pg.y]))[0]||vmP;
       const lf=dist([pv.x,pv.y],[vmP.x,vmP.y])*1.2,lr=dist([pg.x,pg.y],[gP.x,gP.y])*1.2;const w=0.5;const layer=pv.side==='B'?'B':'T';
-      const pkg=pkgOf(c.fp);const esl=pkg?ESL_PKG[pkg]:/(µ|u)F/.test(c.val)&&parseFloat(c.val)>=47?5:1.0;
+      const pkg=pkgOf(c.fp);const cp=capPar(c);const esl=cp&&cp.esl?cp.esl:pkg?ESL_PKG[pkg]:/(µ|u)F/.test(c.val)&&parseFloat(c.val)>=47?5:1.0;
       const Lfwd=Lpm(B,w,layer,env)*lf,Lv=2*Lvia(h,dvia),Lpkg=1.0;const Ltot=Lfwd+Lv+esl+Lpkg;
       const area=(lf+lr)/2*h+dist([pv.x,pv.y],[pg.x,pg.y])*h; // mm² (forward over plane + cap body)
       res.loops.push({cap:c.ref,val:c.val,pkg,lf,lr,esl,Lfwd,Lvia:Lv,Lpkg,L:Ltot,area,pts:[[pv.x,pv.y],[vmP.x,vmP.y],[gP.x,gP.y],[pg.x,pg.y]]});});
@@ -2813,13 +2821,14 @@ function crosstalk(B,aggr,vict,env){
 
 /* ---------- 3. decoupling caps ---------- */
 function parseC(v){const m=String(v||'').replace(/[µμ]/g,'u').match(/(\d+(?:\.\d+)?)\s*([pnu])?F/i);if(!m)return null;return parseFloat(m[1])*({p:1e-12,n:1e-9,u:1e-6}[(m[2]||'').toLowerCase()]||1);}
+function capPar(c){if(typeof PARTS==='undefined')return null;const i=PARTS.find(c.mpn);return i&&i.elec?i.elec:null;}
 function decaps(B,env){
   return B.comps.filter(c=>/^C\d/.test(c.ref)&&c.pads.length===2&&c.pads.some(p=>isGnd(p.net))&&c.pads.some(p=>p.net&&!isGnd(p.net))).map(c=>{const C=parseC(c.val);if(!C)return null;
-    const pkg=pkgOf(c.fp);const esl=pkg?ESL_PKG[pkg]:1.0;const pg=c.pads.find(p=>isGnd(p.net));
+    const pkg=pkgOf(c.fp);const cp=capPar(c);const esl=cp&&cp.esl?cp.esl:pkg?ESL_PKG[pkg]:1.0,esr=cp&&cp.esr?cp.esr:0.01;const pg=c.pads.find(p=>isGnd(p.net));
     const vias=B.vias.filter(v=>isGnd(v.net)&&dist([v.x,v.y],[pg.x,pg.y])<2.5);const near=vias.length?Math.min(...vias.map(v=>dist([v.x,v.y],[pg.x,pg.y]))):null;
     const Lm=vias.length?Lpm(B,0.4,'T',env)*near+Lvia(env.t,0.4)/vias.length:Lpm(B,0.4,'T',env)*5+Lvia(env.t,0.4);
-    const L=esl+Lm;const srf=1/(2*Math.PI*Math.sqrt(L*1e-9*C));const Z=f=>Math.hypot(0.01,2*Math.PI*f*L*1e-9-1/(2*Math.PI*f*C));
-    return{ref:c.ref,val:c.val,C,pkg,esl,Lm,L,srf,vias:vias.length,net:c.pads.find(p=>!isGnd(p.net)).net,Z30:Z(30e6),Z100:Z(100e6)};}).filter(Boolean).sort((a,b)=>a.srf-b.srf);
+    const L=esl+Lm;const srf=1/(2*Math.PI*Math.sqrt(L*1e-9*C));const Z=f=>Math.hypot(esr,2*Math.PI*f*L*1e-9-1/(2*Math.PI*f*C));
+    return{ref:c.ref,val:c.val,C,pkg:pkg||(c.kind==='elcap'?'전해':null),esl,esr,elec:c.kind==='elcap',Lm,L,srf,vias:vias.length,net:c.pads.find(p=>!isGnd(p.net)).net,Z30:Z(30e6),Z100:Z(100e6)};}).filter(Boolean).sort((a,b)=>a.srf-b.srf);
 }
 
 /* ---------- spectra ---------- */
@@ -3259,6 +3268,8 @@ const SAMPLE_TC364=(function(){
   tr('T','DRV_CPL',0.25,'U3.1',[54.225,78],[56,78],'C8.1');tr('T','DRV_CPH',0.25,'U3.2',[53.575,81.6],[56,81.6],'C8.2');tr('T','DRV_VCP',0.25,'U3.3',[52.925,83],[59,83],'C9.2');
   tr('T','DRV_V3P3',0.25,'U3.15',[45.775,70],[46.425,70],'U3.16');tr('T','DRV_V3P3',0.25,[45.775,70],'C10.2');
   tr('T','NFAULT',0.25,'R10.2','U3.18');
+  // VM bulk: aluminium electrolytic C13 tied to the 22 µF MLCC C12 (+12V) with its own ground vias
+  tr('T','+12V',0.8,'C13.1',[64,82],[64,87],'C12.2');tr('T','GND',0.8,'C13.2',[79.4,82]);via('GND',[79.4,81],[79.4,83]);
   // CAN bus to the connector
   tr('T','CANH',0.3,'U4.7',[94,70.635],[94,73.81],'J2.1');tr('T','CANL',0.3,'U4.6',[96,69.365],[96,71.27],'J2.2');
   // battery monitor divider + filter, status LED
@@ -3298,6 +3309,7 @@ const SAMPLE_TC364=(function(){
       {ref:'C9',value:'100nF',footprint:'0603',side:'top',x:59,y:80,rotation:90,mpn:'CL10B104KB8NNNC',description:'VCP–VM',pins:{1:'+12V',2:'DRV_VCP'}},
       {ref:'C10',value:'470nF',footprint:'0603',side:'top',x:44,y:67.6,rotation:90,mpn:'GRM188R71C474KA88D',description:'DRV8313 V3P3 바이패스',pins:{1:'GND',2:'DRV_V3P3'}},
       {ref:'C12',value:'22µF',footprint:'1210',side:'top',x:60,y:87,rotation:0,mpn:'GRM32ER61E226KE15',description:'VM 벌크 커패시터',pins:{1:'GND',2:'+12V'}},
+      {ref:'C13',value:'470µF',footprint:'CP-SMD-10x10',side:'top',x:72,y:82,rotation:0,mpn:'EEE-FK1E471P',description:'VM 벌크 알루미늄 전해 커패시터 (DC-Link · 모터 리플 전류 흡수)',pins:{1:'+12V',2:'GND'},pinNames:{1:'+',2:'−'},label:[72,89.2]},
       {ref:'R10',value:'10kΩ',footprint:'0603',side:'top',x:47.725,y:67.4,rotation:90,mpn:'RC0603FR-0710KL',description:'nFAULT 풀업 (오픈 드레인)',pins:{1:'+3V3',2:'NFAULT'}},
       {ref:'J3',value:'모터·홀',footprint:'HDR-1x8',side:'top',x:20,y:74,rotation:0,mpn:'61300811121',description:'BLDC 모터 상(W V U)과 홀 센서(H1–H3), 홀 전원 5 V',
         pins:{1:'PH_W',2:'PH_V',3:'PH_U',4:'HALL_A',5:'HALL_B',6:'HALL_C',7:'+5V',8:'GND'},pinNames:{1:'W',2:'V',3:'U',4:'H1',5:'H2',6:'H3',7:'+5V',8:'GND'},label:[16.5,74]},
@@ -3462,6 +3474,11 @@ const P={
   'CL10B103KB8NNNC':{mfr:'Samsung Electro-Mechanics',title:'MLCC 10 nF 50 V X7R 0603',cat:'커패시터',page:'https://product.samsungsem.com/mlcc/CL10B103KB8NNN.do',specs:[['값','10 nF ±10 %, 50 V, X7R'],['크기','0603']]},
   'CL10A105KB8NNNC':{mfr:'Samsung Electro-Mechanics',title:'MLCC 1 µF 50 V X5R 0603',cat:'커패시터',page:'https://product.samsungsem.com/mlcc/CL10A105KB8NNN.do',specs:[['값','1 µF ±10 %, 50 V, X5R'],['크기','0603']]},
   'GRM31CR60J107ME39':{mfr:'Murata',title:'MLCC 100 µF 6.3 V X5R 1206',cat:'커패시터',page:'https://www.murata.com/en-us/products/productdetail?partno=GRM31CR60J107ME39L',specs:[['값','100 µF ±20 %, 6.3 V, X5R'],['크기','1206']]},
+  'EEE-FK1E471P':{mfr:'Panasonic Industry',title:'알루미늄 전해 커패시터 470 µF 25 V · FK 시리즈 SMD (ø10 × 10.2)',cat:'커패시터',
+    page:'https://industry.panasonic.com/global/en/products/control/capacitor/aluminum/smd/fk',pdf:'https://docs.rs-online.com/89e5/0900766b8139e2ae.pdf',
+    specs:[['값','470 µF ±20 %, 25 V DC'],['케이스','G (ø10 × L10.2 mm), 105 °C 2000 h'],['ESR / 임피던스','80 mΩ (100 kHz, 유통사 기재)'],['허용 리플 전류','850 mA rms (100 kHz, 105 °C, 유통사 기재)'],
+      ['랜드 패턴','a 4.6 · b 4.1 · c 2.0 mm (FK 케이스 G 권장)'],['ESL','약 6 nH — 데이터시트 값 없음, ø10 SMD 캔 일반값(추정)']],
+    elec:{esr:0.08,esl:6,ripple:0.85},note:'용량·전압·치수·랜드 패턴은 Panasonic FK 데이터시트, ESR·리플 전류는 유통사(RS) 기재값입니다.'},
   'GRM32ER61E226KE15':{mfr:'Murata',title:'MLCC 22 µF 25 V X5R 1210',cat:'커패시터',page:'https://www.murata.com/en-us/products/productdetail?partno=GRM32ER61E226KE15L',specs:[['값','22 µF ±10 %, 25 V, X5R'],['크기','1210']]},
   'GRM188R71C474KA88D':{mfr:'Murata',title:'MLCC 0.47 µF 16 V X7R 0603',cat:'커패시터',page:'https://www.murata.com/en-us/products/productdetail?partno=GRM188R71C474KA88D',specs:[['값','0.47 µF ±10 %, 16 V, X7R'],['크기','0603']]},
   'TC364DP-64F300F':{mfr:'Infineon',title:'AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz',cat:'MCU',
@@ -4811,7 +4828,7 @@ function brackets(ctx,bb,color,w){
 function bodyColor(c){
   const k=c.kind,r=c.ref[0];
   if(k==='chip')return r==='C'?'#a8835a':r==='L'?'#3b3d40':'#1f1f20';
-  return{diode:'#1f1f20',motor:'#b8bdc2',ic:'#1d1e21',usb:'#a9afb4',conn:'#2b2c2f',xtal:'#b8bdc2',btn:'#2a2d31',hdr:'#151617',led:'#e6ece6',tht2:r==='C'?'#2c4f8a':r==='R'?'#d8c9a3':'#232425',box:'#6b7076'}[k]||'#6b7076';
+  return{diode:'#1f1f20',motor:'#b8bdc2',ic:'#1d1e21',usb:'#a9afb4',conn:'#2b2c2f',xtal:'#b8bdc2',btn:'#2a2d31',hdr:'#151617',led:'#e6ece6',elcap:'#aeb4ba',tht2:r==='C'?'#2c4f8a':r==='R'?'#d8c9a3':'#232425',box:'#6b7076'}[k]||'#6b7076';
 }
 const padOn=(p,side)=>p.side==='both'||p.side===side||!p.side;
 function drawSide(ctx,side,o){
@@ -5016,6 +5033,15 @@ function build3D(c){
       if(Math.abs(p.x)>bw/2){const sx=Math.sign(p.x),len=Math.abs(p.x)-bw/2+0.2;inner.add(box(p.w*0.7,p.h*0.75,0.12,m.tin,p.x,p.y,0),box(len,p.h*0.75,0.12,m.tin,sx*(bw/2+len/2-0.2),p.y,st+ht*0.35));}
       else{const sy=Math.sign(p.y),len=Math.abs(p.y)-bh/2+0.2;inner.add(box(p.w*0.75,p.h*0.7,0.12,m.tin,p.x,p.y,0),box(p.w*0.75,len,0.12,m.tin,p.x,sy*(bh/2+len/2-0.2),st+ht*0.35));}
     });
+  }else if(k==='elcap'){
+    const r=Math.min(bw,bh)/2-0.15,base=Math.min(1.1,ht*0.12),hc=ht-base;
+    const alu=m.alu||(m.alu=new THREE.MeshStandardMaterial({color:0xc9ced3,metalness:0.8,roughness:0.32}));
+    inner.add(box(bw,bh,base,m.black,0,0,0));
+    const can=new THREE.Mesh(new THREE.CylinderGeometry(r,r,hc,48),alu);can.rotation.x=Math.PI/2;can.position.z=base+hc/2;inner.add(can);
+    const band=m.band||(m.band=new THREE.MeshStandardMaterial({color:0x111418,roughness:0.5}));
+    const top=new THREE.Mesh(new THREE.CircleGeometry(r*0.995,48,-Math.PI/3,2*Math.PI/3),band);top.position.z=ht+0.01;inner.add(top);
+    const vent=new THREE.Mesh(new THREE.RingGeometry(r*0.18,r*0.24,32),m.steel||alu);vent.position.z=ht+0.02;inner.add(vent);
+    if(f)f.pads.forEach(p=>inner.add(box(p.w*0.85,0.9,0.12,m.tin,p.x,p.y,0)));
   }else if(k==='usb'){
     inner.add(box(bw,bh,ht,m.steel,0,0,0),box(0.06,bh*0.8,ht*0.55,m.dark,-bw/2-0.03,0,ht*0.22));
     if(f)f.pads.forEach(p=>inner.add(box(p.w*0.8,p.h*0.6,0.1,m.tin,p.x,p.y,0)));

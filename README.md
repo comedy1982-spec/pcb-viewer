@@ -75,7 +75,7 @@ ODB++, IPC-2581, Altium/Eagle 원본 파일은 아직 읽지 못합니다.
 - **③ 크로스토크**: 가해선(상 출력 V<sub>bus</sub>/t<sub>r</sub>, PWM 제어선)과 같은 층 5 mm 이내로 나란한 피해선(HSIS 분류·넷 이름으로 아날로그/통신/디지털 입력)을 찾아 영상법으로 C<sub>m</sub>·L<sub>m</sub>을 구하고 유기 노이즈 C<sub>m</sub>·dV/dt·Z + L<sub>m</sub>·dI/dt를 허용치(ADC 4 LSB, 통신 0.2 V, VIL 30 %)와 비교합니다.
 - **④ 수동 소자 기생**: 디커플링 캡마다 ESL + 실장 인덕턴스(GND 비아까지 인출선 + 비아)로 자기공진 f<sub>SRF</sub>와 100 MHz |Z|, VM 고주파 바이패스 MLCC 유무, EMI 필터(L/FB/CMC) 유무.
 - **⑤ 시스템 결합**: 스위칭 노드 동박 면적과 TIM 두께·ε<sub>r</sub>·방열판 위치로 C<sub>p,heatsink</sub> = ε₀ε<sub>r</sub>A/d와 I<sub>cm</sub> = C<sub>p</sub>·dV/dt, GND 기준면을 끊는 반대층 트랙 위를 지나는 신호(슬롯 교차), 신호 리턴 루프 면적, 하네스 길이·실드 감쇠·측정 거리.
-- 레이아웃 기하와 일반 패키지 값에 기반한 1차 추정(pre-compliance)입니다. t<sub>r</sub>/t<sub>f</sub>·C<sub>oss</sub>·Q<sub>rr</sub>·t<sub>rr</sub>는 데이터시트·실측 값을 넣어야 정확하며, 최종 판정은 3D 전자기 해석과 챔버 시험으로 확인해야 합니다. AURIX TC364 예제에서는 DC-Link 캡 C12가 DRV8313 VM 핀에서 16.5 mm 떨어져 L<sub>loop</sub> ≈ 15 nH, 링잉 ≈ 75 MHz(방사 대역), VM에 고주파 바이패스 MLCC가 없는 것이 드러납니다.
+- 레이아웃 기하와 일반 패키지 값에 기반한 1차 추정(pre-compliance)입니다. t<sub>r</sub>/t<sub>f</sub>·C<sub>oss</sub>·Q<sub>rr</sub>·t<sub>rr</sub>는 데이터시트·실측 값을 넣어야 정확하며, 최종 판정은 3D 전자기 해석과 챔버 시험으로 확인해야 합니다. AURIX TC364 예제에서는 DC-Link 캡 C12가 DRV8313 VM 핀에서 16.5 mm 떨어져 L<sub>loop</sub> ≈ 15 nH, 링잉 ≈ 75 MHz(방사 대역), VM에 고주파 바이패스 MLCC가 없는 것이 드러납니다. 알루미늄 전해 C13(470 µF)은 저주파 리플 전류를 맡지만 ESL ≈ 6 nH·ESR 80 mΩ이라 루프 인덕턴스가 21.6 nH로 더 커서, 고주파 바이패스는 MLCC가 맡아야 한다는 점을 비교할 수 있습니다.
 
 ### 3D 재생 (LED 점등 · 모터 회전)
 
@@ -123,6 +123,7 @@ ODB++, IPC-2581, Altium/Eagle 원본 파일은 아직 읽지 못합니다.
 | 42BLF01 (MIKROE-4455) | BLDC 모터 | 정격 사양 기준, R·L은 추정값 |
 | Infineon TC364DP-64F300F (TQFP-144) | AURIX TC364 예제 MCU | 핀 번호·포트 기능은 TC36x 데이터시트 기준 |
 | Infineon TLE9251VSJ, Abracon ABM8 20 MHz, AMS1117-5.0 | AURIX TC364 예제 | CAN FD 트랜시버(VIO 3.3 V), 크리스털, 5 V LDO |
+| Panasonic EEE-FK1E471P (FK 케이스 G, ø10 × 10.2) | AURIX TC364 예제 C13 | VM 벌크 알루미늄 전해 470 µF 25 V · 랜드 패턴 a 4.6/b 4.1/c 2.0 mm · ESR 80 mΩ·리플 850 mA(유통사 기재) · 극성(+ 패드 1) 실크·3D·회로도 심볼 |
 | Kingbright APT1608, Omron B3FS-1000P, Würth 613002/613004/613008, GCT USB4105-GF-A | LED·스위치·커넥터 | USB4105 풋프린트는 단순화 |
 | Samsung CL/Murata GRM 커패시터, Yageo RC0603/RL1206 저항 | 수동 소자 | 값으로 정확한 부품 번호 생성 |
 

@@ -483,6 +483,8 @@ const FP={};
   t144.push({n:'145',x:0,y:0,w:7,h:7});t144.sort((a,b)=>a.n-b.n);
   FP['TQFP-144']={kind:'ic',stand:0.05,body:[20,20,1.2],pads:t144,dot:[-8.6,8.6]};
   FP['HDR-1x8']={kind:'hdr',body:[2.54,20.32,2.5],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:0,y:8.89-2.54*i,w:1.7,h:1.7,round:true,drill:1.0}))};
+  // SMD aluminium electrolytic (V-chip), Panasonic FK case G ø10 × 10.2: land a 4.6 (gap) · b 4.1 · c 2.0, pad 1 = +
+  FP['CP-SMD-10x10']={kind:'elcap',body:[10.3,10.3,10.2],pads:[{n:'1',x:-4.35,y:0,w:4.1,h:2.0},{n:'2',x:4.35,y:0,w:4.1,h:2.0}]};
   FP['1210']={kind:'chip',body:[3.2,2.5,1.6],pads:[{n:'1',x:-1.5,y:0,w:1.2,h:2.7},{n:'2',x:1.5,y:0,w:1.2,h:2.7}]};
   // board-mount 3-phase BLDC motor with 8-pin lead row (U V W H1 H2 H3 VCC GND)
   FP['BLDC-2418']={kind:'motor',body:[30,24,23],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:-19,y:8.75-2.5*i,w:2.0,h:2.0,round:true,drill:1.0}))};
@@ -526,6 +528,9 @@ function fromSpec(spec){
     const xf=(lx,ly)=>{const xx=mir?-lx:lx,a=c.rot*D2R;return[c.x+xx*Math.cos(a)-ly*Math.sin(a),c.y+xx*Math.sin(a)+ly*Math.cos(a)];};
     const kind=c.kind||'box';
     if(f&&kind==='hdr'){const[bw,bh]=f.body;const r=[[-bw/2,-bh/2],[bw/2,-bh/2],[bw/2,bh/2],[-bw/2,bh/2],[-bw/2,-bh/2]].map(p=>xf(p[0],p[1]));S.push({t:'path',pts:r,w:0.13});S.push({t:'seg',a:xf(-bw/2,bh/2-2.54),b:xf(bw/2,bh/2-2.54),w:0.13});}
+    else if(f&&kind==='elcap'){const[bw,bh]=f.body,x0=-bw/2-0.15,y0=-bh/2-0.15,x1=bw/2+0.15,y1=bh/2+0.15,ch=bw*0.28,g=1.25;
+      S.push({t:'path',pts:[[x0+ch,y0],[x1,y0],[x1,-g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x1,g],[x1,y1],[x0+ch,y1],[x0,y1-ch],[x0,g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x0,-g],[x0,y0+ch],[x0+ch,y0]].map(p=>xf(p[0],p[1])),w:0.13});
+      const pl=[x0-0.9,y0+0.9];S.push({t:'seg',a:xf(pl[0]-0.5,pl[1]),b:xf(pl[0]+0.5,pl[1]),w:0.15},{t:'seg',a:xf(pl[0],pl[1]-0.5),b:xf(pl[0],pl[1]+0.5),w:0.15});}
     else if(f&&kind!=='chip'&&kind!=='led'){const m=0.3,[a,b,cc,d]=f.lbb,x0=a-m,y0=b-m,x1=cc+m,y1=d+m,L=Math.min(1.1,(x1-x0)/3,(y1-y0)/3);
       [[x0,y0,1,1],[x1,y0,-1,1],[x1,y1,-1,-1],[x0,y1,1,-1]].forEach(([px,py,sx,sy])=>S.push({t:'path',pts:[xf(px+sx*L,py),xf(px,py),xf(px,py+sy*L)],w:0.13}));
       if(f.dot){const[dx,dy]=xf(f.dot[0],f.dot[1]);S.push({t:'circle',x:dx,y:dy,r:0.25});}}

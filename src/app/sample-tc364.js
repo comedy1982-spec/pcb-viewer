@@ -14,6 +14,8 @@ const SAMPLE_TC364=(function(){
   tr('T','DRV_CPL',0.25,'U3.1',[54.225,78],[56,78],'C8.1');tr('T','DRV_CPH',0.25,'U3.2',[53.575,81.6],[56,81.6],'C8.2');tr('T','DRV_VCP',0.25,'U3.3',[52.925,83],[59,83],'C9.2');
   tr('T','DRV_V3P3',0.25,'U3.15',[45.775,70],[46.425,70],'U3.16');tr('T','DRV_V3P3',0.25,[45.775,70],'C10.2');
   tr('T','NFAULT',0.25,'R10.2','U3.18');
+  // VM bulk: aluminium electrolytic C13 tied to the 22 µF MLCC C12 (+12V) with its own ground vias
+  tr('T','+12V',0.8,'C13.1',[64,82],[64,87],'C12.2');tr('T','GND',0.8,'C13.2',[79.4,82]);via('GND',[79.4,81],[79.4,83]);
   // CAN bus to the connector
   tr('T','CANH',0.3,'U4.7',[94,70.635],[94,73.81],'J2.1');tr('T','CANL',0.3,'U4.6',[96,69.365],[96,71.27],'J2.2');
   // battery monitor divider + filter, status LED
@@ -53,6 +55,7 @@ const SAMPLE_TC364=(function(){
       {ref:'C9',value:'100nF',footprint:'0603',side:'top',x:59,y:80,rotation:90,mpn:'CL10B104KB8NNNC',description:'VCP–VM',pins:{1:'+12V',2:'DRV_VCP'}},
       {ref:'C10',value:'470nF',footprint:'0603',side:'top',x:44,y:67.6,rotation:90,mpn:'GRM188R71C474KA88D',description:'DRV8313 V3P3 바이패스',pins:{1:'GND',2:'DRV_V3P3'}},
       {ref:'C12',value:'22µF',footprint:'1210',side:'top',x:60,y:87,rotation:0,mpn:'GRM32ER61E226KE15',description:'VM 벌크 커패시터',pins:{1:'GND',2:'+12V'}},
+      {ref:'C13',value:'470µF',footprint:'CP-SMD-10x10',side:'top',x:72,y:82,rotation:0,mpn:'EEE-FK1E471P',description:'VM 벌크 알루미늄 전해 커패시터 (DC-Link · 모터 리플 전류 흡수)',pins:{1:'+12V',2:'GND'},pinNames:{1:'+',2:'−'},label:[72,89.2]},
       {ref:'R10',value:'10kΩ',footprint:'0603',side:'top',x:47.725,y:67.4,rotation:90,mpn:'RC0603FR-0710KL',description:'nFAULT 풀업 (오픈 드레인)',pins:{1:'+3V3',2:'NFAULT'}},
       {ref:'J3',value:'모터·홀',footprint:'HDR-1x8',side:'top',x:20,y:74,rotation:0,mpn:'61300811121',description:'BLDC 모터 상(W V U)과 홀 센서(H1–H3), 홀 전원 5 V',
         pins:{1:'PH_W',2:'PH_V',3:'PH_U',4:'HALL_A',5:'HALL_B',6:'HALL_C',7:'+5V',8:'GND'},pinNames:{1:'W',2:'V',3:'U',4:'H1',5:'H2',6:'H3',7:'+5V',8:'GND'},label:[16.5,74]},

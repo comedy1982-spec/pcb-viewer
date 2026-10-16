@@ -77,7 +77,7 @@ function brackets(ctx,bb,color,w){
 function bodyColor(c){
   const k=c.kind,r=c.ref[0];
   if(k==='chip')return r==='C'?'#a8835a':r==='L'?'#3b3d40':'#1f1f20';
-  return{diode:'#1f1f20',motor:'#b8bdc2',ic:'#1d1e21',usb:'#a9afb4',conn:'#2b2c2f',xtal:'#b8bdc2',btn:'#2a2d31',hdr:'#151617',led:'#e6ece6',tht2:r==='C'?'#2c4f8a':r==='R'?'#d8c9a3':'#232425',box:'#6b7076'}[k]||'#6b7076';
+  return{diode:'#1f1f20',motor:'#b8bdc2',ic:'#1d1e21',usb:'#a9afb4',conn:'#2b2c2f',xtal:'#b8bdc2',btn:'#2a2d31',hdr:'#151617',led:'#e6ece6',elcap:'#aeb4ba',tht2:r==='C'?'#2c4f8a':r==='R'?'#d8c9a3':'#232425',box:'#6b7076'}[k]||'#6b7076';
 }
 const padOn=(p,side)=>p.side==='both'||p.side===side||!p.side;
 function drawSide(ctx,side,o){
@@ -282,6 +282,15 @@ function build3D(c){
       if(Math.abs(p.x)>bw/2){const sx=Math.sign(p.x),len=Math.abs(p.x)-bw/2+0.2;inner.add(box(p.w*0.7,p.h*0.75,0.12,m.tin,p.x,p.y,0),box(len,p.h*0.75,0.12,m.tin,sx*(bw/2+len/2-0.2),p.y,st+ht*0.35));}
       else{const sy=Math.sign(p.y),len=Math.abs(p.y)-bh/2+0.2;inner.add(box(p.w*0.75,p.h*0.7,0.12,m.tin,p.x,p.y,0),box(p.w*0.75,len,0.12,m.tin,p.x,sy*(bh/2+len/2-0.2),st+ht*0.35));}
     });
+  }else if(k==='elcap'){
+    const r=Math.min(bw,bh)/2-0.15,base=Math.min(1.1,ht*0.12),hc=ht-base;
+    const alu=m.alu||(m.alu=new THREE.MeshStandardMaterial({color:0xc9ced3,metalness:0.8,roughness:0.32}));
+    inner.add(box(bw,bh,base,m.black,0,0,0));
+    const can=new THREE.Mesh(new THREE.CylinderGeometry(r,r,hc,48),alu);can.rotation.x=Math.PI/2;can.position.z=base+hc/2;inner.add(can);
+    const band=m.band||(m.band=new THREE.MeshStandardMaterial({color:0x111418,roughness:0.5}));
+    const top=new THREE.Mesh(new THREE.CircleGeometry(r*0.995,48,-Math.PI/3,2*Math.PI/3),band);top.position.z=ht+0.01;inner.add(top);
+    const vent=new THREE.Mesh(new THREE.RingGeometry(r*0.18,r*0.24,32),m.steel||alu);vent.position.z=ht+0.02;inner.add(vent);
+    if(f)f.pads.forEach(p=>inner.add(box(p.w*0.85,0.9,0.12,m.tin,p.x,p.y,0)));
   }else if(k==='usb'){
     inner.add(box(bw,bh,ht,m.steel,0,0,0),box(0.06,bh*0.8,ht*0.55,m.dark,-bw/2-0.03,0,ht*0.22));
     if(f)f.pads.forEach(p=>inner.add(box(p.w*0.8,p.h*0.6,0.1,m.tin,p.x,p.y,0)));

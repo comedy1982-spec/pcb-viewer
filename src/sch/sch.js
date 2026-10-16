@@ -150,6 +150,8 @@ function twoPin(c,pads,vert){
   const r=c.ref.toUpperCase(),poly=(pts,fill)=>s.g.push({t:'poly',pts,fill:fill||'none',w:0.254});
   let half=2.54;
   if(/^R/.test(r)||/^F\d/.test(r)){poly([[-2.54,-1],[2.54,-1],[2.54,1],[-2.54,1],[-2.54,-1]]);}
+  else if(/^C/.test(r)&&c.kind==='elcap'){half=1.27;poly([[-0.5,-2],[-0.5,2]]);const a=[];for(let i=0;i<=12;i++){const t=-0.9+1.8*i/12;a.push([0.5+0.55*(1-Math.cos(t))*1.6,2.2*Math.sin(t)/Math.sin(0.9)]);}poly(a);
+    poly([[-1.27,0],[-0.5,0]]);poly([[0.5,0],[1.27,0]]);poly([[-1.9,-1.9],[-1.1,-1.9]]);poly([[-1.5,-2.3],[-1.5,-1.5]]);}
   else if(/^C/.test(r)){half=1.27;poly([[-0.5,-2],[-0.5,2]]);poly([[0.5,-2],[0.5,2]]);poly([[-1.27,0],[-0.5,0]]);poly([[0.5,0],[1.27,0]]);}
   else if(/^(L|FB)/.test(r)){const p=[];for(let k=0;k<4;k++){for(let i=0;i<=8;i++){const a=Math.PI-Math.PI*i/8;p.push([-2.54+k*1.27+0.635+0.635*Math.cos(a),-0.635*Math.sin(a)]);}}poly(p);}
   else if(/^(D|LED)/.test(r)){poly([[-1.27,-1.27],[1.27,0],[-1.27,1.27],[-1.27,-1.27]]);poly([[1.27,-1.27],[1.27,1.27]]);poly([[-2.54,0],[-1.27,0]]);poly([[1.27,0],[2.54,0]]);
@@ -158,6 +160,7 @@ function twoPin(c,pads,vert){
   else if(/^(Y|X)/.test(r)){poly([[-0.8,-1.6],[0.8,-1.6],[0.8,1.6],[-0.8,1.6],[-0.8,-1.6]]);poly([[-1.6,-1.6],[-1.6,1.6]]);poly([[1.6,-1.6],[1.6,1.6]]);poly([[-2.54,0],[-1.6,0]]);poly([[1.6,0],[2.54,0]]);}
   else poly([[-2.54,-1.27],[2.54,-1.27],[2.54,1.27],[-2.54,1.27],[-2.54,-1.27]]);
   const [p1,p2]=pads;
+  if(c.kind==='elcap'){const neg=p=>/^(-|−|N|NEG)$/i.test(p.fn||'')||(!p.fn&&String(p.n)==='2');if(neg(p1))s.g.forEach(g=>{g.pts=g.pts.map(q=>[-q[0],q[1]]);});}
   if(/^(D|LED)/.test(r)){const isK=p=>/^(K|KA|CATHODE|-)$/i.test(p.fn||'');const isA=p=>/^(A|ANODE|\+)$/i.test(p.fn||'');if(isK(p1)||isA(p2))s.g.forEach(g=>{g.pts=g.pts.map(q=>[-q[0],q[1]]);});}
   s.pins.push({num:String(p1.n),name:'',p:[-half-2.54,0],e:[-half,0],nameShow:false,numShow:false,_pad:p1},{num:String(p2.n),name:'',p:[half+2.54,0],e:[half,0],nameShow:false,numShow:false,_pad:p2});
   if(vert){const R=q=>[-q[1],q[0]];s.g.forEach(g=>{g.pts=g.pts.map(R);});s.pins.forEach(p=>{p.p=R(p.p);p.e=R(p.e);});
