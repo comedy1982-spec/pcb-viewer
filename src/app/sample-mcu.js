@@ -47,8 +47,8 @@ const SAMPLE_MCU=(function(){
   const tr=(layer,net,width,...points)=>T.push({layer:layer==='T'?'top':'bottom',net,width,points});
   const via=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.8,drill:0.4}));
   // 5 V input → motor, bulk caps, LDO
-  tr('T','VIN',1.0,'J1.1',[9,39.27],[9,47.5],[44,47.5],'M1.1');
-  tr('T','VIN',0.6,[9,43.15],'U2.3');tr('T','VIN',0.6,'C1.1',[11,47.5]);tr('T','VIN',0.8,'C5.1',[28.5,47.5]);tr('T','VIN',0.8,'D1.2',[40,47.5]);
+  tr('T','VIN',1.0,'J1.1',[9,39.27],[9,48.3],[44,48.3],'M1.1');
+  tr('T','VIN',0.6,[9,43.15],'U2.3');tr('T','VIN',0.6,'C1.1',[11,48.3]);tr('T','VIN',0.8,'C5.1',[28.5,48.3]);tr('T','VIN',0.8,'D1.2',[40,48.3]);
   tr('B','VIN',0.5,[44,40],[76,40],[76,8]);tr('T','VIN',0.4,[76,8],'R7.2');via('VIN',[44,40],[76,8]);
   // 3.3 V from the LDO to the MCU, decoupling and the power LED
   tr('T','+3V3',0.6,'U2.4',[16,26.5],[22.45,26.5]);tr('T','+3V3',0.4,[16,26.5],[16,21.75],'U1.5');
@@ -170,17 +170,17 @@ const SAMPLE_BLDC=(function(){
   const via=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.8,drill:0.4}));
   const via5=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.5,drill:0.25}));
   // 12 V input → LDO, bulk cap, DRV8313 VM (pins 4 and 11)
-  tr('T','+12V',1.0,'J1.1',[9,45.27],[9,53],[48.3,53],[48.3,29.275],'U3.11');
+  tr('T','+12V',1.0,'J1.1',[9,45.27],[9,53],[48.3,53],[48.3,29.275]);tr('T','+12V',0.3,[48.3,29.275],'U3.11');
   tr('T','+12V',0.6,[9,49.15],'U2.3');tr('T','+12V',0.6,'C1.1',[11,53]);tr('T','+12V',0.8,[48.3,44],'C5.1');
   tr('T','+12V',0.4,'U3.4',[49.05,24.725]);via5('+12V',[49.05,24.725],[48.3,29.275]);tr('B','+12V',0.5,[48.3,29.275],[49.05,28.5],[49.05,24.725]);
-  tr('B','+12V',0.3,[49.05,26.4],'C9.1');
+  tr('B','+12V',0.3,[49.05,27],'C9.1');
   via('+12V',[48.3,40]);tr('B','+12V',0.4,[48.3,40],[55.2,40],[55.2,20.75],'M1.7');       // hall supply (42BLF01: 5–20 V)
   // DRV8313 charge pump caps on the bottom side
   tr('T','DRV_CPL',0.3,'U3.1',[48.25,22.775]);tr('T','DRV_CPH',0.3,'U3.2',[49.05,23.425]);tr('T','DRV_VCP',0.3,'U3.3',[48.25,24.075]);
   via5('DRV_CPL',[48.25,22.775]);via5('DRV_CPH',[49.05,23.425]);via5('DRV_VCP',[48.25,24.075]);
   tr('B','DRV_CPL',0.3,[48.25,22.775],'C8.2');tr('B','DRV_CPH',0.3,[49.05,23.425],'C8.1');tr('B','DRV_VCP',0.3,[48.25,24.075],[49.8,24.075],'C9.2');
   // 3.3 V: LDO → VDD (1), VDDA (5), VDDIO2 (17, via bottom), nFAULT pull-up
-  tr('T','+3V3',0.6,'U2.4',[16,25.75],'U1.5');tr('T','+3V3',0.6,'U2.2','U2.4');tr('T','+3V3',0.3,[16,27.75],'U1.1');
+  tr('T','+3V3',0.6,'U2.4',[16,25.75],[18.3,25.75]);tr('T','+3V3',0.25,[18.3,25.75],'U1.5');tr('T','+3V3',0.6,'U2.2','U2.4');tr('T','+3V3',0.3,[16,27.75],'U1.1');
   tr('T','+3V3',0.4,'C2.2',[16,38]);tr('T','+3V3',0.3,'C3.1',[16,30.4]);tr('T','+3V3',0.3,'R3.2',[13,34],'C2.2');
   via('+3V3',[16,32]);tr('B','+3V3',0.4,[16,32],[16,34.5],[36,34.5]);
   tr('T','+3V3',0.3,'U1.17',[25.5,23.2]);via('+3V3',[25.5,23.2]);tr('B','+3V3',0.3,[25.5,23.2],[26.2,23.9],[26.2,34.5]);
@@ -208,7 +208,7 @@ const SAMPLE_BLDC=(function(){
   [['U2.1',[20.6,49.15]],['C1.2',[14.6,51.6]],['C2.1',[11,36.3]],['C3.2',[18.4,31.6]],['C5.2',[55,44]],['D2.1',[8,27.7]],['D3.1',[18,11.7]],['M1.8',[55.6,17.2]],['C10.2',[39.8,33.4]]]
     .forEach(([a,b])=>{tr('T','GND',0.5,a,b);via('GND',b);});
   via('GND',[22,26],[44,25.5],[44,27],[44,28.5]);
-  [['U3.28',[43,24.6]],['U3.20',[42.9,27.975]],['U3.6',[45.1,26.025]],['U3.7',[45.1,26.675]],['U3.10',[45.1,28.625]],['U3.14',[45,29.3]]].forEach(([a,b])=>tr('T','GND',0.3,a,b));
+  [['U3.28',[42.8,22.775],[43,24.6]],['U3.20',[42.9,27.975]],['U3.6',[45.1,26.025]],['U3.7',[45.1,26.675]],['U3.10',[45.1,28.625]],['U3.14',[45.2,31.225],[45,29.3]]].forEach(([a,...b])=>tr('T','GND',0.3,a,...b));
   return{
     _source:'예제',_demo:'bldc',
     board:{name:'MOTION-32 BLDC v1.0',width:100,height:55,thickness:1.6,corner:2,holes:[[3.5,3.5,3.2],[96.5,3.5,3.2],[3.5,51.5,3.2],[96.5,51.5,3.2]]},
@@ -226,8 +226,8 @@ const SAMPLE_BLDC=(function(){
         pins:{1:'DRV_CPL',2:'DRV_CPH',3:'DRV_VCP',4:'+12V',5:'PH_W',6:'GND',7:'GND',8:'PH_V',9:'PH_U',10:'GND',11:'+12V',14:'GND',15:'DRV_V3P3',16:'DRV_V3P3',17:'DRV_V3P3',18:'NFAULT',20:'GND',22:'EN_U',23:'IN_U',24:'EN_V',25:'IN_V',26:'EN_W',27:'IN_W',28:'GND',29:'GND'},
         pinNames:{1:'CPL',2:'CPH',3:'VCP',4:'VM',5:'OUT1',6:'PGND1',7:'PGND2',8:'OUT2',9:'OUT3',10:'PGND3',11:'VM',12:'COMPP',13:'COMPN',14:'GND',15:'V3P3',16:'nRESET',17:'nSLEEP',18:'nFAULT',19:'nCOMPO',20:'GND',21:'NC',22:'EN3',23:'IN3',24:'EN2',25:'IN2',26:'EN1',27:'IN1',28:'GND',29:'PAD'},
         model:{type:'bridge3',ron:0.24},label:[44,20.6]},
-      {ref:'C8',value:'10nF',footprint:'0603',side:'bottom',x:50.6,y:23.1,rotation:90,mpn:'CL10B103KB8NNNC',description:'DRV8313 차지 펌프 (CPH–CPL)',pins:{1:'DRV_CPH',2:'DRV_CPL'},label:[52.4,23.1]},
-      {ref:'C9',value:'100nF',footprint:'0603',side:'bottom',x:50.6,y:25.6,rotation:90,mpn:'CL10B104KB8NNNC',description:'DRV8313 VCP–VM 커패시터',pins:{1:'+12V',2:'DRV_VCP'},label:[52.4,25.6]},
+      {ref:'C8',value:'10nF',footprint:'0603',side:'bottom',x:50.6,y:22.7,rotation:90,mpn:'CL10B103KB8NNNC',description:'DRV8313 차지 펌프 (CPH–CPL)',pins:{1:'DRV_CPH',2:'DRV_CPL'},label:[52.4,22.7]},
+      {ref:'C9',value:'100nF',footprint:'0603',side:'bottom',x:50.6,y:26.2,rotation:90,mpn:'CL10B104KB8NNNC',description:'DRV8313 VCP–VM 커패시터',pins:{1:'+12V',2:'DRV_VCP'},label:[52.4,26.2]},
       {ref:'C10',value:'470nF',footprint:'0603',side:'top',x:38.6,y:32.6,rotation:90,mpn:'GRM188R71C474KA88D',description:'DRV8313 V3P3 바이패스',pins:{1:'DRV_V3P3',2:'GND'},label:[37,32.6]},
       {ref:'R10',value:'10kΩ',footprint:'0603',side:'top',x:36,y:31.6,rotation:0,mpn:'RC0603FR-0710KL',description:'nFAULT 풀업 (오픈 드레인)',pins:{1:'+3V3',2:'NFAULT'},label:[36,32.7]},
       {ref:'M1',value:'42BLF01',footprint:'BLDC-2418',side:'top',x:76,y:27,rotation:0,mpn:'42BLF01 (MIKROE-4455)',description:'3상 BLDC 모터 · 정격 24 V/4000 rpm (예제는 12 V 구동) · 8극 · 홀 센서 120° · 팬 장착',

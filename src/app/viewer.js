@@ -183,15 +183,18 @@ function paint2D(){
   ctx2.setTransform(dpr*s*(mir?-1:1),0,0,-dpr*s,dpr*(V2.ox+(mir?BD.W*s:0)),dpr*(V2.oy+BD.H*s));
   ctx2.save();ctx2.shadowColor='rgba(0,0,0,.35)';ctx2.shadowBlur=22*dpr;ctx2.shadowOffsetY=8*dpr;outlinePath(ctx2);ctx2.fillStyle='#000';ctx2.fill('evenodd');ctx2.restore();
   drawSide(ctx2,S.view,{hover:hover2&&hover2.type==='comp'?hover2.c:null});
+  if(PE&&PE.on)peOverlay(ctx2,S.view);
   updateScale();
 }
 function s2w(px,py){let x=(px-V2.ox)/V2.s;if(S.view==='B')x=BD.W-x;return[x,BD.H-(py-V2.oy)/V2.s];}
 function zoomAt(px,py,f){const[wx,wy]=s2w(px,py);V2.s=Math.max(1,Math.min(600,V2.s*f));const sx=S.view==='B'?BD.W-wx:wx;V2.ox=px-sx*V2.s;V2.oy=py-(BD.H-wy)*V2.s;draw2D();}
 function updateScale(){const target=110/V2.s,steps=[0.1,0.2,0.5,1,2,5,10,20,50,100];let mm=steps[0];steps.forEach(s=>{if(s<=target)mm=s;});$('#scaleBar').style.width=(mm*V2.s)+'px';$('#scaleTxt').textContent=mm+' mm';}
 (function(){
-  const pts=new Map();let start=null,moved=0,pinch=0,hq=null,hraf=0;
+  const pts=new Map();let start=null,moved=0,pinch=0,hq=null,hraf=0,edPtr=null;
   const pos=e=>{const r=cv2.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
-  cv2.addEventListener('pointerdown',e=>{cv2.setPointerCapture(e.pointerId);pts.set(e.pointerId,pos(e));moved=0;start=pos(e);cv2.classList.add('drag');
+  cv2.addEventListener('pointerdown',e=>{cv2.setPointerCapture(e.pointerId);
+    if(PE.on&&e.button===0&&pts.size===0&&BD){const[px,py]=pos(e);if(peDown(s2w(px,py))){edPtr=e.pointerId;cv2.classList.add('moving');return;}}
+    pts.set(e.pointerId,pos(e));moved=0;start=pos(e);cv2.classList.add('drag');
     if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);}});
   const hoverRun=()=>{hraf=0;if(!hq||!BD)return;const p=hq;const[wx,wy]=s2w(p[0],p[1]);
     $('#coord').textContent=(wx>=0&&wx<=BD.W&&wy>=0&&wy<=BD.H)?`X ${wx.toFixed(2)} · Y ${wy.toFixed(2)} mm`:'X — · Y — mm';
@@ -200,6 +203,7 @@ function updateScale(){const target=110/V2.s,steps=[0.1,0.2,0.5,1,2,5,10,20,50,1
     const extra=overlayTip(h,wx,wy);if(h||extra){tip.innerHTML=(h?tipHTML(h):'')+extra;tip.hidden=false;tipAt(cv2,p[0],p[1]);cv2.style.cursor=h?'pointer':'';}else{tip.hidden=true;cv2.style.cursor='';}};
   cv2.addEventListener('pointermove',e=>{
     const p=pos(e);
+    if(PE.on&&BD){const w=s2w(p[0],p[1]);if(edPtr===e.pointerId){peDrag(w);tip.hidden=true;return;}pePoint(w);}
     if(pts.has(e.pointerId)){
       const prev=pts.get(e.pointerId);pts.set(e.pointerId,p);
       if(pts.size===1){V2.ox+=p[0]-prev[0];V2.oy+=p[1]-prev[1];moved+=Math.abs(p[0]-prev[0])+Math.abs(p[1]-prev[1]);draw2D();}
@@ -208,13 +212,13 @@ function updateScale(){const target=110/V2.s,steps=[0.1,0.2,0.5,1,2,5,10,20,50,1
     }
     hq=p;if(!hraf)hraf=requestAnimationFrame(hoverRun);
   });
-  const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);cv2.classList.remove('drag');
-    if(pts.size===0&&moved<5&&start&&e.type==='pointerup'&&BD){const[wx,wy]=s2w(start[0],start[1]);applyHit(hit(wx,wy,S.view,3/V2.s));}
+  const end=e=>{if(edPtr===e.pointerId){edPtr=null;cv2.classList.remove('moving');peUp();return;}if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);cv2.classList.remove('drag');
+    if(pts.size===0&&moved<5&&start&&e.type==='pointerup'&&BD){const[wx,wy]=s2w(start[0],start[1]);if(PE.on)peClick([wx,wy]);else applyHit(hit(wx,wy,S.view,3/V2.s));}
     if(pts.size<2)pinch=0;};
   cv2.addEventListener('pointerup',end);cv2.addEventListener('pointercancel',end);
   cv2.addEventListener('pointerleave',()=>{hq=null;tip.hidden=true;if(hover2){hover2=null;draw2D();}});
   cv2.addEventListener('wheel',e=>{e.preventDefault();const[x,y]=pos(e);zoomAt(x,y,Math.exp(-e.deltaY*0.0015));},{passive:false});
-  cv2.addEventListener('dblclick',()=>{fit2();draw2D();});
+  cv2.addEventListener('dblclick',()=>{if(PE.on&&peDbl())return;if(PE.on&&PE.tool!=='sel')return;fit2();draw2D();});
 })();
 
 /* ---------- 3D view ---------- */
@@ -480,17 +484,19 @@ function setView(v){
   $('#hint').textContent=is3?'드래그 회전 · 우클릭/Shift 드래그 이동 · 휠 확대 · 클릭 선택':'드래그 이동 · 휠 확대 · 더블클릭 맞춤 · 클릭 선택';
   $('#lbl-body').textContent=is3?'3D 부품':'부품 외형 겹쳐 보기';
   $('#ly-body').checked=is3?S.layers.body3d:S.layers.body2d;
-  $('#ctl').innerHTML=(is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>')+'<button class="pill vbtn" data-pop="1" title="보드를 새 창으로 엽니다">새 창</button>';
+  $('#ctl').innerHTML=(is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>')+(is3?'':`<button class="pill vbtn${PE&&PE.on?' on':''}" data-pe="1" title="부품 배치·배선을 편집합니다 (Pcbnew 단축키)">${PE&&PE.on?'편집 끝내기':'PCB 편집'}</button>`)+'<button class="pill vbtn" data-pop="1" title="보드를 새 창으로 엽니다">새 창</button>';
   const lk=S.sch;const relayout=setView.lk!==lk;setView.lk=lk;
   if(S.sch!=='off'){schResize();schData();if(relayout){schFit();SV.fromMe=false;SV.lastKey='';}renderSchOv();schFocus();paintSch();}
+  if(PE&&typeof peBar==='function')peBar();
   if(full)return;
   if(is3){if(!init3D()){setView('T');return;}if(G3.board!==BD)rebuild3D();else{resize3D();if(relayout)homeCam(false);sync3D();}}
   else{measure.done=0;measure();paint2D();}
+  if(PE&&typeof peBar==='function')peBar();
 }
 function tipAt(cv,x,y){const vr=vp.getBoundingClientRect(),cr=cv.getBoundingClientRect();tip.style.left=(x+cr.left-vr.left)+'px';tip.style.top=(y+cr.top-vr.top)+'px';}
 function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
 document.querySelectorAll('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
-$('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
+$('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
 ['cuT','cuB','silk','mask','drill','ghost'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
 $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.target.checked;else S.layers.body2d=e.target.checked;refresh(false);});
@@ -591,6 +597,7 @@ $('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))ope
 function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}popsRefresh();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
   BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
+  if(PE){PE.on=false;PE.undo=[];PE.redo=[];PE.route=null;PE.drag=null;PE.rats=[];PE.drc=[];}
   header();stats();renderPane();simReset();hsisOnBoard();SV.data=null;SV.lastKey='';measure.done=0;measure();fit2();
   if(S.view==='3d'){if(G3)rebuild3D();}else paint2D();
   if(S.sch!=='off'){schData();renderSchOv();paintSch();}

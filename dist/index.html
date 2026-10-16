@@ -613,6 +613,13 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .sepal label{display:flex;gap:6px;align-items:center;font-size:13px}
 .sediff{margin:0;padding-left:18px;max-height:280px;overflow:auto;font-size:12.5px;display:flex;flex-direction:column;gap:2px}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit}
+/* PCB editor */
+.pe-bar{left:12px;top:52px;right:200px;flex-direction:column;align-items:flex-start;gap:6px;display:flex}
+.pe-bar[hidden]{display:none}
+.pe-bar select{font:inherit;font-size:12px;border:0;background:transparent;color:inherit}
+.pe-bar .c-top{color:#e2703a}.pe-bar .c-bot{color:#4f8fe8}
+#cv2.moving{cursor:move}
+@media (max-width:900px){.pe-bar{right:12px;top:96px}}
 </style>
 
 </head>
@@ -988,7 +995,7 @@ function parseKicad(text){
     c.ref=props.Reference||'';c.val=props.Value||'';
     const dsc=ch(fp,'descr');c.desc=props.Description||'';c.fpDesc=dsc?dsc[1]:'';
     for(const k in props){if(/^(mpn|mfr.?part|manufacturer.?part|part.?number|mfr.?pn|lcsc)/i.test(k)&&props[k]){c.mpn=props[k];break;}}
-    const fab=[],crt=[];
+    const fab=[],crt=[];const lay0={};Object.keys(B.layers).forEach(k=>{lay0[k]=B.layers[k].length;});const dr0=B.drills.length;
     for(let i=1;i<fp.length;i++){const it=fp[i];if(!Array.isArray(it))continue;const h=it[0];
       if(/^fp_(line|rect|circle|arc|poly|curve)$/.test(h)){
         const r=gfx(it);if(!r)continue;
@@ -1026,6 +1033,7 @@ function parseKicad(text){
       }
       c.pads.push(pad);
     });
+    Object.keys(B.layers).forEach(k=>{B.layers[k].slice(lay0[k]||0).forEach(p=>{if(p.t!=='pad')p.own=c;});});B.drills.slice(dr0).forEach(d=>{d.own=c;});
     let bb=bboxOf(fab);let fromFab=!!bb;
     if(!bb){bb=bboxOf(crt);if(bb){bb=[bb[0]+0.25,bb[1]+0.25,bb[2]-0.25,bb[3]-0.25];}}
     if(!bb)bb=bboxOf(padLocal);
@@ -1345,7 +1353,7 @@ function fromSpec(spec){
     padsL.forEach(p=>{const[wx,wy]=xf(+p.x,+p.y);const n=''+(p.n!=null?p.n:p.number);const round=p.round||p.shape==='circle';
       const pad={t:'pad',x:wx,y:wy,w:+p.w||+p.d||1,h:+p.h||+p.d||1,ang:rot,shape:round?(n==='1'&&p.drill?'rect':'circle'):(p.shape||'rect'),net:(cs.pins&&cs.pins[n])||p.net||null,ref:c.ref,n,drill:p.drill||null,side:p.drill?'both':side};
       if(pad.shape==='rect'&&!p.drill)pad.rr=Math.min(0.1,Math.min(pad.w,pad.h)*0.25);
-      if(c.pn&&c.pn[n])pad.fn=c.pn[n];c.pads.push(pad);if(p.drill)B.drills.push({x:wx,y:wy,d:+p.drill,plated:true});});
+      if(c.pn&&c.pn[n])pad.fn=c.pn[n];c.pads.push(pad);if(p.drill)B.drills.push({x:wx,y:wy,d:+p.drill,plated:true,own:c});});
     let bw,bh,ht;if(cs.size){[bw,bh,ht]=cs.size;}else if(lib){[bw,bh,ht]=lib.body;}else{const ps=pkgSize(cs.footprint)||[2,2,1];[bw,bh,ht]=ps;}
     c.body={cx:x,cy:y,w:+bw,h:+bh,ang:rot,ht:+ht};
     if(lib){c.f=lib;c.kind=lib.kind;}
@@ -1358,7 +1366,7 @@ function fromSpec(spec){
   (spec.vias||[]).forEach(v=>B.vias.push({x:+v.x,y:+v.y,d:+(v.size||0.6),drill:+(v.drill||0.3),net:v.net||null}));
   // silkscreen
   B.comps.forEach(c=>{
-    const S=B.layers[c.side+'.silk'],f=c.f,mir=c.side==='B';
+    const S=B.layers[c.side+'.silk'],f=c.f,mir=c.side==='B';const s0=S.length;
     const xf=(lx,ly)=>{const xx=mir?-lx:lx,a=c.rot*D2R;return[c.x+xx*Math.cos(a)-ly*Math.sin(a),c.y+xx*Math.sin(a)+ly*Math.cos(a)];};
     const kind=c.kind||'box';
     if(f&&kind==='hdr'){const[bw,bh]=f.body;const r=[[-bw/2,-bh/2],[bw/2,-bh/2],[bw/2,bh/2],[-bw/2,bh/2],[-bw/2,-bh/2]].map(p=>xf(p[0],p[1]));S.push({t:'path',pts:r,w:0.13});S.push({t:'seg',a:xf(-bw/2,bh/2-2.54),b:xf(bw/2,bh/2-2.54),w:0.13});}
@@ -1372,6 +1380,7 @@ function fromSpec(spec){
     const big=kind==='ic'||kind==='usb'||kind==='btn';const size=big?0.85:0.65;
     let lp=c.lab;if(!lp){const ys=c.pads.map(p=>p.y+Math.max(p.w,p.h)/2).concat([c.y+Math.max(c.body.w,c.body.h)/2]);lp=[c.x,Math.max(...ys)+0.35+size/2];}
     S.push({t:'text',s:c.ref,x:lp[0],y:lp[1],size,ang:0,mir,align:'center',bold:true});
+    S.slice(s0).forEach(p=>{p.own=c;});
   });
   (spec.texts||[]).forEach(t=>B.layers[sideOf(t.side)+'.silk'].push({t:'text',s:t.text,x:+t.x,y:+t.y,size:+t.size||1,ang:+t.angle||0,mir:sideOf(t.side)==='B',align:t.align||'center',bold:true}));
   B.hasNets=true;
@@ -3274,7 +3283,7 @@ const SAMPLE_SPEC=(function(){
   via('GND',[6.9,20.5],[6.8,16.8],[4.5,25.4],[4.5,14.6],[11,27.7],[18.3,35.2],[22,32.4],[37.2,23.6],[31.2,26.6],[46,10],[52.6,32.25],[52.6,27.75],
     [31.4,19.4],[32.6,19.4],[31.4,20.6],[32.6,20.6],[12,7],[20,7],[44,6.5],[52,7.5],[11,37.2],[50,37.2]);
   via('+3V3',[24.3,26.85],[40.8,34.2],[45,25.6],[48,13.4],[34.4,24.6],[28.4,17.3]);
-  via('CC1',[6.6,23.4]);via('FLASH_CS',[27.6,21.9]);via('FLASH_MISO',[28.7,20.25]);via('FLASH_MOSI',[15.8,18.095]);via('FLASH_CLK',[15.8,19.365]);
+  via('CC1',[6.6,23.4]);via('FLASH_CS',[27.6,21.9]);V.push({x:28.7,y:20.25,net:'FLASH_MISO',size:0.45,drill:0.2});via('FLASH_MOSI',[15.8,18.095]);via('FLASH_CLK',[15.8,19.365]);
   const C=(ref,value,footprint,side,x,y,rotation,mpn,description,pins,extra)=>Object.assign({ref,value,footprint,side,x,y,rotation,mpn,description,pins},extra||{});
   return{
     _source:'예제',
@@ -3364,8 +3373,8 @@ const SAMPLE_MCU=(function(){
   const tr=(layer,net,width,...points)=>T.push({layer:layer==='T'?'top':'bottom',net,width,points});
   const via=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.8,drill:0.4}));
   // 5 V input → motor, bulk caps, LDO
-  tr('T','VIN',1.0,'J1.1',[9,39.27],[9,47.5],[44,47.5],'M1.1');
-  tr('T','VIN',0.6,[9,43.15],'U2.3');tr('T','VIN',0.6,'C1.1',[11,47.5]);tr('T','VIN',0.8,'C5.1',[28.5,47.5]);tr('T','VIN',0.8,'D1.2',[40,47.5]);
+  tr('T','VIN',1.0,'J1.1',[9,39.27],[9,48.3],[44,48.3],'M1.1');
+  tr('T','VIN',0.6,[9,43.15],'U2.3');tr('T','VIN',0.6,'C1.1',[11,48.3]);tr('T','VIN',0.8,'C5.1',[28.5,48.3]);tr('T','VIN',0.8,'D1.2',[40,48.3]);
   tr('B','VIN',0.5,[44,40],[76,40],[76,8]);tr('T','VIN',0.4,[76,8],'R7.2');via('VIN',[44,40],[76,8]);
   // 3.3 V from the LDO to the MCU, decoupling and the power LED
   tr('T','+3V3',0.6,'U2.4',[16,26.5],[22.45,26.5]);tr('T','+3V3',0.4,[16,26.5],[16,21.75],'U1.5');
@@ -3487,17 +3496,17 @@ const SAMPLE_BLDC=(function(){
   const via=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.8,drill:0.4}));
   const via5=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.5,drill:0.25}));
   // 12 V input → LDO, bulk cap, DRV8313 VM (pins 4 and 11)
-  tr('T','+12V',1.0,'J1.1',[9,45.27],[9,53],[48.3,53],[48.3,29.275],'U3.11');
+  tr('T','+12V',1.0,'J1.1',[9,45.27],[9,53],[48.3,53],[48.3,29.275]);tr('T','+12V',0.3,[48.3,29.275],'U3.11');
   tr('T','+12V',0.6,[9,49.15],'U2.3');tr('T','+12V',0.6,'C1.1',[11,53]);tr('T','+12V',0.8,[48.3,44],'C5.1');
   tr('T','+12V',0.4,'U3.4',[49.05,24.725]);via5('+12V',[49.05,24.725],[48.3,29.275]);tr('B','+12V',0.5,[48.3,29.275],[49.05,28.5],[49.05,24.725]);
-  tr('B','+12V',0.3,[49.05,26.4],'C9.1');
+  tr('B','+12V',0.3,[49.05,27],'C9.1');
   via('+12V',[48.3,40]);tr('B','+12V',0.4,[48.3,40],[55.2,40],[55.2,20.75],'M1.7');       // hall supply (42BLF01: 5–20 V)
   // DRV8313 charge pump caps on the bottom side
   tr('T','DRV_CPL',0.3,'U3.1',[48.25,22.775]);tr('T','DRV_CPH',0.3,'U3.2',[49.05,23.425]);tr('T','DRV_VCP',0.3,'U3.3',[48.25,24.075]);
   via5('DRV_CPL',[48.25,22.775]);via5('DRV_CPH',[49.05,23.425]);via5('DRV_VCP',[48.25,24.075]);
   tr('B','DRV_CPL',0.3,[48.25,22.775],'C8.2');tr('B','DRV_CPH',0.3,[49.05,23.425],'C8.1');tr('B','DRV_VCP',0.3,[48.25,24.075],[49.8,24.075],'C9.2');
   // 3.3 V: LDO → VDD (1), VDDA (5), VDDIO2 (17, via bottom), nFAULT pull-up
-  tr('T','+3V3',0.6,'U2.4',[16,25.75],'U1.5');tr('T','+3V3',0.6,'U2.2','U2.4');tr('T','+3V3',0.3,[16,27.75],'U1.1');
+  tr('T','+3V3',0.6,'U2.4',[16,25.75],[18.3,25.75]);tr('T','+3V3',0.25,[18.3,25.75],'U1.5');tr('T','+3V3',0.6,'U2.2','U2.4');tr('T','+3V3',0.3,[16,27.75],'U1.1');
   tr('T','+3V3',0.4,'C2.2',[16,38]);tr('T','+3V3',0.3,'C3.1',[16,30.4]);tr('T','+3V3',0.3,'R3.2',[13,34],'C2.2');
   via('+3V3',[16,32]);tr('B','+3V3',0.4,[16,32],[16,34.5],[36,34.5]);
   tr('T','+3V3',0.3,'U1.17',[25.5,23.2]);via('+3V3',[25.5,23.2]);tr('B','+3V3',0.3,[25.5,23.2],[26.2,23.9],[26.2,34.5]);
@@ -3525,7 +3534,7 @@ const SAMPLE_BLDC=(function(){
   [['U2.1',[20.6,49.15]],['C1.2',[14.6,51.6]],['C2.1',[11,36.3]],['C3.2',[18.4,31.6]],['C5.2',[55,44]],['D2.1',[8,27.7]],['D3.1',[18,11.7]],['M1.8',[55.6,17.2]],['C10.2',[39.8,33.4]]]
     .forEach(([a,b])=>{tr('T','GND',0.5,a,b);via('GND',b);});
   via('GND',[22,26],[44,25.5],[44,27],[44,28.5]);
-  [['U3.28',[43,24.6]],['U3.20',[42.9,27.975]],['U3.6',[45.1,26.025]],['U3.7',[45.1,26.675]],['U3.10',[45.1,28.625]],['U3.14',[45,29.3]]].forEach(([a,b])=>tr('T','GND',0.3,a,b));
+  [['U3.28',[42.8,22.775],[43,24.6]],['U3.20',[42.9,27.975]],['U3.6',[45.1,26.025]],['U3.7',[45.1,26.675]],['U3.10',[45.1,28.625]],['U3.14',[45.2,31.225],[45,29.3]]].forEach(([a,...b])=>tr('T','GND',0.3,a,...b));
   return{
     _source:'예제',_demo:'bldc',
     board:{name:'MOTION-32 BLDC v1.0',width:100,height:55,thickness:1.6,corner:2,holes:[[3.5,3.5,3.2],[96.5,3.5,3.2],[3.5,51.5,3.2],[96.5,51.5,3.2]]},
@@ -3543,8 +3552,8 @@ const SAMPLE_BLDC=(function(){
         pins:{1:'DRV_CPL',2:'DRV_CPH',3:'DRV_VCP',4:'+12V',5:'PH_W',6:'GND',7:'GND',8:'PH_V',9:'PH_U',10:'GND',11:'+12V',14:'GND',15:'DRV_V3P3',16:'DRV_V3P3',17:'DRV_V3P3',18:'NFAULT',20:'GND',22:'EN_U',23:'IN_U',24:'EN_V',25:'IN_V',26:'EN_W',27:'IN_W',28:'GND',29:'GND'},
         pinNames:{1:'CPL',2:'CPH',3:'VCP',4:'VM',5:'OUT1',6:'PGND1',7:'PGND2',8:'OUT2',9:'OUT3',10:'PGND3',11:'VM',12:'COMPP',13:'COMPN',14:'GND',15:'V3P3',16:'nRESET',17:'nSLEEP',18:'nFAULT',19:'nCOMPO',20:'GND',21:'NC',22:'EN3',23:'IN3',24:'EN2',25:'IN2',26:'EN1',27:'IN1',28:'GND',29:'PAD'},
         model:{type:'bridge3',ron:0.24},label:[44,20.6]},
-      {ref:'C8',value:'10nF',footprint:'0603',side:'bottom',x:50.6,y:23.1,rotation:90,mpn:'CL10B103KB8NNNC',description:'DRV8313 차지 펌프 (CPH–CPL)',pins:{1:'DRV_CPH',2:'DRV_CPL'},label:[52.4,23.1]},
-      {ref:'C9',value:'100nF',footprint:'0603',side:'bottom',x:50.6,y:25.6,rotation:90,mpn:'CL10B104KB8NNNC',description:'DRV8313 VCP–VM 커패시터',pins:{1:'+12V',2:'DRV_VCP'},label:[52.4,25.6]},
+      {ref:'C8',value:'10nF',footprint:'0603',side:'bottom',x:50.6,y:22.7,rotation:90,mpn:'CL10B103KB8NNNC',description:'DRV8313 차지 펌프 (CPH–CPL)',pins:{1:'DRV_CPH',2:'DRV_CPL'},label:[52.4,22.7]},
+      {ref:'C9',value:'100nF',footprint:'0603',side:'bottom',x:50.6,y:26.2,rotation:90,mpn:'CL10B104KB8NNNC',description:'DRV8313 VCP–VM 커패시터',pins:{1:'+12V',2:'DRV_VCP'},label:[52.4,26.2]},
       {ref:'C10',value:'470nF',footprint:'0603',side:'top',x:38.6,y:32.6,rotation:90,mpn:'GRM188R71C474KA88D',description:'DRV8313 V3P3 바이패스',pins:{1:'DRV_V3P3',2:'GND'},label:[37,32.6]},
       {ref:'R10',value:'10kΩ',footprint:'0603',side:'top',x:36,y:31.6,rotation:0,mpn:'RC0603FR-0710KL',description:'nFAULT 풀업 (오픈 드레인)',pins:{1:'+3V3',2:'NFAULT'},label:[36,32.7]},
       {ref:'M1',value:'42BLF01',footprint:'BLDC-2418',side:'top',x:76,y:27,rotation:0,mpn:'42BLF01 (MIKROE-4455)',description:'3상 BLDC 모터 · 정격 24 V/4000 rpm (예제는 12 V 구동) · 8극 · 홀 센서 120° · 팬 장착',
@@ -3580,7 +3589,7 @@ const SAMPLE_TC364=(function(){
   tr('T','+5V',0.8,'U2.4',[30,23.15],[30,13],[40.3,13],'U6.3');tr('T','+5V',0.5,[30,16.8],'C2.2');
   tr('T','+3V3',0.8,'U6.4',[46,23.15]);tr('T','+3V3',0.5,[44.4,23.15],'C3.2');
   // DRV8313 → motor connector (OUT1 → W, OUT2 → V, OUT3 → U), charge pump, V3P3 ties, nFAULT pull-up
-  tr('T','PH_W',0.4,'U3.5',[51.625,82.89],'J3.1');tr('T','PH_V',0.4,'U3.8',[49.675,80.35],'J3.2');tr('T','PH_U',0.4,'U3.9',[49.025,77.81],'J3.3');
+  tr('T','PH_W',0.4,'U3.5',[51.625,82.89],'J3.1');tr('T','PH_V',0.4,'U3.8',[49.675,80.35],'J3.2');tr('T','PH_U',0.4,'U3.9',[49.025,78.2],[21.6,78.2],'J3.3');
   tr('T','DRV_CPL',0.25,'U3.1',[54.225,78],[56,78],'C8.1');tr('T','DRV_CPH',0.25,'U3.2',[53.575,81.6],[56,81.6],'C8.2');tr('T','DRV_VCP',0.25,'U3.3',[52.925,83],[59,83],'C9.2');
   tr('T','DRV_V3P3',0.25,'U3.15',[45.775,70],[46.425,70],'U3.16');tr('T','DRV_V3P3',0.25,[45.775,70],'C10.2');
   tr('T','NFAULT',0.25,'R10.2','U3.18');
@@ -4666,6 +4675,213 @@ return{DEF,prepare,routeNet,route,job,estimate,openNets,components,shapesOfBoard
 
 </script>
 <script>
+/* PCB layout editing (Pcbnew-style): rigid part transforms that carry pads, drills, silkscreen and body, interactive tracks
+   and vias, net bookkeeping, live ratsnest (copper islands joined by a minimum spanning tree), DRC (clearance, holes,
+   courtyards, board edge) and a .kicad_pcb writer. World frame: mm, y up (as drawn by the viewer). Needs PCB, AUTOROUTE. */
+const PCBEDIT=(function(){
+"use strict";
+const D2R=Math.PI/180;
+const snapTo=(v,g)=>Math.round(v/g)*g;
+const isGnd=n=>/^(GND|AGND|DGND|PGND|VSS|GNDA|GNDD|EARTH|0V)$/i.test(String(n||'').replace(/^\//,''));
+
+/* ---- ownership: silkscreen / drills that move with a part ---- */
+function prepare(B){
+  if(B._pe)return;B._pe=true;
+  B.comps.forEach(c=>c.pads.forEach(p=>{if(p.drill&&!p._dr){const d=B.drills.find(d=>d.plated&&!d._pad&&Math.abs(d.x-p.x)<1e-4&&Math.abs(d.y-p.y)<1e-4);if(d){p._dr=d;d._pad=p;d.own=c;}}}));
+  // silkscreen without an owner (e.g. older data): the nearest part whose box holds it, or its reference text
+  ['T.silk','B.silk'].forEach(L=>B.layers[L].forEach(p=>{if(p.own)return;
+    if(p.t==='text'){const c=B.comps.find(c=>c.ref===p.s&&Math.hypot(c.x-p.x,c.y-p.y)<Math.max(6,(c.bb[2]-c.bb[0])));if(c){p.own=c;return;}}
+    const pts=primPts(p);if(!pts.length)return;
+    const c=B.comps.find(c=>{const b=c.bb,m=1.2;return pts.every(q=>q[0]>=b[0]-m&&q[0]<=b[2]+m&&q[1]>=b[1]-m&&q[1]<=b[3]+m)&&(L[0]===c.side);});if(c)p.own=c;}));
+}
+function primPts(p){if(p.t==='seg')return[p.a,p.b];if(p.t==='path')return p.pts;if(p.t==='poly')return p.rings.flat();if(p.x!=null)return[[p.x,p.y]];return[];}
+
+/* ---- rigid transforms ---- */
+// f maps a world point; da = angle change (deg); mir = mirrored (flip)
+function applyComp(B,c,f,da,mir){
+  const ang=a=>mir?((-(a||0))%360+360)%360:(((a||0)+da)%360+360)%360;
+  const xy=o=>{const q=f([o.x,o.y]);o.x=q[0];o.y=q[1];};
+  [c.x,c.y]=f([c.x,c.y]);c.rot=mir?((-(c.rot||0))%360+360)%360:(((c.rot||0)+da)%360+360)%360;
+  c.pads.forEach(p=>{xy(p);p.ang=ang(p.ang);
+    if(mir&&p.parts){p.parts=p.parts.map(q=>q.c?{c:[-q.c[0],q.c[1],q.c[2]]}:{p:q.p.map(v=>[-v[0],v[1]])});if(p.lbb)p.lbb=[-p.lbb[2],p.lbb[1],-p.lbb[0],p.lbb[3]];}
+    if(p._dr){p._dr.x=p.x;p._dr.y=p.y;if(p._dr.ang!=null)p._dr.ang=p.ang;}});
+  B.drills.forEach(d=>{if(d.own===c&&!d._pad){xy(d);}});
+  if(c.body){const q=f([c.body.cx,c.body.cy]);c.body.cx=q[0];c.body.cy=q[1];c.body.ang=ang(c.body.ang);}
+  if(c.lab)c.lab=f(c.lab);
+  Object.keys(B.layers).forEach(L=>B.layers[L].forEach(p=>{if(p.own!==c||p.t==='pad')return;
+    if(p.t==='seg'){p.a=f(p.a);p.b=f(p.b);}else if(p.t==='path')p.pts=p.pts.map(f);else if(p.t==='poly')p.rings=p.rings.map(r=>r.map(f));
+    else if(p.x!=null){xy(p);if(p.t==='text'){p.ang=mir?-(p.ang||0):((p.ang||0)+da);if(mir)p.mir=!p.mir;}}}));
+  bbox(c);
+}
+function bbox(c){const pts=[];const bd=c.body;
+  if(bd&&bd.w>0){const a=bd.ang*D2R;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sy])=>{const lx=sx*bd.w/2,ly=sy*bd.h/2;pts.push([bd.cx+lx*Math.cos(a)-ly*Math.sin(a),bd.cy+lx*Math.sin(a)+ly*Math.cos(a)]);});}
+  c.pads.forEach(p=>{const r=Math.hypot(p.w||0,p.h||0)/2;pts.push([p.x-r,p.y-r],[p.x+r,p.y+r]);});
+  if(!pts.length)pts.push([c.x-1,c.y-1],[c.x+1,c.y+1]);
+  c.bb=[Math.min(...pts.map(p=>p[0])),Math.min(...pts.map(p=>p[1])),Math.max(...pts.map(p=>p[0])),Math.max(...pts.map(p=>p[1]))];}
+function move(B,c,dx,dy){applyComp(B,c,q=>[q[0]+dx,q[1]+dy],0,false);}
+function rotate(B,c,deg){const a=deg*D2R,ca=Math.cos(a),sa=Math.sin(a),cx=c.x,cy=c.y;applyComp(B,c,q=>[cx+(q[0]-cx)*ca-(q[1]-cy)*sa,cy+(q[0]-cx)*sa+(q[1]-cy)*ca],deg,false);}
+// flip to the other side, mirrored about the part's vertical axis (as seen from the top)
+function flip(B,c){
+  const cx=c.x;applyComp(B,c,q=>[2*cx-q[0],q[1]],0,true);
+  const to=c.side==='T'?'B':'T';
+  c.pads.forEach(p=>{if(p.side==='both')return;const from=B.layers[p.side+'.cu'],i=from.indexOf(p);if(i>=0)from.splice(i,1);p.side=to;B.layers[to+'.cu'].push(p);});
+  {const a=c.side+'.silk',b=to+'.silk';const keep=[],mv=[];B.layers[a].forEach(p=>(p.own===c?mv:keep).push(p));if(mv.length){B.layers[a]=keep;mv.forEach(p=>B.layers[b].push(p));}}
+  c.side=to;
+}
+// first point of the part that should sit on the grid (KiCad keeps the footprint anchor on grid)
+function snapDelta(c,dx,dy,g){return[snapTo(c.x+dx,g)-c.x,snapTo(c.y+dy,g)-c.y];}
+
+/* ---- nets ---- */
+function rebuildNets(B){
+  const keep={};Object.values(B.nets||{}).forEach(n=>{keep[n.name]=n;});
+  const N={};const net=n=>N[n]||(N[n]={name:n,pads:[],tracks:[],vias:[],zones:0,len:{T:0,B:0}});
+  ['T','B'].forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(!p.net||p.clear)return;
+    if(p.t==='seg'){net(p.net).len[s]+=Math.hypot(p.b[0]-p.a[0],p.b[1]-p.a[1]);net(p.net).tracks.push(p);}
+    else if(p.t==='path'){let l=0;for(let i=1;i<p.pts.length;i++)l+=Math.hypot(p.pts[i][0]-p.pts[i-1][0],p.pts[i][1]-p.pts[i-1][1]);net(p.net).len[s]+=l;net(p.net).tracks.push(p);}
+    else if(p.t==='poly'||p.t==='pour')net(p.net).zones++;}));
+  const seen=new Set();B.comps.forEach(c=>c.pads.forEach(p=>{if(p.net&&!seen.has(p)){seen.add(p);net(p.net).pads.push(p);}}));
+  B.vias.forEach(v=>{if(v.net)net(v.net).vias.push(v);});
+  B.nets=N;B.netOrder=Object.keys(N).sort((a,b)=>{const r=x=>B.netClass(x)==='접지'?0:B.netClass(x)==='전원'?1:2;return r(a)-r(b)||a.localeCompare(b,undefined,{numeric:true});});
+}
+function addTrack(B,layer,net,w,pts){const p=pts.length===2?{t:'seg',a:pts[0].slice(),b:pts[1].slice(),w,net}:{t:'path',pts:pts.map(q=>q.slice()),w,net};p.user=true;B.layers[layer+'.cu'].push(p);return p;}
+function addVia(B,x,y,net,d,drill){const v={x,y,d:d||0.6,drill:drill||0.3,net,user:true};B.vias.push(v);return v;}
+function removePrim(B,p){for(const L of ['T.cu','B.cu']){const i=B.layers[L].indexOf(p);if(i>=0){B.layers[L].splice(i,1);return{L,i};}}const i=B.vias.indexOf(p);if(i>=0){B.vias.splice(i,1);return{L:'via',i};}return null;}
+function restorePrim(B,p,at){if(at.L==='via')B.vias.splice(at.i,0,p);else B.layers[at.L].splice(at.i,0,p);}
+
+/* ---- ratsnest: islands of each net (copper + pours) joined by a minimum spanning tree ---- */
+function ratsnest(B,onlyNets){
+  const S=AUTOROUTE.shapesOfBoard(B);const out=[];
+  const pour={};['T','B'].forEach((s,li)=>B.layers[s+'.cu'].forEach(p=>{if(p.t==='pour'&&p.net)(pour[p.net]=pour[p.net]||new Set()).add(li);}));
+  const nets=onlyNets?[...onlyNets]:Object.keys(B.nets);
+  nets.forEach(n=>{const N=B.nets[n];if(!N||N.pads.length<2)return;
+    let isl=AUTOROUTE.components(S,n);if(isl.length<2&&!pour[n])return;
+    // islands touching a pour of their net (a via, a through pad or a pad on the poured layer) are already joined
+    if(pour[n]){const L=pour[n];const onPour=g=>g.some(s=>s.via||(s.pad&&s.L.some(l=>L.has(l))));const a=isl.filter(onPour),b=isl.filter(g=>!onPour(g));isl=a.length?[[].concat(...a)].concat(b):b;}
+    if(isl.length<2)return;
+    const pts=isl.map(g=>g.filter(s=>s.pad||s.via||s.prim).map(s=>s.pad?[s.pad.x,s.pad.y]:s.via?[s.via.x,s.via.y]:s.a));
+    const inT=new Set([0]);
+    while(inT.size<isl.length){let best=null;
+      inT.forEach(i=>pts[i].forEach(p=>isl.forEach((_,j)=>{if(inT.has(j))return;pts[j].forEach(q=>{const d=Math.hypot(p[0]-q[0],p[1]-q[1]);if(!best||d<best.d)best={d,a:p,b:q,j};});})));
+      if(!best)break;inT.add(best.j);out.push({net:n,a:best.a,b:best.b,len:best.d});}});
+  return out;
+}
+
+/* ---- DRC ---- */
+const DRC_DEF={clear:0.15,hole:0.25,edge:0.3,courtyard:0.1};
+function drc(B,opts){
+  const o=Object.assign({},DRC_DEF,opts||{});const S=AUTOROUTE.shapesOfBoard(B);const out=[];
+  const box=s=>s.k==='cap'?[Math.min(s.a[0],s.b[0])-s.r,Math.min(s.a[1],s.b[1])-s.r,Math.max(s.a[0],s.b[0])+s.r,Math.max(s.a[1],s.b[1])+s.r]:(e=>[s.x-e,s.y-e,s.x+e,s.y+e])(Math.hypot(s.hw,s.hh));
+  const cell=4,grid=new Map();S.forEach((s,i)=>{s._b=box(s);for(let x=Math.floor(s._b[0]/cell);x<=Math.floor(s._b[2]/cell);x++)for(let y=Math.floor(s._b[1]/cell);y<=Math.floor(s._b[3]/cell);y++){const k=x+','+y;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);}});
+  const seen=new Set();const owner=s=>s.pad&&s.pad.ref;
+  grid.forEach(list=>{for(let a=0;a<list.length;a++)for(let b=a+1;b<list.length;b++){const i=list[a],j=list[b];const k=i<j?i+'|'+j:j+'|'+i;if(seen.has(k))continue;seen.add(k);
+    const A=S[i],Bs=S[j];if(!A.L.some(l=>Bs.L.includes(l)))continue;
+    if(A.hole||Bs.hole){if(A.hole&&Bs.hole)continue;const g=AUTOROUTE_gap(A,Bs);if(g<o.hole-0.02)out.push({code:'hole',msg:`구멍과 동박 간격 ${Math.max(0,g).toFixed(2)} mm`,at:A.hole?(A.a):(Bs.a),refs:[owner(A),owner(Bs)].filter(Boolean)});continue;}
+    if(A.net&&A.net===Bs.net)continue;
+    if(owner(A)&&owner(A)===owner(Bs))continue;
+    const m=o.clear;if(A._b[0]>Bs._b[2]+m||Bs._b[0]>A._b[2]+m||A._b[1]>Bs._b[3]+m||Bs._b[1]>A._b[3]+m)continue;
+    const g=AUTOROUTE_gap(A,Bs);if(g<m-0.02)out.push({code:g<=0?'short':'clearance',msg:`${A.net||'(넷 없음)'} ↔ ${Bs.net||'(넷 없음)'} ${g<=0?'단락':'간격 '+g.toFixed(2)+' mm'}`,at:at(A,Bs),refs:[owner(A),owner(Bs)].filter(Boolean),nets:[A.net,Bs.net],shapes:[A,Bs]});}});
+  // courtyards (part bodies + pads) on the same side
+  for(let i=0;i<B.comps.length;i++)for(let j=i+1;j<B.comps.length;j++){const a=B.comps[i],b=B.comps[j];if(a.kind==='none'||b.kind==='none')continue;if(a.side!==b.side&&!a.pads.some(p=>p.drill)&&!b.pads.some(p=>p.drill))continue;
+    const m=o.courtyard;const ox=Math.min(a.bb[2],b.bb[2])-Math.max(a.bb[0],b.bb[0]),oy=Math.min(a.bb[3],b.bb[3])-Math.max(a.bb[1],b.bb[1]);
+    if(ox>m&&oy>m&&a.side===b.side)out.push({code:'courtyard',msg:`${a.ref}와 ${b.ref} 부품 영역이 겹침`,at:[(Math.max(a.bb[0],b.bb[0])+Math.min(a.bb[2],b.bb[2]))/2,(Math.max(a.bb[1],b.bb[1])+Math.min(a.bb[3],b.bb[3]))/2],refs:[a.ref,b.ref]});}
+  // board edge
+  const ring=B.outline[0];if(ring)B.comps.forEach(c=>{if(c.kind==='none')return;const pts=c.pads.map(p=>[p.x,p.y]);
+    const off=pts.find(p=>!PCB.inRing(p[0],p[1],ring))||(pts.length?null:null);
+    const near=c.pads.find(p=>{for(let k=1;k<ring.length;k++)if(PCB.segDist(p.x,p.y,ring[k-1],ring[k])<Math.max(p.w,p.h)/2+o.edge)return true;return false;});
+    if(off)out.push({code:'edge',msg:`${c.ref}가 보드 밖에 있음`,at:off,refs:[c.ref]});else if(near)out.push({code:'edge',msg:`${c.ref} 패드가 보드 가장자리에 너무 가까움`,at:[near.x,near.y],refs:[c.ref]});});
+  return out;
+}
+const AUTOROUTE_gap=(a,b)=>{ // same sampled gap as the router, local copy to stay independent of its internals
+  const dist=(s,x,y)=>{if(s.k==='cap')return PCB.segDist(x,y,s.a,s.b)-s.r;const c=Math.cos(-s.ang),sn=Math.sin(-s.ang),dx=x-s.x,dy=y-s.y,lx=dx*c-dy*sn,ly=dx*sn+dy*c;
+    if(s.k==='circ')return Math.hypot(dx,dy)-s.hw;const qx=Math.abs(lx)-s.hw,qy=Math.abs(ly)-s.hh;return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0);};
+  if(a.k==='cap'&&b.k==='cap'){const d=Math.min(PCB.segDist(a.a[0],a.a[1],b.a,b.b),PCB.segDist(a.b[0],a.b[1],b.a,b.b),PCB.segDist(b.a[0],b.a[1],a.a,a.b),PCB.segDist(b.b[0],b.b[1],a.a,a.b));return d-a.r-b.r;}
+  if(a.k!=='cap')[a,b]=[b,a];
+  if(a.k==='cap'){const n=Math.max(1,Math.ceil(Math.hypot(a.b[0]-a.a[0],a.b[1]-a.a[1])/0.05));let m=1e9;for(let i=0;i<=n;i++){const t=i/n;m=Math.min(m,dist(b,a.a[0]+(a.b[0]-a.a[0])*t,a.a[1]+(a.b[1]-a.a[1])*t)-a.r);}return m;}
+  const pts=s=>{const c=Math.cos(s.ang),sn=Math.sin(s.ang);return[[0,0],[1,1],[1,-1],[-1,1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
+  return Math.min(...pts(a).map(p=>dist(b,p[0],p[1])),...pts(b).map(p=>dist(a,p[0],p[1])));
+};
+const at=(a,b)=>{const c=s=>s.k==='cap'?[(s.a[0]+s.b[0])/2,(s.a[1]+s.b[1])/2]:[s.x,s.y];const p=c(a),q=c(b);return[(p[0]+q[0])/2,(p[1]+q[1])/2];};
+
+/* ---- routing helpers ---- */
+// KiCad-like posture: straight leg then a 45° leg (or the other way round)
+function posture(a,b,diagFirst){const dx=b[0]-a[0],dy=b[1]-a[1],ax=Math.abs(dx),ay=Math.abs(dy);if(ax<1e-6||ay<1e-6||Math.abs(ax-ay)<1e-6)return[a,b];
+  const d=Math.min(ax,ay),sx=Math.sign(dx),sy=Math.sign(dy);
+  if(diagFirst){const m=[a[0]+sx*d,a[1]+sy*d];return[a,m,b];}
+  const m=ax>ay?[b[0]-sx*d,a[1]]:[a[0],b[1]-sy*d];return[a,m,b];}
+function itemAt(B,x,y,layer,tol){
+  const L=B.layers[layer+'.cu'];
+  let bp=null,bd=1e9;for(const c of B.comps)for(const p of c.pads){if(!(p.side===layer||p.side==='both'))continue;
+    const a=-(p.ang||0)*D2R,dx=x-p.x,dy=y-p.y,lx=dx*Math.cos(a)-dy*Math.sin(a),ly=dx*Math.sin(a)+dy*Math.cos(a);
+    const w=(p.shape==='parts'&&p.lbb?p.lbb[2]-p.lbb[0]:p.w)/2,h=(p.shape==='parts'&&p.lbb?p.lbb[3]-p.lbb[1]:p.h)/2;
+    if(Math.abs(lx)<=w+tol&&Math.abs(ly)<=h+tol){const d=Math.hypot(dx,dy);if(d<bd){bd=d;bp=p;}}}
+  if(bp)return{type:'pad',p:bp,net:bp.net,at:[bp.x,bp.y]};
+  for(const v of B.vias)if(Math.hypot(v.x-x,v.y-y)<=v.d/2+tol)return{type:'via',v,net:v.net,at:[v.x,v.y]};
+  for(let i=L.length-1;i>=0;i--){const t=L[i];if(t.clear||!(t.t==='seg'||t.t==='path'))continue;const ps=t.t==='seg'?[t.a,t.b]:t.pts;
+    for(let k=1;k<ps.length;k++){if(PCB.segDist(x,y,ps[k-1],ps[k])<=t.w/2+tol){const e=[ps[0],ps[ps.length-1]].find(q=>Math.hypot(q[0]-x,q[1]-y)<=t.w/2+tol*2);
+      // snap onto the segment's centre line
+      const a=ps[k-1],b=ps[k],dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy,u=l?Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/l)):0;
+      return{type:'track',t,net:t.net,at:e?e.slice():[a[0]+u*dx,a[1]+u*dy]};}}}
+  return null;
+}
+
+/* ---- .kicad_pcb writer (KiCad 7 format) ---- */
+function toKicadPcb(B,meta){
+  meta=meta||{};const q=s=>'"'+String(s==null?'':s).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"';const n=v=>(Math.round(v*10000)/10000).toString();
+  const OX=25,OY=25;const Y=y=>B.H-y+OY;const P=p=>`${n(p[0]+OX)} ${n(Y(p[1]))}`;
+  const nets=['',...Object.keys(B.nets).sort()];const nid=new Map(nets.map((x,i)=>[x,i]));const NET=x=>x?` (net ${nid.get(x)} ${q(x)})`:'';const NID=x=>` (net ${x?nid.get(x):0})`;
+  let u=0;const uuid=()=>{u++;const h=(u*2654435761>>>0).toString(16).padStart(8,'0');return`${h}-0000-4000-8000-${String(u).padStart(12,'0')}`;};
+  const o=[];o.push(`(kicad_pcb (version 20221018) (generator pcb_viewer)`,` (general (thickness ${n(B.t||1.6)}))`,` (paper "A4")`,
+    ` (title_block (title ${q(meta.title||B.name||'')}) (date ${q(meta.date||'')}))`,
+    ` (layers (0 "F.Cu" signal) (31 "B.Cu" signal) (32 "B.Adhes" user "B.Adhesive") (33 "F.Adhes" user "F.Adhesive") (34 "B.Paste" user) (35 "F.Paste" user) (36 "B.SilkS" user "B.Silkscreen") (37 "F.SilkS" user "F.Silkscreen") (38 "B.Mask" user) (39 "F.Mask" user) (44 "Edge.Cuts" user) (46 "B.CrtYd" user "B.Courtyard") (47 "F.CrtYd" user "F.Courtyard") (48 "B.Fab" user) (49 "F.Fab" user))`,
+    ` (setup (pad_to_mask_clearance 0) (pcbplotparams (layerselection 0x00010fc_ffffffff) (outputdirectory "")))`);
+  nets.forEach((x,i)=>o.push(` (net ${i} ${q(x)})`));
+  const cuL=s=>s==='B'?'B.Cu':'F.Cu',silkL=s=>s==='B'?'B.SilkS':'F.SilkS';
+  B.comps.forEach(c=>{if(c.kind==='none'&&!c.pads.length)return;
+    const a=(c.rot||0)*D2R,ca=Math.cos(a),sa=Math.sin(a);
+    // world (y up) → footprint local (KiCad y down)
+    const loc=p=>{const dx=p[0]-c.x,dy=p[1]-c.y;const ux=dx*ca+dy*sa,uy=-dx*sa+dy*ca;return[ux,-uy];};
+    const L=pt=>{const l=loc(pt);return`${n(l[0])} ${n(l[1])}`;};
+    const side=c.side==='B'?'B':'F';
+    o.push(` (footprint ${q('pcb_viewer:'+(c.fp||c.ref))} (layer "${side}.Cu") (tstamp ${q(uuid())}) (at ${n(c.x+OX)} ${n(Y(c.y))}${c.rot?' '+n(c.rot):''})`);
+    const lab=(Object.values(B.layers).flat().find(p=>p.own===c&&p.t==='text'&&p.s===c.ref))||{x:c.x,y:c.bb[3]+1,size:0.8};
+    o.push(`  (fp_text reference ${q(c.ref)} (at ${L([lab.x,lab.y])}${c.rot?' '+n(c.rot):''}) (layer "${side}.SilkS") (effects (font (size ${n(lab.size||1)} ${n(lab.size||1)}) (thickness 0.15))${side==='B'?' (justify mirror)':''}) (tstamp ${q(uuid())}))`,
+      `  (fp_text value ${q(c.val||'~')} (at ${L([c.x,c.bb[1]-1])}${c.rot?' '+n(c.rot):''}) (layer "${side}.Fab") (effects (font (size 1 1) (thickness 0.15))${side==='B'?' (justify mirror)':''}) (tstamp ${q(uuid())}))`);
+    if(c.mpn)o.push(`  (property "MPN" ${q(c.mpn)})`);
+    Object.values(B.layers).forEach((arr,li)=>arr.forEach(p=>{if(p.own!==c||p.t==='pad'||p.t==='text')return;const lay=p.layer||silkL(c.side);
+      if(p.t==='seg')o.push(`  (fp_line (start ${L(p.a)}) (end ${L(p.b)}) (stroke (width ${n(p.w||0.12)}) (type solid)) (layer "${side}.SilkS"))`);
+      else if(p.t==='path')for(let k=1;k<p.pts.length;k++)o.push(`  (fp_line (start ${L(p.pts[k-1])}) (end ${L(p.pts[k])}) (stroke (width ${n(p.w||0.12)}) (type solid)) (layer "${side}.SilkS"))`);
+      else if(p.t==='circle')o.push(`  (fp_circle (center ${L([p.x,p.y])}) (end ${L([p.x+(p.r||0.2),p.y])}) (stroke (width 0.12) (type solid)) (fill solid) (layer "${side}.SilkS"))`);}));
+    const bd=c.body;if(bd&&bd.w>0){const corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([sx,sy])=>{const t=bd.ang*D2R,lx=sx*bd.w/2,ly=sy*bd.h/2;return[bd.cx+lx*Math.cos(t)-ly*Math.sin(t),bd.cy+lx*Math.sin(t)+ly*Math.cos(t)];});
+      for(let k=0;k<4;k++)o.push(`  (fp_line (start ${L(corners[k])}) (end ${L(corners[(k+1)%4])}) (stroke (width 0.1) (type solid)) (layer "${side}.Fab"))`);}
+    const seen=new Set();c.pads.forEach(p=>{const key=p.n+'@'+n(p.x)+','+n(p.y);if(seen.has(key))return;seen.add(key);
+      const th=!!p.drill,shape=p.shape==='circle'?'circle':p.shape==='oval'?'oval':(p.shape==='roundrect'||p.rr)?'roundrect':'rect';
+      const lays=th?'"*.Cu" "*.Mask"':(p.side==='B'?'"B.Cu" "B.Paste" "B.Mask"':'"F.Cu" "F.Paste" "F.Mask"');
+      const w=p.shape==='parts'&&p.lbb?p.lbb[2]-p.lbb[0]:p.w,h=p.shape==='parts'&&p.lbb?p.lbb[3]-p.lbb[1]:p.h;
+      o.push(`  (pad ${q(p.n)} ${th?'thru_hole':'smd'} ${shape} (at ${L([p.x,p.y])}${p.ang?' '+n(p.ang):''}) (size ${n(w)} ${n(h)})${th?` (drill ${n(p.drill)})`:''} (layers ${lays})${shape==='roundrect'?` (roundrect_rratio ${n(Math.min(0.5,(p.rr||0.1*Math.min(w,h))/Math.min(w,h)))})`:''}${NET(p.net)}${p.fn?` (pinfunction ${q(p.fn)})`:''} (tstamp ${q(uuid())}))`);});
+    o.push(' )');});
+  // board-level silkscreen, edge, holes, tracks, vias, zones
+  ['T','B'].forEach(s=>B.layers[s+'.silk'].forEach(p=>{if(p.own)return;const lay=silkL(s);
+    if(p.t==='text')o.push(` (gr_text ${q(p.s)} (at ${P([p.x,p.y])}${p.ang?' '+n(p.ang):''}) (layer "${lay}") (effects (font (size ${n(p.size||1)} ${n(p.size||1)}) (thickness 0.15))${s==='B'?' (justify mirror)':''}))`);
+    else if(p.t==='seg')o.push(` (gr_line (start ${P(p.a)}) (end ${P(p.b)}) (stroke (width ${n(p.w||0.15)}) (type solid)) (layer "${lay}"))`);
+    else if(p.t==='path')for(let k=1;k<p.pts.length;k++)o.push(` (gr_line (start ${P(p.pts[k-1])}) (end ${P(p.pts[k])}) (stroke (width ${n(p.w||0.15)}) (type solid)) (layer "${lay}"))`);}));
+  B.outline.forEach(r=>{for(let k=0;k<r.length;k++){const a=r[k],b=r[(k+1)%r.length];if(Math.hypot(a[0]-b[0],a[1]-b[1])<1e-6)continue;o.push(` (gr_line (start ${P(a)}) (end ${P(b)}) (stroke (width 0.1) (type solid)) (layer "Edge.Cuts"))`);}});
+  let hn=0;B.drills.forEach(d=>{if(d.plated||d.own||d._pad)return;hn++;o.push(` (footprint "pcb_viewer:MountingHole" (layer "F.Cu") (at ${P([d.x,d.y])}) (fp_text reference "H${hn}" (at 0 0) (layer "F.Fab") hide (effects (font (size 1 1))))`,
+    `  (pad "" np_thru_hole circle (at 0 0) (size ${n(d.d)} ${n(d.d)}) (drill ${n(d.d)}) (layers "*.Cu" "*.Mask"))`,' )');});
+  ['T','B'].forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(p.clear||p.own)return;
+    if(p.t==='seg')o.push(` (segment (start ${P(p.a)}) (end ${P(p.b)}) (width ${n(p.w)}) (layer "${cuL(s)}")${NID(p.net)} (tstamp ${q(uuid())}))`);
+    else if(p.t==='path')for(let k=1;k<p.pts.length;k++)o.push(` (segment (start ${P(p.pts[k-1])}) (end ${P(p.pts[k])}) (width ${n(p.w)}) (layer "${cuL(s)}")${NID(p.net)} (tstamp ${q(uuid())}))`);
+    else if(p.t==='poly'&&p.net)p.rings.slice(0,1).forEach(r=>o.push(` (zone${NET(p.net).replace(/^ \(net (\d+) ("[^"]*")\)$/,' (net $1) (net_name $2)')} (layer "${cuL(s)}") (tstamp ${q(uuid())}) (hatch edge 0.5) (connect_pads (clearance 0.3)) (min_thickness 0.25) (filled_areas_thickness no) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5)) (polygon (pts ${r.map(v=>`(xy ${P(v)})`).join(' ')})))`));
+    else if(p.t==='pour'&&p.net){const r=B.outline[0];o.push(` (zone${NET(p.net).replace(/^ \(net (\d+) ("[^"]*")\)$/,' (net $1) (net_name $2)')} (layer "${cuL(s)}") (tstamp ${q(uuid())}) (hatch edge 0.5) (connect_pads (clearance ${n(p.clr||0.3)})) (min_thickness 0.25) (filled_areas_thickness no) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5)) (polygon (pts ${r.map(v=>`(xy ${P(v)})`).join(' ')})))`);}}));
+  B.vias.forEach(v=>o.push(` (via (at ${P([v.x,v.y])}) (size ${n(v.d)}) (drill ${n(v.drill)}) (layers "F.Cu" "B.Cu")${NID(v.net)} (tstamp ${q(uuid())}))`));
+  o.push(')');return o.join('\n')+'\n';
+}
+
+return{prepare,applyComp,move,rotate,flip,snapDelta,snapTo,bbox,rebuildNets,addTrack,addVia,removePrim,restorePrim,ratsnest,drc,posture,itemAt,toKicadPcb,DRC_DEF};
+})();
+
+
+</script>
+<script>
 /* HSIS → test case generator, split by the boundary "how is it measured / which layer is verified":
    - SYS.4 System Integration Test (SYSITS): needs physical instruments (oscilloscope, multimeter, power supply, bus analyser) —
      electrical characteristics, waveforms, HW–SW physical consistency (divider/RC path, PWM frequency/slew/dead-time/reset
@@ -5250,15 +5466,18 @@ function paint2D(){
   ctx2.setTransform(dpr*s*(mir?-1:1),0,0,-dpr*s,dpr*(V2.ox+(mir?BD.W*s:0)),dpr*(V2.oy+BD.H*s));
   ctx2.save();ctx2.shadowColor='rgba(0,0,0,.35)';ctx2.shadowBlur=22*dpr;ctx2.shadowOffsetY=8*dpr;outlinePath(ctx2);ctx2.fillStyle='#000';ctx2.fill('evenodd');ctx2.restore();
   drawSide(ctx2,S.view,{hover:hover2&&hover2.type==='comp'?hover2.c:null});
+  if(PE&&PE.on)peOverlay(ctx2,S.view);
   updateScale();
 }
 function s2w(px,py){let x=(px-V2.ox)/V2.s;if(S.view==='B')x=BD.W-x;return[x,BD.H-(py-V2.oy)/V2.s];}
 function zoomAt(px,py,f){const[wx,wy]=s2w(px,py);V2.s=Math.max(1,Math.min(600,V2.s*f));const sx=S.view==='B'?BD.W-wx:wx;V2.ox=px-sx*V2.s;V2.oy=py-(BD.H-wy)*V2.s;draw2D();}
 function updateScale(){const target=110/V2.s,steps=[0.1,0.2,0.5,1,2,5,10,20,50,100];let mm=steps[0];steps.forEach(s=>{if(s<=target)mm=s;});$('#scaleBar').style.width=(mm*V2.s)+'px';$('#scaleTxt').textContent=mm+' mm';}
 (function(){
-  const pts=new Map();let start=null,moved=0,pinch=0,hq=null,hraf=0;
+  const pts=new Map();let start=null,moved=0,pinch=0,hq=null,hraf=0,edPtr=null;
   const pos=e=>{const r=cv2.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
-  cv2.addEventListener('pointerdown',e=>{cv2.setPointerCapture(e.pointerId);pts.set(e.pointerId,pos(e));moved=0;start=pos(e);cv2.classList.add('drag');
+  cv2.addEventListener('pointerdown',e=>{cv2.setPointerCapture(e.pointerId);
+    if(PE.on&&e.button===0&&pts.size===0&&BD){const[px,py]=pos(e);if(peDown(s2w(px,py))){edPtr=e.pointerId;cv2.classList.add('moving');return;}}
+    pts.set(e.pointerId,pos(e));moved=0;start=pos(e);cv2.classList.add('drag');
     if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);}});
   const hoverRun=()=>{hraf=0;if(!hq||!BD)return;const p=hq;const[wx,wy]=s2w(p[0],p[1]);
     $('#coord').textContent=(wx>=0&&wx<=BD.W&&wy>=0&&wy<=BD.H)?`X ${wx.toFixed(2)} · Y ${wy.toFixed(2)} mm`:'X — · Y — mm';
@@ -5267,6 +5486,7 @@ function updateScale(){const target=110/V2.s,steps=[0.1,0.2,0.5,1,2,5,10,20,50,1
     const extra=overlayTip(h,wx,wy);if(h||extra){tip.innerHTML=(h?tipHTML(h):'')+extra;tip.hidden=false;tipAt(cv2,p[0],p[1]);cv2.style.cursor=h?'pointer':'';}else{tip.hidden=true;cv2.style.cursor='';}};
   cv2.addEventListener('pointermove',e=>{
     const p=pos(e);
+    if(PE.on&&BD){const w=s2w(p[0],p[1]);if(edPtr===e.pointerId){peDrag(w);tip.hidden=true;return;}pePoint(w);}
     if(pts.has(e.pointerId)){
       const prev=pts.get(e.pointerId);pts.set(e.pointerId,p);
       if(pts.size===1){V2.ox+=p[0]-prev[0];V2.oy+=p[1]-prev[1];moved+=Math.abs(p[0]-prev[0])+Math.abs(p[1]-prev[1]);draw2D();}
@@ -5275,13 +5495,13 @@ function updateScale(){const target=110/V2.s,steps=[0.1,0.2,0.5,1,2,5,10,20,50,1
     }
     hq=p;if(!hraf)hraf=requestAnimationFrame(hoverRun);
   });
-  const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);cv2.classList.remove('drag');
-    if(pts.size===0&&moved<5&&start&&e.type==='pointerup'&&BD){const[wx,wy]=s2w(start[0],start[1]);applyHit(hit(wx,wy,S.view,3/V2.s));}
+  const end=e=>{if(edPtr===e.pointerId){edPtr=null;cv2.classList.remove('moving');peUp();return;}if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);cv2.classList.remove('drag');
+    if(pts.size===0&&moved<5&&start&&e.type==='pointerup'&&BD){const[wx,wy]=s2w(start[0],start[1]);if(PE.on)peClick([wx,wy]);else applyHit(hit(wx,wy,S.view,3/V2.s));}
     if(pts.size<2)pinch=0;};
   cv2.addEventListener('pointerup',end);cv2.addEventListener('pointercancel',end);
   cv2.addEventListener('pointerleave',()=>{hq=null;tip.hidden=true;if(hover2){hover2=null;draw2D();}});
   cv2.addEventListener('wheel',e=>{e.preventDefault();const[x,y]=pos(e);zoomAt(x,y,Math.exp(-e.deltaY*0.0015));},{passive:false});
-  cv2.addEventListener('dblclick',()=>{fit2();draw2D();});
+  cv2.addEventListener('dblclick',()=>{if(PE.on&&peDbl())return;if(PE.on&&PE.tool!=='sel')return;fit2();draw2D();});
 })();
 
 /* ---------- 3D view ---------- */
@@ -5547,17 +5767,19 @@ function setView(v){
   $('#hint').textContent=is3?'드래그 회전 · 우클릭/Shift 드래그 이동 · 휠 확대 · 클릭 선택':'드래그 이동 · 휠 확대 · 더블클릭 맞춤 · 클릭 선택';
   $('#lbl-body').textContent=is3?'3D 부품':'부품 외형 겹쳐 보기';
   $('#ly-body').checked=is3?S.layers.body3d:S.layers.body2d;
-  $('#ctl').innerHTML=(is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>')+'<button class="pill vbtn" data-pop="1" title="보드를 새 창으로 엽니다">새 창</button>';
+  $('#ctl').innerHTML=(is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>')+(is3?'':`<button class="pill vbtn${PE&&PE.on?' on':''}" data-pe="1" title="부품 배치·배선을 편집합니다 (Pcbnew 단축키)">${PE&&PE.on?'편집 끝내기':'PCB 편집'}</button>`)+'<button class="pill vbtn" data-pop="1" title="보드를 새 창으로 엽니다">새 창</button>';
   const lk=S.sch;const relayout=setView.lk!==lk;setView.lk=lk;
   if(S.sch!=='off'){schResize();schData();if(relayout){schFit();SV.fromMe=false;SV.lastKey='';}renderSchOv();schFocus();paintSch();}
+  if(PE&&typeof peBar==='function')peBar();
   if(full)return;
   if(is3){if(!init3D()){setView('T');return;}if(G3.board!==BD)rebuild3D();else{resize3D();if(relayout)homeCam(false);sync3D();}}
   else{measure.done=0;measure();paint2D();}
+  if(PE&&typeof peBar==='function')peBar();
 }
 function tipAt(cv,x,y){const vr=vp.getBoundingClientRect(),cr=cv.getBoundingClientRect();tip.style.left=(x+cr.left-vr.left)+'px';tip.style.top=(y+cr.top-vr.top)+'px';}
 function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
 document.querySelectorAll('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
-$('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
+$('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
 ['cuT','cuB','silk','mask','drill','ghost'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
 $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.target.checked;else S.layers.body2d=e.target.checked;refresh(false);});
@@ -5658,6 +5880,7 @@ $('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))ope
 function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}popsRefresh();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
   BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
+  if(PE){PE.on=false;PE.undo=[];PE.redo=[];PE.route=null;PE.drag=null;PE.rats=[];PE.drc=[];}
   header();stats();renderPane();simReset();hsisOnBoard();SV.data=null;SV.lastKey='';measure.done=0;measure();fit2();
   if(S.view==='3d'){if(G3)rebuild3D();}else paint2D();
   if(S.sch!=='off'){schData();renderSchOv();paintSch();}
@@ -7152,7 +7375,6 @@ function seBoardChanged(){
 }
 async function seExport(){
   const files=SCHEDIT.toKicad(seSheets()||schData().sheets,{name:BD.name||'board',title:BD.name,board:BD,date:new Date().toISOString().slice(0,10)});
-  if(files.length===1)return offerFile(files[0].name,files[0].text,'text/plain');
   const z=new JSZip();files.forEach(f=>z.file(f.name,f.text));const blob=await z.generateAsync({type:'uint8array'});
   offerFile(files[0].name.replace(/\.kicad_sch$/,'')+'_schematic.zip',blob,'application/zip');
 }
@@ -7701,6 +7923,162 @@ $('#fwReset').addEventListener('click',()=>{const c=fwMcu();if(!c)return;fwSetCo
 $('#fw3d').addEventListener('click',()=>{fwClose();setWorkspace('board');if(S.view!=='3d'||S.sch==='full')setView('3d');playReset();});
 $('#fwModal').addEventListener('click',e=>{if(e.target.id==='fwModal'||e.target.closest('[data-fwclose]'))fwClose();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#fwModal').hidden){e.stopPropagation();fwClose();}},true);
+
+/* ---------- PCB layout editing (Pcbnew-style) in the TOP / BOTTOM views ---------- */
+var PE={on:false,tool:'sel',grid:0.5,w:0,layer:'T',undo:[],redo:[],drag:null,route:null,cursor:null,rats:[],drc:[],showRats:true,t3d:0,sel:null};
+const PE_TOOLS=[['sel','선택·이동','Esc'],['route','배선','X'],['via','비아','V'],['del','삭제','Del']];
+const PE_ACTS=[['rot','회전','R'],['flip','뒤집기','F'],['undo','실행 취소','Ctrl+Z'],['redo','다시 실행','Ctrl+Y']];
+const PE_GRIDS=[0.05,0.1,0.25,0.5,1,1.27,2.54];
+const PE_WIDTHS=[0,0.15,0.2,0.25,0.3,0.4,0.5,0.8,1.0];
+function peBegin(){
+  if(S.view==='3d'||S.view==='sch')setView('T');
+  PCBEDIT.prepare(BD);PE.on=true;PE.tool='sel';PE.layer=S.view==='B'?'B':'T';peRecalc(true);peBar();draw2D();
+}
+function peEnd(){PE.on=false;PE.route=null;PE.drag=null;peBar();draw2D();}
+// ratsnest + DRC after a change (ratsnest of a few nets while dragging)
+function peRecalc(full,nets){
+  try{if(full||!nets){PE.rats=PCBEDIT.ratsnest(BD);PE.drc=PCBEDIT.drc(BD);}
+    else{const keep=PE.rats.filter(r=>!nets.has(r.net));PE.rats=keep.concat(PCBEDIT.ratsnest(BD,nets));}}catch(e){console.error(e);}
+  peStat();
+}
+function peChanged(copper){
+  if(copper){PCBEDIT.rebuildNets(BD);}
+  peRecalc(true);try{stats();renderPane();}catch(e){}
+  if(typeof SV!=='undefined')SV.lastKey='';
+  clearTimeout(PE.t3d);PE.t3d=setTimeout(()=>{try{if(typeof rebuild3D==='function'&&G3)rebuild3D();if(typeof simReset==='function')simReset();}catch(e){console.error(e);}},450);
+  peBar();draw2D();
+}
+function pePush(cmd){PE.undo.push(cmd);if(PE.undo.length>100)PE.undo.shift();PE.redo=[];}
+function peUndo(){const c=PE.undo.pop();if(!c)return;c.undo();PE.redo.push(c);peChanged(c.copper);}
+function peRedo(){const c=PE.redo.pop();if(!c)return;c.redo();PE.undo.push(c);peChanged(c.copper);}
+const peComp=ref=>BD.byRef[ref];
+const peNetsOf=c=>new Set(c.pads.map(p=>p.net).filter(Boolean));
+// commands that only keep the reference, so they survive other edits
+function peMoveCmd(ref,dx,dy){return{copper:false,undo:()=>PCBEDIT.move(BD,peComp(ref),-dx,-dy),redo:()=>PCBEDIT.move(BD,peComp(ref),dx,dy)};}
+function peRotate(c,deg){PCBEDIT.rotate(BD,c,deg);const ref=c.ref;pePush({copper:false,undo:()=>PCBEDIT.rotate(BD,peComp(ref),-deg),redo:()=>PCBEDIT.rotate(BD,peComp(ref),deg)});peChanged(false);}
+function peFlip(c){PCBEDIT.flip(BD,c);const ref=c.ref;pePush({copper:false,undo:()=>PCBEDIT.flip(BD,peComp(ref)),redo:()=>PCBEDIT.flip(BD,peComp(ref))});peChanged(false);}
+function peNudge(c,dx,dy){PCBEDIT.move(BD,c,dx,dy);const last=PE.undo[PE.undo.length-1];
+  // consecutive arrow presses on the same part fold into one undo step
+  if(last&&last.nudge===c.ref&&Date.now()-last.t<1200){last.dx+=dx;last.dy+=dy;last.t=Date.now();}
+  else{const cmd={copper:false,nudge:c.ref,dx,dy,t:Date.now()};cmd.undo=()=>PCBEDIT.move(BD,peComp(cmd.nudge),-cmd.dx,-cmd.dy);cmd.redo=()=>PCBEDIT.move(BD,peComp(cmd.nudge),cmd.dx,cmd.dy);pePush(cmd);}
+  peRecalc(false,peNetsOf(c));clearTimeout(PE.tn);PE.tn=setTimeout(()=>peChanged(false),350);draw2D();refresh(false);}
+const peSnap=p=>[PCBEDIT.snapTo(p[0],PE.grid),PCBEDIT.snapTo(p[1],PE.grid)];
+const peTol=()=>Math.max(0.25,5/V2.s);
+function peTrackWidth(net){if(PE.w)return PE.w;if(!net)return 0.25;return BD.netClass(net)==='신호'?0.25:0.5;}
+/* pointer hooks (called from the 2D view) */
+function peDown(w){
+  if(PE.tool!=='sel')return false;
+  const h=hit(w[0],w[1],S.view,3/V2.s);const c=h&&(h.type==='comp'?h.c:h.type==='pad'?h.c:null);
+  if(!c)return false;
+  S.selRef=c.ref;S.hlNet=null;PE.drag={ref:c.ref,start:w,ox:c.x,oy:c.y,moved:false,nets:peNetsOf(c)};refresh(true);return true;
+}
+function peDrag(w){const D=PE.drag;if(!D)return;const c=peComp(D.ref);if(!c)return;
+  const tx=PCBEDIT.snapTo(D.ox+(w[0]-D.start[0]),PE.grid),ty=PCBEDIT.snapTo(D.oy+(w[1]-D.start[1]),PE.grid);const dx=tx-c.x,dy=ty-c.y;
+  if(Math.abs(dx)<1e-9&&Math.abs(dy)<1e-9)return;PCBEDIT.move(BD,c,dx,dy);D.moved=true;
+  if(!D.raf)D.raf=requestAnimationFrame(()=>{D.raf=0;peRecalc(false,D.nets);draw2D();});}
+function peUp(){const D=PE.drag;PE.drag=null;if(!D||!D.moved){draw2D();return;}const c=peComp(D.ref);const dx=c.x-D.ox,dy=c.y-D.oy;pePush(peMoveCmd(D.ref,dx,dy));peChanged(false);}
+function pePoint(w){PE.cursor=w;if(PE.tool!=='sel')draw2D();}
+function peClick(w){
+  const L=PE.layer;
+  if(PE.tool==='sel'){applyHit(hit(w[0],w[1],S.view,3/V2.s));return;}
+  if(PE.tool==='del'){const h=hit(w[0],w[1],S.view,3/V2.s);let p=null;if(h&&h.type==='track')p=h.t;else if(h&&h.type==='via')p=h.v||BD.vias.find(v=>Math.hypot(v.x-w[0],v.y-w[1])<=v.d/2+peTol());
+    if(!p){toast('지울 트랙이나 비아를 누르세요 (부품은 지우지 않습니다).');return;}const at=PCBEDIT.removePrim(BD,p);if(!at)return;
+    pePush({copper:true,undo:()=>PCBEDIT.restorePrim(BD,p,at),redo:()=>PCBEDIT.removePrim(BD,p)});peChanged(true);return;}
+  if(PE.tool==='via'&&!PE.route){const it=PCBEDIT.itemAt(BD,w[0],w[1],L,peTol())||PCBEDIT.itemAt(BD,w[0],w[1],L==='T'?'B':'T',peTol());const p=it&&it.type!=='pad'?it.at:peSnap(w);
+    const v=PCBEDIT.addVia(BD,p[0],p[1],it?it.net:null);pePush({copper:true,undo:()=>PCBEDIT.removePrim(BD,v),redo:()=>BD.vias.push(v)});peChanged(true);return;}
+  if(PE.tool==='route'){
+    const it=PCBEDIT.itemAt(BD,w[0],w[1],L,peTol());
+    if(!PE.route){const net=it?it.net:null;const p=it?it.at.slice():peSnap(w);PE.route={net,runs:[{layer:L,pts:[p]}],vias:[],w:peTrackWidth(net)};peStat();draw2D();return;}
+    const R=PE.route,run=R.runs[R.runs.length-1];const last=run.pts[run.pts.length-1];
+    const end=it&&(it.net===R.net||!R.net)?it.at.slice():peSnap(w);
+    const seg=PCBEDIT.posture(last,end,PE.diag).slice(1);seg.forEach(q=>run.pts.push(q));if(!R.net&&it&&it.net)R.net=it.net;
+    if(it&&(it.net===R.net)&&!(Math.abs(end[0]-R.runs[0].pts[0][0])<1e-6&&Math.abs(end[1]-R.runs[0].pts[0][1])<1e-6))peRouteFinish();
+    draw2D();return;}
+}
+function peDbl(){if(PE.tool==='route'&&PE.route){peRouteFinish();return true;}return false;}
+function peRouteVia(){const R=PE.route;if(!R)return;const run=R.runs[R.runs.length-1];const p=run.pts[run.pts.length-1];R.vias.push({x:p[0],y:p[1]});const nl=run.layer==='T'?'B':'T';R.runs.push({layer:nl,pts:[p.slice()]});PE.layer=nl;toast(`비아를 넣고 ${nl==='T'?'상단':'하단'} 층으로 바꿨습니다.`);peBar();draw2D();}
+function peRouteFinish(){
+  const R=PE.route;PE.route=null;if(!R)return;const added=[],vias=[];
+  R.runs.forEach(r=>{const pts=r.pts.filter((p,i)=>i===0||Math.hypot(p[0]-r.pts[i-1][0],p[1]-r.pts[i-1][1])>1e-6);if(pts.length>=2)added.push(PCBEDIT.addTrack(BD,r.layer,R.net,R.w,pts));});
+  R.vias.forEach(v=>{if(added.length)vias.push(PCBEDIT.addVia(BD,v.x,v.y,R.net));});
+  if(!added.length){draw2D();return;}
+  pePush({copper:true,undo:()=>{added.forEach(p=>PCBEDIT.removePrim(BD,p));vias.forEach(v=>PCBEDIT.removePrim(BD,v));},redo:()=>{added.forEach(p=>BD.layers[(p._L||'T')+'.cu'].push(p));vias.forEach(v=>BD.vias.push(v));}});
+  added.forEach(p=>{p._L=BD.layers['T.cu'].includes(p)?'T':'B';});
+  peChanged(true);
+}
+/* drawing (inside the 2D world transform) */
+function peOverlay(ctx,side){
+  const lw=Math.max(0.05,1.2/V2.s);
+  if(PE.showRats){ctx.save();ctx.strokeStyle='rgba(255,236,150,.9)';ctx.lineWidth=lw;ctx.setLineDash([lw*4,lw*3]);ctx.beginPath();PE.rats.forEach(r=>{ctx.moveTo(r.a[0],r.a[1]);ctx.lineTo(r.b[0],r.b[1]);});ctx.stroke();ctx.restore();}
+  ctx.save();ctx.strokeStyle='#ff4d4d';ctx.lineWidth=lw*1.5;PE.drc.forEach(d=>{const r=Math.max(0.5,6/V2.s);ctx.beginPath();ctx.arc(d.at[0],d.at[1],r,0,TAU);ctx.stroke();});ctx.restore();
+  // grid dots when zoomed in
+  if(V2.s*PE.grid>9){ctx.save();ctx.fillStyle='rgba(255,255,255,.18)';const g=PE.grid,x0=Math.max(0,Math.floor(((-V2.ox)/V2.s)/g)*g),x1=Math.min(BD.W,(vw-V2.ox)/V2.s),y0=Math.max(0,BD.H-(vh-V2.oy)/V2.s),y1=Math.min(BD.H,BD.H+V2.oy/V2.s);const r=Math.max(0.02,0.8/V2.s);
+    const xa=side==='B'?0:x0,xb=side==='B'?BD.W:x1;for(let x=Math.ceil(xa/g)*g;x<=xb;x+=g)for(let y=Math.ceil(y0/g)*g;y<=y1;y+=g)ctx.fillRect(x-r,y-r,2*r,2*r);ctx.restore();}
+  const R=PE.route;
+  if(R){const col=l=>l==='T'?'rgba(255,120,60,.85)':'rgba(80,150,255,.85)';ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+    R.runs.forEach(r=>{ctx.strokeStyle=col(r.layer);ctx.lineWidth=R.w;ctx.beginPath();r.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();});
+    const run=R.runs[R.runs.length-1];if(PE.cursor){const last=run.pts[run.pts.length-1];const it=PCBEDIT.itemAt(BD,PE.cursor[0],PE.cursor[1],run.layer,peTol());const end=it&&(it.net===R.net||!R.net)?it.at:peSnap(PE.cursor);
+      ctx.globalAlpha=0.6;ctx.strokeStyle=col(run.layer);ctx.beginPath();PCBEDIT.posture(last,end,PE.diag).forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();}
+    R.vias.forEach(v=>{ctx.fillStyle='#d8d8d8';ctx.beginPath();ctx.arc(v.x,v.y,0.3,0,TAU);ctx.fill();});ctx.restore();}
+  if(PE.cursor&&PE.tool!=='sel'){const p=peSnap(PE.cursor);ctx.save();ctx.strokeStyle='#ffd23f';ctx.lineWidth=lw;const k=Math.max(0.6,8/V2.s);ctx.beginPath();ctx.moveTo(p[0]-k,p[1]);ctx.lineTo(p[0]+k,p[1]);ctx.moveTo(p[0],p[1]-k);ctx.lineTo(p[0],p[1]+k);ctx.stroke();ctx.restore();}
+}
+/* toolbar */
+function peBar(){
+  let el=$('#peBar');if(!el){el=document.createElement('div');el.id='peBar';el.className='ov pe-bar';$('#vp').appendChild(el);
+    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.ptool)peSetTool(b.dataset.ptool);else if(b.dataset.pact)peAction(b.dataset.pact);else if(b.id==='peDrc')peDrcList();else if(b.id==='peRats'){PE.showRats=!PE.showRats;peBar();draw2D();}else if(b.id==='peSave')peSave();});
+    el.addEventListener('change',e=>{if(e.target.id==='peGrid')PE.grid=+e.target.value;if(e.target.id==='peW'){PE.w=+e.target.value;if(PE.route)PE.route.w=peTrackWidth(PE.route.net);}draw2D();});}
+  const show=PE.on&&(S.view==='T'||S.view==='B');el.hidden=!show;
+  const btn=$('#ctl [data-pe]');if(btn){btn.classList.toggle('on',PE.on);btn.textContent=PE.on?'편집 끝내기':'PCB 편집';}
+  if(!show)return;
+  el.innerHTML=`<div class="setools" role="toolbar" aria-label="PCB 편집 도구">${PE_TOOLS.map(([t,l,k])=>`<button class="pill vbtn${PE.tool===t?' on':''}" data-ptool="${t}" title="${l} (${k})">${l}<kbd>${k}</kbd></button>`).join('')}
+    ${PE_ACTS.map(([a,l,k])=>`<button class="pill vbtn" data-pact="${a}" title="${l} (${k})"${(a==='undo'&&!PE.undo.length)||(a==='redo'&&!PE.redo.length)?' disabled':''}>${l}<kbd>${k}</kbd></button>`).join('')}</div>
+    <div class="setools"><label class="pill vbtn">격자 <select id="peGrid" aria-label="격자">${PE_GRIDS.map(g=>`<option value="${g}"${g===PE.grid?' selected':''}>${g} mm</option>`).join('')}</select></label>
+    <label class="pill vbtn">트랙 폭 <select id="peW" aria-label="트랙 폭">${PE_WIDTHS.map(w=>`<option value="${w}"${w===PE.w?' selected':''}>${w?w+' mm':'넷 종류별'}</option>`).join('')}</select></label>
+    <span class="pill vbtn" title="배선할 층 (비아를 넣으면 바뀜)">층 <b class="${PE.layer==='T'?'c-top':'c-bot'}">${PE.layer==='T'?'상단 F.Cu':'하단 B.Cu'}</b></span>
+    <button class="pill vbtn${PE.showRats?' on':''}" id="peRats" title="아직 동박으로 이어지지 않은 연결">래츠네스트 <b>${PE.rats.length}</b></button>
+    <button class="pill vbtn${PE.drc.length?' warn':''}" id="peDrc" title="간격·단락·부품 겹침·보드 가장자리 검사">DRC <b>${PE.drc.length}</b></button>
+    <button class="pill vbtn" id="peSave" title="KiCad 프로젝트(.kicad_pcb + 회로도)로 저장">KiCad로 저장</button></div>
+    <span class="pill hint2" id="peStat"></span>`;
+  peStat();
+}
+function peStat(){const el=$('#peStat');if(!el)return;const c=S.selRef&&BD.byRef[S.selRef];
+  const t={sel:c?`${c.ref} · X ${c.x.toFixed(2)} Y ${c.y.toFixed(2)} mm · ${Math.round(c.rot||0)}° · ${c.side==='T'?'상단':'하단'} — 끌어서 이동 · 방향키 ${PE.grid} mm (Shift ×10) · R 회전 · F 뒤집기`:'부품을 끌어서 옮기거나 클릭해 고른 뒤 방향키로 움직입니다.',
+    route:PE.route?`${PE.route.net||'(넷 없음)'} · ${PE.route.w} mm — 클릭으로 꺾기 · 같은 넷 패드에서 끝 · V 비아 · / 45° 방향 · Esc 끝`:'배선을 시작할 패드·트랙을 누르세요.',
+    via:'비아를 놓을 곳을 누르세요 (트랙 위면 그 넷).',del:'지울 트랙·비아를 누르세요.'}[PE.tool]||'';
+  el.textContent=t;const rb=$('#peRats b');if(rb)rb.textContent=PE.rats.length;const db=$('#peDrc b');if(db)db.textContent=PE.drc.length;}
+function peSetTool(t){if(PE.route&&t!=='route')peRouteFinish();PE.tool=t;if(t==='route'||t==='via')PE.layer=S.view==='B'?'B':'T';peBar();draw2D();}
+function peAction(a){const c=S.selRef&&BD.byRef[S.selRef];
+  if(a==='undo')return peUndo();if(a==='redo')return peRedo();
+  if(!c){toast('먼저 부품을 고르세요.');return;}
+  if(a==='rot')peRotate(c,90);else if(a==='flip')peFlip(c);}
+function peDrcList(){peRecalc(true);peBar();const d=PE.drc;if(!d.length){toast('DRC 문제 없음');return;}
+  const el=document.createElement('div');el.className='sedlg';el.innerHTML=`<div class="sedlg-in"><b>DRC ${d.length}건</b><ul class="sediff">${d.slice(0,120).map((x,i)=>`<li><button type="button" class="linkbtn" data-d="${i}">보기</button> ${esc(x.msg)}${x.refs&&x.refs.length?` <span class="cls">${esc(x.refs.join(', '))}</span>`:''}</li>`).join('')}</ul>
+    <p class="lead" style="margin:0">간격 ${PCBEDIT.DRC_DEF.clear} mm · 구멍 ${PCBEDIT.DRC_DEF.hole} mm · 가장자리 ${PCBEDIT.DRC_DEF.edge} mm 기준. 같은 부품의 패드끼리, 같은 넷끼리는 검사하지 않습니다.</p><div class="acts"><button class="btn sm" data-x>닫기</button></div></div>`;
+  $('#vp').appendChild(el);el.addEventListener('click',e=>{if(e.target===el||e.target.closest('[data-x]'))el.remove();const b=e.target.closest('[data-d]');if(b){const x=d[+b.dataset.d];V2.s=Math.max(V2.s,30);const sx=S.view==='B'?BD.W-x.at[0]:x.at[0];V2.ox=vw/2-sx*V2.s;V2.oy=vh/2-(BD.H-x.at[1])*V2.s;el.remove();draw2D();}});}
+async function peSave(){
+  const base=(BD.name||'board').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'')||'board';const date=new Date().toISOString().slice(0,10);
+  const z=new JSZip();z.file(base+'.kicad_pcb',PCBEDIT.toKicadPcb(BD,{title:BD.name,date}));
+  const sheets=BD.schSheets||(schData()&&schData().sheets);if(sheets){SCHEDIT.toKicad(sheets,{name:base,title:BD.name,board:BD,date}).forEach(f=>z.file(f.name,f.text));}
+  z.file(base+'.kicad_pro',JSON.stringify({meta:{filename:base+'.kicad_pro',version:1},board:{},schematic:{},sheets:[]},null,2));
+  const data=await z.generateAsync({type:'uint8array'});offerFile(base+'_kicad.zip',data,'application/zip');
+}
+// Pcbnew-like keys while editing in the TOP / BOTTOM view
+document.addEventListener('keydown',e=>{
+  if(!PE.on||!(S.view==='T'||S.view==='B')||S.sch==='full')return;if(e.target.matches('input,select,textarea'))return;
+  const k=e.key,ctl=e.ctrlKey||e.metaKey;let done=true;const c=S.selRef&&BD.byRef[S.selRef];
+  if(ctl&&(k==='z'||k==='Z')&&!e.shiftKey)peUndo();else if(ctl&&(k==='y'||k==='Y'||((k==='z'||k==='Z')&&e.shiftKey)))peRedo();
+  else if(ctl)done=false;
+  else if(k.startsWith('Arrow')){if(!c){done=false;}else{const st=PE.grid*(e.shiftKey?10:1);let dx=k==='ArrowLeft'?-st:k==='ArrowRight'?st:0,dy=k==='ArrowUp'?st:k==='ArrowDown'?-st:0;if(S.view==='B')dx=-dx;peNudge(c,dx,dy);}}
+  else if(k==='Escape'){if(PE.route){const R=PE.route;const n=R.runs.reduce((a,r)=>a+r.pts.length-1,0);if(n>0)peRouteFinish();else PE.route=null;}else if(PE.tool!=='sel')PE.tool='sel';else{S.selRef=null;refresh(true);}peBar();draw2D();}
+  else if(k==='Delete'||k==='Backspace'){if(PE.cursor){const t=PE.tool;PE.tool='del';peClick(PE.cursor);PE.tool=t;}}
+  else if(k==='r'||k==='R'){if(c)peRotate(c,e.shiftKey?-90:90);}
+  else if(k==='f'||k==='F'){if(c)peFlip(c);}
+  else if(k==='x'||k==='X')peSetTool('route');
+  else if(k==='v'||k==='V'){if(PE.route)peRouteVia();else peSetTool('via');}
+  else if(k==='/'){PE.diag=!PE.diag;draw2D();}
+  else done=false;
+  if(done){e.preventDefault();e.stopImmediatePropagation();}
+},true);
 
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));

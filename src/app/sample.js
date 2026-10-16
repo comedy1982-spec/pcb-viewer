@@ -56,7 +56,7 @@ const SAMPLE_SPEC=(function(){
   via('GND',[6.9,20.5],[6.8,16.8],[4.5,25.4],[4.5,14.6],[11,27.7],[18.3,35.2],[22,32.4],[37.2,23.6],[31.2,26.6],[46,10],[52.6,32.25],[52.6,27.75],
     [31.4,19.4],[32.6,19.4],[31.4,20.6],[32.6,20.6],[12,7],[20,7],[44,6.5],[52,7.5],[11,37.2],[50,37.2]);
   via('+3V3',[24.3,26.85],[40.8,34.2],[45,25.6],[48,13.4],[34.4,24.6],[28.4,17.3]);
-  via('CC1',[6.6,23.4]);via('FLASH_CS',[27.6,21.9]);via('FLASH_MISO',[28.7,20.25]);via('FLASH_MOSI',[15.8,18.095]);via('FLASH_CLK',[15.8,19.365]);
+  via('CC1',[6.6,23.4]);via('FLASH_CS',[27.6,21.9]);V.push({x:28.7,y:20.25,net:'FLASH_MISO',size:0.45,drill:0.2});via('FLASH_MOSI',[15.8,18.095]);via('FLASH_CLK',[15.8,19.365]);
   const C=(ref,value,footprint,side,x,y,rotation,mpn,description,pins,extra)=>Object.assign({ref,value,footprint,side,x,y,rotation,mpn,description,pins},extra||{});
   return{
     _source:'예제',

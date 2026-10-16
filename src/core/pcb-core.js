@@ -154,7 +154,7 @@ function parseKicad(text){
     c.ref=props.Reference||'';c.val=props.Value||'';
     const dsc=ch(fp,'descr');c.desc=props.Description||'';c.fpDesc=dsc?dsc[1]:'';
     for(const k in props){if(/^(mpn|mfr.?part|manufacturer.?part|part.?number|mfr.?pn|lcsc)/i.test(k)&&props[k]){c.mpn=props[k];break;}}
-    const fab=[],crt=[];
+    const fab=[],crt=[];const lay0={};Object.keys(B.layers).forEach(k=>{lay0[k]=B.layers[k].length;});const dr0=B.drills.length;
     for(let i=1;i<fp.length;i++){const it=fp[i];if(!Array.isArray(it))continue;const h=it[0];
       if(/^fp_(line|rect|circle|arc|poly|curve)$/.test(h)){
         const r=gfx(it);if(!r)continue;
@@ -192,6 +192,7 @@ function parseKicad(text){
       }
       c.pads.push(pad);
     });
+    Object.keys(B.layers).forEach(k=>{B.layers[k].slice(lay0[k]||0).forEach(p=>{if(p.t!=='pad')p.own=c;});});B.drills.slice(dr0).forEach(d=>{d.own=c;});
     let bb=bboxOf(fab);let fromFab=!!bb;
     if(!bb){bb=bboxOf(crt);if(bb){bb=[bb[0]+0.25,bb[1]+0.25,bb[2]-0.25,bb[3]-0.25];}}
     if(!bb)bb=bboxOf(padLocal);
@@ -511,7 +512,7 @@ function fromSpec(spec){
     padsL.forEach(p=>{const[wx,wy]=xf(+p.x,+p.y);const n=''+(p.n!=null?p.n:p.number);const round=p.round||p.shape==='circle';
       const pad={t:'pad',x:wx,y:wy,w:+p.w||+p.d||1,h:+p.h||+p.d||1,ang:rot,shape:round?(n==='1'&&p.drill?'rect':'circle'):(p.shape||'rect'),net:(cs.pins&&cs.pins[n])||p.net||null,ref:c.ref,n,drill:p.drill||null,side:p.drill?'both':side};
       if(pad.shape==='rect'&&!p.drill)pad.rr=Math.min(0.1,Math.min(pad.w,pad.h)*0.25);
-      if(c.pn&&c.pn[n])pad.fn=c.pn[n];c.pads.push(pad);if(p.drill)B.drills.push({x:wx,y:wy,d:+p.drill,plated:true});});
+      if(c.pn&&c.pn[n])pad.fn=c.pn[n];c.pads.push(pad);if(p.drill)B.drills.push({x:wx,y:wy,d:+p.drill,plated:true,own:c});});
     let bw,bh,ht;if(cs.size){[bw,bh,ht]=cs.size;}else if(lib){[bw,bh,ht]=lib.body;}else{const ps=pkgSize(cs.footprint)||[2,2,1];[bw,bh,ht]=ps;}
     c.body={cx:x,cy:y,w:+bw,h:+bh,ang:rot,ht:+ht};
     if(lib){c.f=lib;c.kind=lib.kind;}
@@ -524,7 +525,7 @@ function fromSpec(spec){
   (spec.vias||[]).forEach(v=>B.vias.push({x:+v.x,y:+v.y,d:+(v.size||0.6),drill:+(v.drill||0.3),net:v.net||null}));
   // silkscreen
   B.comps.forEach(c=>{
-    const S=B.layers[c.side+'.silk'],f=c.f,mir=c.side==='B';
+    const S=B.layers[c.side+'.silk'],f=c.f,mir=c.side==='B';const s0=S.length;
     const xf=(lx,ly)=>{const xx=mir?-lx:lx,a=c.rot*D2R;return[c.x+xx*Math.cos(a)-ly*Math.sin(a),c.y+xx*Math.sin(a)+ly*Math.cos(a)];};
     const kind=c.kind||'box';
     if(f&&kind==='hdr'){const[bw,bh]=f.body;const r=[[-bw/2,-bh/2],[bw/2,-bh/2],[bw/2,bh/2],[-bw/2,bh/2],[-bw/2,-bh/2]].map(p=>xf(p[0],p[1]));S.push({t:'path',pts:r,w:0.13});S.push({t:'seg',a:xf(-bw/2,bh/2-2.54),b:xf(bw/2,bh/2-2.54),w:0.13});}
@@ -538,6 +539,7 @@ function fromSpec(spec){
     const big=kind==='ic'||kind==='usb'||kind==='btn';const size=big?0.85:0.65;
     let lp=c.lab;if(!lp){const ys=c.pads.map(p=>p.y+Math.max(p.w,p.h)/2).concat([c.y+Math.max(c.body.w,c.body.h)/2]);lp=[c.x,Math.max(...ys)+0.35+size/2];}
     S.push({t:'text',s:c.ref,x:lp[0],y:lp[1],size,ang:0,mir,align:'center',bold:true});
+    S.slice(s0).forEach(p=>{p.own=c;});
   });
   (spec.texts||[]).forEach(t=>B.layers[sideOf(t.side)+'.silk'].push({t:'text',s:t.text,x:+t.x,y:+t.y,size:+t.size||1,ang:+t.angle||0,mir:sideOf(t.side)==='B',align:t.align||'center',bold:true}));
   B.hasNets=true;

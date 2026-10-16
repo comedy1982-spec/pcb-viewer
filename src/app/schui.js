@@ -323,7 +323,6 @@ function seBoardChanged(){
 }
 async function seExport(){
   const files=SCHEDIT.toKicad(seSheets()||schData().sheets,{name:BD.name||'board',title:BD.name,board:BD,date:new Date().toISOString().slice(0,10)});
-  if(files.length===1)return offerFile(files[0].name,files[0].text,'text/plain');
   const z=new JSZip();files.forEach(f=>z.file(f.name,f.text));const blob=await z.generateAsync({type:'uint8array'});
   offerFile(files[0].name.replace(/\.kicad_sch$/,'')+'_schematic.zip',blob,'application/zip');
 }

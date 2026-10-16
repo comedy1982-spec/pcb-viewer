@@ -467,4 +467,11 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .sepal label{display:flex;gap:6px;align-items:center;font-size:13px}
 .sediff{margin:0;padding-left:18px;max-height:280px;overflow:auto;font-size:12.5px;display:flex;flex-direction:column;gap:2px}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit}
+/* PCB editor */
+.pe-bar{left:12px;top:52px;right:200px;flex-direction:column;align-items:flex-start;gap:6px;display:flex}
+.pe-bar[hidden]{display:none}
+.pe-bar select{font:inherit;font-size:12px;border:0;background:transparent;color:inherit}
+.pe-bar .c-top{color:#e2703a}.pe-bar .c-bot{color:#4f8fe8}
+#cv2.moving{cursor:move}
+@media (max-width:900px){.pe-bar{right:12px;top:96px}}
 </style>
