@@ -75,7 +75,8 @@ function paintSchV(V){
     if(l.kind==='local'){const w=tx(ctx,l.s,l.p[0]+(vert?0:right?0.3:-0.3)+(vert?-0.3:0),l.p[1]+(vert?(r===90?-0.3:0.3):-0.3),sz,vert?90:0,right?'left':'right','bottom',h);l._w=w;}
     else{ctx.save();ctx.translate(l.p[0],l.p[1]);if(vert)ctx.rotate(-Math.PI/2);const dirR=vert?(r===90):right;const k=sz*1.35/20;ctx.font='600 20px "IBM Plex Sans KR", system-ui, sans-serif';const w=ctx.measureText(l.s).width*k;const H=sz*1.15,pad=sz*0.5,tip=H/2;
       const sg=dirR?1:-1;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(sg*tip,-H/2);ctx.lineTo(sg*(tip+w+pad*2),-H/2);ctx.lineTo(sg*(tip+w+pad*2),H/2);ctx.lineTo(sg*tip,H/2);ctx.closePath();ctx.lineWidth=lw(0.15);ctx.stroke();
-      ctx.scale(k,k);ctx.textAlign=dirR?'left':'right';ctx.textBaseline='middle';ctx.fillText(l.s,sg*(tip+pad)/k,0);ctx.restore();l._w=w+tip+pad*2;}});
+      ctx.scale(k,k);ctx.textAlign=dirR?'left':'right';ctx.textBaseline='middle';ctx.fillText(l.s,sg*(tip+pad)/k,0);let xw=0;
+      if(l.xr){ctx.font='500 16px "IBM Plex Sans KR", system-ui, sans-serif';const t='['+l.xr+']';xw=ctx.measureText(t).width*k+0.6;ctx.fillText(t,sg*(tip+w+pad*2+0.6)/k,0);}ctx.restore();l._w=w+tip+pad*2+xw;}});
   // texts
   ctx.fillStyle=C.text;sh.texts.forEach(t=>{String(t.s).split('\n').forEach((line,i)=>tx(ctx,line,t.p[0],t.p[1]+i*t.fx.size*1.5,t.fx.size,t.rot,t.fx.h==='center'?'left':t.fx.h,'bottom'));});
 }
