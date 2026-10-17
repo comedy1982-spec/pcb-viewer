@@ -303,6 +303,17 @@ function build3D(c){
     inner.add(box(bw,bh,ht*0.57,m.btnBase,0,0,0),box(bw*0.95,bh*0.95,0.25,m.steel,0,0,ht*0.57));
     const r=Math.min(bw,bh)*0.29;const cy=new THREE.Mesh(new THREE.CylinderGeometry(r,r,ht*0.37,32),m.act);cy.rotation.x=Math.PI/2;cy.position.z=ht*0.64+ht*0.185;inner.add(cy);
     if(f)f.pads.forEach(p=>inner.add(box(1.2,0.7,0.12,m.tin,p.x,p.y,0)));
+  }else if(k==='sealhdr'&&f&&f.seal){
+    // sealed right-angle header: flange, hollow shroud with the pin field, latch ramp, pins bent down behind the flange, board-lock pegs
+    const q=f.seal,sh=q.shroud,wt=1.1,x0=sh.x0,x1=q.flangeX,L=x1-x0,zc=(sh.z0+sh.z1)/2;
+    inner.add(box(q.flangeT,2*q.flange.y,q.flange.z1-q.flange.z0,m.plastic,x1+q.flangeT/2,0,q.flange.z0));
+    inner.add(box(3.4,2*q.rear.y,q.rear.z1,m.plastic,x1+q.flangeT+1.7,0,0));
+    inner.add(box(L,2*sh.y,wt,m.plastic,x0+L/2,0,sh.z0),box(L,2*sh.y,wt,m.plastic,x0+L/2,0,sh.z1-wt),box(L,wt,sh.z1-sh.z0,m.plastic,x0+L/2,sh.y-wt/2,sh.z0),box(L,wt,sh.z1-sh.z0,m.plastic,x0+L/2,-sh.y+wt/2,sh.z0));
+    inner.add(box(0.3,2*sh.y-2*wt,sh.z1-sh.z0-2*wt,m.dark||m.black,x1-0.15,0,sh.z0+wt));
+    inner.add(box(4,4.4,1.0,m.plastic,x0+3.2,0,sh.z1),box(1.2,4.4,1.8,m.plastic,x0+1.4,0,sh.z1));
+    f.pads.forEach(p=>{if(!/^\d+$/.test(p.n)){inner.add(box(1.4,1.4,2.6,m.plastic,p.x,p.y,-2.4));return;}
+      const zr=+p.n<=6?zc-1.25:zc+1.25,xb=x1+q.flangeT+3.4;
+      inner.add(box(x1-(x0+1.6),0.64,0.64,m.gold,(x0+1.6+x1)/2,p.y,zr-0.32),box(p.x-xb+0.32,0.64,0.64,m.tin,(xb+p.x)/2,p.y,zr-0.32),box(0.64,0.64,zr+2.6,m.tin,p.x,p.y,-2.6));});
   }else if(k==='hdr'){inner.add(box(bw,bh,ht,m.plastic,0,0,0));f.pads.forEach(p=>inner.add(box(0.64,0.64,11.5,m.gold,p.x,p.y,-3.0)));}
   else if(k==='conn'){inner.add(box(bw,bh,ht,/USB/i.test(c.fp)?m.steel:m.conn,0,0,0));}
   else if(k==='tht2'){

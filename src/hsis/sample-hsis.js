@@ -112,7 +112,7 @@ const SAMPLE_HSIS_TC364=(function(){
     rows:[
       r('HSIS-301','VEXT','전원','23, 42, 44, 52, 69, 78, 83, 125, 126','','VEXT / VDDP3 / VDDM / VAREF1 / VEVRSB','PWR','전원','','','','+3V3','U6.2 (LDO 출력)','3.3 V ±5 %, 단일 공급','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인','코어 VDD는 내부 EVR13'),
       r('HSIS-302','VDD','전원','10, 22, 72, 79, 99, 127','','VDD (EVR13 출력)','PWR','전원','','','','VDD','C5.2','1.25 V 내부 생성','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인',''),
-      r('HSIS-303','VSS','접지','41, 43, 80, 145','','VSS / VSSM / VAGND1','PWR','접지','','','','GND','J1.2','','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인','노출 패드(145) 포함'),
+      r('HSIS-303','VSS','접지','41, 43, 80, 145','','VSS / VSSM / VAGND1','PWR','접지','','','','GND','J1.5','','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인','노출 패드(145) 포함'),
       r('HSIS-304','PORST','리셋·부트','97','PORST','PORST','SCU','입력','','Low','외부 풀업 10kΩ','PORST','R8.1','','','','','','','SYS-REQ-302','TC-RST-01','QM','승인',''),
       r('HSIS-305','XTAL1','클럭','81','XTAL1','XTAL1','SCU','입력','','','','XTAL1','Y1.1','20 MHz','','','Mcu','McuClockSettingConfig_0','','SYS-REQ-303','TC-CLK-01','QM','승인',''),
       r('HSIS-306','XTAL2','클럭','82','XTAL2','XTAL2','SCU','출력','','','','XTAL2','Y1.3','20 MHz','','','Mcu','McuClockSettingConfig_0','','SYS-REQ-303','TC-CLK-01','QM','승인',''),
@@ -123,7 +123,7 @@ const SAMPLE_HSIS_TC364=(function(){
       en('HSIS-313','EN_U','U3.22','DRV8313 EN3'),en('HSIS-314','EN_V','U3.24','DRV8313 EN2'),en('HSIS-315','EN_W','U3.26','DRV8313 EN1'),
       r('HSIS-316','DRV_NSLEEP','디지털 출력','','','GPIO','Dio','출력','Low','High','없음','DRV_NSLEEP','U3.17','','','','Dio','DioConf_DioChannel_DRV_NSLEEP','Dio_WriteChannel','SYS-REQ-322','TC-INV-03','ASIL B','초안','Low = 슬립 (내부 풀다운)'),
       r('HSIS-317','DRV_NFAULT','디지털 입력','','','ERU 외부 인터럽트 (하강 에지)','ERU','입력(오픈 드레인)','','Low','외부 풀업 10kΩ','NFAULT','U3.18','','','','Icu','IcuChannel_DRV_NFAULT','Icu_EnableNotification','SYS-REQ-322','TC-INV-03','ASIL B','초안','과전류·과열·저전압'),
-      hall('HSIS-320','HALL_A','J3.4'),hall('HSIS-321','HALL_B','J3.5'),hall('HSIS-322','HALL_C','J3.6'),
+      hall('HSIS-320','HALL_A','J1.1'),hall('HSIS-321','HALL_B','J1.2'),hall('HSIS-322','HALL_C','J1.3'),
       r('HSIS-330','FLASH_CS','통신','','','QSPI SLSO (CS)','QSPI','출력','High','Low','없음','FLASH_CS','U5.1','','','','Spi','SpiExternalDevice_Flash','Spi_AsyncTransmit','SYS-REQ-340','TC-FLASH-01','QM','초안',''),
       r('HSIS-331','FLASH_SCLK','통신','','','QSPI SCLK','QSPI','출력','','','','FLASH_SCLK','U5.6','','','20 MHz','Spi','SpiExternalDevice_Flash','Spi_AsyncTransmit','SYS-REQ-340','TC-FLASH-01','QM','초안',''),
       r('HSIS-332','FLASH_MOSI','통신','','','QSPI MTSR','QSPI','출력','','','','FLASH_MOSI','U5.5','','','20 MHz','Spi','SpiExternalDevice_Flash','','SYS-REQ-340','TC-FLASH-01','QM','초안',''),

@@ -79,11 +79,12 @@ test('large boards split into function pages with off-page labels', () => {
   assert.ok(d.sheets.some(s => /미사용 핀/.test(s.name)));
   assert.equal(mixedGroups(d, B3).length, 0);
   const gl = d.sheets.flatMap((s, i) => s.labels.filter(l => l.kind === 'global').map(l => ({ l, i })));
-  assert.ok(gl.length >= 2);
+  // rails cross pages through power symbols; signal nets that leave a page get global labels (none left once the ECU connector sits with its circuits)
+  assert.ok(d.sheets.slice(0, 2).every(sh => sh.symbols.some(sy => sy.ref === '#PWR')));
   // the page numbers on an off-page label point at pages that really carry the net
   gl.forEach(({ l, i }) => l.xr.split(',').forEach(pg => { const sh = d.sheets[+pg - 1]; assert.ok(sh && +pg - 1 !== i); assert.ok(sh.labels.some(x => x.s === l.s) || sh.symbols.some(sy => sy.pins.some(p => p.g && p.g.net === l.s)), l.s); }));
   // the regulator chain is wired on the power page: J1 → U2 → U6
   const pw = d.sheets[0];
-  assert.ok(['J1', 'U2', 'U6'].every(r => pw.symbols.some(s => s.ref === r)));
+  assert.ok(['U2', 'U6'].every(r => pw.symbols.some(s => s.ref === r)));
   assert.ok(pw.wires.length >= 5);
 });

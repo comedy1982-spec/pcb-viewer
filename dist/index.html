@@ -1423,6 +1423,14 @@ const FP={};
   FP['CP-SMD-10x10']={kind:'elcap',body:[10.3,10.3,10.2],pads:[{n:'1',x:-4.35,y:0,w:4.1,h:2.0},{n:'2',x:4.35,y:0,w:4.1,h:2.0}]};
   FP['1210']={kind:'chip',body:[3.2,2.5,1.6],pads:[{n:'1',x:-1.5,y:0,w:1.2,h:2.7},{n:'2',x:1.5,y:0,w:1.2,h:2.7}]};
   // shielded power inductor 5.0 × 5.0 mm (e.g. Bourns SRN5040)
+  /* JAE MX23A12NF1 — sealed automotive 2 × 6 header, 2.5 mm pitch, right angle, mating face to local −x (harness side MX23A12SF1).
+     Body origin = bounding-box centre; the shroud passes through the housing wall, the flange (front face at x = −1.65) seals against
+     its inner face, pins and board-lock pegs sit behind. Outline values follow the JAE table (30.5 / 26.5 / 12.5 / 23.5 / 18.3 mm). */
+  FP['MX23A-12-RA']={kind:'sealhdr',body:[23.5,30.5,18.3],pads:Array.from({length:12},(_,i)=>({n:''+(i+1),x:i<6?6.0:8.5,y:6.25-2.5*(i%6),w:1.6,h:1.6,round:true,drill:1.0}))
+    .concat([{n:'P1',x:3.0,y:12.0,w:2.2,h:2.2,round:true,drill:1.6},{n:'P2',x:3.0,y:-12.0,w:2.2,h:2.2,round:true,drill:1.6}]),
+    over:11.45,face:[-1,0],
+    seal:{mpn:'MX23A12NF1',mate:'MX23A12SF1',flangeX:-1.65,flangeT:2.0,flange:{y:15.25,z0:0,z1:18.3},shroud:{x0:-11.75,y:13.25,z0:2.9,z1:15.4},rear:{x1:11.75,y:14.0,z1:16.0},
+      plug:{len:46,w:29.1,h:22.2,keep:70},rated:'3 A/핀 (85 °C) · −40…125 °C · 결합부 실 링 + 전선 그로밋 (하네스 측)'}};
   FP['IND-5x5']={kind:'chip',body:[5.0,5.0,4.0],pads:[{n:'1',x:-1.95,y:0,w:1.6,h:4.2},{n:'2',x:1.95,y:0,w:1.6,h:4.2}]};
   // board-mount 3-phase BLDC motor with 8-pin lead row (U V W H1 H2 H3 VCC GND)
   FP['BLDC-2418']={kind:'motor',body:[30,24,23],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:-19,y:8.75-2.5*i,w:2.0,h:2.0,round:true,drill:1.0}))};
@@ -1466,6 +1474,8 @@ function fromSpec(spec){
     const xf=(lx,ly)=>{const xx=mir?-lx:lx,a=c.rot*D2R;return[c.x+xx*Math.cos(a)-ly*Math.sin(a),c.y+xx*Math.sin(a)+ly*Math.cos(a)];};
     const kind=c.kind||'box';
     if(f&&kind==='hdr'){const[bw,bh]=f.body;const r=[[-bw/2,-bh/2],[bw/2,-bh/2],[bw/2,bh/2],[-bw/2,bh/2],[-bw/2,-bh/2]].map(p=>xf(p[0],p[1]));S.push({t:'path',pts:r,w:0.13});S.push({t:'seg',a:xf(-bw/2,bh/2-2.54),b:xf(bw/2,bh/2-2.54),w:0.13});}
+    else if(f&&kind==='sealhdr'){const q=f.seal,x0=q.flangeX,x1=q.rear.x1,y=q.flange.y;S.push({t:'path',pts:[[x0,-y],[x1,-y],[x1,y],[x0,y],[x0,-y]].map(p=>xf(p[0],p[1])),w:0.13},{t:'seg',a:xf(x0+q.flangeT,-y),b:xf(x0+q.flangeT,y),w:0.13});
+      const p1=f.pads[0];S.push({t:'path',pts:[[p1.x+1.3,p1.y+0.8],[p1.x+1.3,p1.y-0.8],[p1.x+2.2,p1.y],[p1.x+1.3,p1.y+0.8]].map(p=>xf(p[0],p[1])),w:0.13});}
     else if(f&&kind==='elcap'){const[bw,bh]=f.body,x0=-bw/2-0.15,y0=-bh/2-0.15,x1=bw/2+0.15,y1=bh/2+0.15,ch=bw*0.28,g=1.25;
       S.push({t:'path',pts:[[x0+ch,y0],[x1,y0],[x1,-g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x1,g],[x1,y1],[x0+ch,y1],[x0,y1-ch],[x0,g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x0,-g],[x0,y0+ch],[x0+ch,y0]].map(p=>xf(p[0],p[1])),w:0.13});
       const pl=[x0-0.9,y0+0.9];S.push({t:'seg',a:xf(pl[0]-0.5,pl[1]),b:xf(pl[0]+0.5,pl[1]),w:0.15},{t:'seg',a:xf(pl[0],pl[1]-0.5),b:xf(pl[0],pl[1]+0.5),w:0.15});}
@@ -3678,31 +3688,31 @@ const SAMPLE_BLDC=(function(){
 </script>
 <script>
 /* AURIX-364 INV — Infineon TC364DP (TQFP-144) with a DRV8313 3-phase driver, TLE9251V CAN FD transceiver, W25Q32 QSPI flash,
-   hall/motor connector, debug UART and battery monitor. Parts are placed and power is wired, but most MCU signal pins are still
+   one sealed ECU connector (JAE MX23A12NF1, 2 × 6, 2.5 mm: 12 V, CAN, motor phases, hall sensors), debug UART and battery monitor. Parts are placed and power is wired, but most MCU signal pins are still
    unassigned: the HSIS pin recommender proposes MCU pins (ALT functions from the TC36x data sheet) for them. */
 const SAMPLE_TC364=(function(){
   const T=[],V=[];
   const tr=(layer,net,width,...points)=>T.push({layer:layer==='T'?'top':'bottom',net,width,points});
   const via=(net,...pts)=>pts.forEach(p=>V.push({x:p[0],y:p[1],net,size:0.8,drill:0.4}));
-  // 12 V → 5 V (U2) → 3.3 V (U6)
-  tr('T','+12V',0.8,'J1.1',[14,21.27],[14,13],[24.3,13],'U2.3');tr('T','+12V',0.6,[14,14.8],'C1.1');
+  // 12 V from the ECU connector J1 (MX23A pin 12) → 5 V (U2) → 3.3 V (U6)
+  tr('T','+12V',0.8,'J1.12',[9.15,57.5],[14,52.65],[14,13],[24.3,13],'U2.3');tr('T','+12V',0.6,[14,14.8],'C1.1');
   tr('T','+5V',0.8,'U2.4',[30,23.15],[30,13],[40.3,13],'U6.3');tr('T','+5V',0.5,[30,16.8],'C2.2');
   tr('T','+3V3',0.8,'U6.4',[46,23.15]);tr('T','+3V3',0.5,[44.4,23.15],'C3.2');
-  // DRV8313 → motor connector (OUT1 → W, OUT2 → V, OUT3 → U), charge pump, V3P3 ties, nFAULT pull-up
-  tr('T','PH_W',0.4,'U3.5',[51.625,82.89],'J3.1');tr('T','PH_V',0.4,'U3.8',[49.675,80.35],'J3.2');tr('T','PH_U',0.4,'U3.9',[49.025,78.2],[21.6,78.2],'J3.3');
+  // DRV8313 → ECU connector rear row (OUT1 → W pin 7, OUT2 → V pin 8, OUT3 → U pin 9), charge pump, V3P3 ties, nFAULT pull-up
+  tr('T','PH_W',0.4,'U3.5',[51.625,82.89],[19.79,82.89],'J1.7');tr('T','PH_V',0.4,'U3.8',[49.675,80.35],[19.75,80.35],'J1.8');tr('T','PH_U',0.4,'U3.9',[49.025,78.2],[20.1,78.2],'J1.9');
   tr('T','DRV_CPL',0.25,'U3.1',[54.225,78],[56,78],'C8.1');tr('T','DRV_CPH',0.25,'U3.2',[53.575,81.6],[56,81.6],'C8.2');tr('T','DRV_VCP',0.25,'U3.3',[52.925,83],[59,83],'C9.2');
   tr('T','DRV_V3P3',0.25,'U3.15',[45.775,70],[46.425,70],'U3.16');tr('T','DRV_V3P3',0.25,[45.775,70],'C10.2');
   tr('T','NFAULT',0.25,'R10.2','U3.18');
   // VM bulk: aluminium electrolytic C13 tied to the 22 µF MLCC C12 (+12V) with its own ground vias
   tr('T','+12V',0.8,'C13.1',[64,82],[64,87],'C12.2');tr('T','GND',0.8,'C13.2',[79.4,82]);via('GND',[79.4,81],[79.4,83]);
-  // CAN bus to the connector
-  tr('T','CANH',0.3,'U4.7',[94,70.635],[94,73.81],'J2.1');tr('T','CANL',0.3,'U4.6',[96,69.365],[96,71.27],'J2.2');
+  // CAN bus: transceiver next to the connector (pins 10 CANL / 11 CANH)
+  tr('T','CANL',0.3,'J1.10',[19.2,64.75],[19.81,64.14],'U4.6');tr('T','CANH',0.3,'J1.11',[19.2,62.25],[19.81,62.87],'U4.7');
   // battery monitor divider + filter, status LED
   tr('T','VBAT_MON',0.25,'R5.2','R6.2');tr('T','VBAT_MON',0.25,'R5.2',[66,29],'C11.1');
   tr('T','LED_A',0.25,'R7.1','D2.2');
   // ground stubs to the bottom pour
-  [['J1.2',[11,18.73]],['U2.1',[19.7,14.6]],['U6.1',[35.7,14.6]],['C1.2',[17,16.4]],['C2.1',[27.4,19.6]],['C3.1',[42.8,19.3]],['C10.1',[44,65.6]],['R6.1',[70,23.5]],['C11.2',[70.4,30.2]],['D2.1',[100,19.6]],
-   ['U4.2',[83.5,70.635]],['J2.3',[103,68.73]],['J3.8',[23,65.11]],['J4.3',[113,43.73]],['Y1.2',[88.6,38.6]],['Y1.4',[83.4,42.4]],['C4.1',[55.2,40]],['C5.1',[66,63.6]],['C6.1',[84.4,46.5]],['C7.1',[75.6,29.4]],['C12.1',[56.5,87]]]
+  [['J1.5',[4.6,62.25]],['J1.6',[4.6,59.75]],['U2.1',[19.7,14.6]],['U6.1',[35.7,14.6]],['C1.2',[17,16.4]],['C2.1',[27.4,19.6]],['C3.1',[42.8,19.3]],['C10.1',[44,65.6]],['R6.1',[70,23.5]],['C11.2',[70.4,30.2]],['D2.1',[100,19.6]],
+   ['U4.2',[28.4,62.87]],['J4.3',[113,43.73]],['Y1.2',[88.6,38.6]],['Y1.4',[83.4,42.4]],['C4.1',[55.2,40]],['C5.1',[66,63.6]],['C6.1',[84.4,46.5]],['C7.1',[75.6,29.4]],['C12.1',[56.5,87]]]
     .forEach(([a,b])=>{tr('T','GND',0.4,a,b);via('GND',b);});
   via('GND',[67,42],[73,42],[67,48],[73,48]);
   const U1PINS={1:'CAN_TX',2:'CAN_RX',51:'VBAT_MON',10:'VDD',22:'VDD',72:'VDD',79:'VDD',99:'VDD',127:'VDD',23:'+3V3',69:'+3V3',78:'+3V3',83:'+3V3',125:'+3V3',126:'+3V3',44:'+3V3',42:'+3V3',52:'+3V3',
@@ -3712,7 +3722,8 @@ const SAMPLE_TC364=(function(){
     _source:'예제',_demo:'tc364',
     board:{name:'AURIX-364 INV v0.1',width:120,height:92,thickness:1.6,corner:2.5,holes:[[4,4,3.2],[116,4,3.2],[4,88,3.2],[116,88,3.2]]},
     components:[
-      {ref:'J1',value:'12V 입력',footprint:'HDR-1x2',side:'top',x:8,y:20,rotation:0,mpn:'61300211121',description:'12 V 전원 입력 (Würth WR-PHD)',pins:{1:'+12V',2:'GND'},pinNames:{1:'12V',2:'GND'}},
+      {ref:'J1',value:'MX23A 12P',footprint:'MX23A-12-RA',side:'top',x:0.65,y:66,rotation:0,mpn:'MX23A12NF1',description:'JAE MX23A 방수 커넥터 헤더 (2 × 6, 2.5 mm, 직각, 3 A/핀) — 전원·CAN·모터 3상·홀 센서. 하네스 측 MX23A12SF1 (결합부 실 링). 하우징 벽을 관통하고 플랜지가 내벽에 실링',
+        pins:{1:'HALL_A',2:'HALL_B',3:'HALL_C',4:'+5V',5:'GND',6:'GND',7:'PH_W',8:'PH_V',9:'PH_U',10:'CANL',11:'CANH',12:'+12V'},pinNames:{1:'H1',2:'H2',3:'H3',4:'5V_HALL',5:'GND_HALL',6:'GND',7:'W',8:'V',9:'U',10:'CANL',11:'CANH',12:'KL30',P1:'PEG',P2:'PEG'},label:[9,48.6]},
       {ref:'U2',value:'AMS1117-5.0',footprint:'SOT-223',side:'top',x:22,y:20,rotation:0,mpn:'AMS1117-5.0',description:'5 V LDO — CAN 트랜시버 VCC, 홀 센서 전원',pins:{1:'GND',2:'+5V',3:'+12V',4:'+5V'},pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'VOUT'},label:[22,26]},
       {ref:'U6',value:'AMS1117-3.3',footprint:'SOT-223',side:'top',x:38,y:20,rotation:0,mpn:'AMS1117-3.3',description:'3.3 V LDO — TC364 VEXT (단일 3.3 V 공급, 코어 VDD는 내부 EVR)',pins:{1:'GND',2:'+3V3',3:'+5V',4:'+3V3'},pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'VOUT'},label:[38,26]},
       {ref:'C1',value:'10µF',footprint:'0805',side:'top',x:15.4,y:15.6,rotation:90,mpn:'CL21A106KAYNNNE',description:'12 V 입력 커패시터',pins:{1:'+12V',2:'GND'}},
@@ -3736,13 +3747,10 @@ const SAMPLE_TC364=(function(){
       {ref:'C12',value:'22µF',footprint:'1210',side:'top',x:60,y:87,rotation:0,mpn:'GRM32ER61E226KE15',description:'VM 벌크 커패시터',pins:{1:'GND',2:'+12V'}},
       {ref:'C13',value:'470µF',footprint:'CP-SMD-10x10',side:'top',x:72,y:82,rotation:0,mpn:'EEE-FK1E471P',description:'VM 벌크 알루미늄 전해 커패시터 (DC-Link · 모터 리플 전류 흡수)',pins:{1:'+12V',2:'GND'},pinNames:{1:'+',2:'−'},label:[72,89.2]},
       {ref:'R10',value:'10kΩ',footprint:'0603',side:'top',x:47.725,y:67.4,rotation:90,mpn:'RC0603FR-0710KL',description:'nFAULT 풀업 (오픈 드레인)',pins:{1:'+3V3',2:'NFAULT'}},
-      {ref:'J3',value:'모터·홀',footprint:'HDR-1x8',side:'top',x:20,y:74,rotation:0,mpn:'61300811121',description:'BLDC 모터 상(W V U)과 홀 센서(H1–H3), 홀 전원 5 V',
-        pins:{1:'PH_W',2:'PH_V',3:'PH_U',4:'HALL_A',5:'HALL_B',6:'HALL_C',7:'+5V',8:'GND'},pinNames:{1:'W',2:'V',3:'U',4:'H1',5:'H2',6:'H3',7:'+5V',8:'GND'},label:[16.5,74]},
       {ref:'U5',value:'W25Q32JV',footprint:'SOIC-8',side:'top',x:44,y:50,rotation:0,mpn:'W25Q32JVSSIQ',description:'32 Mbit QSPI NOR 플래시 (데이터 로그)',
         pins:{1:'FLASH_CS',2:'FLASH_MISO',3:'+3V3',4:'GND',5:'FLASH_MOSI',6:'FLASH_SCLK',7:'+3V3',8:'+3V3'},pinNames:{1:'/CS',2:'DO',3:'/WP',4:'GND',5:'DI',6:'CLK',7:'/HOLD',8:'VCC'},label:[44,54.5]},
-      {ref:'U4',value:'TLE9251V',footprint:'SOIC-8',side:'top',x:88,y:70,rotation:0,mpn:'TLE9251VSJ',description:'Infineon CAN FD 트랜시버 · VCC 5 V, VIO 3.3 V',
-        pins:{1:'CAN_TX',2:'GND',3:'+5V',4:'CAN_RX',5:'+3V3',6:'CANL',7:'CANH',8:'CAN_STB'},pinNames:{1:'TxD',2:'GND',3:'VCC',4:'RxD',5:'VIO',6:'CANL',7:'CANH',8:'STB'},label:[88,74.6]},
-      {ref:'J2',value:'CAN',footprint:'HDR-1x4',side:'top',x:100,y:70,rotation:0,mpn:'61300411121',description:'CAN 버스 커넥터',pins:{1:'CANH',2:'CANL',3:'GND',4:'+5V'},pinNames:{1:'CANH',2:'CANL',3:'GND',4:'5V'}},
+      {ref:'U4',value:'TLE9251V',footprint:'SOIC-8',side:'top',x:24,y:63.5,rotation:180,mpn:'TLE9251VSJ',description:'Infineon CAN FD 트랜시버 · VCC 5 V, VIO 3.3 V',
+        pins:{1:'CAN_TX',2:'GND',3:'+5V',4:'CAN_RX',5:'+3V3',6:'CANL',7:'CANH',8:'CAN_STB'},pinNames:{1:'TxD',2:'GND',3:'VCC',4:'RxD',5:'VIO',6:'CANL',7:'CANH',8:'STB'},label:[24,58.8]},
       {ref:'J4',value:'DEBUG UART',footprint:'HDR-1x4',side:'top',x:110,y:45,rotation:0,mpn:'61300411121',description:'디버그 UART (3.3 V 레벨)',pins:{1:'DBG_TX',2:'DBG_RX',3:'GND',4:'+3V3'},pinNames:{1:'TX',2:'RX',3:'GND',4:'3V3'}},
       {ref:'R5',value:'100kΩ',footprint:'0603',side:'top',x:66,y:26,rotation:90,mpn:'RC0603FR-07100KL',description:'배터리 전압 분압 (상단)',pins:{1:'+12V',2:'VBAT_MON'}},
       {ref:'R6',value:'22kΩ',footprint:'0603',side:'top',x:70,y:26,rotation:90,mpn:'RC0603FR-0722KL',description:'배터리 전압 분압 (하단)',pins:{1:'GND',2:'VBAT_MON'}},
@@ -3754,7 +3762,7 @@ const SAMPLE_TC364=(function(){
     pours:[{layer:'bottom',net:'GND',clearance:0.4,inset:0.5}],
     texts:[
       {side:'top',text:'AURIX-364 INV',x:60,y:5,size:1.3},{side:'top',text:'v0.1 · 배치 단계',x:71,y:5,size:0.8,align:'left'},
-      {side:'top',text:'12V',x:5.2,y:24,size:0.8},{side:'top',text:'W V U H1 H2 H3 5V G',x:13.5,y:86,size:0.55,align:'left'},{side:'top',text:'CAN',x:100,y:76.5,size:0.7},{side:'top',text:'UART',x:110,y:51.5,size:0.7},
+      {side:'top',text:'ECU · MX23A',x:13,y:84,size:0.7,align:'left'},{side:'top',text:'UART',x:110,y:51.5,size:0.7},
       {side:'bottom',text:'AURIX-364 · TC364DP + DRV8313',x:60,y:6,size:0.9},
     ]
   };
@@ -5158,7 +5166,9 @@ function place(B,opts){
     movable.forEach(o=>{const b=o.c.bb;const dx=Math.max(b[0]-p.x,0,p.x-b[2]),dy=Math.max(b[1]-p.y,0,p.y-b[3]);const d=Math.hypot(dx,dy);if(d<bd){bd=d;best=o.c;}});
     if(best)follow.push({p,c:best,ox:p.x-(best.bb[0]+best.bb[2])/2,oy:p.y-(best.bb[1]+best.bb[3])/2,rot:best.rot||0,side:best.side});}));
   movable.forEach(o=>canonical(B,o.c));
-  const G=movable.map(o=>{const c=o.c;const lb=[c.bb[0]-c.x,c.bb[1]-c.y,c.bb[2]-c.x,c.bb[3]-c.y];const bb=[],pads=[];
+  const G=movable.map(o=>{const c=o.c;const lb=[c.bb[0]-c.x,c.bb[1]-c.y,c.bb[2]-c.x,c.bb[3]-c.y];
+    // a sealed connector reaches through the housing wall: only its on-board part counts for spacing and the board edge
+    const fo=c.f&&c.f.over&&c.f.face;if(fo){const[fx,fy]=c.f.face,ov=c.f.over;if(fx<0)lb[0]+=ov;else if(fx>0)lb[2]-=ov;else if(fy<0)lb[1]+=ov;else lb[3]-=ov;}const bb=[],pads=[];
     for(let v=0;v<8;v++){const q=[XF(lb[0],lb[1],v),XF(lb[2],lb[3],v)];bb.push([Math.min(q[0][0],q[1][0]),Math.min(q[0][1],q[1][1]),Math.max(q[0][0],q[1][0]),Math.max(q[0][1],q[1][1])]);
       pads.push(c.pads.map(p=>XF(p.x-c.x,p.y-c.y,v)));}
     return{bb,pads,area:(lb[2]-lb[0])*(lb[3]-lb[1])};});
@@ -5791,8 +5801,12 @@ return{LIB,MCUS,mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,b
    From the board (outline, mounting holes, connectors at the edge, part heights, heat sources) and the environment
    (heat load W, IP rating, vibration Grms, ambient and limit temperature) it sizes an enclosure for every candidate
    material, then picks the cheapest one that keeps the thermal margin, the IP rating and the vibration safety:
-   - thermal: surface convection + radiation (iterated), wall conduction, internal air film, TIM pedestals on hot parts,
-     optional fins; internal air and hot-part case temperatures, thermal margin to the limit
+   - thermal: surface convection + radiation (iterated), wall conduction, board → inner wall (convection, radiation, supports),
+     and per hot part a conduction path into the housing: package top → gap pad → lid pedestal, or exposed pad → thermal-via
+     array → gap pad / gap filler → base pedestal; the TIM material and bond line are chosen per part for the junction limit;
+     optional fins; board, wall and junction temperatures, thermal margin to the limit
+   - sealed board connectors (e.g. JAE MX23A): the shroud passes through a window in the wall, the header flange seals against
+     the inner face (that side's wall sits on the flange plane), the split line stays below the window, keep-out for the plug
    - sealing by IP code (gasket / O-ring / FIPG, breather vent, screw pitch for even gasket compression)
    - vibration: PCB first mode (Steinberg plate on its supports), 3σ deflection under a flat PSD vs Steinberg's allowable
      for the largest package; centre supports are added until the safety factor is ≥ 2
@@ -5818,6 +5832,15 @@ const SEAL={
   IP65:{label:'실리콘 O-링 / FIPG 액상 개스킷',gasket:'실리콘 O-링 Ø2.0 (압축 25%)',vent:'없음 (온도 변화 크면 벤트 권장)',pitch:60,cost:0.8,groove:true},
   IP67:{label:'실리콘 O-링 / FIPG 액상 개스킷 + 벤트 필터',gasket:'실리콘 O-링 Ø2.0 (압축 25%)',vent:'ePTFE 벤트 필터 (Breather Vent) 필수',pitch:50,cost:1.6,groove:true,breather:true},
   IP69K:{label:'FKM/EPDM O-링 + 고온 고압 세척 대응 벤트',gasket:'FKM O-링 Ø2.4 (압축 25%)',vent:'고압 세척용 보호 캡 ePTFE 벤트 필수',pitch:40,cost:2.6,groove:true,breather:true,extraWall:0.3}};
+/* thermal interface materials between a part (or its thermal-via field) and a housing pedestal */
+const TIMS={
+  pad15:{label:'실리콘 갭 패드 1.5 W/m·K',short:'갭 패드 1.5',k:1.5,minBlt:0.5,comp:0.25,costCm2:0.02,form:'패드',kv:'≥ 4 kV/mm 절연'},
+  pad30:{label:'실리콘 갭 패드 3.0 W/m·K',short:'갭 패드 3.0',k:3.0,minBlt:0.5,comp:0.25,costCm2:0.05,form:'패드',kv:'≥ 4 kV/mm 절연'},
+  gel40:{label:'디스펜싱 갭 필러 4.0 W/m·K (1액형 · 저응력)',short:'갭 필러 4.0',k:4.0,minBlt:0.25,comp:0,costCm2:0.08,form:'디스펜싱',kv:'≥ 5 kV/mm 절연'},
+  pad60:{label:'고성능 갭 패드 6.0 W/m·K',short:'갭 패드 6.0',k:6.0,minBlt:0.5,comp:0.2,costCm2:0.16,form:'패드',kv:'≥ 3 kV/mm 절연'}};
+const TOL={top:0.8,bottom:0.4}; // nominal gap from the tolerance stack: package height + solder + boss/casting (top), boss + PCB flatness (bottom)
+const VIA={pitch:1.0,drill:0.3,plate:0.025,kCu:385};
+const D2R=Math.PI/180;
 const isConn=c=>/^(J|P|CN|X|USB|CON)\d/i.test(c.ref)||/^(usb|hdr|conn)$/.test(c.kind||'');
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
@@ -5829,17 +5852,33 @@ function boardNeeds(B,opts){
   const htTop=Math.max(0,...comps.filter(c=>c.side!=='B').map(c=>c.body.ht||0)),htBot=Math.max(0,...comps.filter(c=>c.side==='B').map(c=>c.body.ht||0));
   const holes=B.drills.filter(d=>!d.plated&&!d.own&&!d._pad&&d.d>=2).map(d=>({x:d.x,y:d.y,d:d.d}));
   // connectors at an edge need a wall opening on that side
-  const cuts=[];comps.filter(isConn).forEach(c=>{const b=c.bb;const ds=[['W',b[0]-bb[0]],['E',bb[2]-b[2]],['S',b[1]-bb[1]],['N',bb[3]-b[3]]].sort((x,y)=>x[1]-y[1]);const[side,d]=ds[0];
+  const cuts=[];
+  comps.filter(c=>c.f&&c.f.seal&&c.f.face&&c.side!=='B').forEach(c=>{const q=c.f.seal,a=c.rot*D2R,ca=Math.cos(a),sa=Math.sin(a);
+    const fx=Math.round(c.f.face[0]*ca-c.f.face[1]*sa),fy=Math.round(c.f.face[0]*sa+c.f.face[1]*ca);const side=fx<0?'W':fx>0?'E':fy<0?'S':'N';
+    const L=(lx,ly)=>[c.x+lx*ca-ly*sa,c.y+lx*sa+ly*ca];const fl=L(q.flangeX,0),hz=side==='W'||side==='E';const ac=hz?fl[1]:fl[0];
+    const gap=side==='W'?bb[0]-fl[0]:side==='E'?fl[0]-bb[2]:side==='S'?bb[1]-fl[1]:fl[1]-bb[3];const zb=(B.t||1.6)/2,clr=0.3;
+    cuts.push({ref:c.ref,side,a:ac-q.shroud.y-clr,b:ac+q.shroud.y+clr,z0:zb+q.shroud.z0-clr,z1:zb+q.shroud.z1+clr,val:c.val,sealed:true,mpn:q.mpn||c.mpn,mate:q.mate,
+      gap,plane:hz?fl[0]:fl[1],flange:{a:ac-q.flange.y,b:ac+q.flange.y,z0:zb+q.flange.z0,z1:zb+q.flange.z1},land:Math.min(q.flange.y-q.shroud.y,q.shroud.z0-q.flange.z0,q.flange.z1-q.shroud.z1),
+      shroudLen:q.flangeX-q.shroud.x0,plug:q.plug,rated:q.rated});});
+  comps.filter(c=>isConn(c)&&!cuts.some(k=>k.ref===c.ref)).forEach(c=>{const b=c.bb;const ds=[['W',b[0]-bb[0]],['E',bb[2]-b[2]],['S',b[1]-bb[1]],['N',bb[3]-b[3]]].sort((x,y)=>x[1]-y[1]);const[side,d]=ds[0];
     if(d>4)return;const along=side==='W'||side==='E'?[b[1],b[3]]:[b[0],b[2]];const z0=c.side==='B'?-B.t/2-(c.body.ht||3):B.t/2;const z1=c.side==='B'?-B.t/2:B.t/2+(c.body.ht||3);
     cuts.push({ref:c.ref,side,a:along[0]-0.6,b:along[1]+0.6,z0:z0-0.4,z1:z1+0.6,val:c.val});});
   // heat sources: given power or typical figures
   let P=opts.power;if(!P&&typeof AUTOPLACE!=='undefined'){P={};AUTOPLACE.classify(B,{}).list.forEach(o=>{if(o.P>0)P[o.ref]=o.P;});}
   const hot=Object.entries(P||{}).map(([ref,w])=>({ref,P:+w,c:B.byRef[ref]})).filter(h=>h.c&&h.P>0).sort((a,b)=>b.P-a.P);
   // the biggest package decides the vibration allowable (leadless parts are the most fragile)
+  // heat sources: exposed pad / tab (largest pad under the body) decides whether the heat can go down through thermal vias
+  hot.forEach(h=>heatInfo(h,comps));
   const ics=comps.filter(c=>c.pads.length>=8&&!isConn(c)).map(c=>({ref:c.ref,L:Math.max(c.body.w,c.body.h),leadless:/QFN|BGA|LGA|DFN|SON/i.test(c.fp||''),fp:c.fp})).sort((a,b)=>b.L-a.L);
   const compMass=comps.reduce((s,c)=>s+c.body.w*c.body.h*Math.max(0.3,c.body.ht||0.5)*1e-3*(isConn(c)?0.9:1.6)*0.6,0); // g
   return{bb,W:bb[2]-bb[0],H:bb[3]-bb[1],t:B.t||1.6,htTop,htBot,holes,cuts,hot,Ptot:hot.reduce((s,h)=>s+h.P,0),big:ics[0]||null,compMass};
 }
+
+function heatInfo(h,comps){const c=h.c,bd=c.body,A=Math.max(1,bd.w*bd.h);let ep=null;
+  c.pads.forEach(p=>{if(p.drill)return;const ar=p.w*p.h;if(ar>=4&&ar>A*0.12&&Math.abs(p.x-bd.cx)<bd.w/2+p.w/2+0.5&&Math.abs(p.y-bd.cy)<bd.h/2+p.h/2+0.5&&(!ep||ar>ep.w*ep.h)){const r=Math.abs(Math.round((p.ang||0)/90))%2;ep={n:p.n,x:p.x,y:p.y,w:r?p.h:p.w,h:r?p.w:p.h,net:p.net};}});
+  // a part on the bottom side, or bottom-side parts under the pad, rule the base pedestal out
+  if(ep&&(c.side==='B'||(comps||[]).some(o=>o.side==='B'&&o.bb&&o.bb[0]<ep.x+ep.w/2+2&&o.bb[2]>ep.x-ep.w/2-2&&o.bb[1]<ep.y+ep.h/2+2&&o.bb[3]>ep.y-ep.h/2-2)))ep.blocked=true;
+  h.ep=ep;h.A=A;h.jcTop=6+300/A;h.jcBot=ep?1+30/(ep.w*ep.h):null;h.Rsp=20/Math.sqrt(A/10);h.Rb=(ep?h.jcBot:20)+h.Rsp;return h;}
 
 /* ---- PCB vibration (Steinberg) ---- */
 function pcbVibration(N,supports,grms){
@@ -5857,32 +5896,53 @@ function pcbVibration(N,supports,grms){
 }
 
 /* ---- thermal ---- */
+// one conduction path from a hot part into the housing; kind 'bottom' = exposed pad → thermal vias → TIM → base pedestal,
+// 'top' = package top → TIM → lid pedestal. Returns its resistance junction → inner wall for a TIM material.
+function pathR(h,kind,tk,m,geo,N){const T=TIMS[tk];const blt=Math.max(T.minBlt,TOL[kind]);let R,A,vias=0,ped;
+  if(kind==='bottom'){const e=h.ep;const nx=Math.max(2,Math.floor((e.w+2)/VIA.pitch)),ny=Math.max(2,Math.floor((e.h+2)/VIA.pitch));vias=nx*ny; // in the pad and the copper ring around it
+    const ri=VIA.drill/2,ro=ri+VIA.plate;const Rvia=N.t/1000/(VIA.kCu*Math.PI*(ro*ro-ri*ri)*1e-6);
+    const w=e.w+3,hh=e.h+3;A=w*hh;const hp=Math.max(0.5,geo.stand-blt);ped={x:e.x-w/2,y:e.y-hh/2,w,h:hh,z0:geo.zFloor,z1:-N.t/2-blt};
+    R=h.jcBot+Rvia/vias+blt/1000/(T.k*A*1e-6)+hp/1000/(m.k*A*1e-6)+0.15;}
+  else{const bd=h.c.body;A=Math.max(4,bd.w*bd.h);const top=N.t/2+(bd.ht||1);const hp=Math.max(0.5,geo.zLid-top-blt);
+    ped={x:bd.cx-bd.w/2,y:bd.cy-bd.h/2,w:bd.w,h:bd.h,z0:top+blt,z1:geo.zLid,tz:top};
+    R=h.jcTop+blt/1000/(T.k*A*1e-6)+hp/1000/(m.k*A*1e-6)+0.15;}
+  return{R,A,blt,vias,ped,padT:T.comp?Math.round(blt/(1-T.comp)*10)/10:null};}
 function thermal(m,geo,inp,N,fins){
   const Ao=2*(geo.Lo*geo.Wo+geo.Lo*geo.Ho+geo.Wo*geo.Ho)*1e-6;const Ai=2*(geo.Li*geo.Wi+geo.Li*geo.Hi+geo.Wi*geo.Hi)*1e-6;
   const finA=fins?fins.area*1e-6*0.75:0; // fin efficiency ≈ 0.75
   const Aeff=Ao+finA,P=inp.P,Ta=inp.ta;
   let Ts=Ta+10;for(let i=0;i<40;i++){const T1=Ts+273.15,T0=Ta+273.15;const hr=m.eps*SIG*(T1*T1+T0*T0)*(T1+T0);const hc=1.42*Math.pow(Math.max(0.1,Ts-Ta)/Math.max(0.03,geo.Ho/1000),0.25)*0.85;const h=hc+hr;const n=Ta+P/(h*Aeff);if(Math.abs(n-Ts)<0.01){Ts=n;break;}Ts=0.5*(Ts+n);}
   const Rwall=geo.t/1000/(m.k*Ao);const Twin=Ts+P*Rwall;
-  // heat that leaves the hot parts through TIM pedestals (metal only) skips the internal air
-  let Ptim=0;const peds=[];const kTim=3.0,blt=1.0;
-  if(m.metal&&inp.tim!==false)N.hot.forEach(hp=>{if(hp.P<0.25||hp.c.side==='B')return;const A=Math.max(4,hp.c.body.w*hp.c.body.h)*1e-6;const R=blt/1000/(kTim*A)+0.8;const share=0.7;Ptim+=hp.P*share;peds.push({ref:hp.ref,P:hp.P,R,share});});
   // the board is the heat source: convection + radiation to the inner walls, plus conduction through the supports
   const Apcb=2*N.W*N.H*1e-6,epsE=1/(1/0.9+1/m.epsIn-1);const Tm=(Twin+30)+273.15;const hi=(inp.slots?7:4.5)+epsE*4*SIG*Tm*Tm*Tm;
   const gBoss=Math.min(0.25,m.k*38.5e-6/Math.max(0.002,geo.stand/1000));const G=hi*Apcb+gBoss*N.nsup;
-  const Tboard=Twin+(P-Ptim)/G;const Tair=(Tboard+Twin)/2;
-  peds.forEach(p=>{p.Tcase=Twin+p.P*p.share*p.R;});
-  const margin=(inp.tmax-Tboard)/Math.max(1,inp.tmax-Ta);
-  return{Ts,Twin,Tair,Tboard,margin,Ptim,peds,Ao,Ai,Rwall,finA,G};
+  // per hot part: no path (plastic, small parts) or the better of bottom / top with the cheapest TIM that keeps Tj in limit
+  const tj=inp.tj,useTim=m.metal&&inp.tim!==false&&inp.tim!=='none';const timKeys=inp.tim&&TIMS[inp.tim]?[inp.tim]:Object.keys(TIMS).sort((a,b)=>TIMS[a].costCm2-TIMS[b].costCm2);
+  const parts=N.hot.map(h=>({h,ref:h.ref,P:h.P,path:null}));let Tboard=Twin+P/G;
+  const solve=(pt,Tb)=>{const h=pt.h;if(!pt.path)return{Tj:Tb+h.P*h.Rb,Pp:0};const Rp=pt.path.R,Rb=h.Rb;const Tj=(h.P+Twin/Rp+Tb/Rb)/(1/Rp+1/Rb);return{Tj,Pp:(Tj-Twin)/Rp};};
+  for(let it=0;it<5;it++){
+    parts.forEach(pt=>{const h=pt.h;pt.path=null;if(!useTim||h.P<0.25)return;if(inp.tim==='auto'&&solve(pt,Tboard).Tj<=tj-25)return; // cool enough through the board alone: no pedestal
+      const kinds=[];if(h.ep&&!h.ep.blocked)kinds.push('bottom');if(h.c.side!=='B')kinds.push('top');let best=null;
+      for(const tk of timKeys){let cand=null;for(const kd of kinds){const r=Object.assign({kind:kd,tim:tk},pathR(h,kd,tk,m,geo,N));pt.path=r;r.Tj=solve(pt,Tboard).Tj;if(!cand||r.Tj<cand.Tj)cand=r;}
+        if(!cand)break;if(!best||cand.Tj<best.Tj)best=cand;if(cand.Tj<=tj-10){best=cand;break;}}
+      pt.path=best;});
+    const Pp=parts.reduce((a,pt)=>a+solve(pt,Tboard).Pp,0);Tboard=Twin+Math.max(0,P-Pp)/G;}
+  let Ptim=0;parts.forEach(pt=>{const s=solve(pt,Tboard);pt.Tj=s.Tj;pt.Pp=Math.max(0,s.Pp);pt.share=pt.P>0?pt.Pp/pt.P:0;Ptim+=pt.Pp;pt.tjmax=tj;});
+  const peds=parts.filter(pt=>pt.path).map(pt=>({ref:pt.ref,P:pt.P,R:pt.path.R,share:pt.share,Tcase:pt.Tj,Tj:pt.Tj,kind:pt.path.kind,tim:pt.path.tim,blt:pt.path.blt,padT:pt.path.padT,vias:pt.path.vias,area:pt.path.A,ped:pt.path.ped,ep:pt.h.ep}));
+  const Tair=(Tboard+Twin)/2;const margin=(inp.tmax-Tboard)/Math.max(1,inp.tmax-Ta);const hotJ=parts.filter(pt=>pt.Tj>tj);
+  return{Ts,Twin,Tair,Tboard,margin,Ptim,peds,parts:parts.map(pt=>({ref:pt.ref,P:pt.P,Tj:pt.Tj,path:pt.path?pt.path.kind:null,share:pt.share})),hotJ:hotJ.map(pt=>pt.ref),Ao,Ai,Rwall,finA,G};
 }
 
 /* ---- one candidate material ---- */
 function design(B,inp,matKey,N){
   const m=MATS[matKey];const ip=ipKey(inp.ip)||'IP54';const S=SEAL[ip];
-  const gap=1.5;const t=Math.round((m.t0+0.05*inp.vib+0.002*Math.max(N.W,N.H)+(S.extraWall||0))*10)/10;
+  const gap=1.5;const gp={W:gap,E:gap,S:gap,N:gap};N.cuts.filter(c=>c.sealed).forEach(c=>{const v=Math.max(0.3,c.gap);gp[c.side]=gp[c.side]===gap?v:Math.min(gp[c.side],v);});const t=Math.round((m.t0+0.05*inp.vib+0.002*Math.max(N.W,N.H)+(S.extraWall||0))*10)/10;
   const stand=Math.max(4,Math.ceil(N.htBot+2));const top=Math.max(3,Math.ceil(N.htTop+2.5));
   const rim=S.groove?Math.max(t,4.6):t; // a groove for the O-ring needs ~4.6 mm of flange
-  const geo={t,gap,stand,top,rim,Li:N.W+2*gap,Wi:N.H+2*gap,Hi:stand+N.t+top};geo.Lo=geo.Li+2*rim;geo.Wo=geo.Wi+2*rim;geo.Ho=geo.Hi+2*t;
-  geo.x0=N.bb[0]-gap-rim;geo.y0=N.bb[1]-gap-rim;geo.zFloor=-N.t/2-stand;geo.zLid=N.t/2+top;geo.zSplit=N.t/2+Math.min(top-1,Math.max(1.5,top*0.4));
+  const geo={t,gap,gaps:gp,stand,top,rim,Li:N.W+gp.W+gp.E,Wi:N.H+gp.S+gp.N,Hi:stand+N.t+top};geo.Lo=geo.Li+2*rim;geo.Wo=geo.Wi+2*rim;geo.Ho=geo.Hi+2*t;
+  geo.x0=N.bb[0]-gp.W-rim;geo.y0=N.bb[1]-gp.S-rim;geo.zFloor=-N.t/2-stand;geo.zLid=N.t/2+top;geo.zSplit=N.t/2+Math.min(top-1,Math.max(1.5,top*0.4));
+  // a sealed connector window must lie wholly in the cover: the split line drops below it, leaving a seal land under the window
+  const win=N.cuts.filter(c=>c.sealed);if(win.length){geo.zSplit=Math.max(geo.zFloor+2,Math.min(geo.zSplit,Math.min(...win.map(c=>c.z0))-1.8));geo.splitWin=true;}
   // supports: mounting holes (or corners), centre supports until the PCB safety factor reaches 2
   let sup=N.holes.length?N.holes.map(h=>({x:h.x,y:h.y,d:h.d,kind:'hole'})):[[3.5,3.5],[N.W-3.5,3.5],[3.5,N.H-3.5],[N.W-3.5,N.H-3.5]].map(([x,y])=>({x:N.bb[0]+x,y:N.bb[1]+y,d:3.2,kind:'corner'}));
   let vib=pcbVibration(N,sup,inp.vib);const added=[];
@@ -5894,13 +5954,13 @@ function design(B,inp,matKey,N){
   const screws=perimeterPoints(geo,ns,screwM==='M4'?4.5:3.75);
   // fins when the plain box runs too hot (metal only)
   N.nsup=sup.length;let th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,null);let fins=null;
-  if(m.metal&&matKey!=='spcc'&&th.margin<0.3&&inp.fins!==false){const pitchF=8,hf=Math.min(25,Math.max(8,inp.P*0.8)),nF=Math.floor((geo.Lo-10)/pitchF);fins={n:nF,h:hf,t:2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8)};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
+  if(m.metal&&matKey!=='spcc'&&(th.margin<0.3||th.hotJ.length)&&inp.fins!==false){const pitchF=8,hf=Math.min(25,Math.max(8,inp.P*0.8)),nF=Math.floor((geo.Lo-10)/pitchF);fins={n:nF,h:hf,t:2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8)};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
   // mass and a relative cost
-  const vol=(geo.Lo*geo.Wo*geo.Ho-geo.Li*geo.Wi*geo.Hi)+sup.length*Math.PI*9*stand+ns*Math.PI*16*geo.Hi*0.5+(fins?fins.n*fins.t*fins.h*fins.len:0)+th.peds.length*120*Math.max(0,top-1);
+  const vol=(geo.Lo*geo.Wo*geo.Ho-geo.Li*geo.Wi*geo.Hi)+sup.length*Math.PI*9*stand+ns*Math.PI*16*geo.Hi*0.5+(fins?fins.n*fins.t*fins.h*fins.len:0)+th.peds.reduce((a,p)=>a+p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0),0);
   const mass=vol*1e-9*m.rho*1000; // g
-  const cost=mass/1000*m.costKg*m.proc+S.cost+ns*0.05+(S.breather?1.2:0)+(fins?0.6:0)+th.peds.length*0.25+(added.length*0.1);
-  const why=[];const ok={thermal:th.margin>=0.25,ip:IPN[ip]<=m.maxIP,vib:inp.vib<=m.maxVib&&vib.sf>=1.5};
-  if(!ok.thermal)why.push(`열 여유 ${(th.margin*100).toFixed(0)}% < 25%`);if(!ok.ip)why.push(`${ip} 대응 어려움 (${m.short} 최대 IP${m.maxIP})`);if(!ok.vib)why.push(inp.vib>m.maxVib?`진동 ${inp.vib} Grms 초과 (보스 강도)`:`PCB 진동 안전율 ${vib.sf.toFixed(2)}`);
+  const cost=mass/1000*m.costKg*m.proc+S.cost+ns*0.05+(S.breather?1.2:0)+(fins?0.6:0)+th.peds.reduce((a,p)=>a+0.15+TIMS[p.tim].costCm2*p.area/100+p.vias*0.002,0)+(added.length*0.1)+N.cuts.filter(c=>c.sealed).length*0.3;
+  const why=[];const ok={thermal:th.margin>=0.25&&!th.hotJ.length,ip:IPN[ip]<=m.maxIP,vib:inp.vib<=m.maxVib&&vib.sf>=1.5};
+  if(th.margin<0.25)why.push(`열 여유 ${(th.margin*100).toFixed(0)}% < 25%`);if(th.hotJ.length)why.push(`Tj > ${inp.tj} °C (${th.hotJ.join(', ')})`);if(!ok.ip)why.push(`${ip} 대응 어려움 (${m.short} 최대 IP${m.maxIP})`);if(!ok.vib)why.push(inp.vib>m.maxVib?`진동 ${inp.vib} Grms 초과 (보스 강도)`:`PCB 진동 안전율 ${vib.sf.toFixed(2)}`);
   return{mat:matKey,m,ip,seal:S,geo,sup,added,vib,screwM,screws,ns,pitch,th,fins,mass,cost,ok,feasible:ok.thermal&&ok.ip&&ok.vib,why};
 }
 function perimeterPoints(geo,n,rb){const L=geo.Lo,W=geo.Wo,inset=geo.rim+(rb||3.75)*0.45;const per=2*(L+W-4*inset);const pts=[];
@@ -5911,10 +5971,10 @@ function perimeterPoints(geo,n,rb){const L=geo.Lo,W=geo.Wo,inset=geo.rim+(rb||3.
 
 /* ---- analysis over all candidates ---- */
 function analyze(B,input){
-  const inp=Object.assign({P:null,ip:'IP54',vib:2,ta:25,tmax:85,mat:'auto',tim:true,fins:true},input||{});
+  const inp=Object.assign({P:null,ip:'IP54',vib:2,ta:25,tmax:85,tj:125,mat:'auto',tim:'auto',fins:true},input||{});inp.tj=+inp.tj||125;if(inp.tim===true)inp.tim='auto';
   const N=boardNeeds(B,{power:inp.power});if(inp.P==null||inp.P===''||!isFinite(+inp.P))inp.P=Math.round(N.Ptot*100)/100;
   // a heat load given by hand is spread over the heat sources in the same proportions (or put on the biggest IC)
-  if(+inp.P>0&&Math.abs(+inp.P-N.Ptot)>1e-6){if(N.Ptot>0){const k=+inp.P/N.Ptot;N.hot.forEach(h=>{h.P*=k;});}else{const c=B.comps.filter(c=>c.pads.length>=8&&!isConn(c)).sort((a,b)=>b.pads.length-a.pads.length)[0];if(c)N.hot=[{ref:c.ref,P:+inp.P,c}];}N.Ptot=+inp.P;}inp.P=Math.max(0,+inp.P);inp.vib=Math.max(0,+inp.vib||0);inp.ta=+inp.ta;inp.tmax=+inp.tmax;inp.ip=ipKey(inp.ip)||'IP54';
+  if(+inp.P>0&&Math.abs(+inp.P-N.Ptot)>1e-6){if(N.Ptot>0){const k=+inp.P/N.Ptot;N.hot.forEach(h=>{h.P*=k;});}else{const c=B.comps.filter(c=>c.pads.length>=8&&!isConn(c)).sort((a,b)=>b.pads.length-a.pads.length)[0];if(c)N.hot=[heatInfo({ref:c.ref,P:+inp.P,c},B.comps)];}N.Ptot=+inp.P;}inp.P=Math.max(0,+inp.P);inp.vib=Math.max(0,+inp.vib||0);inp.ta=+inp.ta;inp.tmax=+inp.tmax;inp.ip=ipKey(inp.ip)||'IP54';
   const all=Object.keys(MATS).map(k=>design(B,inp,k,N));
   const maxC=Math.max(...all.map(d=>d.cost)),maxM=Math.max(...all.map(d=>d.mass));
   all.forEach(d=>{d.costIdx=Math.round(d.cost/maxC*100);d.massIdx=Math.round(d.mass/maxM*100);});
@@ -5923,13 +5983,18 @@ function analyze(B,input){
   const d=pick;const warn=[];
   if(!d.feasible)warn.push(`${d.m.short}: ${d.why.join(' · ')}`);
   if(!N.holes.length)warn.push('보드에 장착 구멍(무도금 Ø2 mm 이상)이 없어 네 모서리에 보스를 가정했습니다 — 보드에 장착 구멍을 추가하세요.');
-  if(N.cuts.length&&IPN[d.ip]>=65)warn.push(`커넥터 ${N.cuts.map(c=>c.ref).join(', ')}: ${d.ip}에는 방수 커넥터(씰 일체형) 또는 케이블 글랜드가 필요합니다.`);
+  const open=N.cuts.filter(c=>!c.sealed);if(open.length&&IPN[d.ip]>=65)warn.push(`커넥터 ${open.map(c=>c.ref).join(', ')}: ${d.ip}에는 방수 커넥터(씰 일체형) 또는 케이블 글랜드가 필요합니다.`);
   if(d.th.margin<0.25)warn.push(`열 여유 ${(d.th.margin*100).toFixed(0)}% — 강제 공랭, 더 큰 핀, 또는 발열 부품의 하우징 직결 방열(TIM)을 검토하세요.`);
-  d.th.peds.forEach(p=>{if(p.Tcase>inp.tmax+10)warn.push(`${p.ref} 케이스 온도 약 ${p.Tcase.toFixed(0)} °C — TIM 두께를 줄이거나 열전도율 높은 패드로`);});
+  d.th.parts.forEach(p=>{if(p.Tj>inp.tj)warn.push(`${p.ref} 접합 온도 약 ${p.Tj.toFixed(0)} °C > ${inp.tj} °C — ${p.path?'더 얇은 BLT·고전도 TIM·서멀 비아 추가':'금속 하우징 + TIM 경로 필요'}`);});
+  d.th.peds.forEach(p=>{if(p.kind==='bottom'&&p.ep&&p.ep.net&&!/^(GND|AGND|PGND|VSS|0V)$/i.test(p.ep.net))warn.push(`${p.ref}: 방열 패드 넷이 ${p.ep.net} — 하우징(접지)과 닿는 TIM은 전기 절연형이어야 합니다 (${TIMS[p.tim].kv}).`);});
+  N.cuts.filter(c=>c.sealed).forEach(c=>{const pr=c.shroudLen-d.geo.rim;if(pr<2)warn.push(`${c.ref}: 슈라우드가 벽 밖으로 ${pr.toFixed(1)} mm만 나옵니다 — 플러그 래치가 걸리려면 2 mm 이상 (벽을 얇게 하거나 창 주변을 오목하게)`);
+    if(c.land<1.5)warn.push(`${c.ref}: 플랜지 실링 폭 ${c.land.toFixed(1)} mm — 1.5 mm 이상 필요`);if(c.gap<0.3)warn.push(`${c.ref}: 플랜지가 보드 가장자리 안쪽에 있습니다 — 벽이 보드에 닿습니다.`);});
   if(d.vib.sf<2&&inp.vib>0)warn.push(`PCB 진동 안전율 ${d.vib.sf.toFixed(2)} (목표 2 이상) — 지지점을 늘리거나 두꺼운 PCB(2.0 mm)를 검토하세요.`);
   const conds=[];
   if(inp.P>12)conds.push(`발열량 기준 초과 (${inp.P} W > 12 W): 수지 재질 한계로 금속 하우징${d.m.metal?' 및 TIM 적용':''}이 유리`);else if(inp.P>5)conds.push(`발열 ${inp.P} W: 수지는 내부 온도 여유를 확인해야 하는 구간`);else conds.push(`발열 ${inp.P} W: 수지 하우징으로 충분한 구간`);
   conds.push(`방수 및 압력 균형: ${d.ip} — ${d.seal.label}${d.seal.breather?' · 내외부 압력 변동 방지용 벤트 필터 필수':''}`);
+  const ped=d.th.peds;if(ped.length)conds.push(`방열 경로: ${ped.map(p=>`${p.ref} ${p.kind==='bottom'?`노출 패드 → 서멀 비아 ${p.vias}개 → ${TIMS[p.tim].short}`:`패키지 윗면 → ${TIMS[p.tim].short}`} (BLT ${p.blt} mm, Tj ${p.Tj.toFixed(0)} °C)`).join(' · ')}`);
+  N.cuts.filter(c=>c.sealed).forEach(c=>conds.push(`커넥터 관통부: ${c.ref} ${c.mpn} — 벽 창 ${(c.b-c.a).toFixed(1)} × ${(c.z1-c.z0).toFixed(1)} mm, 헤더 플랜지를 내벽에 FIPG/실리콘 패킹으로 실링(폭 ${c.land.toFixed(1)} mm), 분할면은 창 아래 · 결합 ${c.mate}`));
   conds.push(`구조 및 밀착 보강: 진동 ${inp.vib} Grms${d.th.peds.length?' 및 방열 패드면 압착 균일도':''}를 위해 ${d.screwM} 체결 보스 ${d.ns}개 (간격 ≤ ${d.pitch} mm)`);
   return{inp,N,all,d,warn,conds,
     idx:{cost:d.costIdx,mass:d.massIdx,thermal:Math.round(clamp(d.th.margin,0,1)*100),vib:Math.round(clamp(d.vib.sf/2.5,0,1)*100)}};
@@ -5940,12 +6005,14 @@ function text(R){const d=R.d,i=R.inp,g=d.geo;const L=[];
   L.push('설계 조건:');R.conds.forEach(c=>L.push('  • '+c));
   L.push(`재질: ${d.m.label} · 벽두께 ${g.t} mm${g.rim>g.t?` (실링 플랜지 ${g.rim} mm)`:''} · 공정 ${d.m.proc_label}`);
   L.push(`외형: ${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm · 내부 ${g.Li.toFixed(1)} × ${g.Wi.toFixed(1)} × ${g.Hi.toFixed(1)} mm · 보드 아래 스탠드오프 ${g.stand} mm · 위 여유 ${g.top} mm`);
-  L.push(`방열: ${d.m.metal?(d.th.peds.length?`TIM(방열 패드 3 W/m·K, 1.0 mm) + 하우징 내벽 페데스탈 (${d.th.peds.map(p=>p.ref).join(', ')})`:'하우징 벽 전도'):'수지 벽 전도 + 내부 대류'}${d.fins?` · 핀 ${d.fins.n}개 (높이 ${d.fins.h.toFixed(0)} mm, 피치 ${d.fins.pitch} mm)`:''}${d.seal.slots?' · 통풍 슬롯':''} · 자연대류`);
-  L.push(`  표면 ${d.th.Ts.toFixed(1)} °C · PCB ${d.th.Tboard.toFixed(1)} °C · 내부 공기 약 ${d.th.Tair.toFixed(1)} °C${d.th.peds.length?` · 페데스탈 부품 케이스 ${d.th.peds.map(p=>`${p.ref} ${p.Tcase.toFixed(0)} °C`).join(', ')}`:''} · TIM 경로 ${d.th.Ptim.toFixed(1)} W`);
+  L.push(`방열: ${d.m.metal?(d.th.peds.length?`TIM + 하우징 페데스탈 ${d.th.peds.length}곳 (베이스 ${d.th.peds.filter(p=>p.kind==='bottom').length} · 커버 ${d.th.peds.filter(p=>p.kind==='top').length})`:'하우징 벽 전도'):'수지 벽 전도 + 내부 대류'}${d.fins?` · 핀 ${d.fins.n}개 (높이 ${d.fins.h.toFixed(0)} mm, 피치 ${d.fins.pitch} mm)`:''}${d.seal.slots?' · 통풍 슬롯':''} · 자연대류`);
+  L.push(`  표면 ${d.th.Ts.toFixed(1)} °C · 내벽 ${d.th.Twin.toFixed(1)} °C · PCB ${d.th.Tboard.toFixed(1)} °C · 내부 공기 약 ${d.th.Tair.toFixed(1)} °C · TIM 경로 ${d.th.Ptim.toFixed(1)} W / ${i.P} W`);
+  d.th.parts.forEach(p=>{const q=d.th.peds.find(x=>x.ref===p.ref);L.push(`  ${p.ref.padEnd(4)} ${p.P.toFixed(2)} W → Tj ${p.Tj.toFixed(0)} °C (한계 ${i.tj})${q?` · ${q.kind==='bottom'?`노출 패드 ${q.ep.w.toFixed(1)}×${q.ep.h.toFixed(1)} → 서멀 비아 ${q.vias}개(Ø${VIA.drill}, ${VIA.pitch} mm 피치, 충전·캡핑) → ${TIMS[q.tim].label} → 베이스 페데스탈`:`패키지 윗면 → ${TIMS[q.tim].label} → 커버 페데스탈`} · BLT ${q.blt} mm${q.padT?` (패드 두께 ${q.padT} mm, 압축 ${Math.round(TIMS[q.tim].comp*100)}%)`:' (디스펜싱)'} · 면적 ${q.area.toFixed(0)} mm² · 경로 ${q.R.toFixed(1)} K/W · ${Math.round(q.share*100)}% 전달`:' · 보드로만 방열'}`);});
   L.push(`실링: ${d.seal.gasket} · ${d.seal.vent}`);
   L.push(`체결: 커버 ${d.screwM} 나사 ${d.ns}개 (간격 ≤ ${d.pitch} mm) · PCB 보스 ${d.sup.length}개 (${d.sup.filter(s=>s.kind==='hole').length?'장착 구멍 '+d.sup.filter(s=>s.kind==='hole').length:'모서리 가정 '+d.sup.filter(s=>s.kind==='corner').length}${d.added.length?` + 중앙 지지 ${d.added.length}`:''})${R.inp.vib>=4?' · 내부 대각 보강 리브':''}`);
   L.push(`진동: PCB 1차 고유진동수 ${d.vib.fn.toFixed(0)} Hz · 응답 ${d.vib.gout.toFixed(1)} Grms · 3σ 처짐 ${d.vib.z3.toFixed(3)} mm / 허용 ${d.vib.zAllow.toFixed(3)} mm (${d.vib.part}${d.vib.leadless?' 리드리스':''}) → 안전율 ${d.vib.sf.toFixed(2)}`);
   L.push(`커넥터 개구부: ${R.N.cuts.length?R.N.cuts.map(c=>`${c.ref}(${c.side})`).join(', '):'없음'}`);
+  R.N.cuts.filter(c=>c.sealed).forEach(c=>L.push(`  ${c.ref} ${c.mpn} ↔ ${c.mate}: 창 ${(c.b-c.a).toFixed(1)} × ${(c.z1-c.z0).toFixed(1)} mm (슈라우드 + 0.3 mm), 플랜지 ${(c.flange.b-c.flange.a).toFixed(1)} × ${(c.flange.z1-c.flange.z0).toFixed(1)} mm를 내벽에 실링(폭 ${c.land.toFixed(1)} mm) · 보드 끝 → 내벽 ${c.gap.toFixed(1)} mm · 슈라우드 돌출 ${(c.shroudLen-d.geo.rim).toFixed(1)} mm · 분할면 z ${d.geo.zSplit.toFixed(1)} (창 아래) · 플러그 착탈 공간 ${c.plug.keep} mm · ${c.rated}`));
   L.push(`트레이드오프: 원가 지수 ${R.idx.cost}/100 · 중량 지수 ${R.idx.mass}/100 (약 ${d.mass.toFixed(0)} g) · 방열 여유도 ${R.idx.thermal}% · 내진동 안전율 ${R.idx.vib}%`);
   if(R.warn.length)L.push('경고:\n'+R.warn.map(w=>'  ! '+w).join('\n'));
   return L.join('\n');}
@@ -5956,18 +6023,19 @@ function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString(
     `wall=${f(g.t)}; rim=${f(g.rim)}; x0=${f(g.x0)}; y0=${f(g.y0)}; Lo=${f(g.Lo)}; Wo=${f(g.Wo)};`,`zFloor=${f(g.zFloor)}; zLid=${f(g.zLid)}; zSplit=${f(g.zSplit)}; r=3;`,
     `module rbox(x,y,z,l,w,h,rr){translate([x,y,z]) hull(){for(i=[rr,l-rr],j=[rr,w-rr]) translate([i,j,0]) cylinder(r=rr,h=h);}}`,
     `module shell(){difference(){rbox(x0,y0,zFloor-wall,Lo,Wo,zLid+wall-(zFloor-wall),r); rbox(x0+rim,y0+rim,zFloor,Lo-2*rim,Wo-2*rim,zLid-zFloor,max(0.5,r-rim/2));`,
-    ...R.N.cuts.map(c=>{const w=c.b-c.a,h=c.z1-c.z0;return c.side==='W'?`  translate([x0-1,${f(c.a)},${f(c.z0)}]) cube([rim+2,${f(w)},${f(h)}]); /* ${c.ref} */`:c.side==='E'?`  translate([x0+Lo-rim-1,${f(c.a)},${f(c.z0)}]) cube([rim+2,${f(w)},${f(h)}]); /* ${c.ref} */`:c.side==='S'?`  translate([${f(c.a)},y0-1,${f(c.z0)}]) cube([${f(w)},rim+2,${f(h)}]); /* ${c.ref} */`:`  translate([${f(c.a)},y0+Wo-rim-1,${f(c.z0)}]) cube([${f(w)},rim+2,${f(h)}]); /* ${c.ref} */`;}),
+    ...R.N.cuts.map(c=>{const w=c.b-c.a,h=c.z1-c.z0;const nm=c.sealed?`${c.ref} ${c.mpn} 창, 플랜지 실링`:c.ref;c={...c,ref:nm};return c.side==='W'?`  translate([x0-1,${f(c.a)},${f(c.z0)}]) cube([rim+2,${f(w)},${f(h)}]); /* ${c.ref} */`:c.side==='E'?`  translate([x0+Lo-rim-1,${f(c.a)},${f(c.z0)}]) cube([rim+2,${f(w)},${f(h)}]); /* ${c.ref} */`:c.side==='S'?`  translate([${f(c.a)},y0-1,${f(c.z0)}]) cube([${f(w)},rim+2,${f(h)}]); /* ${c.ref} */`:`  translate([${f(c.a)},y0+Wo-rim-1,${f(c.z0)}]) cube([${f(w)},rim+2,${f(h)}]); /* ${c.ref} */`;}),
     ...(d.seal.breather?[`  translate([x0+Lo/2,y0+Wo+1,zSplit-4]) rotate([90,0,0]) cylinder(d=12,h=rim+2); // 벤트 필터 M12`]:[]),
     `}}`,
     `module pcb_bosses(){${d.sup.map(s=>`translate([${f(s.x)},${f(s.y)},zFloor]) difference(){cylinder(d=${s.d>3.4?9:7},h=${f(g.stand)}); cylinder(d=${s.d>3.4?3.3:2.5},h=${f(g.stand+1)});}`).join(' ')}}`,
     `module lid_screws(){${d.screws.map(s=>`translate([${f(s.x)},${f(s.y)},zFloor]) difference(){cylinder(d=${d.screwM==='M4'?9:7.5},h=zSplit-zFloor); cylinder(d=${d.screwM==='M4'?3.3:2.5},h=zSplit-zFloor+1);}`).join(' ')}}`,
-    `module pedestals(){${d.th.peds.map(p=>{const c=R.N.hot.find(h=>h.ref===p.ref).c;const top=(c.body.ht||1)+R.N.t/2+1.0;return`translate([${f(c.body.cx-c.body.w/2)},${f(c.body.cy-c.body.h/2)},${f(top)}]) cube([${f(c.body.w)},${f(c.body.h)},${f(g.zLid-top)}]); /* ${p.ref}: TIM 1.0 mm */`;}).join(' ')}}`,
+    `module pedestals(){${d.th.peds.filter(p=>p.kind==='top').map(p=>{const q=p.ped;return`translate([${f(q.x)},${f(q.y)},${f(q.z0)}]) cube([${f(q.w)},${f(q.h)},${f(q.z1-q.z0)}]); /* ${p.ref}: ${TIMS[p.tim].short}, BLT ${p.blt} mm */`;}).join(' ')}}`,
+    `module base_pedestals(){${d.th.peds.filter(p=>p.kind==='bottom').map(p=>{const q=p.ped;return`translate([${f(q.x)},${f(q.y)},${f(q.z0-0.5)}]) cube([${f(q.w)},${f(q.h)},${f(q.z1-q.z0+0.5)}]); /* ${p.ref}: 서멀 비아 ${p.vias} + ${TIMS[p.tim].short}, BLT ${p.blt} mm */`;}).join(' ')}}`,
     `module fins(){${d.fins?`for(i=[0:${d.fins.n-1}]) translate([x0+5+i*${d.fins.pitch},y0+4,zLid+wall]) cube([${d.fins.t},${f(d.fins.len)},${f(d.fins.h)}]);`:''}}`,
-    `module base(){intersection(){union(){shell(); pcb_bosses(); lid_screws();} translate([x0-1,y0-1,zFloor-wall-1]) cube([Lo+2,Wo+2,zSplit-(zFloor-wall)+1]);}}`,
+    `module base(){intersection(){union(){shell(); pcb_bosses(); lid_screws(); base_pedestals();} translate([x0-1,y0-1,zFloor-wall-1]) cube([Lo+2,Wo+2,zSplit-(zFloor-wall)+1]);}}`,
     `module lid(){intersection(){union(){shell(); pedestals(); fins();} translate([x0-1,y0-1,zSplit]) cube([Lo+2,Wo+2,zLid+wall+40-zSplit]);}}`,
     `base();`,`translate([0,0,15]) lid(); // 열린 상태로 보기 — 조립은 translate 제거`];
   return o.join('\n')+'\n';}
-return{MATS,IPS,ipKey,SEAL,boardNeeds,pcbVibration,analyze,text,compareText,scad};
+return{MATS,TIMS,IPS,ipKey,SEAL,boardNeeds,pcbVibration,analyze,text,compareText,scad};
 })();
 
 
@@ -6335,7 +6403,7 @@ const SAMPLE_HSIS_TC364=(function(){
     rows:[
       r('HSIS-301','VEXT','전원','23, 42, 44, 52, 69, 78, 83, 125, 126','','VEXT / VDDP3 / VDDM / VAREF1 / VEVRSB','PWR','전원','','','','+3V3','U6.2 (LDO 출력)','3.3 V ±5 %, 단일 공급','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인','코어 VDD는 내부 EVR13'),
       r('HSIS-302','VDD','전원','10, 22, 72, 79, 99, 127','','VDD (EVR13 출력)','PWR','전원','','','','VDD','C5.2','1.25 V 내부 생성','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인',''),
-      r('HSIS-303','VSS','접지','41, 43, 80, 145','','VSS / VSSM / VAGND1','PWR','접지','','','','GND','J1.2','','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인','노출 패드(145) 포함'),
+      r('HSIS-303','VSS','접지','41, 43, 80, 145','','VSS / VSSM / VAGND1','PWR','접지','','','','GND','J1.5','','','','','','','SYS-REQ-301','TC-PWR-01','QM','승인','노출 패드(145) 포함'),
       r('HSIS-304','PORST','리셋·부트','97','PORST','PORST','SCU','입력','','Low','외부 풀업 10kΩ','PORST','R8.1','','','','','','','SYS-REQ-302','TC-RST-01','QM','승인',''),
       r('HSIS-305','XTAL1','클럭','81','XTAL1','XTAL1','SCU','입력','','','','XTAL1','Y1.1','20 MHz','','','Mcu','McuClockSettingConfig_0','','SYS-REQ-303','TC-CLK-01','QM','승인',''),
       r('HSIS-306','XTAL2','클럭','82','XTAL2','XTAL2','SCU','출력','','','','XTAL2','Y1.3','20 MHz','','','Mcu','McuClockSettingConfig_0','','SYS-REQ-303','TC-CLK-01','QM','승인',''),
@@ -6346,7 +6414,7 @@ const SAMPLE_HSIS_TC364=(function(){
       en('HSIS-313','EN_U','U3.22','DRV8313 EN3'),en('HSIS-314','EN_V','U3.24','DRV8313 EN2'),en('HSIS-315','EN_W','U3.26','DRV8313 EN1'),
       r('HSIS-316','DRV_NSLEEP','디지털 출력','','','GPIO','Dio','출력','Low','High','없음','DRV_NSLEEP','U3.17','','','','Dio','DioConf_DioChannel_DRV_NSLEEP','Dio_WriteChannel','SYS-REQ-322','TC-INV-03','ASIL B','초안','Low = 슬립 (내부 풀다운)'),
       r('HSIS-317','DRV_NFAULT','디지털 입력','','','ERU 외부 인터럽트 (하강 에지)','ERU','입력(오픈 드레인)','','Low','외부 풀업 10kΩ','NFAULT','U3.18','','','','Icu','IcuChannel_DRV_NFAULT','Icu_EnableNotification','SYS-REQ-322','TC-INV-03','ASIL B','초안','과전류·과열·저전압'),
-      hall('HSIS-320','HALL_A','J3.4'),hall('HSIS-321','HALL_B','J3.5'),hall('HSIS-322','HALL_C','J3.6'),
+      hall('HSIS-320','HALL_A','J1.1'),hall('HSIS-321','HALL_B','J1.2'),hall('HSIS-322','HALL_C','J1.3'),
       r('HSIS-330','FLASH_CS','통신','','','QSPI SLSO (CS)','QSPI','출력','High','Low','없음','FLASH_CS','U5.1','','','','Spi','SpiExternalDevice_Flash','Spi_AsyncTransmit','SYS-REQ-340','TC-FLASH-01','QM','초안',''),
       r('HSIS-331','FLASH_SCLK','통신','','','QSPI SCLK','QSPI','출력','','','','FLASH_SCLK','U5.6','','','20 MHz','Spi','SpiExternalDevice_Flash','Spi_AsyncTransmit','SYS-REQ-340','TC-FLASH-01','QM','초안',''),
       r('HSIS-332','FLASH_MOSI','통신','','','QSPI MTSR','QSPI','출력','','','','FLASH_MOSI','U5.5','','','20 MHz','Spi','SpiExternalDevice_Flash','','SYS-REQ-340','TC-FLASH-01','QM','초안',''),
@@ -6677,6 +6745,17 @@ function build3D(c){
     inner.add(box(bw,bh,ht*0.57,m.btnBase,0,0,0),box(bw*0.95,bh*0.95,0.25,m.steel,0,0,ht*0.57));
     const r=Math.min(bw,bh)*0.29;const cy=new THREE.Mesh(new THREE.CylinderGeometry(r,r,ht*0.37,32),m.act);cy.rotation.x=Math.PI/2;cy.position.z=ht*0.64+ht*0.185;inner.add(cy);
     if(f)f.pads.forEach(p=>inner.add(box(1.2,0.7,0.12,m.tin,p.x,p.y,0)));
+  }else if(k==='sealhdr'&&f&&f.seal){
+    // sealed right-angle header: flange, hollow shroud with the pin field, latch ramp, pins bent down behind the flange, board-lock pegs
+    const q=f.seal,sh=q.shroud,wt=1.1,x0=sh.x0,x1=q.flangeX,L=x1-x0,zc=(sh.z0+sh.z1)/2;
+    inner.add(box(q.flangeT,2*q.flange.y,q.flange.z1-q.flange.z0,m.plastic,x1+q.flangeT/2,0,q.flange.z0));
+    inner.add(box(3.4,2*q.rear.y,q.rear.z1,m.plastic,x1+q.flangeT+1.7,0,0));
+    inner.add(box(L,2*sh.y,wt,m.plastic,x0+L/2,0,sh.z0),box(L,2*sh.y,wt,m.plastic,x0+L/2,0,sh.z1-wt),box(L,wt,sh.z1-sh.z0,m.plastic,x0+L/2,sh.y-wt/2,sh.z0),box(L,wt,sh.z1-sh.z0,m.plastic,x0+L/2,-sh.y+wt/2,sh.z0));
+    inner.add(box(0.3,2*sh.y-2*wt,sh.z1-sh.z0-2*wt,m.dark||m.black,x1-0.15,0,sh.z0+wt));
+    inner.add(box(4,4.4,1.0,m.plastic,x0+3.2,0,sh.z1),box(1.2,4.4,1.8,m.plastic,x0+1.4,0,sh.z1));
+    f.pads.forEach(p=>{if(!/^\d+$/.test(p.n)){inner.add(box(1.4,1.4,2.6,m.plastic,p.x,p.y,-2.4));return;}
+      const zr=+p.n<=6?zc-1.25:zc+1.25,xb=x1+q.flangeT+3.4;
+      inner.add(box(x1-(x0+1.6),0.64,0.64,m.gold,(x0+1.6+x1)/2,p.y,zr-0.32),box(p.x-xb+0.32,0.64,0.64,m.tin,(xb+p.x)/2,p.y,zr-0.32),box(0.64,0.64,zr+2.6,m.tin,p.x,p.y,-2.6));});
   }else if(k==='hdr'){inner.add(box(bw,bh,ht,m.plastic,0,0,0));f.pads.forEach(p=>inner.add(box(0.64,0.64,11.5,m.gold,p.x,p.y,-3.0)));}
   else if(k==='conn'){inner.add(box(bw,bh,ht,/USB/i.test(c.fp)?m.steel:m.conn,0,0,0));}
   else if(k==='tht2'){
@@ -7682,14 +7761,14 @@ function renderSim(){
 }
 
 /* ---------- protective housing (HOUSING engine): simulation tab, 3D model, CAD export, console command ---------- */
-function mechCfg(){if(!BD.housing)BD.housing={inp:{P:'auto',ip:'IP54',vib:2,ta:ENV.Ta||25,tmax:85,mat:'auto'},show:false,open:false,R:null,key:''};return BD.housing;}
+function mechCfg(){if(!BD.housing)BD.housing={inp:{P:'auto',ip:'IP54',vib:2,ta:ENV.Ta||25,tmax:85,tj:125,mat:'auto',tim:'auto'},show:false,open:false,R:null,key:''};const I=BD.housing.inp;if(I.tj==null)I.tj=125;if(!I.tim)I.tim='auto';return BD.housing;}
 function mechPower(){try{const cfg=thConfig();const P={};let any=false;Object.entries(cfg.P||{}).forEach(([k,v])=>{if(+v>0){P[k]=+v;any=true;}});return any?P:null;}catch(e){return null;}}
 function mechRun(force){const H=mechCfg();const i=H.inp;const key=JSON.stringify(i)+'|'+BD.comps.length+'|'+BD.W+'x'+BD.H;
-  if(!force&&H.R&&H.key===key)return H.R;H.R=HOUSING.analyze(BD,{P:i.P==='auto'?null:+i.P,ip:i.ip,vib:+i.vib,ta:+i.ta,tmax:+i.tmax,mat:i.mat,power:mechPower()});H.key=key;return H.R;}
+  if(!force&&H.R&&H.key===key)return H.R;H.R=HOUSING.analyze(BD,{P:i.P==='auto'?null:+i.P,ip:i.ip,vib:+i.vib,ta:+i.ta,tmax:+i.tmax,tj:+i.tj,mat:i.mat,tim:i.tim,power:mechPower()});H.key=key;return H.R;}
 const MECH_BAR=(lab,val,max,unit,kind)=>{const pct=Math.max(0,Math.min(100,val/max*100));return`<div class="mbar"><div class="mbar-h"><span>${lab}</span><b class="mono">${unit==='%'?Math.round(val)+'%':`${Math.round(val)} / ${max}`}</b></div><div class="mbar-t"><i class="mb-${kind}" style="width:${pct}%"></i></div></div>`;};
 function mechHTML(){
   const H=mechCfg(),i=H.inp,R=mechRun(),d=R.d,g=d.geo,ipIdx=Math.max(0,HOUSING.IPS.indexOf(d.ip));
-  const autoP=i.P==='auto';const card=(k,t,sub)=>`<div class="mcard"><span class="mk">${k}</span><b>${t}</b><span class="ms">${sub}</span></div>`;
+  const autoP=i.P==='auto';const peds=d.th.peds,seal=R.N.cuts.filter(c=>c.sealed),maxTj=Math.max(0,...d.th.parts.map(p=>p.Tj));const card=(k,t,sub)=>`<div class="mcard"><span class="mk">${k}</span><b>${t}</b><span class="ms">${sub}</span></div>`;
   const good=v=>v>=60?'ok':v>=30?'warn':'err';
   const rows=R.all.map(x=>`<tr class="${x===d?'on':''}"><td>${esc(x.m.short)}${x===d?' <span class="cls">선택</span>':''}</td><td class="r mono">${x.geo.t}</td><td class="r mono">${x.th.Tboard.toFixed(0)}</td><td class="r mono">${Math.round(x.th.margin*100)}%</td><td class="r mono">${x.mass.toFixed(0)}</td><td class="r mono">${x.costIdx}</td><td>${x.feasible?'<span class="sv ok"><i aria-hidden="true">✓</i>적합</span>':`<span class="sv warn" title="${esc(x.why.join(' · '))}"><i aria-hidden="true">!</i>${esc(x.why[0]||'')}</span>`}</td></tr>`).join('');
   return`<div class="sim mech">
@@ -7702,12 +7781,15 @@ function mechHTML(){
       <input type="range" min="0" max="${HOUSING.IPS.length-1}" step="1" value="${ipIdx}" data-mh="ip" aria-label="IP 등급"></label>
     <label class="mrow"><span>진동 가혹도 (Vibration Severity)</span><b class="mono">${R.inp.vib} Grms</b>
       <input type="range" min="0" max="20" step="0.5" value="${R.inp.vib}" data-mh="vib" aria-label="진동 Grms"></label>
-    <div class="mgrid"><label class="fld"><span>주위 온도 (°C)</span><input type="number" step="1" data-mh="ta" value="${i.ta}"></label><label class="fld"><span>PCB 한계 온도 (°C)</span><input type="number" step="1" data-mh="tmax" value="${i.tmax}"></label>
-      <label class="fld"><span>재질</span><select data-mh="mat"><option value="auto"${i.mat==='auto'?' selected':''}>자동 (조건 만족 · 최저 원가)</option>${Object.entries(HOUSING.MATS).map(([k,v])=>`<option value="${k}"${i.mat===k?' selected':''}>${esc(v.short)}</option>`).join('')}</select></label></div>
+    <div class="mgrid"><label class="fld"><span>주위 온도 (°C)</span><input type="number" step="1" data-mh="ta" value="${i.ta}"></label><label class="fld"><span>PCB 한계 온도 (°C)</span><input type="number" step="1" data-mh="tmax" value="${i.tmax}"></label><label class="fld"><span>부품 Tj 한계 (°C)</span><input type="number" step="5" data-mh="tj" value="${i.tj}"></label>
+      <label class="fld"><span>재질</span><select data-mh="mat"><option value="auto"${i.mat==='auto'?' selected':''}>자동 (조건 만족 · 최저 원가)</option>${Object.entries(HOUSING.MATS).map(([k,v])=>`<option value="${k}"${i.mat===k?' selected':''}>${esc(v.short)}</option>`).join('')}</select></label>
+      <label class="fld"><span>방열 패드 (TIM)</span><select data-mh="tim"><option value="auto"${i.tim==='auto'?' selected':''}>자동 (Tj 한계 만족 · 최저 원가)</option>${Object.entries(HOUSING.TIMS).map(([k,v])=>`<option value="${k}"${i.tim===k?' selected':''}>${esc(v.short)} (${v.form})</option>`).join('')}<option value="none"${i.tim==='none'?' selected':''}>사용 안 함</option></select></label></div>
   </div>
   <div class="mnote"><b>주요 설계를 위한 변환 조건 및 요약</b><ul>${R.conds.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>
   ${card('권장 하우징 재질',esc(d.m.label),`최소 권장 벽두께: ${g.t} mm${g.rim>g.t?` · 실링 플랜지 ${g.rim} mm`:''} · ${esc(d.m.proc_label)}`)}
-  ${card('열관리 / 방열 방식',d.m.metal?(d.th.peds.length?'TIM(방열패드) + 하우징 내벽 열전도':'하우징 벽 열전도'):'수지 벽 전도 + 내부 대류',`${d.fins?`방열 핀 ${d.fins.n}개 · `:''}${d.seal.slots?'통풍 슬롯 · ':''}자연대류 · 표면 ${d.th.Ts.toFixed(0)} °C · PCB ${d.th.Tboard.toFixed(0)} °C`)}
+  ${card('열관리 / 방열 방식',d.m.metal?(peds.length?`TIM + 하우징 페데스탈 ${peds.length}곳`:'하우징 벽 열전도'):'수지 벽 전도 + 내부 대류',`${peds.length?`베이스(서멀 비아) ${peds.filter(p=>p.kind==='bottom').length} · 커버 ${peds.filter(p=>p.kind==='top').length} · TIM 경로 ${d.th.Ptim.toFixed(1)} W · `:''}${d.fins?`방열 핀 ${d.fins.n}개 · `:''}${d.seal.slots?'통풍 슬롯 · ':''}자연대류 · 표면 ${d.th.Ts.toFixed(0)} °C · PCB ${d.th.Tboard.toFixed(0)} °C · 최고 Tj ${maxTj.toFixed(0)} °C`)}
+  ${peds.length?card('방열 패드 (TIM) 선정',esc([...new Set(peds.map(p=>HOUSING.TIMS[p.tim].label))].join(' · ')),`BLT ${[...new Set(peds.map(p=>p.blt))].join(' / ')} mm · 패드 면적 합 ${peds.reduce((a,p)=>a+p.area,0).toFixed(0)} mm² · 서멀 비아 ${peds.reduce((a,p)=>a+p.vias,0)}개 (Ø0.3 충전·캡핑) · 전기 절연형`):''}
+  ${seal.map(c=>card('커넥터 관통부 · 실링',`${esc(c.ref)} ${esc(c.mpn)} ↔ ${esc(c.mate)}`,`벽 창 ${(c.b-c.a).toFixed(1)} × ${(c.z1-c.z0).toFixed(1)} mm · 플랜지 내벽 실링 폭 ${c.land.toFixed(1)} mm (FIPG/실리콘 패킹) · 슈라우드 돌출 ${(c.shroudLen-g.rim).toFixed(1)} mm · 분할면 창 아래 · 플러그 착탈 공간 ${c.plug.keep} mm`)).join('')}
   ${card('기밀 및 실링 구조',esc(d.seal.label),esc(d.seal.gasket+(d.seal.breather?' · 벤트 필터(Breather Vent) 필수 적용':'')))}
   ${card('체결 / 기구 보강',`커버 ${d.screwM} Screw Boss ${d.ns}개 · PCB 보스 ${d.sup.length}개`,`간격 ≤ ${d.pitch} mm${d.added.length?` · 중앙 지지 ${d.added.length}개 추가`:''}${R.inp.vib>=4?' · 내부 대각 보강 리브 배치':''}`)}
   <div class="mbars"><b>엔지니어링 트레이드오프 분석</b>
@@ -7719,22 +7801,25 @@ function mechHTML(){
       <tr><td>외형 (L × W × H)</td><td class="mono">${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm</td></tr>
       <tr><td>내부 · 스탠드오프 · 위 여유</td><td class="mono">${g.Li.toFixed(1)} × ${g.Wi.toFixed(1)} × ${g.Hi.toFixed(1)} mm · ${g.stand} mm · ${g.top} mm</td></tr>
       <tr><td>온도 (주위 ${R.inp.ta} °C)</td><td class="mono">표면 ${d.th.Ts.toFixed(1)} · 내벽 ${d.th.Twin.toFixed(1)} · PCB ${d.th.Tboard.toFixed(1)} °C · TIM 경로 ${d.th.Ptim.toFixed(1)} W</td></tr>
-      ${d.th.peds.length?`<tr><td>페데스탈 부품 케이스</td><td class="mono">${d.th.peds.map(p=>`${p.ref} ${p.P.toFixed(1)} W → ${p.Tcase.toFixed(0)} °C`).join(' · ')}</td></tr>`:''}
+
       <tr><td>PCB 진동 (Steinberg)</td><td class="mono">f₁ ${d.vib.fn.toFixed(0)} Hz · 응답 ${d.vib.gout.toFixed(1)} Grms · 3σ ${d.vib.z3.toFixed(3)} / 허용 ${d.vib.zAllow.toFixed(3)} mm (${esc(d.vib.part)}) · SF ${d.vib.sf.toFixed(2)}</td></tr>
       <tr><td>커넥터 개구부</td><td class="mono">${R.N.cuts.length?R.N.cuts.map(c=>`${c.ref} (${{W:'왼쪽',E:'오른쪽',S:'아래',N:'위'}[c.side]})`).join(' · '):'없음'}</td></tr>
     </tbody></table></details>
+  ${d.th.parts.length?`<details class="thsec" open><summary><b>부품별 방열 경로</b><span>Tj 한계 ${R.inp.tj} °C</span></summary>
+    <table class="stbl"><thead><tr><th>부품</th><th class="r">W</th><th>경로</th><th>TIM · BLT</th><th class="r">비아</th><th class="r">K/W</th><th class="r">Tj °C</th></tr></thead><tbody>${d.th.parts.map(p=>{const q=peds.find(x=>x.ref===p.ref);const over=p.Tj>R.inp.tj;
+      return`<tr><td>${esc(p.ref)}</td><td class="r mono">${p.P.toFixed(2)}</td><td>${q?(q.kind==='bottom'?'비아 → 베이스':'윗면 → 커버'):'보드로만'}</td><td>${q?`${esc(HOUSING.TIMS[q.tim].short)} · ${q.blt} mm${q.padT?` (${q.padT} t)`:''}`:'—'}</td><td class="r mono">${q&&q.vias?q.vias:'—'}</td><td class="r mono">${q?q.R.toFixed(1):'—'}</td><td class="r mono"><span class="sv ${over?'err':p.Tj>R.inp.tj-10?'warn':'ok'}">${p.Tj.toFixed(0)}</span></td></tr>`;}).join('')}</tbody></table></details>`:''}
   <details class="thsec"><summary><b>재질 후보 비교</b><span>같은 조건에서 ${R.all.filter(x=>x.feasible).length}/${R.all.length}개 적합</span></summary>
     <table class="stbl"><thead><tr><th>재질</th><th class="r">벽 mm</th><th class="r">PCB °C</th><th class="r">열 여유</th><th class="r">g</th><th class="r">원가</th><th>판정</th></tr></thead><tbody>${rows}</tbody></table></details>
   <div class="acts" style="flex-wrap:wrap"><button class="btn primary sm" id="mh3d">${H.show?'3D 하우징 숨기기':'3D로 하우징 보기'}</button>${H.show?`<button class="btn sm" id="mhOpen">${H.open?'커버 닫기':'커버 열기'}</button>`:''}
     <button class="btn sm" id="mhExp">CAD 내보내기 (SCAD·STL·보고서)</button><button class="btn sm" id="mhCli">${AIM.mode==='ai'?'AI로 트레이드오프 검토':'CLI로 비교'}</button></div>
-  <p class="lead" style="margin-top:8px">계산은 초기 설계용 추정입니다: 외부 자연대류·복사(반복 해), 벽 전도, 보드→내벽 대류·복사·지지 보스 전도, TIM 페데스탈(3 W/m·K, 1 mm), Steinberg PCB 진동(평탄 PSD 20–2000 Hz). 양산 전 열·구조 해석과 IP 시험으로 확인하세요.</p>
+  <p class="lead" style="margin-top:8px">계산은 초기 설계용 추정입니다: 외부 자연대류·복사(반복 해), 벽 전도, 보드→내벽 대류·복사·지지 보스 전도, 부품별 방열 경로(노출 패드 → 서멀 비아 → TIM → 베이스, 또는 윗면 → TIM → 커버; TIM·BLT는 Tj 한계를 맞추는 가장 싼 것), 커넥터 플랜지 실링, Steinberg PCB 진동(평탄 PSD 20–2000 Hz). 양산 전 열·구조 해석과 IP 시험으로 확인하세요.</p>
 </div>`;
 }
 function mechBind(b){
   const H=mechCfg(),i=H.inp;let t=0;const apply=(paint)=>{H.R=null;if(paint!==false){clearTimeout(t);t=setTimeout(()=>{renderSim();if(H.show)mech3D();},60);}};
   b.querySelectorAll('[data-mh]').forEach(el=>{const k=el.dataset.mh;const ev=el.type==='range'?'input':'change';el.addEventListener(ev,()=>{
     if(k==='P'){i.P=+el.value;}else if(k==='Pauto'){i.P=el.checked?'auto':mechRun().inp.P;}else if(k==='ip'){i.ip=HOUSING.IPS[+el.value];}else if(k==='vib'){i.vib=+el.value;}
-    else if(k==='ta'||k==='tmax'){const v=parseFloat(el.value);if(isFinite(v))i[k]=v;}else if(k==='mat')i.mat=el.value;apply();});});
+    else if(k==='ta'||k==='tmax'||k==='tj'){const v=parseFloat(el.value);if(isFinite(v))i[k]=v;}else if(k==='mat')i.mat=el.value;else if(k==='tim')i.tim=el.value;apply();});});
   b.querySelector('#mh3d')?.addEventListener('click',()=>{H.show=!H.show;if(H.show&&S.view!=='3d')setView('3d');mech3D();renderSim();});
   b.querySelector('#mhOpen')?.addEventListener('click',()=>{H.open=!H.open;mech3D();renderSim();});
   b.querySelector('#mhExp')?.addEventListener('click',mechExport);
@@ -7770,8 +7855,15 @@ function mechGroup(R){
   if(d.seal.gasket!=='없음'&&d.seal.gasket!=='없음 (정밀 맞춤)'){const m2=new THR.LineBasicMaterial({color:0xe2703a});const ins=r/2;const pts=[[X0+ins,Y0+ins],[X1-ins,Y0+ins],[X1-ins,Y1-ins],[X0+ins,Y1-ins],[X0+ins,Y0+ins]].map(p=>new THR.Vector3(p[0],p[1],g.zSplit+0.05));base.add(new THR.Line(new THR.BufferGeometry().setFromPoints(pts),m2));}
   // lid: walls from the split line, top plate, pedestals + TIM on the hot parts, fins
   ['S','N','W','E'].forEach(s=>wall(s,g.zSplit,g.zLid,lid));box(X0,Y0,g.zLid,X1,Y1,Zt,mat,lid);
-  d.th.peds.forEach(p=>{const h=R.N.hot.find(x=>x.ref===p.ref);if(!h)return;const c=h.c,bd=c.body;const top=T/2+(bd.ht||1);
-    box(bd.cx-bd.w/2,bd.cy-bd.h/2,top+1.0,bd.cx+bd.w/2,bd.cy+bd.h/2,g.zLid,solid,lid);box(bd.cx-bd.w/2,bd.cy-bd.h/2,top,bd.cx+bd.w/2,bd.cy+bd.h/2,top+1.0,timM,lid);});
+  d.th.peds.forEach(p=>{const q=p.ped;if(p.kind==='top'){box(q.x,q.y,q.z0,q.x+q.w,q.y+q.h,g.zLid,solid,lid);box(q.x,q.y,q.tz,q.x+q.w,q.y+q.h,q.z0,timM,lid);}
+    else{box(q.x,q.y,g.zFloor,q.x+q.w,q.y+q.h,q.z1,solid,base);box(q.x,q.y,q.z1,q.x+q.w,q.y+q.h,-T/2,timM,base);}});
+  // sealed connectors: seal bead around the window on the inner wall face, and the mating harness plug in front of it
+  R.N.cuts.filter(c=>c.sealed).forEach(c=>{const m2=new THR.LineBasicMaterial({color:0xe2703a});const o=0.9;const inner=c.side==='W'?X0+r-0.05:c.side==='E'?X1-r+0.05:c.side==='S'?Y0+r-0.05:Y1-r+0.05;
+    const P=(u,z)=>c.side==='W'||c.side==='E'?new THR.Vector3(inner,u,z):new THR.Vector3(u,inner,z);
+    lid.add(new THR.Line(new THR.BufferGeometry().setFromPoints([P(c.a-o,c.z0-o),P(c.b+o,c.z0-o),P(c.b+o,c.z1+o),P(c.a-o,c.z1+o),P(c.a-o,c.z0-o)]),m2));
+    const pl=c.plug;if(!pl)return;const plugM=new THR.MeshStandardMaterial({color:0x2a2c30,roughness:0.7,transparent:true,opacity:0.55,depthWrite:false});const ac=(c.a+c.b)/2,zc=(c.z0+c.z1)/2,hz=c.side==='W'||c.side==='E';
+    const[u0,u1]=c.side==='W'?[X0-0.5-pl.len,X0-0.5]:c.side==='E'?[X1+0.5,X1+0.5+pl.len]:c.side==='S'?[Y0-0.5-pl.len,Y0-0.5]:[Y1+0.5,Y1+0.5+pl.len];
+    const mesh=hz?box(u0,ac-pl.w/2,zc-pl.h/2,u1,ac+pl.w/2,zc+pl.h/2,plugM,grp):box(ac-pl.w/2,u0,zc-pl.h/2,ac+pl.w/2,u1,zc+pl.h/2,plugM,grp);mesh.userData.plug=c.ref;});
   if(d.fins)for(let k=0;k<d.fins.n;k++){const x=X0+5+k*d.fins.pitch;box(x,Y0+4,Zt,x+d.fins.t,Y0+4+d.fins.len,Zt+d.fins.h,solid,lid);}
   lid.position.z=mechCfg().open?Math.max(25,g.Ho*0.9):0;grp.userData.base=base;grp.userData.lid=lid;return grp;
 }
@@ -7788,15 +7880,15 @@ async function mechExport(){
   const z=new JSZip();z.file(base+'_housing.scad',HOUSING.scad(R,BD.name));
   try{const grp=mechGroup(R);grp.userData.lid.position.z=0;z.file(base+'_housing_base.stl',mechSTL(grp.userData.base,base+'_base'));z.file(base+'_housing_lid.stl',mechSTL(grp.userData.lid,base+'_lid'));disposeTree(grp);}catch(e){console.error(e);}
   z.file(base+'_housing_report.md',`# ${BD.name||base} 하우징 설계\n\n\`\`\`\n${HOUSING.text(R)}\n\n${HOUSING.compareText(R)}\n\`\`\`\n\n- 좌표: 보드 왼쪽 아래 = (0,0), 보드 두께 중간면 z = 0, 단위 mm\n- SCAD는 실제 CSG(차집합)로 만든 파라메트릭 모델입니다. STL은 화면용 형상을 삼각형으로 옮긴 참고용(부품이 겹친 솔리드)이라 3D 프린팅·금형에는 SCAD에서 다시 내보내세요.\n`);
-  z.file(base+'_housing.json',JSON.stringify({input:R.inp,material:R.d.mat,geometry:R.d.geo,supports:R.d.sup,screws:R.d.screws,screw:R.d.screwM,seal:R.d.seal,fins:R.d.fins,pedestals:R.d.th.peds.map(p=>({ref:p.ref,P:p.P,Tcase:p.Tcase})),cutouts:R.N.cuts,thermal:{Ts:R.d.th.Ts,Tboard:R.d.th.Tboard},vibration:R.d.vib,mass_g:R.d.mass,indices:R.idx},null,2));
+  z.file(base+'_housing.json',JSON.stringify({input:R.inp,material:R.d.mat,geometry:R.d.geo,supports:R.d.sup,screws:R.d.screws,screw:R.d.screwM,seal:R.d.seal,fins:R.d.fins,thermal_paths:R.d.th.peds.map(p=>({ref:p.ref,P:p.P,path:p.kind,tim:p.tim,tim_label:HOUSING.TIMS[p.tim].label,blt_mm:p.blt,pad_thickness_mm:p.padT,area_mm2:Math.round(p.area),thermal_vias:p.vias,R_KW:+p.R.toFixed(2),Tj:+p.Tj.toFixed(1),pedestal:p.ped})),junctions:R.d.th.parts,cutouts:R.N.cuts,thermal:{Ts:R.d.th.Ts,Tboard:R.d.th.Tboard},vibration:R.d.vib,mass_g:R.d.mass,indices:R.idx},null,2));
   const data=await z.generateAsync({type:'uint8array'});const fn=await offerFile(base+'_housing.zip',data,'application/zip');if(fn)toast('하우징 CAD(SCAD·STL)와 보고서를 zip으로 내려받았습니다.');return fn;
 }
 /* ---- console: housing [check|compare|show|hide|open|close|export] [--p W --ip 67 --vib 6 --ta 40 --tmax 85 --mat adc12] ---- */
-const MECH_HELP=['housing [--p 18 --ip 67 --vib 6 --ta 40 --tmax 85 --mat auto|pcabs|pa66gf|spcc|a6063|adc12|az91d] · housing compare · housing show|hide|open|close · housing export','PCB 보호 하우징 설계: 재질·벽두께·방열(TIM·핀)·실링(IP)·체결 보스·진동 안전율·원가/중량 지수. AI 모드면 Claude가 조건을 바꿔 가며 트레이드오프를 검토'];
+const MECH_HELP=['housing [--p 18 --ip 67 --vib 6 --ta 40 --tmax 85 --tj 125 --mat auto|pcabs|pa66gf|spcc|a6063|adc12|az91d --tim auto|pad15|pad30|gel40|pad60|none] · housing compare · housing show|hide|open|close · housing export','PCB 보호 하우징 설계: 재질·벽두께·방열(부품별 TIM·서멀 비아·페데스탈·핀)·방수 커넥터 관통부·실링(IP)·체결 보스·진동 안전율·원가/중량 지수. AI 모드면 Claude가 조건을 바꿔 가며 트레이드오프를 검토'];
 async function mechCmd(a){
   const H=mechCfg(),i=H.inp;const sub=(a._[0]||'check').toLowerCase();
   if(a.p!=null)i.P=a.p==='auto'?'auto':+a.p;if(a.ip!=null){const k=HOUSING.ipKey(a.ip);if(!k)throw new Error('IP: '+HOUSING.IPS.join(' · '));i.ip=k;}
-  if(a.vib!=null)i.vib=+a.vib;if(a.ta!=null)i.ta=+a.ta;if(a.tmax!=null)i.tmax=+a.tmax;if(a.mat!=null){if(a.mat!=='auto'&&!HOUSING.MATS[a.mat])throw new Error('재질: auto · '+Object.keys(HOUSING.MATS).join(' · '));i.mat=a.mat;}
+  if(a.vib!=null)i.vib=+a.vib;if(a.ta!=null)i.ta=+a.ta;if(a.tmax!=null)i.tmax=+a.tmax;if(a.tj!=null)i.tj=+a.tj;if(a.tim!=null){if(a.tim!=='auto'&&a.tim!=='none'&&!HOUSING.TIMS[a.tim])throw new Error('TIM: auto · none · '+Object.keys(HOUSING.TIMS).join(' · '));i.tim=a.tim;}if(a.mat!=null){if(a.mat!=='auto'&&!HOUSING.MATS[a.mat])throw new Error('재질: auto · '+Object.keys(HOUSING.MATS).join(' · '));i.mat=a.mat;}
   H.R=null;const R=mechRun(true);if(S.panel==='sim'&&SR.tab==='mech')renderSim();
   if(sub==='show'||sub==='hide'){H.show=sub==='show';if(H.show&&S.view!=='3d')setView('3d');mech3D();return H.show?'3D 보기에 하우징을 표시했습니다.':'하우징을 숨겼습니다.';}
   if(sub==='open'||sub==='close'){H.open=sub==='open';H.show=true;if(S.view!=='3d')setView('3d');mech3D();return H.open?'커버를 열었습니다.':'커버를 닫았습니다.';}
@@ -7805,7 +7897,7 @@ async function mechCmd(a){
   if(sub==='compare')return HOUSING.compareText(R);
   return HOUSING.text(R);
 }
-const MECH_AI=`You are a mechanical engineer sizing a protective housing for this PCB inside a viewer. The deterministic analysis is below. Use the run_cli tool with "housing" commands (flags --p --ip --vib --ta --tmax --mat) to test alternatives the user cares about (e.g. a cheaper material at a lower IP, fins vs. heavier metal, extra supports). Leave the housing set to the option you recommend as your last housing command. Answer in Korean, short: recommended design and why, 2-3 trade-offs with the numbers from the outputs (cost index, mass, thermal margin, vibration safety), and the remaining risks. Never invent numbers.`;
+const MECH_AI=`You are a mechanical engineer sizing a protective housing for this PCB inside a viewer. The deterministic analysis is below. Use the run_cli tool with "housing" commands (flags --p --ip --vib --ta --tmax --tj --mat --tim) to test alternatives the user cares about (e.g. a cheaper material at a lower IP, fins vs. heavier metal, a better TIM vs. more thermal vias, junction temperatures of the hot parts, the sealed connector window). Leave the housing set to the option you recommend as your last housing command. Answer in Korean, short: recommended design and why, 2-3 trade-offs with the numbers from the outputs (cost index, mass, thermal margin, vibration safety), and the remaining risks. Never invent numbers.`;
 
 /* ---------- HSIS workspace (shares viewer scope) ---------- */
 const HS={H:null,arxml:null,arxmlFile:'',mcu:null,res:null,tr:null,sel:null,selPin:null,tab:'table',q:'',sev:'all',cats:new Set(),ws:'board'};

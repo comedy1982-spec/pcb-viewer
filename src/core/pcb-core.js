@@ -488,6 +488,14 @@ const FP={};
   FP['CP-SMD-10x10']={kind:'elcap',body:[10.3,10.3,10.2],pads:[{n:'1',x:-4.35,y:0,w:4.1,h:2.0},{n:'2',x:4.35,y:0,w:4.1,h:2.0}]};
   FP['1210']={kind:'chip',body:[3.2,2.5,1.6],pads:[{n:'1',x:-1.5,y:0,w:1.2,h:2.7},{n:'2',x:1.5,y:0,w:1.2,h:2.7}]};
   // shielded power inductor 5.0 × 5.0 mm (e.g. Bourns SRN5040)
+  /* JAE MX23A12NF1 — sealed automotive 2 × 6 header, 2.5 mm pitch, right angle, mating face to local −x (harness side MX23A12SF1).
+     Body origin = bounding-box centre; the shroud passes through the housing wall, the flange (front face at x = −1.65) seals against
+     its inner face, pins and board-lock pegs sit behind. Outline values follow the JAE table (30.5 / 26.5 / 12.5 / 23.5 / 18.3 mm). */
+  FP['MX23A-12-RA']={kind:'sealhdr',body:[23.5,30.5,18.3],pads:Array.from({length:12},(_,i)=>({n:''+(i+1),x:i<6?6.0:8.5,y:6.25-2.5*(i%6),w:1.6,h:1.6,round:true,drill:1.0}))
+    .concat([{n:'P1',x:3.0,y:12.0,w:2.2,h:2.2,round:true,drill:1.6},{n:'P2',x:3.0,y:-12.0,w:2.2,h:2.2,round:true,drill:1.6}]),
+    over:11.45,face:[-1,0],
+    seal:{mpn:'MX23A12NF1',mate:'MX23A12SF1',flangeX:-1.65,flangeT:2.0,flange:{y:15.25,z0:0,z1:18.3},shroud:{x0:-11.75,y:13.25,z0:2.9,z1:15.4},rear:{x1:11.75,y:14.0,z1:16.0},
+      plug:{len:46,w:29.1,h:22.2,keep:70},rated:'3 A/핀 (85 °C) · −40…125 °C · 결합부 실 링 + 전선 그로밋 (하네스 측)'}};
   FP['IND-5x5']={kind:'chip',body:[5.0,5.0,4.0],pads:[{n:'1',x:-1.95,y:0,w:1.6,h:4.2},{n:'2',x:1.95,y:0,w:1.6,h:4.2}]};
   // board-mount 3-phase BLDC motor with 8-pin lead row (U V W H1 H2 H3 VCC GND)
   FP['BLDC-2418']={kind:'motor',body:[30,24,23],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:-19,y:8.75-2.5*i,w:2.0,h:2.0,round:true,drill:1.0}))};
@@ -531,6 +539,8 @@ function fromSpec(spec){
     const xf=(lx,ly)=>{const xx=mir?-lx:lx,a=c.rot*D2R;return[c.x+xx*Math.cos(a)-ly*Math.sin(a),c.y+xx*Math.sin(a)+ly*Math.cos(a)];};
     const kind=c.kind||'box';
     if(f&&kind==='hdr'){const[bw,bh]=f.body;const r=[[-bw/2,-bh/2],[bw/2,-bh/2],[bw/2,bh/2],[-bw/2,bh/2],[-bw/2,-bh/2]].map(p=>xf(p[0],p[1]));S.push({t:'path',pts:r,w:0.13});S.push({t:'seg',a:xf(-bw/2,bh/2-2.54),b:xf(bw/2,bh/2-2.54),w:0.13});}
+    else if(f&&kind==='sealhdr'){const q=f.seal,x0=q.flangeX,x1=q.rear.x1,y=q.flange.y;S.push({t:'path',pts:[[x0,-y],[x1,-y],[x1,y],[x0,y],[x0,-y]].map(p=>xf(p[0],p[1])),w:0.13},{t:'seg',a:xf(x0+q.flangeT,-y),b:xf(x0+q.flangeT,y),w:0.13});
+      const p1=f.pads[0];S.push({t:'path',pts:[[p1.x+1.3,p1.y+0.8],[p1.x+1.3,p1.y-0.8],[p1.x+2.2,p1.y],[p1.x+1.3,p1.y+0.8]].map(p=>xf(p[0],p[1])),w:0.13});}
     else if(f&&kind==='elcap'){const[bw,bh]=f.body,x0=-bw/2-0.15,y0=-bh/2-0.15,x1=bw/2+0.15,y1=bh/2+0.15,ch=bw*0.28,g=1.25;
       S.push({t:'path',pts:[[x0+ch,y0],[x1,y0],[x1,-g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x1,g],[x1,y1],[x0+ch,y1],[x0,y1-ch],[x0,g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x0,-g],[x0,y0+ch],[x0+ch,y0]].map(p=>xf(p[0],p[1])),w:0.13});
       const pl=[x0-0.9,y0+0.9];S.push({t:'seg',a:xf(pl[0]-0.5,pl[1]),b:xf(pl[0]+0.5,pl[1]),w:0.15},{t:'seg',a:xf(pl[0],pl[1]-0.5),b:xf(pl[0],pl[1]+0.5),w:0.15});}

@@ -85,7 +85,9 @@ function place(B,opts){
     movable.forEach(o=>{const b=o.c.bb;const dx=Math.max(b[0]-p.x,0,p.x-b[2]),dy=Math.max(b[1]-p.y,0,p.y-b[3]);const d=Math.hypot(dx,dy);if(d<bd){bd=d;best=o.c;}});
     if(best)follow.push({p,c:best,ox:p.x-(best.bb[0]+best.bb[2])/2,oy:p.y-(best.bb[1]+best.bb[3])/2,rot:best.rot||0,side:best.side});}));
   movable.forEach(o=>canonical(B,o.c));
-  const G=movable.map(o=>{const c=o.c;const lb=[c.bb[0]-c.x,c.bb[1]-c.y,c.bb[2]-c.x,c.bb[3]-c.y];const bb=[],pads=[];
+  const G=movable.map(o=>{const c=o.c;const lb=[c.bb[0]-c.x,c.bb[1]-c.y,c.bb[2]-c.x,c.bb[3]-c.y];
+    // a sealed connector reaches through the housing wall: only its on-board part counts for spacing and the board edge
+    const fo=c.f&&c.f.over&&c.f.face;if(fo){const[fx,fy]=c.f.face,ov=c.f.over;if(fx<0)lb[0]+=ov;else if(fx>0)lb[2]-=ov;else if(fy<0)lb[1]+=ov;else lb[3]-=ov;}const bb=[],pads=[];
     for(let v=0;v<8;v++){const q=[XF(lb[0],lb[1],v),XF(lb[2],lb[3],v)];bb.push([Math.min(q[0][0],q[1][0]),Math.min(q[0][1],q[1][1]),Math.max(q[0][0],q[1][0]),Math.max(q[0][1],q[1][1])]);
       pads.push(c.pads.map(p=>XF(p.x-c.x,p.y-c.y,v)));}
     return{bb,pads,area:(lb[2]-lb[0])*(lb[3]-lb[1])};});
