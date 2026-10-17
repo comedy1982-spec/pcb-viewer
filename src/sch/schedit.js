@@ -276,9 +276,13 @@ function nameNets(sheets,B){
   sheets.forEach(sh=>{const done=new Set();
     sh.wires.forEach(w=>{const g=w.g;if(!g||g.names.size||!g.net||done.has(g)||/^Net-\(/.test(g.net))return;
       const hs=sh.wires.filter(x=>x.g===g&&Math.abs(x.a[1]-x.b[1])<1e-3&&Math.abs(x.a[0]-x.b[0])>=2*GR-1e-3).sort((a,b)=>Math.abs(b.a[0]-b.b[0])-Math.abs(a.a[0]-a.b[0]));
-      const h=hs[0];if(!h)return;const x0=Math.min(h.a[0],h.b[0]),x1=Math.max(h.a[0],h.b[0]);
-      const len=String(g.net).length*1.15+1;let x=x1-x0>len+2*GR?x0+GR:snap((x0+x1)/2);x=snap(x);if(x<=x0+1e-3)x=x0+GR;
-      sh.labels.push({kind:'local',s:g.net,p:[x,h.a[1]],rot:0,fx:{size:1.27,h:'left',v:'bottom'}});done.add(g);});});
+      // a label point must not sit on another net's wire (a crossing) or pin, or KiCad would join the two nets there
+      const clash=q=>sh.wires.some(x=>x.g!==g&&(same(x.a,q)||same(x.b,q)||onSeg(q,x.a,x.b)))||sh.symbols.some(o=>o.pins.some(pp=>pp.g!==g&&same(pp.p,q)))||sh.labels.some(l=>same(l.p,q));
+      for(const h of hs){const x0=Math.min(h.a[0],h.b[0]),x1=Math.max(h.a[0],h.b[0]);
+        const len=String(g.net).length*1.15+1;let x=x1-x0>len+2*GR?x0+GR:snap((x0+x1)/2);x=snap(x);if(x<=x0+1e-3)x=x0+GR;
+        const cand=[x];for(let t=snap(x0+GR);t<x1-1e-3;t+=GR)if(!same([t,0],[x,0]))cand.push(t);
+        const ok=cand.find(t=>!clash([t,h.a[1]]));if(ok==null)continue;
+        sh.labels.push({kind:'local',s:g.net,p:[ok,h.a[1]],rot:0,fx:{size:1.27,h:'left',v:'bottom'}});done.add(g);return;}});});
   return c;
 }
 function toKicad(sheets,meta){

@@ -487,6 +487,8 @@ const FP={};
   // SMD aluminium electrolytic (V-chip), Panasonic FK case G ø10 × 10.2: land a 4.6 (gap) · b 4.1 · c 2.0, pad 1 = +
   FP['CP-SMD-10x10']={kind:'elcap',body:[10.3,10.3,10.2],pads:[{n:'1',x:-4.35,y:0,w:4.1,h:2.0},{n:'2',x:4.35,y:0,w:4.1,h:2.0}]};
   FP['1210']={kind:'chip',body:[3.2,2.5,1.6],pads:[{n:'1',x:-1.5,y:0,w:1.2,h:2.7},{n:'2',x:1.5,y:0,w:1.2,h:2.7}]};
+  // shielded power inductor 5.0 × 5.0 mm (e.g. Bourns SRN5040)
+  FP['IND-5x5']={kind:'chip',body:[5.0,5.0,4.0],pads:[{n:'1',x:-1.95,y:0,w:1.6,h:4.2},{n:'2',x:1.95,y:0,w:1.6,h:4.2}]};
   // board-mount 3-phase BLDC motor with 8-pin lead row (U V W H1 H2 H3 VCC GND)
   FP['BLDC-2418']={kind:'motor',body:[30,24,23],pads:Array.from({length:8},(_,i)=>({n:''+(i+1),x:-19,y:8.75-2.5*i,w:2.0,h:2.0,round:true,drill:1.0}))};
   for(const k in FP){const f=FP[k];const[bw,bh]=f.body;let a=-bw/2,b=-bh/2,c=bw/2,d=bh/2;f.pads.forEach(p=>{a=Math.min(a,p.x-p.w/2);b=Math.min(b,p.y-p.h/2);c=Math.max(c,p.x+p.w/2);d=Math.max(d,p.y+p.h/2);});f.lbb=[a,b,c,d];}

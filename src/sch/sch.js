@@ -226,7 +226,7 @@ function blocksOf(B,ctx){
   const ics=blocks.filter(b=>b.a&&/^U/i.test(b.a.ref)&&ctx.uniq(b.a).length>=20).sort((x,y)=>ctx.uniq(y.a).length-ctx.uniq(x.a).length);
   blocks.forEach((b,i)=>{b.id=i;b.comps=(b.a?[b.a]:[]).concat(b.items);const a=b.a;
     const allRail=a&&a.pads.every(p=>!p.net||ctx.isRail(p.net));
-    b.kind=!a?'loose':a===(ics[0]&&ics[0].a)?'mcu':(/^U/i.test(a.ref)&&(a.pads.some(p=>/^(VIN|VOUT|VI|VO|IN|OUT)$/i.test(p.fn||''))&&a.pads.filter(p=>p.net&&!ctx.isRail(p.net)).length<=1||/1117|LDO|78\d\d|LM317|REG|TPS7|AMS|LP29|NCV|TLS8|TLE42/i.test(a.val||'')))||allRail?'power':/^U/i.test(a.ref)?'ic':'other';
+    b.kind=!a?'loose':a===(ics[0]&&ics[0].a)?'mcu':(/^U/i.test(a.ref)&&(a.pads.some(p=>/^(VIN|VOUT|VI|VO|IN|OUT)$/i.test(p.fn||''))&&a.pads.filter(p=>p.net&&!ctx.isRail(p.net)).length<=1||/1117|LDO|78\d\d|LM317|REG|TPS7|TPS54|TPS56|LMR|LM259|MP1584|MP2|AMS|LP29|NCV|TLS8|TLE42/i.test(a.val||'')))||allRail?'power':/^U/i.test(a.ref)?'ic':'other';
     b.sig=new Set();b.comps.forEach(c=>c.pads.forEach(p=>{if(p.net&&!ctx.isRail(p.net))b.sig.add(p.net);}));});
   return blocks;
 }
@@ -342,7 +342,7 @@ function layoutPage(P,blocks){
   const sh=(x,y)=>share(x,y,z=>bn.get(z));
   const L={ctx,sigNet,parent:new Map(),kids:new Map(),side:new Map(),level:new Map(),
     netBlocks:n=>blocks.filter(b=>bn.get(b).has(n)),
-    offNet:n=>!ctx.isRail(n)&&P.netBlocks(n).some(b=>!set.has(b)),partnerY:()=>null};
+    offNet:n=>sigNet(n)&&P.netBlocks(n).some(b=>!set.has(b)),partnerY:()=>null};
   // main block and signal-flow tree
   let main=blocks[0],bs=-1;blocks.forEach(b=>{const w=(b.kind==='mcu'?1e6:0)+blocks.reduce((a,o)=>o===b?a:a+sh(b,o),0)*100+(b.a?ctx.uniq(b.a).length:0);if(w>bs){bs=w;main=b;}});
   L.level.set(main,0);const placed=[main];const wsum={L:0,R:0};const order=[];

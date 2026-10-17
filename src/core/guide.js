@@ -92,7 +92,7 @@ function checkPcb(B,key,X){
       const split=Object.keys(B.nets).filter(n=>/^(AGND|DGND|PGND|GNDA|GNDD)$/i.test(n));
       const sc=ratio<0.5&&!slots?1:ratio<2?0.5:0.15;
       return{status:sc===1?'pass':sc>=0.5?'partial':'fail',score:sc,ev:`${X.pour.net} 동박면 ${L==='B'?'하단':'상단'} · 같은 층 다른 넷 트랙 ${cut.toFixed(0)} mm (보드 둘레 반의 ${(ratio*100).toFixed(0)}%) · 기준면 횡단 ${slots}곳${split.length?' · 분리 접지 넷 '+split.join(', ')+' (단일점 연결은 수동 확인)':''}`,fix:sc<1?'동박면 층의 트랙을 줄이고(route --strategy noise는 하단 사용을 억제) 짧은 점퍼만 남기기':''};}
-    case'pl_esd_tvs':{const parts=partsOf(B);const tvs=B.comps.filter(isTVS);const sw=new Set(X.emc?X.emc.ps.switchNets:[]);const ext=[];B.comps.filter(isConn).forEach(c=>c.pads.forEach(p=>{if(p.net&&cls(B,p.net)==='신호'&&!sw.has(p.net)&&!ext.some(e=>e.net===p.net))ext.push({net:p.net,c,p});}));void parts;
+    case'pl_esd_tvs':{const parts=partsOf(B);const tvs=B.comps.filter(isTVS);const sw=new Set(X.emc?X.emc.ps.switchNets:[]);const ext=[];B.comps.filter(isConn).forEach(c=>c.pads.forEach(p=>{if(p.net&&cls(B,p.net)==='신호'&&!sw.has(p.net)&&!/SWD|SWCLK|TMS|TCK|TDI|TDO|DBG_|JTAG|DAP/i.test(p.net)&&!ext.some(e=>e.net===p.net))ext.push({net:p.net,c,p});}));void parts;
       if(!ext.length)return{status:'na',ev:'외부 커넥터 신호 없음'};
       const prot=ext.filter(e=>tvs.some(t=>t.pads.some(q=>q.net===e.net)&&Math.hypot(t.x-e.p.x,t.y-e.p.y)<12));
       const sc=prot.length/ext.length;const miss=ext.filter(e=>!prot.includes(e));
@@ -140,7 +140,7 @@ function checkSch(B,key,X){
       xs.forEach(c=>c.pins.forEach(p=>{if(!p.net||isGnd(p.net))return;rows.push({ref:c.ref,net:p.net,ok:capsOn(p.net).length>0});}));
       const bad=rows.filter(r=>!r.ok);const sc=rows.length?1-bad.length/rows.length:1;
       return{status:bad.length?(sc>=0.5?'partial':'fail'):'pass',score:sc,ev:rows.map(r=>`${r.ref} ${r.net} ${r.ok?'부하 캡 있음':'부하 캡 없음'}`).join(' · '),fix:bad.map(r=>`add C 12pF --pins ${r.net},GND --near ${r.ref}`).slice(0,2).join(' ; '),manualNote:'C_L 값은 크리스털 데이터시트(C_L, 기생 용량)로 계산'};}
-    case'sch_tvs':{const tvs=parts.filter(c=>isTVS(c));const sw=new Set(X.emc?X.emc.ps.switchNets:[]);const ext=[];parts.filter(isConn).forEach(c=>c.pins.forEach(p=>{if(p.net&&cls(B,p.net)==='신호'&&!sw.has(p.net)&&!ext.includes(p.net))ext.push(p.net);}));
+    case'sch_tvs':{const tvs=parts.filter(c=>isTVS(c));const sw=new Set(X.emc?X.emc.ps.switchNets:[]);const ext=[];parts.filter(isConn).forEach(c=>c.pins.forEach(p=>{if(p.net&&cls(B,p.net)==='신호'&&!sw.has(p.net)&&!/SWD|SWCLK|TMS|TCK|TDI|TDO|DBG_|JTAG|DAP/i.test(p.net)&&!ext.includes(p.net))ext.push(p.net);}));
       if(!ext.length)return{status:'na',ev:'외부 커넥터 신호 없음'};const prot=ext.filter(n=>tvs.some(t=>t.pins.some(p=>p.net===n)));const sc=prot.length/ext.length;
       return{status:sc>=0.999?'pass':sc>0?'partial':'fail',score:sc,ev:`커넥터 신호 ${ext.length}개 중 TVS 연결 ${prot.length}${prot.length<ext.length?' · 없음: '+ext.filter(n=>!prot.includes(n)).slice(0,8).join(', '):''}`,fix:'신호마다 TVS/ESD 다이오드(예: add D PESD5V0 --pins <넷>,GND --near <커넥터>)',manualNote:'TVS 동작 전압·용량은 신호 속도와 버스 규격으로 선정'};}
     case'sch_can_term':{const h=[...N.keys()].find(n=>/CAN.*H$|^CANH$/i.test(n)),l=[...N.keys()].find(n=>/CAN.*L$|^CANL$/i.test(n));if(!h||!l)return{status:'na',ev:'CANH/CANL 넷 없음'};

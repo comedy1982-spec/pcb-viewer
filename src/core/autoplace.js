@@ -43,7 +43,7 @@ function classify(B,opts){
   const isConn=c=>/^(J|P|CN|X|USB|CON)\d/i.test(c.ref)||/^(usb|hdr|conn|motor)$/.test(c.kind||'');
   const ics=comps.filter(c=>!two(c)&&!isConn(c)&&/^U|^IC/i.test(c.ref));
   const mcu=ics.slice().sort((a,b)=>b.pads.length-a.pads.length)[0];const isMcu=c=>mcu&&c===mcu&&c.pads.length>=20;
-  const isReg=c=>/1117|LDO|78\d\d|LM317|REG|TPS7|AMS|LP29|NCV|TLS8|TLE42|TLF|LT17|MIC5/i.test((c.val||'')+' '+(c.mpn||''))||c.pads.some(p=>/^(VIN|VI)$/i.test(p.fn||''))&&c.pads.some(p=>/^(VOUT|VO)$/i.test(p.fn||''));
+  const isReg=c=>/1117|LDO|78\d\d|LM317|REG|TPS7|TPS54|TPS56|LMR|LM259|MP1584|AMS|LP29|NCV|TLS8|TLE42|TLF|LT17|MIC5/i.test((c.val||'')+' '+(c.mpn||''))||c.pads.some(p=>/^(VIN|VI)$/i.test(p.fn||''))&&c.pads.some(p=>/^(VOUT|VO)$/i.test(p.fn||''));
   const anaRe=/ADC|AIN|SENSE|SNS|ISNS|VREF|XTAL|OSC|XIN|XOUT|XI\b|XO\b/i;
   const out=comps.map(c=>{
     const nets=[...new Set(c.pads.map(p=>p.net).filter(Boolean))];const fp=String(c.fp||'');
