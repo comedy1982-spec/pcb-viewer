@@ -70,6 +70,21 @@ PCB 편집 도구 막대의 **보드 W × H mm**, **회로도로 리셋·자동 
 - `guide set <규칙> pass|fail|na --note …`로 사람이나 AI가 판정하고(판정자 표시, `auto`로 되돌림), `guide preset motor`, `guide weight rt_3w 9`, `guide show <규칙>`, `guide check --all`(PCB+회로).
 - AI 모드의 점검은 결정론 결과를 Claude가 검토해 근거가 있는 수동 항목만 판정하고, 개선 3가지를 실행할 명령과 함께 제안합니다(요청 없이 보드를 바꾸지 않음). 회로 점검은 빠진 부품을 `add C 100nF --pins +5V,GND --near U4` 같은 명령으로 제시합니다.
 
+## 기구 설계 (보호 하우징)
+
+시뮬레이션 패널의 **기구** 탭에서 보드를 감싸는 케이스를 설계합니다.
+
+- 입력: 발열(W, 기본은 보드 부품 손실 합), 방수·방진 등급(IP54/65/67/69K), 진동(Grms), 주변 온도, 최고 허용 온도, 재질(자동 또는 지정).
+- 후보 재질 6종(PC/ABS, PA66-GF30, SPCC 판금, A6063 압출, ADC12 다이캐스트, AZ91D 마그네슘)을 모두 계산하고, 조건을 만족하는 것 중 가장 싼 것을 고릅니다.
+- 결과 카드: 재질·벽 두께, 방열 경로(대류·복사, 발열 IC 아래 TIM 패드, 필요 시 핀), 밀봉(가스켓/O-링·FIPG, 통기 벤트), 고정(스크루 보스 개수·규격·피치, PCB 지지점).
+- 트레이드오프 막대: 비용, 무게, 열 여유, 진동 안전율. 후보 비교표와 경고(부품별 케이스 온도 등)도 표시합니다.
+- 진동: Steinberg 식으로 PCB 1차 고유진동수와 처짐을 구하고, 안전율 2 미만이면 가운데 지지점을 추가합니다.
+- 3D 보기에 하우징(베이스·커버)을 겹쳐 보여주고 커버를 열 수 있습니다. 커넥터 위치에 개구부가 뚫립니다.
+- 내보내기(zip): OpenSCAD 모델(.scad), 베이스·커버 STL(참고용), 보고서(.md), 결과 JSON.
+- PCB CLI `housing check|compare|show|hide|open|close|export --p 18 --ip 67 --vib 6 --ta 40 --tmax 85 --mat adc12`. AI 모드에서는 계산 결과를 바탕으로 AI가 검토 의견을 덧붙입니다.
+
+수치는 초기 설계용 근사입니다. 양산 설계 전에는 CFD·FEA와 시험으로 확인해야 합니다.
+
 ## 회로도 CLI · AI
 
 회로 편집 도구 막대의 **CLI**(전체 회로도 보기에서 `` ` `` 키)로 엽니다. 명령마다 회로도 실행 취소 한 단계이고, 보드는 `apply`(F8과 같음)를 해야 바뀝니다.
@@ -281,6 +296,8 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/app/aimode.js` | 결정론/AI 실행 방식, Claude 도구 실행·모델·토큰(추정) 표시, 콘솔의 guide 명령 |
 | `src/core/newproj.js` | 새 설계: 블록 라이브러리, 요구사항 → 계획, 전원 트리·손실 점검, MCU 핀 배정, 보드 스펙 |
 | `src/app/newui.js` | 새 설계 창과 설계 CLI (빌드 시 viewer.js에 삽입) |
+| `src/core/housing.js` | 하우징 설계: 재질·IP·진동 조건, 열 저항망, Steinberg 진동, 스크루·가스켓, OpenSCAD 출력 |
+| `src/app/mechui.js` | 기구 탭 UI, 3D 하우징, STL/zip 내보내기, CLI `housing` (빌드 시 viewer.js에 삽입) |
 | `src/core/guide.js` | PCB·회로 설계 가이드라인 규칙, 프리셋, 우선순위, 자동 판정과 준수율 |
 | `src/app/sample-tc364.js` | AURIX TC364 예제 보드 |
 | `src/hsis/testgen.js` | HSIS 기반 SWE.6(SWQT)·SYS.4(SYSIT) 테스트 케이스 생성, 필수 검증 체크리스트 |

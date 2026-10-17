@@ -360,6 +360,7 @@ function rebuild3D(){
   const compRoot=new THREE.Group();root.add(compRoot);G3.compRoot=compRoot;G3.comps={};G3.leds={};G3.rotors={};
   BD.comps.forEach(c=>{if(c.kind==='none'||!(c.body.w>0.1&&c.body.h>0.1))return;const g=build3D(c);compRoot.add(g);G3.comps[c.ref]=g;
     if(g.userData.led)G3.leds[c.ref]=g.userData.led;if(g.userData.rotor)G3.rotors[c.ref]=g.userData.rotor;});PLAY.applied=null;
+  if(typeof mech3D==='function'&&BD.housing&&BD.housing.show)mech3D();
   G3.board=BD;setExplode(S.explode,true);updateTextures();resize3D();homeCam(false);
 }
 function resize3D(){if(!G3||S.view!=='3d'||S.sch==='full')return;const w=cv3.clientWidth,h=cv3.clientHeight;if(!w||!h)return;G3.renderer.setSize(w,h,false);G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.dirty=true;}
