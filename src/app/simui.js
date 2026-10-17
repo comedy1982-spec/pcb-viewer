@@ -610,7 +610,6 @@ function renderSim(){
     else if(SR.tab==='si'){if(!SR.si)runSI();b.innerHTML=siHTML();siBind(b);}
     else if(SR.tab==='th'){b.innerHTML=thHTML();thBind(b);}
     else if(SR.tab==='emc'){b.innerHTML=emcHTML();emcBind(b);}
-    else if(SR.tab==='mech'){b.innerHTML=mechHTML();mechBind(b);}
     else{b.innerHTML=spHTML();spBind(b);}
   }catch(e){console.error(e);b.innerHTML=`<p class="errline">시뮬레이션 화면을 그리지 못했습니다: ${esc(e.message)}</p>`;}
 }

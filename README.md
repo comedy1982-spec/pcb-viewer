@@ -70,9 +70,20 @@ PCB 편집 도구 막대의 **보드 W × H mm**, **회로도로 리셋·자동 
 - `guide set <규칙> pass|fail|na --note …`로 사람이나 AI가 판정하고(판정자 표시, `auto`로 되돌림), `guide preset motor`, `guide weight rt_3w 9`, `guide show <규칙>`, `guide check --all`(PCB+회로).
 - AI 모드의 점검은 결정론 결과를 Claude가 검토해 근거가 있는 수동 항목만 판정하고, 개선 3가지를 실행할 명령과 함께 제안합니다(요청 없이 보드를 바꾸지 않음). 회로 점검은 빠진 부품을 `add C 100nF --pins +5V,GND --near U4` 같은 명령으로 제시합니다.
 
-## 기구 설계 (보호 하우징)
+## 기구 CAD (보호 하우징 · Text-to-CAD)
 
-시뮬레이션 패널의 **기구** 탭에서 보드를 감싸는 케이스를 설계합니다.
+상단 작업 공간 전환의 **기구 CAD**에서 보드를 감싸는 하우징을 설계합니다. 왼쪽은 설계 조건과 결과(카드·트레이드오프·경고), 가운데는 3D 보기와 **Text-to-CAD 콘솔**, 오른쪽은 형상 트리·치수·부품별 방열 경로·재질 비교·CAD 내보내기입니다.
+
+**Text-to-CAD 콘솔** (`src/core/text2cad.js`)
+- 명령: `set power|ip|vib|ta|tmax|tj|mat|tim <값|auto>` · `set wall|corner|stand|top|gap|split <mm|auto>` · `hole <면> --d <mm> [--u --z --n --pitch --label]` · `gland <면> [M16|M20|PG9…]` · `vent <면>` · `slot <면> --w --h` · `tabs <2|4|off> [--screw M5]` · `boss <x> <y>|center` · `rib x|y` · `fins <n> [--h]|off|auto` · `label "<글자>"` · `list` · `del <F번호|all>` · `reset` · `undo`/`redo` · `open`/`close` · `export zip|scad|stl` · `check` · `compare`. 면은 left right front back top bottom (W E S N T B), 벽 구멍의 `--u`는 벽 시작점에서의 거리, `--z`는 높이(보드 두께 중간면 = 0)입니다.
+- 결정론 모드: 문장을 규칙으로 명령으로 바꿉니다. 예) "알루미늄 다이캐스팅으로 IP67, 진동 6G, 발열 18W" → `set mat adc12 → set ip IP67 → set vib 6 → set power 18`, "오른쪽 벽에 M16 케이블 글랜드 2개, 장착 탭 4개 M5, 커버에 "AURIX ECU" 각인" → `gland E M16 --n 2 → tabs 4 --screw M5 → label "AURIX ECU"`.
+- AI 모드: Claude가 같은 명령을 도구로 하나씩 실행하고, 매 명령 뒤에 나오는 무게·온도·원가·경고를 보고 고칩니다. 내보내기는 사용자만 실행합니다. 모델 등급과 토큰(추정)을 표시합니다.
+- 명령마다 결과 한 줄(재질 · 외형 · 무게 · PCB 온도 · 최고 Tj · 원가 · 조건 만족 여부)과 새 경고를 보여 주고, 실행 취소할 수 있습니다.
+- 형상 점검: 커넥터 창과 겹침, 분할면을 가로지르는 구멍, 모서리·벽 높이 밖, 커버/바닥 구멍과 방열 페데스탈 겹침, IP54 이상에서 막지 않은 구멍(글랜드·벤트·플러그 필요)을 경고합니다.
+- 내보내기: SCAD에 구멍·사각 구멍·글랜드·벤트·장착 탭·리브·각인·모서리 R이 실제 CSG로 들어가고(OpenSCAD 렌더링 확인), 보고서에 Text-to-CAD 명령 기록이 남습니다.
+- PCB CLI의 `housing` 명령은 계산·비교만 하고, `housing show`는 기구 CAD 작업 공간을 엽니다.
+
+**하우징 계산** (`src/core/housing.js`)
 
 - 입력: 발열(W, 기본은 보드 부품 손실 합), 방수·방진 등급(IP54/65/67/69K), 진동(Grms), 주변 온도, PCB 한계 온도, 부품 Tj 한계, 재질(자동 또는 지정), 방열 패드(TIM, 자동 또는 지정).
 - 후보 재질 6종(PC/ABS, PA66-GF30, SPCC 판금, A6063 압출, ADC12 다이캐스트, AZ91D 마그네슘)을 모두 계산하고, PCB 온도·부품 Tj·IP·진동 조건을 만족하는 것 중 가장 싼 것을 고릅니다.
@@ -300,7 +311,8 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/core/newproj.js` | 새 설계: 블록 라이브러리, 요구사항 → 계획, 전원 트리·손실 점검, MCU 핀 배정, 보드 스펙 |
 | `src/app/newui.js` | 새 설계 창과 설계 CLI (빌드 시 viewer.js에 삽입) |
 | `src/core/housing.js` | 하우징 설계: 재질·IP·진동 조건, 열 저항망, Steinberg 진동, 스크루·가스켓, OpenSCAD 출력 |
-| `src/app/mechui.js` | 기구 탭 UI, 3D 하우징, STL/zip 내보내기, CLI `housing` (빌드 시 viewer.js에 삽입) |
+| `src/core/text2cad.js` | Text-to-CAD: 하우징 CAD 명령 언어와 한국어/영어 문장 → 명령 해석 |
+| `src/app/mechui.js` | 기구 CAD 작업 공간(조건·형상 트리·3D·Text-to-CAD 콘솔·AI), STL/SCAD/zip 내보내기, PCB CLI `housing` (빌드 시 viewer.js에 삽입) |
 | `src/core/guide.js` | PCB·회로 설계 가이드라인 규칙, 프리셋, 우선순위, 자동 판정과 준수율 |
 | `src/app/sample-tc364.js` | AURIX TC364 예제 보드 |
 | `src/hsis/testgen.js` | HSIS 기반 SWE.6(SWQT)·SYS.4(SYSIT) 테스트 케이스 생성, 필수 검증 체크리스트 |

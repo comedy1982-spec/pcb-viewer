@@ -47,6 +47,7 @@ ${script(stripExport(read('src/core/autoplace.js')))}
 ${script(stripExport(read('src/core/guide.js')))}
 ${script(stripExport(read('src/core/newproj.js')))}
 ${script(stripExport(read('src/core/housing.js')))}
+${script(stripExport(read('src/core/text2cad.js')))}
 ${script(stripExport(read('src/hsis/testgen.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}

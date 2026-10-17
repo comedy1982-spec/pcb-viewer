@@ -35,8 +35,10 @@ function hsisOnBoard(){if(!HS.H||(HS.sample&&HS.sample!==hsisSampleKey()))hsisLo
 // firmware edits change what the HSIS cross-check sees
 function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')renderHSIS();else if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});}
 function setWorkspace(w){
+  const prev=HS.ws;if(prev==='cad'&&w!=='cad')cadLeave();
   HS.ws=w;document.querySelectorAll('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
-  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
+  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
+  if(w==='cad'){cadEnter();return;}
   if(w==='hsis'){if(!HS.H)hsisLoadSample();renderHSIS();}
   else setTimeout(()=>{if(S.view==='3d')resize3D();else{measure();paint2D();}refresh(false);},0);
 }
