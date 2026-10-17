@@ -20,8 +20,12 @@ const SCLI_HELP=[
   ['regen','보드 넷리스트로 회로도를 처음부터 다시 생성 (편집 내용 버림)'],
   ['export','KiCad 회로도(.kicad_sch) zip 저장'],
   ['undo · redo · clear','실행 취소 · 다시 실행 · 화면 지우기'],
-  ['ai <요청>','Claude가 위 명령을 골라 실행 (명령이 아닌 문장도 Claude에게 갑니다)']];
-const SCLI_CMDS=new Set(['help','?','status','pages','page','parts','pins','nets','net','find','add','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
+  GUIDE_HELP,
+  ['ai <요청>','Claude가 위 명령을 골라 실행. 헤더에서 결정론/AI를 고르면 문장·버튼이 그 방식으로 실행되고, AI 실행마다 모델 등급과 토큰(추정)을 표시']];
+const SC_CHIPS=[['상태','status','회로도 상태를 요약하고 먼저 손볼 곳을 알려줘'],['ERC','erc','ERC 문제를 찾아 원인을 설명하고, 확실한 것은 고쳐줘'],
+  ['가이드라인 점검','guide check','회로 설계 가이드라인을 점검하고 빠진 디커플링·보호 소자·부하 캡을 추가하는 명령을 제안해줘 (내가 승인하기 전엔 수정하지 말 것)'],
+  ['보드와 다른 점','diff','회로도와 보드가 어떻게 다른지 설명해줘'],['보드에 반영','apply','ERC를 확인한 뒤 문제가 없으면 회로도를 보드에 반영해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
+const SCLI_CMDS=new Set(['guide','help','?','status','pages','page','parts','pins','nets','net','find','add','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
 
 /* ---- panel ---- */
 function scSay(k,t){const e={k,t,id:++SCLI.seq};SCLI.log.push(e);if(SCLI.log.length>400)SCLI.log.shift();scPaint(e);return e;}
@@ -32,14 +36,10 @@ function scPaint(e,upd){const L=$('#scLog');if(!L)return;
 function scPanel(){
   let el=$('#schCli');if(el)return el;
   el=document.createElement('section');el.id='schCli';el.className='pe-cli sch-cli';el.hidden=true;el.setAttribute('aria-label','회로도 CLI');
-  el.innerHTML=`<div class="cli-h"><b>회로도 CLI</b><span class="cli-ai" id="scAi" title="명령이 아닌 문장은 Claude가 명령으로 바꿔 실행합니다">AI 확인 중…</span>
+  el.innerHTML=`<div class="cli-h"><b>회로도 CLI</b>${aimControls()}
     <span class="cli-sp"></span><button type="button" class="pill vbtn" id="scStop" hidden>중지</button><button type="button" class="pill vbtn" id="scX" title="닫기 (\`)">닫기</button></div>
-    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">
-      <button type="button" class="pill vbtn" data-c="status">상태</button>
-      <button type="button" class="pill vbtn" data-c="erc">ERC</button>
-      <button type="button" class="pill vbtn" data-c="diff">보드와 다른 점</button>
-      <button type="button" class="pill vbtn" data-c="apply">보드에 반영</button>
-      <button type="button" class="pill vbtn" data-c="help">도움말</button></div>
+    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">${SC_CHIPS.map(([l,c,g],i)=>`<button type="button" class="pill vbtn" data-chip="${i}" title="결정론: ${esc(c)}
+AI: ${esc(g)}">${l}</button>`).join('')}</div>
     <div class="cli-log" id="scLog" role="log" aria-live="polite"></div>
     <form class="cli-in" id="scForm" autocomplete="off"><span aria-hidden="true">›</span><input id="scIn" spellcheck="false" placeholder="예: pins U1 --free · add C 100nF --pins +3V3,GND --near U1 · U4 전원 핀에 디커플링 캡 달아줘" aria-label="회로도 명령 입력"><button class="btn primary sm" id="scRun">실행</button></form>`;
   $('#schOv').appendChild(el);
@@ -50,12 +50,12 @@ function scPanel(){
     else if(e.key==='Tab'){const w=i.value.trim();const m=[...SCLI_CMDS].filter(n=>n.length>2&&n.startsWith(w));if(w&&m.length){i.value=m[0]+' ';e.preventDefault();}}
     else if(e.key==='Escape')i.blur();
     e.stopPropagation();});
-  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='scX')scToggle(false);else if(b.id==='scStop'){SCLI.stopReq=true;if(SCLI.abort)SCLI.abort.abort();}else if(b.dataset.c&&!SCLI.busy)scExec(b.dataset.c);});
+  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='scX')scToggle(false);else if(b.id==='scStop'){SCLI.stopReq=true;if(SCLI.abort)SCLI.abort.abort();}else if(b.dataset.chip&&!SCLI.busy){const[,c,g]=SC_CHIPS[+b.dataset.chip];if(AIM.mode==='ai')scGoal(g);else scExec(c);}});
   el.addEventListener('pointerdown',e=>e.stopPropagation());el.addEventListener('wheel',e=>e.stopPropagation());
   scSay('out','회로도 명령을 입력하거나 하고 싶은 일을 문장으로 적으세요. help로 명령 목록을 봅니다.');
-  scAiBadge();return el;
+  aimBind(el);cliAiProbe().then(aimPaint);return el;
 }
-async function scAiBadge(){await cliAiProbe();const b=$('#scAi');if(!b)return;b.textContent=CLI.sample?'AI 사용 가능':'AI 없음 · 문장은 규칙으로 해석';b.classList.toggle('on',!!CLI.sample);}
+
 function scToggle(on){if(S.sch==='off')return;if(!SE.on)seBegin();const el=scPanel();SCLI.open=on==null?!SCLI.open:on;el.hidden=!SCLI.open;seBar();if(SCLI.open)setTimeout(()=>$('#scIn')&&$('#scIn').focus(),20);}
 function scBusy(b){SCLI.busy=b;const r=$('#scRun'),s=$('#scStop'),i=$('#scIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){SCLI.stopReq=false;SCLI.abort=null;setTimeout(()=>i&&SCLI.open&&i.focus(),10);}}
 
@@ -181,7 +181,7 @@ function scDiff(){const res=SCHEDIT.annotate(scSheets(),BD);const ch=res.changes
 function scApply(){const res=SCHEDIT.annotate(scSheets(),BD);if(!res.changes.length)return'보드와 회로도가 같아 반영할 것이 없습니다.';const r=seApplyAnnotation(res);
   return`보드에 ${r.n}건 반영 (넷 ${r.nets} · 값 ${r.vals} · 새 부품 ${r.added.length}${r.added.length?': '+r.added.join(', ')+(r.out.length?` — ${r.out.join(', ')}은 보드 밖 오른쪽`:' — 보드 빈 자리'):''}). 배선은 PCB 편집의 래츠네스트·route로 이어 주세요.`;}
 function scRegen(){return scBatch(()=>{const d=SCH.build(BD,null);BD.schSheets=d.sheets;SV.page=0;SV.fitted=-1;return`보드 넷리스트로 회로도를 다시 만들었습니다 (${d.sheets.length}쪽). undo로 되돌릴 수 있습니다.`;});}
-async function scRun(line){
+async function scRun(line,by){
   const t=cliTok(line);if(!t.length)return'';const cmd=t[0].toLowerCase();const a=cliArgs(t.slice(1));
   switch(cmd){
     case'help':case'?':{if(a._[0]){const h=SCLI_HELP.filter(x=>x[0].split(/[\s·]/).some(w=>w===a._[0]));return h.length?h.map(x=>`${x[0]}\n  ${x[1]}`).join('\n'):`${a._[0]}: 없는 명령입니다.`;}
@@ -209,6 +209,8 @@ async function scRun(line){
     case'redo':if(!SE.redo.length)return'다시 실행할 것이 없습니다.';seAction('redo');renderSchOv();return'다시 실행했습니다.';
     case'clear':{const L=$('#scLog');if(L)L.innerHTML='';SCLI.log=[];return'';}
     case'history':return SCLI.hist.slice(-20).join('\n');
+    case'guide':{const r=guideRun(a,'sch',{by});if(typeof r==='string')return r;const useAI=by!=='ai'&&(a.ai||(AIM.mode==='ai'&&!a.det));const txt=guideText(r,useAI?'ai':'det');
+      if(useAI){scSay('ok',txt);const ok=await scAgent(GUIDE_AI+`\n\n점검 결과:\n${txt}\n\n사용자 요청: 가이드라인 점검 결과를 검토해줘`);if(!ok)scSay('err','Claude를 쓸 수 없어 결정론 결과만 표시했습니다.');return'';}return txt;}
     case'ai':return await scAI(t.slice(1).join(' '));
     default:throw new Error(`알 수 없는 명령: ${cmd}`);
   }
@@ -226,8 +228,8 @@ async function scExec(line){
   if(!BD)return;scPanel();scSay('cmd',line);scBusy(true);
   try{const first=(cliTok(line)[0]||'').toLowerCase();
     if(SCLI_CMDS.has(first)){const o=await scRun(line);if(o)scSay('ok',o);}
-    else{await cliAiProbe();if(CLI.sample)await scAI(line);
-      else{const cmds=scNL(line);if(!cmds.length)scSay('err','명령을 알아듣지 못했습니다. help로 목록을 보세요. (문장 해석은 Claude가 필요합니다)');else{scSay('out','해석: '+cmds.join(' → '));for(const c of cmds){scSay('cmd',c);const o=await scRun(c);if(o)scSay('ok',o);}}}}
+    else{if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample){await scAI(line);scBusy(false);return;}scSay('out','Claude를 쓸 수 없어 규칙으로 해석합니다.');}
+      {const cmds=scNL(line);if(!cmds.length)scSay('err','명령을 알아듣지 못했습니다. help로 목록을 보세요. (문장 해석은 Claude가 필요합니다)');else{scSay('out','해석: '+cmds.join(' → '));for(const c of cmds){scSay('cmd',c);const o=await scRun(c);if(o)scSay('ok',o);}}}}
   }catch(e){console.error(e);scSay('err',e&&e.message?e.message:String(e));}
   scBusy(false);
 }
@@ -241,35 +243,19 @@ const SC_SYS=`You are a schematic-editing assistant embedded in a PCB/schematic 
 Commands (exactly this syntax):
 \${CMDS}
 Notes: two-pin parts are R, C, CP (electrolytic), L, FB (ferrite bead), D, LED; "add ... --pins A,B" connects pin 1 to A and pin 2 to B (for D/LED pin 1 is K, pin 2 is A). Power and ground nets get power symbols automatically. Inspect before you edit: use "pins <ref> --free" or "net <name>" to learn real pin numbers and net names; never guess them. Typical decoupling: one 100nF C per supply pin of an IC, "add C 100nF --pins <supply>,GND --near <IC>". Use at most 8 commands. Finish with "erc" when you added or rewired something, and run "apply" only if the user asked to update the board. Then answer in Korean in 2-5 short sentences: what changed (refs, nets), ERC result, and a next step. Do not invent numbers.`;
+async function scAgent(prompt){
+  return aiAgent({prompt,toolName:'run_sch',toolDesc:'Run one schematic console command (see the command list) and return its text output.',example:'"pins U4 --free" or "add C 100nF --pins +3V3,GND --near U4"',
+    run:c=>scRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!SCLI_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='regen'&&!SCLI.allowRegen)return'not allowed: regen (the user did not ask to regenerate)';return'';},
+    say:scSay,set:scSet,drop:e=>{const el=$('#scLog')&&$('#scLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();SCLI.log=SCLI.log.filter(x=>x!==e);},
+    setAbort:c=>{SCLI.abort=c;},stopped:()=>SCLI.stopReq,max:12});}
 async function scAI(req){
   if(!req.trim())return'요청을 적어 주세요. 예: ai U4 전원 핀에 100nF 디커플링 캡을 달아줘';
-  await cliAiProbe();
-  if(!CLI.sample){const cmds=scNL(req);if(!cmds.length)return'Claude를 쓸 수 없고 문장도 해석하지 못했습니다. help를 보세요.';scSay('out','Claude를 쓸 수 없어 규칙으로 해석: '+cmds.join(' → '));for(const c of cmds){scSay('cmd',c);const o=await scRun(c);if(o)scSay('ok',o);}return'';}
+  SCLI.allowRegen=/regen|다시\s*(만들|생성)|처음부터|재생성/i.test(req);
   const cmds=SCLI_HELP.filter(x=>!/^ai /.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
-  const prompt=SC_SYS.replace('${CMDS}',cmds)+`\n\n현재 회로도:\n${scBrief()}\n\n사용자 요청: ${req}`;
-  const ans=scSay('ai','Claude가 생각하는 중…');SCLI.abort=new AbortController();
-  const runOne=async c=>{const first=(cliTok(c)[0]||'').toLowerCase();if(!SCLI_CMDS.has(first)||first==='ai'||first==='regen'&&!/regen|다시|처음|재생성/i.test(req))throw new Error('not allowed: '+first);
-    scSay('cmd',c+'   (Claude)');try{const o=await scRun(c);if(o)scSay('ok',o);return String(o||'done').slice(0,3500);}catch(e){scSay('err',e.message||String(e));throw e;}};
-  try{
-    if(CLI.tools!==false){let n=0;
-      const tool={name:'run_sch',description:'Run one schematic console command (see the command list) and return its text output.',
-        inputSchema:{type:'object',properties:{command:{type:'string',description:'One command line, e.g. "pins U4 --free" or "add C 100nF --pins +3V3,GND --near U4"'}},required:['command']},
-        execute:async(inp,ctx)=>{const c=String(inp&&inp.command||'').trim();if(!c)throw new Error('empty command');if(++n>10)throw new Error('command limit reached');if(ctx&&ctx.signal&&ctx.signal.aborted)throw new Error('stopped');return runOne(c);}};
-      const r=await CLI.sample(prompt,{tools:[tool],signal:SCLI.abort.signal,onText:({text})=>scSet(ans,text)});
-      if(n){const el=$('#scLog')&&$('#scLog').querySelector(`[data-id="${ans.id}"]`);if(el)el.remove();SCLI.log=SCLI.log.filter(e=>e!==ans);scSay('ai',r.text||'(응답 없음)');}else scSet(ans,r.text||'(응답 없음)');
-    }else{
-      const plan=await CLI.sample.json(prompt+`\n\nReturn ONLY JSON: {"commands":["..."],"note":"Korean one-line plan"}`,{signal:SCLI.abort.signal,cache:false});
-      const list=(plan&&Array.isArray(plan.commands)?plan.commands:[]).slice(0,8).map(String);scSet(ans,(plan&&plan.note?plan.note+'\n':'')+'실행: '+list.join(' → '));
-      for(const c of list){try{await runOne(c);}catch(e){}if(SCLI.stopReq)break;}
-    }
-  }catch(e){
-    if(e&&e.code==='cancelled')scSet(ans,(e.text||'')+'\n(중지됨)');
-    else if(e&&/^(not_granted|sampling_disabled|not_declared|capability_disabled|capability_removed)$/.test(e.code||'')){CLI.sample=null;scAiBadge();cliAiProbe();scSet(ans,'Claude 사용이 허용되지 않아 규칙으로 해석합니다.');for(const c of scNL(req)){scSay('cmd',c);const o=await scRun(c);if(o)scSay('ok',o);}}
-    else if(e&&e.code==='tools_unavailable'){CLI.tools=false;scSet(ans,'이 화면에서는 Claude 도구 호출을 쓸 수 없어 계획만 받아 실행합니다. 다시 실행해 주세요.');}
-    else if(e&&e.code==='rate_limited')scSet(ans,'Claude 사용량 한도에 걸렸습니다. 잠시 뒤 다시 시도하세요. (명령은 그대로 쓸 수 있습니다)');
-    else scSet(ans,(e&&e.text?e.text+'\n':'')+'Claude 호출 실패: '+(e&&(e.message||e.code)||e));
-  }
+  const ok=await scAgent(SC_SYS.replace('${CMDS}',cmds)+`\n\n현재 회로도:\n${scBrief()}\n\n사용자 요청: ${req}`);
+  if(!ok){const list=scNL(req);if(!list.length)return'Claude를 쓸 수 없고 문장도 해석하지 못했습니다. help를 보세요.';scSay('out','Claude를 쓸 수 없어 규칙으로 해석: '+list.join(' → '));for(const c of list){scSay('cmd',c);const o=await scRun(c);if(o)scSay('ok',o);}}
   return'';
 }
+async function scGoal(g){if(!BD)return;scPanel();scSay('cmd',g+'   (AI 모드)');scBusy(true);try{await scAI(g);}catch(e){scSay('err',e.message||String(e));}scBusy(false);}
 // ` toggles the schematic console while the schematic fills the view
 document.addEventListener('keydown',e=>{if(e.key!=='`'||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target.matches('input,select,textarea'))return;if(!BD||S.sch==='off'||S.view!=='sch')return;e.preventDefault();e.stopImmediatePropagation();scToggle();},true);

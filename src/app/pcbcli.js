@@ -17,7 +17,8 @@ const CLI_HELP=[
   ['drc · rats','설계 규칙 검사 · 미연결(래츠네스트) 목록'],
   ['report [place|thermal|emc]','배치 지표 · 열 해석 · EMC 점검 요약'],
   ['undo · redo · clear','실행 취소 · 다시 실행 · 화면 지우기'],
-  ['ai <요청>','Claude가 위 명령을 골라 실행 (명령이 아닌 문장도 Claude에게 갑니다)']];
+  GUIDE_HELP,
+  ['ai <요청>','Claude가 위 명령을 골라 실행. 헤더에서 결정론/AI를 고르면 문장·버튼이 그 방식으로 실행되고, AI 실행마다 모델 등급과 토큰(추정)을 표시']];
 function cliSay(k,t){const e={k,t,id:++CLI.seq};CLI.log.push(e);if(CLI.log.length>400)CLI.log.shift();cliPaint(e);return e;}
 function cliSet(e,t){e.t=t;cliPaint(e,true);}
 function cliPaint(e,upd){const L=$('#cliLog');if(!L)return;
@@ -26,15 +27,10 @@ function cliPaint(e,upd){const L=$('#cliLog');if(!L)return;
 function cliPanel(){
   let el=$('#peCli');if(el)return el;
   el=document.createElement('section');el.id='peCli';el.className='ov pe-cli';el.hidden=true;el.setAttribute('aria-label','배치·배선 CLI');
-  el.innerHTML=`<div class="cli-h"><b>배치·배선 CLI</b><span class="cli-ai" id="cliAi" title="명령이 아닌 문장은 Claude가 명령으로 바꿔 실행합니다">AI 확인 중…</span>
+  el.innerHTML=`<div class="cli-h"><b>배치·배선 CLI</b>${aimControls()}
     <span class="cli-sp"></span><button type="button" class="pill vbtn" id="cliStop" hidden>중지</button><button type="button" class="pill vbtn" id="cliX" title="닫기 (\`)">닫기</button></div>
-    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">
-      <button type="button" class="pill vbtn" data-c="auto thermal">열 분산 자동 배치·배선</button>
-      <button type="button" class="pill vbtn" data-c="auto noise">노이즈 최소화 자동 배치·배선</button>
-      <button type="button" class="pill vbtn" data-c="reset --strategy balanced">회로도로 리셋</button>
-      <button type="button" class="pill vbtn" data-c="route">자동 배선</button>
-      <button type="button" class="pill vbtn" data-c="report">리포트</button>
-      <button type="button" class="pill vbtn" data-c="help">도움말</button></div>
+    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">${CLI_CHIPS.map(([l,c,g],i)=>`<button type="button" class="pill vbtn" data-chip="${i}" title="결정론: ${esc(c)}
+AI: ${esc(g)}">${l}</button>`).join('')}</div>
     <div class="cli-log" id="cliLog" role="log" aria-live="polite"></div>
     <form class="cli-in" id="cliForm" autocomplete="off"><span aria-hidden="true">›</span><input id="cliIn" spellcheck="false" placeholder="예: board size 100 60 · reset --strategy noise --route · 열이 고르게 퍼지게 다시 배치해줘" aria-label="명령 입력"><button class="btn primary sm" id="cliRun">실행</button></form>`;
   $('#vp').appendChild(el);
@@ -45,9 +41,9 @@ function cliPanel(){
     else if(e.key==='Tab'){const w=i.value.trim();const names=['help','status','board size','board corner','strategies','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai'];const m=names.filter(n=>n.startsWith(w));if(w&&m.length){i.value=m[0]+' ';e.preventDefault();}}
     else if(e.key==='Escape'){i.blur();}
     e.stopPropagation();});
-  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='cliX')cliToggle(false);else if(b.id==='cliStop'){CLI.stopReq=true;if(CLI.abort)CLI.abort.abort();}else if(b.dataset.c&&!CLI.busy)cliExec(b.dataset.c);});
+  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='cliX')cliToggle(false);else if(b.id==='cliStop'){CLI.stopReq=true;if(CLI.abort)CLI.abort.abort();}else if(b.dataset.chip&&!CLI.busy){const[,c,g]=CLI_CHIPS[+b.dataset.chip];if(AIM.mode==='ai')cliGoal(g);else cliExec(c);}});
   cliSay('out','명령을 입력하거나 하고 싶은 일을 문장으로 적으세요. help로 명령 목록을 봅니다.');
-  cliAiProbe();return el;
+  aimBind(el);cliAiProbe().then(aimPaint);return el;
 }
 function cliToggle(on){const el=cliPanel();CLI.open=on==null?!CLI.open:on;el.hidden=!CLI.open;peBar();if(CLI.open)setTimeout(()=>$('#cliIn')&&$('#cliIn').focus(),20);}
 function cliBusy(b){CLI.busy=b;const r=$('#cliRun'),s=$('#cliStop'),i=$('#cliIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CLI.stopReq=false;CLI.abort=null;setTimeout(()=>i&&CLI.open&&i.focus(),10);}}
@@ -65,7 +61,13 @@ async function cliAiProbe(){
 /* ---- parsing ---- */
 function cliTok(s){const out=[];const re=/"([^"]*)"|'([^']*)'|(\S+)/g;let m;while((m=re.exec(s)))out.push(m[1]!=null?m[1]:m[2]!=null?m[2]:m[3]);return out;}
 function cliArgs(t){const a={_:[]};for(let i=0;i<t.length;i++){const x=t[i];if(x.startsWith('--')){const[k,v]=x.slice(2).split('=');if(v!=null)a[k]=v;else if(t[i+1]!=null&&!t[i+1].startsWith('--'))a[k]=t[++i];else a[k]=true;}else a._.push(x);}return a;}
-const CLI_CMDS=new Set(['help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
+const CLI_CHIPS=[['열 분산 자동 배치·배선','auto thermal','열 분산 전략으로 회로도 기준 처음부터 배치하고 배선해줘. 미배선이 남으면 시드나 전략 가중치를 바꿔 개선하고, 열 리포트로 결과를 확인해줘'],
+  ['노이즈 최소화 자동 배치·배선','auto noise','노이즈 최소화 전략으로 처음부터 배치하고 배선해줘. EMC 리포트를 보고 디커플링·Hot-loop가 나쁘면 개선해줘'],
+  ['회로도로 리셋','reset --strategy balanced','회로도 기준으로 처음부터 배치해줘 (배선은 하지 말고 배치 지표만 알려줘)'],
+  ['자동 배선','route','열린 넷을 자동 배선하고, 미배선이 남으면 원인을 보고 해결해줘'],
+  ['가이드라인 점검','guide check','PCB 설계 가이드라인을 점검하고 가장 중요한 개선 3가지를 알려줘'],
+  ['리포트','report all','배치·열·EMC 리포트를 보고 문제를 우선순위대로 요약해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
+const CLI_CMDS=new Set(['guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
 
 /* ---- snapshots for undo (same objects: tracks, pads and silk keep their identity) ---- */
 function cliSnap(){return{poses:BD.comps.map(c=>({c,x:c.x,y:c.y,rot:c.rot||0,side:c.side})),layers:Object.fromEntries(Object.keys(BD.layers).map(k=>[k,BD.layers[k].slice()])),vias:BD.vias.slice()};}
@@ -196,7 +198,7 @@ function cliNL(t){const s=t.toLowerCase();const out=[];
   if(/리포트|보고|report|분석|평가|결과|온도|열\s*해석/.test(s))out.push(`report ${/온도|열/.test(s)?'thermal':/emc|노이즈|잡음/.test(s)?'emc':'place'}`);
   return out;}
 
-async function cliRun(line,quiet){
+async function cliRun(line,quiet,by){
   const t=cliTok(line);if(!t.length)return'';let cmd=t[0].toLowerCase();const a=cliArgs(t.slice(1));
   switch(cmd){
     case 'help':case '?':{if(a._[0]){const h=CLI_HELP.filter(x=>x[0].split(/[\s·]/).some(w=>w===a._[0]));return h.length?h.map(x=>`${x[0]}\n  ${x[1]}`).join('\n'):`${a._[0]}: 없는 명령입니다.`;}
@@ -221,6 +223,8 @@ async function cliRun(line,quiet){
     case 'redo':if(!PE.redo.length)return'다시 실행할 것이 없습니다.';peRedo();return'다시 실행했습니다.';
     case 'clear':{const L=$('#cliLog');if(L)L.innerHTML='';CLI.log=[];return'';}
     case 'history':return CLI.hist.slice(-20).join('\n');
+    case 'guide':{const r=guideRun(a,'pcb',{by});if(typeof r==='string')return r;const txt=guideText(r,(a.ai||(AIM.mode==='ai'&&!a.det))&&by!=='ai'?'ai':'det');
+      if(by!=='ai'&&(a.ai||(AIM.mode==='ai'&&!a.det))){cliSay('ok',txt);const ok=await cliAgent(GUIDE_AI+`\n\n점검 결과:\n${txt}\n\n사용자 요청: 가이드라인 점검 결과를 검토해줘`);if(!ok)cliSay('err','Claude를 쓸 수 없어 결정론 결과만 표시했습니다.');return'';}return txt;}
     case 'ai':return await cliAI(t.slice(1).join(' '));
     default:throw new Error(`알 수 없는 명령: ${cmd}`);
   }
@@ -230,8 +234,8 @@ async function cliExec(line){
   try{
     const first=(cliTok(line)[0]||'').toLowerCase();
     if(CLI_CMDS.has(first)){const out=await cliRun(line);if(out)cliSay('ok',out);}
-    else{await cliAiProbe();if(CLI.sample)await cliAI(line);
-      else{const cmds=cliNL(line);if(!cmds.length)cliSay('err','명령을 알아듣지 못했습니다. help로 목록을 보세요.');else{cliSay('out','해석: '+cmds.join(' → '));for(const c of cmds){cliSay('cmd',c);const o=await cliRun(c);if(o)cliSay('ok',o);if(CLI.stopReq)break;}}}}
+    else{if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample){await cliAI(line);cliBusy(false);return;}cliSay('out','Claude를 쓸 수 없어 규칙으로 해석합니다.');}
+      {const cmds=cliNL(line);if(!cmds.length)cliSay('err','명령을 알아듣지 못했습니다. help로 목록을 보세요.');else{cliSay('out','해석: '+cmds.join(' → '));for(const c of cmds){cliSay('cmd',c);const o=await cliRun(c);if(o)cliSay('ok',o);if(CLI.stopReq)break;}}}}
   }catch(e){console.error(e);cliSay('err',e&&e.message?e.message:String(e));}
   cliBusy(false);
 }
@@ -246,36 +250,20 @@ Commands (exactly this syntax):
 ${'$'}{CMDS}
 Strategies: balanced (wirelength/decoupling/heat/noise evenly), thermal (heat sources spread apart, away from electrolytic caps/crystals/analog), noise (decaps at pins, short switching loops, switching parts far from MCU/crystal/analog, ground plane kept whole), compact (short wiring, parts gathered).
 Rules: use at most 6 commands; "reset" re-places everything from the netlist (schematic) and clears copper; "route" auto-routes open nets; run "report" (place, thermal or emc) when the user asks about heat/noise quality; every command is undoable. After the tool calls, answer in Korean in 2-5 short sentences: what you ran, the key numbers from the outputs, and one concrete next step if something is left (unrouted nets, DRC, overlaps). Do not invent numbers.`;
+async function cliAgent(prompt){
+  return aiAgent({prompt,toolName:'run_cli',toolDesc:'Run one PCB layout console command (see the command list) and return its text output.',example:'"reset --strategy thermal" or "guide set ds_kelvin fail --note ..."',
+    run:c=>cliRun(c,true,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();return!CLI_CMDS.has(f)||f==='ai'?'unknown command: '+f:'';},
+    say:cliSay,set:cliSet,drop:e=>{const el=$('#cliLog')&&$('#cliLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();CLI.log=CLI.log.filter(x=>x!==e);},
+    setAbort:c=>{CLI.abort=c;},stopped:()=>CLI.stopReq,max:10});}
 async function cliAI(req){
   if(!req.trim())return'요청을 적어 주세요. 예: ai 열이 고르게 퍼지게 배치하고 배선해줘';
-  await cliAiProbe();
-  if(!CLI.sample){const cmds=cliNL(req);if(!cmds.length)return'Claude를 쓸 수 없고 문장도 해석하지 못했습니다. help를 보세요.';cliSay('out','Claude를 쓸 수 없어 규칙으로 해석: '+cmds.join(' → '));for(const c of cmds){cliSay('cmd',c);const o=await cliRun(c,true);if(o)cliSay('ok',o);}return'';}
   const cmds=CLI_HELP.filter(x=>!/^ai /.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
-  const prompt=CLI_SYS.replace('${CMDS}',cmds)+`\n\n현재 보드:\n${cliBrief()}\n\n사용자 요청: ${req}`;
-  const ans=cliSay('ai','Claude가 생각하는 중…');CLI.abort=new AbortController();
-  try{
-    if(CLI.tools!==false){
-      let n=0;const tool={name:'run_cli',description:'Run one PCB layout console command (see the command list) and return its text output.',
-        inputSchema:{type:'object',properties:{command:{type:'string',description:'One command line, e.g. "reset --strategy thermal" or "route"'}},required:['command']},
-        execute:async(inp,ctx)=>{const c=String(inp&&inp.command||'').trim();if(!c)throw new Error('empty command');if(++n>8)throw new Error('command limit reached');
-          const first=(cliTok(c)[0]||'').toLowerCase();if(!CLI_CMDS.has(first)||first==='ai')throw new Error('unknown command: '+first);if(ctx&&ctx.signal&&ctx.signal.aborted)throw new Error('stopped');
-          cliSay('cmd',c+'   (Claude)');try{const o=await cliRun(c,true);if(o)cliSay('ok',o);return String(o||'done').slice(0,3500);}catch(e){cliSay('err',e.message||String(e));throw e;}}};
-      const r=await CLI.sample(prompt,{tools:[tool],signal:CLI.abort.signal,onText:({text})=>cliSet(ans,text)});
-      if(n){const el=$('#cliLog')&&$('#cliLog').querySelector(`[data-id="${ans.id}"]`);if(el)el.remove();CLI.log=CLI.log.filter(e=>e!==ans);cliSay('ai',r.text||'(응답 없음)');}else cliSet(ans,r.text||'(응답 없음)');
-    }else{
-      const plan=await CLI.sample.json(prompt+`\n\nReturn ONLY JSON: {"commands":["..."],"note":"Korean one-line plan"}`,{signal:CLI.abort.signal,cache:false});
-      const list=(plan&&Array.isArray(plan.commands)?plan.commands:[]).slice(0,6).map(String);cliSet(ans,(plan&&plan.note?plan.note+'\n':'')+'실행: '+list.join(' → '));
-      for(const c of list){const first=(cliTok(c)[0]||'').toLowerCase();if(!CLI_CMDS.has(first)||first==='ai')continue;cliSay('cmd',c+'   (Claude)');const o=await cliRun(c,true);if(o)cliSay('ok',o);if(CLI.stopReq)break;}
-    }
-  }catch(e){
-    if(e&&e.code==='cancelled'){cliSet(ans,(e.text||'')+'\n(중지됨)');}
-    else if(e&&(e.code==='not_granted'||e.code==='sampling_disabled'||e.code==='not_declared'||e.code==='capability_disabled'||e.code==='capability_removed')){CLI.sample=null;cliAiProbe();cliSet(ans,'Claude 사용이 허용되지 않아 규칙으로 해석합니다.');const cmds=cliNL(req);for(const c of cmds){cliSay('cmd',c);const o=await cliRun(c,true);if(o)cliSay('ok',o);}}
-    else if(e&&e.code==='tools_unavailable'){CLI.tools=false;cliSet(ans,'이 화면에서는 Claude 도구 호출을 쓸 수 없어 계획만 받아 실행합니다. 다시 실행해 주세요.');}
-    else if(e&&e.code==='rate_limited')cliSet(ans,'Claude 사용량 한도에 걸렸습니다. 잠시 뒤 다시 시도하세요. (명령은 그대로 쓸 수 있습니다)');
-    else cliSet(ans,(e&&e.text?e.text+'\n':'')+'Claude 호출 실패: '+(e&&(e.message||e.code)||e));
-  }
+  const ok=await cliAgent(CLI_SYS.replace('${CMDS}',cmds)+`\n\n현재 보드:\n${cliBrief()}\n\n사용자 요청: ${req}`);
+  if(!ok){const list=cliNL(req);if(!list.length)return'Claude를 쓸 수 없고 문장도 해석하지 못했습니다. help를 보세요.';cliSay('out','Claude를 쓸 수 없어 규칙으로 해석: '+list.join(' → '));for(const c of list){cliSay('cmd',c);const o=await cliRun(c,true);if(o)cliSay('ok',o);}}
   return'';
 }
+// a toolbar goal in AI mode
+async function cliGoal(g){if(!BD)return;cliPanel();cliSay('cmd',g+'   (AI 모드)');cliBusy(true);try{if(!PE.on)peBegin();await cliAI(g);}catch(e){cliSay('err',e.message||String(e));}cliBusy(false);}
 /* ---- dialogs behind the toolbar buttons (they run the same commands, so the console shows what happened) ---- */
 function cliDialog(kind){
   const el=document.createElement('div');el.className='sedlg';const R=PCBEDIT.cornerRadius(BD);
@@ -295,6 +283,7 @@ function cliDialog(kind){
   el.addEventListener('keydown',e=>{if(e.key==='Escape'){el.remove();e.stopPropagation();}});
   F.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(F);el.remove();cliToggle(true);
     if(kind==='size')cliExec(`board size ${d.get('w')} ${d.get('h')} --corner ${d.get('r')}${d.get('a')==='center'?' --anchor center':''}`);
+    else if(AIM.mode==='ai')cliGoal(`${AUTOPLACE.STRATS[d.get('s')].label} 전략(${d.get('s')})으로 회로도 기준 처음부터 배치${d.get('route')?'하고 배선해줘. 미배선이 남으면 개선해줘':'해줘 (배선은 하지 말 것)'}`);
     else cliExec(d.get('route')?`auto ${d.get('s')}`:`reset --strategy ${d.get('s')}`);});
 }
 // ` toggles the console in the TOP / BOTTOM views
