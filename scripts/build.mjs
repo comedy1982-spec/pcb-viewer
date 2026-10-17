@@ -8,7 +8,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 const stripExport = (s) => s.replace(/if\(typeof module!=='undefined'\)module\.exports=[^;]+;/, '');
 const script = (code) => `<script>\n${code}\n</script>`;
 
-const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js') + '\n' + read('src/app/popui.js') + '\n' + read('src/app/fwui.js') + '\n' + read('src/app/pcbui.js'));
+const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js') + '\n' + read('src/app/popui.js') + '\n' + read('src/app/fwui.js') + '\n' + read('src/app/pcbui.js') + '\n' + read('src/app/pcbcli.js'));
 
 const html = `<!doctype html>
 <html lang="ko">
@@ -43,6 +43,7 @@ ${script(stripExport(read('src/hsis/pinrec.js')))}
 ${script(stripExport(read('src/hsis/mcal.js')))}
 ${script(stripExport(read('src/route/autoroute.js')))}
 ${script(stripExport(read('src/core/pcbedit.js')))}
+${script(stripExport(read('src/core/autoplace.js')))}
 ${script(stripExport(read('src/hsis/testgen.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}

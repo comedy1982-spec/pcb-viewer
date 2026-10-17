@@ -99,9 +99,9 @@ function peOverlay(ctx,side){
 /* toolbar */
 function peBar(){
   let el=$('#peBar');if(!el){el=document.createElement('div');el.id='peBar';el.className='ov pe-bar';$('#vp').appendChild(el);
-    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.ptool)peSetTool(b.dataset.ptool);else if(b.dataset.pact)peAction(b.dataset.pact);else if(b.id==='peDrc')peDrcList();else if(b.id==='peRats'){PE.showRats=!PE.showRats;peBar();draw2D();}else if(b.id==='peSave')peSave();});
+    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.ptool)peSetTool(b.dataset.ptool);else if(b.dataset.pact)peAction(b.dataset.pact);else if(b.id==='peDrc')peDrcList();else if(b.id==='peRats'){PE.showRats=!PE.showRats;peBar();draw2D();}else if(b.id==='peSave')peSave();else if(b.id==='peSize')cliDialog('size');else if(b.id==='peReset')cliDialog('reset');else if(b.id==='peCliBtn')cliToggle();});
     el.addEventListener('change',e=>{if(e.target.id==='peGrid')PE.grid=+e.target.value;if(e.target.id==='peW'){PE.w=+e.target.value;if(PE.route)PE.route.w=peTrackWidth(PE.route.net);}draw2D();});}
-  const show=PE.on&&(S.view==='T'||S.view==='B');el.hidden=!show;
+  const show=PE.on&&(S.view==='T'||S.view==='B');el.hidden=!show;{const cp=$('#peCli');if(cp)cp.hidden=!(show&&CLI.open);}
   const btn=$('#ctl [data-pe]');if(btn){btn.classList.toggle('on',PE.on);btn.textContent=PE.on?'편집 끝내기':'PCB 편집';}
   if(!show)return;
   el.innerHTML=`<div class="setools" role="toolbar" aria-label="PCB 편집 도구">${PE_TOOLS.map(([t,l,k])=>`<button class="pill vbtn${PE.tool===t?' on':''}" data-ptool="${t}" title="${l} (${k})">${l}<kbd>${k}</kbd></button>`).join('')}
@@ -112,6 +112,9 @@ function peBar(){
     <button class="pill vbtn${PE.showRats?' on':''}" id="peRats" title="아직 동박으로 이어지지 않은 연결">래츠네스트 <b>${PE.rats.length}</b></button>
     <button class="pill vbtn${PE.drc.length?' warn':''}" id="peDrc" title="간격·단락·부품 겹침·보드 가장자리 검사">DRC <b>${PE.drc.length}</b></button>
     <button class="pill vbtn" id="peSave" title="KiCad 프로젝트(.kicad_pcb + 회로도)로 저장">KiCad로 저장</button></div>
+    <div class="setools"><button class="pill vbtn" id="peSize" title="보드 가로·세로·모서리 반지름">보드 ${(Math.round(BD.W*10)/10)} × ${(Math.round(BD.H*10)/10)} mm</button>
+    <button class="pill vbtn" id="peReset" title="배선을 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치">회로도로 리셋·자동 배치</button>
+    <button class="pill vbtn${typeof CLI!=='undefined'&&CLI.open?' on':''}" id="peCliBtn" title="배치 전략·자동 배선 명령 콘솔 (\`)">CLI<kbd>\`</kbd></button></div>
     <span class="pill hint2" id="peStat"></span>`;
   peStat();
 }

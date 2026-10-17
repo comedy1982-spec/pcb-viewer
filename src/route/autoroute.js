@@ -57,7 +57,7 @@ function makeGrid(B,o){
   const mode=vs=>{if(!vs.length)return 0;const h={};vs.forEach(v=>{const k=Math.round((((v%g)+g)%g)/g*20)%20;h[k]=(h[k]||0)+1;});const k=+Object.entries(h).sort((a,b)=>b[1]-a[1])[0][0];return k/20*g;};
   const ox=mode(fine.map(p=>p.x))-g,oy=mode(fine.map(p=>p.y))-g;
   const nx=Math.ceil((B.W-ox)/g)+2,ny=Math.ceil((B.H-oy)/g)+2,N=nx*ny;
-  return{g,ox,oy,nx,ny,N,occT:[new Int32Array(N),new Int32Array(N)],occV:[new Int32Array(N),new Int32Array(N)]};
+  return{g,ox,oy,nx,ny,N,occT:[new Int32Array(N),new Int32Array(N)],occV:[new Int32Array(N),new Int32Array(N)],esc:[new Int32Array(N),new Int32Array(N)]};
 }
 function mark(arr,i,k){const v=arr[i];if(v===-1)return;if(k===-1||(v!==0&&v!==k))arr[i]=-1;else arr[i]=k;}
 function paint(G,s,k,wHalf,viaR,clr){
@@ -88,13 +88,13 @@ function astar(G,k,src,tgt,anchors,o){
   const push=(id,f)=>{if(hn===hid.length){const a=new Int32Array(hn*2);a.set(hid);hid=a;const b=new Float32Array(hn*2);b.set(hf);hf=b;}let i=hn++;while(i>0){const p=(i-1)>>1;if(hf[p]<=f)break;hid[i]=hid[p];hf[i]=hf[p];i=p;}hid[i]=id;hf[i]=f;};
   const pop=()=>{const r=hid[0];hn--;if(hn>0){const id=hid[hn],f=hf[hn];let i=0;for(;;){let c=2*i+1;if(c>=hn)break;if(c+1<hn&&hf[c+1]<hf[c])c++;if(hf[c]>=f)break;hid[i]=hid[c];hf[i]=hf[c];i=c;}hid[i]=id;hf[i]=f;}return r;};
   src.forEach(id=>{gs[id]=0;stamp[id]=gen;par[id]=-1;dir[id]=-1;const i=id%N;push(id,h(i%nx,(i/nx)|0));});
-  let exp=0;const viaC=o.viaCost/G.g,bot=o.bottomCost||1;
+  let exp=0;const viaC=o.viaCost/G.g,bot=o.bottomCost||1,esc=o.escCost?G.esc:null,escC=o.escCost||0;
   while(hn){const id=pop();if(cl[id]===gen)continue;cl[id]=gen;if(tgt.has(id)){const path=[];let c=id;while(c>=0){path.push(c);c=par[c];}return{path:path.reverse(),exp};}
     if(++exp>o.maxExp)return{fail:'탐색 한도 초과',exp};
     const l=id>=N?1:0,i=id-l*N,x=i%nx,y=(i/nx)|0,g0=gs[id],d0=dir[id];
     for(let d=0;d<8;d++){const xx=x+DX[d],yy=y+DY[d];if(xx<0||yy<0||xx>=nx||yy>=ny)continue;const j=yy*nx+xx;if(!free(l,j))continue;
       if(d>=4&&(!free(l,y*nx+xx)||!free(l,yy*nx+x)))continue;
-      const nid=l*N+j;if(cl[nid]===gen)continue;const ng=g0+DC[d]*(l?bot:1)+(d0>=0&&d0!==d&&d0<8?0.35:0);
+      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;const ng=g0+DC[d]*(l?bot:1)+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0);
       if(stamp[nid]!==gen||ng<gs[nid]){stamp[nid]=gen;gs[nid]=ng;par[nid]=id;dir[nid]=d;push(nid,ng+h(xx,yy));}}
     // via
     const thr=(src.has(id)&&src.has((1-l)*N+i))||(tgt.has(id)&&tgt.has((1-l)*N+i));
@@ -119,14 +119,28 @@ function toCopper(G,path,w,via,net,startShape,endShape){
 }
 
 /* ---------- main ---------- */
-const DEF={grid:0.1,clear:0.2,edge:0.4,width:{signal:0.2,power:0.3},via:{d:0.6,drill:0.3},viaCost:2.0,maxExp:700000,bottomCost:1.05};
-function widthFor(B,net,o){return B.netClass&&B.netClass(net)==='전원'?o.width.power:o.width.signal;}
+const DEF={grid:0.1,clear:0.2,edge:0.4,width:{signal:0.2,power:0.3},via:{d:0.6,drill:0.3},viaCost:2.0,maxExp:700000,bottomCost:1.05,escCost:0,escape:0.45,reserve:false,neck:0};
+function widthFor(B,net,o){const w=B.netClass&&B.netClass(net)==='전원'?o.width.power:o.width.signal;
+  // supplies that land on fine-pitch pins neck down so the track fits between the neighbouring pads
+  if(o.neck&&w>o.neck&&B.nets[net]&&B.nets[net].pads.some(p=>Math.min(p.w,p.h)<0.36&&!p.drill))return o.neck;return w;}
 function prepare(B,opts){
   const o=Object.assign({},DEF,opts||{});o.width=Object.assign({},DEF.width,(opts||{}).width);o.via=Object.assign({},DEF.via,(opts||{}).via);
   const G=makeGrid(B,o);const S=shapesOfBoard(B);const ids={};let nid=1;const idOf=n=>n==null?-1:(ids[n]||(ids[n]=++nid));
   const wMax=Math.max(o.width.signal,o.width.power)/2;
   outlineBlock(B,G,o.edge);
   S.forEach(s=>paint(G,s,s.hole?-1:idOf(s.net),wMax,o.via.d/2,o.clear));
+  // pin escapes: a short virtual stub of each IC pad's own net, straight out along the pad, so other nets cannot seal the pin
+  if(o.reserve){B.comps.forEach(c=>{if(c.pads.length<6)return;const cx=(c.bb[0]+c.bb[2])/2,cy=(c.bb[1]+c.bb[3])/2;
+    c.pads.forEach(p=>{if(!p.net||isGnd(p.net)||p.drill)return;const a=(p.ang||0)*D2R;let ux=Math.cos(a),uy=Math.sin(a),half=p.w/2;if(p.h>p.w){ux=-Math.sin(a);uy=Math.cos(a);half=p.h/2;}
+      if((p.x-cx)*ux+(p.y-cy)*uy<0){ux=-ux;uy=-uy;}if(Math.abs((p.x-cx)*ux+(p.y-cy)*uy)<0.3)return; // centre pads
+      const L=half+(o.reserve===true?0.6:+o.reserve);const sh={k:'cap',a:[p.x,p.y],b:[p.x+ux*L,p.y+uy*L],r:Math.min(p.w,p.h)/2*0.5,L:p.side==='B'?[1]:[0],net:p.net};
+      const k=idOf(p.net);const mT=wMax+o.clear;const bb=bboxOf(sh,mT);
+      const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
+      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(sh,G.ox+x*G.g,G.oy+y*G.g);if(d>sh.r+mT)continue;mark(G.occT[sh.L[0]],y*G.nx+x,k);}});});}
+  // escape zones: the ring just outside each pad's keep-out is kept for that pad's own track (others pay o.escCost to cross)
+  if(o.escCost)S.forEach(s=>{if(!s.pad||!s.net)return;const k=idOf(s.net),m0=wMax+o.clear,m1=m0+(o.escape||0.45);const bb=bboxOf(s,m1);
+    const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(s,G.ox+x*G.g,G.oy+y*G.g);if(d<=m0||d>m1)continue;const i=y*G.nx+x;s.L.forEach(l=>{const v=G.esc[l][i];G.esc[l][i]=v===0||v===k?k:-1;});}});
   return{o,G,S,idOf};
 }
 // nets that still have more than one copper group
@@ -146,7 +160,9 @@ function routeNet(P,B,net){
       let any=false;for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(s,G.ox+x*G.g,G.oy+y*G.g);if(d<=deep){s.L.forEach(l=>{const id=l*G.N+y*G.nx+x;set.add(id);owner.set(id,s);});any=true;}}
       if(!any){const x=Math.round(((s.k==='cap'?s.a[0]:s.x)-G.ox)/G.g),y=Math.round(((s.k==='cap'?s.a[1]:s.y)-G.oy)/G.g);s.L.forEach(l=>{const id=l*G.N+y*G.nx+x;set.add(id);owner.set(id,s);});}});};
     const src=new Set(),tgt=new Set(),own=new Map();cellsOf(srcC,src,own);cellsOf(rest,tgt,own);
-    const anchors=[];rest.forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
+    let anchors=[];rest.forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
+    // big nets: keep the heuristic cheap — only the anchors nearest to the group being joined
+    if(anchors.length>24){let sx=0,sy=0,sn=0;srcC.forEach(s=>{const p=s.k==='cap'?s.a:[s.x,s.y];sx+=(p[0]-G.ox)/G.g;sy+=(p[1]-G.oy)/G.g;sn++;});sx/=sn;sy/=sn;anchors=anchors.map(a=>[a,Math.abs(a[0]-sx)+Math.abs(a[1]-sy)]).sort((a,b)=>a[1]-b[1]).slice(0,24).map(a=>a[0]);}
     const r=astar(G,k,src,tgt,anchors,o);
     if(!r.path)return Object.assign(added,{ok:false,why:r.fail});
     const cu=toCopper(G,r.path,w,o.via,net,own.get(r.path[0]),own.get(r.path[r.path.length-1]));
@@ -166,7 +182,7 @@ function estimate(B,net){const S=shapesOfBoard(B);const c=components(S,net);if(c
    (nets that failed are moved to the front of the next attempt) */
 function* job(B,nets,opts){
   const o=Object.assign({},DEF,opts||{});const tries=o.attempts||3;
-  let order=nets.map(n=>({n,e:estimate(B,n)})).sort((a,b)=>a.e-b.e).map(x=>x.n);
+  let order=o.keepOrder?nets.slice():nets.map(n=>({n,e:estimate(B,n)})).sort((a,b)=>a.e-b.e).map(x=>x.n);
   let best=null;
   for(let att=0;att<tries;att++){
     const P=prepare(B,opts);const res=[];
@@ -184,6 +200,48 @@ function* job(B,nets,opts){
   return{results:best.res,ok:best.ok,fail:best.res.filter(r=>!r.ok),len:best.len,vias:best.nv,attempt:best.att+1,added:best.cu.map(x=>x.t).concat(best.vv.map(x=>x.v))};
 }
 function route(B,nets,opts){const it=job(B,nets,opts);let r;do{r=it.next();}while(!r.done);return r.value;}
+/* ---------- rip-up and reroute ----------
+   Route every net once; then, for each net that failed, rip up the auto-routed nets whose copper passes close to its
+   pads, route the failed net first and the ripped nets after it. A round is kept only when it routes more nets
+   (or the same number with less copper); otherwise the board goes back to the copper it had before. */
+function copperSnap(B){return{T:B.layers['T.cu'].slice(),B:B.layers['B.cu'].slice(),v:B.vias.slice()};}
+function copperRestore(B,s){B.layers['T.cu']=s.T.slice();B.layers['B.cu']=s.B.slice();B.vias=s.v.slice();
+  Object.values(B.nets).forEach(n=>{n.tracks=[];n.vias=[];n.len={T:0,B:0};});
+  ['T','B'].forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(!(p.t==='seg'||p.t==='path')||!p.net||p.clear)return;const n=B.nets[p.net];if(!n)return;n.tracks.push(p);const q=p.pts||[p.a,p.b];for(let i=1;i<q.length;i++)n.len[L]+=Math.hypot(q[i][0]-q[i-1][0],q[i][1]-q[i-1][1]);}));
+  B.vias.forEach(v=>{const n=v.net&&B.nets[v.net];if(n)n.vias.push(v);});}
+function autoLen(B){let l=0,v=0;['T','B'].forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(!p.auto)return;const q=p.pts||[p.a,p.b];for(let i=1;i<q.length;i++)l+=Math.hypot(q[i][0]-q[i-1][0],q[i][1]-q[i-1][1]);}));B.vias.forEach(x=>{if(x.auto)v++;});return{l,v};}
+function* jobRR(B,nets,opts){
+  const o=Object.assign({},DEF,opts||{});const maxRounds=o.rounds!=null?o.rounds:Math.min(16,4+nets.length);
+  let order=o.keepOrder?nets.slice():nets.map(n=>({n,e:estimate(B,n)})).sort((a,b)=>a.e-b.e).map(x=>x.n);
+  let P=prepare(B,o);const res={};
+  for(let i=0;i<order.length;i++){yield{phase:'route',i,total:order.length,net:order[i]};res[order[i]]=routeNet(P,B,order[i]);}
+  const okCount=()=>{const S=shapesOfBoard(B);return nets.filter(n=>components(S,n).length<=1).length;};
+  let best={ok:okCount(),...autoLen(B)};const tries={};let rounds=0;
+  const failedNow=()=>{const S=shapesOfBoard(B);return nets.filter(n=>components(S,n).length>1);};
+  let queue=failedNow();
+  while(queue.length&&rounds<maxRounds){
+    const X=queue.shift();tries[X]=(tries[X]||0)+1;if(tries[X]>3)continue;rounds++;
+    yield{phase:'ripup',round:rounds,max:maxRounds,net:X,ok:best.ok,total:nets.length};
+    // nets with auto copper near the failed net's pads (tracks and vias)
+    const pads=(B.nets[X]&&B.nets[X].pads)||[];let blockers=[];
+    for(const R of[1.5,3,6]){const cnt={};
+      ['T','B'].forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(!p.auto||p.net===X||!p.net)return;const q=p.pts||[p.a,p.b];
+        for(const pd of pads){let hitp=false;for(let i=1;i<q.length;i++)if(PC.segDist(pd.x,pd.y,q[i-1],q[i])<R+Math.max(pd.w,pd.h)/2){hitp=true;break;}if(hitp){cnt[p.net]=(cnt[p.net]||0)+1;break;}}}));
+      B.vias.forEach(v=>{if(!v.auto||v.net===X||!v.net||v.fan)return;if(pads.some(pd=>Math.hypot(pd.x-v.x,pd.y-v.y)<R+Math.max(pd.w,pd.h)/2))cnt[v.net]=(cnt[v.net]||0)+1;});
+      blockers=Object.keys(cnt).filter(n=>nets.includes(n)).sort((a,b)=>cnt[b]-cnt[a]).slice(0,3);if(blockers.length)break;}
+    if(!blockers.length)continue;
+    const snap=copperSnap(B);
+    const kill=[];['T','B'].forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(p.auto&&!p.fan&&(p.net===X||blockers.includes(p.net)))kill.push(p);}));B.vias.forEach(v=>{if(v.auto&&!v.fan&&(v.net===X||blockers.includes(v.net)))kill.push(v);});
+    unroute(B,kill);P=prepare(B,o);
+    [X,...blockers].forEach(n=>{res[n]=routeNet(P,B,n);});
+    const now={ok:okCount(),...autoLen(B)};
+    if(now.ok>best.ok||(now.ok===best.ok&&now.l+3*now.v<best.l+3*best.v-0.5)){best=now;queue=failedNow().filter(n=>(tries[n]||0)<3);}
+    else{copperRestore(B,snap);P=null;}
+    if(!P)P=prepare(B,o);
+  }
+  const fail=failedNow();const al=autoLen(B);
+  return{ok:nets.length-fail.length,total:nets.length,fail:fail.map(n=>({net:n,why:(res[n]&&res[n].why)||'막힘'})),len:al.l,vias:al.v,rounds,results:nets.map(n=>({net:n,ok:!fail.includes(n)}))};
+}
 function unroute(B,list){ // remove auto tracks/vias (all, or only those in list)
   const kill=list?new Set(list):null;const keep=p=>!(p.auto&&(!kill||kill.has(p)));
   ['T','B'].forEach(s=>{B.layers[s+'.cu']=B.layers[s+'.cu'].filter(keep);});B.vias=B.vias.filter(keep);
@@ -196,6 +254,6 @@ function drc(B,opts){
     const gap=shapeGap(a,b);if(gap<o.clear-0.03)out.push({net:a.net,other:b.net||(b.hole?'구멍':'(넷 없음)'),gap,at:a.k==='cap'?a.a:[a.x,a.y]});});});
   return out;
 }
-return{DEF,prepare,routeNet,route,job,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor};
+return{DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

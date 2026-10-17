@@ -147,6 +147,37 @@ function itemAt(B,x,y,layer,tol){
   return null;
 }
 
+/* ---- board outline: size, corner radius ---- */
+const ringArea=r=>{let a=0;for(let i=0,j=r.length-1;i<r.length;j=i++)a+=(r[j][0]+r[i][0])*(r[j][1]-r[i][1]);return Math.abs(a)/2;};
+const ringBB=r=>[Math.min(...r.map(p=>p[0])),Math.min(...r.map(p=>p[1])),Math.max(...r.map(p=>p[0])),Math.max(...r.map(p=>p[1]))];
+function cornerRadius(B){const r=B.outline[0];if(!r||r.length<=4)return 0;const b=ringBB(r);const lo=r.filter(p=>Math.abs(p[1]-b[1])<1e-3);if(!lo.length)return 0;return Math.max(0,Math.min(...lo.map(p=>p[0]))-b[0]);}
+// a rectangle, possibly with rounded corners (then the outline can be rebuilt for any size)
+function rectLike(B){const r=B.outline[0];if(!r)return true;if(B.outline.length>1)return false;const b=ringBB(r),R=cornerRadius(B);const full=(b[2]-b[0])*(b[3]-b[1]);return Math.abs(ringArea(r)-(full-(4-Math.PI)*R*R))<Math.max(0.5,full*0.004);}
+function roundedRect(W,H,R){const r=Math.min(R,W/2,H/2);if(!(r>0))return[[0,0],[W,0],[W,H],[0,H]];const o=[];[[W-r,r,-90],[W-r,H-r,0],[r,H-r,90],[r,r,180]].forEach(([cx,cy,a])=>PCB.arcPts(cx,cy,r,a*D2R,(a+90)*D2R).forEach(p=>o.push(p)));return o;}
+// shift everything on the board (parts carry their pads, drills and silkscreen)
+function translateAll(B,dx,dy,skip){
+  const seen=new Set();const mv=p=>{if(!p||seen.has(p))return;seen.add(p);p[0]+=dx;p[1]+=dy;};
+  B.comps.forEach(c=>move(B,c,dx,dy));
+  ['T.cu','B.cu','T.silk','B.silk'].forEach(L=>B.layers[L].forEach(p=>{if(p.own||p.t==='pad'||p.t==='pour')return;if(p.t==='seg'){mv(p.a);mv(p.b);}else if(p.t==='path')p.pts.forEach(mv);else if(p.t==='poly')p.rings.forEach(r=>r.forEach(mv));else if(p.x!=null){p.x+=dx;p.y+=dy;}}));
+  B.vias.forEach(v=>{v.x+=dx;v.y+=dy;});B.drills.forEach(d=>{if(d.own||d._pad||(skip&&skip.has(d)))return;d.x+=dx;d.y+=dy;});
+}
+/* resize the board. anchor 'bl' keeps the lower-left corner, 'center' keeps the parts centred. Mounting holes near a corner keep
+   their distance to that corner; a rectangular outline is rebuilt (with corner radius R), any other outline is scaled. */
+function resizeBoard(B,W,H,o){
+  o=o||{};W=+W;H=+H;if(!(W>=5&&H>=5&&W<=1000&&H<=1000))throw new Error('보드 크기는 5–1000 mm 사이여야 합니다.');
+  const W0=B.W,H0=B.H,like=rectLike(B),R0=cornerRadius(B),R=o.corner!=null&&isFinite(+o.corner)?Math.max(0,+o.corner):R0;
+  const anchor=o.anchor==='center'?'center':'bl';const dx=anchor==='center'?(W-W0)/2:0,dy=anchor==='center'?(H-H0)/2:0;
+  const holes=new Set();B.drills.forEach(d=>{if(d.plated||d.own||d._pad)return;const cx=d.x<W0/2?0:W0,cy=d.y<H0/2?0:H0;
+    if(Math.abs(d.x-cx)<=Math.max(12,R0+6)&&Math.abs(d.y-cy)<=Math.max(12,R0+6)){d.x=(cx?W:0)+(d.x-cx);d.y=(cy?H:0)+(d.y-cy);holes.add(d);}});
+  if(dx||dy)translateAll(B,dx,dy,holes);
+  const old=B.outline;
+  B.outline=like?[roundedRect(W,H,R)]:old.map(r=>r.map(p=>[p[0]*W/W0,p[1]*H/H0]));
+  ['T.cu','B.cu'].forEach(L=>{B.layers[L]=B.layers[L].map(p=>p.t==='pour'?Object.assign({},p,{r:Math.max(0,R-(p.inset||0.5))}):p);});
+  B.W=W;B.H=H;
+  const ring=B.outline[0];const outside=B.comps.filter(c=>c.kind!=='none'&&c.pads.some(p=>!PCB.inRing(p.x,p.y,ring))).map(c=>c.ref);
+  return{W0,H0,W,H,R,anchor,rebuilt:like,outside,holes:holes.size};
+}
+
 /* ---- .kicad_pcb writer (KiCad 7 format) ---- */
 function toKicadPcb(B,meta){
   meta=meta||{};const q=s=>'"'+String(s==null?'':s).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"';const n=v=>(Math.round(v*10000)/10000).toString();
@@ -199,6 +230,6 @@ function toKicadPcb(B,meta){
   o.push(')');return o.join('\n')+'\n';
 }
 
-return{prepare,applyComp,move,rotate,flip,snapDelta,snapTo,bbox,rebuildNets,addTrack,addVia,removePrim,restorePrim,ratsnest,drc,posture,itemAt,toKicadPcb,DRC_DEF};
+return{prepare,applyComp,move,rotate,flip,snapDelta,snapTo,bbox,rebuildNets,cornerRadius,rectLike,roundedRect,translateAll,resizeBoard,addTrack,addVia,removePrim,restorePrim,ratsnest,drc,posture,itemAt,toKicadPcb,DRC_DEF};
 })();
 if(typeof module!=='undefined')module.exports=PCBEDIT;
