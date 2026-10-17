@@ -161,7 +161,7 @@ function build(plan){
   const ctx={
     part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,ldo:o.ldo,mcu:!!o.mcu};parts.push(c);return c;},
     cap(rail,val,desc){if(!rail)return;used.add(rail);return ctx.part('C',val,capFp(val),{1:rail,2:'GND'},{desc,mpn:capMpn[val]});},
-    provide(rail,v,by){rails[rail]={v,by};},use(r){if(r)used.add(r);},has,
+    provide(rail,v,by){rails[rail]={v,by,block:ctx._b};},use(r){if(r)used.add(r);},has,
     highest(min){const r=Object.entries(rails).filter(([,x])=>x.v>=min).sort((a,b)=>b[1].v-a[1].v)[0];if(!r){warn.push(`${min} V 이상 레일이 없음 — 전원 블록을 먼저 넣으세요`);return'+12V';}return r[0];},
     setMcu(k){mcu=k;},mcuPin(n,net){fixedPins[n]=net;},need(t){if(!has(t))warn.push(`${t} 블록이 필요합니다 (예: add ${t})`);},
     sig(net,role,group){sigs.push({net,role,group:group||null,block:ctx._b});},xtal(a,b){xt.push(a,b);},
@@ -216,7 +216,7 @@ function build(plan){
   let W,H;if(plan.board){W=plan.board.w;H=plan.board.h;}else{const A=Math.max(1200,area*4.2);W=Math.ceil(Math.sqrt(A*1.6)/5)*5;H=Math.ceil(A/W/5)*5;}
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
-  return{spec,parts,warn,rails,pinmap,assigned,mcu,area,W,H,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P}))};
+  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P}))};
 }
 // board from a plan: place from scratch with the plan's strategy (routing is left to the caller)
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SENSE-32 PCB 뷰어</title>
+<title>AllinOneDesign</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
@@ -709,6 +709,44 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 @media (max-width:820px){.cad-ws{grid-template-columns:1fr}.cad-vp{min-height:56svh}.cad-con{height:auto;min-height:260px}}
 
 </style>
+<style>
+/* ---- AllinOneDesign: brand, design-flow stepper, step 1 system diagram ---- */
+.b-app{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);line-height:1.1}
+.steps{display:inline-flex;align-items:center;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px}
+.steps button{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;padding:6px 12px 6px 8px;border-radius:7px;cursor:pointer;font:inherit;font-size:13px;font-weight:600;color:var(--muted);position:relative}
+.steps button+button{margin-left:14px}
+.steps button+button::before{content:"";position:absolute;left:-12px;top:50%;width:10px;height:1.5px;background:var(--line)}
+.steps button i{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;border:1.5px solid currentColor;font-size:11px;font-family:var(--f-mono)}
+.steps button:hover{color:var(--fg)}
+.steps button.done{color:var(--fg)}.steps button.done i{background:var(--fg);color:var(--surface);border-color:var(--fg)}
+.steps button.on{background:var(--raised);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12),inset 0 0 0 1px var(--line)}
+.steps button.on i{background:var(--accent);border-color:var(--accent);color:#fff}
+.sys-ws{display:grid;grid-template-columns:var(--sys-l,320px) minmax(0,1fr) var(--sys-r,330px);gap:12px;min-height:0}
+.sys-ws[hidden]{display:none}
+.sys-ws .panel section{margin-bottom:14px}.sys-ws .panel h3{font-size:12px;letter-spacing:.06em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.sys-mid{display:flex;flex-direction:column;gap:12px;min-height:0;min-width:0}
+.sys-dia{flex:1;min-height:260px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sys-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.sys-src{color:var(--muted);font-size:12px}
+.sys-svg{flex:1;overflow:auto;padding:6px;color:var(--fg)}
+.sys-svg svg{width:100%;height:auto;min-width:760px;display:block}
+.sys-svg .sd-n:focus{outline:none}.sys-svg .sd-n:focus rect:first-child{stroke:#3d7fd9;stroke-opacity:1;stroke-width:2}
+.sys-ws .np-con{height:min(32%,250px);min-height:180px}
+.sys-ws .fld{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;font-size:12.5px}
+.sys-ws .fld input,.sys-ws .fld textarea{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--raised);color:var(--fg);resize:vertical;width:100%;box-sizing:border-box}
+.sys-ws .npchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.sys-ws .acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sys-ws .np-con .cli-h{flex-wrap:wrap}
+.sys-ws .np-sum{max-height:none}
+.sys-next{display:flex;flex-direction:column;gap:8px;align-items:stretch;position:sticky;bottom:0;background:var(--surface);padding-top:8px}
+.sys-next .msg{font-size:12px;color:var(--muted)}
+.sys-io{list-style:none;margin:6px 0 0;padding:0;font-size:12px;display:flex;flex-direction:column;gap:3px}
+.sys-io .mono{color:var(--muted);font-size:11px}
+.sys-io .k-power{color:#d9822b}.sys-io .k-signal{color:#3d7fd9}.sys-io .k-ext{color:var(--muted)}
+@media (max-width:1280px){.steps button span{display:none}.steps button{padding:6px 8px}}
+@media (max-width:1180px){.sys-ws{grid-template-columns:var(--sys-l,280px) minmax(0,1fr)}#sysRight{grid-column:1/-1}}
+@media (max-width:820px){.sys-ws{grid-template-columns:1fr}}
+</style>
 
 </head>
 <body>
@@ -717,15 +755,21 @@ details.thsec>*:not(summary){margin:0 10px 10px}
     <div class="brand">
       <div class="brand-ico" aria-hidden="true"></div>
       <div style="min-width:0">
+        <div class="b-app">AllinOneDesign</div>
         <div class="b-name"><span id="bName">SENSE-32 DEV v1.2</span><span class="tag" id="bTag">예제 보드</span></div>
         <div class="b-sub" id="bSub"></div>
       </div>
     </div>
     <div class="top-r">
-      <div class="seg ws" role="tablist" aria-label="작업 공간"><button role="tab" data-ws="board" aria-selected="true" id="ws-board">보드 뷰어</button><button role="tab" data-ws="hsis" aria-selected="false" id="ws-hsis">HSIS</button><button role="tab" data-ws="cad" aria-selected="false" id="ws-cad" title="보호 하우징을 문장·명령으로 설계 (Text-to-CAD)">기구 CAD</button></div>
+      <nav class="steps" aria-label="설계 단계">
+        <button type="button" data-step="1" id="st-1" title="요구사항 → 블록과 인터페이스 (결정론 / AI)"><i>1</i><span>시스템 다이어그램</span></button>
+        <button type="button" data-step="2" id="st-2" title="다이어그램의 블록으로 회로도 생성·편집"><i>2</i><span>회로</span></button>
+        <button type="button" data-step="3" id="st-3" title="부품 배치·배선 (PCB)"><i>3</i><span>PCB</span></button>
+        <button type="button" data-step="4" id="st-4" title="보호 하우징 (Text-to-CAD)"><i>4</i><span>기구 CAD</span></button>
+      </nav>
+      <div class="seg ws" role="tablist" aria-label="보조 도구"><button role="tab" data-ws="board" aria-selected="true" id="ws-board" hidden>보드</button><button role="tab" data-ws="hsis" aria-selected="false" id="ws-hsis" title="HW/SW 인터페이스 사양 (MCU 핀 기준)">HSIS</button><button role="tab" data-ws="cad" aria-selected="false" id="ws-cad" hidden>기구 CAD</button></div>
       <div class="top-r" id="boardCtl">
-      <button class="btn" id="openNew" title="요구사항과 부품 블록으로 새 회로·보드 만들기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>새 설계</button>
-      <button class="btn primary" id="openImp"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.6 8 2.4l3.2 3.2M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>파일 불러오기</button>
+            <button class="btn primary" id="openImp"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.6 8 2.4l3.2 3.2M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>파일 불러오기</button>
       <div class="seg" role="tablist" aria-label="보기 전환">
         <button role="tab" data-view="3d" aria-selected="true" id="v-3d">3D</button>
         <button role="tab" data-view="T" aria-selected="false" id="v-top">TOP</button>
@@ -828,6 +872,35 @@ details.thsec>*:not(summary){margin:0 10px 10px}
       </div>
     </aside>
   </div>
+<div class="sys-ws" id="sysWs" hidden>
+  <aside class="panel" id="sysLeft" aria-label="프로젝트와 블록">
+    <section><h3>프로젝트 · 요구사항</h3>
+          <label class="fld"><span>이름</span><input id="npName" placeholder="예: BLDC 팬 컨트롤러 v0.1"></label>
+          <label class="fld"><span>요구사항 (무엇을 만들지, 입력 전압, 쓸 부품)</span><textarea id="npReq" rows="4" placeholder="예: 12V 입력 BLDC 모터 컨트롤러, STM32, CAN 통신, 상태 LED 2개, 버튼 1개, 데이터 로그용 플래시"></textarea></label>
+          <div class="npchips" id="npTpl"></div>
+          <div class="acts"><button class="btn primary sm" id="npPlan">다이어그램 만들기</button><span class="np-hint" id="npPlanHint"></span></div></section>
+        <section><h3>블록</h3><div id="npBlocks"></div>
+          <div class="np-add"><select id="npAddSel" aria-label="추가할 블록"></select><button class="btn sm" id="npAdd">블록 추가</button></div></section>
+        <section><h3>회로 생성 옵션</h3><div class="np-board">
+          <label>가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> mm</label><label>세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
+          <label>배치 전략 <select id="npStrat"><option value="balanced">균형</option><option value="thermal">열 분산</option><option value="noise">노이즈 최소화</option><option value="compact">소형화</option></select></label>
+          <label class="chkl"><input type="checkbox" id="npRoute" checked> 생성 후 자동 배선</label></div></section>
+  </aside>
+  <div class="sys-mid">
+    <section class="sys-dia" id="sysDia" aria-label="시스템 다이어그램">
+      <div class="sys-bar"><b id="sysTitle">시스템 다이어그램</b><span class="sys-src" id="sysSrc"></span><span class="cli-sp"></span>
+        <button type="button" class="pill vbtn" id="sysFromBoard" title="지금 보드의 부품과 넷에서 다이어그램을 그립니다">보드에서 추출</button><button type="button" class="pill vbtn" id="sysSvgDl">SVG 저장</button></div>
+      <div class="sys-svg" id="sysSvg"></div>
+    </section>
+    <section class="cad-con np-con" aria-label="시스템 설계 콘솔"><div class="cli-h"><b>시스템 CLI</b><span class="np-mode" id="npMode"></span></div><div class="cli-log" id="npLog" role="log" aria-live="polite"></div>
+          <form class="cli-in" id="npForm" autocomplete="off"><span aria-hidden="true">›</span><input id="npIn" spellcheck="false" placeholder="예: add led --n 3 · set ldo2 vout 5 · mcu tc364 · plan · generate" aria-label="설계 명령 입력"><button class="btn primary sm" id="npRun">실행</button><button type="button" class="btn sm" id="npStop" hidden>중지</button></form></section>
+  </div>
+  <aside class="panel" id="sysRight" aria-label="선택한 블록과 계획">
+    <section><h3>선택</h3><div id="sysSel"><p class="lead" style="margin:0">다이어그램의 블록을 누르면 부품·전원·신호와 파라미터가 여기 나옵니다.</p></div></section>
+    <section><h3>계획 · BOM · MCU 핀 배정</h3><pre class="np-sum" id="npSum">요구사항을 적고 [계획 세우기]를 누르거나, 블록을 직접 추가하세요.</pre></section>
+    <div class="sys-next"><span class="msg" id="npMsg"></span><button class="btn primary" id="npGen">다음: 회로 생성 →</button></div>
+  </aside>
+</div>
 <div class="cad-ws" id="cadWs" hidden>
   <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
   <div class="cad-mid"><div class="cad-vp" id="cadVpSlot"></div><section class="cad-con" id="cadCon" aria-label="Text-to-CAD 콘솔"></section></div>
@@ -876,32 +949,6 @@ details.thsec>*:not(summary){margin:0 10px 10px}
       <button class="btn ghost" data-close>취소</button>
       <button class="btn primary" id="impGo" disabled>보드 만들기</button>
     </div>
-  </div>
-</div>
-<div class="modal" id="npModal" hidden>
-  <div class="sheet npsheet" role="dialog" aria-modal="true" aria-labelledby="npT">
-    <div class="sheet-h"><h2 id="npT">새 회로 설계</h2><div class="np-mode" id="npMode"></div><button class="x" data-npclose aria-label="닫기">✕</button></div>
-    <div class="npbody">
-      <div class="npleft">
-        <section><h3>1. 프로젝트</h3>
-          <label class="fld"><span>이름</span><input id="npName" placeholder="예: BLDC 팬 컨트롤러 v0.1"></label>
-          <label class="fld"><span>요구사항 (무엇을 만들지, 입력 전압, 쓸 부품)</span><textarea id="npReq" rows="4" placeholder="예: 12V 입력 BLDC 모터 컨트롤러, STM32, CAN 통신, 상태 LED 2개, 버튼 1개, 데이터 로그용 플래시"></textarea></label>
-          <div class="npchips" id="npTpl"></div>
-          <div class="acts"><button class="btn primary sm" id="npPlan">계획 세우기</button><span class="np-hint" id="npPlanHint"></span></div></section>
-        <section><h3>2. 부품 블록</h3><div id="npBlocks"></div>
-          <div class="np-add"><select id="npAddSel" aria-label="추가할 블록"></select><button class="btn sm" id="npAdd">블록 추가</button></div></section>
-        <section><h3>3. 보드</h3><div class="np-board">
-          <label>가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> mm</label><label>세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
-          <label>배치 전략 <select id="npStrat"><option value="balanced">균형</option><option value="thermal">열 분산</option><option value="noise">노이즈 최소화</option><option value="compact">소형화</option></select></label>
-          <label class="chkl"><input type="checkbox" id="npRoute" checked> 생성 후 자동 배선</label></div></section>
-      </div>
-      <div class="npright">
-        <section><h3>계획 · BOM · MCU 핀 배정</h3><pre class="np-sum" id="npSum">요구사항을 적고 [계획 세우기]를 누르거나, 블록을 직접 추가하세요.</pre></section>
-        <section class="np-con"><h3>설계 CLI</h3><div class="cli-log" id="npLog" role="log" aria-live="polite"></div>
-          <form class="cli-in" id="npForm" autocomplete="off"><span aria-hidden="true">›</span><input id="npIn" spellcheck="false" placeholder="예: add led --n 3 · set ldo2 vout 5 · mcu tc364 · plan · generate" aria-label="설계 명령 입력"><button class="btn primary sm" id="npRun">실행</button><button type="button" class="btn sm" id="npStop" hidden>중지</button></form></section>
-      </div>
-    </div>
-    <div class="sheet-f"><span class="msg" id="npMsg"></span><button class="btn ghost" data-npclose>닫기</button><button class="btn primary" id="npGen">회로 생성</button></div>
   </div>
 </div>
 <div class="modal" id="fwModal" hidden>
@@ -4049,10 +4096,36 @@ function category(it){
   if(/I2C|SPI|UART|USART|CAN|LIN|USB|ETH|SDIO/.test(f))return'통신';if(/출력|OUT/.test(f))return'디지털 출력';return'디지털 입력';
 }
 const CAT_ORDER=['통신','디지털 출력','디지털 입력','아날로그','클럭','리셋·부트','전원','접지'];
+/* the HSIS pin map is always drawn on the MCU: a part with pin-function data (or MCU-like name/role) wins over connectors,
+   memories and regulators, however many pin numbers they happen to share with the document */
+const isConnRef=c=>/^(J|P|CN|X|CON|USB|SW|TP)\d/i.test(c.ref||'');
+function mcuScore(c){if(!c||isConnRef(c)||c.pads.length<8)return-1;const MP=typeof MCU_PINS!=='undefined'?MCU_PINS:null;
+  if(MP&&(MP.find(c.mpn)||MP.find(c.val)))return 1000+c.pads.length;
+  const t=((c.mpn||'')+' '+(c.val||'')+' '+(c.desc||'')).toUpperCase();
+  if(/\b(MCU|MICROCONTROLLER|CORTEX|STM32|AURIX|TRICORE|TC3\d\d|TC2\d\d|ATMEGA|ATSAM|PIC\d|ESP32|NRF5|RP2040|S32K|RH850|MSP430|LPC\d|EFM32|GD32|CH32)/.test(t)||/마이크로컨트롤러|마이컴/.test(t))return 500+c.pads.length;
+  if(/^U\d/i.test(c.ref)&&c.pads.length>=20)return 100+c.pads.length;return 0;}
+function isMcuLike(c){return mcuScore(c)>=100;}
 function pickMcu(B,items){
-  let best=null,score=-1;B.comps.forEach(c=>{if(c.pads.length<8)return;let s=0;items.forEach(it=>parsePins(it.pins).forEach(n=>{const p=c.pads.find(q=>q.n===n);if(p&&it.net&&p.net&&netN(p.net)===netN(it.net))s+=2;else if(p)s+=0.1;}));if(score<0||s>score){score=s;best=c;}});
+  let best=null,score=-1;B.comps.forEach(c=>{const base=mcuScore(c);if(base<0)return;let s=base;items.forEach(it=>parsePins(it.pins).forEach(n=>{const p=c.pads.find(q=>q.n===n);if(p&&it.net&&p.net&&netN(p.net)===netN(it.net))s+=2;else if(p)s+=0.1;}));if(score<0||s>score){score=s;best=c;}});
   return best?best.ref:null;
 }
+/* an HSIS drafted from the board itself, MCU pin by MCU pin (used when no HSIS document belongs to the loaded board) */
+function fromBoard(B,mcuRef){
+  const ref=mcuRef&&B.byRef[mcuRef]&&isMcuLike(B.byRef[mcuRef])?mcuRef:pickMcu(B,[]);const U=ref&&B.byRef[ref];
+  const head=['ID','신호명','분류','MCU 핀','포트','핀 기능','주변장치','방향','초기값','활성 레벨','풀업/풀다운','회로도 넷','HW 연결','전기적 특성','변환식','타이밍','SW 모듈','SW 설정 ID','API','요구사항 ID','테스트 ID','ASIL','상태','비고'];
+  const meta={docId:'HSIS-'+String(B.name||'BOARD').replace(/[^\w]+/g,'-').toUpperCase().slice(0,24),title:`${B.name||'보드'} HW/SW 인터페이스 사양 (보드에서 생성)`,version:'0.0',mcuRef:ref||'',date:'',file:'(보드 넷리스트에서 생성)',generated:true};
+  if(!U)return fromRows([head],meta);
+  const MP=typeof MCU_PINS!=='undefined'?MCU_PINS:null;const db=MP&&(MP.find(U.mpn)||MP.find(U.val));
+  const byNet={};U.pads.forEach(p=>{if(!p.net)return;(byNet[p.net]=byNet[p.net]||[]).push(p);});
+  const rows=[head];let k=0;
+  Object.entries(byNet).sort((a,b)=>(+a[1][0].n||0)-(+b[1][0].n||0)).forEach(([net,ps])=>{
+    const pins=ps.map(p=>p.n).sort((a,b)=>(+a)-(+b));const nm=ps.map(p=>(db&&db.pins[p.n]&&db.pins[p.n].name)||p.fn||'').filter(Boolean).filter(x=>!(db&&db.pins[pins[0]]&&x===db.pins[pins[0]].port));
+    const port=db&&db.pins[pins[0]]&&db.pins[pins[0]].port||'';const N=String(net).toUpperCase();
+    const cat=/^(GND|VSS|AGND|PGND|DGND|0V)$/.test(N)?'접지':/^\+|VDD|VCC|VEXT|V3P3|3V3|5V|VBAT$/.test(N)&&!/MON/.test(N)?'전원':/XTAL|OSC|HSE|CLK_?IN/.test(N)?'클럭':/RST|RESET|PORST|NRST|BOOT|ESR/.test(N)?'리셋·부트':/MON|ADC|SENSE|_AN|VBAT_/.test(N)?'아날로그':/STB|SLEEP|^EN_|_EN$|LED|PWM|^IN_/.test(N)?'디지털 출력':/CAN|SPI|SCK|SCLK|MOSI|MISO|SDA|SCL|UART|TX|RX|USB|QSPI|FLASH_/.test(N)?'통신':/PWM|IN_|EN_|LED|CS|STB|SLEEP|OUT/.test(N)?'디지털 출력':'디지털 입력';
+    const peer=(B.nets[net]&&B.nets[net].pads||[]).find(p=>p.ref!==ref);
+    const dir=cat==='전원'?'전원':cat==='접지'?'접지':cat==='디지털 출력'?'출력':cat==='아날로그'||cat==='디지털 입력'?'입력':cat==='통신'?(/TX|MOSI|SCK|SCLK|CS/.test(N)?'출력':/RX|MISO/.test(N)?'입력':'양방향'):'';
+    k++;rows.push([`HSIS-${String(k).padStart(3,'0')}`,net,cat,pins.join(', '),port,[...new Set(nm)].join(' / '),'',dir,'','','',net,peer?`${peer.ref}.${peer.n}`:'','','','','','','','','','','초안','보드 넷리스트에서 생성 — 기능·SW 항목을 채우세요']);});
+  return fromRows(rows,meta);}
 const levelOf=s=>{s=String(s||'').toUpperCase();if(/HIGH|^1$|하이|H$/.test(s))return'H';if(/LOW|^0$|로우|L$/.test(s))return'L';return null;};
 const dirOf=s=>{s=String(s||'').toUpperCase();if(/INOUT|양방향|BIDIR|I\/O/.test(s))return'IO';if(/OUT|출력/.test(s))return'O';if(/IN|입력/.test(s))return'I';return null;};
 
@@ -4159,7 +4232,7 @@ function checkFw(H,fw,prev){
   res.forEach(r=>{if(!r.id||!(r.id in out.status))return;if(r.sev==='err')out.status[r.id]='err';else if(r.sev==='warn'&&out.status[r.id]!=='err')out.status[r.id]='warn';});
   return out;
 }
-return{FIELDS,LABEL,CAT_ORDER,csvRows,mapColumns,fromRows,parseARXML,parsePins,category,pickMcu,check,checkFw,trace,netN};
+return{FIELDS,LABEL,CAT_ORDER,csvRows,mapColumns,fromRows,fromBoard,isMcuLike,mcuScore,parseARXML,parsePins,category,pickMcu,check,checkFw,trace,netN};
 })();
 
 
@@ -4501,7 +4574,7 @@ function arxml(M){
         x.fd?[cont('CanControllerFdBaudrateConfig',cc+'/CanControllerBaudrateConfig/CanControllerFdBaudrateConfig',[flt(cc+'/CanControllerBaudrateConfig/CanControllerFdBaudrateConfig','CanControllerFdBaudRate',x.fd/1000),bool(cc+'/CanControllerBaudrateConfig/CanControllerFdBaudrateConfig','CanControllerTxBitRateSwitch',true)],null,10)]:null,8)],6)),4)]));}
   const notes=M.pins.map(x=>`  ${String(x.n).padStart(3)}  ${x.port.padEnd(7)} ${x.sig.padEnd(12)} ${x.o.sig}${x.o.insel!=null?' (입력 선택 '+x.o.insel+')':''}${M.fam==='aurix'?' · PC='+hex(aurixPC(x),2):''}`).join('\n');
   return`<?xml version="1.0" encoding="UTF-8"?>
-<!-- ${xmlEsc(M.board)} · ${M.mpn} · 생성: PCB 뷰어 HSIS 핀 추천
+<!-- ${xmlEsc(M.board)} · ${M.mpn} · 생성: AllinOneDesign HSIS 핀 추천
      PortPinId는 MCU 패키지 핀 번호입니다. PortPinMode는 ${M.fam==='aurix'?'Infineon 방식(ALT1–ALT7 / GPIO)':'AF 번호 방식(AF0–AF7 / DIO)'}으로 적었습니다.
      벤더 MCAL 도구(EB tresos 등)로 가져올 때는 해당 벤더 BSWMD의 파라미터 정의에 맞춰 확인하세요.
 ${xmlEsc(notes)}
@@ -4516,7 +4589,7 @@ ${mods.join('\n')}
 
 /* ---------- MCAL-style C configuration ---------- */
 function cfiles(M){
-  const ports=portRegs(M),files=[],hdr=(f,desc)=>`/* ${f} — ${desc}\n * ${M.board} · ${M.mpn} · 생성: PCB 뷰어 HSIS 핀 추천\n * 구조와 이름은 AUTOSAR MCAL 관례를 따른 예시이며, 벤더 MCAL의 구조체 정의와 1:1로 같지는 않습니다. */\n`;
+  const ports=portRegs(M),files=[],hdr=(f,desc)=>`/* ${f} — ${desc}\n * ${M.board} · ${M.mpn} · 생성: AllinOneDesign HSIS 핀 추천\n * 구조와 이름은 AUTOSAR MCAL 관례를 따른 예시이며, 벤더 MCAL의 구조체 정의와 1:1로 같지는 않습니다. */\n`;
   const guard=f=>f.replace('.','_').toUpperCase();
   const pp=M.pins.filter(x=>x.pi);
   const pinTbl=pp.map(x=>`  /* ${String(x.n).padStart(3)} ${x.port.padEnd(7)} */ { PortConf_PortPin_${x.name}, ${M.fam==='aurix'?`${x.pi?x.pi.port:0}u, ${x.pi?x.pi.pin:0}u, ${hex(x.pc!=null?x.pc:aurixPC(x),2)}u /* ${x.o.sel} ${x.o.sig} */`:`${x.pi?'GPIO_PORT_'+x.pi.letter:'0'}, ${x.pi?x.pi.pin:0}u, ${x.r?x.r.mode:0}u, ${x.r?x.r.af:0}u /* ${x.o.sel} ${x.o.sig} */`}, PORT_PIN_${x.dir==='OUT'?'OUT':'IN'}, PORT_PIN_LEVEL_${x.level||'LOW'} }`).join(',\n');
@@ -5744,7 +5817,7 @@ function build(plan){
   const ctx={
     part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,ldo:o.ldo,mcu:!!o.mcu};parts.push(c);return c;},
     cap(rail,val,desc){if(!rail)return;used.add(rail);return ctx.part('C',val,capFp(val),{1:rail,2:'GND'},{desc,mpn:capMpn[val]});},
-    provide(rail,v,by){rails[rail]={v,by};},use(r){if(r)used.add(r);},has,
+    provide(rail,v,by){rails[rail]={v,by,block:ctx._b};},use(r){if(r)used.add(r);},has,
     highest(min){const r=Object.entries(rails).filter(([,x])=>x.v>=min).sort((a,b)=>b[1].v-a[1].v)[0];if(!r){warn.push(`${min} V 이상 레일이 없음 — 전원 블록을 먼저 넣으세요`);return'+12V';}return r[0];},
     setMcu(k){mcu=k;},mcuPin(n,net){fixedPins[n]=net;},need(t){if(!has(t))warn.push(`${t} 블록이 필요합니다 (예: add ${t})`);},
     sig(net,role,group){sigs.push({net,role,group:group||null,block:ctx._b});},xtal(a,b){xt.push(a,b);},
@@ -5799,7 +5872,7 @@ function build(plan){
   let W,H;if(plan.board){W=plan.board.w;H=plan.board.h;}else{const A=Math.max(1200,area*4.2);W=Math.ceil(Math.sqrt(A*1.6)/5)*5;H=Math.ceil(A/W/5)*5;}
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
-  return{spec,parts,warn,rails,pinmap,assigned,mcu,area,W,H,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P}))};
+  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P}))};
 }
 // board from a plan: place from scratch with the plan's strategy (routing is left to the caller)
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));
@@ -6091,7 +6164,7 @@ function featLabel(f){const id=f.id?f.id+' ':'';switch(f.type){
 function compareText(R){return['재질 비교 (같은 조건):',...R.all.map(d=>`  ${d===R.d?'▶':' '} ${d.m.short.padEnd(14)} 벽 ${d.geo.t} mm · PCB ${d.th.Tboard.toFixed(0)} °C (여유 ${(d.th.margin*100).toFixed(0)}%) · 진동 SF ${d.vib.sf.toFixed(2)} · ${d.mass.toFixed(0)} g · 원가 ${d.costIdx}${d.fins?` · 핀 ${d.fins.n}개`:''}${d.th.peds.length?' · TIM':''} · ${d.feasible?'적합':'부적합: '+d.why.join(', ')}`)].join('\n');}
 /* ---- OpenSCAD source (parametric, real CSG) ---- */
 function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString();
-  const o=[`// ${name||'board'} 하우징 — PCB 뷰어 기구 설계 (${d.m.label}, ${d.ip}, 진동 ${R.inp.vib} Grms)`,`// 좌표: 보드 왼쪽 아래 = (0,0), 보드 중간면 z = 0 (mm)`,`$fn=40;`,
+  const o=[`// ${name||'board'} 하우징 — AllinOneDesign 기구 설계 (${d.m.label}, ${d.ip}, 진동 ${R.inp.vib} Grms)`,`// 좌표: 보드 왼쪽 아래 = (0,0), 보드 중간면 z = 0 (mm)`,`$fn=40;`,
     `wall=${f(g.t)}; rim=${f(g.rim)}; x0=${f(g.x0)}; y0=${f(g.y0)}; Lo=${f(g.Lo)}; Wo=${f(g.Wo)};`,`zFloor=${f(g.zFloor)}; zLid=${f(g.zLid)}; zSplit=${f(g.zSplit)}; r=${f(g.r)};`,
     `module rbox(x,y,z,l,w,h,rr){translate([x,y,z]) hull(){for(i=[rr,l-rr],j=[rr,w-rr]) translate([i,j,0]) cylinder(r=rr,h=h);}}`,
     `module shell(){difference(){rbox(x0,y0,zFloor-wall,Lo,Wo,zLid+wall-(zFloor-wall),r); rbox(x0+rim,y0+rim,zFloor,Lo-2*rim,Wo-2*rim,zLid-zFloor,max(0.5,r-rim/2));`,
@@ -6261,6 +6334,148 @@ function parse(text){
   return out;
 }
 return{HELP,CMDS,SIDES,GLAND,OVER,tok,args,side,exec,parse,blank,norm,matKey};
+})();
+
+
+</script>
+<script>
+/* System diagram (step 1 of the design flow): blocks and the interfaces between them.
+   fromPlan(plan) reads a NEWPROJ plan through NEWPROJ.build: which block makes which rail, which block uses it,
+   which MCU signals each block needs (PWM, CAN, SPI…), and the connectors that leave the board.
+   fromBoard(B) draws the same picture from a finished board (examples, imported KiCad) with part roles and shared nets.
+   layout() puts the flow left to right — outside → power → control → functions → outside — and svg() draws it with
+   labelled arrows (currentColor so it follows the page theme). */
+const SYSDIAG=(function(){
+"use strict";
+const COLS=['외부 입력','전원','제어','기능','외부 연결'];
+const ROLE_KO={pwm:'PWM',adc:'ADC',cap:'캡처',irq_in:'인터럽트',gpio_in:'GPIO 입력',gpio_out:'GPIO 출력',can_tx:'CAN TX',can_rx:'CAN RX',spi_sck:'SCK',spi_mosi:'MOSI',spi_miso:'MISO',spi_cs:'CS',uart_tx:'TX',uart_rx:'RX',i2c_scl:'SCL',i2c_sda:'SDA',usb_dm:'D−',usb_dp:'D+'};
+const GROUP_KO={can:'CAN',spi:'SPI',uart:'UART',i2c:'I²C',pwm3:'PWM ×3',usb:'USB'};
+const isPass=ref=>/^(R|C|L|FB|D|TP)\d/i.test(ref);
+const isConnRef=ref=>/^(J|P|CN|X|CON|USB)\d/i.test(ref);
+const isGnd=n=>/^(GND|AGND|PGND|DGND|VSS|0V)$/i.test(String(n||''));
+const railV=n=>{const m=String(n||'').toUpperCase().match(/^\+?(\d+)V(\d*)$/);return m?+(m[1]+(m[2]?'.'+m[2]:'')):null;};
+// short label for a list of nets: IN_U, IN_V, IN_W → IN_U/V/W
+function netsLabel(list,max){list=[...new Set(list)].filter(Boolean);max=max||3;const g=new Map();
+  list.forEach(n=>{const m=String(n).match(/^(.+[_\-])([A-Z0-9]{1,2})$/i);const k=m?m[1]:String(n);if(!g.has(k))g.set(k,[]);g.get(k).push(m?m[2]:null);});
+  const parts=[...g].map(([k,v])=>v[0]==null?k:k+v.join('/'));return parts.length>max?parts.slice(0,max).join(' · ')+` +${parts.length-max}`:parts.join(' · ');}
+function roleLabel(sigs){const g={},r={};sigs.forEach(s=>{if(s.group&&GROUP_KO[s.group])g[s.group]=1;else r[s.role]=(r[s.role]||0)+1;});
+  return[...Object.keys(g).map(k=>GROUP_KO[k]),...Object.entries(r).map(([k,n])=>`${ROLE_KO[k]||k}${n>1?' ×'+n:''}`)].join(' · ');}
+const dirOf=sigs=>{let o=0,i=0;sigs.forEach(s=>{if(/^(pwm|gpio_out|spi_sck|spi_mosi|spi_cs|uart_tx|can_tx)$/.test(s.role))o++;else if(/^(adc|cap|irq_in|gpio_in|spi_miso|uart_rx|can_rx)$/.test(s.role))i++;else{o++;i++;}});return o&&i?'both':o?'out':'in';};
+
+/* ---- from a plan (new design) ---- */
+function fromPlan(plan){
+  const r=NEWPROJ.build(plan);const nodes=[],edges=[];const N=id=>nodes.find(n=>n.id===id);
+  const mcuB=plan.blocks.find(b=>b.type==='mcu');
+  plan.blocks.forEach(b=>{const L=NEWPROJ.LIB[b.type];const ps=r.parts.filter(p=>p.block===b.id);
+    const main=ps.filter(p=>!isPass(p.ref)&&!isConnRef(p.ref)).map(p=>p.val);
+    const prov=Object.entries(r.rails).filter(([,x])=>x.block===b.id).map(([k])=>k);
+    const used=[...new Set(ps.flatMap(p=>Object.values(p.pins)).filter(n=>r.rails[n]&&!prov.includes(n)))];
+    const col=b.type==='pwr_in'||b.type==='usb_in'||b.type==='buck'||b.type==='ldo'?1:b.type==='mcu'||b.type==='xtal'?2:3;
+    const title=b.type==='mcu'?`MCU ${b.params.part?NEWPROJ.MCUS[NEWPROJ.mcuKey(b.params.part)]?NEWPROJ.MCUS[NEWPROJ.mcuKey(b.params.part)].val:b.params.part:''}`:b.type==='ldo'||b.type==='buck'?`${L.label} ${b.params.vout} V`:b.type==='pwr_in'?`${L.label} ${b.params.vin} V`:L.label;
+    nodes.push({id:b.id,type:b.type,label:title,sub:[...new Set(main)].slice(0,3).join(' · '),col,prov,used,block:b});
+    // connectors of the block leave the board
+    ps.filter(p=>isConnRef(p.ref)).forEach(p=>{const pn=b.type==='pwr_in'?[`${b.params.vin} V DC`]:b.type==='usb_in'?['VBUS 5 V','D+/D−']:p.pinNames?Object.values(p.pinNames):Object.values(p.pins);const ext=b.type==='pwr_in'||b.type==='usb_in';
+      const id='x_'+p.ref;nodes.push({id,type:'ext',label:p.desc?String(p.desc).split(/[—(·]/)[0].trim().slice(0,22):p.val,sub:`${p.ref} · ${p.val}`,col:ext?0:4,ext:true,part:p.ref});
+      const pl=pn.filter(x=>!isGnd(x)&&!/^NC$/i.test(x));edges.push(ext?{a:id,b:b.id,kind:'ext',label:netsLabel(pl.length?pl:pn,3)}:{a:b.id,b:id,kind:'ext',label:netsLabel(pl,3)});});});
+  // power: rail maker → users (other power blocks and the MCU get arrows; function blocks show the rails they use)
+  Object.entries(r.rails).forEach(([rail,x])=>{if(!x.block)return;nodes.filter(n=>n.used&&n.used.includes(rail)&&n.id!==x.block).forEach(n=>{
+    if(n.col<=2)edges.push({a:x.block,b:n.id,kind:'power',label:rail});});});
+  // control signals between the MCU and each block
+  if(mcuB){const by={};(r.sigs||[]).forEach(s=>{if(s.block&&s.block!==mcuB.id)(by[s.block]=by[s.block]||[]).push(s);});
+    Object.entries(by).forEach(([bid,sigs])=>{const d=dirOf(sigs);edges.push({a:d==='in'?bid:mcuB.id,b:d==='in'?mcuB.id:bid,kind:'signal',both:d==='both',label:roleLabel(sigs)});});
+    const xt=plan.blocks.find(b=>b.type==='xtal');if(xt)edges.push({a:xt.id,b:mcuB.id,kind:'signal',label:'클럭 '+(xt.params.freq||'')});}
+  const D={src:'plan',name:plan.name,req:plan.req||'',nodes,edges,warn:r.warn,rails:r.rails,parts:r.parts.length,mcu:r.mcu,assigned:r.assigned};
+  return layout(D);
+}
+
+/* ---- from a finished board ---- */
+function fromBoard(B){
+  const I=typeof AUTOPLACE!=='undefined'?AUTOPLACE.classify(B,{}):{list:B.comps.map(c=>({ref:c.ref,c,role:isConnRef(c.ref)?'conn':c.pads.length>=8?'ic':'passive'}))};
+  const nodes=[],edges=[];const role=o=>o.mcu?'mcu':o.reg?'reg':o.driver?'driver':o.xtal?'xtal':o.conn?'conn':o.ic?'ic':null;
+  const keep=I.list.filter(o=>role(o));const netsOf=c=>[...new Set(c.pads.map(p=>p.net).filter(n=>n&&!isGnd(n)))];
+  const powerNet=n=>(B.netClass?B.netClass(n)==='전원':railV(n)!=null)&&!/MON|SENSE|_AN/i.test(n);
+  const desc=c=>String(c.desc||'').split(/[—(·]/)[0].trim().slice(0,22);
+  // regulator in / out from the rail voltages in the net names
+  const regIO={};keep.filter(o=>role(o)==='reg').forEach(o=>{const rs=netsOf(o.c).filter(powerNet).map(n=>({n,v:railV(n)})).filter(x=>x.v!=null).sort((a,b)=>b.v-a.v);if(rs.length>=2)regIO[o.ref]={in:rs[0].n,out:rs[rs.length-1].n};});
+  keep.forEach(o=>{const c=o.c,k=role(o);const nets=netsOf(c);const pw=nets.filter(powerNet);
+    if(k==='conn'){const inPow=pw.length&&!nets.some(n=>!powerNet(n))||pw.some(n=>Object.values(regIO).some(x=>x.in===n))&&nets.length<=3;
+      nodes.push({id:o.ref,type:'ext',label:desc(c)||c.val,sub:`${c.ref} · ${c.val}`,col:inPow?0:4,ext:true,part:c.ref,nets});return;}
+    const col=k==='reg'?1:k==='mcu'||k==='xtal'?2:3;
+    nodes.push({id:o.ref,type:k,label:k==='mcu'?`MCU ${c.val}`:k==='reg'?`${c.val}${regIO[o.ref]?` → ${regIO[o.ref].out}`:''}`:desc(c)||c.val,sub:`${c.ref} · ${c.val}`,col,nets,used:pw,prov:regIO[o.ref]?[regIO[o.ref].out]:[]});});
+  // power: regulator (or input connector) → users
+  const makers={};nodes.forEach(n=>{(n.prov||[]).forEach(r=>{makers[r]=n.id;});});
+  nodes.filter(n=>n.col===0).forEach(n=>(n.nets||[]).filter(powerNet).forEach(r=>{if(!makers[r])makers[r]=n.id;}));
+  // a connector that brings in a rail nobody makes is also the board's power input: show that side of it on the left
+  nodes.filter(n=>n.ext&&n.col===4).forEach(n=>{const rs=(n.nets||[]).filter(r=>powerNet(r)&&!makers[r]&&Object.values(regIO).some(x=>x.in===r));if(!rs.length)return;
+    const id=n.id+'~p';nodes.push({id,type:'ext',label:`${n.part} 전원 입력`,sub:`${n.sub}`,col:0,ext:true,part:n.part,nets:rs});rs.forEach(r=>{makers[r]=id;});});
+  Object.entries(makers).forEach(([r,m])=>nodes.forEach(n=>{if(n.id===m||n.ext)return;if((n.nets||[]).includes(r)&&n.col<=2)edges.push({a:m,b:n.id,kind:'power',label:r});
+    else if((n.nets||[]).includes(r)&&!n.used.includes(r))n.used.push(r);}));
+  // signals: nets shared directly between two nodes
+  const pairs={};Object.keys(B.nets).forEach(net=>{if(isGnd(net)||powerNet(net))return;const refs=[...new Set(B.nets[net].pads.map(p=>p.ref))].filter(r=>nodes.some(n=>n.id===r));
+    for(let i=0;i<refs.length;i++)for(let j=i+1;j<refs.length;j++){const a=nodes.find(n=>n.id===refs[i]),b=nodes.find(n=>n.id===refs[j]);const[x,y]=a.col<=b.col?[a,b]:[b,a];const k=x.id+'>'+y.id;(pairs[k]=pairs[k]||{a:x.id,b:y.id,nets:[]}).nets.push(net);}});
+  Object.values(pairs).forEach(p=>{const A=nodes.find(n=>n.id===p.a),Bn=nodes.find(n=>n.id===p.b);edges.push({a:p.a,b:p.b,kind:A.ext||Bn.ext?'ext':'signal',label:netsLabel(p.nets,3)});});
+  return layout({src:'board',name:B.name,req:'',nodes,edges,warn:[],parts:B.comps.length});
+}
+
+/* ---- layout: five columns, each stacked and centred ---- */
+const NW=176,NH=58,GX=140,GY=26,PAD=34;
+function layout(D){
+  const cols=[0,1,2,3,4].map(c=>D.nodes.filter(n=>n.col===c));
+  // keep external nodes level with the block they belong to, and power blocks in voltage order
+  cols[1].sort((a,b)=>(railV((b.prov||[])[0])||99)-(railV((a.prov||[])[0])||99));
+  cols[2].sort((a,b)=>(a.type==='xtal'?-1:0)-(b.type==='xtal'?-1:0));
+  const rank=id=>{for(const c of[1,2,3]){const i=cols[c].findIndex(n=>n.id===id);if(i>=0)return i;}return 99;};
+  [0,4].forEach(c=>cols[c].sort((a,b)=>{const pa=D.edges.find(e=>e.a===a.id||e.b===a.id),pb=D.edges.find(e=>e.a===b.id||e.b===b.id);return rank(pa?(pa.a===a.id?pa.b:pa.a):'')-rank(pb?(pb.a===b.id?pb.b:pb.a):'');}));
+  const used=[0,1,2,3,4].filter(c=>cols[c].length);const H=Math.max(...cols.map(c=>c.length))*(NH+GY)-GY;
+  used.forEach((c,ci)=>{const h=cols[c].length*(NH+GY)-GY;cols[c].forEach((n,i)=>{n.x=PAD+ci*(NW+GX);n.y=PAD+28+(H-h)/2+i*(NH+GY);n.w=NW;n.h=NH;});});
+  D.W=PAD*2+used.length*NW+(used.length-1)*GX;D.H=PAD*2+28+Math.max(H,NH)+30;D.cols=used;
+  return D;}
+
+/* ---- SVG ---- */
+const xe=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const HUE={power:'#d9822b',signal:'#3d7fd9',ext:'currentColor'};
+function svg(D,opts){opts=opts||{};const sel=opts.sel||null;const out=[];const N=id=>D.nodes.find(n=>n.id===id);
+  out.push(`<svg class="sysd" viewBox="0 0 ${D.W} ${D.H}" role="img" aria-label="${xe(`${D.name||'시스템'} 시스템 다이어그램: 블록 ${D.nodes.length}개, 연결 ${D.edges.length}개`)}" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans KR, system-ui, sans-serif">`);
+  out.push(`<defs>${Object.entries(HUE).map(([k,c])=>`<marker id="ar-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join('')}</defs>`);
+  // column headings
+  D.cols.forEach((c,ci)=>{const x=PAD+ci*(NW+GX)+NW/2;out.push(`<text x="${x}" y="${PAD+8}" text-anchor="middle" font-size="11.5" fill="currentColor" opacity="0.55" letter-spacing="0.04em">${COLS[c]}</text>`);});
+  // edges: spread the ports along each side
+  const ports={};const slot=(id,side)=>{const k=id+side;ports[k]=(ports[k]||0)+1;return ports[k];};const tot={};
+  D.edges.forEach(e=>{const a=N(e.a),b=N(e.b);if(!a||!b)return;const sa=a.col<b.col?'R':a.col>b.col?'L':(a.y<b.y?'B':'T'),sb=a.col<b.col?'L':a.col>b.col?'R':(a.y<b.y?'T':'B');e._sa=sa;e._sb=sb;tot[e.a+sa]=(tot[e.a+sa]||0)+1;tot[e.b+sb]=(tot[e.b+sb]||0)+1;});
+  const pt=(n,side,k,t)=>{const f=(k)/(t+1);return side==='R'?[n.x+n.w,n.y+n.h*f]:side==='L'?[n.x,n.y+n.h*f]:side==='B'?[n.x+n.w*f,n.y+n.h]:[n.x+n.w*f,n.y];};
+  const labels=[];
+  D.edges.forEach((e,i)=>{const a=N(e.a),b=N(e.b);if(!a||!b)return;const[x1,y1]=pt(a,e._sa,slot(e.a,e._sa),tot[e.a+e._sa]),[x2,y2]=pt(b,e._sb,slot(e.b,e._sb),tot[e.b+e._sb]);
+    const on=sel&&(e.a===sel||e.b===sel),dim=sel&&!on;const c=HUE[e.kind]||'currentColor';
+    let P;if(e._sa==='R'||e._sa==='L'){const dx=Math.max(30,Math.abs(x2-x1)*0.45)*(x2>x1?1:-1);P=[[x1,y1],[x1+dx,y1],[x2-dx,y2],[x2,y2]];}else{const dy=(y2-y1)*0.45;P=[[x1,y1],[x1,y1+dy],[x2,y2-dy],[x2,y2]];}
+    const d=`M${P[0]} C${P[1]} ${P[2]} ${P[3]}`;
+    // the label sits away from the crowded end (a fan-out from the MCU labels near each target)
+    const ca=tot[e.a+e._sa]||1,cb=tot[e.b+e._sb]||1,t=ca>cb?0.72:cb>ca?0.28:0.5,u=1-t;const bz=k=>u*u*u*P[0][k]+3*u*u*t*P[1][k]+3*u*t*t*P[2][k]+t*t*t*P[3][k];
+    out.push(`<path d="${d}" fill="none" stroke="${c}" stroke-width="${on?2.4:1.5}" ${e.kind==='power'?'stroke-dasharray="6 4"':''} opacity="${dim?0.18:e.kind==='ext'?0.7:0.95}" marker-end="url(#ar-${e.kind})"${e.both?` marker-start="url(#ar-${e.kind})"`:''} data-e="${i}"/>`);
+    if(e.label)labels.push({x:bz(0),y:bz(1),t:e.label,c,dim,on});});
+  // labels after the lines, nudged apart when they collide
+  labels.sort((p,q)=>p.y-q.y);for(let i=1;i<labels.length;i++)for(let j=0;j<i;j++){const p=labels[i],q=labels[j];if(Math.abs(p.x-q.x)<90&&Math.abs(p.y-q.y)<15)p.y=q.y+15;}
+  labels.forEach(l=>{const w=Math.min(170,l.t.length*6.6+10);out.push(`<g opacity="${l.dim?0.25:1}"><rect x="${l.x-w/2}" y="${l.y-8.5}" width="${w}" height="17" rx="4" fill="var(--surface,#fff)" stroke="${l.c}" stroke-opacity="0.35"/><text x="${l.x}" y="${l.y+4}" text-anchor="middle" font-size="11" fill="currentColor"${l.on?' font-weight="600"':''}>${xe(l.t.length>26?l.t.slice(0,25)+'…':l.t)}</text></g>`);});
+  // nodes
+  D.nodes.forEach(n=>{const on=sel===n.id,dim=sel&&!on&&!D.edges.some(e=>(e.a===sel&&e.b===n.id)||(e.b===sel&&e.a===n.id));
+    const acc=n.type==='mcu'?'#3d7fd9':n.col===1?'#d9822b':n.ext?null:'currentColor';
+    out.push(`<g class="sd-n" data-n="${xe(n.id)}" tabindex="0" role="button" aria-label="${xe(n.label)}" opacity="${dim?0.35:1}" style="cursor:pointer">`);
+    out.push(`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="${n.ext?18:8}" fill="var(--raised,#fff)" stroke="${on?'#3d7fd9':'currentColor'}" stroke-opacity="${on?1:0.35}" stroke-width="${on?2:1}"${n.ext?' stroke-dasharray="4 3"':''}/>`);
+    if(acc)out.push(`<rect x="${n.x}" y="${n.y+8}" width="3.5" height="${n.h-16}" rx="1.5" fill="${acc}"/>`);
+    out.push(`<text x="${n.x+12}" y="${n.y+22}" font-size="12.5" font-weight="600" fill="currentColor">${xe(n.label.length>22?n.label.slice(0,21)+'…':n.label)}</text>`);
+    out.push(`<text x="${n.x+12}" y="${n.y+38}" font-size="10.5" fill="currentColor" opacity="0.62">${xe((n.sub||'').slice(0,28))}</text>`);
+    const pw=(n.used||[]).filter(r=>!(n.prov||[]).includes(r));if(!n.ext&&n.col===3&&pw.length)out.push(`<text x="${n.x+12}" y="${n.y+51}" font-size="10" fill="${HUE.power}">전원 ${xe(pw.join(' · ').slice(0,26))}</text>`);
+    else if((n.prov||[]).length)out.push(`<text x="${n.x+12}" y="${n.y+51}" font-size="10" fill="${HUE.power}">출력 ${xe(n.prov.join(' · '))}</text>`);
+    out.push(`</g>`);});
+  // legend (the encodings repeat)
+  const ly=D.H-14;out.push(`<g font-size="10.5" fill="currentColor" opacity="0.75"><line x1="${PAD}" y1="${ly}" x2="${PAD+24}" y2="${ly}" stroke="${HUE.power}" stroke-width="1.5" stroke-dasharray="6 4"/><text x="${PAD+30}" y="${ly+3.5}">전원 레일</text>
+    <line x1="${PAD+110}" y1="${ly}" x2="${PAD+134}" y2="${ly}" stroke="${HUE.signal}" stroke-width="1.5"/><text x="${PAD+140}" y="${ly+3.5}">MCU 신호</text>
+    <line x1="${PAD+222}" y1="${ly}" x2="${PAD+246}" y2="${ly}" stroke="currentColor" stroke-width="1.5" opacity="0.7"/><text x="${PAD+252}" y="${ly+3.5}">보드 밖 연결 (커넥터)</text></g>`);
+  out.push('</svg>');return out.join('');}
+function text(D){const N=id=>D.nodes.find(n=>n.id===id);const L=[`시스템 다이어그램 · ${D.name||''} · 블록 ${D.nodes.filter(n=>!n.ext).length} · 외부 ${D.nodes.filter(n=>n.ext).length} · 연결 ${D.edges.length} (${D.src==='plan'?'설계 계획':'보드에서 추출'})`];
+  D.cols.forEach(c=>{const ns=D.nodes.filter(n=>n.col===c);if(!ns.length)return;L.push(`[${COLS[c]}] `+ns.map(n=>`${n.id} ${n.label}${n.sub?` (${n.sub})`:''}`).join(' · '));});
+  L.push('연결:');D.edges.forEach(e=>{const a=N(e.a),b=N(e.b);L.push(`  ${a?a.label:e.a} ${e.both?'↔':'→'} ${b?b.label:e.b} : ${e.label||''} [${{power:'전원',signal:'신호',ext:'외부'}[e.kind]}]`);});
+  if(D.warn&&D.warn.length)L.push('경고: '+D.warn.join(' · '));return L.join('\n');}
+return{fromPlan,fromBoard,layout,svg,text,COLS,netsLabel};
 })();
 
 
@@ -7151,6 +7366,7 @@ function bind3D(){
 
 /* ---------- views & panels ---------- */
 function setView(v){
+  if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(v==='sch')S.sch='full';else if(v!=='__keep'){S.view=v;if(S.sch==='full')S.sch='off';}
   const full=S.sch==='full',bv=S.view;
   document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-selected',(full?b.dataset.view==='sch':b.dataset.view===bv)?'true':'false'));
@@ -7260,7 +7476,7 @@ document.addEventListener('keydown',e=>{
 function header(){
   $('#bName').textContent=BD.name;$('#bTag').textContent=BD.source==='예제'?'예제 보드':BD.source;
   const n=BD.comps.length;$('#bSub').textContent=`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개`;
-  document.title=BD.source==='예제'?BD.name.split(' ')[0]+' PCB 뷰어':BD.name+' · PCB 뷰어';
+  document.title=BD.name+' · AllinOneDesign';
 }
 function stats(){
   let tl=0,pads=0;Object.values(BD.nets).forEach(N=>{tl+=N.len.T+N.len.B;});
@@ -8255,15 +8471,18 @@ const pill=s=>`<span class="sv ${s}"><i aria-hidden="true">${SEV[s][1]}</i>${SEV
 const pct=v=>Math.round(v*100)+'%';
 
 // each built-in board has its own example HSIS + ARXML; other boards fall back to the SENSE-32 one
-const hsisSampleKey=()=>BD&&BD.source==='예제'&&BD.demo&&HSIS_SAMPLES[BD.demo]?BD.demo:'sense';
+const hsisSampleKey=()=>BD&&BD.source==='예제'&&HSIS_SAMPLES[BD.demo||'sense']?(BD.demo||'sense'):'board';
 function hsisLoadSample(key){
-  key=key||hsisSampleKey();const S=HSIS_SAMPLES[key];HS.sample=key;
+  key=key||hsisSampleKey();HS.mcu=null;HS.sel=null;HS.selPin=null;
+  // a board without its own HSIS document gets one drafted from its MCU pins, never another board's sample
+  if(key==='board'){HS.sample='board:'+(BD&&BD.name);HS.H=HSIS.fromBoard(BD,null);HS.arxml=null;HS.arxmlFile='';hsisRun();return;}
+  const S=HSIS_SAMPLES[key];HS.sample=key;
   HS.H=HSIS.fromRows([S.hsis.header].concat(S.hsis.rows),S.hsis.meta);
-  HS.arxml=HSIS.parseARXML(S.arxml);HS.arxmlFile=S.file;HS.mcu=null;HS.sel=null;HS.selPin=null;hsisRun();
+  HS.arxml=HSIS.parseARXML(S.arxml);HS.arxmlFile=S.file;hsisRun();
 }
 function hsisRun(){
   if(!HS.H||!BD)return;
-  if(!HS.mcu||!BD.byRef[HS.mcu])HS.mcu=(HS.H.meta.mcuRef&&BD.byRef[HS.H.meta.mcuRef]?HS.H.meta.mcuRef:null)||HSIS.pickMcu(BD,HS.H.items);
+  if(!HS.mcu||!BD.byRef[HS.mcu]){const mr=HS.H.meta.mcuRef&&BD.byRef[HS.H.meta.mcuRef];HS.mcu=(mr&&HSIS.isMcuLike(mr)?HS.H.meta.mcuRef:null)||HSIS.pickMcu(BD,HS.H.items);}
   HS.res=HSIS.check(BD,HS.H,HS.arxml,HS.mcu);HS.tr=HSIS.trace(HS.H);
   // firmware cross-check when the selected MCU carries firmware
   const fm=typeof fwMcu==='function'?fwMcu():null;HS.fw=null;
@@ -8279,14 +8498,16 @@ function hsisSelect(id,pin){
   if(net){S.hlNet=net;S.selRef=null;}
   renderHSIS();refresh(HS.ws==='board');
 }
-function hsisOnBoard(){if(!HS.H||(HS.sample&&HS.sample!==hsisSampleKey()))hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();if(typeof SR!=='undefined'&&SR.tab==='emc'){if(S.panel==='sim')renderSim();else simCellsDirty();}}
+function hsisOnBoard(){const k=hsisSampleKey();if(!HS.H||(HS.sample&&HS.sample!==(k==='board'?'board:'+(BD&&BD.name):k)))hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();if(typeof SR!=='undefined'&&SR.tab==='emc'){if(S.panel==='sim')renderSim();else simCellsDirty();}}
 // firmware edits change what the HSIS cross-check sees
 function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')renderHSIS();else if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});}
 function setWorkspace(w){
   const prev=HS.ws;if(prev==='cad'&&w!=='cad')cadLeave();
   HS.ws=w;document.querySelectorAll('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
-  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
+  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
+  if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(w==='cad'){cadEnter();return;}
+  if(w==='sys'){sysEnter();return;}
   if(w==='hsis'){if(!HS.H)hsisLoadSample();renderHSIS();}
   else setTimeout(()=>{if(S.view==='3d')resize3D();else{measure();paint2D();}refresh(false);},0);
 }
@@ -8306,7 +8527,7 @@ function filtered(){
 /* ---------- render ---------- */
 function renderHSIS(){
   if(!HS.H||!BD)return;
-  const c=counts(),cov=pinCoverage(),m=HS.H.meta,mcuOpts=BD.comps.filter(x=>x.pads.length>=8).map(x=>`<option${x.ref===HS.mcu?' selected':''}>${esc(x.ref)}</option>`).join('');
+  const c=counts(),cov=pinCoverage(),m=HS.H.meta,mcuOpts=BD.comps.filter(x=>HSIS.mcuScore(x)>=0).sort((a,b)=>HSIS.mcuScore(b)-HSIS.mcuScore(a)).map(x=>`<option value="${esc(x.ref)}"${x.ref===HS.mcu?' selected':''}>${esc(x.ref)} · ${esc(x.val||x.mpn||'')}${HSIS.isMcuLike(x)?' (MCU)':''}</option>`).join('');
   const cats=HSIS.CAT_ORDER.concat([...new Set(HS.H.items.map(i=>i._cat))].filter(x=>!HSIS.CAT_ORDER.includes(x)));
   $('#hsLeft').innerHTML=`
     <div class="grp"><p class="h">문서</p>
@@ -8612,7 +8833,7 @@ function bindMcal(B){
   B.querySelector('#mcalZip')?.addEventListener('click',async()=>{
     if(!window.JSZip){toast('zip 라이브러리를 불러오지 못했습니다. 파일마다 복사하거나 내려받으세요.');return;}
     const z=new JSZip();G.files.forEach(x=>z.file((x.kind==='arxml'?'arxml/':x.kind==='hal'?'stm32/':'mcal/')+x.name,x.text));
-    z.file('README.txt',`${BD.name} · ${G.model.mpn}\n생성: PCB 뷰어 HSIS 핀 추천\n\narxml/  AUTOSAR ECUC 설정 (Port, Dio, Pwm, Adc, Icu, Spi, Can)\nmcal/   MCAL 관례 C 설정 예시\n${G.model.fam==='stm32'?'stm32/  STM32 HAL·LL 초기화 코드\n':''}\n주의: 벤더 MCAL 도구로 가져올 때 해당 벤더 파라미터 정의에 맞춰 확인하세요.\n${G.model.warn.length?'\n경고:\n'+G.model.warn.join('\n')+'\n':''}`);
+    z.file('README.txt',`${BD.name} · ${G.model.mpn}\n생성: AllinOneDesign HSIS 핀 추천\n\narxml/  AUTOSAR ECUC 설정 (Port, Dio, Pwm, Adc, Icu, Spi, Can)\nmcal/   MCAL 관례 C 설정 예시\n${G.model.fam==='stm32'?'stm32/  STM32 HAL·LL 초기화 코드\n':''}\n주의: 벤더 MCAL 도구로 가져올 때 해당 벤더 파라미터 정의에 맞춰 확인하세요.\n${G.model.warn.length?'\n경고:\n'+G.model.warn.join('\n')+'\n':''}`);
     try{const b=await z.generateAsync({type:'blob'});if(await offerFile(`${(BD.name||'board').replace(/[^\w.-]+/g,'_')}_MCAL.zip`,b,'application/zip'))toast('MCAL 설정 파일을 zip으로 내려받았습니다.');}catch(e){toast('zip을 만들지 못했습니다: '+(e.message||e));}});
   B.querySelector('#mcalUse')?.addEventListener('click',()=>{const ax=G.files.find(x=>x.kind==='arxml');HS.arxml=HSIS.parseARXML(ax.text);HS.arxmlFile=ax.name+' (생성)';hsisRun();HS.tab='checks';renderHSIS();toast('생성한 ARXML로 HSIS를 다시 검사했습니다.');});
 }
@@ -8693,7 +8914,7 @@ function tcBook(L){
     ['필수 검증 항목',[['항목','근거','충족','대상','빠진 HSIS ID']].concat(G.check[L].map(r=>[r.title,r.why,r.ok,r.total,r.miss.join(', ')]))],
     ['추적성',[['HSIS ID','신호','요구사항 ID',L==='swqt'?'SWE.6 테스트 ID':'SYS.4 테스트 ID']].concat(G.trace.map(t=>[t.hsis,t.signal,t.req,t[L].join(', ')]))]];
   if(L==='sysit')sheets.push(['통합 전략',[['단계','설명','케이스 수','진입 조건']].concat(Object.entries(G.stages).map(([k,v],i)=>[k,v,cases.filter(c=>c.stage===k).length,i?`${Object.keys(G.stages)[i-1]} 통과`:'보드 조립·외관 검사 완료']))]);
-  sheets.push(['문서 정보',[['항목','값'],['보드',BD.name],['HSIS',`${HS.H.meta.docId||''} v${HS.H.meta.version||''}`],['시험 수준',info.name],['MCU',HS.mcu],['생성','PCB 뷰어 HSIS 테스트 케이스 생성 (초안)']]]);
+  sheets.push(['문서 정보',[['항목','값'],['보드',BD.name],['HSIS',`${HS.H.meta.docId||''} v${HS.H.meta.version||''}`],['시험 수준',info.name],['MCU',HS.mcu],['생성','AllinOneDesign HSIS 테스트 케이스 생성 (초안)']]]);
   return sheets;
 }
 function bindTc(B){
@@ -10408,29 +10629,30 @@ const NP_HELP=[
   ['add <블록> [--파라미터 값]','블록 추가 (예: add led --n 3 --color 빨강, add ldo --vout 5, add pwr_in --vin 24)'],
   ['set <블록ID> <파라미터> <값> · remove <블록ID>','블록 수정·삭제 (ID는 plan에 표시)'],['mcu <stm32|tc364>','MCU 바꾸기'],
   ['board <가로> <세로> | board auto · strategy <balanced|thermal|noise|compact>','보드 크기 · 배치 전략'],
-  ['generate [--route] [--view sch|pcb]','보드·회로도 생성 (자동 배치, --route면 이어서 자동 배선)'],
+  ['diagram','시스템 다이어그램을 글로 (블록 · 전원 레일 · MCU 신호 · 외부 연결)'],
+  ['generate [--route] [--view sch|pcb]','다이어그램의 블록으로 보드·회로도 생성 (자동 배치, --route면 이어서 자동 배선) → 2단계 회로'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){const L=$('#npLog');if(!L)return;if(upd){const el=L.querySelector(`[data-id="${e.id}"]`);if(el){el.textContent=e.t;L.scrollTop=L.scrollHeight;return;}}
   const d=document.createElement('div');d.className='cl-'+e.k;d.dataset.id=e.id;d.textContent=(e.k==='cmd'?'› ':'')+e.t;L.appendChild(d);L.scrollTop=L.scrollHeight;}
 function npPush(){NP.hist.push(JSON.stringify(NP.plan));if(NP.hist.length>60)NP.hist.shift();}
 function npEnsure(){if(!NP.plan)NP.plan=NEWPROJ.newPlan($('#npName').value.trim()||'새 프로젝트');return NP.plan;}
-function npOpen(){
-  const M=$('#npModal');M.hidden=false;
+function npOpen(){setStep(1);}
+function npInit(){
+  const M=$('#sysWs');
   if(!M.dataset.init){M.dataset.init=1;$('#npMode').innerHTML=aimControls();aimBind($('#npMode'));cliAiProbe().then(aimPaint);
     $('#npTpl').innerHTML=NP_TPL.map(([l],i)=>`<button type="button" class="pill vbtn" data-tpl="${i}">${esc(l)}</button>`).join('');
     $('#npAddSel').innerHTML=Object.entries(NEWPROJ.LIB).map(([k,v])=>`<option value="${k}">${esc(v.label)} (${k})</option>`).join('');
     npSay('out','요구사항을 적고 [계획 세우기]를 누르세요. 결정론 모드는 정해진 규칙으로, AI 모드는 Claude가 블록·부품을 골라 계획을 세웁니다. 명령은 help.');}
-  npRender();setTimeout(()=>$('#npReq').focus(),30);
+  npRender();
 }
-function npClose(){if(NP.busy)return;$('#npModal').hidden=true;}
 function npRender(){
   const P=NP.plan;$('#npPlanHint').textContent=AIM.mode==='ai'?'AI 모드: Claude가 계획 (보는 사람의 사용량)':'결정론: 낱말 규칙으로 계획';
   if(P){if(document.activeElement!==$('#npName'))$('#npName').value=P.name;if(document.activeElement!==$('#npReq')&&P.req)$('#npReq').value=P.req;$('#npStrat').value=P.strategy||'balanced';
     $('#npW').value=P.board?P.board.w:'';$('#npH').value=P.board?P.board.h:'';}
-  const host=$('#npBlocks');
+  if(P&&P.blocks.length){const k=JSON.stringify(P.blocks);if(SYS.pk!==k){SYS.pk=k;SYS.src='plan';}}sysRender();const host=$('#npBlocks');
   if(!P||!P.blocks.length){host.innerHTML='<p class="lead" style="margin:0">아직 블록이 없습니다.</p>';$('#npSum').textContent=P?NEWPROJ.summary(P).text:'요구사항을 적고 [계획 세우기]를 누르거나, 블록을 직접 추가하세요.';$('#npGen').disabled=!P||!P.blocks.length;return;}
   host.innerHTML=P.blocks.map(b=>{const L=NEWPROJ.LIB[b.type];return`<div class="np-blk" data-b="${b.id}"><div class="np-bh"><b>${esc(L.label)}</b><span class="mono">${b.id}</span><button type="button" class="linkbtn" data-rm="${b.id}" aria-label="${b.id} 삭제">삭제</button></div>
     ${Object.keys(L.params).length?`<div class="np-ps">${Object.entries(L.params).map(([k,d])=>`<label title="${esc(d.desc)}">${k} <input data-p="${k}" value="${esc(b.params[k])}" size="${Math.max(3,String(b.params[k]).length+1)}"></label>`).join('')}</div>`:''}<div class="np-bd">${esc(L.desc)}</div></div>`;}).join('');
@@ -10444,6 +10666,7 @@ async function npRun(line,by){
   switch(cmd){
     case'help':case'?':return NP_HELP.map(x=>`${x[0]}\n  ${x[1]}`).join('\n')+'\n\n라이브러리에 없는 부품은 생성 후 회로도 CLI의 add로 더하세요.';
     case'plan':case'status':return NEWPROJ.summary(npEnsure()).text;
+    case'diagram':{const D=sysDiagram();return D?SYSDIAG.text(D):'다이어그램이 없습니다. 요구사항으로 계획을 세우거나 보드를 불러오세요.';}
     case'name':{npPush();npEnsure().name=a._.join(' ')||'새 프로젝트';npRender();return'이름: '+NP.plan.name;}
     case'req':{npPush();npEnsure().req=a._.join(' ');npRender();return'요구사항을 저장했습니다.';}
     case'auto':{const req=a._.join(' ')||(NP.plan&&NP.plan.req)||$('#npReq').value.trim();if(!req)throw new Error('요구사항이 비어 있습니다 (req <문장> 또는 왼쪽 칸)');
@@ -10478,10 +10701,10 @@ async function npGenerate(o){
   const prog=npSay('out','보드를 만들고 부품을 배치하는 중…');await new Promise(r=>setTimeout(r,20));
   const{B,r}=NEWPROJ.toBoard(P,{strategy:st||'balanced',seed:1+Math.floor(Math.random()*1e5)});
   B.notes.push(`새 설계: ${P.blocks.length}개 블록에서 부품 ${r.parts.length}개를 만들고 ${st} 전략으로 배치했습니다.`);r.warn.forEach(w=>B.warnings.push(w));
-  setBoard(B);if(typeof HS!=='undefined'&&HS.ws==='hsis')setWorkspace('board');
+  setBoard(B);
   const sheets=BD.schSheets||(schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:'sch',sheets});
   npSet(prog,`생성: 부품 ${B.comps.length}개 · 넷 ${Object.keys(B.nets).length}개 · 보드 ${f1(B.W)} × ${f1(B.H)} mm · 회로도 ${sheets?sheets.length:0}쪽 · 배치 ${st}${r.place&&r.place.fails.length?` (겹침 가능: ${r.place.fails.join(', ')})`:''}\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>`\n  ! ${x.title}: ${x.ev}`).join('')}${r.warn.length?'\n경고: '+r.warn.join(' / '):''}`);
-  $('#npModal').hidden=true;
+  SYS.src='plan';setStep(o.route||o.view==='pcb'?3:2);
   if(o.route){setView('T');if(!PE.on)peBegin();cliToggle(true);await cliExec(`auto ${st} --tries 2`);}
   if(o.view==='pcb'||o.route){if(S.view!=='T')setView('T');}else setView('sch');
   toast(`${P.name}: 부품 ${B.comps.length}개로 회로도와 보드를 만들었습니다.${o.route?' 배선 결과는 CLI에 있습니다.':' TOP 보기에서 배치를 확인하세요.'}`);
@@ -10500,19 +10723,18 @@ async function npAI(req){
   const cmds=NP_HELP.filter(x=>!/^ai /.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
   const blocks=Object.entries(NEWPROJ.LIB).map(([k,v])=>`- ${k}: ${v.label} — ${v.desc}; params ${Object.entries(v.params).map(([p,d])=>`${p}=${d.def} (${d.desc})`).join(', ')||'none'}`).join('\n');
   const prompt=NP_SYS.replace('${CMDS}',cmds).replace('${BLOCKS}',blocks).replace('${MCUS}',Object.entries(NEWPROJ.MCUS).map(([k,v])=>k+' = '+v.label).join('; '))+
-    `\n\n현재 계획:\n${NP.plan?NEWPROJ.summary(NP.plan).text:'(비어 있음)'}\n\n사용자 요청: ${req}`;
+    `\n\n현재 계획:\n${NP.plan?NEWPROJ.summary(NP.plan).text:'(비어 있음)'}\n\n현재 시스템 다이어그램:\n${(()=>{const D=sysDiagram();return D?SYSDIAG.text(D):'(없음)';})()}\n\n사용자 요청: ${req}`;
   const ok=await aiAgent({prompt,toolName:'run_np',toolDesc:'Run one new-design console command (add/set/remove/mcu/board/strategy/plan/generate) and return its text output.',example:'"add pwr_in --vin 12" or "plan"',
-    run:c=>npRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!NP_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='generate'&&!/생성|만들어|generate|보드\s*까지|그려/.test(req))return'not allowed: generate (the user did not ask to create the board yet)';return'';},
+    run:c=>npRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!NP_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='generate'&&!/(회로|보드|PCB|기판)[^.]{0,10}(생성|만들|그려|까지)|generate/i.test(req))return'not allowed: generate (the user did not ask to create the board yet)';return'';},
     say:npSay,set:npSet,drop:e=>{const el=$('#npLog')&&$('#npLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();NP.log=NP.log.filter(x=>x!==e);},setAbort:c=>{NP.abort=c;},stopped:()=>NP.stopReq,max:16});
   if(!ok){npSay('out','Claude를 쓸 수 없어 규칙으로 계획합니다.');return await npRun('auto '+req);}
   return'';
 }
 // wiring
-$('#openNew').addEventListener('click',npOpen);
-$('#npModal').addEventListener('click',e=>{if(e.target.id==='npModal'||e.target.closest('[data-npclose]'))npClose();
+$('#openNew')?.addEventListener('click',npOpen);
+$('#sysWs').addEventListener('click',e=>{
   const t=e.target.closest('[data-tpl]');if(t){const[,n,r]=NP_TPL[+t.dataset.tpl];$('#npName').value=n;$('#npReq').value=r;if(!r){NP.plan=NEWPROJ.newPlan(n);NP.hist=[];npRender();npSay('out','빈 프로젝트입니다. 블록을 추가하세요 (add pwr_in --vin 12 …).');}}
   const rm=e.target.closest('[data-rm]');if(rm&&!NP.busy)npExec('remove '+rm.dataset.rm);});
-$('#npModal').addEventListener('keydown',e=>{if(e.key==='Escape'){npClose();e.stopPropagation();}e.stopPropagation();});
 $('#npBlocks').addEventListener('change',e=>{const i=e.target.closest('[data-p]');if(!i)return;const id=e.target.closest('[data-b]').dataset.b;npExec(`set ${id} ${i.dataset.p} ${i.value.trim()}`);});
 $('#npPlan').addEventListener('click',async()=>{const req=$('#npReq').value.trim(),name=$('#npName').value.trim();if(!req){npSay('err','요구사항을 적어 주세요.');return;}
   if(AIM.mode==='ai'){npBusy(true);npSay('cmd',`계획 세우기 (AI): ${req}`);try{if(!NP.plan||!NP.plan.blocks.length){NP.plan=NEWPROJ.newPlan(name||null);NP.plan.req=req;}else{npPush();NP.plan.req=req;if(name)NP.plan.name=name;}
@@ -10527,9 +10749,52 @@ $('#npForm').addEventListener('submit',e=>{e.preventDefault();const v=$('#npIn')
 $('#npIn').addEventListener('keydown',e=>{const i=e.target;if(e.key==='ArrowUp'){if(NP.hi>0){NP.hi--;i.value=NP.inHist[NP.hi]||'';}e.preventDefault();}else if(e.key==='ArrowDown'){if(NP.hi<NP.inHist.length){NP.hi++;i.value=NP.inHist[NP.hi]||'';}e.preventDefault();}});
 $('#npStop').addEventListener('click',()=>{NP.stopReq=true;if(NP.abort)NP.abort.abort();});
 
+/* ---------- step 1: system diagram (SYSDIAG) ---------- */
+var SYS={sel:null,src:null,D:null};
+function sysDiagram(){
+  if(SYS.src!=='board'&&NP.plan&&NP.plan.blocks.length){SYS.D=SYSDIAG.fromPlan(NP.plan);SYS.D.from='plan';}
+  else if(BD){SYS.D=SYSDIAG.fromBoard(BD);SYS.D.from='board';}else SYS.D=null;
+  return SYS.D;}
+function sysRender(){const host=$('#sysSvg');if(!host||HS.ws!=='sys')return;const D=sysDiagram();
+  if(!D){host.innerHTML='<p class="lead" style="padding:20px">요구사항을 적고 [다이어그램 만들기]를 누르세요.</p>';return;}
+  if(SYS.sel&&!D.nodes.some(n=>n.id===SYS.sel))SYS.sel=null;
+  host.innerHTML=SYSDIAG.svg(D,{sel:SYS.sel});{const sv=host.firstElementChild;if(sv){const w=Math.max(D.W*0.82,host.clientWidth-14);sv.style.width=w+'px';sv.style.minWidth='0';}}
+  $('#sysTitle').textContent=(D.name||'시스템')+' · 시스템 다이어그램';
+  $('#sysSrc').textContent=D.from==='plan'?`설계 계획 · 블록 ${D.nodes.filter(n=>!n.ext).length} · 연결 ${D.edges.length}`:`보드에서 추출 (${BD.name}) · 블록 ${D.nodes.filter(n=>!n.ext).length} · 연결 ${D.edges.length}`;
+  $('#sysFromBoard').textContent=D.from==='plan'?'보드에서 추출':(NP.plan&&NP.plan.blocks.length?'설계 계획 보기':'보드에서 추출');
+  host.querySelectorAll('[data-n]').forEach(g=>{const pick=()=>{SYS.sel=SYS.sel===g.dataset.n?null:g.dataset.n;sysRender();sysSelPaint();};g.addEventListener('click',pick);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick();}});});
+  sysSelPaint();}
+function sysSelPaint(){const box=$('#sysSel');const D=SYS.D;if(!box)return;const n=D&&SYS.sel&&D.nodes.find(x=>x.id===SYS.sel);
+  if(!n){box.innerHTML='<p class="lead" style="margin:0">다이어그램의 블록을 누르면 부품·전원·신호와 파라미터가 여기 나옵니다.</p>';return;}
+  const N=id=>D.nodes.find(x=>x.id===id);const io=D.edges.filter(e=>e.a===n.id||e.b===n.id);const b=n.block;const L=b&&NEWPROJ.LIB[b.type];
+  box.innerHTML=`<div class="np-blk"><div class="np-bh"><b>${esc(n.label)}</b><span class="mono">${esc(n.id)}</span>${b?`<button type="button" class="linkbtn" data-rm="${esc(b.id)}">삭제</button>`:''}</div>
+    <div class="np-bd">${esc(n.sub||'')}${L?' — '+esc(L.desc):''}</div>
+    ${L&&Object.keys(L.params).length?`<div class="np-ps" data-b="${esc(b.id)}">${Object.entries(L.params).map(([k,d])=>`<label title="${esc(d.desc)}">${k} <input data-p="${k}" value="${esc(b.params[k])}" size="${Math.max(3,String(b.params[k]).length+1)}"></label>`).join('')}</div>`:''}
+    ${(n.prov||[]).length?`<div class="np-bd">출력 레일: ${esc(n.prov.join(', '))}</div>`:''}${(n.used||[]).length?`<div class="np-bd">사용 레일: ${esc(n.used.join(', '))}</div>`:''}
+    <ul class="sys-io">${io.map(e=>{const o=N(e.a===n.id?e.b:e.a);return`<li><span class="k-${e.kind}">${e.a===n.id?(e.both?'↔':'→'):(e.both?'↔':'←')}</span> ${esc(o?o.label:'')} <span class="mono">${esc(e.label||'')}</span></li>`;}).join('')}</ul></div>`;
+  box.querySelectorAll('[data-p]').forEach(i=>i.addEventListener('change',()=>npExec(`set ${b.id} ${i.dataset.p} ${i.value.trim()}`)));
+  box.querySelector('[data-rm]')?.addEventListener('click',()=>{if(!NP.busy){SYS.sel=null;npExec('remove '+b.id);}});}
+function sysEnter(){npInit();SYS.src=NP.plan&&NP.plan.blocks.length?SYS.src||'plan':'board';sysRender();npRender();}
+$('#sysFromBoard').addEventListener('click',()=>{if(SYS.D&&SYS.D.from==='board'&&NP.plan&&NP.plan.blocks.length)SYS.src='plan';else{if(!BD){toast('불러온 보드가 없습니다.');return;}SYS.src='board';}SYS.sel=null;sysRender();});
+$('#sysSvgDl').addEventListener('click',async()=>{const D=SYS.D||sysDiagram();if(!D)return;const svg=SYSDIAG.svg(D).replace('<svg ','<svg style="color:#1d2126;background:#fff;--surface:#fff;--raised:#fff" ');
+  const fn=await offerFile(String(D.name||'system').replace(/[^\w\-]+/g,'_')+'_system.svg',new TextEncoder().encode(svg),'image/svg+xml');if(fn)toast('시스템 다이어그램을 SVG로 내려받았습니다.');});
+
+/* ---------- design flow: 1 system diagram → 2 schematic → 3 PCB → 4 mechanical CAD ---------- */
+function setStep(n){n=+n;
+  if(n===1)setWorkspace('sys');
+  else if(n===2){if(!BD){toast('먼저 1단계에서 회로를 생성하거나 보드를 불러오세요.');return;}setWorkspace('board');if(S.sch!=='full')setView('sch');}
+  else if(n===3){if(!BD){toast('보드가 없습니다.');return;}setWorkspace('board');if(S.sch==='full')setView(S.view&&S.view!=='sch'?S.view:'3d');}
+  else if(n===4){if(!BD){toast('보드가 없습니다.');return;}setWorkspace('cad');}
+  stepPaint();}
+function stepCur(){const w=HS.ws;return w==='sys'?1:w==='cad'?4:w==='board'?(S.sch==='full'?2:3):0;}
+function stepPaint(){const cur=stepCur();const done={1:!!(NP.plan&&NP.plan.blocks.length)||!!BD,2:!!BD,3:!!(BD&&BD.comps.length),4:!!(BD&&BD.housing&&BD.housing.R)};
+  document.querySelectorAll('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
+  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');}
+document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));
+
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));
-const boot=()=>setView('3d');
+const boot=()=>{setView('3d');setTimeout(()=>{if(!new URLSearchParams(location.search).has('board'))setStep(1);},0);};
 (document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]):Promise.resolve()).then(boot);
 })();
 

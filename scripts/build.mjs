@@ -15,7 +15,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SENSE-32 PCB 뷰어</title>
+<title>AllinOneDesign</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
@@ -48,6 +48,7 @@ ${script(stripExport(read('src/core/guide.js')))}
 ${script(stripExport(read('src/core/newproj.js')))}
 ${script(stripExport(read('src/core/housing.js')))}
 ${script(stripExport(read('src/core/text2cad.js')))}
+${script(stripExport(read('src/core/sysdiag.js')))}
 ${script(stripExport(read('src/hsis/testgen.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}

@@ -484,6 +484,7 @@ function bind3D(){
 
 /* ---------- views & panels ---------- */
 function setView(v){
+  if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(v==='sch')S.sch='full';else if(v!=='__keep'){S.view=v;if(S.sch==='full')S.sch='off';}
   const full=S.sch==='full',bv=S.view;
   document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-selected',(full?b.dataset.view==='sch':b.dataset.view===bv)?'true':'false'));
@@ -593,7 +594,7 @@ document.addEventListener('keydown',e=>{
 function header(){
   $('#bName').textContent=BD.name;$('#bTag').textContent=BD.source==='예제'?'예제 보드':BD.source;
   const n=BD.comps.length;$('#bSub').textContent=`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개`;
-  document.title=BD.source==='예제'?BD.name.split(' ')[0]+' PCB 뷰어':BD.name+' · PCB 뷰어';
+  document.title=BD.name+' · AllinOneDesign';
 }
 function stats(){
   let tl=0,pads=0;Object.values(BD.nets).forEach(N=>{tl+=N.len.T+N.len.B;});
@@ -704,6 +705,6 @@ let toastT=0;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=fals
 /*SIMUI*/
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));
-const boot=()=>setView('3d');
+const boot=()=>{setView('3d');setTimeout(()=>{if(!new URLSearchParams(location.search).has('board'))setStep(1);},0);};
 (document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]):Promise.resolve()).then(boot);
 })();

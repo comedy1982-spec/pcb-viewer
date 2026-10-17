@@ -266,7 +266,7 @@ function featLabel(f){const id=f.id?f.id+' ':'';switch(f.type){
 function compareText(R){return['재질 비교 (같은 조건):',...R.all.map(d=>`  ${d===R.d?'▶':' '} ${d.m.short.padEnd(14)} 벽 ${d.geo.t} mm · PCB ${d.th.Tboard.toFixed(0)} °C (여유 ${(d.th.margin*100).toFixed(0)}%) · 진동 SF ${d.vib.sf.toFixed(2)} · ${d.mass.toFixed(0)} g · 원가 ${d.costIdx}${d.fins?` · 핀 ${d.fins.n}개`:''}${d.th.peds.length?' · TIM':''} · ${d.feasible?'적합':'부적합: '+d.why.join(', ')}`)].join('\n');}
 /* ---- OpenSCAD source (parametric, real CSG) ---- */
 function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString();
-  const o=[`// ${name||'board'} 하우징 — PCB 뷰어 기구 설계 (${d.m.label}, ${d.ip}, 진동 ${R.inp.vib} Grms)`,`// 좌표: 보드 왼쪽 아래 = (0,0), 보드 중간면 z = 0 (mm)`,`$fn=40;`,
+  const o=[`// ${name||'board'} 하우징 — AllinOneDesign 기구 설계 (${d.m.label}, ${d.ip}, 진동 ${R.inp.vib} Grms)`,`// 좌표: 보드 왼쪽 아래 = (0,0), 보드 중간면 z = 0 (mm)`,`$fn=40;`,
     `wall=${f(g.t)}; rim=${f(g.rim)}; x0=${f(g.x0)}; y0=${f(g.y0)}; Lo=${f(g.Lo)}; Wo=${f(g.Wo)};`,`zFloor=${f(g.zFloor)}; zLid=${f(g.zLid)}; zSplit=${f(g.zSplit)}; r=${f(g.r)};`,
     `module rbox(x,y,z,l,w,h,rr){translate([x,y,z]) hull(){for(i=[rr,l-rr],j=[rr,w-rr]) translate([i,j,0]) cylinder(r=rr,h=h);}}`,
     `module shell(){difference(){rbox(x0,y0,zFloor-wall,Lo,Wo,zLid+wall-(zFloor-wall),r); rbox(x0+rim,y0+rim,zFloor,Lo-2*rim,Wo-2*rim,zLid-zFloor,max(0.5,r-rim/2));`,

@@ -66,10 +66,36 @@ function category(it){
   if(/I2C|SPI|UART|USART|CAN|LIN|USB|ETH|SDIO/.test(f))return'통신';if(/출력|OUT/.test(f))return'디지털 출력';return'디지털 입력';
 }
 const CAT_ORDER=['통신','디지털 출력','디지털 입력','아날로그','클럭','리셋·부트','전원','접지'];
+/* the HSIS pin map is always drawn on the MCU: a part with pin-function data (or MCU-like name/role) wins over connectors,
+   memories and regulators, however many pin numbers they happen to share with the document */
+const isConnRef=c=>/^(J|P|CN|X|CON|USB|SW|TP)\d/i.test(c.ref||'');
+function mcuScore(c){if(!c||isConnRef(c)||c.pads.length<8)return-1;const MP=typeof MCU_PINS!=='undefined'?MCU_PINS:null;
+  if(MP&&(MP.find(c.mpn)||MP.find(c.val)))return 1000+c.pads.length;
+  const t=((c.mpn||'')+' '+(c.val||'')+' '+(c.desc||'')).toUpperCase();
+  if(/\b(MCU|MICROCONTROLLER|CORTEX|STM32|AURIX|TRICORE|TC3\d\d|TC2\d\d|ATMEGA|ATSAM|PIC\d|ESP32|NRF5|RP2040|S32K|RH850|MSP430|LPC\d|EFM32|GD32|CH32)/.test(t)||/마이크로컨트롤러|마이컴/.test(t))return 500+c.pads.length;
+  if(/^U\d/i.test(c.ref)&&c.pads.length>=20)return 100+c.pads.length;return 0;}
+function isMcuLike(c){return mcuScore(c)>=100;}
 function pickMcu(B,items){
-  let best=null,score=-1;B.comps.forEach(c=>{if(c.pads.length<8)return;let s=0;items.forEach(it=>parsePins(it.pins).forEach(n=>{const p=c.pads.find(q=>q.n===n);if(p&&it.net&&p.net&&netN(p.net)===netN(it.net))s+=2;else if(p)s+=0.1;}));if(score<0||s>score){score=s;best=c;}});
+  let best=null,score=-1;B.comps.forEach(c=>{const base=mcuScore(c);if(base<0)return;let s=base;items.forEach(it=>parsePins(it.pins).forEach(n=>{const p=c.pads.find(q=>q.n===n);if(p&&it.net&&p.net&&netN(p.net)===netN(it.net))s+=2;else if(p)s+=0.1;}));if(score<0||s>score){score=s;best=c;}});
   return best?best.ref:null;
 }
+/* an HSIS drafted from the board itself, MCU pin by MCU pin (used when no HSIS document belongs to the loaded board) */
+function fromBoard(B,mcuRef){
+  const ref=mcuRef&&B.byRef[mcuRef]&&isMcuLike(B.byRef[mcuRef])?mcuRef:pickMcu(B,[]);const U=ref&&B.byRef[ref];
+  const head=['ID','신호명','분류','MCU 핀','포트','핀 기능','주변장치','방향','초기값','활성 레벨','풀업/풀다운','회로도 넷','HW 연결','전기적 특성','변환식','타이밍','SW 모듈','SW 설정 ID','API','요구사항 ID','테스트 ID','ASIL','상태','비고'];
+  const meta={docId:'HSIS-'+String(B.name||'BOARD').replace(/[^\w]+/g,'-').toUpperCase().slice(0,24),title:`${B.name||'보드'} HW/SW 인터페이스 사양 (보드에서 생성)`,version:'0.0',mcuRef:ref||'',date:'',file:'(보드 넷리스트에서 생성)',generated:true};
+  if(!U)return fromRows([head],meta);
+  const MP=typeof MCU_PINS!=='undefined'?MCU_PINS:null;const db=MP&&(MP.find(U.mpn)||MP.find(U.val));
+  const byNet={};U.pads.forEach(p=>{if(!p.net)return;(byNet[p.net]=byNet[p.net]||[]).push(p);});
+  const rows=[head];let k=0;
+  Object.entries(byNet).sort((a,b)=>(+a[1][0].n||0)-(+b[1][0].n||0)).forEach(([net,ps])=>{
+    const pins=ps.map(p=>p.n).sort((a,b)=>(+a)-(+b));const nm=ps.map(p=>(db&&db.pins[p.n]&&db.pins[p.n].name)||p.fn||'').filter(Boolean).filter(x=>!(db&&db.pins[pins[0]]&&x===db.pins[pins[0]].port));
+    const port=db&&db.pins[pins[0]]&&db.pins[pins[0]].port||'';const N=String(net).toUpperCase();
+    const cat=/^(GND|VSS|AGND|PGND|DGND|0V)$/.test(N)?'접지':/^\+|VDD|VCC|VEXT|V3P3|3V3|5V|VBAT$/.test(N)&&!/MON/.test(N)?'전원':/XTAL|OSC|HSE|CLK_?IN/.test(N)?'클럭':/RST|RESET|PORST|NRST|BOOT|ESR/.test(N)?'리셋·부트':/MON|ADC|SENSE|_AN|VBAT_/.test(N)?'아날로그':/STB|SLEEP|^EN_|_EN$|LED|PWM|^IN_/.test(N)?'디지털 출력':/CAN|SPI|SCK|SCLK|MOSI|MISO|SDA|SCL|UART|TX|RX|USB|QSPI|FLASH_/.test(N)?'통신':/PWM|IN_|EN_|LED|CS|STB|SLEEP|OUT/.test(N)?'디지털 출력':'디지털 입력';
+    const peer=(B.nets[net]&&B.nets[net].pads||[]).find(p=>p.ref!==ref);
+    const dir=cat==='전원'?'전원':cat==='접지'?'접지':cat==='디지털 출력'?'출력':cat==='아날로그'||cat==='디지털 입력'?'입력':cat==='통신'?(/TX|MOSI|SCK|SCLK|CS/.test(N)?'출력':/RX|MISO/.test(N)?'입력':'양방향'):'';
+    k++;rows.push([`HSIS-${String(k).padStart(3,'0')}`,net,cat,pins.join(', '),port,[...new Set(nm)].join(' / '),'',dir,'','','',net,peer?`${peer.ref}.${peer.n}`:'','','','','','','','','','','초안','보드 넷리스트에서 생성 — 기능·SW 항목을 채우세요']);});
+  return fromRows(rows,meta);}
 const levelOf=s=>{s=String(s||'').toUpperCase();if(/HIGH|^1$|하이|H$/.test(s))return'H';if(/LOW|^0$|로우|L$/.test(s))return'L';return null;};
 const dirOf=s=>{s=String(s||'').toUpperCase();if(/INOUT|양방향|BIDIR|I\/O/.test(s))return'IO';if(/OUT|출력/.test(s))return'O';if(/IN|입력/.test(s))return'I';return null;};
 
@@ -176,6 +202,6 @@ function checkFw(H,fw,prev){
   res.forEach(r=>{if(!r.id||!(r.id in out.status))return;if(r.sev==='err')out.status[r.id]='err';else if(r.sev==='warn'&&out.status[r.id]!=='err')out.status[r.id]='warn';});
   return out;
 }
-return{FIELDS,LABEL,CAT_ORDER,csvRows,mapColumns,fromRows,parseARXML,parsePins,category,pickMcu,check,checkFw,trace,netN};
+return{FIELDS,LABEL,CAT_ORDER,csvRows,mapColumns,fromRows,fromBoard,isMcuLike,mcuScore,parseARXML,parsePins,category,pickMcu,check,checkFw,trace,netN};
 })();
 if(typeof module!=='undefined')module.exports=HSIS;

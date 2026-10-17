@@ -7,15 +7,18 @@ const pill=s=>`<span class="sv ${s}"><i aria-hidden="true">${SEV[s][1]}</i>${SEV
 const pct=v=>Math.round(v*100)+'%';
 
 // each built-in board has its own example HSIS + ARXML; other boards fall back to the SENSE-32 one
-const hsisSampleKey=()=>BD&&BD.source==='예제'&&BD.demo&&HSIS_SAMPLES[BD.demo]?BD.demo:'sense';
+const hsisSampleKey=()=>BD&&BD.source==='예제'&&HSIS_SAMPLES[BD.demo||'sense']?(BD.demo||'sense'):'board';
 function hsisLoadSample(key){
-  key=key||hsisSampleKey();const S=HSIS_SAMPLES[key];HS.sample=key;
+  key=key||hsisSampleKey();HS.mcu=null;HS.sel=null;HS.selPin=null;
+  // a board without its own HSIS document gets one drafted from its MCU pins, never another board's sample
+  if(key==='board'){HS.sample='board:'+(BD&&BD.name);HS.H=HSIS.fromBoard(BD,null);HS.arxml=null;HS.arxmlFile='';hsisRun();return;}
+  const S=HSIS_SAMPLES[key];HS.sample=key;
   HS.H=HSIS.fromRows([S.hsis.header].concat(S.hsis.rows),S.hsis.meta);
-  HS.arxml=HSIS.parseARXML(S.arxml);HS.arxmlFile=S.file;HS.mcu=null;HS.sel=null;HS.selPin=null;hsisRun();
+  HS.arxml=HSIS.parseARXML(S.arxml);HS.arxmlFile=S.file;hsisRun();
 }
 function hsisRun(){
   if(!HS.H||!BD)return;
-  if(!HS.mcu||!BD.byRef[HS.mcu])HS.mcu=(HS.H.meta.mcuRef&&BD.byRef[HS.H.meta.mcuRef]?HS.H.meta.mcuRef:null)||HSIS.pickMcu(BD,HS.H.items);
+  if(!HS.mcu||!BD.byRef[HS.mcu]){const mr=HS.H.meta.mcuRef&&BD.byRef[HS.H.meta.mcuRef];HS.mcu=(mr&&HSIS.isMcuLike(mr)?HS.H.meta.mcuRef:null)||HSIS.pickMcu(BD,HS.H.items);}
   HS.res=HSIS.check(BD,HS.H,HS.arxml,HS.mcu);HS.tr=HSIS.trace(HS.H);
   // firmware cross-check when the selected MCU carries firmware
   const fm=typeof fwMcu==='function'?fwMcu():null;HS.fw=null;
@@ -31,14 +34,16 @@ function hsisSelect(id,pin){
   if(net){S.hlNet=net;S.selRef=null;}
   renderHSIS();refresh(HS.ws==='board');
 }
-function hsisOnBoard(){if(!HS.H||(HS.sample&&HS.sample!==hsisSampleKey()))hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();if(typeof SR!=='undefined'&&SR.tab==='emc'){if(S.panel==='sim')renderSim();else simCellsDirty();}}
+function hsisOnBoard(){const k=hsisSampleKey();if(!HS.H||(HS.sample&&HS.sample!==(k==='board'?'board:'+(BD&&BD.name):k)))hsisLoadSample();else{HS.mcu=null;hsisRun();}if(HS.ws==='hsis')renderHSIS();if(typeof SR!=='undefined'&&SR.tab==='emc'){if(S.panel==='sim')renderSim();else simCellsDirty();}}
 // firmware edits change what the HSIS cross-check sees
 function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')renderHSIS();else if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});}
 function setWorkspace(w){
   const prev=HS.ws;if(prev==='cad'&&w!=='cad')cadLeave();
   HS.ws=w;document.querySelectorAll('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
-  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
+  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
+  if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(w==='cad'){cadEnter();return;}
+  if(w==='sys'){sysEnter();return;}
   if(w==='hsis'){if(!HS.H)hsisLoadSample();renderHSIS();}
   else setTimeout(()=>{if(S.view==='3d')resize3D();else{measure();paint2D();}refresh(false);},0);
 }
@@ -58,7 +63,7 @@ function filtered(){
 /* ---------- render ---------- */
 function renderHSIS(){
   if(!HS.H||!BD)return;
-  const c=counts(),cov=pinCoverage(),m=HS.H.meta,mcuOpts=BD.comps.filter(x=>x.pads.length>=8).map(x=>`<option${x.ref===HS.mcu?' selected':''}>${esc(x.ref)}</option>`).join('');
+  const c=counts(),cov=pinCoverage(),m=HS.H.meta,mcuOpts=BD.comps.filter(x=>HSIS.mcuScore(x)>=0).sort((a,b)=>HSIS.mcuScore(b)-HSIS.mcuScore(a)).map(x=>`<option value="${esc(x.ref)}"${x.ref===HS.mcu?' selected':''}>${esc(x.ref)} · ${esc(x.val||x.mpn||'')}${HSIS.isMcuLike(x)?' (MCU)':''}</option>`).join('');
   const cats=HSIS.CAT_ORDER.concat([...new Set(HS.H.items.map(i=>i._cat))].filter(x=>!HSIS.CAT_ORDER.includes(x)));
   $('#hsLeft').innerHTML=`
     <div class="grp"><p class="h">문서</p>
@@ -364,7 +369,7 @@ function bindMcal(B){
   B.querySelector('#mcalZip')?.addEventListener('click',async()=>{
     if(!window.JSZip){toast('zip 라이브러리를 불러오지 못했습니다. 파일마다 복사하거나 내려받으세요.');return;}
     const z=new JSZip();G.files.forEach(x=>z.file((x.kind==='arxml'?'arxml/':x.kind==='hal'?'stm32/':'mcal/')+x.name,x.text));
-    z.file('README.txt',`${BD.name} · ${G.model.mpn}\n생성: PCB 뷰어 HSIS 핀 추천\n\narxml/  AUTOSAR ECUC 설정 (Port, Dio, Pwm, Adc, Icu, Spi, Can)\nmcal/   MCAL 관례 C 설정 예시\n${G.model.fam==='stm32'?'stm32/  STM32 HAL·LL 초기화 코드\n':''}\n주의: 벤더 MCAL 도구로 가져올 때 해당 벤더 파라미터 정의에 맞춰 확인하세요.\n${G.model.warn.length?'\n경고:\n'+G.model.warn.join('\n')+'\n':''}`);
+    z.file('README.txt',`${BD.name} · ${G.model.mpn}\n생성: AllinOneDesign HSIS 핀 추천\n\narxml/  AUTOSAR ECUC 설정 (Port, Dio, Pwm, Adc, Icu, Spi, Can)\nmcal/   MCAL 관례 C 설정 예시\n${G.model.fam==='stm32'?'stm32/  STM32 HAL·LL 초기화 코드\n':''}\n주의: 벤더 MCAL 도구로 가져올 때 해당 벤더 파라미터 정의에 맞춰 확인하세요.\n${G.model.warn.length?'\n경고:\n'+G.model.warn.join('\n')+'\n':''}`);
     try{const b=await z.generateAsync({type:'blob'});if(await offerFile(`${(BD.name||'board').replace(/[^\w.-]+/g,'_')}_MCAL.zip`,b,'application/zip'))toast('MCAL 설정 파일을 zip으로 내려받았습니다.');}catch(e){toast('zip을 만들지 못했습니다: '+(e.message||e));}});
   B.querySelector('#mcalUse')?.addEventListener('click',()=>{const ax=G.files.find(x=>x.kind==='arxml');HS.arxml=HSIS.parseARXML(ax.text);HS.arxmlFile=ax.name+' (생성)';hsisRun();HS.tab='checks';renderHSIS();toast('생성한 ARXML로 HSIS를 다시 검사했습니다.');});
 }
@@ -445,7 +450,7 @@ function tcBook(L){
     ['필수 검증 항목',[['항목','근거','충족','대상','빠진 HSIS ID']].concat(G.check[L].map(r=>[r.title,r.why,r.ok,r.total,r.miss.join(', ')]))],
     ['추적성',[['HSIS ID','신호','요구사항 ID',L==='swqt'?'SWE.6 테스트 ID':'SYS.4 테스트 ID']].concat(G.trace.map(t=>[t.hsis,t.signal,t.req,t[L].join(', ')]))]];
   if(L==='sysit')sheets.push(['통합 전략',[['단계','설명','케이스 수','진입 조건']].concat(Object.entries(G.stages).map(([k,v],i)=>[k,v,cases.filter(c=>c.stage===k).length,i?`${Object.keys(G.stages)[i-1]} 통과`:'보드 조립·외관 검사 완료']))]);
-  sheets.push(['문서 정보',[['항목','값'],['보드',BD.name],['HSIS',`${HS.H.meta.docId||''} v${HS.H.meta.version||''}`],['시험 수준',info.name],['MCU',HS.mcu],['생성','PCB 뷰어 HSIS 테스트 케이스 생성 (초안)']]]);
+  sheets.push(['문서 정보',[['항목','값'],['보드',BD.name],['HSIS',`${HS.H.meta.docId||''} v${HS.H.meta.version||''}`],['시험 수준',info.name],['MCU',HS.mcu],['생성','AllinOneDesign HSIS 테스트 케이스 생성 (초안)']]]);
   return sheets;
 }
 function bindTc(B){

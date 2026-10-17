@@ -134,7 +134,7 @@ function arxml(M){
         x.fd?[cont('CanControllerFdBaudrateConfig',cc+'/CanControllerBaudrateConfig/CanControllerFdBaudrateConfig',[flt(cc+'/CanControllerBaudrateConfig/CanControllerFdBaudrateConfig','CanControllerFdBaudRate',x.fd/1000),bool(cc+'/CanControllerBaudrateConfig/CanControllerFdBaudrateConfig','CanControllerTxBitRateSwitch',true)],null,10)]:null,8)],6)),4)]));}
   const notes=M.pins.map(x=>`  ${String(x.n).padStart(3)}  ${x.port.padEnd(7)} ${x.sig.padEnd(12)} ${x.o.sig}${x.o.insel!=null?' (입력 선택 '+x.o.insel+')':''}${M.fam==='aurix'?' · PC='+hex(aurixPC(x),2):''}`).join('\n');
   return`<?xml version="1.0" encoding="UTF-8"?>
-<!-- ${xmlEsc(M.board)} · ${M.mpn} · 생성: PCB 뷰어 HSIS 핀 추천
+<!-- ${xmlEsc(M.board)} · ${M.mpn} · 생성: AllinOneDesign HSIS 핀 추천
      PortPinId는 MCU 패키지 핀 번호입니다. PortPinMode는 ${M.fam==='aurix'?'Infineon 방식(ALT1–ALT7 / GPIO)':'AF 번호 방식(AF0–AF7 / DIO)'}으로 적었습니다.
      벤더 MCAL 도구(EB tresos 등)로 가져올 때는 해당 벤더 BSWMD의 파라미터 정의에 맞춰 확인하세요.
 ${xmlEsc(notes)}
@@ -149,7 +149,7 @@ ${mods.join('\n')}
 
 /* ---------- MCAL-style C configuration ---------- */
 function cfiles(M){
-  const ports=portRegs(M),files=[],hdr=(f,desc)=>`/* ${f} — ${desc}\n * ${M.board} · ${M.mpn} · 생성: PCB 뷰어 HSIS 핀 추천\n * 구조와 이름은 AUTOSAR MCAL 관례를 따른 예시이며, 벤더 MCAL의 구조체 정의와 1:1로 같지는 않습니다. */\n`;
+  const ports=portRegs(M),files=[],hdr=(f,desc)=>`/* ${f} — ${desc}\n * ${M.board} · ${M.mpn} · 생성: AllinOneDesign HSIS 핀 추천\n * 구조와 이름은 AUTOSAR MCAL 관례를 따른 예시이며, 벤더 MCAL의 구조체 정의와 1:1로 같지는 않습니다. */\n`;
   const guard=f=>f.replace('.','_').toUpperCase();
   const pp=M.pins.filter(x=>x.pi);
   const pinTbl=pp.map(x=>`  /* ${String(x.n).padStart(3)} ${x.port.padEnd(7)} */ { PortConf_PortPin_${x.name}, ${M.fam==='aurix'?`${x.pi?x.pi.port:0}u, ${x.pi?x.pi.pin:0}u, ${hex(x.pc!=null?x.pc:aurixPC(x),2)}u /* ${x.o.sel} ${x.o.sig} */`:`${x.pi?'GPIO_PORT_'+x.pi.letter:'0'}, ${x.pi?x.pi.pin:0}u, ${x.r?x.r.mode:0}u, ${x.r?x.r.af:0}u /* ${x.o.sel} ${x.o.sig} */`}, PORT_PIN_${x.dir==='OUT'?'OUT':'IN'}, PORT_PIN_LEVEL_${x.level||'LOW'} }`).join(',\n');
