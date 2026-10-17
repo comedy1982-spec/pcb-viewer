@@ -2,7 +2,12 @@
 
 시스템 설계부터 회로·PCB·기구까지 한 화면에서 순서대로 진행하는 단일 HTML 설계 도구입니다. 상단의 단계 표시줄로 이동합니다.
 
-1. **시스템 다이어그램** — 요구사항 문장에서 블록(전원 입력·레귤레이터·MCU·통신·구동·메모리·LED…)과 인터페이스를 만듭니다. 결정론 모드는 규칙으로, AI 모드는 Claude가 같은 설계 명령(`add`, `set`, `mcu`, `diagram` …)을 골라 실행합니다. 다이어그램은 외부 입력 → 전원 → 제어 → 기능 → 외부 연결 순서로 그리고, 화살표에 전원 레일(+12V, +5V…)·MCU 신호(CAN, SPI, PWM ×3…)·커넥터 핀을 적습니다. 블록을 누르면 부품·레일·신호와 파라미터를 고칠 수 있고, SVG로 저장할 수 있습니다. 이미 있는 보드(예제·KiCad)는 부품 역할과 공유 넷에서 다이어그램을 추출합니다.
+1. **시스템 다이어그램** — 부품을 정하지 않은 **HW 블록 다이어그램**(아키텍처)을 그립니다. 블록은 전원(Battery Input · PMIC / LDO / Buck · Watchdog / Reset) → 통신(CAN-FD Bus · Transceiver) → 제어(Main MCU: Core · ADC · PWM/Timer · Safety) → 구동·센싱·진단(H-Bridge / Gate Driver · Current Sensing & Temp. · Debug / Calib.) → 외부 연결(External Connector) 띠로 나뉘고, 화살표에 레일(VBAT 12 V, VCC_MCU 3.3 V…)·버스(CAN_H / CAN_L)·제어/피드백 신호(Control PWM/EN, Analog Feedback ADC…)를 적습니다. 띠를 건너뛰는 전원은 받는 블록 위에 `⇢ VCC_DRV 12 V` 태그로 표시합니다.
+   - 결정론: 요구사항 문장 → `arch` 규칙(전압·배터리, CAN/CAN-FD/LIN/이더넷, DC/BLDC 모터, 전류·온도·홀 센싱, ECU·ASIL → 워치독·안전, XCP·JTAG 디버그, 플래시, LED/버튼).
+   - 편집: `block <그룹> "<이름>" --feat "…"` · `feat` · `rename` · `move` · `link <A> <B> "<라벨>" --kind power|signal|bus --both` · `unlink` · `del`, 또는 오른쪽 패널에서 이름·그룹·기능을 고칩니다.
+   - AI 모드: Claude가 같은 명령으로 블록과 인터페이스를 설계합니다(부품 번호는 쓰지 않음, 회로 생성은 요청할 때만).
+   - 블록마다 `impl`로 회로 라이브러리 블록을 연결해 두면(기본값은 규칙으로 채움) **다음: 회로 생성**이 그 블록들로 회로도와 보드를 만듭니다. 대응 블록이 없는 HW 블록(예: Watchdog, Relay Driver)은 알려 주고 회로 단계에서 직접 추가합니다.
+   - **부품 구성** 탭은 회로 계획·보드의 부품 수준 다이어그램입니다. **보드에서 추출**은 불러온 보드에서 부품 번호를 뺀 HW 블록을 가져옵니다. SVG로 저장할 수 있습니다.
 2. **회로** — 다이어그램의 블록으로 회로도와 보드를 생성합니다(`다음: 회로 생성`). 회로도 편집·회로 CLI는 아래 설명과 같습니다.
 3. **PCB** — 배치·배선(PCB CLI), 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다.
@@ -320,6 +325,7 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/core/newproj.js` | 새 설계: 블록 라이브러리, 요구사항 → 계획, 전원 트리·손실 점검, MCU 핀 배정, 보드 스펙 |
 | `src/app/newui.js` | 새 설계 창과 설계 CLI (빌드 시 viewer.js에 삽입) |
 | `src/core/housing.js` | 하우징 설계: 재질·IP·진동 조건, 열 저항망, Steinberg 진동, 스크루·가스켓, OpenSCAD 출력 |
+| `src/core/hwarch.js` | HW 아키텍처 블록 다이어그램: 요구사항 → 기능 블록·인터페이스(부품 미정), 편집, 띠 배치 SVG, 회로 계획으로 변환 |
 | `src/core/sysdiag.js` | 시스템 다이어그램: 설계 계획/보드 → 블록·전원 레일·MCU 신호·외부 연결, 5단 배치, SVG |
 | `src/core/text2cad.js` | Text-to-CAD: 하우징 CAD 명령 언어와 한국어/영어 문장 → 명령 해석 |
 | `src/app/mechui.js` | 기구 CAD 작업 공간(조건·형상 트리·3D·Text-to-CAD 콘솔·AI), STL/SCAD/zip 내보내기, PCB CLI `housing` (빌드 시 viewer.js에 삽입) |
