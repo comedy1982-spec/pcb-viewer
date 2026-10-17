@@ -289,10 +289,15 @@ function seAnnotate(){
     ${ch.length?`<ul class="sediff">${ch.slice(0,60).map(row).join('')}${ch.length>60?`<li>… 외 ${ch.length-60}건</li>`:''}</ul>`:'<p class="lead">보드와 회로도가 같습니다.</p>'}
     <p class="lead" style="margin:0">트랙·비아는 그대로 두므로 넷이 바뀐 동박은 래츠네스트와 DRC로 확인하세요.</p>`,()=>true).then(ok=>{
     if(!ok||!ch.length)return;
-    let k=0;const n=SCHEDIT.applyAnnotation(BD,res,c=>seAddBoardPart(c,k++));
-    PINREC.relink(BD);const added=adds.map(a=>a.ref).filter(r=>BD.byRef[r]);if(added.length){S.selRef=added[0];SV.fromMe=true;}seBoardChanged();SE.dirty=false;seRefresh(false);renderSchOv();
-    const out=adds.filter(a=>a.placed==='outside').map(a=>a.ref);
-    toast(`보드에 ${n}건을 반영했습니다.`+(added.length?` 새 부품 ${added.join(', ')}을 ${out.length?'보드 오른쪽 바깥(빈 자리 없음)':'보드의 빈 자리'}에 놓았습니다. 배선은 래츠네스트로 표시됩니다.`:''));});
+    const r=seApplyAnnotation(res);
+    toast(`보드에 ${r.n}건을 반영했습니다.`+(r.added.length?` 새 부품 ${r.added.join(', ')}을 ${r.out.length?'보드 오른쪽 바깥(빈 자리 없음)':'보드의 빈 자리'}에 놓았습니다. 배선은 래츠네스트로 표시됩니다.`:''));});
+}
+function seApplyAnnotation(res){
+  const ch=res.changes,adds=ch.filter(c=>c.kind==='add');
+  let k=0;const n=SCHEDIT.applyAnnotation(BD,res,c=>seAddBoardPart(c,k++));
+  PINREC.relink(BD);if(typeof PCBEDIT!=='undefined'&&BD._pe)PCBEDIT.rebuildNets(BD);const added=adds.map(a=>a.ref).filter(r=>BD.byRef[r]);if(added.length){S.selRef=added[0];SV.fromMe=true;}seBoardChanged();SE.dirty=false;seRefresh(false);renderSchOv();
+  if(typeof PE!=='undefined'&&PE.on)peRecalc(true);
+  return{n,nets:ch.filter(c=>c.kind==='net').length,vals:ch.filter(c=>c.kind==='value').length,added,out:adds.filter(a=>a.placed==='outside').map(a=>a.ref)};
 }
 // a new schematic part becomes a board footprint parked to the right of the board (like Eeschema → Pcbnew)
 function seAddBoardPart(c,k){
@@ -328,12 +333,12 @@ async function seExport(){
 }
 function seBar(){
   let el=$('#seBar');if(!el){el=document.createElement('div');el.id='seBar';el.className='sov sov-ed';$('#schOv').appendChild(el);
-    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.tool)seSetTool(b.dataset.tool);else if(b.dataset.act)seAction(b.dataset.act);else if(b.id==='seAnn')seAnnotate();else if(b.id==='seErc')seErcList();else if(b.id==='seExp')seExport();});}
-  el.hidden=!SE.on;const eb=$('#schEdit');if(eb){eb.classList.toggle('on',SE.on);eb.textContent=SE.on?'편집 끝내기':'회로 편집';}
+    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.tool)seSetTool(b.dataset.tool);else if(b.dataset.act)seAction(b.dataset.act);else if(b.id==='seAnn')seAnnotate();else if(b.id==='seErc')seErcList();else if(b.id==='seExp')seExport();else if(b.id==='seCli')scToggle();});}
+  el.hidden=!SE.on;{const cp=$('#schCli');if(cp)cp.hidden=!(SE.on&&SCLI.open);}const eb=$('#schEdit');if(eb){eb.classList.toggle('on',SE.on);eb.textContent=SE.on?'편집 끝내기':'회로 편집';}
   if(!SE.on)return;
   el.innerHTML=`<div class="setools" role="toolbar" aria-label="회로 편집 도구">${SE_TOOLS.map(([t,l,k])=>`<button class="pill vbtn${SE.tool===t?' on':''}" data-tool="${t}" title="${l} (${k})">${l}<kbd>${k}</kbd></button>`).join('')}</div>
     <div class="setools">${SE_ACTS.map(([a,l,k])=>`<button class="pill vbtn" data-act="${a}" title="${l} (${k})"${(a==='undo'&&!SE.undo.length)||(a==='redo'&&!SE.redo.length)?' disabled':''}>${l}<kbd>${k}</kbd></button>`).join('')}
-    <button class="pill vbtn" id="seErc" title="전기 규칙 검사 결과">ERC <b id="seErcN">${SE.erc.length}</b></button><button class="pill vbtn${SE.dirty?' warn':''}" id="seAnn" title="회로도 연결을 보드 패드 넷에 반영 (F8)">보드에 반영<kbd>F8</kbd></button><button class="pill vbtn" id="seExp" title="KiCad 회로도(.kicad_sch)로 저장">.kicad_sch 저장</button></div>
+    <button class="pill vbtn" id="seErc" title="전기 규칙 검사 결과">ERC <b id="seErcN">${SE.erc.length}</b></button><button class="pill vbtn${SE.dirty?' warn':''}" id="seAnn" title="회로도 연결을 보드 패드 넷에 반영 (F8)">보드에 반영<kbd>F8</kbd></button><button class="pill vbtn" id="seExp" title="KiCad 회로도(.kicad_sch)로 저장">.kicad_sch 저장</button><button class="pill vbtn${typeof SCLI!=='undefined'&&SCLI.open?' on':''}" id="seCli" title="회로도 명령 콘솔 · Claude (\`)">CLI<kbd>\`</kbd></button></div>
     <span class="pill hint2" id="seStat"></span>`;
   seStat();
 }

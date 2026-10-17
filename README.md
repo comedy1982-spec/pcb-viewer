@@ -45,6 +45,15 @@ PCB 편집 도구 막대의 **보드 W × H mm**, **회로도로 리셋·자동 
 - **AI**: 명령이 아닌 문장(예: "열이 고르게 퍼지게 다시 배치하고 배선해줘")은 Claude가 위 명령을 도구로 골라 실행하고 결과 수치를 요약합니다(아티팩트에서 Claude 사용을 허용한 경우, 보는 사람의 사용량). 쓸 수 없으면 규칙으로 해석합니다(크기·리셋·전략·배선·리포트 낱말).
 - 예제 결과(시드에 따라 다름): AURIX-364·MCU DC 모터는 보통 모든 넷이 배선되고 DRC 0건, BLDC·SENSE-32는 1–3개 넷이 남는 경우가 많아 `auto`가 시드를 바꿔 다시 시도합니다. 남은 넷은 직접 배선하거나 보드를 키우고 다시 실행하세요. 결과는 검토용 초안입니다(차동 쌍·길이 맞춤·임피던스 제어는 하지 않음).
 
+## 회로도 CLI · AI
+
+회로 편집 도구 막대의 **CLI**(전체 회로도 보기에서 `` ` `` 키)로 엽니다. 명령마다 회로도 실행 취소 한 단계이고, 보드는 `apply`(F8과 같음)를 해야 바뀝니다.
+
+- 조회: `status` · `pages` · `page 2` · `parts U` · `pins U4 [--free] [--net +5V]` · `nets CAN` · `net +3V3` · `find C14`
+- 편집: `add C 100nF --pins +5V,GND --near U4`(전원·GND 캡은 전원을 위로 세워 놓고, 핀 끝에 짧은 배선과 전원 심볼·넷 라벨을 붙임) · `connect U4.8 CAN_STB`(핀 이름도 됨: `U1.VEXT`) · `disconnect U4.8` · `nc U1.55` · `value R5 47k` · `fp C14 0402` · `rename` · `move` · `rotate` · `mirror` · `delete`
+- 검사·반영: `erc` · `diff`(보드와 다른 점) · `apply` · `regen`(보드 넷리스트로 다시 생성) · `export`
+- **AI**: "U4 전원 핀마다 100nF 디커플링 캡 달아줘", "CAN_STB에 4.7k 풀업 추가하고 보드에 반영해" 같은 문장은 Claude가 먼저 `pins`·`net`으로 실제 핀 번호와 넷 이름을 확인한 뒤 명령을 실행하고, `erc` 결과까지 요약합니다. `regen`처럼 편집을 버리는 명령은 사용자가 요청했을 때만 실행합니다. Claude를 쓸 수 없으면 ERC·반영·다른 점·상태 같은 낱말만 규칙으로 해석합니다.
+
 ## 회로도
 
 보기 전환의 **회로도**로 회로도를 보고, **나란히**를 누르면 회로도와 보드(3D·TOP·BOTTOM)를 함께 봅니다. 한쪽에서 부품이나 넷을 고르면 다른 쪽에서도 같이 강조되고, 그 위치로 이동합니다(크로스 프로빙).
@@ -243,6 +252,7 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/core/pcbedit.js` | 부품 이동·회전·뒤집기, 래츠네스트, DRC, 보드 크기 변경, .kicad_pcb 저장 |
 | `src/core/autoplace.js` | 부품 역할 판정, 전략별 자동 배치(담금질 + 정리), 배치 지표, GND 팬아웃 |
 | `src/app/pcbcli.js` | 배치·배선 CLI 콘솔과 Claude 연동 (빌드 시 viewer.js에 삽입) |
+| `src/app/schcli.js` | 회로도 CLI 콘솔과 Claude 연동 (빌드 시 viewer.js에 삽입) |
 | `src/app/sample-tc364.js` | AURIX TC364 예제 보드 |
 | `src/hsis/testgen.js` | HSIS 기반 SWE.6(SWQT)·SYS.4(SYSIT) 테스트 케이스 생성, 필수 검증 체크리스트 |
 | `src/hsis/hsis.js` | HSIS 열 매핑, ARXML Port 파서, 일관성 검사, 추적성 |

@@ -495,4 +495,5 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .cli-strats label{font-size:13px;line-height:1.4}
 .cli-strats span{color:var(--muted);font-size:12px}
 @media (max-width:900px){.pe-cli{height:46%}.cli-grid{grid-template-columns:1fr}}
+#schOv .sch-cli{position:absolute;z-index:6}
 </style>
