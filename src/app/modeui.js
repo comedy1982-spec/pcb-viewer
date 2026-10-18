@@ -22,7 +22,7 @@ function setMode(m){APP.mode=m;modePaint();if(m!=='home'){measure.done=0;setTime
 function newProject(){
   NP.plan=null;NP.arch=null;NP.hist=[];NP.answers={};NP.variants=null;NP.vkey=null;NP.chooser=false;NP.picked=null;NP.planManual=false;SYS.src=null;SYS.sel=null;
   $('#npName').value='';$('#npReq').value='';
-  const B=PCB.finalize(PCB.fromSpec({board:{name:'새 프로젝트',width:40,height:30,thickness:1.6,corner:2},components:[]}));B.blank=true;B.pcbPending=true;B.source='신규 설계';
+  const B=PCB.finalize(PCB.fromSpec({board:{name:'새 프로젝트',width:40,height:30,thickness:1.6,corner:2},components:[]}));B.blank=true;B.pcbPending=true;B.source='신규 설계';B.pid='p-'+Date.now().toString(36);
   setBoard(B);APP.mode='steps';setStep(1);setTimeout(()=>{const i=$('#npReq');if(i)i.focus();},50);
   copSay('out','신규 설계를 시작합니다. 왼쪽에 프로젝트 이름과 요구사항(무엇을 만들지 · 입력 전원 · 통신 · 구동/센싱 · 안전 등급)을 적고 [블록 다이어그램 만들기]를 누르거나, 여기 바로 적어 보내세요. 빠진 정보는 제가 물어봅니다.');}
 function openViewer(ex){

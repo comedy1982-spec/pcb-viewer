@@ -149,13 +149,14 @@ function expPartsAoa(){const rows=[['참조','값','풋프린트','부품 번호
 function expStackAoa(){const st=PCB.stackOf(BD);const rows=[['층','이름','역할','넷','프리미티브 수']];st.forEach((x,i)=>rows.push([i+1,PCB.cuName(x.k),x.role==='gnd'?'GND 플레인':x.role==='pwr'?'전원 플레인':'신호',x.net||'',(BD.layers[x.k+'.cu']||[]).length]));return rows;}
 async function exportDesignXlsx(){if(!BD)return;const items=[{name:'보드 요약',aoa:expSummaryAoa()},{name:'BOM',aoa:expBomAoa()},{name:'부품 배치',aoa:expPartsAoa()},{name:'넷리스트',aoa:expNetAoa()},{name:'층 구성',aoa:expStackAoa()}];
   if(HS.H)items.push(...hsisSheets(true));if(!BD.blank&&!BD.pcbPending&&typeof mechRun==='function'){mechCfg();try{items.push({name:'하우징 형상',aoa:expHousingAoa()});}catch(e){}}
+  if(typeof REV!=='undefined'&&REV.list.length)items.push({name:'리비전 기록',aoa:revAoa()});
   return exportXlsx(items,expName()+'_design.xlsx','설계 데이터를 엑셀로 내려받았습니다.');}
 function expSummaryAoa(){const rows=[['항목','값']];rows.push(['프로젝트',BD.name],['출처',BD.source],['크기',`${BD.W.toFixed(1)} × ${BD.H.toFixed(1)} mm`],['두께',`${BD.t} mm`],['동박 층',BD.copperLayers||2],['부품',BD.comps.length],['넷',BD.netOrder.length],['비아',BD.vias.length],['드릴',BD.drills.length],['회로 안',BD.variantLabel||''],['내보낸 날짜',new Date().toISOString().slice(0,10)]);
   if(typeof NP!=='undefined'&&$('#npReq')&&$('#npReq').value)rows.push(['요구사항',$('#npReq').value]);BD.warnings.forEach(w=>rows.push(['경고',w]));BD.notes.forEach(n=>rows.push(['참고',n]));return rows;}
 function expHousingAoa(){const R=mechRun(),d=R.d,g=d.geo;const rows=[['항목','값']];rows.push(['재질',d.m.label],['IP',d.ip],['외형',`${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm`],['벽 두께',g.t],['모서리',HOUSING.edgeText(g)],['무게 g',+d.mass.toFixed(0)],['원가 지수',R.idx.cost],['PCB 온도',+d.th.Tboard.toFixed(1)],['진동 SF',+d.vib.sf.toFixed(2)]);
   rows.push([],['형상','설명']);d.feats.forEach(f=>rows.push([f.id,HOUSING.featLabel(Object.assign({},f,{id:''})).trim()]));rows.push([],['경고']);R.warn.forEach(w=>rows.push([w]));return rows;}
 /* ---- the whole design as one HTML document (sections chosen in the dialog); the document prints to PDF ---- */
-const REPORT_SECTIONS=[['overview','개요 · 요구사항'],['sys','시스템 다이어그램'],['circuit','회로 · BOM · 회로도'],['pcb','PCB 층별 보기 · 층 구성'],['3d','3D 보기'],['sim','시뮬레이션 결과'],['hsis','HSIS (신호 표 · 핀 맵 · 검사)'],['housing','기구 (하우징 보고 · 도면 · 3D)'],['log','설계 도우미 기록']];
+const REPORT_SECTIONS=[['overview','개요 · 요구사항'],['sys','시스템 다이어그램'],['circuit','회로 · BOM · 회로도'],['pcb','PCB 층별 보기 · 층 구성'],['3d','3D 보기'],['sim','시뮬레이션 결과'],['hsis','HSIS (신호 표 · 핀 맵 · 검사)'],['housing','기구 (하우징 보고 · 도면 · 3D)'],['rev','리비전 기록'],['log','설계 도우미 기록']];
 const rh=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function aoaTable(aoa,cls){if(!aoa||!aoa.length)return'';const [h,...b]=aoa;return`<table class="${cls||''}"><thead><tr>${h.map(c=>`<th>${rh(c)}</th>`).join('')}</tr></thead><tbody>${b.map(r=>`<tr>${r.map(c=>`<td>${rh(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
 async function buildReport(sel){const on=k=>!sel||sel.has(k);const P=[];const base=BD.name||'board';const date=new Date().toLocaleString('ko-KR');
@@ -177,6 +178,7 @@ async function buildReport(sel){const on=k=>!sel||sel.has(k);const P=[];const ba
     sec('sim','시뮬레이션',b||'<p>실행한 시뮬레이션이 없습니다. 시뮬레이션 탭에서 실행한 뒤 다시 내보내면 결과가 들어갑니다.</p>');}
   if(on('hsis')){const sh=hsisSheets(true);if(sh.length){let b='';sh.forEach(it=>{if(it.aoa){b+=`<h3>${rh(it.name)}</h3>`+aoaTable(it.aoa,'wide');return;}const tbls=xlsxTablesFrom(it.html);if(!tbls.length)return;b+=`<h3>${rh(it.name)}</h3>`+tbls.map(t=>aoaTable(tableAoa(t),'wide')).join('');});sec('hsis','HSIS',b);}}
   if(on('housing')&&!BD.blank&&!BD.pcbPending&&typeof mechRun==='function'){mechCfg();try{const R=mechRun();let b=`<pre>${rh(HOUSING.text(R))}</pre><pre>${rh(HOUSING.compareText(R))}</pre>`;b+=fig(HOUSING.drawingSVG(R,BD.name),'기구 도면 (평면 · 정면 · 우측면)');const u=board3DPNG({iso:true,size:1200,housing:true});if(u)b+=fig(u,'하우징 3D',true);sec('housing','기구 설계',b);}catch(e){console.warn(e);}}
+  if(on('rev')&&typeof REV!=='undefined'&&REV.list.length)sec('rev','리비전 기록',aoaTable(revAoa(),'wide'));
   if(on('log')){const L=(typeof COP!=='undefined'&&COP.log||[]).filter(e=>e.k==='cmd'||e.k==='user'||e.k==='ai');if(L.length)sec('log','설계 도우미 기록',`<ol class="log">${L.slice(-400).map(e=>`<li class="${e.k}"><span>${e.src||''}</span> ${rh(e.t)}</li>`).join('')}</ol>`);}
   const toc=P.map(p=>{const m=p.match(/id="([^"]+)"><h2>([^<]+)/);return m?`<a href="#${m[1]}">${m[2]}</a>`:'';}).join('');
   const css=`body{font-family:"IBM Plex Sans KR",system-ui,-apple-system,sans-serif;color:#1d2126;margin:0;background:#f4f5f7}main{max-width:1180px;margin:0 auto;padding:28px 32px 60px;background:#fff}
