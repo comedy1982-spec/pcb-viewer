@@ -8,7 +8,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 const stripExport = (s) => s.replace(/if\(typeof module!=='undefined'\)module\.exports=[^;]+;/, '');
 const script = (code) => `<script>\n${code}\n</script>`;
 
-const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/mechui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js') + '\n' + read('src/app/popui.js') + '\n' + read('src/app/fwui.js') + '\n' + read('src/app/pcbui.js') + '\n' + read('src/app/aimode.js') + '\n' + read('src/app/pcbcli.js') + '\n' + read('src/app/schcli.js') + '\n' + read('src/app/newui.js') + '\n' + read('src/app/copilot.js') + '\n' + read('src/app/dsui.js') + '\n' + read('src/app/modeui.js') + '\n' + read('src/app/exportui.js') + '\n' + read('src/app/revui.js') + '\n' + read('src/app/nextui.js'));
+const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/mechui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js') + '\n' + read('src/app/popui.js') + '\n' + read('src/app/fwui.js') + '\n' + read('src/app/pcbui.js') + '\n' + read('src/app/aimode.js') + '\n' + read('src/app/pcbcli.js') + '\n' + read('src/app/schcli.js') + '\n' + read('src/app/newui.js') + '\n' + read('src/app/copilot.js') + '\n' + read('src/app/dsui.js') + '\n' + read('src/app/modeui.js') + '\n' + read('src/app/exportui.js') + '\n' + read('src/app/revui.js') + '\n' + read('src/app/nextui.js') + '\n' + read('src/app/iconui.js'));
 
 const html = `<!doctype html>
 <html lang="ko">
