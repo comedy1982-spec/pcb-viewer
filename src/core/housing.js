@@ -342,6 +342,160 @@ function drawingSVG(R,name,opts){opts=opts||{};const d=R.d,g=d.geo,S=opts.scale|
   o.push(`<rect x="${f2(M)}" y="${f2(H-M-26*S/4)}" width="${f2(W-2*M)}" height="${f2(26*S/4)}" fill="#fff" stroke="#1d2126" stroke-width="1"/>`);
   tb.forEach((t,i)=>text(M+6,H-M-26*S/4+10+i*8.5*S/4,t,i?8.5:10.5,'start'));
   o.push('</svg>');return o.join('\n');}
+
+/* ---- mechanical BOM: the two machined/moulded parts, seals, fasteners, inserts, glands, vents, TIMs ----
+   Part numbers HSG-01 (base) / HSG-02 (cover) match the part drawings. Prices are rough reference estimates (USD). */
+const STD_L=[4,5,6,8,10,12,14,16,18,20,25,30];
+const stdLen=v=>STD_L.find(x=>x>=v)||Math.ceil(v/5)*5;
+function rrPerim(L,W,r){r=Math.max(0,Math.min(r,L/2,W/2));return 2*(L+W)-(8-2*Math.PI)*r;}
+// the cover flange a screw clamps: a counterbored pocket from the top leaves this much material under the head
+const screwGrip=g=>Math.min(g.zLid+g.t-g.zSplit,g.t+2);
+function partMass(R){const d=R.d,g=d.geo,m=d.m;const Zb=g.zFloor-g.t,Zt=g.zLid+g.t;const per=rrPerim(g.Lo-g.rim,g.Wo-g.rim,Math.max(0,g.r-g.rim/2));
+  const ring=(Ro,ri,h)=>Math.PI*(Ro*Ro-ri*ri)*Math.max(0,h);
+  let vb=g.Lo*g.Wo*g.t+per*g.rim*Math.max(0,g.zSplit-g.zFloor);
+  d.sup.forEach(s=>{vb+=ring(s.d>3.4?4.5:3.5,s.d>3.4?1.65:1.25,g.stand);});d.screws.forEach(()=>{vb+=ring(d.screwM==='M4'?4.5:3.75,d.screwM==='M4'?1.65:1.25,g.zSplit-g.zFloor);});
+  d.th.peds.filter(p=>p.kind==='bottom').forEach(p=>{vb+=p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0);});d.feats.forEach(f=>{if(f.type==='tabs'||f.type==='rib')vb+=f.vol||0;});
+  let vl=g.Lo*g.Wo*g.t+per*g.rim*Math.max(0,g.zLid-g.zSplit);d.th.peds.filter(p=>p.kind==='top').forEach(p=>{vl+=p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0);});
+  if(d.fins)vl+=d.fins.n*d.fins.t*d.fins.h*d.fins.len;
+  const gk=v=>v*1e-9*m.rho*1000;return{base:gk(vb),lid:gk(vl),hBase:g.zSplit-Zb,hLid:Zt-g.zSplit};}
+function mechBom(R){const d=R.d,g=d.geo,m=d.m,S=d.seal;const PM=partMass(R);const rows=[];let no=0;
+  const add=(o)=>{rows.push(Object.assign({no:++no,qty:1,unit:'EA',src:'구매',cost:null,note:''},o));};
+  const surf=m.metal?(d.mat==='a6063'?'아노다이징 (흑색 또는 투명)':d.mat==='az91d'?'화성 처리 + 분체 도장':d.mat==='spcc'?'인산염 처리 + 분체 도장':'쇼트 블라스트 + 투명 크로메이트'):'무도장 (텍스처 MT-11010)';
+  const pc=gm=>+(gm/1000*m.costKg*m.proc).toFixed(2);
+  const lbl=d.feats.find(f=>f.type==='label');
+  add({pn:'HSG-01',name:'베이스 (하우징 하부)',spec:`${f1(g.Lo)} × ${f1(g.Wo)} × ${f1(PM.hBase)} mm · 벽 ${g.t} mm${g.rim>g.t?` · 플랜지 ${g.rim} mm`:''} · PCB 보스 ${d.sup.length} · 커버 나사 보스 ${d.ns}${d.feats.some(f=>f.type==='tabs')?' · 장착 탭':''}${d.feats.some(f=>f.type==='rib')||R.inp.vib>=4?' · 리브':''}`,mat:m.label,proc:m.proc_label,src:'제작',mass:+PM.base.toFixed(0),cost:pc(PM.base),dwg:'HSG-01',note:`표면: ${surf} · 모서리 ${edgeText(g)}`});
+  add({pn:'HSG-02',name:'커버 (하우징 상부)',spec:`${f1(g.Lo)} × ${f1(g.Wo)} × ${f1(PM.hLid)} mm · 윗판 ${g.t} mm${d.th.peds.some(p=>p.kind==='top')?` · 방열 페데스탈 ${d.th.peds.filter(p=>p.kind==='top').length}`:''}${d.fins?` · 방열 핀 ${d.fins.n}개 × ${d.fins.h.toFixed(0)} mm`:''}${S.groove?' · O-링 홈':''}`,mat:m.label,proc:m.proc_label,src:'제작',mass:+PM.lid.toFixed(0),cost:pc(PM.lid),dwg:'HSG-02',note:`표면: ${surf}${lbl?` · 각인 "${lbl.text}" (${m.metal?'레이저 각인':'금형 양각'})`:''}`});
+  // seal on the split line
+  const sealLen=rrPerim(g.Lo-g.rim,g.Wo-g.rim,Math.max(0,g.r-g.rim/2));
+  if(S.gasket&&!/^없음/.test(S.gasket)){const oring=/O-링/.test(S.gasket);const cs=+((S.gasket.match(/Ø([\d.]+)/)||[])[1]||2);
+    add({pn:'HSG-10',name:oring?'O-링 (분할면 실링)':'개스킷 (분할면 실링)',spec:oring?`${S.gasket} · 둘레 ${f1(sealLen)} mm (내경 약 ${f1(sealLen/Math.PI-cs)} mm 상당)`:`${S.gasket} · 길이 ${f1(sealLen)} mm (양면 접착, 끝단 맞대기)`,mat:/FKM/.test(S.gasket)?'FKM 70 Shore A':oring?'실리콘 VMQ 60 Shore A':'EPDM 발포',proc:oring?'성형품':'타발',cost:+(oring?0.15+sealLen*0.002:0.1+sealLen*0.001).toFixed(2),note:oring?`커버 홈: 폭 ${f1(cs*1.3)} × 깊이 ${f1(cs*0.75)} mm (압축 25%)`:'베이스 플랜지 위에 부착'});}
+  // cover screws: through the cover flange into the base boss
+  const metal=m.metal;const sd=d.screwM;const Lc=stdLen(screwGrip(g)+(sd==='M4'?8:6));
+  add({pn:'HSG-20',name:'커버 체결 나사',spec:metal?`${sd} × ${Lc} 버튼 헤드 볼트 (ISO 7380) · 베이스 보스 탭 ${sd}`:`${sd} × ${Lc} 기계 나사 (ISO 7045 팬 헤드) · 베이스 보스 열 압입 인서트`,mat:'스테인리스 A2-70',qty:d.ns,cost:+(0.03*d.ns).toFixed(2),note:`간격 ≤ ${d.pitch} mm · 체결 토크 ${sd==='M4'?'1.6':'0.9'} N·m${S.groove||/개스킷/.test(S.gasket)?' · 대각 순서로 체결':''}`});
+  if(!metal)add({pn:'HSG-21',name:'열 압입 인서트',spec:`${sd} 황동 인서트 (길이 ${sd==='M4'?6:5} mm) · 커버 나사용`,mat:'황동 C3604',qty:d.ns,cost:+(0.05*d.ns).toFixed(2),note:`보스 구멍 Ø${sd==='M4'?'5.6':'4.0'} mm`});
+  // PCB to base
+  const pcbT=(R.N.t||1.6);const pcbM=d.sup.some(s=>s.d>=3.4)?'M3':d.sup.some(s=>s.d>=2.7)?'M2.5':'M2';const Lp=stdLen(pcbT+(metal?4:5));
+  add({pn:'HSG-22',name:'PCB 고정 나사',spec:metal?`${pcbM} × ${Lp} 팬 헤드 + 스프링 와셔 · 보스 탭`:`${pcbM} × ${Lp} 셀프 태핑 (델타 PT형)`,mat:'스테인리스 A2',qty:d.sup.length,cost:+(0.03*d.sup.length).toFixed(2),note:`보스 ${d.sup.filter(s=>s.kind==='hole').length?'보드 장착 구멍 위치':'모서리 가정 (보드에 장착 구멍 추가 필요)'} · 높이 ${g.stand} mm`});
+  // glands and vents
+  const gl={};d.feats.filter(f=>f.type==='hole'&&(f.kind==='gland'||/글랜드/.test(f.label||''))).forEach(f=>{const k=(f.label||'').match(/(M|PG)\d+/)?(f.label.match(/(M|PG)\d+/)[0]):`Ø${f.w}`;(gl[k]=gl[k]||[]).push(f.id);});
+  Object.entries(gl).forEach(([k,ids])=>add({pn:'HSG-30',name:'케이블 글랜드',spec:`${k}${/^M/.test(k)?' × 1.5':''} · IP68 · 로크너트 포함`,mat:'PA66 (UL94 V-2) · 실 NBR',qty:ids.length,cost:+((/M2[05]|PG1[13]/.test(k)?0.9:0.6)*ids.length).toFixed(2),note:`위치 ${ids.join(', ')}`}));
+  const vents=d.feats.filter(f=>f.type==='hole'&&(f.kind==='vent'||/벤트/.test(f.label||''))).map(f=>f.id);const nv=vents.length+(S.breather?1:0);
+  if(nv)add({pn:'HSG-31',name:'ePTFE 벤트 필터',spec:`M12 × 1.5 나사식 · IP68/IP69K · 통기량 ≥ 300 ml/min`,mat:'ePTFE 멤브레인 · PA 하우징',qty:nv,cost:+(1.2*nv).toFixed(2),note:[S.breather?'뒤 벽 자동':'',vents.join(', ')].filter(Boolean).join(' · ')});
+  // thermal interface per pedestal
+  d.th.peds.forEach(p=>{const T=TIMS[p.tim];const a=p.ped.w*p.ped.h;
+    if(T.form==='디스펜싱')add({pn:'HSG-40',name:`방열 갭 필러 (${p.ref})`,spec:`${T.label} · 도포 ${f1(p.ped.w)} × ${f1(p.ped.h)} mm × BLT ${p.blt} mm`,mat:T.label,qty:+(a*p.blt*1.15*3.2/1000).toFixed(2),unit:'g',proc:'디스펜싱',cost:+(T.costCm2*a/100).toFixed(2),note:`${p.kind==='bottom'?'베이스':'커버'} 페데스탈 · ${T.kv}`});
+    else add({pn:'HSG-40',name:`방열 갭 패드 (${p.ref})`,spec:`${T.label} · ${f1(p.ped.w)} × ${f1(p.ped.h)} × ${p.padT} mm (압축 후 ${p.blt} mm)`,mat:T.label,proc:'타발',cost:+(T.costCm2*a/100).toFixed(2),note:`${p.kind==='bottom'?'베이스':'커버'} 페데스탈 · ${T.kv}`});});
+  // sealed connector flange
+  R.N.cuts.filter(c=>c.sealed).forEach(c=>{const L=2*((c.flange.b-c.flange.a)+(c.flange.z1-c.flange.z0));add({pn:'HSG-50',name:`커넥터 플랜지 실링 (${c.ref})`,spec:`FIPG 실리콘 비드 Ø1.5 · 길이 ${f1(L)} mm`,mat:'1액형 RTV 실리콘',qty:+(L*1.77*1.1/1000).toFixed(2),unit:'g',proc:'디스펜싱',cost:0.05,note:`${c.mpn||''} 창 둘레 · 플랜지 폭 ${c.land.toFixed(1)} mm`});});
+  // customer side (reference)
+  const tabs=d.feats.find(f=>f.type==='tabs');if(tabs)add({pn:'(참고)',name:'장착 볼트 (차량/설비 측)',spec:`${tabs.screw||'M5'} · 탭 ${tabs.tabs.length}곳 (구멍 Ø${tabs.hd})`,mat:'—',qty:tabs.tabs.length,src:'별도',note:'하우징 BOM 수량에서 제외'});
+  return rows;}
+const f1=v=>(Math.round(v*10)/10).toString();
+function mechBomAoa(R){const rows=mechBom(R);const tot=rows.reduce((a,r)=>a+(r.src==='별도'?0:+r.cost||0),0),mass=rows.reduce((a,r)=>a+(+r.mass||0),0);
+  return[['No','품번','품명','사양','재질','수량','단위','조달','공정','질량 g','참고 단가(USD, 추정)','도면','비고'],...rows.map(r=>[r.no,r.pn,r.name,r.spec,r.mat,r.qty,r.unit,r.src,r.proc||'',r.mass!=null?r.mass:'',r.cost!=null?r.cost:'',r.dwg||'',r.note||'']),['','','합계','','','','','','',+mass.toFixed(0),+tot.toFixed(2),'','하우징 부품 질량 합 (나사·씰 제외)']];}
+/* ---- part drawings: HSG-01 base / HSG-02 cover — plan view with hole IDs, section A–A, hole and opening tables, notes, title block ---- */
+function partSVG(R,name,part,opts){opts=opts||{};const d=R.d,g=d.geo,m=d.m;const isBase=part!=='lid';const PM=partMass(R);
+  const xe=v=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const f2=v=>(Math.round(v*100)/100).toString();
+  const Zb=g.zFloor-g.t,Zt=g.zLid+g.t;const h0=isBase?Zb:g.zSplit,h1=isBase?g.zSplit:Zt,Hp=h1-h0;
+  const S=Math.max(1.6,Math.min(5,520/g.Lo,330/g.Wo));const M=20,dp=26;
+  // datum: outer corner (x0, y0) of the part = X 0, Y 0; Z from the part's bottom face
+  const X=x=>x-g.x0,Y=y=>y-g.y0;
+  // ---- hole/feature table
+  const T=[];let k=0;const id=p=>p+(++k);
+  if(isBase){k=0;d.sup.forEach(s=>T.push({id:id('B'),kind:'PCB 보스',x:X(s.x),y:Y(s.y),dia:`OD ${s.d>3.4?9:7} / ${s.d>3.4?'M3 탭 (Ø2.5 기초)':'M2.5 탭 (Ø2.05 기초)'}`,depth:`높이 ${g.stand} (바닥 안쪽 면에서)`}));
+    k=0;d.screws.forEach(s=>T.push({id:id('S'),kind:'커버 나사 보스',x:X(s.x),y:Y(s.y),dia:`OD ${d.screwM==='M4'?9:7.5} / ${m.metal?`${d.screwM} 탭`:`인서트 Ø${d.screwM==='M4'?'5.6':'4.0'}`}`,depth:`분할면까지 ${f2(g.zSplit-g.zFloor)}`}));
+    k=0;d.th.peds.filter(p=>p.kind==='bottom').forEach(p=>T.push({id:id('P'),kind:`방열 페데스탈 (${p.ref})`,x:X(p.ped.x+p.ped.w/2),y:Y(p.ped.y+p.ped.h/2),dia:`${f2(p.ped.w)} × ${f2(p.ped.h)}`,depth:`윗면 Z ${f2(p.ped.z1-Zb)}`}));
+    k=0;d.feats.filter(f=>f.type==='tabs').forEach(f=>f.tabs.forEach(t=>T.push({id:id('T'),kind:`장착 탭 (${f.id})`,x:X(t.hx),y:Y(t.hy),dia:`Ø${f.hd} 관통`,depth:`탭 두께 ${f.tt}`})));
+    d.feats.filter(f=>f.type==='rib').forEach(f=>T.push({id:f.id,kind:'바닥 리브',x:f.axis==='y'?X(f.pos):X(g.x0+g.Lo/2),y:f.axis==='x'?Y(f.pos):Y(g.y0+g.Wo/2),dia:`${f.axis} 방향 · 두께 ${f.tt}`,depth:`높이 ${f2(f.h)}`}));}
+  else{k=0;d.screws.forEach(s=>T.push({id:id('S'),kind:'커버 나사 구멍',x:X(s.x),y:Y(s.y),dia:`Ø${d.screwM==='M4'?'4.5':'3.4'} 관통 · 카운터보어 Ø${d.screwM==='M4'?'8.0':'6.5'}`,depth:Hp-screwGrip(g)>0.05?`카운터보어 깊이 ${f2(Hp-screwGrip(g))} (윗면에서) · 남는 두께 ${f2(screwGrip(g))}`:`플랜지 두께 ${f2(Hp)}`}));
+    k=0;d.th.peds.filter(p=>p.kind==='top').forEach(p=>T.push({id:id('P'),kind:`방열 페데스탈 (${p.ref})`,x:X(p.ped.x+p.ped.w/2),y:Y(p.ped.y+p.ped.h/2),dia:`${f2(p.ped.w)} × ${f2(p.ped.h)}`,depth:`윗판 안쪽에서 ${f2(g.zLid-p.ped.z0)} 돌출`}));}
+  const flat=d.feats.filter(f=>(f.type==='hole'||f.type==='slot')&&f.side===(isBase?'B':'T'));
+  flat.forEach(f=>T.push({id:f.id,kind:f.label||(f.type==='hole'?'구멍':'사각 구멍'),x:X(f.x),y:Y(f.y),dia:f.type==='hole'?`Ø${f2(f.w)} 관통`:`${f2(f.w)} × ${f2(f.h)} 관통`,depth:`판 ${g.t}`}));
+  // wall openings that fall in this part (by the opening's centre height)
+  const inPart=(z0,z1)=>{const zc=(z0+z1)/2;return isBase?zc<g.zSplit:zc>=g.zSplit;};
+  const SK=SIDE_KO;const along=s=>s==='S'||s==='N'?g.x0:g.y0;const O=[];
+  R.N.cuts.filter(c=>inPart(c.z0,c.z1)).forEach(c=>O.push({id:c.ref,side:c.side,u:c.a-along(c.side),w:c.b-c.a,z:c.z0-h0,h:c.z1-c.z0,kind:c.sealed?`방수 커넥터 창 (${c.mpn||''})`:'커넥터 창'}));
+  d.feats.filter(f=>(f.type==='hole'||f.type==='slot')&&!/^[TB]$/.test(f.side)&&inPart(f.z-f.h/2,f.z+f.h/2)).forEach(f=>O.push({id:f.id,side:f.side,u:f.a-along(f.side)-f.w/2,w:f.w,z:f.z-f.h/2-h0,h:f.h,kind:f.label||(f.type==='hole'?`구멍 Ø${f2(f.w)}`:'사각 구멍'),round:f.type==='hole',cu:f.a-along(f.side),cz:f.z-h0}));
+  if(!isBase&&false){}
+  if(isBase&&d.seal.breather&&g.zSplit-4<g.zSplit)O.push({id:'V',side:'N',u:g.Lo/2-6,w:12,z:g.zSplit-4-6-h0,h:12,kind:'ePTFE 벤트 M12 (자동)',round:true,cu:g.Lo/2,cz:g.zSplit-4-h0});
+  // ---- layout
+  const planW=g.Lo*S,planH=g.Wo*S,secH=Hp*S+ (isBase?0:(d.fins?d.fins.h*S:0));
+  const px=M+dp*1.6,py=M+44;const sx=px+planW+dp*2.4;const secW=Math.max(260,Math.min(g.Lo*S*0.9,420));const sS=secW/g.Lo;
+  const rowH=15;const tblY=py+Math.max(planH+dp*1.6,(Hp+(isBase?0:(d.fins?d.fins.h:0)))*sS+dp*2.2+150)+18;
+  const Wsv=Math.max(sx+secW+dp*1.5+M,M*2+780);const tblH=(T.length+1)*rowH+(O.length?(O.length+2)*rowH+30:0)+20;const H=tblY+tblH+64+M;
+  const o=[];const line=(x1,y1,x2,y2,c,w,dash)=>o.push(`<line x1="${f2(x1)}" y1="${f2(y1)}" x2="${f2(x2)}" y2="${f2(y2)}" stroke="${c||'#1d2126'}" stroke-width="${w||1}"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  const text=(x,y,t,sz,an,w,col)=>o.push(`<text x="${f2(x)}" y="${f2(y)}" font-size="${sz||10}" text-anchor="${an||'middle'}"${w?` font-weight="${w}"`:''} fill="${col||'#1d2126'}">${xe(t)}</text>`);
+  const rect=(x,y,w,h,rx,fill,stroke,sw,dash)=>o.push(`<rect x="${f2(x)}" y="${f2(y)}" width="${f2(Math.max(0,w))}" height="${f2(Math.max(0,h))}"${rx?` rx="${f2(rx)}"`:''} fill="${fill||'none'}" stroke="${stroke||'#1d2126'}" stroke-width="${sw||1.2}"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  const circle=(x,y,r,fill,stroke,sw,dash)=>o.push(`<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(r)}" fill="${fill||'none'}" stroke="${stroke||'#1d2126'}" stroke-width="${sw||1}"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  const dim=(x1,y1,x2,y2,label,dir,off)=>{const a=3.2,c='#5a6872';if(dir==='h'){const y=y1+off;line(x1,y1,x1,y+(off>0?a:-a),c,.7);line(x2,y2,x2,y+(off>0?a:-a),c,.7);line(x1,y,x2,y,c,.8);
+      o.push(`<path d="M${f2(x1)} ${f2(y)} l${a*1.6} ${-a*.55} v${a*1.1} z M${f2(x2)} ${f2(y)} l${-a*1.6} ${-a*.55} v${a*1.1} z" fill="${c}"/>`);text((x1+x2)/2,y-3,label,9);}
+    else{const x=x1+off;line(x1,y1,x+(off>0?a:-a),y1,c,.7);line(x2,y2,x+(off>0?a:-a),y2,c,.7);line(x,y1,x,y2,c,.8);
+      o.push(`<path d="M${f2(x)} ${f2(y1)} l${-a*.55} ${a*1.6} h${a*1.1} z M${f2(x)} ${f2(y2)} l${-a*.55} ${-a*1.6} h${a*1.1} z" fill="${c}"/>`);o.push(`<text x="${f2(x+(off>0?10:-6))}" y="${f2((y1+y2)/2)}" font-size="9" text-anchor="middle" fill="#1d2126" transform="rotate(-90 ${f2(x+(off>0?10:-6))} ${f2((y1+y2)/2)})">${xe(label)}</text>`);}};
+  o.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f2(Wsv)} ${f2(H)}" width="${f2(Wsv)}" height="${f2(H)}" font-family="IBM Plex Sans KR, system-ui, sans-serif" style="background:#fff">`);
+  o.push(`<defs><pattern id="hat${part}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#5a6872" stroke-width="0.8"/></pattern></defs>`);
+  o.push(`<rect width="${f2(Wsv)}" height="${f2(H)}" fill="#fff"/><rect x="${M/2}" y="${M/2}" width="${f2(Wsv-M)}" height="${f2(H-M)}" fill="none" stroke="#1d2126" stroke-width="1.2"/>`);
+  text(M+4,M+14,`${isBase?'HSG-01 베이스':'HSG-02 커버'} — 부품도`,14,'start','700');text(Wsv-M-4,M+14,`${name||'board'} 하우징`,11,'end');
+  // ---- plan view
+  const PX=x=>px+X(x)*S,PY=y=>py+(g.Wo-Y(y))*S;
+  text(px,py-8,isBase?'평면도 (안쪽, 위에서 본 면)':'평면도 (바깥, 위에서 본 면) — 안쪽 요소는 점선',10.5,'start','600');
+  rect(px,py,planW,planH,g.r*S,'#f6f3ec','#1d2126',1.4);
+  rect(px+g.rim*S,py+g.rim*S,(g.Lo-2*g.rim)*S,(g.Wo-2*g.rim)*S,Math.max(0,g.r-g.rim)*S,'none',isBase?'#1d2126':'#9aa3ab',isBase?1:.8,isBase?null:'3 2');
+  if(!isBase&&g.eT){const i=g.eT.r*S;rect(px+i,py+i,planW-2*i,planH-2*i,Math.max(0,g.r-g.eT.r)*S,'none','#6b7076',.7);}
+  if(isBase&&g.eB){const i=g.eB.r*S;rect(px+i,py+i,planW-2*i,planH-2*i,Math.max(0,g.r-g.eB.r)*S,'none','#9aa3ab',.6,'2 2');}
+  if(!isBase&&d.seal.groove){const ins=g.rim/2;rect(px+(ins-0.6)*S,py+(ins-0.6)*S,(g.Lo-2*ins+1.2)*S,(g.Wo-2*ins+1.2)*S,Math.max(0,g.r-ins)*S,'none','#2f6fb5',.8,'5 2');}
+  const tag=(x,y,t,dx,dy)=>{text(x+(dx||0),y+(dy||-6),t,8.5,'middle','600','#b5541c');};
+  T.forEach(t=>{const x=PX(t.x+g.x0),y=PY(t.y+g.y0);
+    if(/^B\d/.test(t.id)){circle(x,y,(d.sup[0]&&d.sup[0].d>3.4?4.5:3.5)*S,'#fff','#1d2126',1);circle(x,y,1.25*S,'none','#1d2126',.8);tag(x,y,t.id,0,-(3.5*S+3));}
+    else if(/^S\d/.test(t.id)){const R0=(d.screwM==='M4'?4.5:3.75)*S;if(isBase){circle(x,y,R0,'#fff','#1d2126',1);circle(x,y,1.25*S,'none','#1d2126',.8);}else{circle(x,y,(d.screwM==='M4'?4:3.25)*S,'#fff','#1d2126',1);circle(x,y,(d.screwM==='M4'?2.25:1.7)*S,'none','#1d2126',.9);}tag(x,y,t.id,0,-(R0+3));}
+    else if(/^P\d/.test(t.id)){const p=d.th.peds.filter(q=>q.kind===(isBase?'bottom':'top'))[+t.id.slice(1)-1];if(p)rect(PX(p.ped.x),PY(p.ped.y+p.ped.h),p.ped.w*S,p.ped.h*S,0,`url(#hat${part})`,'#1d2126',.9,isBase?null:'3 2');tag(x,y,t.id,0,-(p?p.ped.h*S/2+3:6));}
+    else if(/^T\d/.test(t.id)){const f=d.feats.find(q=>q.type==='tabs');const tb=f&&f.tabs[+t.id.slice(1)-1];if(tb){rect(PX(tb.cx-tb.sx/2),PY(tb.cy+tb.sy/2),tb.sx*S,tb.sy*S,1.5*S,'#fff','#1d2126',1.1);circle(x,y,f.hd/2*S,'#fff','#1d2126');}tag(x,y,t.id,0,-(f?f.hd/2*S+3:6));}});
+  if(isBase)d.feats.filter(f=>f.type==='rib').forEach(f=>{if(f.axis==='x')rect(px+g.rim*S,PY(f.pos+f.tt/2),(g.Lo-2*g.rim)*S,f.tt*S,0,'#e6e2d8','#1d2126',.8);else rect(PX(f.pos-f.tt/2),py+g.rim*S,f.tt*S,(g.Wo-2*g.rim)*S,0,'#e6e2d8','#1d2126',.8);tag(f.axis==='x'?px+planW/2:PX(f.pos),f.axis==='x'?PY(f.pos):py+planH/2,f.id);});
+  flat.forEach(f=>{const x=PX(f.x),y=PY(f.y);if(f.type==='hole')circle(x,y,f.w/2*S,'#fff','#1d2126',1.1);else rect(x-f.w/2*S,y-f.h/2*S,f.w*S,f.h*S,0,'#fff','#1d2126',1.1);tag(x,y,f.id,0,-(f.h/2*S+3));});
+  if(!isBase){const lb=d.feats.find(f=>f.type==='label');if(lb)text(PX(lb.x),PY(lb.y)+3,lb.text,Math.max(8,lb.size*S*0.85),'middle','600','#6b7076');
+    if(d.fins)for(let i=0;i<d.fins.n;i++){const x=g.x0+5+i*d.fins.pitch;if(x+d.fins.t>g.x0+g.Lo-2)break;rect(PX(x),PY(g.y0+4+d.fins.len),d.fins.t*S,d.fins.len*S,0,'#e6e2d8','#6b7076',.5);}}
+  O.forEach(c=>{const col='#c0392b',u0=c.u,u1=c.u+c.w;if(c.side==='S')line(px+u0*S,py+planH,px+u1*S,py+planH,col,3);else if(c.side==='N')line(px+u0*S,py,px+u1*S,py,col,3);else if(c.side==='W')line(px,py+planH-u1*S,px,py+planH-u0*S,col,3);else line(px+planW,py+planH-u1*S,px+planW,py+planH-u0*S,col,3);});
+  // datum + overall dims + section line
+  o.push(`<path d="M${f2(px)} ${f2(py+planH)} m-7 0 l7 -7 l7 7 z" fill="#1d2126"/>`);text(px-10,py+planH+12,'기준 A (0,0)',8,'start');
+  dim(px,py+planH,px+planW,py+planH,f1(g.Lo),'h',dp*0.9);dim(px,py,px,py+planH,f1(g.Wo),'v',-dp*0.9);
+  const ay=py+planH/2;line(px-12,ay,px+planW+12,ay,'#b5541c',.8,'10 3 2 3');text(px-14,ay+3,'A',10,'end','700','#b5541c');text(px+planW+14,ay+3,'A',10,'start','700','#b5541c');
+  // ---- section A–A (through the middle, looking from the front)
+  const sy0=py+18,QX=x=>sx+(x-g.x0)*sS,QZ=z=>sy0+(h1+(isBase?0:(d.fins?d.fins.h:0))-z)*sS;
+  text(sx,py-8,'단면 A–A',10.5,'start','600');
+  const L=g.Lo,rim=g.rim,t=g.t;
+  // solid outline of the section: U shape (base: floor + walls up to split; cover: top plate + walls down to split)
+  const pts=isBase?[[0,h0],[L,h0],[L,h1],[L-rim,h1],[L-rim,g.zFloor],[rim,g.zFloor],[rim,h1],[0,h1]]:[[0,h1],[L,h1],[L,h0],[L-rim,h0],[L-rim,g.zLid],[rim,g.zLid],[rim,h0],[0,h0]];
+  o.push(`<path d="M${pts.map(([x,z])=>`${f2(QX(g.x0+x))} ${f2(QZ(z))}`).join(' L')} Z" fill="url(#hat${part})" stroke="#1d2126" stroke-width="1.3"/>`);
+  if(isBase){d.sup.slice(0,2).forEach(s=>{const xb=s.x;rect(QX(xb-3.5),QZ(g.zFloor+g.stand),7*sS,g.stand*sS,0,`url(#hat${part})`,'#1d2126',1);});
+    dim(QX(g.x0),QZ(h0),QX(g.x0),QZ(h1),`${f2(Hp)}`,'v',-dp*0.8);dim(QX(g.x0+L),QZ(h0),QX(g.x0+L),QZ(g.zFloor),`${t}`,'v',dp*0.6);
+    if(d.sup[0])dim(QX(d.sup[0].x+3.5),QZ(g.zFloor),QX(d.sup[0].x+3.5),QZ(g.zFloor+g.stand),`${g.stand}`,'v',dp*0.5);
+    dim(QX(g.x0+L-rim),QZ(h1),QX(g.x0+L),QZ(h1),`${rim}`,'h',-dp*0.55);}
+  else{d.th.peds.filter(p=>p.kind==='top').slice(0,3).forEach(p=>rect(QX(p.ped.x),QZ(g.zLid),p.ped.w*sS,(g.zLid-p.ped.z0)*sS,0,`url(#hat${part})`,'#1d2126',1));
+    if(d.fins)for(let i=0;i<d.fins.n;i++){const x=g.x0+5+i*d.fins.pitch;if(x+d.fins.t>g.x0+g.Lo-2)break;rect(QX(x),QZ(h1+d.fins.h),d.fins.t*sS,d.fins.h*sS,0,`url(#hat${part})`,'#1d2126',.6);}
+    if(d.seal.groove){const cs=+((d.seal.gasket.match(/Ø([\d.]+)/)||[])[1]||2);[g.rim/2,L-g.rim/2].forEach(xc=>rect(QX(g.x0+xc-cs*0.65),QZ(h0+cs*0.75),cs*1.3*sS,cs*0.75*sS,0,'#fff','#2f6fb5',.9));}
+    dim(QX(g.x0),QZ(h0),QX(g.x0),QZ(h1),`${f2(Hp)}`,'v',-dp*0.8);dim(QX(g.x0+L),QZ(g.zLid),QX(g.x0+L),QZ(h1),`${t}`,'v',dp*0.6);
+    if(d.fins)dim(QX(g.x0+L-2),QZ(h1),QX(g.x0+L-2),QZ(h1+d.fins.h),`핀 ${d.fins.h.toFixed(0)}`,'v',dp*1.3);}
+  dim(QX(g.x0),QZ(h0),QX(g.x0+L),QZ(h0),f1(L),'h',dp*0.8);
+  // ---- notes
+  const surf=mechBom(R).find(r=>r.pn===(isBase?'HSG-01':'HSG-02'));const notes=[`재질: ${m.label}`,`공정: ${m.proc_label}${/사출|다이캐스팅/.test(m.proc_label)?' · 빼기 구배 1° (외측) / 1.5° (내측)':''}`,(surf&&surf.note||'').split(' · ')[0],
+    `일반 공차: ISO 2768-m · 평면도 ${isBase?'분할면':'분할면·페데스탈 면'} 0.1`,`모서리: ${edgeText(g)} · 지시 없는 모서리 R0.5`,
+    isBase?`분할면 실링: ${d.seal.gasket}`:d.seal.groove?`O-링 홈: 폭 ${f1(((d.seal.gasket.match(/Ø([\d.]+)/)||[])[1]||2)*1.3)} × 깊이 ${f1(((d.seal.gasket.match(/Ø([\d.]+)/)||[])[1]||2)*0.75)} mm (파란 점선)`:`분할면: ${d.seal.gasket}`,
+    !isBase&&g.rim<(d.screwM==='M4'?8:6.5)+2?`커버 나사 위치: 벽 안쪽에 Ø${d.screwM==='M4'?11:9.5} 보스로 카운터보어 둘레 보강`:'',
+    `질량 (추정): ${(isBase?PM.base:PM.lid).toFixed(0)} g · Z 기준 = ${isBase?'바닥 바깥 면':'분할면'}`];
+  const ny=sy0+(Hp+(isBase?0:(d.fins?d.fins.h:0)))*sS+dp*1.6+10;text(sx,ny,'주기',10.5,'start','600');notes.filter(Boolean).forEach((n,i)=>text(sx,ny+16+i*14,`${i+1}. ${n}`,9,'start'));
+  // ---- tables
+  let ty=tblY;const cols=[[M+4,'ID',40],[M+44,'종류',190],[M+234,'X',60],[M+294,'Y',60],[M+354,'크기',230],[M+584,'높이·깊이',200]];
+  text(M+4,ty-6,'구멍·형상 표 (기준 A에서, mm)',10,'start','600');
+  rect(M,ty,Wsv-2*M,rowH,0,'#f1f3f5','#c7cdd2',.8);cols.forEach(([x,h])=>text(x+2,ty+11,h,9,'start','600'));ty+=rowH;
+  T.forEach(t=>{rect(M,ty,Wsv-2*M,rowH,0,'none','#e3e6ea',.6);[t.id,t.kind,f2(t.x),f2(t.y),t.dia,t.depth].forEach((v,i)=>text(cols[i][0]+2,ty+11,v,9,'start',i?null:'600',i?null:'#b5541c'));ty+=rowH;});
+  if(O.length){ty+=26;text(M+4,ty-8,'벽 개구 표 (u = 벽 시작 모서리에서, z = 이 부품 아래 면에서, mm)',10,'start','600');ty+=4;const oc=[[M+4,'ID'],[M+70,'면'],[M+150,'종류'],[M+400,'u'],[M+460,'폭'],[M+520,'z'],[M+580,'높이']];
+    rect(M,ty,Wsv-2*M,rowH,0,'#f1f3f5','#c7cdd2',.8);oc.forEach(([x,h])=>text(x+2,ty+11,h,9,'start','600'));ty+=rowH;
+    O.forEach(c=>{rect(M,ty,Wsv-2*M,rowH,0,'none','#e3e6ea',.6);const out=c.z<-0.05||c.z+c.h>Hp+0.05;[c.id,SK[c.side],c.kind+(out?' ! 부품 높이를 벗어남 — 위치 확인':''),f2(c.u),f2(c.w),f2(c.z),f2(c.h)].forEach((v,i)=>text(oc[i][0]+2,ty+11,v,9,'start'));ty+=rowH;});}
+  // ---- title block
+  const tbY=H-M-48,tbX=Wsv-M-430;rect(tbX,tbY,430,48,0,'#fff','#1d2126',1);line(tbX,tbY+16,tbX+430,tbY+16,'#1d2126',.6);line(tbX,tbY+32,tbX+430,tbY+32,'#1d2126',.6);line(tbX+110,tbY,tbX+110,tbY+48,'#1d2126',.6);line(tbX+300,tbY,tbX+300,tbY+48,'#1d2126',.6);
+  const tbv=[['품번',isBase?'HSG-01':'HSG-02','리비전',opts.rev||'—'],['품명',isBase?'베이스 (하우징 하부)':'커버 (하우징 상부)','축척',`${f2(S)} px/mm`],['프로젝트',name||'board','날짜',opts.date||new Date().toISOString().slice(0,10)]];
+  tbv.forEach(([a,b,c,e],i)=>{text(tbX+4,tbY+12+i*16,a,8.5,'start',null,'#5a6872');text(tbX+114,tbY+12+i*16,b,9.5,'start','600');text(tbX+304,tbY+12+i*16,c,8.5,'start',null,'#5a6872');text(tbX+350,tbY+12+i*16,e,9.5,'start');});
+  text(M+4,H-M-8,'단위 mm · 3각법 · AllinOneDesign 기구 설계 (초기 설계용 — 양산 도면은 금형/가공 업체 검토 후 확정)',8.5,'start',null,'#5a6872');
+  o.push('</svg>');return o.join('\n');}
 /* ---- OpenSCAD source (parametric, real CSG) ---- */
 function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString();
   const o=[`// ${name||'board'} 하우징 — AllinOneDesign 기구 설계 (${d.m.label}, ${d.ip}, 진동 ${R.inp.vib} Grms)`,`// 좌표: 보드 왼쪽 아래 = (0,0), 보드 중간면 z = 0 (mm)`,`$fn=40;`,
@@ -374,6 +528,6 @@ function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString(
     `module lid(){intersection(){union(){shell(); pedestals(); fins();} translate([x0-1,y0-1,zSplit]) cube([Lo+2,Wo+2,zLid+wall+40-zSplit]);}}`,
     `base();`,`translate([0,0,15]) lid(); // 열린 상태로 보기 — 조립은 translate 제거`];
   return o.join('\n')+'\n';}
-return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,featLabel,edgeText,edgeLayers,drawingSVG,boardNeeds,pcbVibration,analyze,text,compareText,scad};
+return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,featLabel,edgeText,edgeLayers,drawingSVG,partSVG,mechBom,mechBomAoa,partMass,boardNeeds,pcbVibration,analyze,text,compareText,scad};
 })();
 if(typeof module!=='undefined')module.exports=HOUSING;

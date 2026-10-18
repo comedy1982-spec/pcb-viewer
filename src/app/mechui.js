@@ -48,7 +48,7 @@ function cadRightHTML(){
       return`<li class="fe${fu?' fu':''}${sel.has(e.key)?' sel':''}" data-el="${esc(e.key)}" tabindex="0" role="option" aria-selected="${sel.has(e.key)}"><span class="fk mono">${fu?esc(e.key):''}</span><span class="fl">${esc(e.label)}<small>${esc(e.desc)}</small></span>${fu?`<button class="pill vbtn" data-fdel="${esc(e.key)}" title="${esc(e.key)} 삭제" aria-label="${esc(e.key)} 삭제">×</button>`:'<span></span>'}</li>`;}).join('');}).join('')}
     ${ov.map(([k,v])=>`<li class="fo"><span class="fk">지정</span><span>${esc(TEXT2CAD.OVER[k]||k)} ${v}</span><button class="pill vbtn" data-oclr="${esc(k)}" title="자동으로" aria-label="${esc(TEXT2CAD.OVER[k]||k)} 자동으로">×</button></li>`).join('')}</ul>
   ${C.feats.length||ov.length?'':'<p class="lead" style="margin:4px 0 0">아래 Text-to-CAD 콘솔에 문장이나 명령으로 형상을 더하세요. 예: 오른쪽 벽에 M16 케이블 글랜드 2개, 장착 탭 4개 M5</p>'}
-  <div class="acts" style="flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="cadOpen">${H.open?'커버 닫기':'커버 열기'}</button><button class="btn primary sm" id="cadExp">CAD 내보내기</button><button class="btn sm" id="cadUndo"${H.undo.length?'':' disabled'}>실행 취소</button></div>
+  <div class="acts" style="flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="cadOpen">${H.open?'커버 닫기':'커버 열기'}</button><button class="btn primary sm" id="cadExp">CAD 내보내기</button><button class="btn sm" id="cadDwg" title="조립도·부품도(HSG-01 베이스, HSG-02 커버)·기구 BOM·SCAD를 zip으로">도면·BOM</button><button class="btn sm" id="cadBom" title="기구 BOM을 엑셀로">BOM Excel</button><button class="btn sm" id="cadUndo"${H.undo.length?'':' disabled'}>실행 취소</button></div>
   <details class="thsec" open><summary><b>치수 · 해석</b><span>${d.mass.toFixed(0)} g</span></summary>
     <table class="stbl"><tbody>
       <tr><td>외형</td><td class="mono">${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm</td></tr>
@@ -76,6 +76,7 @@ function cadBind(){
   Rr.querySelectorAll('[data-oclr]').forEach(b=>b.addEventListener('click',()=>cadExec(`set ${b.dataset.oclr} auto`)));
   Rr.querySelector('#cadOpen')?.addEventListener('click',()=>cadExec(H.open?'close':'open'));
   Rr.querySelector('#cadExp')?.addEventListener('click',()=>cadExec('export zip'));
+  Rr.querySelector('#cadDwg')?.addEventListener('click',()=>exportMechParts('zip'));Rr.querySelector('#cadBom')?.addEventListener('click',()=>exportMechParts('bom'));
   Rr.querySelector('#cadUndo')?.addEventListener('click',()=>cadExec('undo'));
 }
 function cadRender(){if(!BD||!$('#cadLeft'))return;const keep=[$('#cadLeft').scrollTop,$('#cadRight').scrollTop];
