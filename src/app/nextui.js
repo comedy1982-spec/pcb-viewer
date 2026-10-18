@@ -13,14 +13,14 @@ function nxMetrics(){if(!BD)return null;const key=(typeof revSig==='function'?re
   if(HS.H){try{if(!HS.res)hsisRun();const st=Object.values(HS.res.status||{});m.hsis={ok:st.filter(x=>x==='ok').length,n:st.length,err:st.filter(x=>x==='err').length};}catch(e){}}
   if(typeof SR!=='undefined'&&SR.th&&SR.th.parts){const hot=SR.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'sim'};}
   if(m.pcb&&typeof mechRun==='function'&&BD.housing){try{const R=mechRun();m.house={mass:R.d.mass,ok:R.d.feasible,ip:R.d.ip,mat:R.d.m.short,warn:R.warn.length};if(!m.tj){const hot=R.d.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'housing',lim:R.inp.tj};}}catch(e){}}
-  if(NP.arch)m.blocks={n:NP.arch.blocks.length,links:(NP.arch.links||[]).length};m.answers=NP.answers?Object.keys(NP.answers).length:0;
+  const A=typeof sysArch==='function'?sysArch():NP.arch;if(A)m.blocks={n:A.blocks.length,links:(A.links||[]).length,fromBoard:!NP.arch};m.answers=NP.answers?Object.keys(NP.answers).length:0;
   NX.key=key;NX.m=m;return m;}
 /* ---- status strip under the header ---- */
 function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP!=='undefined'?APP.mode:'viewer';if(!BD||mode==='home'){el.hidden=true;return;}el.hidden=false;
   const m=nxMetrics();if(!m)return;const st=typeof stepCur==='function'?stepCur():0;const f=(v,d)=>v==null?'—':(+v).toFixed(d==null?0:d);
   const tile=(k,label,val,sub,tone,title)=>`<button type="button" class="st-t${tone?' '+tone:''}" data-st="${k}" title="${esc(title||'')}"><span class="st-l">${esc(label)}</span><span class="st-v mono">${val}</span><span class="st-s">${sub||''}</span></button>`;
   const T=[];
-  if(st===1||m.blank){T.push(tile('sys','시스템 블록',m.blocks?m.blocks.n:'—',m.blocks?`연결 ${m.blocks.links}`:'요구사항부터','', '1단계'));T.push(tile('ans','AI 확인 정보',m.answers,'필수 정보 질문·답','', '요구사항 보강'));}
+  if(st===1||m.blank){T.push(tile('sys','시스템 블록',m.blocks?m.blocks.n:'—',m.blocks?`연결 ${m.blocks.links}${m.blocks.fromBoard?' · 보드에서 추출':''}`:'요구사항부터','', '1단계'));if(m.answers||m.blank)T.push(tile('ans','AI 확인 정보',m.answers,'필수 정보 질문·답','', '요구사항 보강'));}
   if(!m.blank){
     const dB=m.bomRef&&m.bom!=null?m.bom-m.bomRef.v:null;
     T.push(tile('bom','BOM 참고가',m.bom!=null?'$'+f(m.bom,2):'—',dB!=null&&Math.abs(dB)>=0.005?`${m.bomRef.label} 대비 ${dB>0?'+':'−'}$${f(Math.abs(dB),2)}`:`부품 ${m.parts} · 단가 ${m.bomN}종`,dB>0.5?'warn':'','참고 단가 합 (추정) · 데이터시트 탭'));

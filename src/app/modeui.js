@@ -9,7 +9,7 @@ function modePaint(){
   const home=$('#home');if(home)home.hidden=m!=='home';
   const work=$('.work');if(work)work.hidden=m==='home';
   const hd=$('#hDock');if(hd)hd.hidden=m==='home';
-  const steps=$('.steps');if(steps)steps.hidden=m!=='steps';
+  const steps=$('.steps');if(steps){steps.hidden=m==='home';steps.classList.toggle('viewer',m==='viewer');}
   const early=m==='steps'&&st>0&&st<3;
   const ws=$('.seg.ws');if(ws)ws.hidden=m==='home'||early;
   const bc=$('#boardCtl');if(bc)bc.hidden=m==='home'||early;
