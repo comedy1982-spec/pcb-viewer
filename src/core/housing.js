@@ -142,10 +142,13 @@ function design(B,inp,matKey,N){
   const stand=num(O.stand)?Math.max(N.htBot+0.5,1.5,+O.stand):Math.max(4,Math.ceil(N.htBot+2));const top=num(O.top)?Math.max(N.htTop+0.5,1,+O.top):Math.max(3,Math.ceil(N.htTop+2.5));
   const rim=S.groove?Math.max(t,4.6):t; // a groove for the O-ring needs ~4.6 mm of flange
   const geo={t,gap,gaps:gp,stand,top,rim,Li:N.W+gp.W+gp.E,Wi:N.H+gp.S+gp.N,Hi:stand+N.t+top};geo.Lo=geo.Li+2*rim;geo.Wo=geo.Wi+2*rim;geo.Ho=geo.Hi+2*t;
-  geo.x0=N.bb[0]-gp.W-rim;geo.y0=N.bb[1]-gp.S-rim;geo.zFloor=-N.t/2-stand;geo.zLid=N.t/2+top;geo.zSplit=N.t/2+Math.min(top-1,Math.max(1.5,top*0.4));geo.tAuto=tAuto;geo.r=num(O.corner)?Math.max(0.5,Math.min(+O.corner,geo.Wo/2-1,geo.Lo/2-1)):3;
+  geo.x0=N.bb[0]-gp.W-rim;geo.y0=N.bb[1]-gp.S-rim;geo.zFloor=-N.t/2-stand;geo.zLid=N.t/2+top;geo.zSplit=N.t/2+Math.min(top-1,Math.max(1.5,top*0.4));geo.tAuto=tAuto;geo.r=num(O.corner)?Math.max(0,Math.min(+O.corner,geo.Wo/2-1,geo.Lo/2-1)):3;const E=(inp.cad&&inp.cad.edge)||{};geo.vk=E.V==='chamfer'?'chamfer':'fillet';
   // a sealed connector window must lie wholly in the cover: the split line drops below it, leaving a seal land under the window
   const win=N.cuts.filter(c=>c.sealed);if(win.length){geo.zSplit=Math.max(geo.zFloor+2,Math.min(geo.zSplit,Math.min(...win.map(c=>c.z0))-1.8));geo.splitWin=true;}
   if(num(O.split))geo.zSplit=Math.max(geo.zFloor+1,Math.min(geo.zLid-1,+O.split));
+  // outer edge treatment of the cover top and the base bottom perimeters: fillet (R) or chamfer (C), kept off the split line
+  {const Zb=geo.zFloor-t,Zt=geo.zLid+t;const lim=(e,room)=>e&&+e.r>0?{k:e.k==='chamfer'?'chamfer':'fillet',r:+Math.max(0.2,Math.min(+e.r,room,geo.Lo/2-1,geo.Wo/2-1)).toFixed(2),req:+e.r}:null;
+    geo.eT=lim(E.T,Zt-geo.zSplit-1);geo.eB=lim(E.B,geo.zSplit-Zb-1);}
   // supports: mounting holes (or corners), centre supports until the PCB safety factor reaches 2
   let sup=N.holes.length?N.holes.map(h=>({x:h.x,y:h.y,d:h.d,kind:'hole'})):[[3.5,3.5],[N.W-3.5,3.5],[3.5,N.H-3.5],[N.W-3.5,N.H-3.5]].map(([x,y])=>({x:N.bb[0]+x,y:N.bb[1]+y,d:3.2,kind:'corner'}));
   F.filter(f=>f.type==='boss').forEach(f=>sup.push({x:f.x==null?N.bb[0]+N.W/2:+f.x,y:f.y==null?N.bb[1]+N.H/2:+f.y,d:+(f.d||3.2),kind:'user',id:f.id}));
@@ -190,15 +193,18 @@ function cadFeatures(F,g,N,sup){const out=[];const along=s=>s==='S'||s==='N'?[g.
     else if(f.type!=='boss'&&f.type!=='fins')return;
     out.push(o);});
   return out;}
-function featWarn(R){const d=R.d,g=d.geo,w=[];const IPN_=IPN[d.ip]||0;
+function featWarn(R){const d=R.d,g=d.geo,w=[];const IPN_=IPN[d.ip]||0;const eT=g.eT?g.eT.r:0,eB=g.eB?g.eB.r:0,Zb=g.zFloor-g.t,Zt=g.zLid+g.t;
+  [['eT','커버 윗면 둘레','분할면'],['eB','바닥 둘레','분할면']].forEach(([k,nm])=>{const e=g[k];if(e&&e.r<e.req-1e-6)w.push(`${nm} ${e.k==='chamfer'?'C':'R'}${e.req} → ${e.k==='chamfer'?'C':'R'}${e.r}로 줄였습니다 (면에서 분할면 z ${g.zSplit.toFixed(1)}까지 높이 · 외형 한계).`);});
+  if(g.eT&&g.eT.r>g.t&&g.eT.k==='fillet')w.push(`커버 윗면 R${g.eT.r}가 벽 두께 ${g.t} mm보다 커 안쪽도 R${(g.eT.r-g.t).toFixed(1)}로 따라 둥글어집니다 (커버 안쪽 높이 여유 확인).`);
   d.feats.forEach(f=>{const nm=`${f.id||'?'} ${f.type==='hole'?`구멍 Ø${f.w}`:f.type==='slot'?`사각 구멍 ${f.w}×${f.h}`:''}`;
     if(f.type==='hole'||f.type==='slot'){
-      if(f.side==='T'||f.side==='B'){if(f.x-f.w/2<g.x0+g.rim||f.x+f.w/2>g.x0+g.Lo-g.rim||f.y-f.h/2<g.y0+g.rim||f.y+f.h/2>g.y0+g.Wo-g.rim)w.push(`${nm}: ${f.side==='T'?'커버':'바닥'} 가장자리(실링 플랜지)에 걸립니다.`);
+      if(f.side==='T'||f.side==='B'){const mg=Math.max(g.rim,f.side==='T'?eT:eB);if(f.x-f.w/2<g.x0+mg||f.x+f.w/2>g.x0+g.Lo-mg||f.y-f.h/2<g.y0+mg||f.y+f.h/2>g.y0+g.Wo-mg)w.push(`${nm}: ${f.side==='T'?'커버':'바닥'} 가장자리(실링 플랜지${(f.side==='T'?eT:eB)>0?'·모서리 R/C':''})에 걸립니다.`);
         if(f.side==='T')d.th.peds.filter(p=>p.kind==='top').forEach(p=>{const q=p.ped;if(f.x+f.w/2>q.x&&f.x-f.w/2<q.x+q.w&&f.y+f.h/2>q.y&&f.y-f.h/2<q.y+q.h)w.push(`${nm}: ${p.ref} 방열 페데스탈과 겹칩니다.`);});
         if(f.side==='B')d.th.peds.filter(p=>p.kind==='bottom').forEach(p=>{const q=p.ped;if(f.x+f.w/2>q.x&&f.x-f.w/2<q.x+q.w&&f.y+f.h/2>q.y&&f.y-f.h/2<q.y+q.h)w.push(`${nm}: ${p.ref} 베이스 페데스탈과 겹칩니다.`);});}
       else{const L=f.side==='S'||f.side==='N'?[g.x0,g.x0+g.Lo]:[g.y0,g.y0+g.Wo];
         if(f.a-f.w/2<L[0]+g.r||f.a+f.w/2>L[1]-g.r)w.push(`${nm}: 벽 끝(모서리 R)에 걸립니다.`);
         if(f.z+f.h/2>g.zLid+g.t-0.5||f.z-f.h/2<g.zFloor-g.t+0.5)w.push(`${nm}: 벽 높이 밖으로 나갑니다.`);
+        else if(f.z+f.h/2>Zt-eT||f.z-f.h/2<Zb+eB)w.push(`${nm}: ${f.z>0?'윗면':'바닥'} 모서리 ${f.z>0?(g.eT.k==='chamfer'?'C':'R'):(g.eB.k==='chamfer'?'C':'R')} 띠에 걸립니다 — 높이를 옮기세요.`);
         if(f.z-f.h/2<g.zSplit+1.5&&f.z+f.h/2>g.zSplit-1.5)w.push(`${nm}: 분할면(z ${g.zSplit.toFixed(1)})을 가로지릅니다 — 실링이 끊기니 높이를 옮기세요.`);
         R.N.cuts.filter(c=>c.side===f.side).forEach(c=>{if(f.a+f.w/2>c.a-2&&f.a-f.w/2<c.b+2&&f.z+f.h/2>c.z0-2&&f.z-f.h/2<c.z1+2)w.push(`${nm}: ${c.ref} 커넥터 창과 겹칩니다.`);});}
       if(IPN_>=54&&!/gland|vent|plug|connector|글랜드|벤트|플러그|커넥터/i.test(f.kind||f.label||''))w.push(`${nm}: ${d.ip}을 지키려면 케이블 글랜드·벤트·실링 플러그로 막아야 합니다.`);}
@@ -245,6 +251,7 @@ function text(R){const d=R.d,i=R.inp,g=d.geo;const L=[];
   L.push(`하우징 설계 · 발열 ${i.P} W · ${d.ip} · 진동 ${i.vib} Grms · 주위 ${i.ta} °C · PCB 한계 ${i.tmax} °C`);
   L.push('설계 조건:');R.conds.forEach(c=>L.push('  • '+c));
   L.push(`재질: ${d.m.label} · 벽두께 ${g.t} mm${g.rim>g.t?` (실링 플랜지 ${g.rim} mm)`:''} · 공정 ${d.m.proc_label}`);
+  L.push(`모서리: ${edgeText(g)}`);
   L.push(`외형: ${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm · 내부 ${g.Li.toFixed(1)} × ${g.Wi.toFixed(1)} × ${g.Hi.toFixed(1)} mm · 보드 아래 스탠드오프 ${g.stand} mm · 위 여유 ${g.top} mm`);
   L.push(`방열: ${d.m.metal?(d.th.peds.length?`TIM + 하우징 페데스탈 ${d.th.peds.length}곳 (베이스 ${d.th.peds.filter(p=>p.kind==='bottom').length} · 커버 ${d.th.peds.filter(p=>p.kind==='top').length})`:'하우징 벽 전도'):'수지 벽 전도 + 내부 대류'}${d.fins?` · 핀 ${d.fins.n}개 (높이 ${d.fins.h.toFixed(0)} mm, 피치 ${(+d.fins.pitch).toFixed(1)} mm)`:''}${d.seal.slots?' · 통풍 슬롯':''} · 자연대류`);
   L.push(`  표면 ${d.th.Ts.toFixed(1)} °C · 내벽 ${d.th.Twin.toFixed(1)} °C · PCB ${d.th.Tboard.toFixed(1)} °C · 내부 공기 약 ${d.th.Tair.toFixed(1)} °C · TIM 경로 ${d.th.Ptim.toFixed(1)} W / ${i.P} W`);
@@ -258,6 +265,14 @@ function text(R){const d=R.d,i=R.inp,g=d.geo;const L=[];
   L.push(`트레이드오프: 원가 지수 ${R.idx.cost}/100 · 중량 지수 ${R.idx.mass}/100 (약 ${d.mass.toFixed(0)} g) · 방열 여유도 ${R.idx.thermal}% · 내진동 안전율 ${R.idx.vib}%`);
   if(R.warn.length)L.push('경고:\n'+R.warn.map(w=>'  ! '+w).join('\n'));
   return L.join('\n');}
+// applied edge treatment from the geometry: vertical corners + cover top / base bottom perimeters
+function edgeText(g){const t=e=>(e.k==='chamfer'?'C':'R')+e.r;return[`세로 ${g.r>0?(g.vk==='chamfer'?'C':'R')+g.r:'없음'}`,g.eT?`윗면 ${t(g.eT)}`:null,g.eB?`바닥 ${t(g.eB)}`:null].filter(Boolean).join(' · ');}
+// [z, inset] layers of an outline that is filleted/chamfered at the bottom (eb) and top (et) edges, z from 0 to h
+function edgeLayers(h,eb,et,n){n=n||6;const L=[];const band=(e,top)=>{if(!e||!(e.r>0))return[[top?h:0,0]];const out=[];
+    if(e.k==='chamfer')out.push([0,e.r],[e.r,0]);else for(let i=0;i<=n;i++){const a=i/n*Math.PI/2;out.push([e.r*(1-Math.cos(a)),e.r*(1-Math.sin(a))]);}
+    return top?out.map(([z,s])=>[h-z,s]).reverse():out;};
+  band(eb,false).forEach(p=>L.push(p));band(et,true).forEach(p=>L.push(p));
+  return L.filter((p,i)=>i===0||Math.abs(p[0]-L[i-1][0])>1e-6||Math.abs(p[1]-L[i-1][1])>1e-6);}
 const SIDE_KO={W:'왼쪽 벽',E:'오른쪽 벽',S:'앞 벽',N:'뒤 벽',T:'커버 윗면',B:'바닥'};
 function featLabel(f){const id=f.id?f.id+' ':'';switch(f.type){
   case'hole':return`${id}${SIDE_KO[f.side]} ${f.label||'구멍'} Ø${f.w||f.d}`;case'slot':return`${id}${SIDE_KO[f.side]} ${f.label||'사각 구멍'} ${f.w}×${f.h}`;
@@ -268,8 +283,14 @@ function compareText(R){return['재질 비교 (같은 조건):',...R.all.map(d=>
 function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString();
   const o=[`// ${name||'board'} 하우징 — AllinOneDesign 기구 설계 (${d.m.label}, ${d.ip}, 진동 ${R.inp.vib} Grms)`,`// 좌표: 보드 왼쪽 아래 = (0,0), 보드 중간면 z = 0 (mm)`,`$fn=40;`,
     `wall=${f(g.t)}; rim=${f(g.rim)}; x0=${f(g.x0)}; y0=${f(g.y0)}; Lo=${f(g.Lo)}; Wo=${f(g.Wo)};`,`zFloor=${f(g.zFloor)}; zLid=${f(g.zLid)}; zSplit=${f(g.zSplit)}; r=${f(g.r)};`,
-    `module rbox(x,y,z,l,w,h,rr){translate([x,y,z]) hull(){for(i=[rr,l-rr],j=[rr,w-rr]) translate([i,j,0]) cylinder(r=rr,h=h);}}`,
-    `module shell(){difference(){rbox(x0,y0,zFloor-wall,Lo,Wo,zLid+wall-(zFloor-wall),r); rbox(x0+rim,y0+rim,zFloor,Lo-2*rim,Wo-2*rim,zLid-zFloor,max(0.5,r-rim/2));`,
+    `// 모서리: ${edgeText(g)} (R = 둥근모따기, C = 각모따기)`,
+    `// plan: 바닥 윤곽 (세로 모서리 R 또는 C), rsolid: 층마다 안쪽으로 줄인 윤곽을 hull — 윗면·바닥 둘레의 R/C`,
+    `module plan(l,w,rv,ch){if(rv<=0) square([l,w]); else if(ch) polygon([[rv,0],[l-rv,0],[l,rv],[l,w-rv],[l-rv,w],[rv,w],[0,w-rv],[0,rv]]); else translate([rv,rv]) offset(r=rv) square([l-2*rv,w-2*rv]);}`,
+    `module rsolid(x,y,z,l,w,rv,ch,layers){translate([x,y,z]) hull() for(L=layers) translate([0,0,L[0]]) linear_extrude(0.01) if(L[1]>0) offset(r=-L[1]) plan(l,w,rv,ch); else plan(l,w,rv,ch);}`,
+    (()=>{const ch=g.vk==='chamfer',hO=g.zLid+g.t-(g.zFloor-g.t),hI=g.zLid-g.zFloor;const inE=e=>e?{k:e.k,r:Math.max(0,e.k==='chamfer'?e.r-0.586*g.t:e.r-g.t)}:null;
+      const ly=(h,eb,et)=>'['+edgeLayers(h,eb,et).map(([z,s])=>`[${f(Math.min(z,h-0.01))},${f(s)}]`).join(',')+']';
+      const ri=Math.max(0,ch?g.r-0.586*g.rim:g.r-g.rim);
+      return`module shell(){difference(){rsolid(x0,y0,zFloor-wall,Lo,Wo,r,${ch},${ly(hO,g.eB,g.eT)}); rsolid(x0+rim,y0+rim,zFloor,Lo-2*rim,Wo-2*rim,${f(ri)},${ch},${ly(hI,inE(g.eB),inE(g.eT))});`;})(),
     ...R.N.cuts.map(c=>{const w=c.b-c.a,h=c.z1-c.z0;const nm=c.sealed?`${c.ref} ${c.mpn} 창, 플랜지 실링`:c.ref;c={...c,ref:nm};return c.side==='W'?`  translate([x0-1,${f(c.a)},${f(c.z0)}]) cube([rim+2,${f(w)},${f(h)}]); /* ${c.ref} */`:c.side==='E'?`  translate([x0+Lo-rim-1,${f(c.a)},${f(c.z0)}]) cube([rim+2,${f(w)},${f(h)}]); /* ${c.ref} */`:c.side==='S'?`  translate([${f(c.a)},y0-1,${f(c.z0)}]) cube([${f(w)},rim+2,${f(h)}]); /* ${c.ref} */`:`  translate([${f(c.a)},y0+Wo-rim-1,${f(c.z0)}]) cube([${f(w)},rim+2,${f(h)}]); /* ${c.ref} */`;}),
     ...(d.seal.breather?[`  translate([x0+Lo/2,y0+Wo+1,zSplit-4]) rotate([90,0,0]) cylinder(d=12,h=rim+2); // 벤트 필터 M12`]:[]),
     ...d.feats.filter(x=>x.type==='hole'||x.type==='slot').map(x=>{const H=x.type==='hole',tag=`/* ${x.id||''} ${x.label||(H?'구멍':'사각 구멍')} */`;
@@ -290,6 +311,6 @@ function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString(
     `module lid(){intersection(){union(){shell(); pedestals(); fins();} translate([x0-1,y0-1,zSplit]) cube([Lo+2,Wo+2,zLid+wall+40-zSplit]);}}`,
     `base();`,`translate([0,0,15]) lid(); // 열린 상태로 보기 — 조립은 translate 제거`];
   return o.join('\n')+'\n';}
-return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,featLabel,boardNeeds,pcbVibration,analyze,text,compareText,scad};
+return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,featLabel,edgeText,edgeLayers,boardNeeds,pcbVibration,analyze,text,compareText,scad};
 })();
 if(typeof module!=='undefined')module.exports=HOUSING;

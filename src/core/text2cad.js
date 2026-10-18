@@ -14,7 +14,8 @@ const HELP=[
   ['status · check','현재 설계 전체 보고 (재질·방열·실링·체결·진동·형상·경고)'],
   ['compare','재질 6종 비교'],
   ['set power|ip|vib|ta|tmax|tj|mat|tim <값|auto>','설계 조건: 발열 W · IP · 진동 Grms · 주위/PCB/Tj 온도 · 재질 · 방열 패드'],
-  ['set wall|corner|stand|top|gap|split <mm|auto>','형상 직접 지정: 벽 두께 · 모서리 R · 아래 스탠드오프 · 위 여유 · 보드–벽 간격 · 분할면 z'],
+  ['set wall|corner|stand|top|gap|split <mm|auto>','형상 직접 지정: 벽 두께 · 세로 모서리 R · 아래 스탠드오프 · 위 여유 · 보드–벽 간격 · 분할면 z'],
+  ['fillet <top|bottom|vertical|all> <R mm|off> · chamfer <top|bottom|vertical|all> <C mm|off>','외곽 모서리 처리: fillet = 둥근모따기(R), chamfer = 각모따기(C). top = 커버 윗면 둘레, bottom = 바닥 둘레, vertical = 세로 모서리 4곳, all = 셋 다'],
   ['hole <면> --d <mm> [--u <mm>] [--z <mm>] [--n 2 --pitch 20] [--label 이름]','원형 구멍. 면: left right front back top bottom (W E S N T B). u = 벽 시작에서의 거리, z = 높이(보드 중간면 0)'],
   ['gland <면> [M16|M20|PG9…] [--u --z --n]','케이블 글랜드 구멍 (IP 유지)'],
   ['vent <면> [--d 12.5]','ePTFE 벤트 구멍'],
@@ -29,23 +30,31 @@ const HELP=[
   ['show · open · close','3D에서 하우징 보기 · 커버 열기 · 닫기'],
   ['export [zip|scad|stl]','CAD 내보내기'],
   ['ai <문장>','Claude가 위 명령으로 설계 (AI 모드). 결정론 모드에서는 문장을 규칙으로 명령으로 바꿉니다']];
-const CMDS=new Set(['help','status','check','compare','set','hole','gland','vent','slot','tabs','boss','rib','fins','label','list','feats','del','delete','reset','undo','redo','show','hide','open','close','export','ai','clear']);
+const CMDS=new Set(['fillet','chamfer','round','help','status','check','compare','set','hole','gland','vent','slot','tabs','boss','rib','fins','label','list','feats','del','delete','reset','undo','redo','show','hide','open','close','export','ai','clear']);
 function tok(s){const out=[];const re=/"([^"]*)"|“([^”]*)”|'([^']*)'|(\S+)/g;let m;while((m=re.exec(s)))out.push(m[1]!=null?m[1]:m[2]!=null?m[2]:m[3]!=null?m[3]:m[4]);return out;}
 function args(t){const a={_:[]};for(let i=0;i<t.length;i++){const x=t[i];if(/^--/.test(x)){const[k,v]=x.slice(2).split('=');if(v!=null)a[k]=v;else if(t[i+1]!=null&&!/^--/.test(t[i+1]))a[k]=t[++i];else a[k]=true;}else a._.push(x);}return a;}
 const side=v=>{const k=String(v||'').toUpperCase();if(SIDES[k])return SIDES[k];for(const[re,s]of SIDE_RE)if(re.test(String(v||'')))return s;return null;};
 const num=(v,nm)=>{const n=parseFloat(v);if(!isFinite(n))throw new Error(`${nm||'값'}: 숫자가 필요합니다 (${v==null?'없음':v})`);return n;};
 const optNum=v=>v==null||v===true||v===''?null:num(v);
-function blank(){return{over:{},feats:[],seq:0};}
-function norm(st){if(!st.cad)st.cad=blank();if(!st.cad.over)st.cad.over={};if(!st.cad.feats)st.cad.feats=[];if(!st.cad.seq)st.cad.seq=st.cad.feats.reduce((m,f)=>Math.max(m,+String(f.id||'F0').slice(1)||0),0);return st;}
+function blank(){return{over:{},feats:[],seq:0,edge:{}};}
+function norm(st){if(!st.cad)st.cad=blank();if(!st.cad.over)st.cad.over={};if(!st.cad.feats)st.cad.feats=[];if(!st.cad.edge)st.cad.edge={};if(!st.cad.seq)st.cad.seq=st.cad.feats.reduce((m,f)=>Math.max(m,+String(f.id||'F0').slice(1)||0),0);return st;}
 function add(st,f){st.cad.seq++;f.id='F'+st.cad.seq;st.cad.feats.push(f);return f;}
 const SK={W:'왼쪽 벽',E:'오른쪽 벽',S:'앞 벽',N:'뒤 벽',T:'커버 윗면',B:'바닥'};
+const EDGE_KO={T:'커버 윗면 둘레',B:'바닥 둘레',V:'세로 모서리 4곳'};
+// which outer edges a word names: top/bottom/vertical/all (several allowed, comma or + separated)
+function edgeSet(v){const s=String(v||'').toLowerCase();if(!s||/^(all|전체|전부|모두|모든|외곽|outer|every)$/.test(s))return['T','B','V'];const out=[];
+  s.split(/[,+/]/).forEach(w=>{if(/^(top|t|윗면|상면|커버|위|upper|lid|cover)$/.test(w))out.push('T');else if(/^(bottom|b|바닥|하면|밑면|아래|lower|base|floor)$/.test(w))out.push('B');else if(/^(vertical|v|세로|수직|corner|corners|코너|side|sides)$/.test(w))out.push('V');else if(/^(all|전체|전부|모두|외곽)$/.test(w))out.push('T','B','V');});
+  return out.length?[...new Set(out)]:null;}
+// current edge treatment as text, e.g. "세로 R3 · 윗면 R2 · 바닥 C1"
+function edgeText(C){const E=(C&&C.edge)||{},O=(C&&C.over)||{};const v=O.corner!=null?+O.corner:3;
+  return[`세로 ${v>0?(E.V==='chamfer'?'C':'R')+v:'없음'}`,...['T','B'].map(k=>E[k]&&E[k].r>0?`${k==='T'?'윗면':'바닥'} ${E[k].k==='chamfer'?'C':'R'}${E[k].r}`:null).filter(Boolean)].join(' · ');}
 /* one command. H = HOUSING (materials, TIMs, IP keys). Returns {out, action?, mutated} */
 function exec(st,line,H){norm(st);const t=tok(line);const cmd=(t[0]||'').toLowerCase();const a=args(t.slice(1));const I=st.inp,C=st.cad;const ok=(out,extra)=>Object.assign({out,mutated:true},extra||{});
   switch(cmd){
     case'help':return{out:HELP.map(([c,d])=>`${c}\n    ${d}`).join('\n')};
     case'status':case'check':return{out:'',action:'report'};
     case'compare':return{out:'',action:'compare'};
-    case'list':case'feats':return{out:C.feats.length?C.feats.map(f=>'  '+(H&&H.featLabel?H.featLabel(f):f.id+' '+f.type)).join('\n')+(Object.keys(C.over).length?`\n  지정값: ${Object.entries(C.over).map(([k,v])=>`${OVER[k]||k} ${v}`).join(' · ')}`:''):'추가한 형상이 없습니다. (자동 설계만 적용)'};
+    case'list':case'feats':return{out:C.feats.length?C.feats.map(f=>'  '+(H&&H.featLabel?H.featLabel(f):f.id+' '+f.type)).join('\n')+`\n  모서리: ${edgeText(C)}`+(Object.keys(C.over).length?`\n  지정값: ${Object.entries(C.over).map(([k,v])=>`${OVER[k]||k} ${v}`).join(' · ')}`:''):'추가한 형상이 없습니다. (자동 설계만 적용)'};
     case'show':case'hide':case'open':case'close':return{out:'',action:cmd};
     case'export':{const k=String(a._[0]||'zip').toLowerCase();if(!/^(zip|scad|stl)$/.test(k))throw new Error('export zip|scad|stl');return{out:'',action:'export',kind:k};}
     case'undo':case'redo':case'clear':return{out:'',action:cmd};
@@ -60,7 +69,8 @@ function exec(st,line,H){norm(st);const t=tok(line);const cmd=(t[0]||'').toLower
       if(/^(ta|tmax|tj)$/.test(k)){I[k]=num(v,k);return ok(`${{ta:'주위 온도',tmax:'PCB 한계 온도',tj:'부품 Tj 한계'}[k]} ${I[k]} °C`);}
       if(/^(mat|material|재질)$/.test(k)){const m=auto?'auto':matKey(v,H);if(!m)throw new Error('재질: auto · '+Object.keys(H.MATS).join(' · '));I.mat=m;return ok(`재질 ${m==='auto'?'자동 (조건 만족 · 최저 원가)':H.MATS[m].label}`);}
       if(/^(tim|pad|방열패드)$/.test(k)){const m=auto?'auto':/^(none|off|없음)$/i.test(v)?'none':H.TIMS[v]?v:null;if(!m)throw new Error('TIM: auto · none · '+Object.keys(H.TIMS).join(' · '));I.tim=m;return ok(`방열 패드 ${m==='auto'?'자동':m==='none'?'사용 안 함':H.TIMS[m].label}`);}
-      if(OVER[k]){if(auto)delete C.over[k];else C.over[k]=num(v,OVER[k]);return ok(`${OVER[k]} ${auto?'자동':C.over[k]+(k==='split'?'':' mm')}`);}
+      if(k==='corner'&&!auto&&C.edge.V==='chamfer'&&/^r/i.test(v))delete C.edge.V;
+      if(OVER[k]){if(auto)delete C.over[k];else C.over[k]=num(k==='corner'?v.replace(/^[rc]\s*/i,''):v,OVER[k]);return ok(`${OVER[k]} ${auto?'자동':C.over[k]+(k==='split'?'':' mm')}`);}
       throw new Error(`모르는 키: ${k} — power ip vib ta tmax tj mat tim wall corner stand top gap split`);}
     case'hole':case'gland':case'vent':{const sd=side(a._[0])||(cmd==='vent'?'N':'E');let d,label,kind;
       if(cmd==='gland'){const sz=String(a._.find(x=>/^(m|pg)\d+$/i.test(x))||a.size||'M16').toUpperCase();d=GLAND[sz]||num(sz.replace(/\D/g,''))+0.5;label=`케이블 글랜드 ${sz}`;kind='gland';}
@@ -83,6 +93,14 @@ function exec(st,line,H){norm(st);const t=tok(line);const cmd=(t[0]||'').toLower
       const f=add(st,{type:'fins',n:Math.round(num(v,'개수')),h:optNum(a.h)||12,pitch:optNum(a.pitch)});return ok(`${f.id}: 커버 방열 핀 ${f.n}개 · 높이 ${f.h} mm`);}
     case'label':{const txt=a._.join(' ').trim();if(!txt)throw new Error('label "글자"');C.feats=C.feats.filter(f=>f.type!=='label');
       const f=add(st,{type:'label',text:txt.slice(0,40),size:optNum(a.size)||6,u:optNum(a.u),v:optNum(a.v)});return ok(`${f.id}: 커버 윗면에 "${f.text}" 각인 (${f.size} mm)`);}
+    case'fillet':case'round':case'chamfer':{const kind=cmd==='chamfer'?'chamfer':'fillet';let w=a._[0],v=a._[1];
+      if(w!=null&&/^[rc]?\d/i.test(w)&&v==null){v=w;w='all';}
+      const es=edgeSet(w==null?'all':w);if(!es)throw new Error(`${cmd} <top|bottom|vertical|all> <mm|off> — 모르는 모서리: ${w}`);
+      if(v==null||v===true)throw new Error(`${cmd} ${w} <mm|off> — 크기가 필요합니다`);
+      const off=/^(off|none|없음|0)$/i.test(v);const r=off?0:num(String(v).replace(/^[rc]/i,''),kind==='chamfer'?'C':'R');if(!off&&!(r>0&&r<60))throw new Error('크기가 이상합니다: '+v);
+      es.forEach(e=>{if(e==='V'){if(off){C.over.corner=0;delete C.edge.V;}else{C.over.corner=r;if(kind==='chamfer')C.edge.V='chamfer';else delete C.edge.V;}}
+        else if(off)delete C.edge[e];else C.edge[e]={k:kind,r};});
+      return ok(`${es.map(e=>EDGE_KO[e]).join(', ')}: ${off?'모서리 처리 없음':`${kind==='chamfer'?'각모따기 C':'둥근모따기 R'}${r} mm`} → 모서리 ${edgeText(C)}`);}
     case'ai':return{out:'',action:'ai',text:t.slice(1).join(' ')};
     default:throw new Error(`알 수 없는 명령: ${cmd} — help`);
   }
@@ -113,7 +131,14 @@ function parse(text){
     if(/방열\s*패드|tim|갭\s*패드|갭\s*필러|gap\s*(pad|filler)/i.test(c)){if(/없|빼|제거|off|사용\s*안/.test(L))out.push('set tim none');else if(/필러|filler|디스펜/.test(L))out.push('set tim gel40');else if(/\b6(\.0)?\s*w|6\s*와트|고성능/.test(L))out.push('set tim pad60');else if(/\b3(\.0)?\s*w|3\s*와트/.test(L))out.push('set tim pad30');else if(/1\.5\s*w/.test(L))out.push('set tim pad15');else if(/자동|auto/.test(L))out.push('set tim auto');}
     // geometry overrides
     const wl=c.match(/(?:벽\s*두께|벽두께|두께|wall)\D{0,6}?(\d+(?:\.\d+)?)/i);if(wl&&!/pcb|기판/i.test(c))out.push('set wall '+wl[1]);else if(/벽\s*두께.*자동/.test(c))out.push('set wall auto');
-    const cr=c.match(/(?:모서리|라운드|필렛|fillet|코너|corner)\D{0,6}?(\d+(?:\.\d+)?)/i);if(cr)out.push('set corner '+cr[1]);
+    if(/모따기|필렛|휠렛|챔퍼|fillet|chamfer|라운드|라운딩|둥글|rounding|\bround/i.test(c)){
+      const kind=/둥근|둥글|라운드|라운딩|필렛|휠렛|fillet|round/i.test(c)||(/\bR\s*\d/.test(c)&&!/\bC\s*\d/.test(c))?'fillet':'chamfer';
+      const es=[];if(/윗면|상면|커버|뚜껑|위쪽|상단|윗\s*모서리|\btop\b/i.test(c))es.push('top');if(/바닥|하면|밑면|아래|하단|\bbottom\b/i.test(c))es.push('bottom');if(/세로|수직|코너|\bvertical\b|\bcorners?\b|네\s*모서리|4\s*(?:개\s*)?모서리|옆\s*모서리/i.test(c))es.push('vertical');
+      const e=es.length?es.join(','):'all';
+      if(/없|제거|빼|off|날카|각지게/.test(L))out.push(`${kind} ${e} off`);
+      else{const sz=(c.match(/\b[RC]\s*=?\s*(\d+(?:\.\d+)?)/i)||c.match(/(?:반경|반지름|크기|사이즈)\s*(\d+(?:\.\d+)?)/)||c.replace(/(?:네|4)\s*(?:개\s*)?모서리/g,'').match(/(\d+(?:\.\d+)?)\s*(?:mm|밀리)?/)||[])[1];
+        out.push(`${kind} ${e} ${sz||(kind==='chamfer'?'1':'2')}`);}}
+    else{const cr=c.match(/(?:모서리|코너|corner)\D{0,6}?(\d+(?:\.\d+)?)/i);if(cr)out.push('set corner '+cr[1]);}
     const tp=c.match(/(?:위\s*여유|상부\s*여유|커버\s*높이|커버\s*여유|top\s*clearance)\D{0,6}?(\d+(?:\.\d+)?)/i);if(tp)out.push('set top '+tp[1]);
     const so=c.match(/(?:스탠드\s*오프|standoff|아래\s*여유|하부\s*여유)\D{0,6}?(\d+(?:\.\d+)?)/i);if(so)out.push('set stand '+so[1]);
     const gp=c.match(/(?:보드\s*와?\s*벽\s*(?:사이)?\s*간격|벽\s*간격|gap)\D{0,6}?(\d+(?:\.\d+)?)/i);if(gp)out.push('set gap '+gp[1]);
@@ -137,6 +162,6 @@ function parse(text){
   }
   return out;
 }
-return{HELP,CMDS,SIDES,GLAND,OVER,tok,args,side,exec,parse,blank,norm,matKey};
+return{HELP,CMDS,SIDES,GLAND,OVER,EDGE_KO,tok,args,side,exec,parse,blank,norm,matKey,edgeSet,edgeText};
 })();
 if(typeof module!=='undefined')module.exports=TEXT2CAD;

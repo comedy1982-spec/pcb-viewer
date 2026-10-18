@@ -27,7 +27,7 @@ function cadLeftHTML(){
       <label class="fld"><span>방열 패드 (TIM)</span><select data-mh="tim"><option value="auto"${i.tim==='auto'?' selected':''}>자동</option>${Object.entries(HOUSING.TIMS).map(([k,v])=>`<option value="${k}"${i.tim===k?' selected':''}>${esc(v.short)}</option>`).join('')}<option value="none"${i.tim==='none'?' selected':''}>사용 안 함</option></select></label></div>
   </div>
   <div class="mnote"><b>설계 조건 요약</b><ul>${R.conds.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>
-  ${mechCard('하우징 재질',esc(d.m.label),`벽 ${g.t} mm${g.t!==g.tAuto?' (지정)':''}${g.rim>g.t?` · 실링 플랜지 ${g.rim} mm`:''} · 모서리 R${g.r} · ${esc(d.m.proc_label)}`)}
+  ${mechCard('하우징 재질',esc(d.m.label),`벽 ${g.t} mm${g.t!==g.tAuto?' (지정)':''}${g.rim>g.t?` · 실링 플랜지 ${g.rim} mm`:''} · 모서리 ${esc(HOUSING.edgeText(g))} · ${esc(d.m.proc_label)}`)}
   ${mechCard('열관리',d.m.metal?(peds.length?`TIM + 페데스탈 ${peds.length}곳`:'하우징 벽 열전도'):'수지 벽 전도 + 내부 대류',`${peds.length?`베이스(서멀 비아) ${peds.filter(p=>p.kind==='bottom').length} · 커버 ${peds.filter(p=>p.kind==='top').length} · `:''}${d.fins?`방열 핀 ${d.fins.n}개${d.fins.user?' (지정)':''} · `:''}표면 ${d.th.Ts.toFixed(0)} °C · PCB ${d.th.Tboard.toFixed(0)} °C · 최고 Tj ${maxTj.toFixed(0)} °C`)}
   ${peds.length?mechCard('방열 패드 (TIM)',esc([...new Set(peds.map(p=>HOUSING.TIMS[p.tim].label))].join(' · ')),`BLT ${[...new Set(peds.map(p=>p.blt))].join(' / ')} mm · 면적 ${peds.reduce((a,p)=>a+p.area,0).toFixed(0)} mm² · 서멀 비아 ${peds.reduce((a,p)=>a+p.vias,0)}개 · 전기 절연형`):''}
   ${seal.map(c=>mechCard('커넥터 관통부',`${esc(c.ref)} ${esc(c.mpn)} ↔ ${esc(c.mate)}`,`창 ${(c.b-c.a).toFixed(1)} × ${(c.z1-c.z0).toFixed(1)} mm · 플랜지 실링 ${c.land.toFixed(1)} mm · 돌출 ${(c.shroudLen-g.rim).toFixed(1)} mm · 분할면 창 아래`)).join('')}
@@ -45,7 +45,7 @@ function cadRightHTML(){
   const auto=[['본체',`${esc(d.m.short)} · 외형 ${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm`],['분할',`베이스 / 커버 · z ${g.zSplit.toFixed(1)} mm${g.splitWin?' (커넥터 창 아래)':''}`],
     ['PCB 보스',`${d.sup.length}개 · 스탠드오프 ${g.stand} mm`],['커버 나사',`${d.screwM} × ${d.ns}`],['실링',esc(d.seal.gasket)],
     ...R.N.cuts.map(c=>[`창 ${c.ref}`,`${HOUSING.SIDE_KO[c.side]} ${(c.b-c.a).toFixed(1)} × ${(c.z1-c.z0).toFixed(1)}${c.sealed?' · 플랜지 실링':''}`]),
-    ...(d.seal.breather?[['벤트','뒤 벽 M12 ePTFE (자동)']]:[]),...(peds.length?[['페데스탈',peds.map(p=>`${p.ref}(${p.kind==='bottom'?'베이스':'커버'})`).join(' ')]]:[]),...(d.fins&&!d.fins.user?[['방열 핀',`${d.fins.n}개 · ${d.fins.h.toFixed(0)} mm (자동)`]]:[])];
+    ['모서리',esc(HOUSING.edgeText(g))],...(d.seal.breather?[['벤트','뒤 벽 M12 ePTFE (자동)']]:[]),...(peds.length?[['페데스탈',peds.map(p=>`${p.ref}(${p.kind==='bottom'?'베이스':'커버'})`).join(' ')]]:[]),...(d.fins&&!d.fins.user?[['방열 핀',`${d.fins.n}개 · ${d.fins.h.toFixed(0)} mm (자동)`]]:[])];
   return`<p class="h">형상 트리</p>
   <ul class="ftree">${auto.map(([k,v])=>`<li class="fa"><span class="fk">${k}</span><span>${v}</span></li>`).join('')}
     ${C.feats.map(f=>`<li class="fu"><span class="fk mono">${esc(f.id)}</span><span>${esc(HOUSING.featLabel(Object.assign({},f,{id:''})))}</span><button class="pill vbtn" data-fdel="${esc(f.id)}" title="${esc(f.id)} 삭제" aria-label="${esc(f.id)} 삭제">×</button></li>`).join('')}
@@ -56,7 +56,8 @@ function cadRightHTML(){
     <table class="stbl"><tbody>
       <tr><td>외형</td><td class="mono">${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm</td></tr>
       <tr><td>내부</td><td class="mono">${g.Li.toFixed(1)} × ${g.Wi.toFixed(1)} × ${g.Hi.toFixed(1)} mm</td></tr>
-      <tr><td>벽 · 플랜지 · R</td><td class="mono">${g.t} · ${g.rim} · ${g.r} mm</td></tr>
+      <tr><td>벽 · 플랜지</td><td class="mono">${g.t} · ${g.rim} mm</td></tr>
+      <tr><td>모서리</td><td class="mono">${esc(HOUSING.edgeText(g))}</td></tr>
       <tr><td>온도 (주위 ${R.inp.ta} °C)</td><td class="mono">표면 ${d.th.Ts.toFixed(1)} · PCB ${d.th.Tboard.toFixed(1)} °C · TIM ${d.th.Ptim.toFixed(1)} W</td></tr>
       <tr><td>PCB 진동</td><td class="mono">f₁ ${d.vib.fn.toFixed(0)} Hz · SF ${d.vib.sf.toFixed(2)}</td></tr>
     </tbody></table></details>
@@ -105,14 +106,38 @@ function mechGroup(R){
   const cyl=(x,y,z0,z1,r,m,par)=>{const me=new THR.Mesh(new THR.CylinderGeometry(r,r,z1-z0,24),m);me.rotation.x=Math.PI/2;me.position.set(x,y,(z0+z1)/2);par.add(me);return me;};
   const X0=g.x0,Y0=g.y0,X1=g.x0+g.Lo,Y1=g.y0+g.Wo,Zb=g.zFloor-g.t,Zt=g.zLid+g.t,r=g.rim;
   const holesOn=sd=>d.feats.filter(f=>(f.type==='hole'||f.type==='slot')&&f.side===sd);
+  // edge treatment: vertical corners (rv, fillet|chamfer), cover-top band (eT) and base-bottom band (eB)
+  const rv=g.r||0,ch=g.vk==='chamfer',rT=g.eT?g.eT.r:0,rB=g.eB?g.eB.r:0;const SEG=8;
+  // wall slabs stop where the corner pieces start (along the wall, from each end)
+  const Rp=rv<=0?0:ch?Math.max(rv+0.414*r,r):Math.max(rv,r);
+  // outline of the housing plan, shrunk inward by `inset` (corner R/C follow the offset), counter-clockwise, SEG+1 points per corner
+  const planPts=inset=>{const P=[];const cs=[[X0,Y0,1,1,Math.PI],[X1,Y0,-1,1,1.5*Math.PI],[X1,Y1,-1,-1,0],[X0,Y1,1,-1,0.5*Math.PI]];
+    cs.forEach(([cx,cy,sx,sy,a0])=>{const rr=ch?Math.max(0,rv-0.586*inset):Math.max(0,rv-inset),off=inset+rr,ox=cx+sx*off,oy=cy+sy*off;
+      const s0=[ox+rr*Math.cos(a0),oy+rr*Math.sin(a0)],s1=[ox+rr*Math.cos(a0+Math.PI/2),oy+rr*Math.sin(a0+Math.PI/2)];
+      for(let i=0;i<=SEG;i++){const k=i/SEG;if(ch)P.push([s0[0]+(s1[0]-s0[0])*k,s0[1]+(s1[1]-s0[1])*k]);else{const a=a0+k*Math.PI/2;P.push([ox+rr*Math.cos(a),oy+rr*Math.sin(a)]);}}});
+    return P;};
+  const planShape=inset=>{const P=planPts(inset);const sh=new THR.Shape();sh.moveTo(P[0][0],P[0][1]);for(let i=1;i<P.length;i++)sh.lineTo(P[i][0],P[i][1]);sh.closePath();return sh;};
+  // outer skin of a filleted/chamfered band: rings of the shrunk outline, joined into quads
+  const loft=(layers,par)=>{if(layers.length<2)return;const rings=layers.map(([z,s])=>planPts(s).map(p=>[p[0],p[1],z]));const n=rings[0].length,pos=[];
+    for(let k=0;k+1<rings.length;k++)for(let i=0;i<n;i++){const j=(i+1)%n,a=rings[k][i],b=rings[k][j],c=rings[k+1][j],e=rings[k+1][i];pos.push(...a,...b,...c,...a,...c,...e);}
+    const geo=new THR.BufferGeometry();geo.setAttribute('position',new THR.Float32BufferAttribute(pos,3));geo.computeVertexNormals();const me=new THR.Mesh(geo,mat);par.add(me);return me;};
+  const bandB=rB>0?HOUSING.edgeLayers(rB,g.eB,null).filter(p=>p[0]<=rB+1e-6).map(([z,s])=>[Zb+z,s]):[];
+  const bandT=rT>0?HOUSING.edgeLayers(rT,null,g.eT).filter(p=>p[0]>=-1e-6).map(([z,s])=>[Zt-rT+z,s]):[];
+  // corner piece between z0 and z1: outer R/C, inner R/C (or square), meeting the trimmed wall slabs
+  const corner=(z0,z1,par)=>{if(rv<=0||z1-z0<0.05)return;const q=ch?rv+0.414*r:0,ri=Math.max(0,rv-r);
+    const loc=[[Rp,0]];if(ch)loc.push([rv,0],[0,rv]);else for(let i=0;i<=SEG;i++){const a=1.5*Math.PI-i/SEG*Math.PI/2;loc.push([rv+rv*Math.cos(a),rv+rv*Math.sin(a)]);}
+    loc.push([0,Rp],[r,Rp]);if(ch){if(q>r)loc.push([r,q],[q,r]);else loc.push([r,r]);}else if(ri>0)for(let i=0;i<=SEG;i++){const a=Math.PI+i/SEG*Math.PI/2;loc.push([rv+ri*Math.cos(a),rv+ri*Math.sin(a)]);}else loc.push([r,r]);
+    loc.push([Rp,r]);
+    [[X0,Y0,1,1],[X1,Y0,-1,1],[X1,Y1,-1,-1],[X0,Y1,1,-1]].forEach(([cx,cy,sx,sy])=>{const sh=new THR.Shape();loc.forEach(([a,b],i)=>{const x=cx+sx*a,y=cy+sy*b;if(i)sh.lineTo(x,y);else sh.moveTo(x,y);});sh.closePath();
+      const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:8}),mat);me.position.z=z0;par.add(me);});};
   // a wall as an extruded outline with connector / vent / user openings, between z0 and z1
   const wall=(side,z0,z1,par)=>{const horiz=side==='S'||side==='N';const len=horiz?g.Lo:g.Wo;const o0=horiz?X0:Y0;
-    const sh=new THR.Shape();sh.moveTo(0,z0);sh.lineTo(len,z0);sh.lineTo(len,z1);sh.lineTo(0,z1);sh.lineTo(0,z0);
-    const rectHole=(a,b,lo,hi)=>{lo=Math.max(z0+0.2,lo);hi=Math.min(z1-0.2,hi);if(hi-lo<0.3||b-a<0.3)return;const h=new THR.Path();h.moveTo(a,lo);h.lineTo(a,hi);h.lineTo(b,hi);h.lineTo(b,lo);h.lineTo(a,lo);sh.holes.push(h);};
+    if(z1-z0<0.05)return;const A=Rp,Bn=len-Rp;const sh=new THR.Shape();sh.moveTo(A,z0);sh.lineTo(Bn,z0);sh.lineTo(Bn,z1);sh.lineTo(A,z1);sh.lineTo(A,z0);
+    const rectHole=(a,b,lo,hi)=>{lo=Math.max(z0+0.2,lo);hi=Math.min(z1-0.2,hi);a=Math.max(A+0.2,a);b=Math.min(Bn-0.2,b);if(hi-lo<0.3||b-a<0.3)return;const h=new THR.Path();h.moveTo(a,lo);h.lineTo(a,hi);h.lineTo(b,hi);h.lineTo(b,lo);h.lineTo(a,lo);sh.holes.push(h);};
     R.N.cuts.filter(c=>c.side===side).forEach(c=>rectHole(c.a-o0,c.b-o0,c.z0,c.z1));
-    if(side==='N'&&d.seal.breather){const zc=g.zSplit-4;if(zc-6>z0&&zc+6<z1){const h=new THR.Path();h.absarc(len/2,zc,6,0,Math.PI*2,true);sh.holes.push(h);}}
+    if(side==='N'&&d.seal.breather){const zc=g.zSplit-4;if(zc-6>z0&&zc+6<z1&&len/2-6>A){const h=new THR.Path();h.absarc(len/2,zc,6,0,Math.PI*2,true);sh.holes.push(h);}}
     holesOn(side).forEach(f=>{const u=f.a-o0;if(f.type==='slot'){if(f.z-f.h/2>z0+0.2&&f.z+f.h/2<z1-0.2)rectHole(u-f.w/2,u+f.w/2,f.z-f.h/2,f.z+f.h/2);return;}
-      if(f.z-f.w/2>z0+0.2&&f.z+f.w/2<z1-0.2&&u-f.w/2>0.2&&u+f.w/2<len-0.2){const h=new THR.Path();h.absarc(u,f.z,f.w/2,0,Math.PI*2,true);sh.holes.push(h);}});
+      if(f.z-f.w/2>z0+0.2&&f.z+f.w/2<z1-0.2&&u-f.w/2>A+0.2&&u+f.w/2<Bn-0.2){const h=new THR.Path();h.absarc(u,f.z,f.w/2,0,Math.PI*2,true);sh.holes.push(h);}});
     const geo=new THR.ExtrudeGeometry(sh,{depth:r,bevelEnabled:false,curveSegments:24});
     // shape (along, z) extruded by the wall thickness → world: S/N walls run along x, W/E walls along y
     geo.applyMatrix4(horiz?new THR.Matrix4().set(1,0,0,0, 0,0,-1,0, 0,1,0,0, 0,0,0,1):new THR.Matrix4().set(0,0,1,0, 1,0,0,0, 0,1,0,0, 0,0,0,1));
@@ -120,12 +145,13 @@ function mechGroup(R){
     if(side==='S')me.position.set(X0,Y0+r,0);else if(side==='N')me.position.set(X0,Y1,0);else if(side==='W')me.position.set(X0,Y0,0);else me.position.set(X1-r,Y0,0);
     par.add(me);return me;};
   // floor / cover plate with user holes
-  const plate=(sd,z0,z1,par)=>{const hs=holesOn(sd);if(!hs.length)return box(X0,Y0,z0,X1,Y1,z1,mat,par);
-    const sh=new THR.Shape();sh.moveTo(X0,Y0);sh.lineTo(X1,Y0);sh.lineTo(X1,Y1);sh.lineTo(X0,Y1);sh.lineTo(X0,Y0);
+  const plate=(sd,z0,z1,par,inset)=>{const hs=holesOn(sd);
+    const sh=planShape(inset||0);
     hs.forEach(f=>{const h=new THR.Path();if(f.type==='slot'){h.moveTo(f.x-f.w/2,f.y-f.h/2);h.lineTo(f.x-f.w/2,f.y+f.h/2);h.lineTo(f.x+f.w/2,f.y+f.h/2);h.lineTo(f.x+f.w/2,f.y-f.h/2);h.lineTo(f.x-f.w/2,f.y-f.h/2);}else h.absarc(f.x,f.y,f.w/2,0,Math.PI*2,true);sh.holes.push(h);});
     const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:24}),mat);me.position.z=z0;par.add(me);return me;};
   // base: floor, walls up to the split line, PCB supports, lid screw bosses, base pedestals, tabs, ribs
-  plate('B',Zb,g.zFloor,base);['S','N','W','E'].forEach(s=>wall(s,g.zFloor,g.zSplit,base));
+  const zw0=rB>0?Math.min(g.zSplit,Zb+rB):g.zFloor,zw1=rT>0?Math.max(g.zSplit,Zt-rT):g.zLid;
+  plate('B',Zb,g.zFloor,base,rB);['S','N','W','E'].forEach(s=>wall(s,zw0,g.zSplit,base));corner(zw0,g.zSplit,base);loft(bandB,base);
   d.sup.forEach(s=>cyl(s.x,s.y,g.zFloor,-T/2,s.d>3.4?4.5:3.5,s.kind==='user'?featM:solid,base));
   d.screws.forEach(s=>cyl(s.x,s.y,g.zFloor,g.zSplit,d.screwM==='M4'?4.5:3.75,mat,base));
   if(R.inp.vib>=4){box(X0+r,(Y0+Y1)/2-1,g.zFloor,X1-r,(Y0+Y1)/2+1,g.zFloor+Math.min(3,g.stand-0.5),mat,base);}
@@ -135,7 +161,7 @@ function mechGroup(R){
   // gasket on the split line
   if(d.seal.gasket!=='없음'&&d.seal.gasket!=='없음 (정밀 맞춤)'){const m2=new THR.LineBasicMaterial({color:0xe2703a});const ins=r/2;const pts=[[X0+ins,Y0+ins],[X1-ins,Y0+ins],[X1-ins,Y1-ins],[X0+ins,Y1-ins],[X0+ins,Y0+ins]].map(p=>new THR.Vector3(p[0],p[1],g.zSplit+0.05));base.add(new THR.Line(new THR.BufferGeometry().setFromPoints(pts),m2));}
   // cover: walls from the split line, top plate, pedestals + TIM on the hot parts, fins, engraved label
-  ['S','N','W','E'].forEach(s=>wall(s,g.zSplit,g.zLid,lid));plate('T',g.zLid,Zt,lid);
+  ['S','N','W','E'].forEach(s=>wall(s,g.zSplit,zw1,lid));corner(g.zSplit,zw1,lid);loft(bandT,lid);plate('T',g.zLid,Zt,lid,rT);
   d.th.peds.forEach(p=>{const q=p.ped;if(p.kind==='top'){box(q.x,q.y,q.z0,q.x+q.w,q.y+q.h,g.zLid,solid,lid);box(q.x,q.y,q.tz,q.x+q.w,q.y+q.h,q.z0,timM,lid);}
     else{box(q.x,q.y,g.zFloor,q.x+q.w,q.y+q.h,q.z1,solid,base);box(q.x,q.y,q.z1,q.x+q.w,q.y+q.h,-T/2,timM,base);}});
   if(d.fins)for(let k=0;k<d.fins.n;k++){const x=X0+5+k*d.fins.pitch;if(x+d.fins.t>X1-2)break;box(x,Y0+4,Zt,x+d.fins.t,Y0+4+d.fins.len,Zt+d.fins.h,solid,lid);}
@@ -177,6 +203,7 @@ const CAD_CHIPS=[['IP67 다이캐스팅','set mat adc12','알루미늄 다이캐
   ['장착 탭 4개','tabs 4 --screw M5','차량 브래킷에 고정할 M5 장착 탭 4개를 달아줘'],
   ['방열 핀','fins 14 --h 15','커버에 방열 핀을 넣어 최고 Tj를 낮추고 무게 변화를 알려줘'],
   ['커버 각인','label "AURIX ECU"','커버 윗면에 제품명을 각인해줘'],
+  ['모서리 라운드','fillet all 3','커버 윗면·바닥 둘레와 세로 모서리를 R3 둥근모따기 해줘'],
   ['재질 비교','compare','재질 후보를 비교하고 원가·무게·열 여유 기준으로 추천해줘'],
   ['점검','check','지금 설계에서 문제(겹침·실링·온도)를 찾아 고쳐줘'],
   ['내보내기','export zip','CAD를 zip으로 내보내줘']];
@@ -190,7 +217,9 @@ async function cadRunCmd(line,by){
   const H=mechCfg();const before=JSON.stringify({inp:H.inp,cad:H.cad});const st=JSON.parse(before);
   const r=TEXT2CAD.exec(st,line,HOUSING);
   if(r.mutated){H.undo.push(before);if(H.undo.length>80)H.undo.shift();H.redo=[];H.inp=st.inp;H.cad=st.cad;H.R=null;const R=mechRun();cadRefresh();
-    const nw=R.warn.filter(w=>/^F\d+/.test(w));return r.out+'\n'+cadBrief(R)+(nw.length?'\n'+nw.map(w=>'! '+w).join('\n'):'');}
+    const edgeCmd=/^(fillet|chamfer|round|set\s+corner)\b/i.test(line.trim());
+    const nw=R.warn.filter(w=>/^F\d+/.test(w)||edgeCmd&&/둘레|윗면 R|모서리/.test(w));
+    return r.out+(edgeCmd?`\n적용된 모서리: ${HOUSING.edgeText(R.d.geo)}${HS.ws==='cad'?'':' (기구 CAD 작업 공간 3D에서 확인)'}`:'')+'\n'+cadBrief(R)+(nw.length?'\n'+nw.map(w=>'! '+w).join('\n'):'');}
   switch(r.action){
     case'report':return HOUSING.text(mechRun());
     case'compare':return HOUSING.compareText(mechRun());
@@ -218,11 +247,12 @@ const CAD_SYS=`You are a mechanical design engineer doing text-to-CAD for the pr
 You change the CAD model only by calling the run_cad tool with one command at a time. Commands (exactly this syntax):
 \${CMDS}
 Coordinates: walls W (left, x min) E (right) S (front, y min) N (back), T = cover top, B = floor. For wall holes --u is the distance along the wall from its start corner and --z the height in board coordinates (board mid-plane = 0; the split line and connector windows are listed in the state). Keep holes clear of connector windows, the split line (±1.5 mm), wall corners and screw bosses; under IP54+ every opening needs a gland, vent or plug (use gland/vent commands).
+Edge treatment vocabulary: 둥근모따기 · 라운드 · 필렛 · R = fillet; 모따기 · 각모따기 · 챔퍼 · C = chamfer (a plain "모따기" with an R size is a fillet). Edges: top = cover top perimeter, bottom = base bottom perimeter, vertical = the four vertical corners (same value as set corner), all = all three; "모서리" without a place means all. Always use the fillet/chamfer commands for these (set corner only changes the vertical corners). The tool output line "적용된 모서리" is what was really applied (sizes are limited by the height to the split line) — report it.
 Rules: use at most 8 commands; read the output after each one (it reports mass, temperatures, cost and warnings) and fix what you broke; never run export (the user does that). Finish with one "check" only if the user asked for a review. Then answer in Korean in 2-5 short sentences: what you changed (feature ids), the key numbers from the outputs, and remaining risks. Do not invent numbers.`;
 async function cadAI(req){
   if(!req.trim())return'요청을 적어 주세요. 예: ai 오른쪽 벽에 케이블 글랜드 두 개 넣고 장착 탭 달아줘';
   const R=mechRun(),H=mechCfg();const cmds=TEXT2CAD.HELP.filter(x=>!/^ai /.test(x[0])&&!/^export/.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
-  const state=`${HOUSING.text(R)}\n형상 목록: ${H.cad.feats.map(f=>HOUSING.featLabel(f)).join(' · ')||'없음'}\n지정값: ${JSON.stringify(H.cad.over)}\n벽 길이: S/N ${R.d.geo.Lo.toFixed(1)} mm, W/E ${R.d.geo.Wo.toFixed(1)} mm · 분할면 z ${R.d.geo.zSplit.toFixed(1)} · 커버 안쪽 z ${R.d.geo.zLid.toFixed(1)} · 바닥 z ${R.d.geo.zFloor.toFixed(1)}`;
+  const state=`${HOUSING.text(R)}\n형상 목록: ${H.cad.feats.map(f=>HOUSING.featLabel(f)).join(' · ')||'없음'}\n지정값: ${JSON.stringify(H.cad.over)}\n모서리: ${HOUSING.edgeText(R.d.geo)}\n벽 길이: S/N ${R.d.geo.Lo.toFixed(1)} mm, W/E ${R.d.geo.Wo.toFixed(1)} mm · 분할면 z ${R.d.geo.zSplit.toFixed(1)} · 커버 안쪽 z ${R.d.geo.zLid.toFixed(1)} · 바닥 z ${R.d.geo.zFloor.toFixed(1)}`;
   const ok=await aiAgent({ro:c=>['help','status','check','compare','list','feats'].includes((TEXT2CAD.tok(c)[0]||'').toLowerCase()),roList:'status, check, compare, feats',prompt:CAD_SYS.replace('${CMDS}',cmds)+`\n\n현재 설계:\n${state}\n\n사용자 요청: ${req}`,toolName:'run_cad',toolDesc:'Run one housing CAD console command (see the list) and return its text output.',example:'"gland E M16 --z 9" or "tabs 4 --screw M5"',
     run:c=>cadRunCmd(c,'ai'),allowed:c=>{const f=(TEXT2CAD.tok(c)[0]||'').toLowerCase();return!TEXT2CAD.CMDS.has(f)||f==='ai'||f==='export'||f==='clear'?'unknown or not allowed: '+f:'';},
     say:cadSay,set:cadSetE,drop:e=>{copDrop(e);CADC.log=CADC.log.filter(x=>x!==e);},

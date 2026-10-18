@@ -61,3 +61,39 @@ test('fins and bosses from the console change the analysis', () => {
   assert.throws(() => TEXT2CAD.exec(st, 'del F99', HOUSING), /F99/);
   assert.equal(TEXT2CAD.exec(st, 'export stl', HOUSING).action, 'export');
 });
+
+test('edge treatments: 둥근모따기 (fillet) and 모따기 (chamfer) on the cover top, base bottom and vertical corners', () => {
+  const p = TEXT2CAD.parse;
+  assert.deepEqual([...p('윗면 모서리 R3 둥근모따기')], ['fillet top 3']);
+  assert.deepEqual([...p('둥근모따기 R2 해줘')], ['fillet all 2']);
+  assert.deepEqual([...p('바닥은 C1 모따기')], ['chamfer bottom 1']);
+  assert.deepEqual([...p('네 모서리 라운드 5')], ['fillet vertical 5']);
+  assert.deepEqual([...p('윗면 모서리 둥근모따기 제거')], ['fillet top off']);
+  assert.deepEqual([...p('모서리 R5')], ['set corner 5'], 'plain corner R keeps meaning the vertical corners');
+  const st = fresh();
+  ['fillet top 4', 'chamfer bottom 1.5', 'set corner 8'].forEach(c => TEXT2CAD.exec(st, c, HOUSING));
+  let R = analyze(st), g = R.d.geo;
+  assert.equal(g.r, 8); assert.equal(g.vk, 'fillet');
+  assert.deepEqual([g.eT.k, g.eT.r, g.eB.k, g.eB.r], ['fillet', 4, 'chamfer', 1.5]);
+  assert.equal(HOUSING.edgeText(g), '세로 R8 · 윗면 R4 · 바닥 C1.5');
+  const s = HOUSING.scad(R, 'x');
+  assert.match(s, /module rsolid/); assert.match(s, /\/\/ 모서리: 세로 R8 · 윗면 R4 · 바닥 C1\.5/);
+  assert.equal((s.match(/\{/g) || []).length, (s.match(/\}/g) || []).length);
+  assert.equal((s.match(/\[/g) || []).length, (s.match(/\]/g) || []).length);
+  // a fillet taller than the cover above the split line is limited, and says so
+  TEXT2CAD.exec(st, 'fillet top 40', HOUSING); R = analyze(st); g = R.d.geo;
+  assert.ok(g.eT.r < 40 && g.eT.r <= g.zLid + g.t - g.zSplit - 1 + 1e-9);
+  assert.ok(R.warn.some(w => /커버 윗면 둘레 R40 → R/.test(w)), R.warn.join('\n'));
+  // vertical chamfer, then everything off
+  TEXT2CAD.exec(st, 'chamfer vertical 2', HOUSING); assert.equal(analyze(st).d.geo.vk, 'chamfer');
+  TEXT2CAD.exec(st, 'fillet all off', HOUSING); g = analyze(st).d.geo;
+  assert.equal(g.r, 0); assert.equal(g.eT, null); assert.equal(g.eB, null);
+  assert.throws(() => TEXT2CAD.exec(st, 'fillet sideways 2', HOUSING), /모르는 모서리/);
+});
+
+test('edge layers run from the bottom band to the top band', () => {
+  const L = HOUSING.edgeLayers(20, { k: 'chamfer', r: 2 }, { k: 'fillet', r: 3 }, 4);
+  assert.deepEqual([...L[0]], [0, 2]); assert.deepEqual([...L[1]], [2, 0]);
+  assert.ok(Math.abs(L[L.length - 1][0] - 20) < 1e-9 && Math.abs(L[L.length - 1][1] - 3) < 1e-9);
+  for (let i = 1; i < L.length; i++) assert.ok(L[i][0] >= L[i - 1][0]);
+});
