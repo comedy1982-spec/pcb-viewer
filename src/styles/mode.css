@@ -1,0 +1,93 @@
+<style>
+/* ---------- 첫 화면 ---------- */
+.home{display:flex;align-items:center;justify-content:center;min-height:0;overflow:auto;padding:24px 16px}
+.home[hidden]{display:none}
+.home-in{width:min(880px,100%);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+.home-k{margin:0;font-size:12px;letter-spacing:.14em;color:var(--accent);font-weight:700;text-transform:uppercase}
+.home h1{margin:0;font-size:28px;font-weight:600}
+.home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;width:100%;margin-top:10px}
+.home-card{display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left;padding:26px 26px 22px;border:1px solid var(--line);border-radius:16px;background:var(--surface);cursor:pointer;transition:border-color .12s,transform .12s,box-shadow .12s;min-height:220px}
+.home-card:hover,.home-card:focus-visible{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.14)}
+.home-card b{font-size:19px}
+.home-card>span{color:var(--muted);font-size:13.5px;line-height:1.55}
+.home-card em{font-style:normal;font-size:12px;color:var(--accent);font-weight:600;margin-top:auto;font-family:var(--f-mono)}
+.hc-ico{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.hc-ico svg{width:36px;height:36px}
+.home-ex{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;color:var(--muted);font-size:13px;margin-top:6px}
+#homeBtn{cursor:pointer;border:0;padding:0}
+#homeBtn:hover{box-shadow:inset 0 0 0 2px var(--accent)}
+body[data-mode="home"] .top{border-bottom:0}
+body[data-mode="home"] .b-name,body[data-mode="home"] .b-sub{display:none}
+/* step 2 is the circuit only: no layer rail, no board summary */
+body[data-mode="steps"][data-step="2"] .main>.layers,body[data-mode="steps"][data-step="2"] #hLeft{display:none}
+body[data-mode="steps"][data-step="2"] .main{grid-template-columns:minmax(0,1fr)!important}
+body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-step="2"] .nogl{display:none}
+
+/* ---------- 2단계: 회로 안 고르기 ---------- */
+.plan-gate{position:absolute;inset:0;z-index:8;overflow:auto;background:var(--bg);padding:18px}
+.pg-wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.pg-head{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;justify-content:space-between}
+.pg-head b{font-size:16px}.pg-head .lead{margin:4px 0 0;max-width:760px}
+.pg-w{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.pg-w .pill.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.vcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;align-items:stretch}
+.vcard{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.vcard.rec{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.vcard.cur{background:color-mix(in srgb,var(--accent-soft) 45%,var(--surface))}
+.vc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vc-h b{font-size:17px}
+.vc-tag{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:1px 8px}
+.vc-rec{font-size:11px;font-weight:700;color:var(--on-accent);background:var(--accent);border-radius:99px;padding:2px 8px}
+.vc-cur{font-size:11px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 8px}
+.vc-d{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.vc-m{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vc-m div{display:flex;flex-direction:column;background:var(--raised);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+.vc-m b{font-family:var(--f-mono);font-size:18px}.vc-m span{font-size:11.5px;color:var(--muted)}
+.vc-s{display:flex;flex-direction:column;gap:4px}
+.pg-bar{display:grid;grid-template-columns:44px 1fr 28px;align-items:center;gap:8px;font-size:12px}
+.pg-bar span{color:var(--muted)}.pg-bar em{font-style:normal;font-family:var(--f-mono);text-align:right;color:var(--muted)}
+.pg-bar i{height:7px;border-radius:4px;background:var(--line);overflow:hidden;display:block}.pg-bar i b{display:block;height:100%;background:var(--accent);border-radius:4px}
+.vc-k{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.vc-diff{margin:0;padding-left:18px;font-size:12.5px;line-height:1.5;color:var(--fg);flex:1}
+.vcard .acts{display:flex;gap:8px;margin-top:4px}
+.pg-foot{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- 1단계: 질문 카드 ---------- */
+.cp-ask{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.cp-ask.open{border-color:var(--accent)}
+.ask-q{font-weight:600}
+.ask-w{font-size:12.5px;color:var(--muted)}
+.ask-a{font-size:13px;color:var(--accent);font-weight:600}
+.ask-o{display:flex;flex-wrap:wrap;gap:6px}
+.ask-o .pill.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.ask-f{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ask-f input{flex:1;min-width:140px;font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+
+/* ---------- 데이터시트 탭 ---------- */
+.dspane{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;background:var(--surface)}
+.ds-h{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ds-h .search{flex:1;min-width:160px;margin:0}
+.ds-sum{padding:10px 12px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line)}
+.ds-list{display:flex;flex-direction:column}
+.ds-row{display:grid;grid-template-columns:92px minmax(0,1fr) auto 44px;gap:8px;align-items:center;width:100%;text-align:left;padding:8px 12px;border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer;font:inherit;color:inherit}
+.ds-row:hover{background:var(--raised)}
+.ds-row:disabled{cursor:default;opacity:.6}
+.ds-refs{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-name{display:flex;flex-direction:column;min-width:0}
+.ds-name b{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-name small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-price{font-size:12px;white-space:nowrap}
+.ds-st{font-size:10.5px;color:var(--muted);text-align:right}
+.ds-stub{font-size:11px;color:var(--warn-fg);background:var(--warn-bg);border-radius:99px;padding:1px 8px}
+.ds-page{padding:14px 16px;font-size:13.5px;line-height:1.55;overflow-wrap:anywhere}
+.ds-page h1{font-size:18px;margin:0 0 4px;font-family:var(--f-mono)}
+.ds-page h2{font-size:13.5px;margin:18px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px}
+.ds-page .meta{color:var(--muted);font-size:12.5px;margin:0 0 6px}
+.ds-page dl{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 10px;margin:6px 0}
+.ds-page dt{color:var(--muted)}.ds-page dd{margin:0}
+.ds-page table{border-collapse:collapse;font-size:12.5px;width:100%;margin:6px 0}
+.ds-page td,.ds-page th{border:1px solid var(--line);padding:4px 7px;text-align:left}
+.ds-page .todo{background:var(--warn-bg);color:var(--warn-fg);border-radius:8px;padding:8px 10px;font-size:12.5px}
+.ds-page img{max-width:100%;height:auto}
+.ds-page ul{padding-left:18px;margin:6px 0}
+</style>

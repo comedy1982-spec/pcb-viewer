@@ -1,7 +1,7 @@
 <div class="app">
   <header class="top">
     <div class="brand">
-      <div class="brand-ico" aria-hidden="true"></div>
+      <button type="button" class="brand-ico" id="homeBtn" title="첫 화면 (신규 설계 · 기존 프로젝트)" aria-label="첫 화면으로"></button>
       <div style="min-width:0">
         <div class="b-app">AllinOneDesign</div>
         <div class="b-name"><span id="bName">SENSE-32 DEV v1.2</span><span class="tag" id="bTag">예제 보드</span></div>
@@ -32,6 +32,27 @@
     </div>
   </header>
 
+  <section class="home" id="home" aria-label="첫 화면">
+    <div class="home-in">
+      <p class="home-k">AllinOneDesign</p>
+      <h1>무엇을 하시겠어요?</h1>
+      <div class="home-cards">
+        <button type="button" class="home-card" id="homeNew">
+          <span class="hc-ico" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="36" height="32" rx="4"/><path d="M14 20h8M14 28h20M24 8v32M6 20h8"/><circle cx="34" cy="20" r="3"/></svg></span>
+          <b>신규 설계</b>
+          <span>요구사항을 적으면 AI가 분석해 시스템 다이어그램부터 회로 · PCB · 기구까지 단계별로 설계합니다.</span>
+          <em>1 시스템 → 2 회로 → 3 PCB → 4 기구</em>
+        </button>
+        <button type="button" class="home-card" id="homeOpen">
+          <span class="hc-ico" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14a3 3 0 0 1 3-3h10l4 4h16a3 3 0 0 1 3 3v19a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z"/><path d="M17 27h14M24 20v14"/></svg></span>
+          <b>기존 프로젝트</b>
+          <span>KiCad · Gerber · 뷰어 JSON 파일을 열어 3D / TOP / BOTTOM / 회로도로 보고, 시뮬레이션 · HSIS · PCB 편집을 합니다.</span>
+          <em>디자인 뷰어</em>
+        </button>
+      </div>
+      <div class="home-ex"><span>예제로 열기</span><button type="button" class="pill vbtn" data-hex="sense">SENSE-32</button><button type="button" class="pill vbtn" data-hex="mcu">MCU DC 모터</button><button type="button" class="pill vbtn" data-hex="bldc">MCU BLDC 3상</button><button type="button" class="pill vbtn" data-hex="tc364">AURIX TC364</button></div>
+    </div>
+  </section>
   <div class="work"><div class="wsa">
   <div class="main">
     <div class="rh" id="hLeft"></div>
@@ -101,12 +122,7 @@
           <div class="acts"><button class="btn primary sm" id="npPlan">블록 다이어그램 만들기</button><span class="np-hint" id="npPlanHint"></span></div></section>
         <section><h3>HW 블록 (부품 미정)</h3><div id="arBlocks"></div>
           <div class="np-add"><select id="arGroup" aria-label="블록 그룹"></select><input id="arLabel" placeholder="블록 이름 (예: Relay Driver)" aria-label="새 블록 이름"><button class="btn sm" id="arAdd">추가</button></div></section>
-        <section><h3>PCB 조건 <span class="np-hint">3단계 PCB 시작 때 적용</span></h3><div class="np-board">
-          <label>동박 층 <select id="npLayers"><option value="2">2층</option><option value="4">4층</option><option value="6">6층</option><option value="8">8층</option><option value="10">10층</option></select></label>
-          <label>보드 크기 <select id="npSize"><option value="auto">자동</option><option value="min">최소화</option><option value="fix">직접 입력</option></select></label>
-          <label id="npWH">가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> × 세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
-          <label>배치 전략 <select id="npStrat"><option value="balanced">균형</option><option value="thermal">열 분산</option><option value="noise">노이즈 최소화</option><option value="compact">소형화</option></select></label>
-          <label class="chkl"><input type="checkbox" id="npRoute" checked> PCB 시작 때 자동 배선</label></div></section>
+
   </aside>
   <div class="sys-mid">
     <section class="sys-dia" id="sysDia" aria-label="시스템 다이어그램">
@@ -154,11 +170,13 @@
       <button role="tab" type="button" data-dock="ai" aria-selected="true" id="dk-ai">설계 도우미</button>
       <button role="tab" type="button" data-dock="info" aria-selected="false" id="dk-info">정보</button>
       <button role="tab" type="button" data-dock="sim" aria-selected="false" id="dk-sim">시뮬레이션</button>
+      <button role="tab" type="button" data-dock="ds" aria-selected="false" id="dk-ds">데이터시트</button>
       <span class="dock-sp"></span>
       <button type="button" class="dock-btn" id="dockPop" title="지금 탭을 새 창으로 엽니다 (메인 창과 계속 연동)" aria-label="지금 탭을 새 창으로"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 8 8M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3"/></svg></button>
       <button type="button" class="dock-btn" id="dockHide" title="오른쪽 패널 접기" aria-label="오른쪽 패널 접기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg></button>
     </div>
     <div class="dock-body" id="dockBody">
+    <section class="dspane" id="dsPane" aria-label="데이터시트 DB" hidden></section>
     <aside class="panel insp" aria-label="정보">
       <div class="seg pmode" role="tablist" aria-label="패널 전환"><button role="tab" data-panel="info" aria-selected="true" id="p-info">정보</button><button role="tab" data-panel="sim" aria-selected="false" id="p-sim">시뮬레이션</button></div>
       <div id="infoPane">

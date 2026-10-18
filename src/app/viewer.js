@@ -599,7 +599,7 @@ document.addEventListener('keydown',e=>{
 });
 function header(){
   $('#bName').textContent=BD.name;$('#bTag').textContent=BD.source==='예제'?'예제 보드':BD.source;
-  const n=BD.comps.length;$('#bSub').textContent=`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers||2}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개${BD.pcbPending?' · PCB 미배치':''}`;
+  const n=BD.comps.length;$('#bSub').textContent=BD.blank?'신규 설계 · 요구사항 → 시스템 다이어그램 → 회로 → PCB → 기구':BD.pcbPending?`회로 · 부품 ${n}개 · 넷 ${BD.netOrder.length}개${BD.variantLabel?' · 회로 안: '+BD.variantLabel:''} · PCB는 3단계에서`:`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers||2}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개`;
   const ir=$('#ly-inner-row');if(ir)ir.hidden=!((BD.copperLayers||2)>2&&PCB.cuKeys(BD).length>2);
   document.title=BD.name+' · AllinOneDesign';
 }
@@ -712,6 +712,6 @@ let toastT=0;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=fals
 /*SIMUI*/
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));
-const boot=()=>{setView('3d');setTimeout(()=>{if(!new URLSearchParams(location.search).has('board'))setStep(1);},0);};
+const boot=()=>{setView('3d');setTimeout(()=>{const q=new URLSearchParams(location.search);if(q.has('new'))newProject();else if(q.has('board'))openViewer(null);else setMode('home');},0);};
 (document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]):Promise.resolve()).then(boot);
 })();

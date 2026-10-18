@@ -8,7 +8,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 const stripExport = (s) => s.replace(/if\(typeof module!=='undefined'\)module\.exports=[^;]+;/, '');
 const script = (code) => `<script>\n${code}\n</script>`;
 
-const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/mechui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js') + '\n' + read('src/app/popui.js') + '\n' + read('src/app/fwui.js') + '\n' + read('src/app/pcbui.js') + '\n' + read('src/app/aimode.js') + '\n' + read('src/app/pcbcli.js') + '\n' + read('src/app/schcli.js') + '\n' + read('src/app/newui.js') + '\n' + read('src/app/copilot.js'));
+const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/mechui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js') + '\n' + read('src/app/popui.js') + '\n' + read('src/app/fwui.js') + '\n' + read('src/app/pcbui.js') + '\n' + read('src/app/aimode.js') + '\n' + read('src/app/pcbcli.js') + '\n' + read('src/app/schcli.js') + '\n' + read('src/app/newui.js') + '\n' + read('src/app/copilot.js') + '\n' + read('src/app/dsui.js') + '\n' + read('src/app/modeui.js'));
 
 const html = `<!doctype html>
 <html lang="ko">
@@ -22,6 +22,7 @@ const html = `<!doctype html>
 ${read('src/styles/base.css')}
 ${read('src/styles/extra.css')}
 ${read('src/styles/copilot.css')}
+${read('src/styles/mode.css')}
 </head>
 <body>
 ${read('src/app/body.html')}
@@ -39,6 +40,7 @@ ${script(read('src/app/sample-mcu.js'))}
 ${script(read('src/app/sample-tc364.js'))}
 ${script(stripExport(read('src/fw/fw.js')))}
 ${script(stripExport(read('src/parts/parts.js')))}
+${script(stripExport(read('src/parts/dsdb.js')))}
 ${script(stripExport(read('src/hsis/hsis.js')))}
 ${script(stripExport(read('src/hsis/pinrec.js')))}
 ${script(stripExport(read('src/hsis/mcal.js')))}

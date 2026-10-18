@@ -1,11 +1,13 @@
 {
   "name": "pcb-viewer",
-  "version": "1.23.0",
+  "version": "1.24.0",
   "private": true,
   "description": "Browser-based interactive PCB viewer for KiCad and Gerber files, with 3D and TOP/BOTTOM views and simple IR-drop, signal integrity, thermal and circuit simulations.",
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "node scripts/dsdb.mjs && node scripts/build.mjs",
+    "dsdb": "node scripts/dsdb.mjs",
+    "dsdb:init": "node scripts/dsdb.mjs --init",
     "test": "node --test test/*.test.mjs",
     "examples": "node scripts/examples.mjs",
     "datasheets": "node scripts/datasheets.mjs",

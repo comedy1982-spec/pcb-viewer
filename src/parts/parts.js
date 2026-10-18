@@ -96,6 +96,14 @@ const rval=c=>{let m=c.match(/^(\d+)([KRM])(\d*)$/);if(!m)return c;return m[1]+(
 const FAMILY=[
   [/^RC0603FR-07(.+)L$/,m=>({mfr:'Yageo',title:'RC series thick-film chip resistor 0603',cat:'저항',specs:[['값',rval(m[1])],['정밀도','±1 %'],['크기','0603, 1/10 W']]})],
 ];
+/* reference unit price (USD, around 1k pcs, estimates for comparing circuit variants — not quotes) */
+const PRICE={'STM32F042K6U6':2.6,'TC364DP-64F300F':17.5,'DRV8313PWPR':3.4,'AMS1117-3.3':0.28,'AMS1117-5.0':0.28,'W25Q32JVSSIQ':0.55,'AO3400A':0.12,'SS14':0.09,'SS34':0.14,
+  'APT1608SGC':0.07,'APT1608EC':0.07,'APT1608QBC/D':0.09,'B3FS-1000P':0.18,'61300411121':0.16,'61300211121':0.10,'61300811121':0.28,'USB4105-GF-A':0.55,'FA-130RA':2.1,'42BLF01 (MIKROE-4455)':24,
+  'CL21A106KAYNNNE':0.04,'CL10B104KB8NNNC':0.012,'CL10B103KB8NNNC':0.012,'CL10A105KB8NNNC':0.02,'GRM31CR60J107ME39':0.22,'EEE-FK1E471P':0.38,'GRM32ER61E226KE15':0.12,'GRM188R71C474KA88D':0.02,
+  'TLE9251VSJ':1.15,'ABM8-20.000MHZ-B2-T':0.55,'RL1206FR-070R1L':0.08,'TPS54331DR':1.25,'SRN5040-100M':0.26,'SMAJ5.0A':0.18,'SMAJ15A':0.18,'SMAJ28A':0.18,'SMAJ58A':0.2,'CL10B332KB8NNBC':0.012,'CL10B332KB8NNNC':0.012};
+const CAT_PRICE={'저항':0.008,'커패시터':0.02,'LED':0.07,'다이오드':0.1,'커넥터':0.2,'MCU':3,'전원':0.4,'메모리':0.6,'트랜지스터':0.15,'스위치':0.2,'크리스털':0.5,'모터':3,'모터 드라이버':3,'통신':1.2,'인덕터':0.25};
+function price(mpn,cat){if(mpn&&PRICE[mpn]!=null)return PRICE[mpn];const k=String(mpn||'');if(/^RC0603|^RC0805|^RC1206/.test(k))return 0.008;if(/^CL10|^CL21|^GRM18|^GRM21/.test(k))return 0.015;if(/^GRM3|^CL31/.test(k))return 0.12;
+  const i=find(mpn);return CAT_PRICE[(i&&i.cat)||cat]!=null?CAT_PRICE[(i&&i.cat)||cat]:null;}
 const search=mpn=>'https://octopart.com/search?q='+encodeURIComponent(mpn);
 function find(mpn){
   if(!mpn)return null;const k=String(mpn).trim();
@@ -105,6 +113,6 @@ function find(mpn){
   return null;
 }
 function links(info,mpn){const l=[];if(info&&info.pdf)l.push(['데이터시트 PDF',info.pdf]);if(info&&info.page)l.push([info.pdf?'제품 페이지':'제품·데이터시트 페이지',info.page]);if(info&&info.page2)l.push(['관련 페이지',info.page2]);l.push(['부품 검색 (Octopart)',search(mpn)]);return l;}
-return{P,find,links,search};
+return{P,PRICE,price,find,links,search};
 })();
 if(typeof module!=='undefined')module.exports=PARTS;

@@ -898,12 +898,106 @@ body.pp-body{height:100vh;margin:0;overflow:hidden}
 }
 </style>
 
+<style>
+/* ---------- 첫 화면 ---------- */
+.home{display:flex;align-items:center;justify-content:center;min-height:0;overflow:auto;padding:24px 16px}
+.home[hidden]{display:none}
+.home-in{width:min(880px,100%);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+.home-k{margin:0;font-size:12px;letter-spacing:.14em;color:var(--accent);font-weight:700;text-transform:uppercase}
+.home h1{margin:0;font-size:28px;font-weight:600}
+.home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;width:100%;margin-top:10px}
+.home-card{display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left;padding:26px 26px 22px;border:1px solid var(--line);border-radius:16px;background:var(--surface);cursor:pointer;transition:border-color .12s,transform .12s,box-shadow .12s;min-height:220px}
+.home-card:hover,.home-card:focus-visible{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.14)}
+.home-card b{font-size:19px}
+.home-card>span{color:var(--muted);font-size:13.5px;line-height:1.55}
+.home-card em{font-style:normal;font-size:12px;color:var(--accent);font-weight:600;margin-top:auto;font-family:var(--f-mono)}
+.hc-ico{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.hc-ico svg{width:36px;height:36px}
+.home-ex{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;color:var(--muted);font-size:13px;margin-top:6px}
+#homeBtn{cursor:pointer;border:0;padding:0}
+#homeBtn:hover{box-shadow:inset 0 0 0 2px var(--accent)}
+body[data-mode="home"] .top{border-bottom:0}
+body[data-mode="home"] .b-name,body[data-mode="home"] .b-sub{display:none}
+/* step 2 is the circuit only: no layer rail, no board summary */
+body[data-mode="steps"][data-step="2"] .main>.layers,body[data-mode="steps"][data-step="2"] #hLeft{display:none}
+body[data-mode="steps"][data-step="2"] .main{grid-template-columns:minmax(0,1fr)!important}
+body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-step="2"] .nogl{display:none}
+
+/* ---------- 2단계: 회로 안 고르기 ---------- */
+.plan-gate{position:absolute;inset:0;z-index:8;overflow:auto;background:var(--bg);padding:18px}
+.pg-wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.pg-head{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;justify-content:space-between}
+.pg-head b{font-size:16px}.pg-head .lead{margin:4px 0 0;max-width:760px}
+.pg-w{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.pg-w .pill.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.vcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;align-items:stretch}
+.vcard{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.vcard.rec{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.vcard.cur{background:color-mix(in srgb,var(--accent-soft) 45%,var(--surface))}
+.vc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vc-h b{font-size:17px}
+.vc-tag{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:1px 8px}
+.vc-rec{font-size:11px;font-weight:700;color:var(--on-accent);background:var(--accent);border-radius:99px;padding:2px 8px}
+.vc-cur{font-size:11px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 8px}
+.vc-d{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.vc-m{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vc-m div{display:flex;flex-direction:column;background:var(--raised);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+.vc-m b{font-family:var(--f-mono);font-size:18px}.vc-m span{font-size:11.5px;color:var(--muted)}
+.vc-s{display:flex;flex-direction:column;gap:4px}
+.pg-bar{display:grid;grid-template-columns:44px 1fr 28px;align-items:center;gap:8px;font-size:12px}
+.pg-bar span{color:var(--muted)}.pg-bar em{font-style:normal;font-family:var(--f-mono);text-align:right;color:var(--muted)}
+.pg-bar i{height:7px;border-radius:4px;background:var(--line);overflow:hidden;display:block}.pg-bar i b{display:block;height:100%;background:var(--accent);border-radius:4px}
+.vc-k{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.vc-diff{margin:0;padding-left:18px;font-size:12.5px;line-height:1.5;color:var(--fg);flex:1}
+.vcard .acts{display:flex;gap:8px;margin-top:4px}
+.pg-foot{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- 1단계: 질문 카드 ---------- */
+.cp-ask{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.cp-ask.open{border-color:var(--accent)}
+.ask-q{font-weight:600}
+.ask-w{font-size:12.5px;color:var(--muted)}
+.ask-a{font-size:13px;color:var(--accent);font-weight:600}
+.ask-o{display:flex;flex-wrap:wrap;gap:6px}
+.ask-o .pill.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.ask-f{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ask-f input{flex:1;min-width:140px;font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+
+/* ---------- 데이터시트 탭 ---------- */
+.dspane{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;background:var(--surface)}
+.ds-h{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ds-h .search{flex:1;min-width:160px;margin:0}
+.ds-sum{padding:10px 12px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line)}
+.ds-list{display:flex;flex-direction:column}
+.ds-row{display:grid;grid-template-columns:92px minmax(0,1fr) auto 44px;gap:8px;align-items:center;width:100%;text-align:left;padding:8px 12px;border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer;font:inherit;color:inherit}
+.ds-row:hover{background:var(--raised)}
+.ds-row:disabled{cursor:default;opacity:.6}
+.ds-refs{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-name{display:flex;flex-direction:column;min-width:0}
+.ds-name b{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-name small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-price{font-size:12px;white-space:nowrap}
+.ds-st{font-size:10.5px;color:var(--muted);text-align:right}
+.ds-stub{font-size:11px;color:var(--warn-fg);background:var(--warn-bg);border-radius:99px;padding:1px 8px}
+.ds-page{padding:14px 16px;font-size:13.5px;line-height:1.55;overflow-wrap:anywhere}
+.ds-page h1{font-size:18px;margin:0 0 4px;font-family:var(--f-mono)}
+.ds-page h2{font-size:13.5px;margin:18px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px}
+.ds-page .meta{color:var(--muted);font-size:12.5px;margin:0 0 6px}
+.ds-page dl{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 10px;margin:6px 0}
+.ds-page dt{color:var(--muted)}.ds-page dd{margin:0}
+.ds-page table{border-collapse:collapse;font-size:12.5px;width:100%;margin:6px 0}
+.ds-page td,.ds-page th{border:1px solid var(--line);padding:4px 7px;text-align:left}
+.ds-page .todo{background:var(--warn-bg);color:var(--warn-fg);border-radius:8px;padding:8px 10px;font-size:12.5px}
+.ds-page img{max-width:100%;height:auto}
+.ds-page ul{padding-left:18px;margin:6px 0}
+</style>
+
 </head>
 <body>
 <div class="app">
   <header class="top">
     <div class="brand">
-      <div class="brand-ico" aria-hidden="true"></div>
+      <button type="button" class="brand-ico" id="homeBtn" title="첫 화면 (신규 설계 · 기존 프로젝트)" aria-label="첫 화면으로"></button>
       <div style="min-width:0">
         <div class="b-app">AllinOneDesign</div>
         <div class="b-name"><span id="bName">SENSE-32 DEV v1.2</span><span class="tag" id="bTag">예제 보드</span></div>
@@ -934,6 +1028,27 @@ body.pp-body{height:100vh;margin:0;overflow:hidden}
     </div>
   </header>
 
+  <section class="home" id="home" aria-label="첫 화면">
+    <div class="home-in">
+      <p class="home-k">AllinOneDesign</p>
+      <h1>무엇을 하시겠어요?</h1>
+      <div class="home-cards">
+        <button type="button" class="home-card" id="homeNew">
+          <span class="hc-ico" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="36" height="32" rx="4"/><path d="M14 20h8M14 28h20M24 8v32M6 20h8"/><circle cx="34" cy="20" r="3"/></svg></span>
+          <b>신규 설계</b>
+          <span>요구사항을 적으면 AI가 분석해 시스템 다이어그램부터 회로 · PCB · 기구까지 단계별로 설계합니다.</span>
+          <em>1 시스템 → 2 회로 → 3 PCB → 4 기구</em>
+        </button>
+        <button type="button" class="home-card" id="homeOpen">
+          <span class="hc-ico" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14a3 3 0 0 1 3-3h10l4 4h16a3 3 0 0 1 3 3v19a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z"/><path d="M17 27h14M24 20v14"/></svg></span>
+          <b>기존 프로젝트</b>
+          <span>KiCad · Gerber · 뷰어 JSON 파일을 열어 3D / TOP / BOTTOM / 회로도로 보고, 시뮬레이션 · HSIS · PCB 편집을 합니다.</span>
+          <em>디자인 뷰어</em>
+        </button>
+      </div>
+      <div class="home-ex"><span>예제로 열기</span><button type="button" class="pill vbtn" data-hex="sense">SENSE-32</button><button type="button" class="pill vbtn" data-hex="mcu">MCU DC 모터</button><button type="button" class="pill vbtn" data-hex="bldc">MCU BLDC 3상</button><button type="button" class="pill vbtn" data-hex="tc364">AURIX TC364</button></div>
+    </div>
+  </section>
   <div class="work"><div class="wsa">
   <div class="main">
     <div class="rh" id="hLeft"></div>
@@ -1003,12 +1118,7 @@ body.pp-body{height:100vh;margin:0;overflow:hidden}
           <div class="acts"><button class="btn primary sm" id="npPlan">블록 다이어그램 만들기</button><span class="np-hint" id="npPlanHint"></span></div></section>
         <section><h3>HW 블록 (부품 미정)</h3><div id="arBlocks"></div>
           <div class="np-add"><select id="arGroup" aria-label="블록 그룹"></select><input id="arLabel" placeholder="블록 이름 (예: Relay Driver)" aria-label="새 블록 이름"><button class="btn sm" id="arAdd">추가</button></div></section>
-        <section><h3>PCB 조건 <span class="np-hint">3단계 PCB 시작 때 적용</span></h3><div class="np-board">
-          <label>동박 층 <select id="npLayers"><option value="2">2층</option><option value="4">4층</option><option value="6">6층</option><option value="8">8층</option><option value="10">10층</option></select></label>
-          <label>보드 크기 <select id="npSize"><option value="auto">자동</option><option value="min">최소화</option><option value="fix">직접 입력</option></select></label>
-          <label id="npWH">가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> × 세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
-          <label>배치 전략 <select id="npStrat"><option value="balanced">균형</option><option value="thermal">열 분산</option><option value="noise">노이즈 최소화</option><option value="compact">소형화</option></select></label>
-          <label class="chkl"><input type="checkbox" id="npRoute" checked> PCB 시작 때 자동 배선</label></div></section>
+
   </aside>
   <div class="sys-mid">
     <section class="sys-dia" id="sysDia" aria-label="시스템 다이어그램">
@@ -1056,11 +1166,13 @@ body.pp-body{height:100vh;margin:0;overflow:hidden}
       <button role="tab" type="button" data-dock="ai" aria-selected="true" id="dk-ai">설계 도우미</button>
       <button role="tab" type="button" data-dock="info" aria-selected="false" id="dk-info">정보</button>
       <button role="tab" type="button" data-dock="sim" aria-selected="false" id="dk-sim">시뮬레이션</button>
+      <button role="tab" type="button" data-dock="ds" aria-selected="false" id="dk-ds">데이터시트</button>
       <span class="dock-sp"></span>
       <button type="button" class="dock-btn" id="dockPop" title="지금 탭을 새 창으로 엽니다 (메인 창과 계속 연동)" aria-label="지금 탭을 새 창으로"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 8 8M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3"/></svg></button>
       <button type="button" class="dock-btn" id="dockHide" title="오른쪽 패널 접기" aria-label="오른쪽 패널 접기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg></button>
     </div>
     <div class="dock-body" id="dockBody">
+    <section class="dspane" id="dsPane" aria-label="데이터시트 DB" hidden></section>
     <aside class="panel insp" aria-label="정보">
       <div class="seg pmode" role="tablist" aria-label="패널 전환"><button role="tab" data-panel="info" aria-selected="true" id="p-info">정보</button><button role="tab" data-panel="sim" aria-selected="false" id="p-sim">시뮬레이션</button></div>
       <div id="infoPane">
@@ -4193,6 +4305,14 @@ const rval=c=>{let m=c.match(/^(\d+)([KRM])(\d*)$/);if(!m)return c;return m[1]+(
 const FAMILY=[
   [/^RC0603FR-07(.+)L$/,m=>({mfr:'Yageo',title:'RC series thick-film chip resistor 0603',cat:'저항',specs:[['값',rval(m[1])],['정밀도','±1 %'],['크기','0603, 1/10 W']]})],
 ];
+/* reference unit price (USD, around 1k pcs, estimates for comparing circuit variants — not quotes) */
+const PRICE={'STM32F042K6U6':2.6,'TC364DP-64F300F':17.5,'DRV8313PWPR':3.4,'AMS1117-3.3':0.28,'AMS1117-5.0':0.28,'W25Q32JVSSIQ':0.55,'AO3400A':0.12,'SS14':0.09,'SS34':0.14,
+  'APT1608SGC':0.07,'APT1608EC':0.07,'APT1608QBC/D':0.09,'B3FS-1000P':0.18,'61300411121':0.16,'61300211121':0.10,'61300811121':0.28,'USB4105-GF-A':0.55,'FA-130RA':2.1,'42BLF01 (MIKROE-4455)':24,
+  'CL21A106KAYNNNE':0.04,'CL10B104KB8NNNC':0.012,'CL10B103KB8NNNC':0.012,'CL10A105KB8NNNC':0.02,'GRM31CR60J107ME39':0.22,'EEE-FK1E471P':0.38,'GRM32ER61E226KE15':0.12,'GRM188R71C474KA88D':0.02,
+  'TLE9251VSJ':1.15,'ABM8-20.000MHZ-B2-T':0.55,'RL1206FR-070R1L':0.08,'TPS54331DR':1.25,'SRN5040-100M':0.26,'SMAJ5.0A':0.18,'SMAJ15A':0.18,'SMAJ28A':0.18,'SMAJ58A':0.2,'CL10B332KB8NNBC':0.012,'CL10B332KB8NNNC':0.012};
+const CAT_PRICE={'저항':0.008,'커패시터':0.02,'LED':0.07,'다이오드':0.1,'커넥터':0.2,'MCU':3,'전원':0.4,'메모리':0.6,'트랜지스터':0.15,'스위치':0.2,'크리스털':0.5,'모터':3,'모터 드라이버':3,'통신':1.2,'인덕터':0.25};
+function price(mpn,cat){if(mpn&&PRICE[mpn]!=null)return PRICE[mpn];const k=String(mpn||'');if(/^RC0603|^RC0805|^RC1206/.test(k))return 0.008;if(/^CL10|^CL21|^GRM18|^GRM21/.test(k))return 0.015;if(/^GRM3|^CL31/.test(k))return 0.12;
+  const i=find(mpn);return CAT_PRICE[(i&&i.cat)||cat]!=null?CAT_PRICE[(i&&i.cat)||cat]:null;}
 const search=mpn=>'https://octopart.com/search?q='+encodeURIComponent(mpn);
 function find(mpn){
   if(!mpn)return null;const k=String(mpn).trim();
@@ -4202,8 +4322,14 @@ function find(mpn){
   return null;
 }
 function links(info,mpn){const l=[];if(info&&info.pdf)l.push(['데이터시트 PDF',info.pdf]);if(info&&info.page)l.push([info.pdf?'제품 페이지':'제품·데이터시트 페이지',info.page]);if(info&&info.page2)l.push(['관련 페이지',info.page2]);l.push(['부품 검색 (Octopart)',search(mpn)]);return l;}
-return{P,find,links,search};
+return{P,PRICE,price,find,links,search};
 })();
+
+
+</script>
+<script>
+/* generated by scripts/dsdb.mjs from datasheets/db/*.html — do not edit; edit the HTML pages and rebuild */
+const DSDB={"built":"2026-10-18","items":{"42BLF01 (MIKROE-4455)":{"file":"datasheets/db/42BLF01.html","mfr":"MIKROE (42BLF 시리즈)","cat":"모터","price":24,"status":"stub","title":"42BLF01 (MIKROE-4455) · 42BLF01 — 3-phase BLDC motor with hall sensors","html":"<h1>42BLF01 (MIKROE-4455)</h1>\n  <p class=\"meta\">MIKROE (42BLF 시리즈) · 모터 · 42BLF01 — 3-phase BLDC motor with hall sensors · 참고 단가 약 $24 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://mouser.com/datasheet/2/272/BLDC_Motor_BLDC_Motor_with_Hall_sensor_Datasheet-3217747.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.mikroe.com/motor-bldc-42blf01-with-hall-sensor\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=42BLF01%20(MIKROE-4455)\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>정격</dt><dd>24 V, 4000 rpm, 1.9 A</dd>\n      <dt>극수</dt><dd>8극 (4극쌍), Y결선</dd>\n      <dt>토크 상수</dt><dd>0.035 N·m/A</dd>\n      <dt>역기전력 상수</dt><dd>3.7 V/krpm</dd>\n      <dt>회전자 관성</dt><dd>24 g·cm²</dd>\n      <dt>홀 센서</dt><dd>120°, 전원 5–20 V</dd>\n      <dt>시뮬레이션 값</dt><dd>상 저항 0.9 Ω·인덕턴스 1.3 mH는 추정값 (데이터시트에 없음), 예제는 12 V 구동</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"61300211121":{"file":"datasheets/db/61300211121.html","mfr":"Würth Elektronik","cat":"커넥터","price":0.1,"status":"stub","title":"61300211121 · WR-PHD 2.54 mm pin header, 2 pins","html":"<h1>61300211121</h1>\n  <p class=\"meta\">Würth Elektronik · 커넥터 · WR-PHD 2.54 mm pin header, 2 pins · 참고 단가 약 $0.1 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.we-online.com/components/products/datasheet/61300211121.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=61300211121\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>피치</dt><dd>2.54 mm</dd>\n      <dt>핀</dt><dd>1×2, 스루홀</dd>\n      <dt>정격</dt><dd>3 A, 250 V AC</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"61300411121":{"file":"datasheets/db/61300411121.html","mfr":"Würth Elektronik","cat":"커넥터","price":0.16,"status":"stub","title":"61300411121 · WR-PHD 2.54 mm pin header, 4 pins","html":"<h1>61300411121</h1>\n  <p class=\"meta\">Würth Elektronik · 커넥터 · WR-PHD 2.54 mm pin header, 4 pins · 참고 단가 약 $0.16 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.we-online.com/components/products/datasheet/61300411121.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=61300411121\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>피치</dt><dd>2.54 mm</dd>\n      <dt>핀</dt><dd>1×4, 스루홀</dd>\n      <dt>정격</dt><dd>3 A, 250 V AC</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"61300811121":{"file":"datasheets/db/61300811121.html","mfr":"Würth Elektronik","cat":"커넥터","price":0.28,"status":"stub","title":"61300811121 · WR-PHD 2.54 mm pin header, 8 pins","html":"<h1>61300811121</h1>\n  <p class=\"meta\">Würth Elektronik · 커넥터 · WR-PHD 2.54 mm pin header, 8 pins · 참고 단가 약 $0.28 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.we-online.com/components/products/datasheet/61300811121.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=61300811121\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>피치</dt><dd>2.54 mm</dd>\n      <dt>핀</dt><dd>1×8, 스루홀</dd>\n      <dt>정격</dt><dd>3 A, 250 V AC</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"ABM8-20.000MHZ-B2-T":{"file":"datasheets/db/ABM8-20.000MHZ-B2-T.html","mfr":"Abracon","cat":"크리스털","price":0.55,"status":"stub","title":"ABM8-20.000MHZ-B2-T · ABM8 — 3.2×2.5 mm SMD crystal, 20 MHz","html":"<h1>ABM8-20.000MHZ-B2-T</h1>\n  <p class=\"meta\">Abracon · 크리스털 · ABM8 — 3.2×2.5 mm SMD crystal, 20 MHz · 참고 단가 약 $0.55 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://abracon.com/Resonators/abm8.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=ABM8-20.000MHZ-B2-T\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>주파수</dt><dd>20 MHz</dd>\n      <dt>패키지</dt><dd>3.2×2.5 mm, 4패드 (1·3 수정, 2·4 GND)</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"AMS1117-3.3":{"file":"datasheets/db/AMS1117-3.3.html","mfr":"Advanced Monolithic Systems","cat":"전원","price":0.28,"status":"stub","title":"AMS1117-3.3 · AMS1117 — 1 A low-dropout regulator","html":"<h1>AMS1117-3.3</h1>\n  <p class=\"meta\">Advanced Monolithic Systems · 전원 · AMS1117 — 1 A low-dropout regulator · 참고 단가 약 $0.28 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"http://www.advanced-monolithic.com/pdf/ds1117.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"http://www.advanced-monolithic.com/\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=AMS1117-3.3\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>출력</dt><dd>3.3 V 고정, 최대 1 A</dd>\n      <dt>드롭아웃</dt><dd>약 1.1 V (1 A)</dd>\n      <dt>입력</dt><dd>최대 15 V</dd>\n      <dt>패키지</dt><dd>SOT-223: 1 GND · 2 VOUT · 3 VIN · 탭 VOUT</dd>\n      <dt>열 저항</dt><dd>θJB 15 °C/W · θJC 15 °C/W · ΨJT 3 °C/W · Tj,max 125 °C</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"AMS1117-5.0":{"file":"datasheets/db/AMS1117-5.0.html","mfr":"Advanced Monolithic Systems","cat":"전원","price":0.28,"status":"stub","title":"AMS1117-5.0 · AMS1117 — 1 A low-dropout regulator","html":"<h1>AMS1117-5.0</h1>\n  <p class=\"meta\">Advanced Monolithic Systems · 전원 · AMS1117 — 1 A low-dropout regulator · 참고 단가 약 $0.28 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"http://www.advanced-monolithic.com/pdf/ds1117.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"http://www.advanced-monolithic.com/\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=AMS1117-5.0\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>출력</dt><dd>5.0 V 고정, 최대 1 A</dd>\n      <dt>드롭아웃</dt><dd>약 1.1 V (1 A)</dd>\n      <dt>입력</dt><dd>최대 15 V</dd>\n      <dt>패키지</dt><dd>SOT-223: 1 GND · 2 VOUT · 3 VIN · 탭 VOUT</dd>\n      <dt>열 저항</dt><dd>θJB 15 °C/W · θJC 15 °C/W · ΨJT 3 °C/W · Tj,max 125 °C</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"AO3400A":{"file":"datasheets/db/AO3400A.html","mfr":"Alpha & Omega Semiconductor","cat":"트랜지스터","price":0.12,"status":"stub","title":"AO3400A · AO3400A — 30 V N-channel MOSFET","html":"<h1>AO3400A</h1>\n  <p class=\"meta\">Alpha &amp; Omega Semiconductor · 트랜지스터 · AO3400A — 30 V N-channel MOSFET · 참고 단가 약 $0.12 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.aosmd.com/res/datasheets/AO3400A.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.aosmd.com/products/mosfets/low-voltage-mosfets/AO3400A\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=AO3400A\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>VDS</dt><dd>30 V</dd>\n      <dt>ID</dt><dd>5.7 A (VGS 10 V)</dd>\n      <dt>RDS(on)</dt><dd>19 mΩ typ @ 4.5 V · 24 mΩ typ @ 2.5 V</dd>\n      <dt>VGS(th)</dt><dd>1.05 V typ (0.65–1.45 V)</dd>\n      <dt>패키지</dt><dd>SOT-23: 1 G · 2 S · 3 D</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"APT1608EC":{"file":"datasheets/db/APT1608EC.html","mfr":"Kingbright","cat":"LED","price":0.07,"status":"stub","title":"APT1608EC · APT1608EC — 0603 high-efficiency red LED","html":"<h1>APT1608EC</h1>\n  <p class=\"meta\">Kingbright · LED · APT1608EC — 0603 high-efficiency red LED · 참고 단가 약 $0.07 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.kingbrightusa.com/images/catalog/SPEC/APT1608EC.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=APT1608EC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>색</dt><dd>적색 617 nm (dominant)</dd>\n      <dt>VF</dt><dd>2.0 V typ @ 20 mA</dd>\n      <dt>IF</dt><dd>최대 30 mA DC</dd>\n      <dt>패키지</dt><dd>0603</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"APT1608QBC/D":{"file":"datasheets/db/APT1608QBC_D.html","mfr":"Kingbright","cat":"LED","price":0.09,"status":"stub","title":"APT1608QBC/D · APT1608QBC/D — 0603 blue LED","html":"<h1>APT1608QBC/D</h1>\n  <p class=\"meta\">Kingbright · LED · APT1608QBC/D — 0603 blue LED · 참고 단가 약 $0.09 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.kingbrightusa.com/images/catalog/SPEC/APT1608QBC-D.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=APT1608QBC%2FD\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>색</dt><dd>청색 465 nm (dominant)</dd>\n      <dt>VF</dt><dd>3.3 V typ @ 20 mA (최대 4.0 V)</dd>\n      <dt>패키지</dt><dd>0603</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"APT1608SGC":{"file":"datasheets/db/APT1608SGC.html","mfr":"Kingbright","cat":"LED","price":0.07,"status":"stub","title":"APT1608SGC · APT1608SGC — 0603 super bright green LED","html":"<h1>APT1608SGC</h1>\n  <p class=\"meta\">Kingbright · LED · APT1608SGC — 0603 super bright green LED · 참고 단가 약 $0.07 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.kingbrightusa.com/images/catalog/SPEC/APT1608SGC.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=APT1608SGC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>색</dt><dd>녹색 568 nm (dominant)</dd>\n      <dt>VF</dt><dd>2.2 V typ @ 20 mA</dd>\n      <dt>IF</dt><dd>최대 25 mA DC</dd>\n      <dt>패키지</dt><dd>0603 (1.6×0.8 mm)</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"B3FS-1000P":{"file":"datasheets/db/B3FS-1000P.html","mfr":"Omron","cat":"스위치","price":0.18,"status":"stub","title":"B3FS-1000P · B3FS — 6×6 mm SMT tactile switch","html":"<h1>B3FS-1000P</h1>\n  <p class=\"meta\">Omron · 스위치 · B3FS — 6×6 mm SMT tactile switch · 참고 단가 약 $0.18 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://omronfs.omron.com/en_US/ecb/products/pdf/en-b3fs.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=B3FS-1000P\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>크기</dt><dd>6×6 mm, 플런저 3.1 mm</dd>\n      <dt>작동력</dt><dd>0.98 N (100 gf)</dd>\n      <dt>정격</dt><dd>1–50 mA, 3–24 VDC</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"CL10A105KB8NNNC":{"file":"datasheets/db/CL10A105KB8NNNC.html","mfr":"Samsung Electro-Mechanics","cat":"커패시터","price":0.02,"status":"stub","title":"CL10A105KB8NNNC · MLCC 1 µF 50 V X5R 0603","html":"<h1>CL10A105KB8NNNC</h1>\n  <p class=\"meta\">Samsung Electro-Mechanics · 커패시터 · MLCC 1 µF 50 V X5R 0603 · 참고 단가 약 $0.02 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://product.samsungsem.com/mlcc/CL10A105KB8NNN.do\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=CL10A105KB8NNNC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>값</dt><dd>1 µF ±10 %, 50 V, X5R</dd>\n      <dt>크기</dt><dd>0603</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"CL10B103KB8NNNC":{"file":"datasheets/db/CL10B103KB8NNNC.html","mfr":"Samsung Electro-Mechanics","cat":"커패시터","price":0.012,"status":"stub","title":"CL10B103KB8NNNC · MLCC 10 nF 50 V X7R 0603","html":"<h1>CL10B103KB8NNNC</h1>\n  <p class=\"meta\">Samsung Electro-Mechanics · 커패시터 · MLCC 10 nF 50 V X7R 0603 · 참고 단가 약 $0.012 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://product.samsungsem.com/mlcc/CL10B103KB8NNN.do\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=CL10B103KB8NNNC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>값</dt><dd>10 nF ±10 %, 50 V, X7R</dd>\n      <dt>크기</dt><dd>0603</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"CL10B104KB8NNNC":{"file":"datasheets/db/CL10B104KB8NNNC.html","mfr":"Samsung Electro-Mechanics","cat":"커패시터","price":0.012,"status":"stub","title":"CL10B104KB8NNNC · MLCC 100 nF 50 V X7R 0603","html":"<h1>CL10B104KB8NNNC</h1>\n  <p class=\"meta\">Samsung Electro-Mechanics · 커패시터 · MLCC 100 nF 50 V X7R 0603 · 참고 단가 약 $0.012 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://product.samsungsem.com/mlcc/CL10B104KB8NNN.do\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=CL10B104KB8NNNC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>값</dt><dd>100 nF ±10 %, 50 V, X7R</dd>\n      <dt>크기</dt><dd>0603</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"CL21A106KAYNNNE":{"file":"datasheets/db/CL21A106KAYNNNE.html","mfr":"Samsung Electro-Mechanics","cat":"커패시터","price":0.04,"status":"stub","title":"CL21A106KAYNNNE · MLCC 10 µF 25 V X5R 0805","html":"<h1>CL21A106KAYNNNE</h1>\n  <p class=\"meta\">Samsung Electro-Mechanics · 커패시터 · MLCC 10 µF 25 V X5R 0805 · 참고 단가 약 $0.04 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://product.samsungsem.com/mlcc/CL21A106KAYNNN.do\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=CL21A106KAYNNNE\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>값</dt><dd>10 µF ±10 %, 25 V, X5R</dd>\n      <dt>크기</dt><dd>0805</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"DRV8313PWPR":{"file":"datasheets/db/DRV8313PWPR.html","mfr":"Texas Instruments","cat":"모터 드라이버","price":3.4,"status":"stub","title":"DRV8313PWPR · DRV8313 — 2.5 A triple half-bridge driver","html":"<h1>DRV8313PWPR</h1>\n  <p class=\"meta\">Texas Instruments · 모터 드라이버 · DRV8313 — 2.5 A triple half-bridge driver · 참고 단가 약 $3.4 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.ti.com/lit/ds/symlink/drv8313.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.ti.com/product/DRV8313\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=DRV8313PWPR\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>VM</dt><dd>8–60 V (절대 최대 65 V)</dd>\n      <dt>출력</dt><dd>상당 2.5 A 피크 · 과전류 3 A 최소</dd>\n      <dt>RDS(on)</dt><dd>0.24 Ω typ (상단·하단 각, 25 °C)</dd>\n      <dt>입력 논리</dt><dd>ENx=0 → OUTx 하이 임피던스 · ENx=1, INx=1 → H · INx=0 → L</dd>\n      <dt>보호</dt><dd>과전류·과열·저전압 → nFAULT (오픈 드레인, 외부 풀업)</dd>\n      <dt>기타</dt><dd>nSLEEP·nRESET 내부 풀다운 · V3P3 3.3 V 10 mA · 차지 펌프 (CPH–CPL 0.01 µF, VCP–VM 0.1 µF)</dd>\n      <dt>패키지</dt><dd>HTSSOP-28 (PWP), 써멀 패드 GND</dd>\n      <dt>열 저항</dt><dd>θJB 5.6 °C/W · θJC 15.9 °C/W · ΨJT 0.2 °C/W · Tj,max 150 °C</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"EEE-FK1E471P":{"file":"datasheets/db/EEE-FK1E471P.html","mfr":"Panasonic Industry","cat":"커패시터","price":0.38,"status":"stub","title":"EEE-FK1E471P · 알루미늄 전해 커패시터 470 µF 25 V · FK 시리즈 SMD (ø10 × 10.2)","html":"<h1>EEE-FK1E471P</h1>\n  <p class=\"meta\">Panasonic Industry · 커패시터 · 알루미늄 전해 커패시터 470 µF 25 V · FK 시리즈 SMD (ø10 × 10.2) · 참고 단가 약 $0.38 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://docs.rs-online.com/89e5/0900766b8139e2ae.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://industry.panasonic.com/global/en/products/control/capacitor/aluminum/smd/fk\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=EEE-FK1E471P\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>값</dt><dd>470 µF ±20 %, 25 V DC</dd>\n      <dt>케이스</dt><dd>G (ø10 × L10.2 mm), 105 °C 2000 h</dd>\n      <dt>ESR / 임피던스</dt><dd>80 mΩ (100 kHz, 유통사 기재)</dd>\n      <dt>허용 리플 전류</dt><dd>850 mA rms (100 kHz, 105 °C, 유통사 기재)</dd>\n      <dt>랜드 패턴</dt><dd>a 4.6 · b 4.1 · c 2.0 mm (FK 케이스 G 권장)</dd>\n      <dt>ESL</dt><dd>약 6 nH — 데이터시트 값 없음, ø10 SMD 캔 일반값(추정)</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"FA-130RA":{"file":"datasheets/db/FA-130RA.html","mfr":"Mabuchi Motor (Tamiya 판매)","cat":"모터","price":2.1,"status":"stub","title":"FA-130RA · FA-130 brushed DC motor + Tamiya 70097 gearbox","html":"<h1>FA-130RA</h1>\n  <p class=\"meta\">Mabuchi Motor (Tamiya 판매) · 모터 · FA-130 brushed DC motor + Tamiya 70097 gearbox · 참고 단가 약 $2.1 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.pololu.com/product/77/specs\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://www.pololu.com/product/61\" target=\"_blank\" rel=\"noopener\">관련 페이지</a> · <a href=\"https://octopart.com/search?q=FA-130RA\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>정격</dt><dd>3 V</dd>\n      <dt>무부하</dt><dd>12,300 rpm, 150 mA (3 V)</dd>\n      <dt>구속</dt><dd>2.1 A, 0.5 oz·in ≈ 3.5 mN·m (3 V)</dd>\n      <dt>기어박스</dt><dd>Tamiya 70097 Twin-Motor Gearbox, 58:1 또는 203:1 (예제는 58:1)</dd>\n      <dt>시뮬레이션 값</dt><dd>R 1.43 Ω, ke = kt 2.16 mV/(rad/s), 마찰 0.32 mN·m — 위 정격에서 계산</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"GRM188R71C474KA88D":{"file":"datasheets/db/GRM188R71C474KA88D.html","mfr":"Murata","cat":"커패시터","price":0.02,"status":"stub","title":"GRM188R71C474KA88D · MLCC 0.47 µF 16 V X7R 0603","html":"<h1>GRM188R71C474KA88D</h1>\n  <p class=\"meta\">Murata · 커패시터 · MLCC 0.47 µF 16 V X7R 0603 · 참고 단가 약 $0.02 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.murata.com/en-us/products/productdetail?partno=GRM188R71C474KA88D\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=GRM188R71C474KA88D\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>값</dt><dd>0.47 µF ±10 %, 16 V, X7R</dd>\n      <dt>크기</dt><dd>0603</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"GRM31CR60J107ME39":{"file":"datasheets/db/GRM31CR60J107ME39.html","mfr":"Murata","cat":"커패시터","price":0.22,"status":"stub","title":"GRM31CR60J107ME39 · MLCC 100 µF 6.3 V X5R 1206","html":"<h1>GRM31CR60J107ME39</h1>\n  <p class=\"meta\">Murata · 커패시터 · MLCC 100 µF 6.3 V X5R 1206 · 참고 단가 약 $0.22 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.murata.com/en-us/products/productdetail?partno=GRM31CR60J107ME39L\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=GRM31CR60J107ME39\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>값</dt><dd>100 µF ±20 %, 6.3 V, X5R</dd>\n      <dt>크기</dt><dd>1206</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"GRM32ER61E226KE15":{"file":"datasheets/db/GRM32ER61E226KE15.html","mfr":"Murata","cat":"커패시터","price":0.12,"status":"stub","title":"GRM32ER61E226KE15 · MLCC 22 µF 25 V X5R 1210","html":"<h1>GRM32ER61E226KE15</h1>\n  <p class=\"meta\">Murata · 커패시터 · MLCC 22 µF 25 V X5R 1210 · 참고 단가 약 $0.12 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.murata.com/en-us/products/productdetail?partno=GRM32ER61E226KE15L\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=GRM32ER61E226KE15\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>값</dt><dd>22 µF ±10 %, 25 V, X5R</dd>\n      <dt>크기</dt><dd>1210</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"RL1206FR-070R1L":{"file":"datasheets/db/RL1206FR-070R1L.html","mfr":"Yageo","cat":"저항","price":0.08,"status":"stub","title":"RL1206FR-070R1L · RL series low-ohm chip resistor 0.1 Ω 1206","html":"<h1>RL1206FR-070R1L</h1>\n  <p class=\"meta\">Yageo · 저항 · RL series low-ohm chip resistor 0.1 Ω 1206 · 참고 단가 약 $0.08 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://octopart.com/search?q=RL1206FR-070R1L\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>값</dt><dd>0.1 Ω ±1 %</dd>\n      <dt>크기</dt><dd>1206, 1/4 W</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"SS14":{"file":"datasheets/db/SS14.html","mfr":"Vishay","cat":"다이오드","price":0.09,"status":"stub","title":"SS14 · SS12–SS16 — 1 A surface-mount Schottky rectifier","html":"<h1>SS14</h1>\n  <p class=\"meta\">Vishay · 다이오드 · SS12–SS16 — 1 A surface-mount Schottky rectifier · 참고 단가 약 $0.09 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.vishay.com/docs/88746/ss12.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=SS14\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>VRRM</dt><dd>40 V (SS14)</dd>\n      <dt>IF(AV)</dt><dd>1.0 A</dd>\n      <dt>패키지</dt><dd>SMA (DO-214AC), 띠 = 캐소드</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"STM32F042K6U6":{"file":"datasheets/db/STM32F042K6U6.html","mfr":"STMicroelectronics","cat":"MCU","price":2.6,"status":"stub","title":"STM32F042K6U6 · STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN","html":"<h1>STM32F042K6U6</h1>\n  <p class=\"meta\">STMicroelectronics · MCU · STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN · 참고 단가 약 $2.6 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.st.com/resource/en/datasheet/stm32f042k6.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.st.com/en/microcontrollers-microprocessors/stm32f042k6.html\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=STM32F042K6U6\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>코어</dt><dd>Arm Cortex-M0, 최대 48 MHz</dd>\n      <dt>메모리</dt><dd>플래시 32 KB · SRAM 6 KB</dd>\n      <dt>전원</dt><dd>VDD 2.0–3.6 V · VDDA ≤ 3.6 V (ADC 사용 시 ≥ 2.4 V) · VDDIO2 1.65–3.6 V</dd>\n      <dt>USB</dt><dd>USB 2.0 FS, 크리스털리스 (HSI48 + CRS) · PA11 DM / PA12 DP</dd>\n      <dt>타이머</dt><dd>TIM1 고급 제어 (CH1–CH4: PA8–PA11) 외</dd>\n      <dt>ADC</dt><dd>12비트, ADC_IN0–9 (PA0–PA7, PB0, PB1)</dd>\n      <dt>패키지</dt><dd>UFQFPN32 5×5 mm · 노출 패드 = VSS · 31번 BOOT0</dd>\n      <dt>디버그</dt><dd>SWD: PA13 SWDIO / PA14 SWCLK</dd>\n      <dt>열 저항</dt><dd> · Tj,max 105 °C</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"TC364DP-64F300F":{"file":"datasheets/db/TC364DP-64F300F.html","mfr":"Infineon","cat":"MCU","price":17.5,"status":"stub","title":"TC364DP-64F300F · AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz","html":"<h1>TC364DP-64F300F</h1>\n  <p class=\"meta\">Infineon · MCU · AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz · 참고 단가 약 $17.5 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.infineon.com/dgdl/Infineon-SAK-TC36xDP-DataSheet-v01_01-EN.pdf?fileId=5546d46274dd77260174e8c7c7bf34b1\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.infineon.com/assets/row/public/documents/10/49/infineon-aurix-tc36x-addendum-datasheet-en.pdf\" target=\"_blank\" rel=\"noopener\">관련 페이지</a> · <a href=\"https://octopart.com/search?q=TC364DP-64F300F\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>코어</dt><dd>TriCore, 최대 300 MHz (TC36x)</dd>\n      <dt>ADC</dt><dd>EVADC 주 그룹 4개/32채널 + 보조 그룹 2개/32채널, EDSADC</dd>\n      <dt>타이머</dt><dd>GTM (TOUT 출력, TIM 입력 캡처), CCU6, GPT12</dd>\n      <dt>통신</dt><dd>MCMCAN (CAN FD) CAN0x·CAN1x, QSPI0–3, ASCLIN0–11, I2C0, E-Ray, GETH</dd>\n      <dt>포트 출력</dt><dd>핀마다 ALT1–ALT7 출력 선택 (Pn_IOCR.PCx), 입력은 주변장치 쪽 입력 선택(A/B/…)</dd>\n      <dt>패키지</dt><dd>TQFP-144 (SAK-TC364DP-64F300F) · 노출 패드 VSS</dd>\n      <dt>디버그</dt><dd>JTAG/DAP: TMS 89, TCK 92, TRST 91, P21.6 TDI, P21.7 TDO</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"TLE9251VSJ":{"file":"datasheets/db/TLE9251VSJ.html","mfr":"Infineon","cat":"CAN 트랜시버","price":1.15,"status":"stub","title":"TLE9251VSJ · TLE9251V — high-speed CAN FD transceiver with VIO","html":"<h1>TLE9251VSJ</h1>\n  <p class=\"meta\">Infineon · CAN 트랜시버 · TLE9251V — high-speed CAN FD transceiver with VIO · 참고 단가 약 $1.15 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.infineon.com/cms/en/product/interface/automotive-transceiver/automotive-can-transceivers/tle9251vsj/\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=TLE9251VSJ\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>속도</dt><dd>최대 5 Mbit/s (CAN FD)</dd>\n      <dt>전원</dt><dd>VCC 5 V (송신부) · VIO 3.3 V/5 V (MCU 인터페이스)</dd>\n      <dt>모드</dt><dd>STB High = 대기 (내부 풀업), Low = 정상 동작 · 대기 중 버스 웨이크업</dd>\n      <dt>패키지</dt><dd>PG-DSO-8: 1 TxD · 2 GND · 3 VCC · 4 RxD · 5 VIO · 6 CANL · 7 CANH · 8 STB</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"USB4105-GF-A":{"file":"datasheets/db/USB4105-GF-A.html","mfr":"GCT","cat":"커넥터","price":0.55,"status":"stub","title":"USB4105-GF-A · USB4105 — USB Type-C 2.0 receptacle","html":"<h1>USB4105-GF-A</h1>\n  <p class=\"meta\">GCT · 커넥터 · USB4105 — USB Type-C 2.0 receptacle · 참고 단가 약 $0.55 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://gct.co/connector/usb4105\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=USB4105-GF-A\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>규격</dt><dd>USB Type-C, USB 2.0 데이터 + 전원</dd>\n      <dt>비고</dt><dd>뷰어 풋프린트는 사용 핀(CC1, VBUS, D−, D+, GND, 실드)만 단순화</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"},"W25Q32JVSSIQ":{"file":"datasheets/db/W25Q32JVSSIQ.html","mfr":"Winbond","cat":"메모리","price":0.55,"status":"stub","title":"W25Q32JVSSIQ · W25Q32JV — 3 V 32 Mbit serial NOR flash","html":"<h1>W25Q32JVSSIQ</h1>\n  <p class=\"meta\">Winbond · 메모리 · W25Q32JV — 3 V 32 Mbit serial NOR flash · 참고 단가 약 $0.55 (추정)</p>\n  <p class=\"meta\">원본: <a href=\"https://www.winbond.com/hq/product/code-storage-flash-memory/serial-nor-flash/?__locale=en&amp;partNo=W25Q32JV\" target=\"_blank\" rel=\"noopener\">제품·데이터시트 페이지</a> · <a href=\"https://octopart.com/search?q=W25Q32JVSSIQ\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a></p>\n  <p class=\"todo\">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 \"done\"으로 바꾸세요.</p>\n\n  <h2>핵심 사양</h2>\n  <dl>\n      <dt>용량</dt><dd>32 Mbit (4 MB)</dd>\n      <dt>전원</dt><dd>2.7–3.6 V</dd>\n      <dt>인터페이스</dt><dd>SPI / Dual / Quad SPI, 최대 133 MHz</dd>\n      <dt>패키지</dt><dd>SOIC-8 208 mil: 1 /CS · 2 DO · 3 /WP · 4 GND · 5 DI · 6 CLK · 7 /HOLD · 8 VCC</dd>\n  </dl>\n\n  <h2>절대 최대 정격</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>\n    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>\n\n  <h2>권장 동작 조건</h2>\n  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>\n    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>\n\n  <h2>핀 배치</h2>\n  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>\n\n  <h2>응용 회로 · 주변 부품</h2>\n  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>\n\n  <h2>패키지 · 열</h2>\n  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>\n\n  <h2>설계 메모</h2>\n  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>"}}};
 
 
 </script>
@@ -6146,7 +6272,67 @@ function summary(plan){const r=build(plan);const L=[];
   if(r.power.length)L.push('발열: '+r.power.map(x=>`${x.ref} ${x.P} W`).join(' · '));
   L.push(r.warn.length?'경고:\n'+r.warn.map(w=>'  ! '+w).join('\n'):'경고 없음');
   return{text:L.join('\n'),r};}
-return{LIB,MCUS,mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,ldoToBuck,guessName,build,toBoard,summary,railOf};
+/* ---------- BOM cost and circuit variants (step 2: pick a plan by price · features · extensibility) ---------- */
+const catOf=c=>c.mcu?'MCU':/^C\d/.test(c.ref)?'커패시터':/^R\d/.test(c.ref)?'저항':/^D\d/.test(c.ref)?'다이오드':/^J\d/.test(c.ref)?'커넥터':/^L\d/.test(c.ref)?'인덕터':/^Y\d/.test(c.ref)?'크리스털':/^Q\d/.test(c.ref)?'트랜지스터':/^M\d/.test(c.ref)?'모터':'전원';
+function bom(plan){const r=build(plan);const P=typeof PARTS!=='undefined'?PARTS:null;const items=new Map();let total=0,unknown=0;
+  r.parts.forEach(c=>{const key=(c.mpn||c.val)+'|'+c.fp;const it=items.get(key)||{mpn:c.mpn||'',val:c.val,fp:c.fp,refs:[],unit:null,cat:catOf(c)};it.refs.push(c.ref);
+    if(it.unit==null){it.unit=P?P.price(c.mpn,it.cat):null;if(it.unit==null){it.unit=0;it.est=true;unknown++;}}items.set(key,it);});
+  items.forEach(it=>{it.sub=+(it.unit*it.refs.length).toFixed(3);total+=it.sub;});
+  const list=[...items.values()].sort((a,b)=>b.sub-a.sub);return{items:list,total:+total.toFixed(2),unknown,parts:r.parts.length,r};}
+// spare MCU pins: assignable signal pins left after the plan's signals
+function spareMcuPins(r){if(!r.mcu)return 0;const db=MCU_PINS.DB[r.mcu];const M=MCUS[r.mcu];const U=r.parts.find(c=>c.mcu);if(!db||!U)return 0;
+  const busy=new Set(Object.keys(U.pins).map(String));M.reserved.forEach(n=>busy.add(String(n)));if(M.boot)busy.add(String(M.boot));if(M.reset)busy.add(String(M.reset));
+  return Object.keys(db.pins).filter(n=>!db.pins[n].supply&&!busy.has(String(n))&&(MCU_PINS.options(db,n).length||db.pins[n].an!=null)).length;}
+const FEAT_W={pwr_in:1,usb_in:2,ldo:1,buck:2,mcu:0,xtal:1,can:3,bldc:4,dcmotor:3,led:1,button:1,flash:2,uart:1,i2c:2,vmon:1};
+function planMetrics(plan){const B=bom(plan);const r=B.r;const feat=plan.blocks.reduce((a,b)=>a+(FEAT_W[b.type]||1)*(b.type==='led'||b.type==='button'?Math.min(3,+b.params.n||1):1),0);
+  const spare=spareMcuPins(r);const headers=plan.blocks.filter(b=>/^(uart|i2c|usb_in)$/.test(b.type)).length;const ext=Math.round(spare*0.5+headers*8+(r.mcu==='TC364DP-64F300F'?15:0)+(plan.blocks.some(b=>b.type==='flash')?6:0));
+  const loss=r.power.reduce((a,x)=>a+x.P,0);
+  return{price:B.total,unknown:B.unknown,parts:B.parts,feat,spare,headers,ext,loss:+loss.toFixed(2),mcu:r.mcu,warn:r.warn.length,bom:B};}
+const clone=p=>JSON.parse(JSON.stringify(p));
+const has=(p,t)=>p.blocks.some(b=>b.type===t);
+const reqHas=(p,re)=>re.test(String(p.req||'').toLowerCase());
+function addSafe(p,t,params){try{return addBlock(p,t,params||{});}catch(e){return null;}}
+/* three plans from one: 저가형 (cost) · 표준 (balanced, the plan itself) · 확장형 (features and headroom) */
+function variants(plan){
+  const base=clone(plan);const out=[];
+  // 저가형: cheapest MCU that still meets stated needs, LDO instead of buck when the loss is bearable, optional blocks dropped unless the requirement names them
+  const c=clone(plan);const dc=[];
+  const mcuB=c.blocks.find(b=>b.type==='mcu');const needTc=reqHas(c,/aurix|tc3|tc364|asil|iso\s*26262|기능\s*안전|lockstep|오릭스/);
+  if(mcuB&&mcuKey(mcuB.params.part)==='TC364DP-64F300F'&&!needTc){mcuB.params.part='STM32F042K6U6';dc.push('MCU를 STM32F042K6U6로 (요구사항에 AURIX·ASIL이 없음)');}
+  c.blocks.filter(b=>b.type==='buck').forEach(b=>{b.type='ldo';b.id=b.id.replace(/^buck/,'ldo');b.params={vin:b.params.vin,vout:b.params.vout,iout:'auto'};dc.push(`${b.params.vout} V 벅 컨버터를 LDO로 (부품 7개 → 3개)`);});
+  const drop=(t,why,re)=>{const i=c.blocks.findIndex(b=>b.type===t);if(i>=0&&!reqHas(c,re)){c.blocks.splice(i,1);dc.push(why);}};
+  drop('flash','SPI 플래시 제거 (요구사항에 로그·저장이 없음)',/플래시|flash|메모리|로그|저장/);
+  drop('vmon','전압 감시 제거 (요구사항에 없음)',/전압\s*(감시|모니터|측정)|배터리|vbat|vmon/);
+  drop('uart','UART 헤더 제거 (SWD 디버그로 충분)',/uart|시리얼|serial|콘솔|디버그/);
+  if(mcuKey((c.blocks.find(b=>b.type==='mcu')||{params:{}}).params.part)==='STM32F042K6U6'&&!has(c,'can')&&has(c,'xtal')&&!reqHas(c,/크리스털|crystal|xtal|정밀/)){c.blocks=c.blocks.filter(b=>b.type!=='xtal');dc.push('크리스털 제거 (STM32 내부 RC · 크리스털리스 USB)');}
+  c.blocks.filter(b=>b.type==='led'&&+b.params.n>1).forEach(b=>{dc.push(`LED ${b.params.n}개 → 1개`);b.params.n=1;});
+  // the loss check: an LDO that would burn more than 1.2 W goes back to a buck even in the cheap plan
+  {const r1=build(c);r1.parts.filter(x=>x.ldo&&x.P>1.2).forEach(x=>{const b=c.blocks.find(y=>y.id===x.block);if(!b)return;b.type='buck';b.id=b.id.replace(/^ldo/,'buck');b.params={vin:b.params.vin,vout:b.params.vout};dc.push(`${b.params.vout} V LDO는 손실 ${x.P} W라 벅 컨버터 유지`);});}
+  out.push({key:'cost',label:'저가형',tag:'가격 우선',desc:'요구사항에 적힌 기능만 가장 싼 부품 구성으로. 여유 핀·확장 헤더는 최소.',plan:c,diff:dc.length?dc:['기본 안과 같음 (더 뺄 선택 블록이 없음)']});
+  // 표준
+  out.push({key:'std',label:'표준',tag:'균형',desc:'요구사항을 규칙대로 구현한 기본 안. 손실이 큰 LDO는 벅으로, CAN·모터는 전용 레일.',plan:base,diff:['요구사항 그대로 (기준 안)']});
+  // 확장형
+  const e=clone(plan);const de=[];
+  e.blocks.filter(b=>b.type==='ldo').forEach(b=>{const r0=build(e);const part=r0.parts.find(x=>x.ldo&&x.block===b.id);if(part&&part.P>0.35){b.type='buck';b.id=b.id.replace(/^ldo/,'buck');b.params={vin:b.params.vin,vout:b.params.vout};de.push(`${b.params.vout} V LDO(손실 ${part.P} W)를 벅 컨버터로 (발열·효율)`);}});
+  if(!has(e,'flash')){addSafe(e,'flash');de.push('SPI 플래시 추가 (로그·설정 저장)');}
+  if(!has(e,'uart')){addSafe(e,'uart');de.push('UART 디버그 헤더 추가');}
+  if(!has(e,'i2c')){addSafe(e,'i2c');de.push('I²C 센서 확장 헤더 추가');}
+  if(!has(e,'vmon')){addSafe(e,'vmon');de.push('입력 전압 감시 추가');}
+  const led=e.blocks.find(b=>b.type==='led');if(led){if(+led.params.n<2){led.params.n=2;de.push('상태 LED 2개');}}else{addSafe(e,'led',{n:2});de.push('상태 LED 2개 추가');}
+  if(!has(e,'button')){addSafe(e,'button',{n:1});de.push('사용자 버튼 추가');}
+  const mcuE=e.blocks.find(b=>b.type==='mcu');const needPins=e.blocks.reduce((a,b)=>a+({can:2,bldc:9,dcmotor:2,flash:4,uart:2,i2c:2,vmon:1,led:+b.params.n||1,button:+b.params.n||1,usb_in:2}[b.type]||0),0);
+  if(mcuE&&mcuKey(mcuE.params.part)==='STM32F042K6U6'&&(needPins>18||reqHas(e,/차량|automotive|ecu|산업|asil/))){mcuE.params.part='TC364DP-64F300F';if(!has(e,'xtal'))addSafe(e,'xtal');de.push('MCU를 AURIX TC364DP로 (핀 여유 · 안전 기능 · 성능)');}
+  out.push({key:'ext',label:'확장형',tag:'기능·확장 우선',desc:'나중에 기능을 더할 수 있게 헤더·메모리·감시를 넣고, 핀이 모자라면 큰 MCU로.',plan:e,diff:de});
+  out.forEach(v=>{v.m=planMetrics(v.plan);});
+  // relative scores 0–100 for the cards
+  const mn=k=>Math.min(...out.map(v=>v.m[k])),mx=k=>Math.max(...out.map(v=>v.m[k]));
+  const sc=(v,k,inv)=>{const a=mn(k),b=mx(k);if(b-a<1e-9)return 60;const t=(v.m[k]-a)/(b-a);return Math.round(20+80*(inv?1-t:t));};
+  out.forEach(v=>{v.score={price:sc(v,'price',true),feat:sc(v,'feat'),ext:sc(v,'ext')};});
+  return out;}
+// weighted pick: w = {price,feat,ext} in 0..1
+function recommend(vs,w){w=Object.assign({price:1,feat:1,ext:1},w||{});let best=null;vs.forEach(v=>{const s=v.score.price*w.price+v.score.feat*w.feat+v.score.ext*w.ext;v.total=Math.round(s/(w.price+w.feat+w.ext));if(!best||v.total>best.total)best=v;});return best;}
+function variantsText(vs){return vs.map(v=>`[${v.key}] ${v.label} (${v.tag}) · BOM 약 $${v.m.price}${v.m.unknown?' (+미정 '+v.m.unknown+')':''} · 부품 ${v.m.parts}개 · 기능 ${v.m.feat} · 여유 핀 ${v.m.spare} · MCU ${v.m.mcu||'-'} · 손실 ${v.m.loss} W\n  ${v.diff.join(' · ')}`).join('\n');}
+return{LIB,MCUS,mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
 })();
 
 
@@ -7900,7 +8086,7 @@ document.addEventListener('keydown',e=>{
 });
 function header(){
   $('#bName').textContent=BD.name;$('#bTag').textContent=BD.source==='예제'?'예제 보드':BD.source;
-  const n=BD.comps.length;$('#bSub').textContent=`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers||2}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개${BD.pcbPending?' · PCB 미배치':''}`;
+  const n=BD.comps.length;$('#bSub').textContent=BD.blank?'신규 설계 · 요구사항 → 시스템 다이어그램 → 회로 → PCB → 기구':BD.pcbPending?`회로 · 부품 ${n}개 · 넷 ${BD.netOrder.length}개${BD.variantLabel?' · 회로 안: '+BD.variantLabel:''} · PCB는 3단계에서`:`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers||2}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개`;
   const ir=$('#ly-inner-row');if(ir)ir.hidden=!((BD.copperLayers||2)>2&&PCB.cuKeys(BD).length>2);
   document.title=BD.name+' · AllinOneDesign';
 }
@@ -11118,9 +11304,10 @@ const NP_HELP=[
   ['set <블록ID> <파라미터> <값> · remove <블록ID>','블록 수정·삭제 (ID는 plan에 표시)'],['mcu <stm32|tc364>','MCU 바꾸기'],
   ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
   ['diagram','시스템 다이어그램을 글로 (블록 · 전원 레일 · MCU 신호 · 외부 연결)'],
-  ['generate [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
+  ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
+  ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -11137,8 +11324,7 @@ function npInit(){
 }
 function npRender(){
   const P=NP.plan;$('#npPlanHint').textContent=AIM.mode==='ai'?'AI: Claude가 블록·인터페이스를 설계 (보는 사람의 사용량)':'결정론: 낱말 규칙으로 블록 설계';
-  if(P){if(document.activeElement!==$('#npName'))$('#npName').value=P.name;if(document.activeElement!==$('#npReq')&&P.req)$('#npReq').value=P.req;$('#npStrat').value=P.strategy||'balanced';
-    $('#npW').value=P.board?P.board.w:'';$('#npH').value=P.board?P.board.h:'';const pc=P.pcb||{};$('#npLayers').value=String(pc.layers||2);$('#npSize').value=pc.min?'min':P.board?'fix':'auto';$('#npWH').hidden=$('#npSize').value!=='fix';$('#npRoute').checked=pc.route!==false;}
+  if(P){if(document.activeElement!==$('#npName'))$('#npName').value=P.name;if(document.activeElement!==$('#npReq')&&P.req)$('#npReq').value=P.req;}
   if(P&&P.blocks.length){const k=JSON.stringify(P.blocks);if(SYS.pk!==k){SYS.pk=k;SYS.src='plan';}}sysRender();
   {const h=$('#implHint');if(h)h.textContent=P&&P.blocks.length?` · 회로 블록 ${P.blocks.length}개${NP.planManual?' (직접 수정)':' (아키텍처에서 자동)'}`:'';}
   if(NP.arch&&document.activeElement!==$('#npName')&&NP.arch.name)$('#npName').value=NP.arch.name;
@@ -11185,7 +11371,8 @@ async function npRun(line,by){
       if(s0==='route'){P.pcb.route=!/^(off|0|false|no)$/i.test(a._[1]||'on');npRender();return`PCB 조건: 자동 배선 ${P.pcb.route?'켬':'끔'}`;}
       if(a._[0]==='auto'||!a._.length){P.board=null;P.pcb.min=false;}else{let w=+a._[0],h=+a._[1];if(!h&&/x|×/i.test(a._[0])){[w,h]=a._[0].split(/x|×/i).map(Number);}if(!(w>=20&&h>=20))throw new Error('board <가로> <세로> (mm, 20 이상) 또는 board auto');P.board={w,h};P.pcb.min=false;}npRender();return(P.board?`보드 ${P.board.w} × ${P.board.h} mm`:'보드 크기 자동')+' — 3단계 PCB 시작 때 적용';}
     case'strategy':{const k=AUTOPLACE.strategy(a._[0]);if(!k)throw new Error('balanced · thermal · noise · compact');npPush();npEnsure().strategy=k;npRender();return'배치 전략 '+k;}
-    case'generate':return await npGenerate({pcb:!!(a.pcb||a.route===true||a.route==='1'||a.view==='pcb'),strategy:a.strategy,by});
+    case'generate':return await npGenerate({pcb:!!(a.pcb||a.route===true||a.route==='1'||a.view==='pcb'),strategy:a.strategy,variant:a.variant||a._[0],by});
+    case'variants':{if(a._[0]==='pick'&&a._[1])return await npGenerate({variant:a._[1],by});const vs=npVariants(true);NP.chooser=true;if(HS.ws!=='board'||S.sch!=='full')setStep(2);else stepPaint();return '회로 안 비교 (참고 단가는 데이터시트 DB의 추정값):\n'+NEWPROJ.variantsText(vs)+'\n→ variants pick cost|std|ext 또는 카드의 버튼으로 생성';}
     case'undo':{if(!NP.hist.length)return'되돌릴 것이 없습니다.';const h=JSON.parse(NP.hist.pop());if(h&&'plan' in h){NP.plan=h.plan;NP.arch=h.arch;}else NP.plan=h;npRender();return'되돌렸습니다.';}
     case'clear':{copClear('np');NP.log=[];return'';}
     case'ai':return await npAI(t.slice(1).join(' '));
@@ -11196,10 +11383,10 @@ async function npExec(line){
   npSay('cmd',line);npBusy(true);
   try{const f=(cliTok(line)[0]||'').toLowerCase();
     if(NP_CMDS.has(f)){const o=await npRun(line);if(o)npSay('ok',o);}
-    else if(AIM.mode==='ai'&&(await cliAiProbe(),CLI.sample))await npAI(line);
+    else if(AIM.mode==='ai'&&(await cliAiProbe(),CLI.sample)&&(NP.arch&&NP.arch.blocks.length)&&!npIsReq(line))await npAI(line);
     else if(await aimDetQuestion(line,npSay,()=>npRun('status'))){}
     else if(npNL(line)){const cmds=npNL(line);npSay('out','해석: '+cmds.join(' → '));for(const c of cmds){npSay('cmd',c);const o=await npRun(c);if(o)npSay('ok',o);}}
-    else{npSay('out','문장을 요구사항으로 보고 규칙으로 HW 블록 다이어그램을 만듭니다.');const o=await npRun('arch '+line);npSay('ok',o);}
+    else{const cur=$('#npReq').value.trim();const req=cur&&NP.arch&&NP.arch.blocks.length&&!/요구|설계|만들|보드|노드|컨트롤러|ecu/i.test(line)?cur+'\n'+line:line;$('#npReq').value=req;await npAnalyze(req);}
   }catch(e){console.error(e);npSay('err',e.message||String(e));}
   npBusy(false);
 }
@@ -11210,17 +11397,19 @@ function npNL(t){const s=t.toLowerCase();const out=[];const ly=s.match(/(\d+)\s*
   return out.length?out:null;}
 // build the board from the plan and load it into the viewer
 async function npGenerate(o){
-  if(NP.arch&&!NP.planManual)archToPlan(true);const P=npEnsure();if(!P.blocks.length)throw new Error('회로로 구현할 블록이 없습니다 (HW 블록에 impl을 지정하세요)');
+  if(NP.arch&&!NP.planManual)archToPlan(true);const P0=npEnsure();if(!P0.blocks.length)throw new Error('회로로 구현할 블록이 없습니다 (HW 블록에 impl을 지정하세요)');
+  if(!o.variant){const vs=npVariants(true);NP.chooser=true;setStep(2);const rec=NEWPROJ.recommend(vs,NP.vw);return '회로 안을 고르세요 (참고 단가는 데이터시트 DB 추정값):\n'+NEWPROJ.variantsText(vs)+`\n추천: ${rec.label} (${rec.tag}) — 카드의 [이 안으로 회로 생성] 또는 variants pick ${rec.key}`;}
+  const V=npVariants().find(v=>v.key===o.variant);if(!V)throw new Error('회로 안: cost · std · ext');const P=V.plan;P.name=P0.name;P.req=P0.req;NP.picked=V.key;NP.chooser=false;
   if(NP.arch){const um=NP.arch.blocks.filter(b=>!b.ext&&!(b.impl||[]).length).map(b=>b.label);if(um.length)npSay('out',`회로 라이브러리에 대응 블록이 없는 HW 블록: ${um.join(', ')} — 회로 단계에서 회로 CLI(add)로 직접 추가하세요.`);}
   const st=o.strategy?AUTOPLACE.strategy(o.strategy):P.strategy;
   const prog=npSay('out','부품을 고르고 넷리스트·회로도를 만드는 중…');await new Promise(r=>setTimeout(r,20));
   // step 2 is the circuit only: parts, nets and schematic. Placement and routing wait for step 3 (B.pcbPending).
-  const{B,r}=NEWPROJ.toBoard(P,{place:false});B.pcbPending=true;
+  const{B,r}=NEWPROJ.toBoard(P,{place:false});B.pcbPending=true;B.variant=V.key;B.variantLabel=`${V.label} (${V.tag})`;
   B.pcbPlan=Object.assign({layers:2,min:false,route:true},P.pcb||{},{strategy:st||'balanced',board:P.board?{w:P.board.w,h:P.board.h}:null});
   B.notes.push(`새 설계: ${P.blocks.length}개 블록에서 부품 ${r.parts.length}개와 회로도를 만들었습니다. 부품 배치·배선은 3단계(PCB)에서 시작합니다.`);r.warn.forEach(w=>B.warnings.push(w));
   setBoard(B);
   const sheets=BD.schSheets||(schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:'sch',sheets});
-  npSet(prog,`회로 생성: 부품 ${B.comps.length}개 · 넷 ${Object.keys(B.nets).length}개 · 회로도 ${sheets?sheets.length:0}쪽 · MCU 핀 배정 ${r.assigned.length}개\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>'\n  △ '+x.title).join('')}\nPCB 조건(3단계에서 적용): ${pcbPlanText(B.pcbPlan)}`);
+  npSet(prog,`회로 생성 [${V.label}]: 부품 ${B.comps.length}개 · BOM 약 $${V.m.price} · 넷 ${Object.keys(B.nets).length}개 · 회로도 ${sheets?sheets.length:0}쪽 · MCU 핀 배정 ${r.assigned.length}개\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>'\n  △ '+x.title).join('')}\nPCB 조건(3단계에서 적용): ${pcbPlanText(B.pcbPlan)}`);
   SYS.src='plan';setStep(2);
   if(o.pcb){setStep(3);await pcbStart(B.pcbPlan);return'회로 생성 후 PCB 설계를 시작했습니다 — 결과는 배치·배선 CLI에 있습니다.';}
   toast(`${P.name}: 부품 ${B.comps.length}개로 회로를 만들었습니다. 회로도를 검토한 뒤 3단계에서 PCB를 시작하세요.`);
@@ -11229,7 +11418,7 @@ async function npGenerate(o){
 const pcbPlanText=p=>`${p.layers||2}층 · ${p.min?'크기 최소화':p.board?`${p.board.w} × ${p.board.h} mm`:'크기 자동'} · ${AUTOPLACE.STRATS[p.strategy]?AUTOPLACE.STRATS[p.strategy].label:p.strategy} 배치 · 자동 배선 ${p.route===false?'끔':'켬'}`;
 /* ---------- step 3 gate: the PCB is started explicitly (layers, size, strategy, routing), the console shows each command ---------- */
 function pcbGatePaint(){
-  const show=!!(BD&&BD.pcbPending&&HS.ws==='board'&&S.sch!=='full');let el=$('#pcbGate');
+  const show=!!(BD&&BD.pcbPending&&!BD.blank&&HS.ws==='board'&&S.sch!=='full');let el=$('#pcbGate');
   if(!show){if(el)el.remove();return;}
   if(el)return;const p=Object.assign({layers:2,min:false,route:true,strategy:'balanced',board:null},BD.pcbPlan||{});
   el=document.createElement('div');el.id='pcbGate';el.className='pcb-gate';
@@ -11256,6 +11445,66 @@ async function pcbStart(p){
   else{if(p.board)cmds.push(`board size ${p.board.w} ${p.board.h} --anchor center`);cmds.push(`reset --strategy ${p.strategy}${p.route?' --route':''}`);}
   cliSay('out','PCB 설계 시작: '+cmds.join(' → '));for(const c of cmds){await cliExec(c);if(CLI.stopReq)break;}
   stepPaint();}
+/* ---------- step 2 entry: three circuit variants to pick from (price · features · extensibility) ---------- */
+function npVariants(fresh){if(NP.arch&&!NP.planManual)archToPlan(true);const P=npEnsure();const key=JSON.stringify(P.blocks)+'|'+P.req;
+  if(fresh||!NP.variants||NP.vkey!==key){NP.variants=NEWPROJ.variants(P);NP.vkey=key;}NP.vw=NP.vw||{price:1,feat:1,ext:1};NEWPROJ.recommend(NP.variants,NP.vw);return NP.variants;}
+function planGatePaint(){
+  const show=!!(NP.chooser&&HS.ws==='board'&&S.sch==='full'&&NP.plan&&NP.plan.blocks.length);let el=$('#planGate');
+  if(!show){if(el)el.remove();return;}
+  const vs=npVariants();const rec=NEWPROJ.recommend(vs,NP.vw);const W=NP.vw;
+  const bar=(l,v)=>`<div class="pg-bar"><span>${l}</span><i><b style="width:${v}%"></b></i><em>${v}</em></div>`;
+  const card=v=>`<article class="vcard${v===rec?' rec':''}${NP.picked===v.key&&BD&&BD.variant===v.key?' cur':''}" data-v="${v.key}">
+      <div class="vc-h"><b>${esc(v.label)}</b><span class="vc-tag">${esc(v.tag)}</span>${v===rec?'<span class="vc-rec">추천</span>':''}${NP.picked===v.key&&BD&&BD.variant===v.key?'<span class="vc-cur">지금 회로</span>':''}</div>
+      <p class="vc-d">${esc(v.desc)}</p>
+      <div class="vc-m"><div><b>$${v.m.price}</b><span>BOM 참고가${v.m.unknown?` (미정 ${v.m.unknown})`:''}</span></div><div><b>${v.m.parts}</b><span>부품</span></div><div><b>${v.m.spare}</b><span>여유 MCU 핀</span></div><div><b>${v.m.loss} W</b><span>레귤레이터 손실</span></div></div>
+      <div class="vc-s">${bar('가격',v.score.price)}${bar('기능',v.score.feat)}${bar('확장성',v.score.ext)}</div>
+      <div class="vc-k">MCU ${esc((v.m.mcu||'-').replace(/-.*$/,''))} · 블록 ${v.plan.blocks.length}개${v.m.warn?` · 경고 ${v.m.warn}`:''}</div>
+      <ul class="vc-diff">${v.diff.map(d=>`<li>${esc(d)}</li>`).join('')}</ul>
+      <div class="acts"><button type="button" class="btn primary sm" data-pick="${v.key}">이 안으로 회로 생성</button><button type="button" class="btn sm" data-bom="${v.key}">BOM 보기</button></div></article>`;
+  const html=`<div class="pg-wrap"><div class="pg-head"><div><b>2단계 · 회로 안 고르기</b><p class="lead">1단계 다이어그램을 세 가지 부품 구성으로 풀었습니다. 가격은 데이터시트 DB의 참고 단가(약 1k 수량, 추정)를 더한 값이고, 기능·확장성은 블록·헤더·여유 핀으로 셈한 상대 점수입니다. 고르면 부품·넷리스트·회로도를 만듭니다 (PCB는 3단계).</p></div>
+      <div class="pg-w" role="group" aria-label="우선순위"><span>우선순위</span>${[['price','가격'],['bal','균형'],['feat','기능'],['ext','확장성']].map(([k,l])=>`<button type="button" class="pill vbtn${NP.vwk===k||(!NP.vwk&&k==='bal')?' on':''}" data-w="${k}">${l}</button>`).join('')}</div></div>
+    <div class="vcards">${vs.map(card).join('')}</div>
+    <div class="pg-foot"><button type="button" class="btn sm" data-back>← 1단계 다이어그램 수정</button>${BD&&!BD.blank&&BD.variant?'<button type="button" class="btn sm" data-keep>지금 회로 그대로 보기</button>':''}</div></div>`;
+  if(!el){el=document.createElement('div');el.id='planGate';el.className='plan-gate';$('#vp').appendChild(el);
+    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+      if(b.dataset.w){NP.vwk=b.dataset.w;NP.vw={price:{price:3,bal:1,feat:1,ext:1}[b.dataset.w],feat:{price:1,bal:1,feat:3,ext:1}[b.dataset.w],ext:{price:1,bal:1,feat:1,ext:3}[b.dataset.w]};planGatePaint();}
+      else if(b.dataset.pick){if(NP.busy)return;npExec(`generate ${b.dataset.pick}`);}
+      else if(b.dataset.bom){const v=npVariants().find(x=>x.key===b.dataset.bom);copSay('ok',`[${v.label}] BOM 약 $${v.m.price} (참고 단가)\n`+v.m.bom.items.map(i=>`  ${i.refs.join(',').padEnd(14)} ${(i.mpn||i.val).padEnd(22)} ×${i.refs.length}  $${i.unit}${i.est?'?':''} → $${i.sub.toFixed(2)}`).join('\n'));copFocus();}
+      else if(b.hasAttribute('data-back'))setStep(1);
+      else if(b.hasAttribute('data-keep')){NP.chooser=false;stepPaint();}});}
+  el.innerHTML=html;}
+/* ---------- step 1: requirement analysis with follow-up questions (AI or rules) ---------- */
+const REQ_Q=[
+  {key:'power',label:'전원',re:/\d+(\.\d+)?\s*v\b|배터리|battery|usb|vbat|전원|power|어댑터/i,q:'입력 전원은 무엇인가요?',why:'레귤레이터 단수·보호 회로·커넥터가 입력 전원으로 정해집니다.',opts:['12 V 차량 배터리','24 V 산업 전원','USB 5 V','5 V 어댑터']},
+  {key:'mcu',label:'MCU',re:/stm32|aurix|tc3|tc364|cortex|\bmcu\b|마이크로|esp32|\bpic\b|avr|atmega/i,q:'MCU는 어떤 계열을 쓰나요?',why:'핀 수·주변장치·안전 기능이 달라 회로 안이 달라집니다.',opts:['STM32 (Cortex-M, 범용·저가)','AURIX TC364 (차량·기능 안전)','상관없음 — 추천해 주세요']},
+  {key:'comm',label:'통신',re:/\bcan\b|can-?fd|\blin\b|uart|usb|i2c|i²c|spi|ethernet|이더넷|통신|\bble\b|wifi|무선|rs-?485/i,q:'외부와 어떤 통신을 하나요?',why:'트랜시버·커넥터·MCU 핀 배정에 필요합니다.',opts:['CAN','CAN-FD','UART (디버그·시리얼)','USB','통신 없음'],multi:true},
+  {key:'func',label:'기능',re:/모터|motor|bldc|팬|\bfan\b|센서|sens|led|버튼|button|릴레이|relay|밸브|valve|측정|adc|전류|온도|홀|hall|솔레노이드|플래시|flash|로그/i,q:'보드가 하는 주요 기능은 무엇인가요?',why:'구동·센싱 블록과 전원 용량을 정합니다.',opts:['DC 모터 구동','BLDC 모터 구동 (홀 센서)','센서 측정 (전류·온도·전압)','LED·버튼 (표시·입력)','데이터 로그 (플래시)'],multi:true},
+  {key:'env',label:'환경·안전',re:/asil|iso\s*26262|기능\s*안전|safety|산업|industrial|차량|automotive|\becu\b|실내|옥외|-40|온도\s*범위|\bqm\b/i,q:'사용 환경과 안전 등급은요?',why:'워치독·보호 회로·부품 등급이 달라집니다.',opts:['일반 (실내 · QM)','차량용 (ASIL B)','산업용 (-40~85 °C)','모름 — 일반으로']}];
+const npIsReq=t=>REQ_Q.filter(f=>f.re.test(t)).length>=2||/요구|설계|만들|보드|노드|컨트롤러|ecu|모듈/i.test(t);
+async function npAskAI(req){
+  const prompt=`You are a hardware system architect. A user wrote this requirement for a new electronics board (Korean). Decide which ESSENTIAL facts are still missing before an HW block diagram can be drawn: input power (voltage/source), MCU family, external communication, main functions (actuation/sensing/UI/storage), environment & safety level, and anything the request makes necessary (e.g. motor rating, sensor type, bus speed). Ask ONLY about missing or ambiguous facts, at most 4 questions, each with 3-5 concrete answer options in Korean (short labels that include the key words a rules engine can read, e.g. "12 V 차량 배터리", "AURIX TC364", "CAN-FD", "BLDC 모터 구동 (홀 센서)", "ASIL B"). If nothing essential is missing return an empty list.
+Return ONLY JSON: {"questions":[{"key":"power","label":"전원","q":"…?","why":"…","options":["…"],"multi":false}],"note":"one Korean line on what you understood"}
+Requirement:\n${req}`;
+  try{const r=await CLI.sample.json(prompt,{cache:false,modelTier:AIM.tier});AIM.calls++;AIM.inTok+=aimTok(prompt)+AIM_OVERHEAD;AIM.outTok+=aimTok(JSON.stringify(r));aimPaint();
+    if(r&&r.note)copSay('ai',r.note);const qs=(r&&Array.isArray(r.questions)?r.questions:[]).slice(0,4).map(x=>({key:String(x.key||x.label||'q'),label:String(x.label||x.key||''),q:String(x.q||x.question||''),why:String(x.why||''),opts:(x.options||[]).map(String).slice(0,6),multi:!!x.multi})).filter(x=>x.q);return qs;}
+  catch(e){console.error(e);return null;}}
+async function npAnalyze(req){
+  if(NP.busy)return;npBusy(true);NP.answers=NP.answers||{};const name=$('#npName').value.trim();
+  try{
+    copSay('out',`요구사항 분석 중… (${AIM.mode==='ai'?'AI':'규칙'})`);
+    let qs=null;if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample)qs=await npAskAI(req);}
+    if(!qs)qs=REQ_Q.filter(f=>!f.re.test(req)&&!NP.answers[f.key]).map(f=>({key:f.key,label:f.label,q:f.q,why:f.why,opts:f.opts,multi:!!f.multi}));
+    qs=qs.filter(q=>!NP.answers[q.key]);
+    if(qs.length){copSay('out',`블록 다이어그램을 그리기 전에 ${qs.length}가지를 확인합니다. 답을 고르거나 적어 주세요 (건너뛰면 기본값).`);
+      for(const q of qs){const a=await copAsk(q);if(a==null)continue;NP.answers[q.key]={label:q.label||q.key,v:a};if(NP.stopReq)break;}}
+    const add=Object.values(NP.answers).map(x=>`${x.label}: ${x.v}`).join(' · ');
+    const base=req.replace(/\n보강:.*$/s,'');const full=add?base+'\n보강: '+add:base;$('#npReq').value=full;if(NP.plan)NP.plan.req=full;
+    npPush();if(!NP.arch)NP.arch=HWARCH.blank(name||null);NP.arch.req=full;if(name)NP.arch.name=name;SYS.view='hw';
+    if(AIM.mode==='ai'&&CLI.sample){await npAI(`${name?'프로젝트 이름: '+name+'. ':''}요구사항: ${full}. 이 요구사항으로 HW 블록 다이어그램(부품 미정)을 ${NP.arch.blocks.length?'다시 ':''}만들어줘.`);archToPlan();npRender();}
+    else{const o=await npRun('arch '+full);npSay('ok',o);}
+    copSay('out','다이어그램을 확인하고 블록·기능·인터페이스를 고친 뒤 [다음: 회로 생성]을 누르세요. 부품과 PCB는 다음 단계에서 정합니다.');
+  }catch(e){console.error(e);npSay('err',e.message||String(e));}
+  npBusy(false);}
 /* Claude plans with the same commands */
 const NP_SYS=`You are a hardware system architect working inside a design tool. The user writes in Korean. Step 1 is a HW ARCHITECTURE BLOCK DIAGRAM: functional blocks without part numbers (e.g. "Battery Input (12 V)", "PMIC / LDO / Buck", "CAN-FD Transceiver", "Main MCU", "H-Bridge / Gate Driver IC", "Current Sensing & Temp. Sensor", "Debug / Calib. Interface", "External Connector") grouped in bands power · comm · ctrl · io · ext, with labelled interfaces (rails such as VCC_MCU 3.3 V, buses such as CAN_H / CAN_L, control and feedback signals). Build it with arch / block / feat / link commands through the run_np tool, one command at a time. Use impl only to say which library circuit block will realise a block in step 2; never put part numbers in labels or features unless the user names them.
 Commands:
@@ -11283,17 +11532,9 @@ $('#sysWs').addEventListener('click',e=>{
   const ar=e.target.closest('[data-adel]');if(ar&&!NP.busy)npExec('del '+ar.dataset.adel);
   const rm=e.target.closest('[data-rm]');if(rm&&!NP.busy)npExec('remove '+rm.dataset.rm);});
 $('#npBlocks').addEventListener('change',e=>{const i=e.target.closest('[data-p]');if(!i)return;const id=e.target.closest('[data-b]').dataset.b;npExec(`set ${id} ${i.dataset.p} ${i.value.trim()}`);});
-$('#npPlan').addEventListener('click',async()=>{const req=$('#npReq').value.trim(),name=$('#npName').value.trim();if(!req){npSay('err','요구사항을 적어 주세요.');return;}
-  if(AIM.mode==='ai'){npBusy(true);npSay('cmd',`HW 블록 다이어그램 (AI): ${req}`);try{npPush();if(!NP.arch){NP.arch=HWARCH.blank(name||null);}NP.arch.req=req;if(name)NP.arch.name=name;SYS.view='hw';
-      await npAI(`${name?'프로젝트 이름: '+name+'. ':''}요구사항: ${req}. 이 요구사항으로 HW 블록 다이어그램(부품 미정)을 ${NP.arch.blocks.length?'다시 ':''}만들어줘.`);archToPlan();npRender();}catch(e){npSay('err',e.message||String(e));}npBusy(false);}
-  else npExec(`arch ${req}`);});
+$('#npPlan').addEventListener('click',()=>{if(NP.busy)return;const req=$('#npReq').value.trim();if(!req){npSay('err','요구사항을 적어 주세요.');copFocus();return;}npAnalyze(req);});
 $('#npAdd').addEventListener('click',()=>npExec('add '+$('#npAddSel').value));
 $('#npName').addEventListener('change',()=>{const v=$('#npName').value.trim();if(NP.arch&&v)NP.arch.name=v;if(NP.plan){NP.plan.name=v||NP.plan.name;}npRender();});
-$('#npStrat').addEventListener('change',()=>{if(NP.plan){NP.plan.strategy=$('#npStrat').value;npRender();}});
-['#npW','#npH'].forEach(id=>$(id).addEventListener('change',()=>{const w=+$('#npW').value,h=+$('#npH').value;if(w>=20&&h>=20)npExec(`board ${w} ${h}`);}));
-$('#npLayers').addEventListener('change',()=>npExec(`board layers ${$('#npLayers').value}`));
-$('#npSize').addEventListener('change',()=>{const v=$('#npSize').value;$('#npWH').hidden=v!=='fix';if(v==='min')npExec('board min');else if(v==='auto')npExec('board auto');else{const w=+$('#npW').value,h=+$('#npH').value;if(w>=20&&h>=20)npExec(`board ${w} ${h}`);}});
-$('#npRoute').addEventListener('change',()=>npExec(`board route ${$('#npRoute').checked?'on':'off'}`));
 $('#npGen').addEventListener('click',()=>{if(NP.busy)return;npExec('generate');});
 
 /* ---------- step 1: HW architecture block diagram (HWARCH) · part-level view (SYSDIAG) ---------- */
@@ -11301,7 +11542,7 @@ var SYS={sel:null,src:null,D:null,view:'hw',A:null};
 function archEnsure(){if(!NP.arch)NP.arch=HWARCH.blank($('#npName').value.trim()||(BD&&BD.name)||null);return NP.arch;}
 // the circuit plan follows the architecture until the user edits the plan by hand
 function archToPlan(force){if(!NP.arch)return;if(NP.planManual&&!force)return;const prev=NP.plan;const t=HWARCH.toPlan(NP.arch);NP.plan=t.plan;NP.planManual=false;if(prev){NP.plan.board=prev.board;if(prev.pcb)NP.plan.pcb=prev.pcb;if(prev.strategy&&prev.strategy!=='balanced')NP.plan.strategy=prev.strategy;}}
-function sysArch(){if(NP.arch&&NP.arch.blocks.length)return NP.arch;if(BD){const D=SYSDIAG.fromBoard(BD);return HWARCH.fromDiagram(D);}return null;}
+function sysArch(){if(NP.arch&&NP.arch.blocks.length)return NP.arch;if(BD&&!BD.blank){const D=SYSDIAG.fromBoard(BD);return HWARCH.fromDiagram(D);}return null;}
 function sysDiagram(){
   if(SYS.src!=='board'&&NP.plan&&NP.plan.blocks.length){SYS.D=SYSDIAG.fromPlan(NP.plan);SYS.D.from='plan';}
   else if(BD){SYS.D=SYSDIAG.fromBoard(BD);SYS.D.from='board';}else SYS.D=null;
@@ -11366,16 +11607,16 @@ $('#sysSvgDl').addEventListener('click',async()=>{const svgS=SYS.view==='hw'?(SY
 /* ---------- design flow: 1 system diagram → 2 schematic → 3 PCB → 4 mechanical CAD ---------- */
 function setStep(n){n=+n;
   if(n===1)setWorkspace('sys');
-  else if(n===2){if(!BD){toast('먼저 1단계에서 회로를 생성하거나 보드를 불러오세요.');return;}setWorkspace('board');if(S.sch!=='full')setView('sch');}
-  else if(n===3){if(!BD){toast('보드가 없습니다.');return;}setWorkspace('board');if(S.sch==='full')setView(S.view&&S.view!=='sch'?S.view:'3d');}
-  else if(n===4){if(!BD){toast('보드가 없습니다.');return;}if(BD.pcbPending){toast('4단계 기구 설계는 PCB(3단계)를 배치한 뒤에 할 수 있습니다.');setStep(3);return;}setWorkspace('cad');}
+  else if(n===2){if((!BD||BD.blank)&&!(NP.chooser&&NP.plan&&NP.plan.blocks.length)){toast('먼저 1단계에서 요구사항으로 다이어그램을 만들고 [다음: 회로 생성]을 누르세요.');return;}setWorkspace('board');if(S.sch!=='full')setView('sch');}
+  else if(n===3){if(!BD||BD.blank){toast('회로(2단계)를 먼저 생성하세요.');return;}setWorkspace('board');if(S.sch==='full')setView(S.view&&S.view!=='sch'?S.view:'3d');}
+  else if(n===4){if(!BD||BD.blank){toast('회로(2단계)를 먼저 생성하세요.');return;}if(BD.pcbPending){toast('4단계 기구 설계는 PCB(3단계)를 배치한 뒤에 할 수 있습니다.');setStep(3);return;}setWorkspace('cad');}
   stepPaint();}
 function stepCur(){const w=HS.ws;return w==='sys'?1:w==='cad'?4:w==='board'?(S.sch==='full'?2:3):0;}
-function stepPaint(){const cur=stepCur();const done={1:!!(NP.plan&&NP.plan.blocks.length)||!!BD,2:!!BD,3:!!(BD&&BD.comps.length&&!BD.pcbPending),4:!!(BD&&BD.housing&&BD.housing.R)};
-  pcbGatePaint();
-  $$('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>1&&!BD;b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
+function stepPaint(){const cur=stepCur();const real=!!(BD&&!BD.blank);const done={1:!!(NP.plan&&NP.plan.blocks.length)||real,2:real,3:!!(real&&BD.comps.length&&!BD.pcbPending),4:!!(real&&BD.housing&&BD.housing.R)};
+  pcbGatePaint();planGatePaint();
+  $$('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>2&&!real||k===2&&!real&&!(NP.chooser&&NP.plan&&NP.plan.blocks.length);b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
   $$('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
-  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');if(typeof copCtx==='function')copCtx();}
+  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');if(typeof copCtx==='function')copCtx();if(typeof modePaint==='function')modePaint();}
 $$('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));
 
 /* ---------- AI 코파일럿 분할: 설계 도우미 + 오른쪽 도킹 패널 + 고정 패널 새 창 ----------
@@ -11422,7 +11663,20 @@ function copFill(d,e){
       :e.state==='stale'?'그 뒤에 다른 변경이 있어 여기서는 되돌릴 수 없습니다. 실행 취소(Ctrl+Z)로 한 단계씩 되돌리세요.'
       :`${e.by==='ai'?'Claude가 ':''}${S0?S0.label+' ':''}설계를 ${e.n}단계 바꿨습니다.`;
     d.innerHTML=tag+`<span class="cp-msg">${msg}</span>`+(e.state==='open'?`<span class="cp-acts"><button type="button" class="btn sm" data-keep="${e.cid}">유지</button><button type="button" class="btn sm" data-undo="${e.cid}">되돌리기</button></span>`:'');return;}
+  if(k==='ask'){d.className='cp cp-ask'+(e.state==='open'?' open':'');const sel=e.sel||[];
+    if(e.state!=='open'){d.innerHTML=tag+`<div class="ask-q">${esc(e.q)}</div><div class="ask-a">${e.answer==null?'건너뜀 (기본값)':'→ '+esc(e.answer)}</div>`;return;}
+    d.innerHTML=tag+`<div class="ask-q">${esc(e.q)}</div>${e.why?`<div class="ask-w">${esc(e.why)}</div>`:''}
+      <div class="ask-o">${(e.opts||[]).map((o,i)=>`<button type="button" class="pill vbtn${sel.includes(i)?' on':''}" data-opt="${i}">${esc(o)}</button>`).join('')}</div>
+      <div class="ask-f"><input type="text" placeholder="${e.multi?'직접 적기 (여러 개면 , 로 구분)':'직접 적기'}" aria-label="답"><button type="button" class="btn primary sm" data-ok>${e.multi?'선택 완료':'보내기'}</button><button type="button" class="btn sm" data-skip>건너뛰기</button></div>`;return;}
   d.className='cp cp-out';d.innerHTML=tag+esc(t);}
+/* a question to the user (step 1 requirement analysis): resolves with the answer text, or null when skipped */
+function copAsk(q){return new Promise(res=>{const e={k:'ask',t:q.q,q:q.q,why:q.why,opts:q.opts||[],multi:!!q.multi,state:'open',sel:[],res};COP.ask=e;copPaint(COP.askSrc||'np',e);copBusyPaint();copFocus();
+  setTimeout(()=>{const L=$('#copLog');const d=L&&L.querySelector(`[data-cid="${e.cid}"] input`);if(d)d.focus();},30);});}
+function copAnswer(e,val){if(!e||e.state!=='open')return;e.state='done';e.answer=val;COP.ask=null;copPaint(e.src,e,true);copBusyPaint();const r=e.res;e.res=null;if(r)r(val);}
+function copAskClick(d,e,b){const i=+b.dataset.opt;const inp=d.querySelector('input');
+  if(b.dataset.opt!=null){if(e.multi){const k=e.sel.indexOf(i);if(k>=0)e.sel.splice(k,1);else e.sel.push(i);copPaint(e.src,e,true);}else copAnswer(e,e.opts[i]);return;}
+  if(b.hasAttribute('data-skip')){copAnswer(e,null);return;}
+  if(b.hasAttribute('data-ok')){const txt=(inp&&inp.value.trim())||'';const parts=e.sel.map(k=>e.opts[k]).concat(txt?[txt]:[]);if(!parts.length){toast('답을 고르거나 적어 주세요.');return;}copAnswer(e,parts.join(', '));}}
 function copNode(e,doc){const d=doc.createElement('div');d.dataset.cid=e.cid;copFill(d,e);return d;}
 // called by every console's say/set: new entries join the log, updates repaint in place
 function copPaint(src,e,upd){
@@ -11438,7 +11692,7 @@ function copDrop(e){COP.log=COP.log.filter(x=>x!==e);const L=$('#copLog');const 
 function copClear(src){COP.log=src?COP.log.filter(x=>x.src!==src):[];copRebuild();}
 function copRebuild(){const L=$('#copLog');if(!L)return;L.innerHTML='';let prev=null;COP.log.forEach(e=>{e.newSrc=!prev||prev.src!==e.src;prev=e;L.appendChild(copNode(e,L.ownerDocument));});L.scrollTop=L.scrollHeight;}
 function copSay(k,t){copPaint('sys',{k,t});}
-function copBusyPaint(){const b=copBusyAny();const s=$('#copStop'),r=$('#copSend'),el=$('#copilot');if(s)s.hidden=!b;if(r)r.disabled=b;if(el)el.classList.toggle('busy',b);}
+function copBusyPaint(){const b=copBusyAny();const ask=!!(COP.ask&&COP.ask.state==='open');const s=$('#copStop'),r=$('#copSend'),el=$('#copilot');if(s)s.hidden=!b;if(r)r.disabled=b&&!ask;if(el)el.classList.toggle('busy',b);}
 async function copChg(cid,act){const e=COP.log.find(x=>x.cid===+cid);if(!e||e.state!=='open')return;
   if(act==='keep'){e.state='kept';copPaint(e.src,e,true);return;}
   if(copBusyAny()){toast('실행 중에는 되돌릴 수 없습니다.');return;}
@@ -11448,6 +11702,7 @@ async function copChg(cid,act){const e=COP.log.find(x=>x.cid===+cid);if(!e||e.st
 // one message from the user: to the current step's console; a run that changed the design leaves a keep / undo card
 async function copSubmit(text,opt){
   text=String(text||'').trim();if(!text)return;
+  if(COP.ask&&COP.ask.state==='open'){copAnswer(COP.ask,text);return;}
   if(copBusyAny()){toast('실행 중입니다. 끝나거나 [중지]한 뒤 보내세요.');return;}
   const src=opt&&opt.src||copActive();
   if(src!=='np'&&!BD){copSay('err','보드가 없습니다. 1단계에서 회로를 만들거나 파일을 불러오세요.');return;}
@@ -11485,7 +11740,7 @@ function copEnsure(){
       <div class="cop-row"><span class="cop-k">Enter 보내기 · Shift+Enter 줄바꿈 · ↑ 이전</span><span class="cop-sp"></span><button type="button" class="btn sm" id="copStop" hidden>중지</button><button class="btn primary sm" id="copSend">보내기</button></div></form>`;
   const host=document.getElementById('dockBody');host.insertBefore(el,host.firstChild);
   const inp=el.querySelector('#copIn'),form=el.querySelector('#copForm');
-  form.addEventListener('submit',e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;if(copBusyAny()){toast('실행 중입니다. 끝나거나 [중지]한 뒤 보내세요.');return;}inp.value='';copSubmit(v);});
+  form.addEventListener('submit',e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;if(COP.ask&&COP.ask.state==='open'){inp.value='';copAnswer(COP.ask,v);return;}if(copBusyAny()){toast('실행 중입니다. 끝나거나 [중지]한 뒤 보내세요.');return;}inp.value='';copSubmit(v);});
   inp.addEventListener('keydown',e=>{e.stopPropagation();
     if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();form.requestSubmit();return;}
     if(e.key==='ArrowUp'&&inp.selectionStart===0&&inp.selectionEnd===0&&COP.hi>0){COP.hi--;inp.value=COP.hist[COP.hi]||'';e.preventDefault();}
@@ -11495,18 +11750,21 @@ function copEnsure(){
   el.querySelector('#copSrc').addEventListener('change',e=>{COP.src=e.target.value;copCtx();});
   el.querySelector('#copClr').addEventListener('click',()=>{COP.log=[];copRebuild();});
   el.querySelector('#copChips').addEventListener('click',e=>{const b=e.target.closest('[data-cchip]');if(!b||copBusyAny())return;const[,c,g]=copChips(copActive())[+b.dataset.cchip]||[];if(c)copSubmit(AIM.mode==='ai'?g:c);});
-  el.querySelector('#copLog').addEventListener('click',e=>{const k=e.target.closest('[data-keep]'),u=e.target.closest('[data-undo]');if(k)copChg(k.dataset.keep,'keep');else if(u)copChg(u.dataset.undo,'undo');});
+  el.querySelector('#copLog').addEventListener('click',e=>{const k=e.target.closest('[data-keep]'),u=e.target.closest('[data-undo]');if(k){copChg(k.dataset.keep,'keep');return;}if(u){copChg(u.dataset.undo,'undo');return;}
+    const d=e.target.closest('.cp-ask');const b=e.target.closest('button');if(d&&b){const ent=COP.log.find(x=>x.cid===+d.dataset.cid);if(ent&&ent.state==='open')copAskClick(d,ent,b);}});
+  el.querySelector('#copLog').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const d=e.target.closest('.cp-ask');if(!d||e.target.tagName!=='INPUT')return;e.preventDefault();const ent=COP.log.find(x=>x.cid===+d.dataset.cid);const ok=d.querySelector('[data-ok]');if(ent&&ent.state==='open'&&ok)copAskClick(d,ent,ok);});
   aimBind(el);cliAiProbe().then(aimPaint);
   copRebuild();copCtx();return el;}
 
 /* ---- right dock: 설계 도우미 · 정보 · 시뮬레이션 ---- */
 function dockPaint(){
   const app=$('.app');const aiOut=!!PANELS.ai.out,inOut=!!PANELS.insp.out,off=!!LAY.dockOff,empty=aiOut&&inOut;
-  let t=COP.tab;if(t==='ai'&&aiOut)t=inOut?null:(S.panel||'info');if((t==='info'||t==='sim')&&inOut)t=aiOut?null:'ai';COP.shown=t;
+  let t=COP.tab;if(t==='ai'&&aiOut)t=inOut?'ds':(S.panel||'info');if((t==='info'||t==='sim')&&inOut)t=aiOut?'ds':'ai';COP.shown=t;
   app.classList.toggle('dock-off',off);app.classList.toggle('dock-empty',empty);app.classList.toggle('dk',!off&&!empty);
   const tg=$('#dockTg');if(tg)tg.setAttribute('aria-pressed',String(!off&&!empty));
-  $$('[data-dock]').forEach(b=>{const k=b.dataset.dock;b.hidden=k==='ai'?aiOut:inOut;b.setAttribute('aria-selected',k===t?'true':'false');});
-  const cp=PANELS.ai.el,ins=PANELS.insp.el;if(cp)cp.hidden=!aiOut&&t!=='ai';if(ins)ins.hidden=!inOut&&!(t==='info'||t==='sim');
+  const allow=typeof modeTabs==='function'?modeTabs():['ai','info','sim','ds'];if(t&&!allow.includes(t)){t=allow[0]||null;COP.shown=t;}
+  $$('[data-dock]').forEach(b=>{const k=b.dataset.dock;b.hidden=(k==='ai'?aiOut:k==='ds'?false:inOut)||!allow.includes(k);b.setAttribute('aria-selected',k===t?'true':'false');});
+  const cp=PANELS.ai.el,ins=PANELS.insp.el,ds=$('#dsPane');if(cp)cp.hidden=!aiOut&&t!=='ai';if(ins)ins.hidden=!inOut&&!(t==='info'||t==='sim');if(ds){ds.hidden=t!=='ds';if(t==='ds'&&typeof dsRender==='function')dsRender();}
   const d=$('#dock');if(d)d.classList.toggle('wide',t==='sim');}
 function dockTab(t){COP.tab=t;LAY.dockTab=t;saveLayout();if(t==='info'||t==='sim')setPanel(t);dockPaint();
   if(t==='ai')setTimeout(()=>{const L=$('#copLog');if(L)L.scrollTop=L.scrollHeight;},0);}
@@ -11583,19 +11841,85 @@ window.addEventListener('beforeunload',()=>Object.values(PANELS).forEach(P=>{if(
 /* ---- boot ---- */
 copEnsure();
 Object.entries(PANELS).forEach(([k,P])=>{P.el=$(P.sel);panelDecorate(k);});
-if(LAY.dockTab==='info'||LAY.dockTab==='sim'||LAY.dockTab==='ai')COP.tab=LAY.dockTab;
+if(['info','sim','ai','ds'].includes(LAY.dockTab))COP.tab=LAY.dockTab;
 $$('[data-dock]').forEach(b=>b.addEventListener('click',()=>dockTab(b.dataset.dock)));
 $('#dockHide').addEventListener('click',()=>dockToggle(false));
 $('#dockTg').addEventListener('click',()=>dockToggle());
-$('#dockPop').addEventListener('click',()=>panelPop(COP.shown==='ai'?'ai':'insp'));
+$('#dockPop').addEventListener('click',()=>{if(COP.shown==='ds'){toast('데이터시트 탭은 새 창으로 띄울 수 없습니다. 페이지의 [원본 파일] 링크를 쓰세요.');return;}panelPop(COP.shown==='ai'?'ai':'insp');});
 // ` anywhere (outside a text field) jumps to the 도우미 input
 document.addEventListener('keydown',e=>{if(e.key!=='`'||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target.matches('input,select,textarea'))return;e.preventDefault();e.stopImmediatePropagation();copFocus();},true);
 dockPaint();if(COP.tab!=='ai')setPanel(COP.tab);
 copSay('out','설계 도우미입니다. 요구사항·질문·명령을 적으면 지금 단계(1 시스템 · 2 회로 · 3 PCB · 4 기구)의 콘솔이 처리합니다. AI 모드에서는 Claude가 같은 명령을 골라 실행하고, 설계를 바꾼 실행은 [유지] / [되돌리기]로 정할 수 있습니다. 패널은 오른쪽 위 버튼으로 새 창에 띄울 수 있습니다.');
 
+/* ---------- 데이터시트 탭: the HTML datasheet DB (datasheets/db/*.html → DSDB) for the parts of the current circuit ----------
+   Left: parts of the circuit (BOM order, with reference price) and a search over the whole DB; right: the part's page. */
+var DS={q:'',sel:null,view:'list'};
+const dsDB=()=>typeof DSDB!=='undefined'?DSDB:{built:'',items:{}};
+const dsStrip=html=>String(html||'').replace(/<script[\s\S]*?<\/script>/gi,'').replace(/\son[a-z]+="[^"]*"/gi,'').replace(/javascript:/gi,'');
+function dsFind(mpn){if(!mpn)return null;const I=dsDB().items;const k=String(mpn).trim();if(I[k])return Object.assign({mpn:k},I[k]);const base=k.replace(/\s*\(.*\)$/,'');if(I[base])return Object.assign({mpn:base},I[base]);
+  const hit=Object.keys(I).find(x=>x.replace(/\s*\(.*\)$/,'')===base);return hit?Object.assign({mpn:hit},I[hit]):null;}
+// parts of the current circuit grouped by part number
+function dsParts(){if(!BD||BD.blank)return[];const m=new Map();BD.comps.forEach(c=>{const key=(c.mpn||'').trim()||('~'+c.val+'|'+c.fp);const it=m.get(key)||{mpn:(c.mpn||'').trim(),val:c.val,fp:c.fp,refs:[],desc:c.desc||''};it.refs.push(c.ref);m.set(key,it);});
+  const P=typeof PARTS!=='undefined'?PARTS:null;const out=[...m.values()].map(it=>{it.ds=dsFind(it.mpn);it.info=P&&(P.find(it.mpn)||P.find(it.val));it.price=P?P.price(it.mpn,it.info&&it.info.cat):null;it.sub=it.price!=null?it.price*it.refs.length:null;return it;});
+  out.sort((a,b)=>(b.sub||0)-(a.sub||0)||a.refs[0].localeCompare(b.refs[0],undefined,{numeric:true}));return out;}
+function dsRender(){
+  const host=$('#dsPane');if(!host)return;const D=dsDB();const parts=dsParts();const q=DS.q.toLowerCase();
+  const total=parts.reduce((a,p)=>a+(p.sub||0),0),unknown=parts.filter(p=>p.sub==null).length;
+  if(DS.sel){const it=dsFind(DS.sel);const P=typeof PARTS!=='undefined'?PARTS:null;const info=P&&P.find(DS.sel);
+    host.innerHTML=`<div class="ds-h"><button type="button" class="btn sm" data-dsback>← 목록</button><b class="mono">${esc(DS.sel)}</b>${it&&it.status==='stub'?'<span class="ds-stub">초안</span>':''}<span class="cop-sp"></span>${it?`<a class="btn sm" href="${esc(it.file)}" target="_blank" rel="noopener">원본 파일</a>`:''}</div>
+      <div class="ds-page">${it?dsStrip(it.html):`<p class="lead">이 부품(${esc(DS.sel)})의 데이터시트 페이지가 아직 없습니다. <code>datasheets/db/${esc(DS.sel.replace(/[^A-Za-z0-9.+-]+/g,'_'))}.html</code>을 만들고 <code>npm run dsdb</code>로 묶으세요.</p>${info?`<dl class="kv">${info.specs.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl><p>${P.links(info,DS.sel).map(([t,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join(' · ')}</p>`:''}`}</div>`;
+    host.querySelector('[data-dsback]').addEventListener('click',()=>{DS.sel=null;dsRender();});return;}
+  const row=p=>{const name=p.mpn||p.val;return`<button type="button" class="ds-row${p.ds?'':' none'}" data-ds="${esc(p.mpn||'')}" ${p.mpn?'':'disabled'}><span class="ds-refs mono">${esc(p.refs.slice(0,4).join(', '))}${p.refs.length>4?` +${p.refs.length-4}`:''}</span><span class="ds-name"><b>${esc(name)}</b><small>${esc(p.info?p.info.title:p.desc||p.fp||'')}</small></span><span class="ds-price mono">${p.price!=null?`$${p.price}${p.refs.length>1?` ×${p.refs.length}`:''}`:'—'}</span><span class="ds-st">${p.ds?(p.ds.status==='stub'?'초안':'DB'):'없음'}</span></button>`;};
+  const all=Object.entries(D.items).map(([mpn,v])=>({mpn,v})).filter(x=>!q||(x.mpn+' '+x.v.title+' '+x.v.mfr+' '+x.v.cat).toLowerCase().includes(q)).slice(0,60);
+  host.innerHTML=`<div class="ds-h"><b>데이터시트 DB</b><span class="cls">${Object.keys(D.items).length}페이지 · ${esc(D.built)}</span><span class="cop-sp"></span><input class="search" id="dsQ" type="search" placeholder="부품 번호·제조사·분류 검색" value="${esc(DS.q)}"></div>
+    ${q?`<div class="ds-list">${all.map(x=>`<button type="button" class="ds-row" data-ds="${esc(x.mpn)}"><span class="ds-name"><b>${esc(x.mpn)}</b><small>${esc(x.v.mfr)} · ${esc(x.v.cat)} · ${esc(x.v.title.replace(/^[^·]*·\s*/,''))}</small></span><span class="ds-price mono">${x.v.price!=null?'$'+x.v.price:'—'}</span><span class="ds-st">${x.v.status==='stub'?'초안':'DB'}</span></button>`).join('')||'<p class="lead">검색 결과가 없습니다.</p>'}</div>`
+    :parts.length?`<div class="ds-sum">이 회로의 부품 ${parts.length}종 · BOM 참고가 약 <b>$${total.toFixed(2)}</b>${unknown?` (단가 미정 ${unknown}종)`:''}${BD.variantLabel?` · 회로 안: ${esc(BD.variantLabel)}`:''}</div><div class="ds-list">${parts.map(row).join('')}</div>
+      <p class="lead">참고 단가는 데이터시트 페이지의 <code>data-price</code>(약 1k 수량, 추정)입니다. 행을 누르면 정리된 데이터시트가 열립니다. 페이지 추가·수정은 <code>datasheets/db/</code>에서 합니다.</p>`
+    :'<p class="lead" style="padding:12px">회로가 아직 없습니다. 2단계에서 회로 안을 고르면 부품 목록과 데이터시트가 여기 나옵니다. 위 검색으로 DB 전체를 볼 수 있습니다.</p>'}`;
+  const inp=host.querySelector('#dsQ');inp.addEventListener('input',()=>{DS.q=inp.value;const pos=inp.selectionStart;dsRender();const n=$('#dsQ');if(n){n.focus();n.setSelectionRange(pos,pos);}});
+  host.querySelectorAll('[data-ds]').forEach(b=>b.addEventListener('click',()=>{DS.sel=b.dataset.ds;dsRender();}));}
+
+/* ---------- app modes: 첫 화면 (home) · 신규 설계 (steps: 1 시스템 → 2 회로 → 3 PCB → 4 기구) · 기존 프로젝트 (viewer) ----------
+   The step mode shows only what the step needs: step 1 has the requirement and the HW block diagram (no PCB conditions, no
+   정보/시뮬레이션), step 2 the circuit-variant choice, schematic and datasheet DB (no 3D/TOP/BOTTOM), step 3+ the full board tools.
+   The viewer mode is the full board viewer for files and examples. */
+var APP={mode:'home'};
+function modeTabs(){if(!APP)return['ai'];if(APP.mode==='steps'){const st=stepCur();if(st===1)return['ai'];if(st===2)return['ai','ds'];}return['ai','info','sim','ds'];}
+function modePaint(){
+  if(!APP)return;const m=APP.mode,st=typeof stepCur==='function'?stepCur():0;
+  const home=$('#home');if(home)home.hidden=m!=='home';
+  const work=$('.work');if(work)work.hidden=m==='home';
+  const hd=$('#hDock');if(hd)hd.hidden=m==='home';
+  const steps=$('.steps');if(steps)steps.hidden=m!=='steps';
+  const early=m==='steps'&&st>0&&st<3;
+  const ws=$('.seg.ws');if(ws)ws.hidden=m==='home'||early;
+  const bc=$('#boardCtl');if(bc)bc.hidden=m==='home'||early;
+  const tg=$('#dockTg');if(tg)tg.hidden=m==='home';
+  document.body.dataset.mode=m;document.body.dataset.step=m==='steps'?String(st):'';
+  const hb=$('#homeBtn');if(hb)hb.setAttribute('aria-pressed',m==='home'?'true':'false');
+  if(typeof dockPaint==='function')dockPaint();}
+function setMode(m){APP.mode=m;modePaint();if(m!=='home'){measure.done=0;setTimeout(()=>{relayoutViews();if(typeof stepPaint==='function')stepPaint();},0);}}
+// 신규 설계: an empty project board so the header, dock and steps start clean; the real board arrives from step 2
+function newProject(){
+  NP.plan=null;NP.arch=null;NP.hist=[];NP.answers={};NP.variants=null;NP.vkey=null;NP.chooser=false;NP.picked=null;NP.planManual=false;SYS.src=null;SYS.sel=null;
+  $('#npName').value='';$('#npReq').value='';
+  const B=PCB.finalize(PCB.fromSpec({board:{name:'새 프로젝트',width:40,height:30,thickness:1.6,corner:2},components:[]}));B.blank=true;B.pcbPending=true;B.source='신규 설계';
+  setBoard(B);APP.mode='steps';setStep(1);setTimeout(()=>{const i=$('#npReq');if(i)i.focus();},50);
+  copSay('out','신규 설계를 시작합니다. 왼쪽에 프로젝트 이름과 요구사항(무엇을 만들지 · 입력 전원 · 통신 · 구동/센싱 · 안전 등급)을 적고 [블록 다이어그램 만들기]를 누르거나, 여기 바로 적어 보내세요. 빠진 정보는 제가 물어봅니다.');}
+function openViewer(ex){
+  if(ex){loadExample(ex);}
+  APP.mode='viewer';setWorkspace('board');setMode('viewer');
+  if(!ex&&(!BD||BD.blank||BD.source==='신규 설계'))openImport();}
+$('#homeNew').addEventListener('click',newProject);
+$('#homeOpen').addEventListener('click',()=>openViewer(null));
+$('#home').addEventListener('click',e=>{const b=e.target.closest('[data-hex]');if(b)openViewer(b.dataset.hex);});
+$('#homeBtn').addEventListener('click',()=>{if(APP.mode==='home'){if(BD&&!BD.blank)setMode(NP.plan&&NP.plan.blocks.length?'steps':'viewer');return;}setMode('home');});
+// a file loaded from the import dialog while on the home screen opens the viewer
+const _impGo=$('#impGo');if(_impGo)_impGo.addEventListener('click',()=>{if(APP.mode==='home')setTimeout(()=>{if(BD&&!BD.blank)setMode('viewer');},80);});
+
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));
-const boot=()=>{setView('3d');setTimeout(()=>{if(!new URLSearchParams(location.search).has('board'))setStep(1);},0);};
+const boot=()=>{setView('3d');setTimeout(()=>{const q=new URLSearchParams(location.search);if(q.has('new'))newProject();else if(q.has('board'))openViewer(null);else setMode('home');},0);};
 (document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]):Promise.resolve()).then(boot);
 })();
 

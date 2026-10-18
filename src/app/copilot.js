@@ -42,7 +42,20 @@ function copFill(d,e){
       :e.state==='stale'?'그 뒤에 다른 변경이 있어 여기서는 되돌릴 수 없습니다. 실행 취소(Ctrl+Z)로 한 단계씩 되돌리세요.'
       :`${e.by==='ai'?'Claude가 ':''}${S0?S0.label+' ':''}설계를 ${e.n}단계 바꿨습니다.`;
     d.innerHTML=tag+`<span class="cp-msg">${msg}</span>`+(e.state==='open'?`<span class="cp-acts"><button type="button" class="btn sm" data-keep="${e.cid}">유지</button><button type="button" class="btn sm" data-undo="${e.cid}">되돌리기</button></span>`:'');return;}
+  if(k==='ask'){d.className='cp cp-ask'+(e.state==='open'?' open':'');const sel=e.sel||[];
+    if(e.state!=='open'){d.innerHTML=tag+`<div class="ask-q">${esc(e.q)}</div><div class="ask-a">${e.answer==null?'건너뜀 (기본값)':'→ '+esc(e.answer)}</div>`;return;}
+    d.innerHTML=tag+`<div class="ask-q">${esc(e.q)}</div>${e.why?`<div class="ask-w">${esc(e.why)}</div>`:''}
+      <div class="ask-o">${(e.opts||[]).map((o,i)=>`<button type="button" class="pill vbtn${sel.includes(i)?' on':''}" data-opt="${i}">${esc(o)}</button>`).join('')}</div>
+      <div class="ask-f"><input type="text" placeholder="${e.multi?'직접 적기 (여러 개면 , 로 구분)':'직접 적기'}" aria-label="답"><button type="button" class="btn primary sm" data-ok>${e.multi?'선택 완료':'보내기'}</button><button type="button" class="btn sm" data-skip>건너뛰기</button></div>`;return;}
   d.className='cp cp-out';d.innerHTML=tag+esc(t);}
+/* a question to the user (step 1 requirement analysis): resolves with the answer text, or null when skipped */
+function copAsk(q){return new Promise(res=>{const e={k:'ask',t:q.q,q:q.q,why:q.why,opts:q.opts||[],multi:!!q.multi,state:'open',sel:[],res};COP.ask=e;copPaint(COP.askSrc||'np',e);copBusyPaint();copFocus();
+  setTimeout(()=>{const L=$('#copLog');const d=L&&L.querySelector(`[data-cid="${e.cid}"] input`);if(d)d.focus();},30);});}
+function copAnswer(e,val){if(!e||e.state!=='open')return;e.state='done';e.answer=val;COP.ask=null;copPaint(e.src,e,true);copBusyPaint();const r=e.res;e.res=null;if(r)r(val);}
+function copAskClick(d,e,b){const i=+b.dataset.opt;const inp=d.querySelector('input');
+  if(b.dataset.opt!=null){if(e.multi){const k=e.sel.indexOf(i);if(k>=0)e.sel.splice(k,1);else e.sel.push(i);copPaint(e.src,e,true);}else copAnswer(e,e.opts[i]);return;}
+  if(b.hasAttribute('data-skip')){copAnswer(e,null);return;}
+  if(b.hasAttribute('data-ok')){const txt=(inp&&inp.value.trim())||'';const parts=e.sel.map(k=>e.opts[k]).concat(txt?[txt]:[]);if(!parts.length){toast('답을 고르거나 적어 주세요.');return;}copAnswer(e,parts.join(', '));}}
 function copNode(e,doc){const d=doc.createElement('div');d.dataset.cid=e.cid;copFill(d,e);return d;}
 // called by every console's say/set: new entries join the log, updates repaint in place
 function copPaint(src,e,upd){
@@ -58,7 +71,7 @@ function copDrop(e){COP.log=COP.log.filter(x=>x!==e);const L=$('#copLog');const 
 function copClear(src){COP.log=src?COP.log.filter(x=>x.src!==src):[];copRebuild();}
 function copRebuild(){const L=$('#copLog');if(!L)return;L.innerHTML='';let prev=null;COP.log.forEach(e=>{e.newSrc=!prev||prev.src!==e.src;prev=e;L.appendChild(copNode(e,L.ownerDocument));});L.scrollTop=L.scrollHeight;}
 function copSay(k,t){copPaint('sys',{k,t});}
-function copBusyPaint(){const b=copBusyAny();const s=$('#copStop'),r=$('#copSend'),el=$('#copilot');if(s)s.hidden=!b;if(r)r.disabled=b;if(el)el.classList.toggle('busy',b);}
+function copBusyPaint(){const b=copBusyAny();const ask=!!(COP.ask&&COP.ask.state==='open');const s=$('#copStop'),r=$('#copSend'),el=$('#copilot');if(s)s.hidden=!b;if(r)r.disabled=b&&!ask;if(el)el.classList.toggle('busy',b);}
 async function copChg(cid,act){const e=COP.log.find(x=>x.cid===+cid);if(!e||e.state!=='open')return;
   if(act==='keep'){e.state='kept';copPaint(e.src,e,true);return;}
   if(copBusyAny()){toast('실행 중에는 되돌릴 수 없습니다.');return;}
@@ -68,6 +81,7 @@ async function copChg(cid,act){const e=COP.log.find(x=>x.cid===+cid);if(!e||e.st
 // one message from the user: to the current step's console; a run that changed the design leaves a keep / undo card
 async function copSubmit(text,opt){
   text=String(text||'').trim();if(!text)return;
+  if(COP.ask&&COP.ask.state==='open'){copAnswer(COP.ask,text);return;}
   if(copBusyAny()){toast('실행 중입니다. 끝나거나 [중지]한 뒤 보내세요.');return;}
   const src=opt&&opt.src||copActive();
   if(src!=='np'&&!BD){copSay('err','보드가 없습니다. 1단계에서 회로를 만들거나 파일을 불러오세요.');return;}
@@ -105,7 +119,7 @@ function copEnsure(){
       <div class="cop-row"><span class="cop-k">Enter 보내기 · Shift+Enter 줄바꿈 · ↑ 이전</span><span class="cop-sp"></span><button type="button" class="btn sm" id="copStop" hidden>중지</button><button class="btn primary sm" id="copSend">보내기</button></div></form>`;
   const host=document.getElementById('dockBody');host.insertBefore(el,host.firstChild);
   const inp=el.querySelector('#copIn'),form=el.querySelector('#copForm');
-  form.addEventListener('submit',e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;if(copBusyAny()){toast('실행 중입니다. 끝나거나 [중지]한 뒤 보내세요.');return;}inp.value='';copSubmit(v);});
+  form.addEventListener('submit',e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;if(COP.ask&&COP.ask.state==='open'){inp.value='';copAnswer(COP.ask,v);return;}if(copBusyAny()){toast('실행 중입니다. 끝나거나 [중지]한 뒤 보내세요.');return;}inp.value='';copSubmit(v);});
   inp.addEventListener('keydown',e=>{e.stopPropagation();
     if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();form.requestSubmit();return;}
     if(e.key==='ArrowUp'&&inp.selectionStart===0&&inp.selectionEnd===0&&COP.hi>0){COP.hi--;inp.value=COP.hist[COP.hi]||'';e.preventDefault();}
@@ -115,18 +129,21 @@ function copEnsure(){
   el.querySelector('#copSrc').addEventListener('change',e=>{COP.src=e.target.value;copCtx();});
   el.querySelector('#copClr').addEventListener('click',()=>{COP.log=[];copRebuild();});
   el.querySelector('#copChips').addEventListener('click',e=>{const b=e.target.closest('[data-cchip]');if(!b||copBusyAny())return;const[,c,g]=copChips(copActive())[+b.dataset.cchip]||[];if(c)copSubmit(AIM.mode==='ai'?g:c);});
-  el.querySelector('#copLog').addEventListener('click',e=>{const k=e.target.closest('[data-keep]'),u=e.target.closest('[data-undo]');if(k)copChg(k.dataset.keep,'keep');else if(u)copChg(u.dataset.undo,'undo');});
+  el.querySelector('#copLog').addEventListener('click',e=>{const k=e.target.closest('[data-keep]'),u=e.target.closest('[data-undo]');if(k){copChg(k.dataset.keep,'keep');return;}if(u){copChg(u.dataset.undo,'undo');return;}
+    const d=e.target.closest('.cp-ask');const b=e.target.closest('button');if(d&&b){const ent=COP.log.find(x=>x.cid===+d.dataset.cid);if(ent&&ent.state==='open')copAskClick(d,ent,b);}});
+  el.querySelector('#copLog').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const d=e.target.closest('.cp-ask');if(!d||e.target.tagName!=='INPUT')return;e.preventDefault();const ent=COP.log.find(x=>x.cid===+d.dataset.cid);const ok=d.querySelector('[data-ok]');if(ent&&ent.state==='open'&&ok)copAskClick(d,ent,ok);});
   aimBind(el);cliAiProbe().then(aimPaint);
   copRebuild();copCtx();return el;}
 
 /* ---- right dock: 설계 도우미 · 정보 · 시뮬레이션 ---- */
 function dockPaint(){
   const app=$('.app');const aiOut=!!PANELS.ai.out,inOut=!!PANELS.insp.out,off=!!LAY.dockOff,empty=aiOut&&inOut;
-  let t=COP.tab;if(t==='ai'&&aiOut)t=inOut?null:(S.panel||'info');if((t==='info'||t==='sim')&&inOut)t=aiOut?null:'ai';COP.shown=t;
+  let t=COP.tab;if(t==='ai'&&aiOut)t=inOut?'ds':(S.panel||'info');if((t==='info'||t==='sim')&&inOut)t=aiOut?'ds':'ai';COP.shown=t;
   app.classList.toggle('dock-off',off);app.classList.toggle('dock-empty',empty);app.classList.toggle('dk',!off&&!empty);
   const tg=$('#dockTg');if(tg)tg.setAttribute('aria-pressed',String(!off&&!empty));
-  $$('[data-dock]').forEach(b=>{const k=b.dataset.dock;b.hidden=k==='ai'?aiOut:inOut;b.setAttribute('aria-selected',k===t?'true':'false');});
-  const cp=PANELS.ai.el,ins=PANELS.insp.el;if(cp)cp.hidden=!aiOut&&t!=='ai';if(ins)ins.hidden=!inOut&&!(t==='info'||t==='sim');
+  const allow=typeof modeTabs==='function'?modeTabs():['ai','info','sim','ds'];if(t&&!allow.includes(t)){t=allow[0]||null;COP.shown=t;}
+  $$('[data-dock]').forEach(b=>{const k=b.dataset.dock;b.hidden=(k==='ai'?aiOut:k==='ds'?false:inOut)||!allow.includes(k);b.setAttribute('aria-selected',k===t?'true':'false');});
+  const cp=PANELS.ai.el,ins=PANELS.insp.el,ds=$('#dsPane');if(cp)cp.hidden=!aiOut&&t!=='ai';if(ins)ins.hidden=!inOut&&!(t==='info'||t==='sim');if(ds){ds.hidden=t!=='ds';if(t==='ds'&&typeof dsRender==='function')dsRender();}
   const d=$('#dock');if(d)d.classList.toggle('wide',t==='sim');}
 function dockTab(t){COP.tab=t;LAY.dockTab=t;saveLayout();if(t==='info'||t==='sim')setPanel(t);dockPaint();
   if(t==='ai')setTimeout(()=>{const L=$('#copLog');if(L)L.scrollTop=L.scrollHeight;},0);}
@@ -203,11 +220,11 @@ window.addEventListener('beforeunload',()=>Object.values(PANELS).forEach(P=>{if(
 /* ---- boot ---- */
 copEnsure();
 Object.entries(PANELS).forEach(([k,P])=>{P.el=$(P.sel);panelDecorate(k);});
-if(LAY.dockTab==='info'||LAY.dockTab==='sim'||LAY.dockTab==='ai')COP.tab=LAY.dockTab;
+if(['info','sim','ai','ds'].includes(LAY.dockTab))COP.tab=LAY.dockTab;
 $$('[data-dock]').forEach(b=>b.addEventListener('click',()=>dockTab(b.dataset.dock)));
 $('#dockHide').addEventListener('click',()=>dockToggle(false));
 $('#dockTg').addEventListener('click',()=>dockToggle());
-$('#dockPop').addEventListener('click',()=>panelPop(COP.shown==='ai'?'ai':'insp'));
+$('#dockPop').addEventListener('click',()=>{if(COP.shown==='ds'){toast('데이터시트 탭은 새 창으로 띄울 수 없습니다. 페이지의 [원본 파일] 링크를 쓰세요.');return;}panelPop(COP.shown==='ai'?'ai':'insp');});
 // ` anywhere (outside a text field) jumps to the 도우미 input
 document.addEventListener('keydown',e=>{if(e.key!=='`'||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target.matches('input,select,textarea'))return;e.preventDefault();e.stopImmediatePropagation();copFocus();},true);
 dockPaint();if(COP.tab!=='ai')setPanel(COP.tab);

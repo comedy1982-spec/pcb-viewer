@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TC364DP-64F300F · AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TC364DP-64F300F" data-mfr="Infineon" data-cat="MCU" data-price="17.5" data-status="stub">
+  <h1>TC364DP-64F300F</h1>
+  <p class="meta">Infineon · MCU · AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz · 참고 단가 약 $17.5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.infineon.com/dgdl/Infineon-SAK-TC36xDP-DataSheet-v01_01-EN.pdf?fileId=5546d46274dd77260174e8c7c7bf34b1" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.infineon.com/assets/row/public/documents/10/49/infineon-aurix-tc36x-addendum-datasheet-en.pdf" target="_blank" rel="noopener">관련 페이지</a> · <a href="https://octopart.com/search?q=TC364DP-64F300F" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
+  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+      <dt>코어</dt><dd>TriCore, 최대 300 MHz (TC36x)</dd>
+      <dt>ADC</dt><dd>EVADC 주 그룹 4개/32채널 + 보조 그룹 2개/32채널, EDSADC</dd>
+      <dt>타이머</dt><dd>GTM (TOUT 출력, TIM 입력 캡처), CCU6, GPT12</dd>
+      <dt>통신</dt><dd>MCMCAN (CAN FD) CAN0x·CAN1x, QSPI0–3, ASCLIN0–11, I2C0, E-Ray, GETH</dd>
+      <dt>포트 출력</dt><dd>핀마다 ALT1–ALT7 출력 선택 (Pn_IOCR.PCx), 입력은 주변장치 쪽 입력 선택(A/B/…)</dd>
+      <dt>패키지</dt><dd>TQFP-144 (SAK-TC364DP-64F300F) · 노출 패드 VSS</dd>
+      <dt>디버그</dt><dd>JTAG/DAP: TMS 89, TCK 92, TRST 91, P21.6 TDI, P21.7 TDO</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
+
+  <h2>핀 배치</h2>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
+
+  <h2>패키지 · 열</h2>
+  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
+
+  <h2>설계 메모</h2>
+  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+</article>
+</body>
+</html>

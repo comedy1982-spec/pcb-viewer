@@ -235,6 +235,66 @@ function summary(plan){const r=build(plan);const L=[];
   if(r.power.length)L.push('발열: '+r.power.map(x=>`${x.ref} ${x.P} W`).join(' · '));
   L.push(r.warn.length?'경고:\n'+r.warn.map(w=>'  ! '+w).join('\n'):'경고 없음');
   return{text:L.join('\n'),r};}
-return{LIB,MCUS,mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,ldoToBuck,guessName,build,toBoard,summary,railOf};
+/* ---------- BOM cost and circuit variants (step 2: pick a plan by price · features · extensibility) ---------- */
+const catOf=c=>c.mcu?'MCU':/^C\d/.test(c.ref)?'커패시터':/^R\d/.test(c.ref)?'저항':/^D\d/.test(c.ref)?'다이오드':/^J\d/.test(c.ref)?'커넥터':/^L\d/.test(c.ref)?'인덕터':/^Y\d/.test(c.ref)?'크리스털':/^Q\d/.test(c.ref)?'트랜지스터':/^M\d/.test(c.ref)?'모터':'전원';
+function bom(plan){const r=build(plan);const P=typeof PARTS!=='undefined'?PARTS:null;const items=new Map();let total=0,unknown=0;
+  r.parts.forEach(c=>{const key=(c.mpn||c.val)+'|'+c.fp;const it=items.get(key)||{mpn:c.mpn||'',val:c.val,fp:c.fp,refs:[],unit:null,cat:catOf(c)};it.refs.push(c.ref);
+    if(it.unit==null){it.unit=P?P.price(c.mpn,it.cat):null;if(it.unit==null){it.unit=0;it.est=true;unknown++;}}items.set(key,it);});
+  items.forEach(it=>{it.sub=+(it.unit*it.refs.length).toFixed(3);total+=it.sub;});
+  const list=[...items.values()].sort((a,b)=>b.sub-a.sub);return{items:list,total:+total.toFixed(2),unknown,parts:r.parts.length,r};}
+// spare MCU pins: assignable signal pins left after the plan's signals
+function spareMcuPins(r){if(!r.mcu)return 0;const db=MCU_PINS.DB[r.mcu];const M=MCUS[r.mcu];const U=r.parts.find(c=>c.mcu);if(!db||!U)return 0;
+  const busy=new Set(Object.keys(U.pins).map(String));M.reserved.forEach(n=>busy.add(String(n)));if(M.boot)busy.add(String(M.boot));if(M.reset)busy.add(String(M.reset));
+  return Object.keys(db.pins).filter(n=>!db.pins[n].supply&&!busy.has(String(n))&&(MCU_PINS.options(db,n).length||db.pins[n].an!=null)).length;}
+const FEAT_W={pwr_in:1,usb_in:2,ldo:1,buck:2,mcu:0,xtal:1,can:3,bldc:4,dcmotor:3,led:1,button:1,flash:2,uart:1,i2c:2,vmon:1};
+function planMetrics(plan){const B=bom(plan);const r=B.r;const feat=plan.blocks.reduce((a,b)=>a+(FEAT_W[b.type]||1)*(b.type==='led'||b.type==='button'?Math.min(3,+b.params.n||1):1),0);
+  const spare=spareMcuPins(r);const headers=plan.blocks.filter(b=>/^(uart|i2c|usb_in)$/.test(b.type)).length;const ext=Math.round(spare*0.5+headers*8+(r.mcu==='TC364DP-64F300F'?15:0)+(plan.blocks.some(b=>b.type==='flash')?6:0));
+  const loss=r.power.reduce((a,x)=>a+x.P,0);
+  return{price:B.total,unknown:B.unknown,parts:B.parts,feat,spare,headers,ext,loss:+loss.toFixed(2),mcu:r.mcu,warn:r.warn.length,bom:B};}
+const clone=p=>JSON.parse(JSON.stringify(p));
+const has=(p,t)=>p.blocks.some(b=>b.type===t);
+const reqHas=(p,re)=>re.test(String(p.req||'').toLowerCase());
+function addSafe(p,t,params){try{return addBlock(p,t,params||{});}catch(e){return null;}}
+/* three plans from one: 저가형 (cost) · 표준 (balanced, the plan itself) · 확장형 (features and headroom) */
+function variants(plan){
+  const base=clone(plan);const out=[];
+  // 저가형: cheapest MCU that still meets stated needs, LDO instead of buck when the loss is bearable, optional blocks dropped unless the requirement names them
+  const c=clone(plan);const dc=[];
+  const mcuB=c.blocks.find(b=>b.type==='mcu');const needTc=reqHas(c,/aurix|tc3|tc364|asil|iso\s*26262|기능\s*안전|lockstep|오릭스/);
+  if(mcuB&&mcuKey(mcuB.params.part)==='TC364DP-64F300F'&&!needTc){mcuB.params.part='STM32F042K6U6';dc.push('MCU를 STM32F042K6U6로 (요구사항에 AURIX·ASIL이 없음)');}
+  c.blocks.filter(b=>b.type==='buck').forEach(b=>{b.type='ldo';b.id=b.id.replace(/^buck/,'ldo');b.params={vin:b.params.vin,vout:b.params.vout,iout:'auto'};dc.push(`${b.params.vout} V 벅 컨버터를 LDO로 (부품 7개 → 3개)`);});
+  const drop=(t,why,re)=>{const i=c.blocks.findIndex(b=>b.type===t);if(i>=0&&!reqHas(c,re)){c.blocks.splice(i,1);dc.push(why);}};
+  drop('flash','SPI 플래시 제거 (요구사항에 로그·저장이 없음)',/플래시|flash|메모리|로그|저장/);
+  drop('vmon','전압 감시 제거 (요구사항에 없음)',/전압\s*(감시|모니터|측정)|배터리|vbat|vmon/);
+  drop('uart','UART 헤더 제거 (SWD 디버그로 충분)',/uart|시리얼|serial|콘솔|디버그/);
+  if(mcuKey((c.blocks.find(b=>b.type==='mcu')||{params:{}}).params.part)==='STM32F042K6U6'&&!has(c,'can')&&has(c,'xtal')&&!reqHas(c,/크리스털|crystal|xtal|정밀/)){c.blocks=c.blocks.filter(b=>b.type!=='xtal');dc.push('크리스털 제거 (STM32 내부 RC · 크리스털리스 USB)');}
+  c.blocks.filter(b=>b.type==='led'&&+b.params.n>1).forEach(b=>{dc.push(`LED ${b.params.n}개 → 1개`);b.params.n=1;});
+  // the loss check: an LDO that would burn more than 1.2 W goes back to a buck even in the cheap plan
+  {const r1=build(c);r1.parts.filter(x=>x.ldo&&x.P>1.2).forEach(x=>{const b=c.blocks.find(y=>y.id===x.block);if(!b)return;b.type='buck';b.id=b.id.replace(/^ldo/,'buck');b.params={vin:b.params.vin,vout:b.params.vout};dc.push(`${b.params.vout} V LDO는 손실 ${x.P} W라 벅 컨버터 유지`);});}
+  out.push({key:'cost',label:'저가형',tag:'가격 우선',desc:'요구사항에 적힌 기능만 가장 싼 부품 구성으로. 여유 핀·확장 헤더는 최소.',plan:c,diff:dc.length?dc:['기본 안과 같음 (더 뺄 선택 블록이 없음)']});
+  // 표준
+  out.push({key:'std',label:'표준',tag:'균형',desc:'요구사항을 규칙대로 구현한 기본 안. 손실이 큰 LDO는 벅으로, CAN·모터는 전용 레일.',plan:base,diff:['요구사항 그대로 (기준 안)']});
+  // 확장형
+  const e=clone(plan);const de=[];
+  e.blocks.filter(b=>b.type==='ldo').forEach(b=>{const r0=build(e);const part=r0.parts.find(x=>x.ldo&&x.block===b.id);if(part&&part.P>0.35){b.type='buck';b.id=b.id.replace(/^ldo/,'buck');b.params={vin:b.params.vin,vout:b.params.vout};de.push(`${b.params.vout} V LDO(손실 ${part.P} W)를 벅 컨버터로 (발열·효율)`);}});
+  if(!has(e,'flash')){addSafe(e,'flash');de.push('SPI 플래시 추가 (로그·설정 저장)');}
+  if(!has(e,'uart')){addSafe(e,'uart');de.push('UART 디버그 헤더 추가');}
+  if(!has(e,'i2c')){addSafe(e,'i2c');de.push('I²C 센서 확장 헤더 추가');}
+  if(!has(e,'vmon')){addSafe(e,'vmon');de.push('입력 전압 감시 추가');}
+  const led=e.blocks.find(b=>b.type==='led');if(led){if(+led.params.n<2){led.params.n=2;de.push('상태 LED 2개');}}else{addSafe(e,'led',{n:2});de.push('상태 LED 2개 추가');}
+  if(!has(e,'button')){addSafe(e,'button',{n:1});de.push('사용자 버튼 추가');}
+  const mcuE=e.blocks.find(b=>b.type==='mcu');const needPins=e.blocks.reduce((a,b)=>a+({can:2,bldc:9,dcmotor:2,flash:4,uart:2,i2c:2,vmon:1,led:+b.params.n||1,button:+b.params.n||1,usb_in:2}[b.type]||0),0);
+  if(mcuE&&mcuKey(mcuE.params.part)==='STM32F042K6U6'&&(needPins>18||reqHas(e,/차량|automotive|ecu|산업|asil/))){mcuE.params.part='TC364DP-64F300F';if(!has(e,'xtal'))addSafe(e,'xtal');de.push('MCU를 AURIX TC364DP로 (핀 여유 · 안전 기능 · 성능)');}
+  out.push({key:'ext',label:'확장형',tag:'기능·확장 우선',desc:'나중에 기능을 더할 수 있게 헤더·메모리·감시를 넣고, 핀이 모자라면 큰 MCU로.',plan:e,diff:de});
+  out.forEach(v=>{v.m=planMetrics(v.plan);});
+  // relative scores 0–100 for the cards
+  const mn=k=>Math.min(...out.map(v=>v.m[k])),mx=k=>Math.max(...out.map(v=>v.m[k]));
+  const sc=(v,k,inv)=>{const a=mn(k),b=mx(k);if(b-a<1e-9)return 60;const t=(v.m[k]-a)/(b-a);return Math.round(20+80*(inv?1-t:t));};
+  out.forEach(v=>{v.score={price:sc(v,'price',true),feat:sc(v,'feat'),ext:sc(v,'ext')};});
+  return out;}
+// weighted pick: w = {price,feat,ext} in 0..1
+function recommend(vs,w){w=Object.assign({price:1,feat:1,ext:1},w||{});let best=null;vs.forEach(v=>{const s=v.score.price*w.price+v.score.feat*w.feat+v.score.ext*w.ext;v.total=Math.round(s/(w.price+w.feat+w.ext));if(!best||v.total>best.total)best=v;});return best;}
+function variantsText(vs){return vs.map(v=>`[${v.key}] ${v.label} (${v.tag}) · BOM 약 $${v.m.price}${v.m.unknown?' (+미정 '+v.m.unknown+')':''} · 부품 ${v.m.parts}개 · 기능 ${v.m.feat} · 여유 핀 ${v.m.spare} · MCU ${v.m.mcu||'-'} · 손실 ${v.m.loss} W\n  ${v.diff.join(' · ')}`).join('\n');}
+return{LIB,MCUS,mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
 })();
 if(typeof module!=='undefined')module.exports=NEWPROJ;

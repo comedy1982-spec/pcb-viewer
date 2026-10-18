@@ -12,6 +12,20 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 첫 화면 · 단계 설계 · 디자인 뷰어 (v1.24)
+
+앱을 열면 **첫 화면**이 나옵니다. 머리의 로고 아이콘으로 언제든 돌아올 수 있습니다.
+
+- **신규 설계** — 요구사항부터 시작하는 단계 모드. 단계마다 그 단계에 필요한 것만 보입니다.
+  - **1단계 시스템 다이어그램**: 프로젝트 이름과 요구사항을 적고 **블록 다이어그램 만들기**(또는 도우미에 문장을 바로 보내기)를 누르면 AI가 요구사항을 분석합니다. **빠진 필수 정보(입력 전원 · MCU 계열 · 통신 · 구동/센싱 · 환경/안전 등급)는 도우미에 응답형 질문 카드로 물어보고**, 선택지를 누르거나 직접 적어 답하면 요구사항에 `보강: …` 줄로 합쳐진 뒤 시스템 다이어그램을 그립니다(AI 모드에선 Claude가 질문을 고르고, 결정론 모드·AI 실패 시엔 규칙으로 묻습니다). 이 단계엔 PCB 조건 입력이 없고, 도킹 패널도 **설계 도우미** 탭만 있습니다(정보·시뮬레이션 없음).
+  - **2단계 회로**: 다이어그램을 **세 가지 회로 안**(저가형 · 표준 · 확장형)으로 풀어 카드로 보여 줍니다. 각 안의 BOM 참고가(데이터시트 DB의 참고 단가 합, 약 1k 수량 추정), 부품 수, 여유 MCU 핀, 레귤레이터 손실, 가격·기능·확장성 점수와 기준 안과의 차이를 비교하고, 위의 **우선순위**(가격 · 균형 · 기능 · 확장성)로 추천이 바뀝니다. 안을 고르면 부품 · 넷리스트 · 회로도가 만들어지고 **회로도만** 보입니다 — 3D/TOP/BOTTOM, 레이어, 보드 요약 등 PCB 관련 화면은 3단계까지 나오지 않습니다. 도킹 패널에는 **데이터시트** 탭이 더해집니다. 도우미 명령: `variants [pick cost|std|ext]`, `generate [cost|std|ext]`.
+  - **3단계 PCB** 부터는 기존과 같습니다(PCB 설계 시작 카드 → 배치·배선, 3D/TOP/BOTTOM, 정보·시뮬레이션).
+- **기존 프로젝트** — 파일(KiCad · Gerber · 뷰어 JSON)이나 예제를 **디자인 뷰어**로 엽니다. 단계 표시줄 없이 3D/TOP/BOTTOM/회로도, 시뮬레이션, HSIS, PCB 편집을 모두 씁니다.
+
+### 데이터시트 HTML DB
+
+`datasheets/db/<부품번호>.html` — 부품 하나에 페이지 하나로, 실제 데이터시트를 보고 정리한 HTML입니다(형식은 `datasheets/db/README.md`). `<article data-mpn data-mfr data-cat data-price data-status>` 안에 핵심 사양 `<dl>`, 절대 최대 정격 · 권장 동작 조건 · 핀 배치 · 응용 회로 · 패키지 · 설계 메모 절을 둡니다. `npm run build`가 `scripts/dsdb.mjs`로 페이지를 `src/parts/dsdb.js`에 묶어 앱에 넣고 `datasheets/db/index.json`을 만듭니다. `npm run dsdb:init`은 부품 DB(`src/parts/parts.js`)에 있지만 페이지가 없는 부품의 초안(`data-status="stub"`)을 만들어 줍니다. 지금 29페이지는 모두 초안이며, 실제 데이터시트 내용으로 채우고 `done`으로 바꾸면 됩니다. `data-price`가 2단계 회로 안의 가격 비교와 데이터시트 탭의 BOM 참고가에 쓰입니다(없으면 분류별 기본 단가).
+
 ## 화면 구성 — AI 코파일럿 분할 (v1.23)
 
 - **왼쪽: 작업 공간** — 단계마다 보드(3D·TOP·BOTTOM·회로도), 시스템 다이어그램, 하우징 CAD, HSIS가 들어갑니다. 1·4단계와 HSIS의 옆 패널은 도우미 패널과 나란히 놓일 때 한 열로 쌓여 캔버스 폭을 지킵니다.
@@ -311,6 +325,8 @@ HSIS 작업 공간의 **테스트 케이스** 탭은 HSIS에서 ASPICE 두 프�
 npm run build   # src/ → dist/index.html (외부 의존성 없음, Node 18+)
 npm test        # 파서·회로도·시뮬레이션·HSIS 테스트
 npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
+npm run dsdb      # datasheets/db/*.html → src/parts/dsdb.js (build가 먼저 실행)
+npm run dsdb:init # 페이지가 없는 부품의 데이터시트 초안 만들기
 ```
 
 | 경로 | 내용 |
@@ -326,6 +342,8 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl 필요)
 | `src/app/sample.js` | 내장 예제 보드 (뷰어 JSON 형식) |
 | `src/parts/parts.js` | 실제 부품 데이터베이스(제조사, 사양, 데이터시트 링크) |
 | `scripts/datasheets.mjs` | 데이터시트 목록 생성·PDF 내려받기 |
+| `datasheets/db/`, `scripts/dsdb.mjs` | 데이터시트 HTML DB(부품당 한 페이지)와 번들러 → `src/parts/dsdb.js` |
+| `src/app/modeui.js`, `src/app/dsui.js` | 첫 화면·단계/뷰어 모드, 데이터시트 탭 (빌드 시 viewer.js에 삽입) |
 | `src/parts/mcu-pins.js` | MCU 핀 기능 DB (TC364DP, STM32F042K6U6)와 상대 IC 핀 역할 |
 | `src/hsis/pinrec.js` | HSIS 기반 핀 배정 추천 (역할 판정, 주변장치 묶음, 헝가리안 매칭, 적용) |
 | `src/hsis/mcal.js` | MCAL 설정 생성 (ECUC ARXML, C 설정, STM32 HAL/LL) |

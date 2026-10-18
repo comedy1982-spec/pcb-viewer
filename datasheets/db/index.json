@@ -1,0 +1,237 @@
+{
+  "built": "2026-10-18",
+  "items": {
+    "42BLF01 (MIKROE-4455)": {
+      "file": "datasheets/db/42BLF01.html",
+      "mfr": "MIKROE (42BLF 시리즈)",
+      "cat": "모터",
+      "price": 24,
+      "status": "stub",
+      "title": "42BLF01 (MIKROE-4455) · 42BLF01 — 3-phase BLDC motor with hall sensors"
+    },
+    "61300211121": {
+      "file": "datasheets/db/61300211121.html",
+      "mfr": "Würth Elektronik",
+      "cat": "커넥터",
+      "price": 0.1,
+      "status": "stub",
+      "title": "61300211121 · WR-PHD 2.54 mm pin header, 2 pins"
+    },
+    "61300411121": {
+      "file": "datasheets/db/61300411121.html",
+      "mfr": "Würth Elektronik",
+      "cat": "커넥터",
+      "price": 0.16,
+      "status": "stub",
+      "title": "61300411121 · WR-PHD 2.54 mm pin header, 4 pins"
+    },
+    "61300811121": {
+      "file": "datasheets/db/61300811121.html",
+      "mfr": "Würth Elektronik",
+      "cat": "커넥터",
+      "price": 0.28,
+      "status": "stub",
+      "title": "61300811121 · WR-PHD 2.54 mm pin header, 8 pins"
+    },
+    "ABM8-20.000MHZ-B2-T": {
+      "file": "datasheets/db/ABM8-20.000MHZ-B2-T.html",
+      "mfr": "Abracon",
+      "cat": "크리스털",
+      "price": 0.55,
+      "status": "stub",
+      "title": "ABM8-20.000MHZ-B2-T · ABM8 — 3.2×2.5 mm SMD crystal, 20 MHz"
+    },
+    "AMS1117-3.3": {
+      "file": "datasheets/db/AMS1117-3.3.html",
+      "mfr": "Advanced Monolithic Systems",
+      "cat": "전원",
+      "price": 0.28,
+      "status": "stub",
+      "title": "AMS1117-3.3 · AMS1117 — 1 A low-dropout regulator"
+    },
+    "AMS1117-5.0": {
+      "file": "datasheets/db/AMS1117-5.0.html",
+      "mfr": "Advanced Monolithic Systems",
+      "cat": "전원",
+      "price": 0.28,
+      "status": "stub",
+      "title": "AMS1117-5.0 · AMS1117 — 1 A low-dropout regulator"
+    },
+    "AO3400A": {
+      "file": "datasheets/db/AO3400A.html",
+      "mfr": "Alpha & Omega Semiconductor",
+      "cat": "트랜지스터",
+      "price": 0.12,
+      "status": "stub",
+      "title": "AO3400A · AO3400A — 30 V N-channel MOSFET"
+    },
+    "APT1608EC": {
+      "file": "datasheets/db/APT1608EC.html",
+      "mfr": "Kingbright",
+      "cat": "LED",
+      "price": 0.07,
+      "status": "stub",
+      "title": "APT1608EC · APT1608EC — 0603 high-efficiency red LED"
+    },
+    "APT1608QBC/D": {
+      "file": "datasheets/db/APT1608QBC_D.html",
+      "mfr": "Kingbright",
+      "cat": "LED",
+      "price": 0.09,
+      "status": "stub",
+      "title": "APT1608QBC/D · APT1608QBC/D — 0603 blue LED"
+    },
+    "APT1608SGC": {
+      "file": "datasheets/db/APT1608SGC.html",
+      "mfr": "Kingbright",
+      "cat": "LED",
+      "price": 0.07,
+      "status": "stub",
+      "title": "APT1608SGC · APT1608SGC — 0603 super bright green LED"
+    },
+    "B3FS-1000P": {
+      "file": "datasheets/db/B3FS-1000P.html",
+      "mfr": "Omron",
+      "cat": "스위치",
+      "price": 0.18,
+      "status": "stub",
+      "title": "B3FS-1000P · B3FS — 6×6 mm SMT tactile switch"
+    },
+    "CL10A105KB8NNNC": {
+      "file": "datasheets/db/CL10A105KB8NNNC.html",
+      "mfr": "Samsung Electro-Mechanics",
+      "cat": "커패시터",
+      "price": 0.02,
+      "status": "stub",
+      "title": "CL10A105KB8NNNC · MLCC 1 µF 50 V X5R 0603"
+    },
+    "CL10B103KB8NNNC": {
+      "file": "datasheets/db/CL10B103KB8NNNC.html",
+      "mfr": "Samsung Electro-Mechanics",
+      "cat": "커패시터",
+      "price": 0.012,
+      "status": "stub",
+      "title": "CL10B103KB8NNNC · MLCC 10 nF 50 V X7R 0603"
+    },
+    "CL10B104KB8NNNC": {
+      "file": "datasheets/db/CL10B104KB8NNNC.html",
+      "mfr": "Samsung Electro-Mechanics",
+      "cat": "커패시터",
+      "price": 0.012,
+      "status": "stub",
+      "title": "CL10B104KB8NNNC · MLCC 100 nF 50 V X7R 0603"
+    },
+    "CL21A106KAYNNNE": {
+      "file": "datasheets/db/CL21A106KAYNNNE.html",
+      "mfr": "Samsung Electro-Mechanics",
+      "cat": "커패시터",
+      "price": 0.04,
+      "status": "stub",
+      "title": "CL21A106KAYNNNE · MLCC 10 µF 25 V X5R 0805"
+    },
+    "DRV8313PWPR": {
+      "file": "datasheets/db/DRV8313PWPR.html",
+      "mfr": "Texas Instruments",
+      "cat": "모터 드라이버",
+      "price": 3.4,
+      "status": "stub",
+      "title": "DRV8313PWPR · DRV8313 — 2.5 A triple half-bridge driver"
+    },
+    "EEE-FK1E471P": {
+      "file": "datasheets/db/EEE-FK1E471P.html",
+      "mfr": "Panasonic Industry",
+      "cat": "커패시터",
+      "price": 0.38,
+      "status": "stub",
+      "title": "EEE-FK1E471P · 알루미늄 전해 커패시터 470 µF 25 V · FK 시리즈 SMD (ø10 × 10.2)"
+    },
+    "FA-130RA": {
+      "file": "datasheets/db/FA-130RA.html",
+      "mfr": "Mabuchi Motor (Tamiya 판매)",
+      "cat": "모터",
+      "price": 2.1,
+      "status": "stub",
+      "title": "FA-130RA · FA-130 brushed DC motor + Tamiya 70097 gearbox"
+    },
+    "GRM188R71C474KA88D": {
+      "file": "datasheets/db/GRM188R71C474KA88D.html",
+      "mfr": "Murata",
+      "cat": "커패시터",
+      "price": 0.02,
+      "status": "stub",
+      "title": "GRM188R71C474KA88D · MLCC 0.47 µF 16 V X7R 0603"
+    },
+    "GRM31CR60J107ME39": {
+      "file": "datasheets/db/GRM31CR60J107ME39.html",
+      "mfr": "Murata",
+      "cat": "커패시터",
+      "price": 0.22,
+      "status": "stub",
+      "title": "GRM31CR60J107ME39 · MLCC 100 µF 6.3 V X5R 1206"
+    },
+    "GRM32ER61E226KE15": {
+      "file": "datasheets/db/GRM32ER61E226KE15.html",
+      "mfr": "Murata",
+      "cat": "커패시터",
+      "price": 0.12,
+      "status": "stub",
+      "title": "GRM32ER61E226KE15 · MLCC 22 µF 25 V X5R 1210"
+    },
+    "RL1206FR-070R1L": {
+      "file": "datasheets/db/RL1206FR-070R1L.html",
+      "mfr": "Yageo",
+      "cat": "저항",
+      "price": 0.08,
+      "status": "stub",
+      "title": "RL1206FR-070R1L · RL series low-ohm chip resistor 0.1 Ω 1206"
+    },
+    "SS14": {
+      "file": "datasheets/db/SS14.html",
+      "mfr": "Vishay",
+      "cat": "다이오드",
+      "price": 0.09,
+      "status": "stub",
+      "title": "SS14 · SS12–SS16 — 1 A surface-mount Schottky rectifier"
+    },
+    "STM32F042K6U6": {
+      "file": "datasheets/db/STM32F042K6U6.html",
+      "mfr": "STMicroelectronics",
+      "cat": "MCU",
+      "price": 2.6,
+      "status": "stub",
+      "title": "STM32F042K6U6 · STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN"
+    },
+    "TC364DP-64F300F": {
+      "file": "datasheets/db/TC364DP-64F300F.html",
+      "mfr": "Infineon",
+      "cat": "MCU",
+      "price": 17.5,
+      "status": "stub",
+      "title": "TC364DP-64F300F · AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz"
+    },
+    "TLE9251VSJ": {
+      "file": "datasheets/db/TLE9251VSJ.html",
+      "mfr": "Infineon",
+      "cat": "CAN 트랜시버",
+      "price": 1.15,
+      "status": "stub",
+      "title": "TLE9251VSJ · TLE9251V — high-speed CAN FD transceiver with VIO"
+    },
+    "USB4105-GF-A": {
+      "file": "datasheets/db/USB4105-GF-A.html",
+      "mfr": "GCT",
+      "cat": "커넥터",
+      "price": 0.55,
+      "status": "stub",
+      "title": "USB4105-GF-A · USB4105 — USB Type-C 2.0 receptacle"
+    },
+    "W25Q32JVSSIQ": {
+      "file": "datasheets/db/W25Q32JVSSIQ.html",
+      "mfr": "Winbond",
+      "cat": "메모리",
+      "price": 0.55,
+      "status": "stub",
+      "title": "W25Q32JVSSIQ · W25Q32JV — 3 V 32 Mbit serial NOR flash"
+    }
+  }
+}
