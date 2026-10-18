@@ -180,25 +180,10 @@ const CAD_CHIPS=[['IP67 다이캐스팅','set mat adc12','알루미늄 다이캐
   ['재질 비교','compare','재질 후보를 비교하고 원가·무게·열 여유 기준으로 추천해줘'],
   ['점검','check','지금 설계에서 문제(겹침·실링·온도)를 찾아 고쳐줘'],
   ['내보내기','export zip','CAD를 zip으로 내보내줘']];
-function cadSay(k,t){const e={k,t,id:++CADC.seq};CADC.log.push(e);if(CADC.log.length>400)CADC.log.shift();const L=$('#cadLog');if(L){const d=document.createElement('div');d.className='cl-'+k;d.dataset.id=e.id;d.textContent=(k==='cmd'?'› ':'')+t;L.appendChild(d);while(L.children.length>400)L.firstChild.remove();L.scrollTop=L.scrollHeight;}return e;}
-function cadSetE(e,t){e.t=t;const el=$('#cadLog')&&$('#cadLog').querySelector(`[data-id="${e.id}"]`);if(el){el.textContent=t;$('#cadLog').scrollTop=$('#cadLog').scrollHeight;}}
-function cadConsole(){const el=$('#cadCon');if(el.dataset.ready)return el;el.dataset.ready='1';
-  el.innerHTML=`<div class="cli-h"><b>Text-to-CAD</b>${aimControls()}<span class="cli-sp"></span><button type="button" class="pill vbtn" id="cadStop" hidden>중지</button><button type="button" class="pill vbtn" id="cadHelp">명령 목록</button></div>
-    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">${CAD_CHIPS.map(([l,c,g],k)=>`<button type="button" class="pill vbtn" data-cchip="${k}" title="결정론: ${esc(c)}
-AI: ${esc(g)}">${l}</button>`).join('')}</div>
-    <div class="cli-log" id="cadLog" role="log" aria-live="polite"></div>
-    <form class="cli-in" id="cadForm" autocomplete="off"><span aria-hidden="true">›</span><input id="cadIn" spellcheck="false" placeholder="예: 벽 두께 3mm, 오른쪽 벽에 M16 글랜드 2개, 장착 탭 4개 M5 · hole top --d 8 · export scad" aria-label="CAD 명령 또는 문장"><button class="btn primary sm" id="cadRun">실행</button></form>`;
-  el.querySelector('#cadForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#cadIn');const v=i.value.trim();if(!v||CADC.busy)return;i.value='';CADC.hist.push(v);CADC.hi=CADC.hist.length;cadExec(v);});
-  el.querySelector('#cadIn').addEventListener('keydown',e=>{const i=e.target;
-    if(e.key==='ArrowUp'){if(CADC.hi>0){CADC.hi--;i.value=CADC.hist[CADC.hi]||'';}e.preventDefault();}
-    else if(e.key==='ArrowDown'){if(CADC.hi<CADC.hist.length){CADC.hi++;i.value=CADC.hist[CADC.hi]||'';}e.preventDefault();}
-    else if(e.key==='Tab'){const w=i.value.trim();const m=[...TEXT2CAD.CMDS].filter(n=>n.startsWith(w));if(w&&m.length){i.value=m[0]+' ';e.preventDefault();}}
-    e.stopPropagation();});
-  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='cadHelp')cadExec('help');else if(b.id==='cadStop'){CADC.stopReq=true;if(CADC.abort)CADC.abort.abort();}
-    else if(b.dataset.cchip&&!CADC.busy){const[,c,g]=CAD_CHIPS[+b.dataset.cchip];if(AIM.mode==='ai'){cadSay('cmd',g+'   (AI 모드)');cadBusy(true);cadAI(g).finally(()=>cadBusy(false));}else cadExec(c);}});
-  cadSay('out','문장이나 명령으로 하우징을 설계합니다. 결정론 모드는 문장을 규칙으로 명령으로 바꾸고, AI 모드는 Claude가 같은 명령을 골라 실행합니다. help로 명령 목록을 봅니다.');
-  aimBind(el);cliAiProbe().then(aimPaint);return el;}
-function cadBusy(b){CADC.busy=b;const r=$('#cadRun'),s=$('#cadStop'),i=$('#cadIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CADC.stopReq=false;CADC.abort=null;setTimeout(()=>i&&HS.ws==='cad'&&i.focus(),10);}}
+function cadSay(k,t){const e={k,t,id:++CADC.seq};CADC.log.push(e);if(CADC.log.length>400)CADC.log.shift();copPaint('cad',e);return e;}
+function cadSetE(e,t){e.t=t;copPaint('cad',e,true);}
+function cadConsole(){if(!CADC.greeted){CADC.greeted=true;cadSay('out','4단계 하우징: 문장이나 명령으로 설계합니다 (예: 오른쪽 벽에 M16 글랜드 2개, 장착 탭 4개 M5). 결정론 모드는 문장을 규칙으로 명령으로 바꾸고, AI 모드는 Claude가 같은 명령을 골라 실행합니다. help로 명령 목록.');}return copEnsure();}
+function cadBusy(b){CADC.busy=b;copBusyPaint();const r=$('#cadRun'),s=$('#cadStop'),i=$('#cadIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CADC.stopReq=false;CADC.abort=null;setTimeout(()=>i&&HS.ws==='cad'&&i.focus(),10);}}
 function cadBrief(R){const d=R.d,g=d.geo;return`→ ${d.m.short} · ${g.Lo.toFixed(0)}×${g.Wo.toFixed(0)}×${g.Ho.toFixed(0)} mm · ${d.mass.toFixed(0)} g · PCB ${d.th.Tboard.toFixed(0)} °C · 최고 Tj ${Math.max(0,...d.th.parts.map(p=>p.Tj)).toFixed(0)} °C · 원가 ${R.idx.cost} · ${d.feasible?'조건 만족':'조건 미달: '+d.why.join(', ')}${R.warn.length?` · 경고 ${R.warn.length}건`:''}`;}
 // one console command; returns the text to print
 async function cadRunCmd(line,by){
@@ -214,7 +199,7 @@ async function cadRunCmd(line,by){
     case'export':{if(by==='ai')return'내보내기는 사용자가 직접 실행합니다 (export '+r.kind+').';const fn=await mechExport(r.kind);return fn?`${fn} 내려받기`:'내려받기를 취소했습니다.';}
     case'undo':case'redo':{const from=r.action==='undo'?H.undo:H.redo,to=r.action==='undo'?H.redo:H.undo;if(!from.length)return r.action==='undo'?'되돌릴 것이 없습니다.':'다시 실행할 것이 없습니다.';
       to.push(JSON.stringify({inp:H.inp,cad:H.cad}));const s=JSON.parse(from.pop());H.inp=s.inp;H.cad=s.cad;H.R=null;const R=mechRun();cadRefresh();return(r.action==='undo'?'실행 취소':'다시 실행')+'\n'+cadBrief(R);}
-    case'clear':{const L=$('#cadLog');if(L)L.innerHTML='';CADC.log=[];return'';}
+    case'clear':{copClear('cad');CADC.log=[];return'';}
     case'ai':return await cadAI(r.text||'');
   }
   return r.out||'';}
@@ -240,7 +225,7 @@ async function cadAI(req){
   const state=`${HOUSING.text(R)}\n형상 목록: ${H.cad.feats.map(f=>HOUSING.featLabel(f)).join(' · ')||'없음'}\n지정값: ${JSON.stringify(H.cad.over)}\n벽 길이: S/N ${R.d.geo.Lo.toFixed(1)} mm, W/E ${R.d.geo.Wo.toFixed(1)} mm · 분할면 z ${R.d.geo.zSplit.toFixed(1)} · 커버 안쪽 z ${R.d.geo.zLid.toFixed(1)} · 바닥 z ${R.d.geo.zFloor.toFixed(1)}`;
   const ok=await aiAgent({ro:c=>['help','status','check','compare','list','feats'].includes((TEXT2CAD.tok(c)[0]||'').toLowerCase()),roList:'status, check, compare, feats',prompt:CAD_SYS.replace('${CMDS}',cmds)+`\n\n현재 설계:\n${state}\n\n사용자 요청: ${req}`,toolName:'run_cad',toolDesc:'Run one housing CAD console command (see the list) and return its text output.',example:'"gland E M16 --z 9" or "tabs 4 --screw M5"',
     run:c=>cadRunCmd(c,'ai'),allowed:c=>{const f=(TEXT2CAD.tok(c)[0]||'').toLowerCase();return!TEXT2CAD.CMDS.has(f)||f==='ai'||f==='export'||f==='clear'?'unknown or not allowed: '+f:'';},
-    say:cadSay,set:cadSetE,drop:e=>{const el=$('#cadLog')&&$('#cadLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();CADC.log=CADC.log.filter(x=>x!==e);},
+    say:cadSay,set:cadSetE,drop:e=>{copDrop(e);CADC.log=CADC.log.filter(x=>x!==e);},
     setAbort:c=>{CADC.abort=c;},stopped:()=>CADC.stopReq,max:12});
   if(!ok){const list=TEXT2CAD.parse(req);if(!list.length)return'Claude를 쓸 수 없고 문장도 해석하지 못했습니다. help를 보세요.';cadSay('out','Claude를 쓸 수 없어 규칙으로 해석: '+list.join(' → '));for(const c of list){cadSay('cmd',c);try{const o=await cadRunCmd(c);if(o)cadSay('ok',o);}catch(e){cadSay('err',e.message);}}}
   return'';}

@@ -26,32 +26,11 @@ const CLI_HELP=[
   ['ai <요청>','Claude가 위 명령을 골라 실행. 헤더에서 결정론/AI를 고르면 문장·버튼이 그 방식으로 실행되고, AI 실행마다 모델 등급과 토큰(추정)을 표시']];
 function cliSay(k,t){const e={k,t,id:++CLI.seq};CLI.log.push(e);if(CLI.log.length>400)CLI.log.shift();cliPaint(e);return e;}
 function cliSet(e,t){e.t=t;cliPaint(e,true);}
-function cliPaint(e,upd){const L=$('#cliLog');if(!L)return;
-  if(upd){const el=L.querySelector(`[data-id="${e.id}"]`);if(el){el.textContent=e.t;L.scrollTop=L.scrollHeight;return;}}
-  const d=document.createElement('div');d.className='cl-'+e.k;d.dataset.id=e.id;d.textContent=(e.k==='cmd'?'› ':'')+e.t;L.appendChild(d);while(L.children.length>400)L.firstChild.remove();L.scrollTop=L.scrollHeight;}
-function cliPanel(){
-  let el=$('#peCli');if(el)return el;
-  el=document.createElement('section');el.id='peCli';el.className='ov pe-cli';el.hidden=true;el.setAttribute('aria-label','배치·배선 CLI');
-  el.innerHTML=`<div class="cli-h"><b>배치·배선 CLI</b>${aimControls()}
-    <span class="cli-sp"></span><button type="button" class="pill vbtn" id="cliStop" hidden>중지</button><button type="button" class="pill vbtn" id="cliX" title="닫기 (\`)">닫기</button></div>
-    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">${CLI_CHIPS.map(([l,c,g],i)=>`<button type="button" class="pill vbtn" data-chip="${i}" title="결정론: ${esc(c)}
-AI: ${esc(g)}">${l}</button>`).join('')}</div>
-    <div class="cli-log" id="cliLog" role="log" aria-live="polite"></div>
-    <form class="cli-in" id="cliForm" autocomplete="off"><span aria-hidden="true">›</span><input id="cliIn" spellcheck="false" placeholder="예: board size 100 60 · reset --strategy noise --route · 열이 고르게 퍼지게 다시 배치해줘" aria-label="명령 입력"><button class="btn primary sm" id="cliRun">실행</button></form>`;
-  $('#vp').appendChild(el);
-  el.querySelector('#cliForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#cliIn');const v=i.value.trim();if(!v||CLI.busy)return;i.value='';CLI.hist.push(v);CLI.hi=CLI.hist.length;cliExec(v);});
-  el.querySelector('#cliIn').addEventListener('keydown',e=>{const i=e.target;
-    if(e.key==='ArrowUp'){if(CLI.hi>0){CLI.hi--;i.value=CLI.hist[CLI.hi]||'';}e.preventDefault();}
-    else if(e.key==='ArrowDown'){if(CLI.hi<CLI.hist.length){CLI.hi++;i.value=CLI.hist[CLI.hi]||'';}e.preventDefault();}
-    else if(e.key==='Tab'){const w=i.value.trim();const names=['help','status','board size','board corner','strategies','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai'];const m=names.filter(n=>n.startsWith(w));if(w&&m.length){i.value=m[0]+' ';e.preventDefault();}}
-    else if(e.key==='Escape'){i.blur();}
-    e.stopPropagation();});
-  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='cliX')cliToggle(false);else if(b.id==='cliStop'){CLI.stopReq=true;if(CLI.abort)CLI.abort.abort();}else if(b.dataset.chip&&!CLI.busy){const[,c,g]=CLI_CHIPS[+b.dataset.chip];if(AIM.mode==='ai')cliGoal(g);else cliExec(c);}});
-  cliSay('out','명령을 입력하거나 하고 싶은 일을 문장으로 적으세요. help로 명령 목록을 봅니다.');
-  aimBind(el);cliAiProbe().then(aimPaint);return el;
-}
-function cliToggle(on){const el=cliPanel();CLI.open=on==null?!CLI.open:on;el.hidden=!CLI.open;peBar();if(CLI.open)setTimeout(()=>$('#cliIn')&&$('#cliIn').focus(),20);}
-function cliBusy(b){CLI.busy=b;const r=$('#cliRun'),s=$('#cliStop'),i=$('#cliIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CLI.stopReq=false;CLI.abort=null;setTimeout(()=>i&&CLI.open&&i.focus(),10);}}
+function cliPaint(e,upd){copPaint('pcb',e,upd);}
+function cliPanel(){return copEnsure();}
+// the console lives in the 설계 도우미 panel now: "open" just focuses it
+function cliToggle(on){if(on===false)return;copFocus('pcb');}
+function cliBusy(b){CLI.busy=b;copBusyPaint();const r=$('#cliRun'),s=$('#cliStop'),i=$('#cliIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CLI.stopReq=false;CLI.abort=null;setTimeout(()=>i&&CLI.open&&i.focus(),10);}}
 const cliTick=()=>new Promise(r=>setTimeout(r,0));
 
 /* ---- Claude (sample capability): probe once, quietly ---- */
@@ -307,7 +286,7 @@ async function cliRun(line,quiet,by){
     case 'report':return cliReport(a);
     case 'undo':if(!PE.undo.length)return'되돌릴 것이 없습니다.';peUndo();return'실행 취소했습니다.';
     case 'redo':if(!PE.redo.length)return'다시 실행할 것이 없습니다.';peRedo();return'다시 실행했습니다.';
-    case 'clear':{const L=$('#cliLog');if(L)L.innerHTML='';CLI.log=[];return'';}
+    case 'clear':{copClear('pcb');CLI.log=[];return'';}
     case 'history':return CLI.hist.slice(-20).join('\n');
     case 'housing':{const useAI=by!=='ai'&&(a.ai||(AIM.mode==='ai'&&!a.det&&!a._[0]));const txt=await mechCmd(a);
       if(useAI){cliSay('ok',txt);const ok=await cliAgent(MECH_AI+`\n\n현재 분석:\n${txt}\n\n${HOUSING.compareText(mechRun())}\n\n사용자 요청: 하우징 트레이드오프를 검토하고 추천해줘`);if(!ok)cliSay('err','Claude를 쓸 수 없어 결정론 결과만 표시했습니다.');if(S.panel==='sim'&&SR.tab==='mech')renderSim();return'';}return txt;}
@@ -345,7 +324,7 @@ const CLI_RO=c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase(),s=(t[1]||'')
 async function cliAgent(prompt,kind){
   return aiAgent({prompt,kind,ro:CLI_RO,roList:'status, report place|thermal|emc, drc, rats, guide check, board stack, housing check',toolName:'run_cli',toolDesc:'Run one PCB layout console command (see the command list) and return its text output.',example:'"reset --strategy thermal" or "guide set ds_kelvin fail --note ..."',
     run:c=>cliRun(c,true,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();return!CLI_CMDS.has(f)||f==='ai'?'unknown command: '+f:'';},
-    say:cliSay,set:cliSet,drop:e=>{const el=$('#cliLog')&&$('#cliLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();CLI.log=CLI.log.filter(x=>x!==e);},
+    say:cliSay,set:cliSet,drop:e=>{copDrop(e);CLI.log=CLI.log.filter(x=>x!==e);},
     setAbort:c=>{CLI.abort=c;},stopped:()=>CLI.stopReq,max:10});}
 async function cliAI(req){
   if(!req.trim())return'요청을 적어 주세요. 예: ai 열이 고르게 퍼지게 배치하고 배선해줘';
@@ -378,5 +357,4 @@ function cliDialog(kind){
     else if(AIM.mode==='ai')cliGoal(`${AUTOPLACE.STRATS[d.get('s')].label} 전략(${d.get('s')})으로 회로도 기준 처음부터 배치${d.get('route')?'하고 배선해줘. 미배선이 남으면 개선해줘':'해줘 (배선은 하지 말 것)'}`);
     else cliExec(d.get('route')?`auto ${d.get('s')}`:`reset --strategy ${d.get('s')}`);});
 }
-// ` toggles the console in the TOP / BOTTOM views
-document.addEventListener('keydown',e=>{if(e.key!=='`'||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target.matches('input,select,textarea'))return;if(!BD||!(S.view==='T'||S.view==='B'))return;e.preventDefault();e.stopImmediatePropagation();if(!PE.on)peBegin();cliToggle();},true);
+

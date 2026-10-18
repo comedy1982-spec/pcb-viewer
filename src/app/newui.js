@@ -25,14 +25,13 @@ const NP_HELP=[
 const NP_CMDS=new Set(['arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
-function npPaint(e,upd){const L=$('#npLog');if(!L)return;if(upd){const el=L.querySelector(`[data-id="${e.id}"]`);if(el){el.textContent=e.t;L.scrollTop=L.scrollHeight;return;}}
-  const d=document.createElement('div');d.className='cl-'+e.k;d.dataset.id=e.id;d.textContent=(e.k==='cmd'?'› ':'')+e.t;L.appendChild(d);L.scrollTop=L.scrollHeight;}
+function npPaint(e,upd){copPaint('np',e,upd);}
 function npPush(){NP.hist.push(JSON.stringify({plan:NP.plan,arch:NP.arch||null}));if(NP.hist.length>60)NP.hist.shift();}
 function npEnsure(){if(!NP.plan)NP.plan=NEWPROJ.newPlan($('#npName').value.trim()||'새 프로젝트');return NP.plan;}
 function npOpen(){setStep(1);}
 function npInit(){
   const M=$('#sysWs');
-  if(!M.dataset.init){M.dataset.init=1;$('#npMode').innerHTML=aimControls();aimBind($('#npMode'));cliAiProbe().then(aimPaint);
+  if(!M.dataset.init){M.dataset.init=1;
     $('#npTpl').innerHTML=NP_TPL.map(([l],i)=>`<button type="button" class="pill vbtn" data-tpl="${i}">${esc(l)}</button>`).join('');
     $('#npAddSel').innerHTML=Object.entries(NEWPROJ.LIB).map(([k,v])=>`<option value="${k}">${esc(v.label)} (${k})</option>`).join('');
     npSay('out','요구사항을 적고 [블록 다이어그램 만들기]를 누르세요. 1단계는 부품을 정하지 않은 HW 블록 다이어그램입니다. 결정론 모드는 정해진 규칙으로, AI 모드는 Claude가 블록·인터페이스를 설계합니다. 명령은 help.');}
@@ -52,7 +51,7 @@ function npRender(){
   const s=NEWPROJ.summary(P);$('#npSum').textContent=s.text;$('#npGen').disabled=false;
   $('#npMsg').textContent=s.r.warn.length?`경고 ${s.r.warn.length}개 · 부품 ${s.r.parts.length}개`:`부품 ${s.r.parts.length}개 · 보드 ${s.r.W} × ${s.r.H} mm`;
 }
-function npBusy(b){NP.busy=b;['#npRun','#npGen','#npPlan','#npAdd'].forEach(id=>{const e=$(id);if(e)e.disabled=b;});$('#npStop').hidden=!b;$('#npIn').disabled=b;if(!b){NP.stopReq=false;NP.abort=null;}}
+function npBusy(b){NP.busy=b;['#npGen','#npPlan','#npAdd'].forEach(id=>{const e=$(id);if(e)e.disabled=b;});if(!b){NP.stopReq=false;NP.abort=null;}copBusyPaint();}
 /* commands */
 async function npRun(line,by){
   const t=cliTok(line);if(!t.length)return'';const cmd=t[0].toLowerCase();const a=cliArgs(t.slice(1));
@@ -90,7 +89,7 @@ async function npRun(line,by){
     case'strategy':{const k=AUTOPLACE.strategy(a._[0]);if(!k)throw new Error('balanced · thermal · noise · compact');npPush();npEnsure().strategy=k;npRender();return'배치 전략 '+k;}
     case'generate':return await npGenerate({pcb:!!(a.pcb||a.route===true||a.route==='1'||a.view==='pcb'),strategy:a.strategy,by});
     case'undo':{if(!NP.hist.length)return'되돌릴 것이 없습니다.';const h=JSON.parse(NP.hist.pop());if(h&&'plan' in h){NP.plan=h.plan;NP.arch=h.arch;}else NP.plan=h;npRender();return'되돌렸습니다.';}
-    case'clear':{$('#npLog').innerHTML='';NP.log=[];return'';}
+    case'clear':{copClear('np');NP.log=[];return'';}
     case'ai':return await npAI(t.slice(1).join(' '));
     default:throw new Error('알 수 없는 명령: '+cmd);
   }
@@ -137,7 +136,7 @@ function pcbGatePaint(){
   if(el)return;const p=Object.assign({layers:2,min:false,route:true,strategy:'balanced',board:null},BD.pcbPlan||{});
   el=document.createElement('div');el.id='pcbGate';el.className='pcb-gate';
   el.innerHTML=`<form class="pg-in" data-f><b>3단계 · PCB 설계 시작</b>
-    <p class="lead">회로(부품 ${BD.comps.length}개 · 넷 ${BD.netOrder.length}개)는 준비됐고 아직 배치·배선 전입니다. 조건을 정하면 배치·배선 CLI가 명령을 차례로 실행합니다 (Ctrl+Z로 되돌릴 수 있음).</p>
+    <p class="lead">회로(부품 ${BD.comps.length}개 · 넷 ${BD.netOrder.length}개)는 준비됐고 아직 배치·배선 전입니다. 조건을 정하면 설계 도우미가 명령을 차례로 실행합니다 (Ctrl+Z로 되돌릴 수 있음).</p>
     <div class="pg-grid">
       <label>동박 층 <select name="layers">${[2,4,6,8,10].map(n=>`<option value="${n}"${n===+p.layers?' selected':''}>${n}층 · ${PCB.STACKS[n].map(x=>x==='sig'?'S':x==='gnd'?'G':'P').join('')}</option>`).join('')}</select></label>
       <label>보드 크기 <select name="size"><option value="min"${p.min?' selected':''}>최소화 (가장 작은 크기 탐색)</option><option value="auto"${!p.min&&!p.board?' selected':''}>자동 (여유 있게)</option><option value="fix"${!p.min&&p.board?' selected':''}>직접 입력</option></select></label>
@@ -145,7 +144,7 @@ function pcbGatePaint(){
       <label>배치 전략 <select name="s">${Object.entries(AUTOPLACE.STRATS).map(([k,v])=>`<option value="${k}"${k===p.strategy?' selected':''}>${v.label}</option>`).join('')}</select></label>
       <label class="chkl"><input type="checkbox" name="route"${p.route!==false?' checked':''}> 이어서 자동 배선${'' }</label></div>
     <p class="lead pg-note">PCB 단계에서는 배선을 위해 MCU 핀 배정을 바꾸는 등 회로를 함께 고칠 수 있습니다 (CLI pinswap · 분할 보기에서 회로도 편집).</p>
-    <div class="acts"><button type="button" class="btn sm" data-sch>회로도로 돌아가기</button><button type="button" class="btn sm" data-cli title="배치·배선 CLI에 명령이나 문장(AI 모드)으로 지시">CLI로 지시</button><button class="btn primary sm">PCB 설계 시작</button></div></form>`;
+    <div class="acts"><button type="button" class="btn sm" data-sch>회로도로 돌아가기</button><button type="button" class="btn sm" data-cli title="오른쪽 설계 도우미에 명령이나 문장으로 지시">도우미로 지시</button><button class="btn primary sm">PCB 설계 시작</button></div></form>`;
   $('#vp').appendChild(el);const F=el.querySelector('[data-f]');const wh=F.querySelector('.pg-wh');const sz=F.querySelector('[name=size]');const upd=()=>{wh.hidden=sz.value!=='fix';};sz.addEventListener('change',upd);upd();
   el.querySelector('[data-sch]').addEventListener('click',()=>setStep(2));
   el.querySelector('[data-cli]').addEventListener('click',()=>{if(S.view!=='T'&&S.view!=='B')setView('T');cliToggle(true);});
@@ -175,7 +174,7 @@ async function npAI(req){
     `\n\n현재 HW 블록 다이어그램:\n${NP.arch?HWARCH.text(NP.arch):'(비어 있음)'}\n\n현재 회로 계획 (2단계):\n${NP.plan?NEWPROJ.summary(NP.plan).text.split('\n').slice(0,14).join('\n'):'(비어 있음)'}\n\n사용자 요청: ${req}`;
   const ok=await aiAgent({prompt,ro:c=>['help','?','status','blocks','mcus','view','diagram'].includes((cliTok(c)[0]||'').toLowerCase()),roList:'status, blocks, mcus, diagram',toolName:'run_np',toolDesc:'Run one new-design console command (add/set/remove/mcu/board/strategy/plan/generate) and return its text output.',example:'"add pwr_in --vin 12" or "plan"',
     run:c=>npRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!NP_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='generate'&&/--pcb/.test(c)&&!/(보드|PCB|기판|배치|배선)[^.]{0,12}(생성|만들|그려|까지|시작|진행)/i.test(req))return'not allowed: generate --pcb (the user did not ask to start the PCB yet; record PCB wishes with board commands)';if(f==='generate'&&!/(회로|보드|PCB|기판)[^.]{0,10}(생성|만들|그려|까지)|generate/i.test(req))return'not allowed: generate (the user did not ask to create the board yet)';return'';},
-    say:npSay,set:npSet,drop:e=>{const el=$('#npLog')&&$('#npLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();NP.log=NP.log.filter(x=>x!==e);},setAbort:c=>{NP.abort=c;},stopped:()=>NP.stopReq,max:16});
+    say:npSay,set:npSet,drop:e=>{copDrop(e);NP.log=NP.log.filter(x=>x!==e);},setAbort:c=>{NP.abort=c;},stopped:()=>NP.stopReq,max:16});
   if(!ok){npSay('out','Claude를 쓸 수 없어 규칙으로 HW 블록 다이어그램을 만듭니다.');return await npRun('arch '+req);}
   return'';
 }
@@ -198,9 +197,6 @@ $('#npLayers').addEventListener('change',()=>npExec(`board layers ${$('#npLayers
 $('#npSize').addEventListener('change',()=>{const v=$('#npSize').value;$('#npWH').hidden=v!=='fix';if(v==='min')npExec('board min');else if(v==='auto')npExec('board auto');else{const w=+$('#npW').value,h=+$('#npH').value;if(w>=20&&h>=20)npExec(`board ${w} ${h}`);}});
 $('#npRoute').addEventListener('change',()=>npExec(`board route ${$('#npRoute').checked?'on':'off'}`));
 $('#npGen').addEventListener('click',()=>{if(NP.busy)return;npExec('generate');});
-$('#npForm').addEventListener('submit',e=>{e.preventDefault();const v=$('#npIn').value.trim();if(!v||NP.busy)return;$('#npIn').value='';NP.inHist.push(v);NP.hi=NP.inHist.length;npExec(v);});
-$('#npIn').addEventListener('keydown',e=>{const i=e.target;if(e.key==='ArrowUp'){if(NP.hi>0){NP.hi--;i.value=NP.inHist[NP.hi]||'';}e.preventDefault();}else if(e.key==='ArrowDown'){if(NP.hi<NP.inHist.length){NP.hi++;i.value=NP.inHist[NP.hi]||'';}e.preventDefault();}});
-$('#npStop').addEventListener('click',()=>{NP.stopReq=true;if(NP.abort)NP.abort.abort();});
 
 /* ---------- step 1: HW architecture block diagram (HWARCH) · part-level view (SYSDIAG) ---------- */
 var SYS={sel:null,src:null,D:null,view:'hw',A:null};
@@ -213,7 +209,7 @@ function sysDiagram(){
   else if(BD){SYS.D=SYSDIAG.fromBoard(BD);SYS.D.from='board';}else SYS.D=null;
   return SYS.D;}
 function sysRender(){const host=$('#sysSvg');if(!host||HS.ws!=='sys')return;
-  document.querySelectorAll('[data-sv]').forEach(b=>b.setAttribute('aria-selected',b.dataset.sv===SYS.view?'true':'false'));
+  $$('[data-sv]').forEach(b=>b.setAttribute('aria-selected',b.dataset.sv===SYS.view?'true':'false'));
   if(SYS.view==='hw'){const A=sysArch();SYS.A=A;
     if(!A){host.innerHTML='<p class="lead" style="padding:20px">요구사항을 적고 [블록 다이어그램 만들기]를 누르세요.</p>';return;}
     if(SYS.sel&&!A.blocks.some(b=>b.id===SYS.sel))SYS.sel=null;host.innerHTML=HWARCH.svg(A,{sel:SYS.sel});
@@ -258,7 +254,7 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
     <ul class="sys-io">${io.map(e=>{const o=N(e.a===n.id?e.b:e.a);return`<li><span class="k-${e.kind}">${e.a===n.id?(e.both?'↔':'→'):(e.both?'↔':'←')}</span> ${esc(o?o.label:'')} <span class="mono">${esc(e.label||'')}</span></li>`;}).join('')}</ul></div>`;
   box.querySelectorAll('[data-p]').forEach(i=>i.addEventListener('change',()=>npExec(`set ${b.id} ${i.dataset.p} ${i.value.trim()}`)));}
 function sysEnter(){npInit();if(!(NP.plan&&NP.plan.blocks.length))SYS.src='board';else if(!SYS.src)SYS.src='plan';sysRender();npRender();}
-document.querySelectorAll('[data-sv]').forEach(b=>b.addEventListener('click',()=>{SYS.view=b.dataset.sv;SYS.sel=null;sysRender();}));
+$$('[data-sv]').forEach(b=>b.addEventListener('click',()=>{SYS.view=b.dataset.sv;SYS.sel=null;sysRender();}));
 $('#sysZoom').addEventListener('click',()=>{SYS.zoom=SYS.zoom==='1'?'fit':'1';sysRender();});
 window.addEventListener('resize',()=>{if(HS.ws==='sys')sysRender();});
 $('#sysFromBoard').addEventListener('click',()=>{if(!BD){toast('불러온 보드가 없습니다.');return;}
@@ -279,7 +275,7 @@ function setStep(n){n=+n;
 function stepCur(){const w=HS.ws;return w==='sys'?1:w==='cad'?4:w==='board'?(S.sch==='full'?2:3):0;}
 function stepPaint(){const cur=stepCur();const done={1:!!(NP.plan&&NP.plan.blocks.length)||!!BD,2:!!BD,3:!!(BD&&BD.comps.length&&!BD.pcbPending),4:!!(BD&&BD.housing&&BD.housing.R)};
   pcbGatePaint();
-  document.querySelectorAll('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>1&&!BD;b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
-  document.querySelectorAll('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
-  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');}
-document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));
+  $$('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>1&&!BD;b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
+  $$('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
+  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');if(typeof copCtx==='function')copCtx();}
+$$('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));

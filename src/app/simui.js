@@ -25,13 +25,13 @@ function simReset(){
   if(S.panel==='sim')renderSim();else simCellsDirty();updateLegend();
 }
 function setPanel(p){
-  S.panel=p;document.querySelectorAll('.pmode button').forEach(b=>b.setAttribute('aria-selected',b.dataset.panel===p?'true':'false'));
-  $('#infoPane').hidden=p!=='info';$('#simPane').hidden=p!=='sim';$('.main').classList.toggle('simwide',p==='sim');
+  S.panel=p;$$('.pmode button').forEach(b=>b.setAttribute('aria-selected',b.dataset.panel===p?'true':'false'));
+  $('#infoPane').hidden=p!=='info';$('#simPane').hidden=p!=='sim';if(typeof dockOnPanel==='function')dockOnPanel(p);
   if(p==='sim'){envSync();renderSim();}else renderPane();
   updateLegend();setTimeout(()=>{if(S.view==='3d')resize3D();else{measure();paint2D();}refresh(false);},0);
 }
-document.querySelectorAll('.pmode button').forEach(b=>b.addEventListener('click',()=>setPanel(b.dataset.panel)));
-document.querySelectorAll('.stabs button').forEach(b=>b.addEventListener('click',()=>{SR.tab=b.dataset.stab;if(SR.tab==='si'&&!SR.si)runSI();renderSim();updateLegend();refresh(false);}));
+$$('.pmode button').forEach(b=>b.addEventListener('click',()=>setPanel(b.dataset.panel)));
+$$('.stabs button').forEach(b=>b.addEventListener('click',()=>{SR.tab=b.dataset.stab;if(SR.tab==='si'&&!SR.si)runSI();renderSim();updateLegend();refresh(false);}));
 // which result is drawn over the board: the main sim panel's tab, unless a window cell sets OV_FORCE while it paints (null = none)
 let OV_FORCE;
 const ovKey=()=>{const t=OV_FORCE!==undefined?OV_FORCE:(S.panel==='sim'?SR.tab:null);return t&&SR[t]&&!SR[t].error?t:null;};
@@ -603,7 +603,7 @@ function drawChart(host,cfg){
 function renderSim(){
   simCellsDirty();
   if(S.panel!=='sim'||!BD)return;
-  document.querySelectorAll('.stabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.stab===SR.tab?'true':'false'));
+  $$('.stabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.stab===SR.tab?'true':'false'));
   const b=$('#simBody');const sc=b.scrollTop;
   try{
     if(SR.tab==='ir'){b.innerHTML=irHTML();irBind(b);}

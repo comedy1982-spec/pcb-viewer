@@ -338,7 +338,7 @@ function seBar(){
   if(!SE.on)return;
   el.innerHTML=`<div class="setools" role="toolbar" aria-label="회로 편집 도구">${SE_TOOLS.map(([t,l,k])=>`<button class="pill vbtn${SE.tool===t?' on':''}" data-tool="${t}" title="${l} (${k})">${l}<kbd>${k}</kbd></button>`).join('')}</div>
     <div class="setools">${SE_ACTS.map(([a,l,k])=>`<button class="pill vbtn" data-act="${a}" title="${l} (${k})"${(a==='undo'&&!SE.undo.length)||(a==='redo'&&!SE.redo.length)?' disabled':''}>${l}<kbd>${k}</kbd></button>`).join('')}
-    <button class="pill vbtn" id="seErc" title="전기 규칙 검사 결과">ERC <b id="seErcN">${SE.erc.length}</b></button><button class="pill vbtn${SE.dirty?' warn':''}" id="seAnn" title="회로도 연결을 보드 패드 넷에 반영 (F8)">보드에 반영<kbd>F8</kbd></button><button class="pill vbtn" id="seExp" title="KiCad 회로도(.kicad_sch)로 저장">.kicad_sch 저장</button><button class="pill vbtn${typeof SCLI!=='undefined'&&SCLI.open?' on':''}" id="seCli" title="회로도 명령 콘솔 · Claude (\`)">CLI<kbd>\`</kbd></button></div>
+    <button class="pill vbtn" id="seErc" title="전기 규칙 검사 결과">ERC <b id="seErcN">${SE.erc.length}</b></button><button class="pill vbtn${SE.dirty?' warn':''}" id="seAnn" title="회로도 연결을 보드 패드 넷에 반영 (F8)">보드에 반영<kbd>F8</kbd></button><button class="pill vbtn" id="seExp" title="KiCad 회로도(.kicad_sch)로 저장">.kicad_sch 저장</button><button class="pill vbtn" id="seCli" title="오른쪽 설계 도우미에서 회로 명령·질문 (\`)">도우미<kbd>\`</kbd></button></div>
     <span class="pill hint2" id="seStat"></span>`;
   seStat();
 }

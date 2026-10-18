@@ -8,7 +8,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 const stripExport = (s) => s.replace(/if\(typeof module!=='undefined'\)module\.exports=[^;]+;/, '');
 const script = (code) => `<script>\n${code}\n</script>`;
 
-const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/mechui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js') + '\n' + read('src/app/popui.js') + '\n' + read('src/app/fwui.js') + '\n' + read('src/app/pcbui.js') + '\n' + read('src/app/aimode.js') + '\n' + read('src/app/pcbcli.js') + '\n' + read('src/app/schcli.js') + '\n' + read('src/app/newui.js'));
+const viewer = read('src/app/viewer.js').replace('/*SIMUI*/', () => read('src/app/simui.js') + '\n' + read('src/app/mechui.js') + '\n' + read('src/app/hsisui.js') + '\n' + read('src/app/schui.js') + '\n' + read('src/app/popui.js') + '\n' + read('src/app/fwui.js') + '\n' + read('src/app/pcbui.js') + '\n' + read('src/app/aimode.js') + '\n' + read('src/app/pcbcli.js') + '\n' + read('src/app/schcli.js') + '\n' + read('src/app/newui.js') + '\n' + read('src/app/copilot.js'));
 
 const html = `<!doctype html>
 <html lang="ko">
@@ -21,6 +21,7 @@ const html = `<!doctype html>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 ${read('src/styles/base.css')}
 ${read('src/styles/extra.css')}
+${read('src/styles/copilot.css')}
 </head>
 <body>
 ${read('src/app/body.html')}

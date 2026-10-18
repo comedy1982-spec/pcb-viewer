@@ -777,6 +777,127 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 </style>
 <style>#peCli{z-index:7}.pcb-gate{place-items:start center;padding-top:28px}</style>
 
+<style>
+/* ---------- AI 코파일럿 분할: workspace | right dock (설계 도우미 · 정보 · 시뮬레이션) ---------- */
+.app{grid-template-rows:auto minmax(0,1fr)}
+.work{position:relative;display:grid;grid-template-columns:minmax(0,1fr) var(--dock,400px);gap:12px;min-height:0;min-width:0}
+.work:has(>.dock.wide){grid-template-columns:minmax(0,1fr) max(var(--dock,400px),452px)}
+.app.dock-off .work,.app.dock-empty .work{grid-template-columns:minmax(0,1fr)}
+.app.dock-off .dock,.app.dock-empty .dock,.app.dock-off #hDock,.app.dock-empty #hDock{display:none}
+.wsa{display:grid;grid-template:minmax(0,1fr)/minmax(0,1fr);min-height:0;min-width:0}
+.wsa>*{grid-area:1/1;min-width:0}
+#hDock{right:var(--dock,400px)}
+.work:has(>.dock.wide) #hDock{right:max(var(--dock,400px),452px)}
+.dock-tg[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.dock-tg svg{width:15px;height:15px}
+
+.dock{display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.dock-tabs{display:flex;align-items:flex-end;gap:2px;padding:4px 6px 0 8px;border-bottom:1px solid var(--line)}
+.dock-tabs [role="tab"]{border:0;background:none;padding:9px 10px 8px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;white-space:nowrap}
+.dock-tabs [role="tab"]:hover{color:var(--fg)}
+.dock-tabs [role="tab"][aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.dock-sp,.cop-sp{flex:1}
+.dock-tabs .dock-btn{align-self:center;margin-bottom:3px}
+.dock-btn{width:30px;height:30px;display:inline-grid;place-items:center;border:0;background:none;border-radius:7px;color:var(--muted);cursor:pointer;flex:none}
+.dock-btn:hover{background:var(--raised);color:var(--fg)}
+.dock-btn svg{width:16px;height:16px}
+.dock-body{flex:1;min-height:0;display:flex;flex-direction:column}
+.dock-body>.insp{flex:1;border:0;border-radius:0;background:transparent}
+.dock .insp .pmode{display:none}
+
+/* 설계 도우미 */
+.copilot{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface)}
+.cop-h{display:flex;align-items:center;gap:8px;padding:10px 12px 6px}
+.cop-t{display:flex;flex-direction:column;min-width:0}
+.cop-t b{font-size:14px}
+.cop-ctx{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cop-src select{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--raised);color:var(--fg)}
+.cop-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 12px 8px;border-bottom:1px solid var(--line)}
+.cop-log{flex:1;min-height:140px;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;line-height:1.55}
+.cp{min-width:0;max-width:100%}
+.cp-src{display:block;font-size:11px;font-weight:600;letter-spacing:.05em;color:var(--muted);margin:8px 0 4px}
+.cp-user{align-self:flex-end;max-width:88%;display:flex;flex-direction:column;align-items:flex-end}
+.cp-user .cp-b{background:var(--fg);color:var(--bg);border-radius:14px 14px 4px 14px;padding:8px 12px;white-space:pre-wrap;word-break:break-word}
+.cp-tool{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.cp-tool .cp-src{flex-basis:100%;margin-bottom:0}
+.cp-tool code{font-family:var(--f-mono);font-size:12px;color:var(--accent);background:var(--raised);border:1px solid var(--line);border-radius:7px;padding:3px 8px;word-break:break-all}
+.cp-by{font-size:11px;color:var(--muted)}
+.cp-ok pre{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--fg)}
+.cp-ok details{background:var(--raised);border:1px solid var(--line);border-radius:8px}
+.cp-ok summary{cursor:pointer;padding:7px 10px;font-family:var(--f-mono);font-size:12px;display:flex;gap:8px;align-items:baseline}
+.cp-ok summary span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-ok summary em{font-style:normal;color:var(--muted);flex:none}
+.cp-ok details pre{border:0;border-top:1px solid var(--line);border-radius:0 0 8px 8px}
+.cp-ai .cp-b{white-space:pre-wrap;word-break:break-word}
+.cp-out{color:var(--muted);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
+.cp-err{color:var(--err);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
+.cp-use{color:var(--muted);font-size:11px;font-family:var(--f-mono);white-space:pre-line;border-top:1px dashed var(--line);padding-top:4px}
+.cp-chg{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:10px;padding:8px 10px;font-size:13px}
+.cp-chg .cp-src{flex-basis:100%;margin:0}
+.cp-chg .cp-msg{flex:1;min-width:150px}
+.cp-acts{display:flex;gap:6px}
+.cop-chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px 0}
+.cop-in{padding:8px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.cop-in textarea{font:inherit;font-size:13.5px;line-height:1.5;resize:vertical;min-height:48px;max-height:220px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--raised);color:var(--fg)}
+.cop-in textarea[data-mode="ai"]{border-color:var(--accent)}
+.cop-row{display:flex;align-items:center;gap:8px}
+.cop-k{font-size:11px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cop-row .btn{flex:none;white-space:nowrap}
+.copilot.busy .cop-log{cursor:progress}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* "새 창" button on each side panel */
+.pop-btn{position:sticky;top:0;float:right;z-index:4;width:26px;height:26px;display:grid;place-items:center;margin:-8px -8px 4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--muted);cursor:pointer;padding:0}
+.pop-btn:hover{color:var(--fg);border-color:var(--accent)}
+.pop-btn svg{width:14px;height:14px}
+.popped>.pop-btn{display:none}
+
+/* a panel in its own window, or floating when pop-ups are blocked */
+body.pp-body{height:100vh;margin:0;overflow:hidden}
+.pp{display:flex;flex-direction:column;height:100%;min-height:0;background:var(--bg)}
+.pp-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
+.pp-title{font-size:13px;white-space:nowrap}.pp-sub{font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pp-bar .btn{flex:none;white-space:nowrap}
+.pp-grip{color:var(--muted)}
+.pp-host.pp-host{flex:1;min-height:0;display:flex;flex-direction:column;grid-template-columns:none;grid-template-rows:none;gap:0;padding:0;border:0;background:none;overflow:hidden;position:static;height:auto}
+.pp-host>*{flex:1;min-height:0;border:0!important;border-radius:0!important;grid-column:auto!important;grid-row:auto!important;max-height:none!important;order:0!important}
+.pp-host>.panel{overflow:auto}
+.pp-host>.insp .pmode{display:inline-flex}
+.ppfloat{position:fixed;z-index:40;top:84px;right:28px;width:min(440px,calc(100vw - 32px));height:min(78vh,780px);min-width:260px;min-height:220px;resize:both;overflow:hidden;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.28);background:var(--surface)}
+.ppfloat .pp-bar{cursor:move;user-select:none}
+
+/* workspaces next to the dock: side panels stack in one column so the canvas keeps its width */
+@media (min-width:981px){
+  .main,.main.simwide{grid-template-columns:var(--lw,212px) minmax(0,1fr)}
+  .main:not(:has(>.layers)){grid-template-columns:minmax(0,1fr)}
+  .main:not(:has(>.layers)) #hLeft{display:none}
+  .app.dk .sys-ws{grid-template-columns:var(--sys-l,300px) minmax(0,1fr);grid-template-rows:minmax(0,1.2fr) minmax(0,1fr)}
+  .app.dk .sys-ws>#sysLeft{grid-column:1;grid-row:1}.app.dk .sys-ws>#sysRight{grid-column:1;grid-row:2}.app.dk .sys-ws>.sys-mid{grid-column:2;grid-row:1/3}
+  .app.dk .sys-ws:not(:has(>#sysRight))>#sysLeft,.app.dk .sys-ws:not(:has(>#sysLeft))>#sysRight{grid-row:1/3}
+  .app.dk .cad-ws{grid-template-columns:var(--cad-l,330px) minmax(0,1fr);grid-template-rows:minmax(0,1.3fr) minmax(0,1fr)}
+  .app.dk .cad-ws>#cadLeft{grid-column:1;grid-row:1}.app.dk .cad-ws>#cadRight{grid-column:1;grid-row:2}.app.dk .cad-ws>.cad-mid{grid-column:2;grid-row:1/3}
+  .app.dk .cad-ws:not(:has(>#cadRight))>#cadLeft,.app.dk .cad-ws:not(:has(>#cadLeft))>#cadRight{grid-row:1/3}
+  .app.dk .hsis-ws{grid-template-columns:var(--hsw-l,260px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr)}
+  .app.dk .hsis-ws>#hsLeft{grid-column:1;grid-row:1}.app.dk .hsis-ws>#hsDetail{grid-column:1;grid-row:2}.app.dk .hsis-ws>.hsmain{grid-column:2;grid-row:1/3}
+  .app.dk .hsis-ws.hswide>#hsLeft,.app.dk .hsis-ws:not(:has(>#hsDetail))>#hsLeft,.app.dk .hsis-ws:not(:has(>#hsLeft))>#hsDetail{grid-row:1/3}
+  .app.dk .hsis-ws #hHsR{display:none}
+  /* a side panel moved to its own window frees its column */
+  .sys-ws:not(:has(>#sysLeft)):not(:has(>#sysRight)),.cad-ws:not(:has(>#cadLeft)):not(:has(>#cadRight)),.hsis-ws:not(:has(>#hsLeft)):not(:has(>#hsDetail)){grid-template-columns:minmax(0,1fr)!important}
+  .sys-ws:not(:has(>#sysLeft)):not(:has(>#sysRight))>.sys-mid,.cad-ws:not(:has(>#cadLeft)):not(:has(>#cadRight))>.cad-mid,.hsis-ws:not(:has(>#hsLeft)):not(:has(>#hsDetail))>.hsmain{grid-column:1!important;grid-row:1!important}
+  .hsis-ws:not(:has(>#hsLeft)) #hHsL{display:none}
+  .app:not(.dk) .sys-ws:not(:has(>#sysRight)){grid-template-columns:var(--sys-l,290px) minmax(0,1fr)}
+  .app:not(.dk) .sys-ws:not(:has(>#sysLeft)){grid-template-columns:minmax(0,1fr) var(--sys-r,310px)}
+  .app:not(.dk) .cad-ws:not(:has(>#cadRight)){grid-template-columns:var(--cad-l,340px) minmax(0,1fr)}
+  .app:not(.dk) .cad-ws:not(:has(>#cadLeft)){grid-template-columns:minmax(0,1fr) var(--cad-r,330px)}
+}
+@media (max-width:980px){
+  .work,.work:has(>.dock.wide){grid-template-columns:minmax(0,1fr)}
+  #hDock{display:none}
+  .dock{height:min(78vh,760px)}
+  .app{height:auto}
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -809,11 +930,13 @@ details.thsec>*:not(summary){margin:0 10px 10px}
       <div class="winpick-wrap"><button class="btn sm splitbtn" id="winBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="winPick" title="여러 보기를 격자로 배치한 새 창을 엽니다"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M8 2.5v11M1.5 8h13"/></svg>새 창</button>
         <div class="winpick" id="winPick" role="dialog" aria-label="새 창 레이아웃" hidden></div></div>
       </div>
+      <button class="btn sm dock-tg" id="dockTg" aria-pressed="true" aria-controls="dock" title="설계 도우미 · 정보 · 시뮬레이션 패널 보이기/숨기기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/></svg>도우미</button>
     </div>
   </header>
 
+  <div class="work"><div class="wsa">
   <div class="main">
-    <div class="rh" id="hLeft"></div><div class="rh" id="hRight"></div>
+    <div class="rh" id="hLeft"></div>
     <aside class="panel layers" aria-label="레이어">
       <div class="grp">
         <p class="h">레이어</p>
@@ -869,6 +992,75 @@ details.thsec>*:not(summary){margin:0 10px 10px}
       <div class="tip" id="tip" hidden></div>
     </section>
 
+
+  </div>
+<div class="sys-ws" id="sysWs" hidden>
+  <aside class="panel" id="sysLeft" aria-label="프로젝트와 블록">
+    <section><h3>프로젝트 · 요구사항</h3>
+          <label class="fld"><span>이름</span><input id="npName" placeholder="예: BLDC 팬 컨트롤러 v0.1"></label>
+          <label class="fld"><span>요구사항 (시스템 기능 · 전원 · 통신 · 구동 · 센싱 · 안전)</span><textarea id="npReq" rows="4" placeholder="예: eLSD ECU — 12V 배터리, AURIX MCU, CAN-FD, DC 모터 H-bridge 구동, 전류·온도 센싱, XCP 캘리브레이션, ASIL B. 데이터 로그용 플래시"></textarea></label>
+          <div class="npchips" id="npTpl"></div>
+          <div class="acts"><button class="btn primary sm" id="npPlan">블록 다이어그램 만들기</button><span class="np-hint" id="npPlanHint"></span></div></section>
+        <section><h3>HW 블록 (부품 미정)</h3><div id="arBlocks"></div>
+          <div class="np-add"><select id="arGroup" aria-label="블록 그룹"></select><input id="arLabel" placeholder="블록 이름 (예: Relay Driver)" aria-label="새 블록 이름"><button class="btn sm" id="arAdd">추가</button></div></section>
+        <section><h3>PCB 조건 <span class="np-hint">3단계 PCB 시작 때 적용</span></h3><div class="np-board">
+          <label>동박 층 <select id="npLayers"><option value="2">2층</option><option value="4">4층</option><option value="6">6층</option><option value="8">8층</option><option value="10">10층</option></select></label>
+          <label>보드 크기 <select id="npSize"><option value="auto">자동</option><option value="min">최소화</option><option value="fix">직접 입력</option></select></label>
+          <label id="npWH">가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> × 세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
+          <label>배치 전략 <select id="npStrat"><option value="balanced">균형</option><option value="thermal">열 분산</option><option value="noise">노이즈 최소화</option><option value="compact">소형화</option></select></label>
+          <label class="chkl"><input type="checkbox" id="npRoute" checked> PCB 시작 때 자동 배선</label></div></section>
+  </aside>
+  <div class="sys-mid">
+    <section class="sys-dia" id="sysDia" aria-label="시스템 다이어그램">
+      <div class="sys-bar"><b id="sysTitle">시스템 다이어그램</b><span class="sys-src" id="sysSrc"></span><span class="cli-sp"></span>
+        <span class="seg sys-view" role="tablist" aria-label="다이어그램 종류"><button role="tab" data-sv="hw" aria-selected="true">HW 블록</button><button role="tab" data-sv="parts" aria-selected="false">부품 구성</button></span><button type="button" class="pill vbtn" id="sysFromBoard" title="지금 보드의 부품과 넷에서 블록 다이어그램을 추출합니다 (부품 번호는 빼고 기능 블록으로)">보드에서 추출</button><button type="button" class="pill vbtn" id="sysZoom">100%</button><button type="button" class="pill vbtn" id="sysSvgDl">SVG 저장</button></div>
+      <div class="sys-svg" id="sysSvg"></div>
+    </section>
+
+  </div>
+  <aside class="panel" id="sysRight" aria-label="선택한 블록과 계획">
+    <section><h3>선택</h3><div id="sysSel"><p class="lead" style="margin:0">다이어그램의 블록을 누르면 부품·전원·신호와 파라미터가 여기 나옵니다.</p></div></section>
+    <details class="np-impl" id="implSec"><summary><b>회로 구현 (2단계 준비)</b><span id="implHint"></span></summary>
+      <p class="lead" style="margin:4px 0 8px">HW 블록마다 회로 라이브러리 블록을 연결해 둡니다. 부품은 다음 단계에서 정해지며, 여기서 바꾸면 아키텍처 다이어그램은 그대로입니다.</p>
+      <div id="npBlocks"></div><div class="np-add"><select id="npAddSel" aria-label="추가할 회로 블록"></select><button class="btn sm" id="npAdd">회로 블록 추가</button></div></details>
+    <details class="np-impl"><summary><b>계획 · BOM · MCU 핀 배정</b></summary><pre class="np-sum" id="npSum">요구사항을 적고 [계획 세우기]를 누르거나, 블록을 직접 추가하세요.</pre></details>
+    <div class="sys-next"><span class="msg" id="npMsg"></span><button class="btn primary" id="npGen">다음: 회로 생성 →</button></div>
+  </aside>
+</div>
+<div class="cad-ws" id="cadWs" hidden>
+  <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
+  <div class="cad-mid"><div class="cad-vp" id="cadVpSlot"></div></div>
+  <aside class="panel" id="cadRight" aria-label="형상 트리와 내보내기"></aside>
+</div>
+<div class="hsis-ws" id="hsisWs" hidden>
+  <div class="rh" id="hHsL"></div><div class="rh" id="hHsR"></div>
+  <aside class="panel" id="hsLeft" aria-label="HSIS 문서와 필터"></aside>
+  <section class="panel hsmain" aria-label="HSIS">
+    <div class="tabs" role="tablist" style="margin-top:0">
+      <button role="tab" data-htab="table" aria-selected="true" id="htab-table">신호 표</button>
+      <button role="tab" data-htab="pins" aria-selected="false" id="htab-pins">MCU 핀 맵</button>
+      <button role="tab" data-htab="trace" aria-selected="false" id="htab-trace">추적성</button>
+      <button role="tab" data-htab="checks" aria-selected="false" id="htab-chk">검사 결과</button>
+      <button role="tab" data-htab="rec" aria-selected="false" id="htab-rec">핀 추천</button>
+      <button role="tab" data-htab="mcal" aria-selected="false" id="htab-mcal">MCAL 설정</button>
+      <button role="tab" data-htab="tc" aria-selected="false" id="htab-tc">테스트 케이스</button>
+    </div>
+    <div id="hsBody"></div>
+  </section>
+  <aside class="panel" id="hsDetail" aria-label="신호 상세"></aside>
+</div>
+</div>
+  <div class="rh" id="hDock"></div>
+  <aside class="dock" id="dock" aria-label="도우미 · 정보 · 시뮬레이션">
+    <div class="dock-tabs" role="tablist" aria-label="오른쪽 패널">
+      <button role="tab" type="button" data-dock="ai" aria-selected="true" id="dk-ai">설계 도우미</button>
+      <button role="tab" type="button" data-dock="info" aria-selected="false" id="dk-info">정보</button>
+      <button role="tab" type="button" data-dock="sim" aria-selected="false" id="dk-sim">시뮬레이션</button>
+      <span class="dock-sp"></span>
+      <button type="button" class="dock-btn" id="dockPop" title="지금 탭을 새 창으로 엽니다 (메인 창과 계속 연동)" aria-label="지금 탭을 새 창으로"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 8 8M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3"/></svg></button>
+      <button type="button" class="dock-btn" id="dockHide" title="오른쪽 패널 접기" aria-label="오른쪽 패널 접기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg></button>
+    </div>
+    <div class="dock-body" id="dockBody">
     <aside class="panel insp" aria-label="정보">
       <div class="seg pmode" role="tablist" aria-label="패널 전환"><button role="tab" data-panel="info" aria-selected="true" id="p-info">정보</button><button role="tab" data-panel="sim" aria-selected="false" id="p-sim">시뮬레이션</button></div>
       <div id="infoPane">
@@ -901,62 +1093,8 @@ details.thsec>*:not(summary){margin:0 10px 10px}
         <div id="simBody"></div>
       </div>
     </aside>
-  </div>
-<div class="sys-ws" id="sysWs" hidden>
-  <aside class="panel" id="sysLeft" aria-label="프로젝트와 블록">
-    <section><h3>프로젝트 · 요구사항</h3>
-          <label class="fld"><span>이름</span><input id="npName" placeholder="예: BLDC 팬 컨트롤러 v0.1"></label>
-          <label class="fld"><span>요구사항 (시스템 기능 · 전원 · 통신 · 구동 · 센싱 · 안전)</span><textarea id="npReq" rows="4" placeholder="예: eLSD ECU — 12V 배터리, AURIX MCU, CAN-FD, DC 모터 H-bridge 구동, 전류·온도 센싱, XCP 캘리브레이션, ASIL B. 데이터 로그용 플래시"></textarea></label>
-          <div class="npchips" id="npTpl"></div>
-          <div class="acts"><button class="btn primary sm" id="npPlan">블록 다이어그램 만들기</button><span class="np-hint" id="npPlanHint"></span></div></section>
-        <section><h3>HW 블록 (부품 미정)</h3><div id="arBlocks"></div>
-          <div class="np-add"><select id="arGroup" aria-label="블록 그룹"></select><input id="arLabel" placeholder="블록 이름 (예: Relay Driver)" aria-label="새 블록 이름"><button class="btn sm" id="arAdd">추가</button></div></section>
-        <section><h3>PCB 조건 <span class="np-hint">3단계 PCB 시작 때 적용</span></h3><div class="np-board">
-          <label>동박 층 <select id="npLayers"><option value="2">2층</option><option value="4">4층</option><option value="6">6층</option><option value="8">8층</option><option value="10">10층</option></select></label>
-          <label>보드 크기 <select id="npSize"><option value="auto">자동</option><option value="min">최소화</option><option value="fix">직접 입력</option></select></label>
-          <label id="npWH">가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> × 세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
-          <label>배치 전략 <select id="npStrat"><option value="balanced">균형</option><option value="thermal">열 분산</option><option value="noise">노이즈 최소화</option><option value="compact">소형화</option></select></label>
-          <label class="chkl"><input type="checkbox" id="npRoute" checked> PCB 시작 때 자동 배선</label></div></section>
-  </aside>
-  <div class="sys-mid">
-    <section class="sys-dia" id="sysDia" aria-label="시스템 다이어그램">
-      <div class="sys-bar"><b id="sysTitle">시스템 다이어그램</b><span class="sys-src" id="sysSrc"></span><span class="cli-sp"></span>
-        <span class="seg sys-view" role="tablist" aria-label="다이어그램 종류"><button role="tab" data-sv="hw" aria-selected="true">HW 블록</button><button role="tab" data-sv="parts" aria-selected="false">부품 구성</button></span><button type="button" class="pill vbtn" id="sysFromBoard" title="지금 보드의 부품과 넷에서 블록 다이어그램을 추출합니다 (부품 번호는 빼고 기능 블록으로)">보드에서 추출</button><button type="button" class="pill vbtn" id="sysZoom">100%</button><button type="button" class="pill vbtn" id="sysSvgDl">SVG 저장</button></div>
-      <div class="sys-svg" id="sysSvg"></div>
-    </section>
-    <section class="cad-con np-con" aria-label="시스템 설계 콘솔"><div class="cli-h"><b>시스템 CLI</b><span class="np-mode" id="npMode"></span></div><div class="cli-log" id="npLog" role="log" aria-live="polite"></div>
-          <form class="cli-in" id="npForm" autocomplete="off"><span aria-hidden="true">›</span><input id="npIn" spellcheck="false" placeholder="예: block io &quot;Relay Driver&quot; · link mcu relaydriver &quot;GPIO&quot; · feat mcu &quot;Lockstep core&quot; · 문장으로 요구사항 · help" aria-label="설계 명령 입력"><button class="btn primary sm" id="npRun">실행</button><button type="button" class="btn sm" id="npStop" hidden>중지</button></form></section>
-  </div>
-  <aside class="panel" id="sysRight" aria-label="선택한 블록과 계획">
-    <section><h3>선택</h3><div id="sysSel"><p class="lead" style="margin:0">다이어그램의 블록을 누르면 부품·전원·신호와 파라미터가 여기 나옵니다.</p></div></section>
-    <details class="np-impl" id="implSec"><summary><b>회로 구현 (2단계 준비)</b><span id="implHint"></span></summary>
-      <p class="lead" style="margin:4px 0 8px">HW 블록마다 회로 라이브러리 블록을 연결해 둡니다. 부품은 다음 단계에서 정해지며, 여기서 바꾸면 아키텍처 다이어그램은 그대로입니다.</p>
-      <div id="npBlocks"></div><div class="np-add"><select id="npAddSel" aria-label="추가할 회로 블록"></select><button class="btn sm" id="npAdd">회로 블록 추가</button></div></details>
-    <details class="np-impl"><summary><b>계획 · BOM · MCU 핀 배정</b></summary><pre class="np-sum" id="npSum">요구사항을 적고 [계획 세우기]를 누르거나, 블록을 직접 추가하세요.</pre></details>
-    <div class="sys-next"><span class="msg" id="npMsg"></span><button class="btn primary" id="npGen">다음: 회로 생성 →</button></div>
-  </aside>
-</div>
-<div class="cad-ws" id="cadWs" hidden>
-  <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
-  <div class="cad-mid"><div class="cad-vp" id="cadVpSlot"></div><section class="cad-con" id="cadCon" aria-label="Text-to-CAD 콘솔"></section></div>
-  <aside class="panel" id="cadRight" aria-label="형상 트리와 내보내기"></aside>
-</div>
-<div class="hsis-ws" id="hsisWs" hidden>
-  <div class="rh" id="hHsL"></div><div class="rh" id="hHsR"></div>
-  <aside class="panel" id="hsLeft" aria-label="HSIS 문서와 필터"></aside>
-  <section class="panel hsmain" aria-label="HSIS">
-    <div class="tabs" role="tablist" style="margin-top:0">
-      <button role="tab" data-htab="table" aria-selected="true" id="htab-table">신호 표</button>
-      <button role="tab" data-htab="pins" aria-selected="false" id="htab-pins">MCU 핀 맵</button>
-      <button role="tab" data-htab="trace" aria-selected="false" id="htab-trace">추적성</button>
-      <button role="tab" data-htab="checks" aria-selected="false" id="htab-chk">검사 결과</button>
-      <button role="tab" data-htab="rec" aria-selected="false" id="htab-rec">핀 추천</button>
-      <button role="tab" data-htab="mcal" aria-selected="false" id="htab-mcal">MCAL 설정</button>
-      <button role="tab" data-htab="tc" aria-selected="false" id="htab-tc">테스트 케이스</button>
     </div>
-    <div id="hsBody"></div>
-  </section>
-  <aside class="panel" id="hsDetail" aria-label="신호 상세"></aside>
+  </aside>
 </div>
 </div>
 
@@ -7164,7 +7302,10 @@ const HSIS_SAMPLES={
 (function(){
 "use strict";
 const D2R=Math.PI/180,TAU=Math.PI*2;
-const $=s=>document.querySelector(s);
+// panels moved into their own window (copilot.js) keep their ids: $ and $$ look there too
+const PANEL_DOCS=new Set();
+const $=s=>{const e=document.querySelector(s);if(e)return e;for(const d of PANEL_DOCS){try{const x=d.querySelector(s);if(x)return x;}catch(err){}}return null;};
+const $$=s=>{const out=[...document.querySelectorAll(s)];PANEL_DOCS.forEach(d=>{try{out.push(...d.querySelectorAll(s));}catch(err){}});return out;};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- colours ---------- */
@@ -7653,7 +7794,7 @@ function setView(v){
   if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(v==='sch')S.sch='full';else if(v!=='__keep'){S.view=v;if(S.sch==='full')S.sch='off';}
   const full=S.sch==='full',bv=S.view;
-  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-selected',(full?b.dataset.view==='sch':b.dataset.view===bv)?'true':'false'));
+  $$('[data-view]').forEach(b=>b.setAttribute('aria-selected',(full?b.dataset.view==='sch':b.dataset.view===bv)?'true':'false'));
   $('#splitBtn').setAttribute('aria-pressed',S.sch==='split'?'true':'false');
   vp.classList.toggle('split',S.sch==='split');vp.classList.toggle('schfull',full);
   cvs.hidden=S.sch==='off';$('#schOv').hidden=S.sch==='off';
@@ -7674,7 +7815,7 @@ function setView(v){
 }
 function tipAt(cv,x,y){const vr=vp.getBoundingClientRect(),cr=cv.getBoundingClientRect();tip.style.left=(x+cr.left-vr.left)+'px';tip.style.top=(y+cr.top-vr.top)+'px';}
 function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
-document.querySelectorAll('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+$$('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 $('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
 ['cuT','cuB','silk','mask','drill','ghost','inner'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
@@ -7682,7 +7823,7 @@ $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.t
 $('#explode').addEventListener('input',e=>setExplode(e.target.value/100));
 (function(){const box=$('#masks');Object.entries(MASKS).forEach(([k,m])=>{const b=document.createElement('button');b.className='mk';b.style.background=m.mask;b.title=m.name;b.setAttribute('aria-label','솔더마스크 '+m.name);b.setAttribute('aria-pressed',k===S.mask?'true':'false');
   b.addEventListener('click',()=>{S.mask=k;box.querySelectorAll('.mk').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');$('#sw-mask').style.background=m.mask;refresh(false);});box.appendChild(b);});})();
-document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{S.tab=b.dataset.tab;renderPane();}));
+$$('.tabs button').forEach(b=>b.addEventListener('click',()=>{S.tab=b.dataset.tab;renderPane();}));
 $('#q').addEventListener('input',e=>{S.q=e.target.value.trim().toLowerCase();if(S.tab==='sel'||S.tab==='data')S.tab='bom';renderPane();});
 $('#q').addEventListener('keydown',e=>{if(e.key!=='Enter'||!S.q)return;const q=S.q;
   const c=BD.comps.find(c=>c.ref.toLowerCase()===q)||filtComps()[0];if(c){selectComp(c.ref,true);return;}const n=filtNets()[0];if(n){S.hlNet=n;S.tab='sel';refresh(true);}});
@@ -7729,7 +7870,7 @@ function netCard(n){
   ${pads?`<div class="sub">연결된 핀</div><div style="line-height:1.9">${pads}${N.pads.length>300?' …':''}</div>`:''}</div>`;
 }
 function renderPane(){
-  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab?'true':'false'));
+  $$('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab?'true':'false'));
   const fc=filtComps(),fn=filtNets();$('#n-bom').textContent=fc.length;$('#n-net').textContent=fn.length;
   const pane=$('#pane');
   if(S.tab==='sel'){
@@ -7896,13 +8037,13 @@ function simReset(){
   if(S.panel==='sim')renderSim();else simCellsDirty();updateLegend();
 }
 function setPanel(p){
-  S.panel=p;document.querySelectorAll('.pmode button').forEach(b=>b.setAttribute('aria-selected',b.dataset.panel===p?'true':'false'));
-  $('#infoPane').hidden=p!=='info';$('#simPane').hidden=p!=='sim';$('.main').classList.toggle('simwide',p==='sim');
+  S.panel=p;$$('.pmode button').forEach(b=>b.setAttribute('aria-selected',b.dataset.panel===p?'true':'false'));
+  $('#infoPane').hidden=p!=='info';$('#simPane').hidden=p!=='sim';if(typeof dockOnPanel==='function')dockOnPanel(p);
   if(p==='sim'){envSync();renderSim();}else renderPane();
   updateLegend();setTimeout(()=>{if(S.view==='3d')resize3D();else{measure();paint2D();}refresh(false);},0);
 }
-document.querySelectorAll('.pmode button').forEach(b=>b.addEventListener('click',()=>setPanel(b.dataset.panel)));
-document.querySelectorAll('.stabs button').forEach(b=>b.addEventListener('click',()=>{SR.tab=b.dataset.stab;if(SR.tab==='si'&&!SR.si)runSI();renderSim();updateLegend();refresh(false);}));
+$$('.pmode button').forEach(b=>b.addEventListener('click',()=>setPanel(b.dataset.panel)));
+$$('.stabs button').forEach(b=>b.addEventListener('click',()=>{SR.tab=b.dataset.stab;if(SR.tab==='si'&&!SR.si)runSI();renderSim();updateLegend();refresh(false);}));
 // which result is drawn over the board: the main sim panel's tab, unless a window cell sets OV_FORCE while it paints (null = none)
 let OV_FORCE;
 const ovKey=()=>{const t=OV_FORCE!==undefined?OV_FORCE:(S.panel==='sim'?SR.tab:null);return t&&SR[t]&&!SR[t].error?t:null;};
@@ -8474,7 +8615,7 @@ function drawChart(host,cfg){
 function renderSim(){
   simCellsDirty();
   if(S.panel!=='sim'||!BD)return;
-  document.querySelectorAll('.stabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.stab===SR.tab?'true':'false'));
+  $$('.stabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.stab===SR.tab?'true':'false'));
   const b=$('#simBody');const sc=b.scrollTop;
   try{
     if(SR.tab==='ir'){b.innerHTML=irHTML();irBind(b);}
@@ -8667,25 +8808,10 @@ const CAD_CHIPS=[['IP67 다이캐스팅','set mat adc12','알루미늄 다이캐
   ['재질 비교','compare','재질 후보를 비교하고 원가·무게·열 여유 기준으로 추천해줘'],
   ['점검','check','지금 설계에서 문제(겹침·실링·온도)를 찾아 고쳐줘'],
   ['내보내기','export zip','CAD를 zip으로 내보내줘']];
-function cadSay(k,t){const e={k,t,id:++CADC.seq};CADC.log.push(e);if(CADC.log.length>400)CADC.log.shift();const L=$('#cadLog');if(L){const d=document.createElement('div');d.className='cl-'+k;d.dataset.id=e.id;d.textContent=(k==='cmd'?'› ':'')+t;L.appendChild(d);while(L.children.length>400)L.firstChild.remove();L.scrollTop=L.scrollHeight;}return e;}
-function cadSetE(e,t){e.t=t;const el=$('#cadLog')&&$('#cadLog').querySelector(`[data-id="${e.id}"]`);if(el){el.textContent=t;$('#cadLog').scrollTop=$('#cadLog').scrollHeight;}}
-function cadConsole(){const el=$('#cadCon');if(el.dataset.ready)return el;el.dataset.ready='1';
-  el.innerHTML=`<div class="cli-h"><b>Text-to-CAD</b>${aimControls()}<span class="cli-sp"></span><button type="button" class="pill vbtn" id="cadStop" hidden>중지</button><button type="button" class="pill vbtn" id="cadHelp">명령 목록</button></div>
-    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">${CAD_CHIPS.map(([l,c,g],k)=>`<button type="button" class="pill vbtn" data-cchip="${k}" title="결정론: ${esc(c)}
-AI: ${esc(g)}">${l}</button>`).join('')}</div>
-    <div class="cli-log" id="cadLog" role="log" aria-live="polite"></div>
-    <form class="cli-in" id="cadForm" autocomplete="off"><span aria-hidden="true">›</span><input id="cadIn" spellcheck="false" placeholder="예: 벽 두께 3mm, 오른쪽 벽에 M16 글랜드 2개, 장착 탭 4개 M5 · hole top --d 8 · export scad" aria-label="CAD 명령 또는 문장"><button class="btn primary sm" id="cadRun">실행</button></form>`;
-  el.querySelector('#cadForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#cadIn');const v=i.value.trim();if(!v||CADC.busy)return;i.value='';CADC.hist.push(v);CADC.hi=CADC.hist.length;cadExec(v);});
-  el.querySelector('#cadIn').addEventListener('keydown',e=>{const i=e.target;
-    if(e.key==='ArrowUp'){if(CADC.hi>0){CADC.hi--;i.value=CADC.hist[CADC.hi]||'';}e.preventDefault();}
-    else if(e.key==='ArrowDown'){if(CADC.hi<CADC.hist.length){CADC.hi++;i.value=CADC.hist[CADC.hi]||'';}e.preventDefault();}
-    else if(e.key==='Tab'){const w=i.value.trim();const m=[...TEXT2CAD.CMDS].filter(n=>n.startsWith(w));if(w&&m.length){i.value=m[0]+' ';e.preventDefault();}}
-    e.stopPropagation();});
-  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='cadHelp')cadExec('help');else if(b.id==='cadStop'){CADC.stopReq=true;if(CADC.abort)CADC.abort.abort();}
-    else if(b.dataset.cchip&&!CADC.busy){const[,c,g]=CAD_CHIPS[+b.dataset.cchip];if(AIM.mode==='ai'){cadSay('cmd',g+'   (AI 모드)');cadBusy(true);cadAI(g).finally(()=>cadBusy(false));}else cadExec(c);}});
-  cadSay('out','문장이나 명령으로 하우징을 설계합니다. 결정론 모드는 문장을 규칙으로 명령으로 바꾸고, AI 모드는 Claude가 같은 명령을 골라 실행합니다. help로 명령 목록을 봅니다.');
-  aimBind(el);cliAiProbe().then(aimPaint);return el;}
-function cadBusy(b){CADC.busy=b;const r=$('#cadRun'),s=$('#cadStop'),i=$('#cadIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CADC.stopReq=false;CADC.abort=null;setTimeout(()=>i&&HS.ws==='cad'&&i.focus(),10);}}
+function cadSay(k,t){const e={k,t,id:++CADC.seq};CADC.log.push(e);if(CADC.log.length>400)CADC.log.shift();copPaint('cad',e);return e;}
+function cadSetE(e,t){e.t=t;copPaint('cad',e,true);}
+function cadConsole(){if(!CADC.greeted){CADC.greeted=true;cadSay('out','4단계 하우징: 문장이나 명령으로 설계합니다 (예: 오른쪽 벽에 M16 글랜드 2개, 장착 탭 4개 M5). 결정론 모드는 문장을 규칙으로 명령으로 바꾸고, AI 모드는 Claude가 같은 명령을 골라 실행합니다. help로 명령 목록.');}return copEnsure();}
+function cadBusy(b){CADC.busy=b;copBusyPaint();const r=$('#cadRun'),s=$('#cadStop'),i=$('#cadIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CADC.stopReq=false;CADC.abort=null;setTimeout(()=>i&&HS.ws==='cad'&&i.focus(),10);}}
 function cadBrief(R){const d=R.d,g=d.geo;return`→ ${d.m.short} · ${g.Lo.toFixed(0)}×${g.Wo.toFixed(0)}×${g.Ho.toFixed(0)} mm · ${d.mass.toFixed(0)} g · PCB ${d.th.Tboard.toFixed(0)} °C · 최고 Tj ${Math.max(0,...d.th.parts.map(p=>p.Tj)).toFixed(0)} °C · 원가 ${R.idx.cost} · ${d.feasible?'조건 만족':'조건 미달: '+d.why.join(', ')}${R.warn.length?` · 경고 ${R.warn.length}건`:''}`;}
 // one console command; returns the text to print
 async function cadRunCmd(line,by){
@@ -8701,7 +8827,7 @@ async function cadRunCmd(line,by){
     case'export':{if(by==='ai')return'내보내기는 사용자가 직접 실행합니다 (export '+r.kind+').';const fn=await mechExport(r.kind);return fn?`${fn} 내려받기`:'내려받기를 취소했습니다.';}
     case'undo':case'redo':{const from=r.action==='undo'?H.undo:H.redo,to=r.action==='undo'?H.redo:H.undo;if(!from.length)return r.action==='undo'?'되돌릴 것이 없습니다.':'다시 실행할 것이 없습니다.';
       to.push(JSON.stringify({inp:H.inp,cad:H.cad}));const s=JSON.parse(from.pop());H.inp=s.inp;H.cad=s.cad;H.R=null;const R=mechRun();cadRefresh();return(r.action==='undo'?'실행 취소':'다시 실행')+'\n'+cadBrief(R);}
-    case'clear':{const L=$('#cadLog');if(L)L.innerHTML='';CADC.log=[];return'';}
+    case'clear':{copClear('cad');CADC.log=[];return'';}
     case'ai':return await cadAI(r.text||'');
   }
   return r.out||'';}
@@ -8727,7 +8853,7 @@ async function cadAI(req){
   const state=`${HOUSING.text(R)}\n형상 목록: ${H.cad.feats.map(f=>HOUSING.featLabel(f)).join(' · ')||'없음'}\n지정값: ${JSON.stringify(H.cad.over)}\n벽 길이: S/N ${R.d.geo.Lo.toFixed(1)} mm, W/E ${R.d.geo.Wo.toFixed(1)} mm · 분할면 z ${R.d.geo.zSplit.toFixed(1)} · 커버 안쪽 z ${R.d.geo.zLid.toFixed(1)} · 바닥 z ${R.d.geo.zFloor.toFixed(1)}`;
   const ok=await aiAgent({ro:c=>['help','status','check','compare','list','feats'].includes((TEXT2CAD.tok(c)[0]||'').toLowerCase()),roList:'status, check, compare, feats',prompt:CAD_SYS.replace('${CMDS}',cmds)+`\n\n현재 설계:\n${state}\n\n사용자 요청: ${req}`,toolName:'run_cad',toolDesc:'Run one housing CAD console command (see the list) and return its text output.',example:'"gland E M16 --z 9" or "tabs 4 --screw M5"',
     run:c=>cadRunCmd(c,'ai'),allowed:c=>{const f=(TEXT2CAD.tok(c)[0]||'').toLowerCase();return!TEXT2CAD.CMDS.has(f)||f==='ai'||f==='export'||f==='clear'?'unknown or not allowed: '+f:'';},
-    say:cadSay,set:cadSetE,drop:e=>{const el=$('#cadLog')&&$('#cadLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();CADC.log=CADC.log.filter(x=>x!==e);},
+    say:cadSay,set:cadSetE,drop:e=>{copDrop(e);CADC.log=CADC.log.filter(x=>x!==e);},
     setAbort:c=>{CADC.abort=c;},stopped:()=>CADC.stopReq,max:12});
   if(!ok){const list=TEXT2CAD.parse(req);if(!list.length)return'Claude를 쓸 수 없고 문장도 해석하지 못했습니다. help를 보세요.';cadSay('out','Claude를 쓸 수 없어 규칙으로 해석: '+list.join(' → '));for(const c of list){cadSay('cmd',c);try{const o=await cadRunCmd(c);if(o)cadSay('ok',o);}catch(e){cadSay('err',e.message);}}}
   return'';}
@@ -8789,7 +8915,7 @@ function hsisOnBoard(){const k=hsisSampleKey();if(!HS.H||(HS.sample&&HS.sample!=
 function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')renderHSIS();else if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});}
 function setWorkspace(w){
   const prev=HS.ws;if(prev==='cad'&&w!=='cad')cadLeave();
-  HS.ws=w;document.querySelectorAll('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
+  HS.ws=w;$$('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
   $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
   if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(w==='cad'){cadEnter();return;}
@@ -8797,7 +8923,7 @@ function setWorkspace(w){
   if(w==='hsis'){if(!HS.H)hsisLoadSample();renderHSIS();}
   else setTimeout(()=>{if(S.view==='3d')resize3D();else{measure();paint2D();}refresh(false);},0);
 }
-document.querySelectorAll('[data-ws]').forEach(b=>b.addEventListener('click',()=>setWorkspace(b.dataset.ws)));
+$$('[data-ws]').forEach(b=>b.addEventListener('click',()=>setWorkspace(b.dataset.ws)));
 
 /* ---------- data helpers ---------- */
 const itemById=id=>HS.H.items.find(i=>i.id===id);
@@ -8835,7 +8961,7 @@ function renderHSIS(){
       <div class="catchips" role="group" aria-label="분류 필터">${cats.filter(k=>HS.H.items.some(i=>i._cat===k)).map(k=>`<button data-cat="${esc(k)}" aria-pressed="${HS.cats.size?HS.cats.has(k):true}"><i style="background:${catColor(k)}"></i>${esc(k)}</button>`).join('')}</div>
     </div>`;
   const nErr=HS.res.results.filter(r=>r.sev==='err').length,nWarn=HS.res.results.filter(r=>r.sev==='warn').length;
-  document.querySelectorAll('[data-htab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.htab===HS.tab?'true':'false'));
+  $$('[data-htab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.htab===HS.tab?'true':'false'));
   $('#htab-chk').innerHTML=`검사 결과 <span class="n">${nErr+nWarn}</span>`;
   const body=$('#hsBody');$('#hsisWs').classList.toggle('hswide',HS.tab==='rec'||HS.tab==='mcal'||HS.tab==='tc');
   if(HS.tab==='table')body.innerHTML=tableHTML();else if(HS.tab==='pins')body.innerHTML=pinmapHTML();else if(HS.tab==='trace')body.innerHTML=traceHTML();else if(HS.tab==='rec')body.innerHTML=recHTML();else if(HS.tab==='mcal')body.innerHTML=mcalHTML();else if(HS.tab==='tc')body.innerHTML=tcHTML();else body.innerHTML=checksHTML();
@@ -8968,7 +9094,7 @@ function bindHsBody(B){
     try{navigator.clipboard.writeText(csv).then(done,()=>fallbackCopy(csv,done));}catch(e){fallbackCopy(csv,done);}});
 }
 function fallbackCopy(text,done){const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}t.remove();if(ok)done();else toast('복사하지 못했습니다. 브라우저가 클립보드 접근을 막았습니다.');}
-document.querySelectorAll('[data-htab]').forEach(b=>b.addEventListener('click',()=>{HS.tab=b.dataset.htab;renderHSIS();}));
+$$('[data-htab]').forEach(b=>b.addEventListener('click',()=>{HS.tab=b.dataset.htab;renderHSIS();}));
 
 /* ---------- import ---------- */
 async function hsisFiles(files){
@@ -9557,7 +9683,7 @@ function seBar(){
   if(!SE.on)return;
   el.innerHTML=`<div class="setools" role="toolbar" aria-label="회로 편집 도구">${SE_TOOLS.map(([t,l,k])=>`<button class="pill vbtn${SE.tool===t?' on':''}" data-tool="${t}" title="${l} (${k})">${l}<kbd>${k}</kbd></button>`).join('')}</div>
     <div class="setools">${SE_ACTS.map(([a,l,k])=>`<button class="pill vbtn" data-act="${a}" title="${l} (${k})"${(a==='undo'&&!SE.undo.length)||(a==='redo'&&!SE.redo.length)?' disabled':''}>${l}<kbd>${k}</kbd></button>`).join('')}
-    <button class="pill vbtn" id="seErc" title="전기 규칙 검사 결과">ERC <b id="seErcN">${SE.erc.length}</b></button><button class="pill vbtn${SE.dirty?' warn':''}" id="seAnn" title="회로도 연결을 보드 패드 넷에 반영 (F8)">보드에 반영<kbd>F8</kbd></button><button class="pill vbtn" id="seExp" title="KiCad 회로도(.kicad_sch)로 저장">.kicad_sch 저장</button><button class="pill vbtn${typeof SCLI!=='undefined'&&SCLI.open?' on':''}" id="seCli" title="회로도 명령 콘솔 · Claude (\`)">CLI<kbd>\`</kbd></button></div>
+    <button class="pill vbtn" id="seErc" title="전기 규칙 검사 결과">ERC <b id="seErcN">${SE.erc.length}</b></button><button class="pill vbtn${SE.dirty?' warn':''}" id="seAnn" title="회로도 연결을 보드 패드 넷에 반영 (F8)">보드에 반영<kbd>F8</kbd></button><button class="pill vbtn" id="seExp" title="KiCad 회로도(.kicad_sch)로 저장">.kicad_sch 저장</button><button class="pill vbtn" id="seCli" title="오른쪽 설계 도우미에서 회로 명령·질문 (\`)">도우미<kbd>\`</kbd></button></div>
     <span class="pill hint2" id="seStat"></span>`;
   seStat();
 }
@@ -9907,7 +10033,7 @@ const LAYOUT_KEY='pcbv.layout';
 const LAY=(function(){try{return JSON.parse(localStorage.getItem(LAYOUT_KEY)||'{}')||{};}catch(e){return{};}})();
 function saveLayout(){try{localStorage.setItem(LAYOUT_KEY,JSON.stringify(LAY));}catch(e){}}
 function applyLayout(){const m=$('.main'),h=$('#hsisWs');
-  [['lw',m,'--lw'],['rw',m,'--rw'],['rws',m,'--rws'],['hl',h,'--hsw-l'],['hr',h,'--hsw-r']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
+  [['lw',m,'--lw'],['dock',$('.work'),'--dock'],['hl',h,'--hsw-l'],['hr',h,'--hsw-r']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
   if(LAY.split)vp.style.setProperty('--split',LAY.split+'%');else vp.style.removeProperty('--split');}
 function makeHandle(el,opts){
   // opts: {get():px, set(px), min, max, reset()}
@@ -9923,9 +10049,8 @@ function makeHandle(el,opts){
 (function(){
   const m=$('.main'),h=$('#hsisWs');
   const w=(el)=>el.getBoundingClientRect().width;
-  const sim=()=>m.classList.contains('simwide');
   makeHandle($('#hLeft'),{label:'왼쪽 패널 너비',get:()=>w($('.layers')),set:v=>{LAY.lw=Math.round(v);applyLayout();},min:170,max:()=>Math.min(420,w(m)*0.35),reset:()=>{delete LAY.lw;applyLayout();}});
-  makeHandle($('#hRight'),{label:'오른쪽 패널 너비',dir:-1,get:()=>w($('.insp')),set:v=>{LAY[sim()?'rws':'rw']=Math.round(v);applyLayout();},min:260,max:()=>Math.min(720,w(m)*0.5),reset:()=>{delete LAY[sim()?'rws':'rw'];applyLayout();}});
+  makeHandle($('#hDock'),{label:'오른쪽 패널(설계 도우미) 너비',dir:-1,get:()=>w($('#dock')),set:v=>{LAY.dock=Math.round(v);applyLayout();relayoutViews();},min:300,max:()=>Math.min(760,window.innerWidth*0.5),reset:()=>{delete LAY.dock;applyLayout();relayoutViews();}});
   makeHandle($('#hHsL'),{label:'HSIS 왼쪽 패널 너비',get:()=>w($('#hsLeft')),set:v=>{LAY.hl=Math.round(v);applyLayout();},min:190,max:()=>Math.min(440,w(h)*0.35),reset:()=>{delete LAY.hl;applyLayout();}});
   makeHandle($('#hHsR'),{label:'HSIS 상세 패널 너비',dir:-1,get:()=>w($('#hsDetail')),set:v=>{LAY.hr=Math.round(v);applyLayout();drawMini();},min:280,max:()=>Math.min(760,w(h)*0.55),reset:()=>{delete LAY.hr;applyLayout();drawMini();}});
   const sp=$('#splitter');const narrow=()=>matchMedia('(max-width:760px)').matches;
@@ -10212,7 +10337,7 @@ function peBar(){
     <button class="pill vbtn" id="peSave" title="KiCad 프로젝트(.kicad_pcb + 회로도)로 저장">KiCad로 저장</button></div>
     <div class="setools"><button class="pill vbtn" id="peSize" title="보드 가로·세로·모서리 반지름">보드 ${(Math.round(BD.W*10)/10)} × ${(Math.round(BD.H*10)/10)} mm</button>
     <button class="pill vbtn" id="peReset" title="배선을 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치">회로도로 리셋·자동 배치</button>
-    <button class="pill vbtn${typeof CLI!=='undefined'&&CLI.open?' on':''}" id="peCliBtn" title="배치 전략·자동 배선 명령 콘솔 (\`)">CLI<kbd>\`</kbd></button></div>
+    <button class="pill vbtn" id="peCliBtn" title="오른쪽 설계 도우미에서 명령·질문 (\`)">도우미<kbd>\`</kbd></button></div>
     <span class="pill hint2" id="peStat"></span>`;
   peStat();
 }
@@ -10285,11 +10410,11 @@ function aimControls(){return`<span class="aim" role="group" aria-label="실행 
 function aimBind(root){root.querySelectorAll('[data-aim]').forEach(b=>b.addEventListener('click',()=>{AIM.mode=b.dataset.aim;aimSave();aimPaint();if(AIM.mode==='ai')cliAiProbe().then(aimPaint);}));
   const t=root.querySelector('.aim-t');if(t)t.addEventListener('change',()=>{AIM.tier=t.value;aimSave();aimPaint();});
   const q=root.querySelector('.aim-q');if(q)q.addEventListener('change',()=>{AIM.qa=q.value;aimSave();aimPaint();});aimPaint();}
-function aimPaint(){document.querySelectorAll('.aim-b').forEach(b=>{b.classList.toggle('on',b.dataset.aim===AIM.mode);b.setAttribute('aria-pressed',b.dataset.aim===AIM.mode?'true':'false');});
-  document.querySelectorAll('.aim-t').forEach(t=>{t.value=AIM.tier;t.hidden=AIM.mode!=='ai';});
-  document.querySelectorAll('.aim-q').forEach(t=>{t.value=AIM.qa;t.hidden=AIM.mode!=='ai';});
-  document.querySelectorAll('.aim-u').forEach(u=>{u.textContent=AIM.calls?`AI ${AIM.calls}회 · 토큰(추정) 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)}`:(AIM.mode==='ai'?(CLI.sample===null?'AI 사용 불가 · 규칙으로 해석':CLI.sample?'AI 대기':'AI 확인 중…'):'');});
-  document.querySelectorAll('.cli-in input').forEach(i=>{i.dataset.mode=AIM.mode;});}
+function aimPaint(){$$('.aim-b').forEach(b=>{b.classList.toggle('on',b.dataset.aim===AIM.mode);b.setAttribute('aria-pressed',b.dataset.aim===AIM.mode?'true':'false');});
+  $$('.aim-t').forEach(t=>{t.value=AIM.tier;t.hidden=AIM.mode!=='ai';});
+  $$('.aim-q').forEach(t=>{t.value=AIM.qa;t.hidden=AIM.mode!=='ai';});
+  $$('.aim-u').forEach(u=>{u.textContent=AIM.calls?`AI ${AIM.calls}회 · 토큰(추정) 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)}`:(AIM.mode==='ai'?(CLI.sample===null?'AI 사용 불가 · 규칙으로 해석':CLI.sample?'AI 대기':'AI 확인 중…'):'');});
+  $$('.cli-in input,#copIn').forEach(i=>{i.dataset.mode=AIM.mode;});if(typeof copCtx==='function')copCtx();}
 // a question typed while the consoles run deterministically: answer with the state instead of turning the sentence into commands
 async function aimDetQuestion(line,say,status){if(!aimIsQuestion(line))return false;
   say('out','질문으로 보입니다. 결정론 모드는 명령만 실행하므로 설계를 바꾸지 않았습니다 — 답을 받으려면 AI 모드로 바꾸세요 (대화 방식: 자동 또는 질문). 지금 상태:');
@@ -10399,32 +10524,11 @@ const CLI_HELP=[
   ['ai <요청>','Claude가 위 명령을 골라 실행. 헤더에서 결정론/AI를 고르면 문장·버튼이 그 방식으로 실행되고, AI 실행마다 모델 등급과 토큰(추정)을 표시']];
 function cliSay(k,t){const e={k,t,id:++CLI.seq};CLI.log.push(e);if(CLI.log.length>400)CLI.log.shift();cliPaint(e);return e;}
 function cliSet(e,t){e.t=t;cliPaint(e,true);}
-function cliPaint(e,upd){const L=$('#cliLog');if(!L)return;
-  if(upd){const el=L.querySelector(`[data-id="${e.id}"]`);if(el){el.textContent=e.t;L.scrollTop=L.scrollHeight;return;}}
-  const d=document.createElement('div');d.className='cl-'+e.k;d.dataset.id=e.id;d.textContent=(e.k==='cmd'?'› ':'')+e.t;L.appendChild(d);while(L.children.length>400)L.firstChild.remove();L.scrollTop=L.scrollHeight;}
-function cliPanel(){
-  let el=$('#peCli');if(el)return el;
-  el=document.createElement('section');el.id='peCli';el.className='ov pe-cli';el.hidden=true;el.setAttribute('aria-label','배치·배선 CLI');
-  el.innerHTML=`<div class="cli-h"><b>배치·배선 CLI</b>${aimControls()}
-    <span class="cli-sp"></span><button type="button" class="pill vbtn" id="cliStop" hidden>중지</button><button type="button" class="pill vbtn" id="cliX" title="닫기 (\`)">닫기</button></div>
-    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">${CLI_CHIPS.map(([l,c,g],i)=>`<button type="button" class="pill vbtn" data-chip="${i}" title="결정론: ${esc(c)}
-AI: ${esc(g)}">${l}</button>`).join('')}</div>
-    <div class="cli-log" id="cliLog" role="log" aria-live="polite"></div>
-    <form class="cli-in" id="cliForm" autocomplete="off"><span aria-hidden="true">›</span><input id="cliIn" spellcheck="false" placeholder="예: board size 100 60 · reset --strategy noise --route · 열이 고르게 퍼지게 다시 배치해줘" aria-label="명령 입력"><button class="btn primary sm" id="cliRun">실행</button></form>`;
-  $('#vp').appendChild(el);
-  el.querySelector('#cliForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#cliIn');const v=i.value.trim();if(!v||CLI.busy)return;i.value='';CLI.hist.push(v);CLI.hi=CLI.hist.length;cliExec(v);});
-  el.querySelector('#cliIn').addEventListener('keydown',e=>{const i=e.target;
-    if(e.key==='ArrowUp'){if(CLI.hi>0){CLI.hi--;i.value=CLI.hist[CLI.hi]||'';}e.preventDefault();}
-    else if(e.key==='ArrowDown'){if(CLI.hi<CLI.hist.length){CLI.hi++;i.value=CLI.hist[CLI.hi]||'';}e.preventDefault();}
-    else if(e.key==='Tab'){const w=i.value.trim();const names=['help','status','board size','board corner','strategies','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai'];const m=names.filter(n=>n.startsWith(w));if(w&&m.length){i.value=m[0]+' ';e.preventDefault();}}
-    else if(e.key==='Escape'){i.blur();}
-    e.stopPropagation();});
-  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='cliX')cliToggle(false);else if(b.id==='cliStop'){CLI.stopReq=true;if(CLI.abort)CLI.abort.abort();}else if(b.dataset.chip&&!CLI.busy){const[,c,g]=CLI_CHIPS[+b.dataset.chip];if(AIM.mode==='ai')cliGoal(g);else cliExec(c);}});
-  cliSay('out','명령을 입력하거나 하고 싶은 일을 문장으로 적으세요. help로 명령 목록을 봅니다.');
-  aimBind(el);cliAiProbe().then(aimPaint);return el;
-}
-function cliToggle(on){const el=cliPanel();CLI.open=on==null?!CLI.open:on;el.hidden=!CLI.open;peBar();if(CLI.open)setTimeout(()=>$('#cliIn')&&$('#cliIn').focus(),20);}
-function cliBusy(b){CLI.busy=b;const r=$('#cliRun'),s=$('#cliStop'),i=$('#cliIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CLI.stopReq=false;CLI.abort=null;setTimeout(()=>i&&CLI.open&&i.focus(),10);}}
+function cliPaint(e,upd){copPaint('pcb',e,upd);}
+function cliPanel(){return copEnsure();}
+// the console lives in the 설계 도우미 panel now: "open" just focuses it
+function cliToggle(on){if(on===false)return;copFocus('pcb');}
+function cliBusy(b){CLI.busy=b;copBusyPaint();const r=$('#cliRun'),s=$('#cliStop'),i=$('#cliIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CLI.stopReq=false;CLI.abort=null;setTimeout(()=>i&&CLI.open&&i.focus(),10);}}
 const cliTick=()=>new Promise(r=>setTimeout(r,0));
 
 /* ---- Claude (sample capability): probe once, quietly ---- */
@@ -10680,7 +10784,7 @@ async function cliRun(line,quiet,by){
     case 'report':return cliReport(a);
     case 'undo':if(!PE.undo.length)return'되돌릴 것이 없습니다.';peUndo();return'실행 취소했습니다.';
     case 'redo':if(!PE.redo.length)return'다시 실행할 것이 없습니다.';peRedo();return'다시 실행했습니다.';
-    case 'clear':{const L=$('#cliLog');if(L)L.innerHTML='';CLI.log=[];return'';}
+    case 'clear':{copClear('pcb');CLI.log=[];return'';}
     case 'history':return CLI.hist.slice(-20).join('\n');
     case 'housing':{const useAI=by!=='ai'&&(a.ai||(AIM.mode==='ai'&&!a.det&&!a._[0]));const txt=await mechCmd(a);
       if(useAI){cliSay('ok',txt);const ok=await cliAgent(MECH_AI+`\n\n현재 분석:\n${txt}\n\n${HOUSING.compareText(mechRun())}\n\n사용자 요청: 하우징 트레이드오프를 검토하고 추천해줘`);if(!ok)cliSay('err','Claude를 쓸 수 없어 결정론 결과만 표시했습니다.');if(S.panel==='sim'&&SR.tab==='mech')renderSim();return'';}return txt;}
@@ -10718,7 +10822,7 @@ const CLI_RO=c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase(),s=(t[1]||'')
 async function cliAgent(prompt,kind){
   return aiAgent({prompt,kind,ro:CLI_RO,roList:'status, report place|thermal|emc, drc, rats, guide check, board stack, housing check',toolName:'run_cli',toolDesc:'Run one PCB layout console command (see the command list) and return its text output.',example:'"reset --strategy thermal" or "guide set ds_kelvin fail --note ..."',
     run:c=>cliRun(c,true,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();return!CLI_CMDS.has(f)||f==='ai'?'unknown command: '+f:'';},
-    say:cliSay,set:cliSet,drop:e=>{const el=$('#cliLog')&&$('#cliLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();CLI.log=CLI.log.filter(x=>x!==e);},
+    say:cliSay,set:cliSet,drop:e=>{copDrop(e);CLI.log=CLI.log.filter(x=>x!==e);},
     setAbort:c=>{CLI.abort=c;},stopped:()=>CLI.stopReq,max:10});}
 async function cliAI(req){
   if(!req.trim())return'요청을 적어 주세요. 예: ai 열이 고르게 퍼지게 배치하고 배선해줘';
@@ -10751,8 +10855,7 @@ function cliDialog(kind){
     else if(AIM.mode==='ai')cliGoal(`${AUTOPLACE.STRATS[d.get('s')].label} 전략(${d.get('s')})으로 회로도 기준 처음부터 배치${d.get('route')?'하고 배선해줘. 미배선이 남으면 개선해줘':'해줘 (배선은 하지 말 것)'}`);
     else cliExec(d.get('route')?`auto ${d.get('s')}`:`reset --strategy ${d.get('s')}`);});
 }
-// ` toggles the console in the TOP / BOTTOM views
-document.addEventListener('keydown',e=>{if(e.key!=='`'||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target.matches('input,select,textarea'))return;if(!BD||!(S.view==='T'||S.view==='B'))return;e.preventDefault();e.stopImmediatePropagation();if(!PE.on)peBegin();cliToggle();},true);
+
 
 /* ---------- schematic console (CLI) with the same Claude agent as the layout console ----------
    Commands edit BD.schSheets through SCHEDIT (each one is a single schematic undo step); "apply" back-annotates the board. */
@@ -10786,34 +10889,11 @@ const SCLI_CMDS=new Set(['guide','help','?','status','pages','page','parts','pin
 /* ---- panel ---- */
 function scSay(k,t){const e={k,t,id:++SCLI.seq};SCLI.log.push(e);if(SCLI.log.length>400)SCLI.log.shift();scPaint(e);return e;}
 function scSet(e,t){e.t=t;scPaint(e,true);}
-function scPaint(e,upd){const L=$('#scLog');if(!L)return;
-  if(upd){const el=L.querySelector(`[data-id="${e.id}"]`);if(el){el.textContent=e.t;L.scrollTop=L.scrollHeight;return;}}
-  const d=document.createElement('div');d.className='cl-'+e.k;d.dataset.id=e.id;d.textContent=(e.k==='cmd'?'› ':'')+e.t;L.appendChild(d);while(L.children.length>400)L.firstChild.remove();L.scrollTop=L.scrollHeight;}
-function scPanel(){
-  let el=$('#schCli');if(el)return el;
-  el=document.createElement('section');el.id='schCli';el.className='pe-cli sch-cli';el.hidden=true;el.setAttribute('aria-label','회로도 CLI');
-  el.innerHTML=`<div class="cli-h"><b>회로도 CLI</b>${aimControls()}
-    <span class="cli-sp"></span><button type="button" class="pill vbtn" id="scStop" hidden>중지</button><button type="button" class="pill vbtn" id="scX" title="닫기 (\`)">닫기</button></div>
-    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">${SC_CHIPS.map(([l,c,g],i)=>`<button type="button" class="pill vbtn" data-chip="${i}" title="결정론: ${esc(c)}
-AI: ${esc(g)}">${l}</button>`).join('')}</div>
-    <div class="cli-log" id="scLog" role="log" aria-live="polite"></div>
-    <form class="cli-in" id="scForm" autocomplete="off"><span aria-hidden="true">›</span><input id="scIn" spellcheck="false" placeholder="예: pins U1 --free · add C 100nF --pins +3V3,GND --near U1 · U4 전원 핀에 디커플링 캡 달아줘" aria-label="회로도 명령 입력"><button class="btn primary sm" id="scRun">실행</button></form>`;
-  $('#schOv').appendChild(el);
-  el.querySelector('#scForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#scIn');const v=i.value.trim();if(!v||SCLI.busy)return;i.value='';SCLI.hist.push(v);SCLI.hi=SCLI.hist.length;scExec(v);});
-  el.querySelector('#scIn').addEventListener('keydown',e=>{const i=e.target;
-    if(e.key==='ArrowUp'){if(SCLI.hi>0){SCLI.hi--;i.value=SCLI.hist[SCLI.hi]||'';}e.preventDefault();}
-    else if(e.key==='ArrowDown'){if(SCLI.hi<SCLI.hist.length){SCLI.hi++;i.value=SCLI.hist[SCLI.hi]||'';}e.preventDefault();}
-    else if(e.key==='Tab'){const w=i.value.trim();const m=[...SCLI_CMDS].filter(n=>n.length>2&&n.startsWith(w));if(w&&m.length){i.value=m[0]+' ';e.preventDefault();}}
-    else if(e.key==='Escape')i.blur();
-    e.stopPropagation();});
-  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='scX')scToggle(false);else if(b.id==='scStop'){SCLI.stopReq=true;if(SCLI.abort)SCLI.abort.abort();}else if(b.dataset.chip&&!SCLI.busy){const[,c,g]=SC_CHIPS[+b.dataset.chip];if(AIM.mode==='ai')scGoal(g);else scExec(c);}});
-  el.addEventListener('pointerdown',e=>e.stopPropagation());el.addEventListener('wheel',e=>e.stopPropagation());
-  scSay('out','회로도 명령을 입력하거나 하고 싶은 일을 문장으로 적으세요. help로 명령 목록을 봅니다.');
-  aimBind(el);cliAiProbe().then(aimPaint);return el;
-}
+function scPaint(e,upd){copPaint('sch',e,upd);}
+function scPanel(){return copEnsure();}
 
-function scToggle(on){if(S.sch==='off')return;if(!SE.on)seBegin();const el=scPanel();SCLI.open=on==null?!SCLI.open:on;el.hidden=!SCLI.open;seBar();if(SCLI.open)setTimeout(()=>$('#scIn')&&$('#scIn').focus(),20);}
-function scBusy(b){SCLI.busy=b;const r=$('#scRun'),s=$('#scStop'),i=$('#scIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){SCLI.stopReq=false;SCLI.abort=null;setTimeout(()=>i&&SCLI.open&&i.focus(),10);}}
+function scToggle(on){if(on===false)return;copFocus('sch');}
+function scBusy(b){SCLI.busy=b;copBusyPaint();const r=$('#scRun'),s=$('#scStop'),i=$('#scIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){SCLI.stopReq=false;SCLI.abort=null;setTimeout(()=>i&&SCLI.open&&i.focus(),10);}}
 
 /* ---- model helpers ---- */
 const scIsGnd=n=>/^(GND|AGND|DGND|PGND|VSS|GNDA|GNDD|EARTH|0V)$/i.test(String(n||''));
@@ -10963,7 +11043,7 @@ async function scRun(line,by){
     case'export':await seExport();return'.kicad_sch zip을 내려받습니다.';
     case'undo':if(!SE.undo.length)return'되돌릴 것이 없습니다.';seAction('undo');renderSchOv();return'실행 취소했습니다.';
     case'redo':if(!SE.redo.length)return'다시 실행할 것이 없습니다.';seAction('redo');renderSchOv();return'다시 실행했습니다.';
-    case'clear':{const L=$('#scLog');if(L)L.innerHTML='';SCLI.log=[];return'';}
+    case'clear':{copClear('sch');SCLI.log=[];return'';}
     case'history':return SCLI.hist.slice(-20).join('\n');
     case'guide':{const r=guideRun(a,'sch',{by});if(typeof r==='string')return r;const useAI=by!=='ai'&&(a.ai||(AIM.mode==='ai'&&!a.det));const txt=guideText(r,useAI?'ai':'det');
       if(useAI){scSay('ok',txt);const ok=await scAgent(GUIDE_AI+`\n\n점검 결과:\n${txt}\n\n사용자 요청: 가이드라인 점검 결과를 검토해줘`,'agent');if(!ok)scSay('err','Claude를 쓸 수 없어 결정론 결과만 표시했습니다.');return'';}return txt;}
@@ -11003,7 +11083,7 @@ Notes: two-pin parts are R, C, CP (electrolytic), L, FB (ferrite bead), D, LED; 
 async function scAgent(prompt,kind){
   return aiAgent({prompt,kind,ro:c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase();return['help','?','status','pages','parts','pins','nets','net','find','erc','diff','history'].includes(f)||(f==='guide'&&(!t[1]||/^(check|list|show)$/i.test(t[1])));},roList:'status, pages, parts, pins, nets, net, find, erc, diff, guide check',toolName:'run_sch',toolDesc:'Run one schematic console command (see the command list) and return its text output.',example:'"pins U4 --free" or "add C 100nF --pins +3V3,GND --near U4"',
     run:c=>scRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!SCLI_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='regen'&&!SCLI.allowRegen)return'not allowed: regen (the user did not ask to regenerate)';return'';},
-    say:scSay,set:scSet,drop:e=>{const el=$('#scLog')&&$('#scLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();SCLI.log=SCLI.log.filter(x=>x!==e);},
+    say:scSay,set:scSet,drop:e=>{copDrop(e);SCLI.log=SCLI.log.filter(x=>x!==e);},
     setAbort:c=>{SCLI.abort=c;},stopped:()=>SCLI.stopReq,max:12});}
 async function scAI(req){
   if(!req.trim())return'요청을 적어 주세요. 예: ai U4 전원 핀에 100nF 디커플링 캡을 달아줘';
@@ -11014,8 +11094,7 @@ async function scAI(req){
   return'';
 }
 async function scGoal(g){if(!BD)return;scPanel();scSay('cmd',g+'   (AI 모드)');scBusy(true);try{await scAI(g);}catch(e){scSay('err',e.message||String(e));}scBusy(false);}
-// ` toggles the schematic console while the schematic fills the view
-document.addEventListener('keydown',e=>{if(e.key!=='`'||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target.matches('input,select,textarea'))return;if(!BD||S.sch==='off'||S.view!=='sch')return;e.preventDefault();e.stopImmediatePropagation();scToggle();},true);
+
 
 /* ---------- new design: project → blocks → board + schematic (NEWPROJ), deterministic or AI ---------- */
 var NP={plan:null,hist:[],log:[],seq:0,busy:false,stopReq:false,abort:null,inHist:[],hi:-1};
@@ -11044,14 +11123,13 @@ const NP_HELP=[
 const NP_CMDS=new Set(['arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
-function npPaint(e,upd){const L=$('#npLog');if(!L)return;if(upd){const el=L.querySelector(`[data-id="${e.id}"]`);if(el){el.textContent=e.t;L.scrollTop=L.scrollHeight;return;}}
-  const d=document.createElement('div');d.className='cl-'+e.k;d.dataset.id=e.id;d.textContent=(e.k==='cmd'?'› ':'')+e.t;L.appendChild(d);L.scrollTop=L.scrollHeight;}
+function npPaint(e,upd){copPaint('np',e,upd);}
 function npPush(){NP.hist.push(JSON.stringify({plan:NP.plan,arch:NP.arch||null}));if(NP.hist.length>60)NP.hist.shift();}
 function npEnsure(){if(!NP.plan)NP.plan=NEWPROJ.newPlan($('#npName').value.trim()||'새 프로젝트');return NP.plan;}
 function npOpen(){setStep(1);}
 function npInit(){
   const M=$('#sysWs');
-  if(!M.dataset.init){M.dataset.init=1;$('#npMode').innerHTML=aimControls();aimBind($('#npMode'));cliAiProbe().then(aimPaint);
+  if(!M.dataset.init){M.dataset.init=1;
     $('#npTpl').innerHTML=NP_TPL.map(([l],i)=>`<button type="button" class="pill vbtn" data-tpl="${i}">${esc(l)}</button>`).join('');
     $('#npAddSel').innerHTML=Object.entries(NEWPROJ.LIB).map(([k,v])=>`<option value="${k}">${esc(v.label)} (${k})</option>`).join('');
     npSay('out','요구사항을 적고 [블록 다이어그램 만들기]를 누르세요. 1단계는 부품을 정하지 않은 HW 블록 다이어그램입니다. 결정론 모드는 정해진 규칙으로, AI 모드는 Claude가 블록·인터페이스를 설계합니다. 명령은 help.');}
@@ -11071,7 +11149,7 @@ function npRender(){
   const s=NEWPROJ.summary(P);$('#npSum').textContent=s.text;$('#npGen').disabled=false;
   $('#npMsg').textContent=s.r.warn.length?`경고 ${s.r.warn.length}개 · 부품 ${s.r.parts.length}개`:`부품 ${s.r.parts.length}개 · 보드 ${s.r.W} × ${s.r.H} mm`;
 }
-function npBusy(b){NP.busy=b;['#npRun','#npGen','#npPlan','#npAdd'].forEach(id=>{const e=$(id);if(e)e.disabled=b;});$('#npStop').hidden=!b;$('#npIn').disabled=b;if(!b){NP.stopReq=false;NP.abort=null;}}
+function npBusy(b){NP.busy=b;['#npGen','#npPlan','#npAdd'].forEach(id=>{const e=$(id);if(e)e.disabled=b;});if(!b){NP.stopReq=false;NP.abort=null;}copBusyPaint();}
 /* commands */
 async function npRun(line,by){
   const t=cliTok(line);if(!t.length)return'';const cmd=t[0].toLowerCase();const a=cliArgs(t.slice(1));
@@ -11109,7 +11187,7 @@ async function npRun(line,by){
     case'strategy':{const k=AUTOPLACE.strategy(a._[0]);if(!k)throw new Error('balanced · thermal · noise · compact');npPush();npEnsure().strategy=k;npRender();return'배치 전략 '+k;}
     case'generate':return await npGenerate({pcb:!!(a.pcb||a.route===true||a.route==='1'||a.view==='pcb'),strategy:a.strategy,by});
     case'undo':{if(!NP.hist.length)return'되돌릴 것이 없습니다.';const h=JSON.parse(NP.hist.pop());if(h&&'plan' in h){NP.plan=h.plan;NP.arch=h.arch;}else NP.plan=h;npRender();return'되돌렸습니다.';}
-    case'clear':{$('#npLog').innerHTML='';NP.log=[];return'';}
+    case'clear':{copClear('np');NP.log=[];return'';}
     case'ai':return await npAI(t.slice(1).join(' '));
     default:throw new Error('알 수 없는 명령: '+cmd);
   }
@@ -11156,7 +11234,7 @@ function pcbGatePaint(){
   if(el)return;const p=Object.assign({layers:2,min:false,route:true,strategy:'balanced',board:null},BD.pcbPlan||{});
   el=document.createElement('div');el.id='pcbGate';el.className='pcb-gate';
   el.innerHTML=`<form class="pg-in" data-f><b>3단계 · PCB 설계 시작</b>
-    <p class="lead">회로(부품 ${BD.comps.length}개 · 넷 ${BD.netOrder.length}개)는 준비됐고 아직 배치·배선 전입니다. 조건을 정하면 배치·배선 CLI가 명령을 차례로 실행합니다 (Ctrl+Z로 되돌릴 수 있음).</p>
+    <p class="lead">회로(부품 ${BD.comps.length}개 · 넷 ${BD.netOrder.length}개)는 준비됐고 아직 배치·배선 전입니다. 조건을 정하면 설계 도우미가 명령을 차례로 실행합니다 (Ctrl+Z로 되돌릴 수 있음).</p>
     <div class="pg-grid">
       <label>동박 층 <select name="layers">${[2,4,6,8,10].map(n=>`<option value="${n}"${n===+p.layers?' selected':''}>${n}층 · ${PCB.STACKS[n].map(x=>x==='sig'?'S':x==='gnd'?'G':'P').join('')}</option>`).join('')}</select></label>
       <label>보드 크기 <select name="size"><option value="min"${p.min?' selected':''}>최소화 (가장 작은 크기 탐색)</option><option value="auto"${!p.min&&!p.board?' selected':''}>자동 (여유 있게)</option><option value="fix"${!p.min&&p.board?' selected':''}>직접 입력</option></select></label>
@@ -11164,7 +11242,7 @@ function pcbGatePaint(){
       <label>배치 전략 <select name="s">${Object.entries(AUTOPLACE.STRATS).map(([k,v])=>`<option value="${k}"${k===p.strategy?' selected':''}>${v.label}</option>`).join('')}</select></label>
       <label class="chkl"><input type="checkbox" name="route"${p.route!==false?' checked':''}> 이어서 자동 배선${'' }</label></div>
     <p class="lead pg-note">PCB 단계에서는 배선을 위해 MCU 핀 배정을 바꾸는 등 회로를 함께 고칠 수 있습니다 (CLI pinswap · 분할 보기에서 회로도 편집).</p>
-    <div class="acts"><button type="button" class="btn sm" data-sch>회로도로 돌아가기</button><button type="button" class="btn sm" data-cli title="배치·배선 CLI에 명령이나 문장(AI 모드)으로 지시">CLI로 지시</button><button class="btn primary sm">PCB 설계 시작</button></div></form>`;
+    <div class="acts"><button type="button" class="btn sm" data-sch>회로도로 돌아가기</button><button type="button" class="btn sm" data-cli title="오른쪽 설계 도우미에 명령이나 문장으로 지시">도우미로 지시</button><button class="btn primary sm">PCB 설계 시작</button></div></form>`;
   $('#vp').appendChild(el);const F=el.querySelector('[data-f]');const wh=F.querySelector('.pg-wh');const sz=F.querySelector('[name=size]');const upd=()=>{wh.hidden=sz.value!=='fix';};sz.addEventListener('change',upd);upd();
   el.querySelector('[data-sch]').addEventListener('click',()=>setStep(2));
   el.querySelector('[data-cli]').addEventListener('click',()=>{if(S.view!=='T'&&S.view!=='B')setView('T');cliToggle(true);});
@@ -11194,7 +11272,7 @@ async function npAI(req){
     `\n\n현재 HW 블록 다이어그램:\n${NP.arch?HWARCH.text(NP.arch):'(비어 있음)'}\n\n현재 회로 계획 (2단계):\n${NP.plan?NEWPROJ.summary(NP.plan).text.split('\n').slice(0,14).join('\n'):'(비어 있음)'}\n\n사용자 요청: ${req}`;
   const ok=await aiAgent({prompt,ro:c=>['help','?','status','blocks','mcus','view','diagram'].includes((cliTok(c)[0]||'').toLowerCase()),roList:'status, blocks, mcus, diagram',toolName:'run_np',toolDesc:'Run one new-design console command (add/set/remove/mcu/board/strategy/plan/generate) and return its text output.',example:'"add pwr_in --vin 12" or "plan"',
     run:c=>npRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!NP_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='generate'&&/--pcb/.test(c)&&!/(보드|PCB|기판|배치|배선)[^.]{0,12}(생성|만들|그려|까지|시작|진행)/i.test(req))return'not allowed: generate --pcb (the user did not ask to start the PCB yet; record PCB wishes with board commands)';if(f==='generate'&&!/(회로|보드|PCB|기판)[^.]{0,10}(생성|만들|그려|까지)|generate/i.test(req))return'not allowed: generate (the user did not ask to create the board yet)';return'';},
-    say:npSay,set:npSet,drop:e=>{const el=$('#npLog')&&$('#npLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();NP.log=NP.log.filter(x=>x!==e);},setAbort:c=>{NP.abort=c;},stopped:()=>NP.stopReq,max:16});
+    say:npSay,set:npSet,drop:e=>{copDrop(e);NP.log=NP.log.filter(x=>x!==e);},setAbort:c=>{NP.abort=c;},stopped:()=>NP.stopReq,max:16});
   if(!ok){npSay('out','Claude를 쓸 수 없어 규칙으로 HW 블록 다이어그램을 만듭니다.');return await npRun('arch '+req);}
   return'';
 }
@@ -11217,9 +11295,6 @@ $('#npLayers').addEventListener('change',()=>npExec(`board layers ${$('#npLayers
 $('#npSize').addEventListener('change',()=>{const v=$('#npSize').value;$('#npWH').hidden=v!=='fix';if(v==='min')npExec('board min');else if(v==='auto')npExec('board auto');else{const w=+$('#npW').value,h=+$('#npH').value;if(w>=20&&h>=20)npExec(`board ${w} ${h}`);}});
 $('#npRoute').addEventListener('change',()=>npExec(`board route ${$('#npRoute').checked?'on':'off'}`));
 $('#npGen').addEventListener('click',()=>{if(NP.busy)return;npExec('generate');});
-$('#npForm').addEventListener('submit',e=>{e.preventDefault();const v=$('#npIn').value.trim();if(!v||NP.busy)return;$('#npIn').value='';NP.inHist.push(v);NP.hi=NP.inHist.length;npExec(v);});
-$('#npIn').addEventListener('keydown',e=>{const i=e.target;if(e.key==='ArrowUp'){if(NP.hi>0){NP.hi--;i.value=NP.inHist[NP.hi]||'';}e.preventDefault();}else if(e.key==='ArrowDown'){if(NP.hi<NP.inHist.length){NP.hi++;i.value=NP.inHist[NP.hi]||'';}e.preventDefault();}});
-$('#npStop').addEventListener('click',()=>{NP.stopReq=true;if(NP.abort)NP.abort.abort();});
 
 /* ---------- step 1: HW architecture block diagram (HWARCH) · part-level view (SYSDIAG) ---------- */
 var SYS={sel:null,src:null,D:null,view:'hw',A:null};
@@ -11232,7 +11307,7 @@ function sysDiagram(){
   else if(BD){SYS.D=SYSDIAG.fromBoard(BD);SYS.D.from='board';}else SYS.D=null;
   return SYS.D;}
 function sysRender(){const host=$('#sysSvg');if(!host||HS.ws!=='sys')return;
-  document.querySelectorAll('[data-sv]').forEach(b=>b.setAttribute('aria-selected',b.dataset.sv===SYS.view?'true':'false'));
+  $$('[data-sv]').forEach(b=>b.setAttribute('aria-selected',b.dataset.sv===SYS.view?'true':'false'));
   if(SYS.view==='hw'){const A=sysArch();SYS.A=A;
     if(!A){host.innerHTML='<p class="lead" style="padding:20px">요구사항을 적고 [블록 다이어그램 만들기]를 누르세요.</p>';return;}
     if(SYS.sel&&!A.blocks.some(b=>b.id===SYS.sel))SYS.sel=null;host.innerHTML=HWARCH.svg(A,{sel:SYS.sel});
@@ -11277,7 +11352,7 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
     <ul class="sys-io">${io.map(e=>{const o=N(e.a===n.id?e.b:e.a);return`<li><span class="k-${e.kind}">${e.a===n.id?(e.both?'↔':'→'):(e.both?'↔':'←')}</span> ${esc(o?o.label:'')} <span class="mono">${esc(e.label||'')}</span></li>`;}).join('')}</ul></div>`;
   box.querySelectorAll('[data-p]').forEach(i=>i.addEventListener('change',()=>npExec(`set ${b.id} ${i.dataset.p} ${i.value.trim()}`)));}
 function sysEnter(){npInit();if(!(NP.plan&&NP.plan.blocks.length))SYS.src='board';else if(!SYS.src)SYS.src='plan';sysRender();npRender();}
-document.querySelectorAll('[data-sv]').forEach(b=>b.addEventListener('click',()=>{SYS.view=b.dataset.sv;SYS.sel=null;sysRender();}));
+$$('[data-sv]').forEach(b=>b.addEventListener('click',()=>{SYS.view=b.dataset.sv;SYS.sel=null;sysRender();}));
 $('#sysZoom').addEventListener('click',()=>{SYS.zoom=SYS.zoom==='1'?'fit':'1';sysRender();});
 window.addEventListener('resize',()=>{if(HS.ws==='sys')sysRender();});
 $('#sysFromBoard').addEventListener('click',()=>{if(!BD){toast('불러온 보드가 없습니다.');return;}
@@ -11298,10 +11373,225 @@ function setStep(n){n=+n;
 function stepCur(){const w=HS.ws;return w==='sys'?1:w==='cad'?4:w==='board'?(S.sch==='full'?2:3):0;}
 function stepPaint(){const cur=stepCur();const done={1:!!(NP.plan&&NP.plan.blocks.length)||!!BD,2:!!BD,3:!!(BD&&BD.comps.length&&!BD.pcbPending),4:!!(BD&&BD.housing&&BD.housing.R)};
   pcbGatePaint();
-  document.querySelectorAll('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>1&&!BD;b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
-  document.querySelectorAll('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
-  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');}
-document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));
+  $$('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>1&&!BD;b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
+  $$('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
+  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');if(typeof copCtx==='function')copCtx();}
+$$('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));
+
+/* ---------- AI 코파일럿 분할: 설계 도우미 + 오른쪽 도킹 패널 + 고정 패널 새 창 ----------
+   - The four step consoles (1 시스템 · 2 회로 · 3 PCB · 4 기구) keep their own command engines. Their output is painted here as one
+     conversation, tagged with the step it came from; what the user types goes to the console of the current step (or the one picked
+     in the header). After a run that changed the design, a card offers to keep it or to undo exactly those steps.
+   - The right dock holds 설계 도우미 · 정보 · 시뮬레이션.
+   - Every fixed panel (도우미, 정보·시뮬레이션, 레이어, 1·4단계 side panels, HSIS panels) can move into its own browser window — or a
+     floating window when pop-ups are blocked — and stays live: the panel's own DOM moves, so its handlers and state are shared, and
+     $ / $$ also search the panel windows. Closing that window (or "메인 창으로") puts the panel back where it was. */
+var COP={log:[],seq:0,src:'auto',hist:[],hi:-1,tab:'ai',shown:'ai',pending:null,chipsFor:null};
+const COP_SRC={np:{n:1,label:'시스템',con:'시스템 설계'},sch:{n:2,label:'회로',con:'회로도'},pcb:{n:3,label:'PCB',con:'배치·배선'},cad:{n:4,label:'기구',con:'하우징 Text-to-CAD'}};
+const COP_HINT={np:'요구사항이나 질문 — 예: 12V 입력 CAN 센서 노드, STM32, LED 1개 · 8층으로 해줘 · plan',
+  sch:'회로 명령이나 질문 — 예: U4 전원 핀에 100nF 달아줘 · pins U1 --free · erc',
+  pcb:'배치·배선 명령이나 질문 — 예: 8층으로 바꾸고 크기를 최소화해줘 · 왜 미배선이 남았어? · route',
+  cad:'하우징 명령이나 질문 — 예: 오른쪽 벽에 M16 글랜드 2개 · set ip IP67 · compare'};
+const NP_CHIPS=[['계획 요약','plan','현재 계획을 요약하고 빠진 블록과 경고를 알려줘'],['다이어그램 검토','diagram','HW 블록 다이어그램을 검토하고 개선할 점을 알려줘'],
+  ['회로 생성','generate','다이어그램의 블록으로 회로를 생성해줘'],['도움말','help','이 단계에서 할 수 있는 일을 짧게 알려줘']];
+const copChips=src=>src==='pcb'?CLI_CHIPS:src==='sch'?SC_CHIPS:src==='cad'?CAD_CHIPS:NP_CHIPS;
+function copActive(){if(COP.src!=='auto')return COP.src;const w=HS.ws;return w==='sys'?'np':w==='cad'?'cad':w==='board'&&S.sch==='full'?'sch':'pcb';}
+const COP_EXEC={np:l=>npExec(l),sch:l=>scExec(l),pcb:l=>cliExec(l),cad:l=>cadExec(l)};
+// undo stacks per console: the change card undoes exactly the steps a run added
+const COP_UNDO={np:()=>NP.hist,sch:()=>SE.undo,pcb:()=>PE.undo,cad:()=>BD&&BD.housing&&BD.housing.undo||[]};
+const COP_DO_UNDO={np:()=>npRun('undo'),sch:()=>{seAction('undo');renderSchOv();},pcb:()=>peUndo(),cad:()=>cadRunCmd('undo')};
+const copBusyAny=()=>[CLI,SCLI,NP,CADC].some(s=>s&&s.busy);
+function copMark(src){const u=COP_UNDO[src]();return{u,n:u.length,top:u[u.length-1]};}
+function copDiff(src,m){const u=COP_UNDO[src]();if(u!==m.u||!u.length)return 0;if(u.length>m.n)return u.length-m.n;
+  if(u[u.length-1]===m.top)return 0;const i=u.indexOf(m.top);return i>=0?u.length-1-i:u.length;}
+
+/* ---- conversation ---- */
+function copFill(d,e){
+  const t=String(e.t==null?'':e.t),k=e.k,S0=COP_SRC[e.src];
+  const tag=e.newSrc&&S0?`<span class="cp-src">${S0.n} ${esc(S0.label)}</span>`:'';
+  if(k==='cmd'&&e.user){d.className='cp cp-user';d.innerHTML=tag+`<div class="cp-b">${esc(t.replace(/\s+\(AI 모드\)\s*$/,''))}</div>`;return;}
+  if(k==='cmd'){const ai=/\(Claude\)\s*$/.test(t);d.className='cp cp-tool'+(ai?' ai':'');
+    d.innerHTML=tag+`<code>${esc(t.replace(/\s+\((Claude|AI 모드)\)\s*$/,''))}</code>${ai?'<span class="cp-by">Claude 실행</span>':''}`;return;}
+  if(k==='ok'){const L=t.split('\n');d.className='cp cp-ok';
+    d.innerHTML=tag+(L.length>9?`<details><summary><span>${esc(L[0].slice(0,140))}</span><em>${L.length}줄</em></summary><pre>${esc(L.slice(1).join('\n'))}</pre></details>`:`<pre>${esc(t)}</pre>`);return;}
+  if(k==='ai'){d.className='cp cp-ai';d.innerHTML=tag+`<div class="cp-b">${esc(t)}</div>`;return;}
+  if(k==='use'){d.className='cp cp-use';d.innerHTML=tag+esc(t);return;}
+  if(k==='err'){d.className='cp cp-err';d.innerHTML=tag+esc(t);return;}
+  if(k==='chg'){d.className='cp cp-chg';
+    const msg=e.state==='undone'?`되돌렸습니다 (${e.n}단계).`:e.state==='kept'?`${S0?S0.label+' ':''}변경 ${e.n}단계를 유지했습니다.`
+      :e.state==='stale'?'그 뒤에 다른 변경이 있어 여기서는 되돌릴 수 없습니다. 실행 취소(Ctrl+Z)로 한 단계씩 되돌리세요.'
+      :`${e.by==='ai'?'Claude가 ':''}${S0?S0.label+' ':''}설계를 ${e.n}단계 바꿨습니다.`;
+    d.innerHTML=tag+`<span class="cp-msg">${msg}</span>`+(e.state==='open'?`<span class="cp-acts"><button type="button" class="btn sm" data-keep="${e.cid}">유지</button><button type="button" class="btn sm" data-undo="${e.cid}">되돌리기</button></span>`:'');return;}
+  d.className='cp cp-out';d.innerHTML=tag+esc(t);}
+function copNode(e,doc){const d=doc.createElement('div');d.dataset.cid=e.cid;copFill(d,e);return d;}
+// called by every console's say/set: new entries join the log, updates repaint in place
+function copPaint(src,e,upd){
+  if(!e.cid){e.cid=++COP.seq;e.src=src;
+    if(e.k==='cmd'&&COP.pending!=null&&String(e.t).replace(/\s+\(AI 모드\)\s*$/,'').trim()===COP.pending){e.user=true;COP.pending=null;}
+    const prev=COP.log[COP.log.length-1];e.newSrc=!prev||prev.src!==src;COP.log.push(e);if(COP.log.length>600)COP.log.shift();}
+  const L=$('#copLog');if(!L)return;
+  const near=L.scrollHeight-L.scrollTop-L.clientHeight<140;
+  let d=L.querySelector(`[data-cid="${e.cid}"]`);
+  if(d)copFill(d,e);else{d=copNode(e,L.ownerDocument);L.appendChild(d);while(L.children.length>600)L.firstChild.remove();}
+  if(near||e.user||!upd)L.scrollTop=L.scrollHeight;}
+function copDrop(e){COP.log=COP.log.filter(x=>x!==e);const L=$('#copLog');const d=L&&L.querySelector(`[data-cid="${e.cid}"]`);if(d)d.remove();}
+function copClear(src){COP.log=src?COP.log.filter(x=>x.src!==src):[];copRebuild();}
+function copRebuild(){const L=$('#copLog');if(!L)return;L.innerHTML='';let prev=null;COP.log.forEach(e=>{e.newSrc=!prev||prev.src!==e.src;prev=e;L.appendChild(copNode(e,L.ownerDocument));});L.scrollTop=L.scrollHeight;}
+function copSay(k,t){copPaint('sys',{k,t});}
+function copBusyPaint(){const b=copBusyAny();const s=$('#copStop'),r=$('#copSend'),el=$('#copilot');if(s)s.hidden=!b;if(r)r.disabled=b;if(el)el.classList.toggle('busy',b);}
+async function copChg(cid,act){const e=COP.log.find(x=>x.cid===+cid);if(!e||e.state!=='open')return;
+  if(act==='keep'){e.state='kept';copPaint(e.src,e,true);return;}
+  if(copBusyAny()){toast('실행 중에는 되돌릴 수 없습니다.');return;}
+  const u=COP_UNDO[e.src]();if(u!==e.u||u[u.length-1]!==e.after){e.state='stale';copPaint(e.src,e,true);return;}
+  try{for(let i=0;i<e.n;i++)await COP_DO_UNDO[e.src]();e.state='undone';}catch(err){console.error(err);e.state='stale';}
+  copPaint(e.src,e,true);}
+// one message from the user: to the current step's console; a run that changed the design leaves a keep / undo card
+async function copSubmit(text,opt){
+  text=String(text||'').trim();if(!text)return;
+  if(copBusyAny()){toast('실행 중입니다. 끝나거나 [중지]한 뒤 보내세요.');return;}
+  const src=opt&&opt.src||copActive();
+  if(src!=='np'&&!BD){copSay('err','보드가 없습니다. 1단계에서 회로를 만들거나 파일을 불러오세요.');return;}
+  COP.hist.push(text);if(COP.hist.length>100)COP.hist.shift();COP.hi=COP.hist.length;
+  COP.log.forEach(x=>{if(x.k==='chg'&&x.state==='open'){x.state='kept';copPaint(x.src,x,true);}});
+  const m=copMark(src);COP.pending=text;
+  try{await COP_EXEC[src](text);}catch(err){console.error(err);copPaint(src,{k:'err',t:err&&err.message||String(err)});}
+  finally{COP.pending=null;}
+  const n=copDiff(src,m);
+  if(n>0){const u=COP_UNDO[src]();copPaint(src,{k:'chg',t:'',n,by:AIM.mode==='ai'?'ai':'user',state:'open',u,after:u[u.length-1]});}
+  copBusyPaint();}
+function copCtx(){
+  if(!$('#copilot'))return;const src=copActive(),S0=COP_SRC[src];
+  const c=$('#copCtx');if(c)c.textContent=`${COP.src==='auto'?'지금 단계':'고정'} · ${S0.n} ${S0.label} (${S0.con})`;
+  const i=$('#copIn');if(i){i.placeholder=COP_HINT[src];i.dataset.mode=AIM.mode;}
+  const key=src+'|'+AIM.mode;
+  if(COP.chipsFor!==key){COP.chipsFor=key;const box=$('#copChips');
+    if(box)box.innerHTML=copChips(src).map(([l,c,g],k)=>`<button type="button" class="pill vbtn" data-cchip="${k}" title="${esc(AIM.mode==='ai'?'AI 요청: '+g:'명령: '+c)}">${esc(l)}</button>`).join('');}
+  const sel=$('#copSrc');if(sel&&sel.value!==COP.src)sel.value=COP.src;}
+function copFocus(){
+  if(LAY.dockOff){LAY.dockOff=false;saveLayout();}
+  const P=PANELS.ai;if(P.out){if(P.win)try{P.win.focus();}catch(e){}}else{COP.tab='ai';dockPaint();}
+  setTimeout(()=>{const i=$('#copIn');if(i)i.focus();},20);}
+const SVG_POP='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 8 8M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3"/></svg>';
+function copEnsure(){
+  let el=$('#copilot');if(el)return el;
+  el=document.createElement('section');el.id='copilot';el.className='copilot';el.setAttribute('aria-label','설계 도우미');
+  el.innerHTML=`<div class="cop-h"><div class="cop-t"><b>설계 도우미</b><span class="cop-ctx" id="copCtx"></span></div><span class="cop-sp"></span>
+      <label class="cop-src"><span class="sr">명령 대상</span><select id="copSrc" title="문장·명령을 보낼 단계 콘솔"><option value="auto">지금 단계</option>${Object.entries(COP_SRC).map(([k,v])=>`<option value="${k}">${v.n} ${v.label}</option>`).join('')}</select></label>
+      <button type="button" class="dock-btn" id="copClr" title="대화 지우기" aria-label="대화 지우기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg></button></div>
+    <div class="cop-ctl">${aimControls()}</div>
+    <div class="cop-log" id="copLog" role="log" aria-live="polite"></div>
+    <div class="cop-chips" id="copChips" role="toolbar" aria-label="빠른 요청"></div>
+    <form class="cop-in" id="copForm" autocomplete="off"><label class="sr" for="copIn">메시지</label><textarea id="copIn" rows="2" spellcheck="false"></textarea>
+      <div class="cop-row"><span class="cop-k">Enter 보내기 · Shift+Enter 줄바꿈 · ↑ 이전</span><span class="cop-sp"></span><button type="button" class="btn sm" id="copStop" hidden>중지</button><button class="btn primary sm" id="copSend">보내기</button></div></form>`;
+  const host=document.getElementById('dockBody');host.insertBefore(el,host.firstChild);
+  const inp=el.querySelector('#copIn'),form=el.querySelector('#copForm');
+  form.addEventListener('submit',e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;if(copBusyAny()){toast('실행 중입니다. 끝나거나 [중지]한 뒤 보내세요.');return;}inp.value='';copSubmit(v);});
+  inp.addEventListener('keydown',e=>{e.stopPropagation();
+    if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();form.requestSubmit();return;}
+    if(e.key==='ArrowUp'&&inp.selectionStart===0&&inp.selectionEnd===0&&COP.hi>0){COP.hi--;inp.value=COP.hist[COP.hi]||'';e.preventDefault();}
+    else if(e.key==='ArrowDown'&&inp.selectionStart===inp.value.length&&COP.hi<COP.hist.length){COP.hi++;inp.value=COP.hist[COP.hi]||'';e.preventDefault();}
+    else if(e.key==='Escape')inp.blur();});
+  el.querySelector('#copStop').addEventListener('click',()=>[CLI,SCLI,NP,CADC].forEach(s=>{if(s&&s.busy){s.stopReq=true;if(s.abort)s.abort.abort();}}));
+  el.querySelector('#copSrc').addEventListener('change',e=>{COP.src=e.target.value;copCtx();});
+  el.querySelector('#copClr').addEventListener('click',()=>{COP.log=[];copRebuild();});
+  el.querySelector('#copChips').addEventListener('click',e=>{const b=e.target.closest('[data-cchip]');if(!b||copBusyAny())return;const[,c,g]=copChips(copActive())[+b.dataset.cchip]||[];if(c)copSubmit(AIM.mode==='ai'?g:c);});
+  el.querySelector('#copLog').addEventListener('click',e=>{const k=e.target.closest('[data-keep]'),u=e.target.closest('[data-undo]');if(k)copChg(k.dataset.keep,'keep');else if(u)copChg(u.dataset.undo,'undo');});
+  aimBind(el);cliAiProbe().then(aimPaint);
+  copRebuild();copCtx();return el;}
+
+/* ---- right dock: 설계 도우미 · 정보 · 시뮬레이션 ---- */
+function dockPaint(){
+  const app=$('.app');const aiOut=!!PANELS.ai.out,inOut=!!PANELS.insp.out,off=!!LAY.dockOff,empty=aiOut&&inOut;
+  let t=COP.tab;if(t==='ai'&&aiOut)t=inOut?null:(S.panel||'info');if((t==='info'||t==='sim')&&inOut)t=aiOut?null:'ai';COP.shown=t;
+  app.classList.toggle('dock-off',off);app.classList.toggle('dock-empty',empty);app.classList.toggle('dk',!off&&!empty);
+  const tg=$('#dockTg');if(tg)tg.setAttribute('aria-pressed',String(!off&&!empty));
+  $$('[data-dock]').forEach(b=>{const k=b.dataset.dock;b.hidden=k==='ai'?aiOut:inOut;b.setAttribute('aria-selected',k===t?'true':'false');});
+  const cp=PANELS.ai.el,ins=PANELS.insp.el;if(cp)cp.hidden=!aiOut&&t!=='ai';if(ins)ins.hidden=!inOut&&!(t==='info'||t==='sim');
+  const d=$('#dock');if(d)d.classList.toggle('wide',t==='sim');}
+function dockTab(t){COP.tab=t;LAY.dockTab=t;saveLayout();if(t==='info'||t==='sim')setPanel(t);dockPaint();
+  if(t==='ai')setTimeout(()=>{const L=$('#copLog');if(L)L.scrollTop=L.scrollHeight;},0);}
+// setPanel from the panel's own tabs (when it sits in a separate window it keeps them); in the dock the tab follows
+function dockOnPanel(p){if(PANELS.insp&&!PANELS.insp.out&&COP.tab!=='ai'){COP.tab=p;dockPaint();}}
+function dockToggle(on){LAY.dockOff=on==null?!LAY.dockOff:!on;if(!LAY.dockOff&&PANELS.ai.out&&PANELS.insp.out){toast('설계 도우미와 정보 패널이 모두 새 창에 있습니다. 새 창의 [메인 창으로]로 되돌리세요.');}saveLayout();dockPaint();}
+
+/* ---- every fixed panel can live in its own window ---- */
+const PANELS={
+  ai:{sel:'#copilot',title:'설계 도우미',w:460,h:780},
+  insp:{sel:'.insp',title:'정보 · 시뮬레이션',w:480,h:820},
+  layers:{sel:'.main>.layers',title:'레이어 · 보드 요약',w:300,h:760},
+  sysL:{sel:'#sysLeft',title:'프로젝트 · HW 블록 · PCB 조건',w:380,h:820},
+  sysR:{sel:'#sysRight',title:'선택 블록 · 회로 구현',w:400,h:820},
+  cadL:{sel:'#cadLeft',title:'하우징 조건 · 결과',w:420,h:840},
+  cadR:{sel:'#cadRight',title:'형상 트리 · 내보내기',w:400,h:820},
+  hsL:{sel:'#hsLeft',title:'HSIS 문서 · 필터',w:340,h:800},
+  hsD:{sel:'#hsDetail',title:'HSIS 신호 상세',w:460,h:840}};
+const WS_CLASSES=['main','sys-ws','cad-ws','hsis-ws'];
+const ppShell=(title,floating)=>`<div class="pp"><div class="pp-bar">${floating?'<span class="pp-grip" aria-hidden="true">⠿</span>':''}<b class="pp-title">${esc(title)}</b><span class="pp-sub">${esc(BD?BD.name:'')} · 메인 창과 연동</span><span class="cop-sp"></span><button type="button" class="btn sm" data-back title="이 패널을 메인 창의 원래 자리로 되돌립니다">메인 창으로</button></div><div class="pp-host"></div></div>`;
+let ppFloatN=0,ppWarned=false;
+function panelPop(key){
+  const P=PANELS[key];if(!P||!P.el)return;
+  if(P.out){if(P.win)try{P.win.focus();}catch(e){}return;}
+  const el=P.el;const ctx=[];for(let a=el.parentElement;a&&a!==document.body;a=a.parentElement)a.classList.forEach(c=>{if(WS_CLASSES.includes(c))ctx.push(c);});
+  P.home=document.createComment('panel:'+key);el.parentNode.insertBefore(P.home,el);
+  let w=null,ok=false;
+  try{w=window.open('','aiod_panel_'+key,`popup=yes,width=${P.w},height=${P.h}`);}catch(e){w=null;}
+  if(w){try{const d=w.document;d.open();
+      d.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(P.title)} · ${esc(BD?BD.name:'AllinOneDesign')}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"><style>${pageCSS()}${tokenCSS()}${POP_BASE}</style></head><body class="pp-body">${ppShell(P.title,false)}</body></html>`);d.close();
+      const host=d.querySelector('.pp-host');
+      if(host){host.classList.add(...ctx);host.appendChild(d.adoptNode(el));ok=true;P.win=w;P.doc=d;PANEL_DOCS.add(d);
+        d.querySelector('[data-back]').addEventListener('click',()=>panelBack(key));
+        w.addEventListener('pagehide',()=>panelBack(key));
+        P.poll=setInterval(()=>{let c=true;try{c=w.closed;}catch(e){}if(c)panelBack(key);},800);}}
+    catch(e){console.error(e);}}
+  if(!ok){if(w)try{w.close();}catch(e){}
+    const f=document.createElement('div');f.className='ppfloat';f.setAttribute('role','dialog');f.setAttribute('aria-label',P.title);f.innerHTML=ppShell(P.title,true);
+    const n=ppFloatN++%5;f.style.top=(84+n*26)+'px';f.style.right=(28+n*26)+'px';f.style.width=`min(${P.w}px,calc(100vw - 32px))`;
+    document.body.appendChild(f);const host=f.querySelector('.pp-host');host.classList.add(...ctx);host.appendChild(el);P.float=f;
+    f.querySelector('[data-back]').addEventListener('click',()=>panelBack(key));
+    const bar=f.querySelector('.pp-bar');bar.addEventListener('pointerdown',e=>{if(e.target.closest('button,select,input'))return;e.preventDefault();const r=f.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;
+      const mv=ev=>{f.style.left=Math.max(0,Math.min(window.innerWidth-120,ev.clientX-sx))+'px';f.style.top=Math.max(0,Math.min(window.innerHeight-40,ev.clientY-sy))+'px';f.style.right='auto';};
+      const up=()=>{window.removeEventListener('pointermove',mv);window.removeEventListener('pointerup',up);};window.addEventListener('pointermove',mv);window.addEventListener('pointerup',up);});
+    f.addEventListener('pointerdown',()=>{f.style.zIndex=String(41+(ppFloatN++));},true);
+    if(!ppWarned){ppWarned=true;toast('브라우저가 새 창을 막아 화면 위에 떠 있는 창으로 열었습니다. 제목 줄을 끌어 옮기고 오른쪽 아래 모서리로 크기를 바꿀 수 있습니다.');}}
+  P.out=true;el.classList.add('popped');el.hidden=false;panelAfter(key);}
+function panelBack(key){
+  const P=PANELS[key];if(!P||!P.out)return;P.out=false;clearInterval(P.poll);
+  const el=P.el;try{if(P.home&&P.home.parentNode){P.home.parentNode.insertBefore(document.adoptNode(el),P.home);P.home.remove();}}catch(e){console.error(e);}
+  if(P.doc)PANEL_DOCS.delete(P.doc);P.doc=null;
+  if(P.win){const w=P.win;P.win=null;try{if(!w.closed)w.close();}catch(e){}}
+  if(P.float){P.float.remove();P.float=null;}
+  el.classList.remove('popped');panelAfter(key);}
+function panelAfter(key){
+  dockPaint();
+  setTimeout(()=>{try{
+    relayoutViews();aimPaint();copCtx();
+    if(key==='ai'){const L=$('#copLog');if(L)L.scrollTop=L.scrollHeight;}
+    if(key==='insp'){if(S.panel==='sim')renderSim();else renderPane();}
+    if(key==='hsD'&&HS.H&&BD)renderDetail();
+    if((key==='cadL'||key==='cadR')&&HS.ws==='cad')cadRender();
+    if((key==='sysL'||key==='sysR')&&HS.ws==='sys')sysRender();
+  }catch(e){console.error(e);}},30);}
+// a small "새 창" button on each side panel (kept when the panel re-renders its content)
+function panelDecorate(key){
+  const P=PANELS[key];const el=P.el;if(!el||key==='ai'||key==='insp')return;
+  const mk=()=>{if(el.querySelector(':scope>.pop-btn'))return;const b=el.ownerDocument.createElement('button');b.type='button';b.className='pop-btn';
+    b.title=`${P.title} — 새 창으로 (메인 창과 연동)`;b.setAttribute('aria-label',`${P.title} 새 창으로`);b.innerHTML=SVG_POP;
+    b.addEventListener('click',()=>panelPop(key));el.prepend(b);};
+  mk();new MutationObserver(mk).observe(el,{childList:true});}
+window.addEventListener('beforeunload',()=>Object.values(PANELS).forEach(P=>{if(P.win)try{P.win.close();}catch(e){}}));
+
+/* ---- boot ---- */
+copEnsure();
+Object.entries(PANELS).forEach(([k,P])=>{P.el=$(P.sel);panelDecorate(k);});
+if(LAY.dockTab==='info'||LAY.dockTab==='sim'||LAY.dockTab==='ai')COP.tab=LAY.dockTab;
+$$('[data-dock]').forEach(b=>b.addEventListener('click',()=>dockTab(b.dataset.dock)));
+$('#dockHide').addEventListener('click',()=>dockToggle(false));
+$('#dockTg').addEventListener('click',()=>dockToggle());
+$('#dockPop').addEventListener('click',()=>panelPop(COP.shown==='ai'?'ai':'insp'));
+// ` anywhere (outside a text field) jumps to the 도우미 input
+document.addEventListener('keydown',e=>{if(e.key!=='`'||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target.matches('input,select,textarea'))return;e.preventDefault();e.stopImmediatePropagation();copFocus();},true);
+dockPaint();if(COP.tab!=='ai')setPanel(COP.tab);
+copSay('out','설계 도우미입니다. 요구사항·질문·명령을 적으면 지금 단계(1 시스템 · 2 회로 · 3 PCB · 4 기구)의 콘솔이 처리합니다. AI 모드에서는 Claude가 같은 명령을 골라 실행하고, 설계를 바꾼 실행은 [유지] / [되돌리기]로 정할 수 있습니다. 패널은 오른쪽 위 버튼으로 새 창에 띄울 수 있습니다.');
 
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));

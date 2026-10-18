@@ -307,7 +307,7 @@ const LAYOUT_KEY='pcbv.layout';
 const LAY=(function(){try{return JSON.parse(localStorage.getItem(LAYOUT_KEY)||'{}')||{};}catch(e){return{};}})();
 function saveLayout(){try{localStorage.setItem(LAYOUT_KEY,JSON.stringify(LAY));}catch(e){}}
 function applyLayout(){const m=$('.main'),h=$('#hsisWs');
-  [['lw',m,'--lw'],['rw',m,'--rw'],['rws',m,'--rws'],['hl',h,'--hsw-l'],['hr',h,'--hsw-r']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
+  [['lw',m,'--lw'],['dock',$('.work'),'--dock'],['hl',h,'--hsw-l'],['hr',h,'--hsw-r']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
   if(LAY.split)vp.style.setProperty('--split',LAY.split+'%');else vp.style.removeProperty('--split');}
 function makeHandle(el,opts){
   // opts: {get():px, set(px), min, max, reset()}
@@ -323,9 +323,8 @@ function makeHandle(el,opts){
 (function(){
   const m=$('.main'),h=$('#hsisWs');
   const w=(el)=>el.getBoundingClientRect().width;
-  const sim=()=>m.classList.contains('simwide');
   makeHandle($('#hLeft'),{label:'왼쪽 패널 너비',get:()=>w($('.layers')),set:v=>{LAY.lw=Math.round(v);applyLayout();},min:170,max:()=>Math.min(420,w(m)*0.35),reset:()=>{delete LAY.lw;applyLayout();}});
-  makeHandle($('#hRight'),{label:'오른쪽 패널 너비',dir:-1,get:()=>w($('.insp')),set:v=>{LAY[sim()?'rws':'rw']=Math.round(v);applyLayout();},min:260,max:()=>Math.min(720,w(m)*0.5),reset:()=>{delete LAY[sim()?'rws':'rw'];applyLayout();}});
+  makeHandle($('#hDock'),{label:'오른쪽 패널(설계 도우미) 너비',dir:-1,get:()=>w($('#dock')),set:v=>{LAY.dock=Math.round(v);applyLayout();relayoutViews();},min:300,max:()=>Math.min(760,window.innerWidth*0.5),reset:()=>{delete LAY.dock;applyLayout();relayoutViews();}});
   makeHandle($('#hHsL'),{label:'HSIS 왼쪽 패널 너비',get:()=>w($('#hsLeft')),set:v=>{LAY.hl=Math.round(v);applyLayout();},min:190,max:()=>Math.min(440,w(h)*0.35),reset:()=>{delete LAY.hl;applyLayout();}});
   makeHandle($('#hHsR'),{label:'HSIS 상세 패널 너비',dir:-1,get:()=>w($('#hsDetail')),set:v=>{LAY.hr=Math.round(v);applyLayout();drawMini();},min:280,max:()=>Math.min(760,w(h)*0.55),reset:()=>{delete LAY.hr;applyLayout();drawMini();}});
   const sp=$('#splitter');const narrow=()=>matchMedia('(max-width:760px)').matches;

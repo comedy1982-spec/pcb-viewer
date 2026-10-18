@@ -1,7 +1,10 @@
 (function(){
 "use strict";
 const D2R=Math.PI/180,TAU=Math.PI*2;
-const $=s=>document.querySelector(s);
+// panels moved into their own window (copilot.js) keep their ids: $ and $$ look there too
+const PANEL_DOCS=new Set();
+const $=s=>{const e=document.querySelector(s);if(e)return e;for(const d of PANEL_DOCS){try{const x=d.querySelector(s);if(x)return x;}catch(err){}}return null;};
+const $$=s=>{const out=[...document.querySelectorAll(s)];PANEL_DOCS.forEach(d=>{try{out.push(...d.querySelectorAll(s));}catch(err){}});return out;};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- colours ---------- */
@@ -490,7 +493,7 @@ function setView(v){
   if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(v==='sch')S.sch='full';else if(v!=='__keep'){S.view=v;if(S.sch==='full')S.sch='off';}
   const full=S.sch==='full',bv=S.view;
-  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-selected',(full?b.dataset.view==='sch':b.dataset.view===bv)?'true':'false'));
+  $$('[data-view]').forEach(b=>b.setAttribute('aria-selected',(full?b.dataset.view==='sch':b.dataset.view===bv)?'true':'false'));
   $('#splitBtn').setAttribute('aria-pressed',S.sch==='split'?'true':'false');
   vp.classList.toggle('split',S.sch==='split');vp.classList.toggle('schfull',full);
   cvs.hidden=S.sch==='off';$('#schOv').hidden=S.sch==='off';
@@ -511,7 +514,7 @@ function setView(v){
 }
 function tipAt(cv,x,y){const vr=vp.getBoundingClientRect(),cr=cv.getBoundingClientRect();tip.style.left=(x+cr.left-vr.left)+'px';tip.style.top=(y+cr.top-vr.top)+'px';}
 function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
-document.querySelectorAll('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+$$('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 $('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
 ['cuT','cuB','silk','mask','drill','ghost','inner'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
@@ -519,7 +522,7 @@ $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.t
 $('#explode').addEventListener('input',e=>setExplode(e.target.value/100));
 (function(){const box=$('#masks');Object.entries(MASKS).forEach(([k,m])=>{const b=document.createElement('button');b.className='mk';b.style.background=m.mask;b.title=m.name;b.setAttribute('aria-label','솔더마스크 '+m.name);b.setAttribute('aria-pressed',k===S.mask?'true':'false');
   b.addEventListener('click',()=>{S.mask=k;box.querySelectorAll('.mk').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');$('#sw-mask').style.background=m.mask;refresh(false);});box.appendChild(b);});})();
-document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{S.tab=b.dataset.tab;renderPane();}));
+$$('.tabs button').forEach(b=>b.addEventListener('click',()=>{S.tab=b.dataset.tab;renderPane();}));
 $('#q').addEventListener('input',e=>{S.q=e.target.value.trim().toLowerCase();if(S.tab==='sel'||S.tab==='data')S.tab='bom';renderPane();});
 $('#q').addEventListener('keydown',e=>{if(e.key!=='Enter'||!S.q)return;const q=S.q;
   const c=BD.comps.find(c=>c.ref.toLowerCase()===q)||filtComps()[0];if(c){selectComp(c.ref,true);return;}const n=filtNets()[0];if(n){S.hlNet=n;S.tab='sel';refresh(true);}});
@@ -566,7 +569,7 @@ function netCard(n){
   ${pads?`<div class="sub">연결된 핀</div><div style="line-height:1.9">${pads}${N.pads.length>300?' …':''}</div>`:''}</div>`;
 }
 function renderPane(){
-  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab?'true':'false'));
+  $$('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab?'true':'false'));
   const fc=filtComps(),fn=filtNets();$('#n-bom').textContent=fc.length;$('#n-net').textContent=fn.length;
   const pane=$('#pane');
   if(S.tab==='sel'){

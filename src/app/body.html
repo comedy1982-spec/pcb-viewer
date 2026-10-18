@@ -28,11 +28,13 @@
       <div class="winpick-wrap"><button class="btn sm splitbtn" id="winBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="winPick" title="여러 보기를 격자로 배치한 새 창을 엽니다"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M8 2.5v11M1.5 8h13"/></svg>새 창</button>
         <div class="winpick" id="winPick" role="dialog" aria-label="새 창 레이아웃" hidden></div></div>
       </div>
+      <button class="btn sm dock-tg" id="dockTg" aria-pressed="true" aria-controls="dock" title="설계 도우미 · 정보 · 시뮬레이션 패널 보이기/숨기기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/></svg>도우미</button>
     </div>
   </header>
 
+  <div class="work"><div class="wsa">
   <div class="main">
-    <div class="rh" id="hLeft"></div><div class="rh" id="hRight"></div>
+    <div class="rh" id="hLeft"></div>
     <aside class="panel layers" aria-label="레이어">
       <div class="grp">
         <p class="h">레이어</p>
@@ -88,6 +90,75 @@
       <div class="tip" id="tip" hidden></div>
     </section>
 
+
+  </div>
+<div class="sys-ws" id="sysWs" hidden>
+  <aside class="panel" id="sysLeft" aria-label="프로젝트와 블록">
+    <section><h3>프로젝트 · 요구사항</h3>
+          <label class="fld"><span>이름</span><input id="npName" placeholder="예: BLDC 팬 컨트롤러 v0.1"></label>
+          <label class="fld"><span>요구사항 (시스템 기능 · 전원 · 통신 · 구동 · 센싱 · 안전)</span><textarea id="npReq" rows="4" placeholder="예: eLSD ECU — 12V 배터리, AURIX MCU, CAN-FD, DC 모터 H-bridge 구동, 전류·온도 센싱, XCP 캘리브레이션, ASIL B. 데이터 로그용 플래시"></textarea></label>
+          <div class="npchips" id="npTpl"></div>
+          <div class="acts"><button class="btn primary sm" id="npPlan">블록 다이어그램 만들기</button><span class="np-hint" id="npPlanHint"></span></div></section>
+        <section><h3>HW 블록 (부품 미정)</h3><div id="arBlocks"></div>
+          <div class="np-add"><select id="arGroup" aria-label="블록 그룹"></select><input id="arLabel" placeholder="블록 이름 (예: Relay Driver)" aria-label="새 블록 이름"><button class="btn sm" id="arAdd">추가</button></div></section>
+        <section><h3>PCB 조건 <span class="np-hint">3단계 PCB 시작 때 적용</span></h3><div class="np-board">
+          <label>동박 층 <select id="npLayers"><option value="2">2층</option><option value="4">4층</option><option value="6">6층</option><option value="8">8층</option><option value="10">10층</option></select></label>
+          <label>보드 크기 <select id="npSize"><option value="auto">자동</option><option value="min">최소화</option><option value="fix">직접 입력</option></select></label>
+          <label id="npWH">가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> × 세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
+          <label>배치 전략 <select id="npStrat"><option value="balanced">균형</option><option value="thermal">열 분산</option><option value="noise">노이즈 최소화</option><option value="compact">소형화</option></select></label>
+          <label class="chkl"><input type="checkbox" id="npRoute" checked> PCB 시작 때 자동 배선</label></div></section>
+  </aside>
+  <div class="sys-mid">
+    <section class="sys-dia" id="sysDia" aria-label="시스템 다이어그램">
+      <div class="sys-bar"><b id="sysTitle">시스템 다이어그램</b><span class="sys-src" id="sysSrc"></span><span class="cli-sp"></span>
+        <span class="seg sys-view" role="tablist" aria-label="다이어그램 종류"><button role="tab" data-sv="hw" aria-selected="true">HW 블록</button><button role="tab" data-sv="parts" aria-selected="false">부품 구성</button></span><button type="button" class="pill vbtn" id="sysFromBoard" title="지금 보드의 부품과 넷에서 블록 다이어그램을 추출합니다 (부품 번호는 빼고 기능 블록으로)">보드에서 추출</button><button type="button" class="pill vbtn" id="sysZoom">100%</button><button type="button" class="pill vbtn" id="sysSvgDl">SVG 저장</button></div>
+      <div class="sys-svg" id="sysSvg"></div>
+    </section>
+
+  </div>
+  <aside class="panel" id="sysRight" aria-label="선택한 블록과 계획">
+    <section><h3>선택</h3><div id="sysSel"><p class="lead" style="margin:0">다이어그램의 블록을 누르면 부품·전원·신호와 파라미터가 여기 나옵니다.</p></div></section>
+    <details class="np-impl" id="implSec"><summary><b>회로 구현 (2단계 준비)</b><span id="implHint"></span></summary>
+      <p class="lead" style="margin:4px 0 8px">HW 블록마다 회로 라이브러리 블록을 연결해 둡니다. 부품은 다음 단계에서 정해지며, 여기서 바꾸면 아키텍처 다이어그램은 그대로입니다.</p>
+      <div id="npBlocks"></div><div class="np-add"><select id="npAddSel" aria-label="추가할 회로 블록"></select><button class="btn sm" id="npAdd">회로 블록 추가</button></div></details>
+    <details class="np-impl"><summary><b>계획 · BOM · MCU 핀 배정</b></summary><pre class="np-sum" id="npSum">요구사항을 적고 [계획 세우기]를 누르거나, 블록을 직접 추가하세요.</pre></details>
+    <div class="sys-next"><span class="msg" id="npMsg"></span><button class="btn primary" id="npGen">다음: 회로 생성 →</button></div>
+  </aside>
+</div>
+<div class="cad-ws" id="cadWs" hidden>
+  <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
+  <div class="cad-mid"><div class="cad-vp" id="cadVpSlot"></div></div>
+  <aside class="panel" id="cadRight" aria-label="형상 트리와 내보내기"></aside>
+</div>
+<div class="hsis-ws" id="hsisWs" hidden>
+  <div class="rh" id="hHsL"></div><div class="rh" id="hHsR"></div>
+  <aside class="panel" id="hsLeft" aria-label="HSIS 문서와 필터"></aside>
+  <section class="panel hsmain" aria-label="HSIS">
+    <div class="tabs" role="tablist" style="margin-top:0">
+      <button role="tab" data-htab="table" aria-selected="true" id="htab-table">신호 표</button>
+      <button role="tab" data-htab="pins" aria-selected="false" id="htab-pins">MCU 핀 맵</button>
+      <button role="tab" data-htab="trace" aria-selected="false" id="htab-trace">추적성</button>
+      <button role="tab" data-htab="checks" aria-selected="false" id="htab-chk">검사 결과</button>
+      <button role="tab" data-htab="rec" aria-selected="false" id="htab-rec">핀 추천</button>
+      <button role="tab" data-htab="mcal" aria-selected="false" id="htab-mcal">MCAL 설정</button>
+      <button role="tab" data-htab="tc" aria-selected="false" id="htab-tc">테스트 케이스</button>
+    </div>
+    <div id="hsBody"></div>
+  </section>
+  <aside class="panel" id="hsDetail" aria-label="신호 상세"></aside>
+</div>
+</div>
+  <div class="rh" id="hDock"></div>
+  <aside class="dock" id="dock" aria-label="도우미 · 정보 · 시뮬레이션">
+    <div class="dock-tabs" role="tablist" aria-label="오른쪽 패널">
+      <button role="tab" type="button" data-dock="ai" aria-selected="true" id="dk-ai">설계 도우미</button>
+      <button role="tab" type="button" data-dock="info" aria-selected="false" id="dk-info">정보</button>
+      <button role="tab" type="button" data-dock="sim" aria-selected="false" id="dk-sim">시뮬레이션</button>
+      <span class="dock-sp"></span>
+      <button type="button" class="dock-btn" id="dockPop" title="지금 탭을 새 창으로 엽니다 (메인 창과 계속 연동)" aria-label="지금 탭을 새 창으로"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 8 8M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3"/></svg></button>
+      <button type="button" class="dock-btn" id="dockHide" title="오른쪽 패널 접기" aria-label="오른쪽 패널 접기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg></button>
+    </div>
+    <div class="dock-body" id="dockBody">
     <aside class="panel insp" aria-label="정보">
       <div class="seg pmode" role="tablist" aria-label="패널 전환"><button role="tab" data-panel="info" aria-selected="true" id="p-info">정보</button><button role="tab" data-panel="sim" aria-selected="false" id="p-sim">시뮬레이션</button></div>
       <div id="infoPane">
@@ -120,62 +191,8 @@
         <div id="simBody"></div>
       </div>
     </aside>
-  </div>
-<div class="sys-ws" id="sysWs" hidden>
-  <aside class="panel" id="sysLeft" aria-label="프로젝트와 블록">
-    <section><h3>프로젝트 · 요구사항</h3>
-          <label class="fld"><span>이름</span><input id="npName" placeholder="예: BLDC 팬 컨트롤러 v0.1"></label>
-          <label class="fld"><span>요구사항 (시스템 기능 · 전원 · 통신 · 구동 · 센싱 · 안전)</span><textarea id="npReq" rows="4" placeholder="예: eLSD ECU — 12V 배터리, AURIX MCU, CAN-FD, DC 모터 H-bridge 구동, 전류·온도 센싱, XCP 캘리브레이션, ASIL B. 데이터 로그용 플래시"></textarea></label>
-          <div class="npchips" id="npTpl"></div>
-          <div class="acts"><button class="btn primary sm" id="npPlan">블록 다이어그램 만들기</button><span class="np-hint" id="npPlanHint"></span></div></section>
-        <section><h3>HW 블록 (부품 미정)</h3><div id="arBlocks"></div>
-          <div class="np-add"><select id="arGroup" aria-label="블록 그룹"></select><input id="arLabel" placeholder="블록 이름 (예: Relay Driver)" aria-label="새 블록 이름"><button class="btn sm" id="arAdd">추가</button></div></section>
-        <section><h3>PCB 조건 <span class="np-hint">3단계 PCB 시작 때 적용</span></h3><div class="np-board">
-          <label>동박 층 <select id="npLayers"><option value="2">2층</option><option value="4">4층</option><option value="6">6층</option><option value="8">8층</option><option value="10">10층</option></select></label>
-          <label>보드 크기 <select id="npSize"><option value="auto">자동</option><option value="min">최소화</option><option value="fix">직접 입력</option></select></label>
-          <label id="npWH">가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> × 세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
-          <label>배치 전략 <select id="npStrat"><option value="balanced">균형</option><option value="thermal">열 분산</option><option value="noise">노이즈 최소화</option><option value="compact">소형화</option></select></label>
-          <label class="chkl"><input type="checkbox" id="npRoute" checked> PCB 시작 때 자동 배선</label></div></section>
-  </aside>
-  <div class="sys-mid">
-    <section class="sys-dia" id="sysDia" aria-label="시스템 다이어그램">
-      <div class="sys-bar"><b id="sysTitle">시스템 다이어그램</b><span class="sys-src" id="sysSrc"></span><span class="cli-sp"></span>
-        <span class="seg sys-view" role="tablist" aria-label="다이어그램 종류"><button role="tab" data-sv="hw" aria-selected="true">HW 블록</button><button role="tab" data-sv="parts" aria-selected="false">부품 구성</button></span><button type="button" class="pill vbtn" id="sysFromBoard" title="지금 보드의 부품과 넷에서 블록 다이어그램을 추출합니다 (부품 번호는 빼고 기능 블록으로)">보드에서 추출</button><button type="button" class="pill vbtn" id="sysZoom">100%</button><button type="button" class="pill vbtn" id="sysSvgDl">SVG 저장</button></div>
-      <div class="sys-svg" id="sysSvg"></div>
-    </section>
-    <section class="cad-con np-con" aria-label="시스템 설계 콘솔"><div class="cli-h"><b>시스템 CLI</b><span class="np-mode" id="npMode"></span></div><div class="cli-log" id="npLog" role="log" aria-live="polite"></div>
-          <form class="cli-in" id="npForm" autocomplete="off"><span aria-hidden="true">›</span><input id="npIn" spellcheck="false" placeholder="예: block io &quot;Relay Driver&quot; · link mcu relaydriver &quot;GPIO&quot; · feat mcu &quot;Lockstep core&quot; · 문장으로 요구사항 · help" aria-label="설계 명령 입력"><button class="btn primary sm" id="npRun">실행</button><button type="button" class="btn sm" id="npStop" hidden>중지</button></form></section>
-  </div>
-  <aside class="panel" id="sysRight" aria-label="선택한 블록과 계획">
-    <section><h3>선택</h3><div id="sysSel"><p class="lead" style="margin:0">다이어그램의 블록을 누르면 부품·전원·신호와 파라미터가 여기 나옵니다.</p></div></section>
-    <details class="np-impl" id="implSec"><summary><b>회로 구현 (2단계 준비)</b><span id="implHint"></span></summary>
-      <p class="lead" style="margin:4px 0 8px">HW 블록마다 회로 라이브러리 블록을 연결해 둡니다. 부품은 다음 단계에서 정해지며, 여기서 바꾸면 아키텍처 다이어그램은 그대로입니다.</p>
-      <div id="npBlocks"></div><div class="np-add"><select id="npAddSel" aria-label="추가할 회로 블록"></select><button class="btn sm" id="npAdd">회로 블록 추가</button></div></details>
-    <details class="np-impl"><summary><b>계획 · BOM · MCU 핀 배정</b></summary><pre class="np-sum" id="npSum">요구사항을 적고 [계획 세우기]를 누르거나, 블록을 직접 추가하세요.</pre></details>
-    <div class="sys-next"><span class="msg" id="npMsg"></span><button class="btn primary" id="npGen">다음: 회로 생성 →</button></div>
-  </aside>
-</div>
-<div class="cad-ws" id="cadWs" hidden>
-  <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
-  <div class="cad-mid"><div class="cad-vp" id="cadVpSlot"></div><section class="cad-con" id="cadCon" aria-label="Text-to-CAD 콘솔"></section></div>
-  <aside class="panel" id="cadRight" aria-label="형상 트리와 내보내기"></aside>
-</div>
-<div class="hsis-ws" id="hsisWs" hidden>
-  <div class="rh" id="hHsL"></div><div class="rh" id="hHsR"></div>
-  <aside class="panel" id="hsLeft" aria-label="HSIS 문서와 필터"></aside>
-  <section class="panel hsmain" aria-label="HSIS">
-    <div class="tabs" role="tablist" style="margin-top:0">
-      <button role="tab" data-htab="table" aria-selected="true" id="htab-table">신호 표</button>
-      <button role="tab" data-htab="pins" aria-selected="false" id="htab-pins">MCU 핀 맵</button>
-      <button role="tab" data-htab="trace" aria-selected="false" id="htab-trace">추적성</button>
-      <button role="tab" data-htab="checks" aria-selected="false" id="htab-chk">검사 결과</button>
-      <button role="tab" data-htab="rec" aria-selected="false" id="htab-rec">핀 추천</button>
-      <button role="tab" data-htab="mcal" aria-selected="false" id="htab-mcal">MCAL 설정</button>
-      <button role="tab" data-htab="tc" aria-selected="false" id="htab-tc">테스트 케이스</button>
     </div>
-    <div id="hsBody"></div>
-  </section>
-  <aside class="panel" id="hsDetail" aria-label="신호 상세"></aside>
+  </aside>
 </div>
 </div>
 

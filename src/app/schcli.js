@@ -30,34 +30,11 @@ const SCLI_CMDS=new Set(['guide','help','?','status','pages','page','parts','pin
 /* ---- panel ---- */
 function scSay(k,t){const e={k,t,id:++SCLI.seq};SCLI.log.push(e);if(SCLI.log.length>400)SCLI.log.shift();scPaint(e);return e;}
 function scSet(e,t){e.t=t;scPaint(e,true);}
-function scPaint(e,upd){const L=$('#scLog');if(!L)return;
-  if(upd){const el=L.querySelector(`[data-id="${e.id}"]`);if(el){el.textContent=e.t;L.scrollTop=L.scrollHeight;return;}}
-  const d=document.createElement('div');d.className='cl-'+e.k;d.dataset.id=e.id;d.textContent=(e.k==='cmd'?'› ':'')+e.t;L.appendChild(d);while(L.children.length>400)L.firstChild.remove();L.scrollTop=L.scrollHeight;}
-function scPanel(){
-  let el=$('#schCli');if(el)return el;
-  el=document.createElement('section');el.id='schCli';el.className='pe-cli sch-cli';el.hidden=true;el.setAttribute('aria-label','회로도 CLI');
-  el.innerHTML=`<div class="cli-h"><b>회로도 CLI</b>${aimControls()}
-    <span class="cli-sp"></span><button type="button" class="pill vbtn" id="scStop" hidden>중지</button><button type="button" class="pill vbtn" id="scX" title="닫기 (\`)">닫기</button></div>
-    <div class="cli-chips" role="toolbar" aria-label="빠른 명령">${SC_CHIPS.map(([l,c,g],i)=>`<button type="button" class="pill vbtn" data-chip="${i}" title="결정론: ${esc(c)}
-AI: ${esc(g)}">${l}</button>`).join('')}</div>
-    <div class="cli-log" id="scLog" role="log" aria-live="polite"></div>
-    <form class="cli-in" id="scForm" autocomplete="off"><span aria-hidden="true">›</span><input id="scIn" spellcheck="false" placeholder="예: pins U1 --free · add C 100nF --pins +3V3,GND --near U1 · U4 전원 핀에 디커플링 캡 달아줘" aria-label="회로도 명령 입력"><button class="btn primary sm" id="scRun">실행</button></form>`;
-  $('#schOv').appendChild(el);
-  el.querySelector('#scForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#scIn');const v=i.value.trim();if(!v||SCLI.busy)return;i.value='';SCLI.hist.push(v);SCLI.hi=SCLI.hist.length;scExec(v);});
-  el.querySelector('#scIn').addEventListener('keydown',e=>{const i=e.target;
-    if(e.key==='ArrowUp'){if(SCLI.hi>0){SCLI.hi--;i.value=SCLI.hist[SCLI.hi]||'';}e.preventDefault();}
-    else if(e.key==='ArrowDown'){if(SCLI.hi<SCLI.hist.length){SCLI.hi++;i.value=SCLI.hist[SCLI.hi]||'';}e.preventDefault();}
-    else if(e.key==='Tab'){const w=i.value.trim();const m=[...SCLI_CMDS].filter(n=>n.length>2&&n.startsWith(w));if(w&&m.length){i.value=m[0]+' ';e.preventDefault();}}
-    else if(e.key==='Escape')i.blur();
-    e.stopPropagation();});
-  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='scX')scToggle(false);else if(b.id==='scStop'){SCLI.stopReq=true;if(SCLI.abort)SCLI.abort.abort();}else if(b.dataset.chip&&!SCLI.busy){const[,c,g]=SC_CHIPS[+b.dataset.chip];if(AIM.mode==='ai')scGoal(g);else scExec(c);}});
-  el.addEventListener('pointerdown',e=>e.stopPropagation());el.addEventListener('wheel',e=>e.stopPropagation());
-  scSay('out','회로도 명령을 입력하거나 하고 싶은 일을 문장으로 적으세요. help로 명령 목록을 봅니다.');
-  aimBind(el);cliAiProbe().then(aimPaint);return el;
-}
+function scPaint(e,upd){copPaint('sch',e,upd);}
+function scPanel(){return copEnsure();}
 
-function scToggle(on){if(S.sch==='off')return;if(!SE.on)seBegin();const el=scPanel();SCLI.open=on==null?!SCLI.open:on;el.hidden=!SCLI.open;seBar();if(SCLI.open)setTimeout(()=>$('#scIn')&&$('#scIn').focus(),20);}
-function scBusy(b){SCLI.busy=b;const r=$('#scRun'),s=$('#scStop'),i=$('#scIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){SCLI.stopReq=false;SCLI.abort=null;setTimeout(()=>i&&SCLI.open&&i.focus(),10);}}
+function scToggle(on){if(on===false)return;copFocus('sch');}
+function scBusy(b){SCLI.busy=b;copBusyPaint();const r=$('#scRun'),s=$('#scStop'),i=$('#scIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){SCLI.stopReq=false;SCLI.abort=null;setTimeout(()=>i&&SCLI.open&&i.focus(),10);}}
 
 /* ---- model helpers ---- */
 const scIsGnd=n=>/^(GND|AGND|DGND|PGND|VSS|GNDA|GNDD|EARTH|0V)$/i.test(String(n||''));
@@ -207,7 +184,7 @@ async function scRun(line,by){
     case'export':await seExport();return'.kicad_sch zip을 내려받습니다.';
     case'undo':if(!SE.undo.length)return'되돌릴 것이 없습니다.';seAction('undo');renderSchOv();return'실행 취소했습니다.';
     case'redo':if(!SE.redo.length)return'다시 실행할 것이 없습니다.';seAction('redo');renderSchOv();return'다시 실행했습니다.';
-    case'clear':{const L=$('#scLog');if(L)L.innerHTML='';SCLI.log=[];return'';}
+    case'clear':{copClear('sch');SCLI.log=[];return'';}
     case'history':return SCLI.hist.slice(-20).join('\n');
     case'guide':{const r=guideRun(a,'sch',{by});if(typeof r==='string')return r;const useAI=by!=='ai'&&(a.ai||(AIM.mode==='ai'&&!a.det));const txt=guideText(r,useAI?'ai':'det');
       if(useAI){scSay('ok',txt);const ok=await scAgent(GUIDE_AI+`\n\n점검 결과:\n${txt}\n\n사용자 요청: 가이드라인 점검 결과를 검토해줘`,'agent');if(!ok)scSay('err','Claude를 쓸 수 없어 결정론 결과만 표시했습니다.');return'';}return txt;}
@@ -247,7 +224,7 @@ Notes: two-pin parts are R, C, CP (electrolytic), L, FB (ferrite bead), D, LED; 
 async function scAgent(prompt,kind){
   return aiAgent({prompt,kind,ro:c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase();return['help','?','status','pages','parts','pins','nets','net','find','erc','diff','history'].includes(f)||(f==='guide'&&(!t[1]||/^(check|list|show)$/i.test(t[1])));},roList:'status, pages, parts, pins, nets, net, find, erc, diff, guide check',toolName:'run_sch',toolDesc:'Run one schematic console command (see the command list) and return its text output.',example:'"pins U4 --free" or "add C 100nF --pins +3V3,GND --near U4"',
     run:c=>scRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!SCLI_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='regen'&&!SCLI.allowRegen)return'not allowed: regen (the user did not ask to regenerate)';return'';},
-    say:scSay,set:scSet,drop:e=>{const el=$('#scLog')&&$('#scLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();SCLI.log=SCLI.log.filter(x=>x!==e);},
+    say:scSay,set:scSet,drop:e=>{copDrop(e);SCLI.log=SCLI.log.filter(x=>x!==e);},
     setAbort:c=>{SCLI.abort=c;},stopped:()=>SCLI.stopReq,max:12});}
 async function scAI(req){
   if(!req.trim())return'요청을 적어 주세요. 예: ai U4 전원 핀에 100nF 디커플링 캡을 달아줘';
@@ -258,5 +235,4 @@ async function scAI(req){
   return'';
 }
 async function scGoal(g){if(!BD)return;scPanel();scSay('cmd',g+'   (AI 모드)');scBusy(true);try{await scAI(g);}catch(e){scSay('err',e.message||String(e));}scBusy(false);}
-// ` toggles the schematic console while the schematic fills the view
-document.addEventListener('keydown',e=>{if(e.key!=='`'||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target.matches('input,select,textarea'))return;if(!BD||S.sch==='off'||S.view!=='sch')return;e.preventDefault();e.stopImmediatePropagation();scToggle();},true);
+

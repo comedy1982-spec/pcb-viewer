@@ -39,7 +39,7 @@ function hsisOnBoard(){const k=hsisSampleKey();if(!HS.H||(HS.sample&&HS.sample!=
 function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')renderHSIS();else if(typeof POPS!=='undefined')POPS.forEach(C=>{if(C.hv)C.draw();});}
 function setWorkspace(w){
   const prev=HS.ws;if(prev==='cad'&&w!=='cad')cadLeave();
-  HS.ws=w;document.querySelectorAll('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
+  HS.ws=w;$$('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
   $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
   if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(w==='cad'){cadEnter();return;}
@@ -47,7 +47,7 @@ function setWorkspace(w){
   if(w==='hsis'){if(!HS.H)hsisLoadSample();renderHSIS();}
   else setTimeout(()=>{if(S.view==='3d')resize3D();else{measure();paint2D();}refresh(false);},0);
 }
-document.querySelectorAll('[data-ws]').forEach(b=>b.addEventListener('click',()=>setWorkspace(b.dataset.ws)));
+$$('[data-ws]').forEach(b=>b.addEventListener('click',()=>setWorkspace(b.dataset.ws)));
 
 /* ---------- data helpers ---------- */
 const itemById=id=>HS.H.items.find(i=>i.id===id);
@@ -85,7 +85,7 @@ function renderHSIS(){
       <div class="catchips" role="group" aria-label="분류 필터">${cats.filter(k=>HS.H.items.some(i=>i._cat===k)).map(k=>`<button data-cat="${esc(k)}" aria-pressed="${HS.cats.size?HS.cats.has(k):true}"><i style="background:${catColor(k)}"></i>${esc(k)}</button>`).join('')}</div>
     </div>`;
   const nErr=HS.res.results.filter(r=>r.sev==='err').length,nWarn=HS.res.results.filter(r=>r.sev==='warn').length;
-  document.querySelectorAll('[data-htab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.htab===HS.tab?'true':'false'));
+  $$('[data-htab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.htab===HS.tab?'true':'false'));
   $('#htab-chk').innerHTML=`검사 결과 <span class="n">${nErr+nWarn}</span>`;
   const body=$('#hsBody');$('#hsisWs').classList.toggle('hswide',HS.tab==='rec'||HS.tab==='mcal'||HS.tab==='tc');
   if(HS.tab==='table')body.innerHTML=tableHTML();else if(HS.tab==='pins')body.innerHTML=pinmapHTML();else if(HS.tab==='trace')body.innerHTML=traceHTML();else if(HS.tab==='rec')body.innerHTML=recHTML();else if(HS.tab==='mcal')body.innerHTML=mcalHTML();else if(HS.tab==='tc')body.innerHTML=tcHTML();else body.innerHTML=checksHTML();
@@ -218,7 +218,7 @@ function bindHsBody(B){
     try{navigator.clipboard.writeText(csv).then(done,()=>fallbackCopy(csv,done));}catch(e){fallbackCopy(csv,done);}});
 }
 function fallbackCopy(text,done){const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}t.remove();if(ok)done();else toast('복사하지 못했습니다. 브라우저가 클립보드 접근을 막았습니다.');}
-document.querySelectorAll('[data-htab]').forEach(b=>b.addEventListener('click',()=>{HS.tab=b.dataset.htab;renderHSIS();}));
+$$('[data-htab]').forEach(b=>b.addEventListener('click',()=>{HS.tab=b.dataset.htab;renderHSIS();}));
 
 /* ---------- import ---------- */
 async function hsisFiles(files){

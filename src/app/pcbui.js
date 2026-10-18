@@ -114,7 +114,7 @@ function peBar(){
     <button class="pill vbtn" id="peSave" title="KiCad 프로젝트(.kicad_pcb + 회로도)로 저장">KiCad로 저장</button></div>
     <div class="setools"><button class="pill vbtn" id="peSize" title="보드 가로·세로·모서리 반지름">보드 ${(Math.round(BD.W*10)/10)} × ${(Math.round(BD.H*10)/10)} mm</button>
     <button class="pill vbtn" id="peReset" title="배선을 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치">회로도로 리셋·자동 배치</button>
-    <button class="pill vbtn${typeof CLI!=='undefined'&&CLI.open?' on':''}" id="peCliBtn" title="배치 전략·자동 배선 명령 콘솔 (\`)">CLI<kbd>\`</kbd></button></div>
+    <button class="pill vbtn" id="peCliBtn" title="오른쪽 설계 도우미에서 명령·질문 (\`)">도우미<kbd>\`</kbd></button></div>
     <span class="pill hint2" id="peStat"></span>`;
   peStat();
 }
