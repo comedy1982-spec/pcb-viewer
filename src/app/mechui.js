@@ -224,6 +224,7 @@ async function cadExec(line){
     const first=(TEXT2CAD.tok(line)[0]||'').toLowerCase();
     if(TEXT2CAD.CMDS.has(first)){const out=await cadRunCmd(line);if(out)cadSay('ok',out);}
     else{if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample){await cadAI(line);cadBusy(false);return;}cadSay('out','Claude를 쓸 수 없어 규칙으로 해석합니다.');}
+      if(await aimDetQuestion(line,cadSay,()=>cadRunCmd('status'))){cadBusy(false);return;}
       const cmds=TEXT2CAD.parse(line);if(!cmds.length)cadSay('err','문장을 명령으로 바꾸지 못했습니다. 예: "오른쪽 벽에 지름 8 구멍", "장착 탭 4개 M5" · help로 명령 목록을 보세요.');
       else{cadSay('out','해석: '+cmds.join(' → '));for(const c of cmds){cadSay('cmd',c);try{const o=await cadRunCmd(c);if(o)cadSay('ok',o);}catch(e){cadSay('err',e.message||String(e));}if(CADC.stopReq)break;}}}
   }catch(e){console.error(e);cadSay('err',e&&e.message?e.message:String(e));}
@@ -237,7 +238,7 @@ async function cadAI(req){
   if(!req.trim())return'요청을 적어 주세요. 예: ai 오른쪽 벽에 케이블 글랜드 두 개 넣고 장착 탭 달아줘';
   const R=mechRun(),H=mechCfg();const cmds=TEXT2CAD.HELP.filter(x=>!/^ai /.test(x[0])&&!/^export/.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
   const state=`${HOUSING.text(R)}\n형상 목록: ${H.cad.feats.map(f=>HOUSING.featLabel(f)).join(' · ')||'없음'}\n지정값: ${JSON.stringify(H.cad.over)}\n벽 길이: S/N ${R.d.geo.Lo.toFixed(1)} mm, W/E ${R.d.geo.Wo.toFixed(1)} mm · 분할면 z ${R.d.geo.zSplit.toFixed(1)} · 커버 안쪽 z ${R.d.geo.zLid.toFixed(1)} · 바닥 z ${R.d.geo.zFloor.toFixed(1)}`;
-  const ok=await aiAgent({prompt:CAD_SYS.replace('${CMDS}',cmds)+`\n\n현재 설계:\n${state}\n\n사용자 요청: ${req}`,toolName:'run_cad',toolDesc:'Run one housing CAD console command (see the list) and return its text output.',example:'"gland E M16 --z 9" or "tabs 4 --screw M5"',
+  const ok=await aiAgent({ro:c=>['help','status','check','compare','list','feats'].includes((TEXT2CAD.tok(c)[0]||'').toLowerCase()),roList:'status, check, compare, feats',prompt:CAD_SYS.replace('${CMDS}',cmds)+`\n\n현재 설계:\n${state}\n\n사용자 요청: ${req}`,toolName:'run_cad',toolDesc:'Run one housing CAD console command (see the list) and return its text output.',example:'"gland E M16 --z 9" or "tabs 4 --screw M5"',
     run:c=>cadRunCmd(c,'ai'),allowed:c=>{const f=(TEXT2CAD.tok(c)[0]||'').toLowerCase();return!TEXT2CAD.CMDS.has(f)||f==='ai'||f==='export'||f==='clear'?'unknown or not allowed: '+f:'';},
     say:cadSay,set:cadSetE,drop:e=>{const el=$('#cadLog')&&$('#cadLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();CADC.log=CADC.log.filter(x=>x!==e);},
     setAbort:c=>{CADC.abort=c;},stopped:()=>CADC.stopReq,max:12});

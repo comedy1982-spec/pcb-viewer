@@ -74,7 +74,7 @@ function checkPcb(B,key,X){
       if(!eps.length)return{status:'na',ev:'노출(방열) 패드가 있는 패키지 없음'};
       const sc=eps.reduce((s,e)=>s+Math.min(1,e.n/e.need),0)/eps.length;
       return{status:sc>=0.999?'pass':sc>=0.5?'partial':'fail',score:sc,ev:eps.map(e=>`${e.ref} 방열 비아 ${e.n}/${e.full}(최소 ${e.need})`).join(' · ')+' · 솔더 페이스트 분할은 보드 데이터에 없어 미확인',fix:sc<1?'노출 패드 안에 0.3 mm 비아를 1.0–1.2 mm 피치로 배열 (route --strategy thermal은 자동으로 넣음)':'',manualNote:'메탈마스크 40~60% 분할 개구율은 스텐실 설계에서 확인'};}
-    case'rt_return_path':{if(!X.pour)return{status:'fail',score:0,ev:'GND 동박면(기준면)이 없음',fix:'하단 전면 GND 동박면을 깔고 신호는 상단에 배선'};
+    case'rt_return_path':{if(X.plane)return{status:'pass',score:1,ev:`${X.plane.n}층 스택업 · 내층 ${X.plane.net} 플레인(L${X.plane.idx}) — 신호층마다 인접 기준면이 있어 귀환 경로가 끊기지 않음`};if(!X.pour)return{status:'fail',score:0,ev:'GND 동박면(기준면)이 없음',fix:'하단 전면 GND 동박면을 깔고 신호는 상단에 배선'};
       const n=R?R.slots.length:0;return{status:n===0?'pass':n<=5?'partial':'fail',score:n===0?1:n<=5?0.5:0.1,ev:`신호선이 기준면을 끊는 반대층 트랙을 건너는 곳 ${n}곳${n?' ('+[...new Set(R.slots.map(s=>s.net))].slice(0,4).join(', ')+')':''}`,fix:n?'반대층(GND면 층) 트랙을 짧게 하거나 신호를 우회, 레이어 변경 지점 옆 GND 스티칭 비아':''};}
     case'pl_sw_loop':{if(!R||!R.ps.drivers.length)return{status:'na',ev:'스위칭 파워 스테이지(드라이버·하프브리지) 없음'};
       if(!R.ps.loops.length)return{status:'fail',score:0,ev:`${R.ps.vmNet}–GND DC-Link 캡 없음`,fix:'VM 핀 옆에 0.1 µF MLCC + 벌크 캡'};
@@ -87,7 +87,7 @@ function checkPcb(B,key,X){
       if(!d.length)return ics.length?{status:'fail',score:0,ev:'IC 전원 핀용 소용량 디커플링 캡이 없음',fix:'IC 전원 핀마다 100 nF'}:{status:'na',ev:'IC 없음'};
       const ok=d.filter(x=>x.d<=3).length;const sc=ok/d.length;const far=d.filter(x=>x.d>3).sort((a,b)=>b.d-a.d);
       return{status:sc>=0.999?'pass':sc>=0.5?'partial':'fail',score:sc,ev:`캡–전원 핀 3 mm 이내 ${ok}/${d.length} · 평균 ${M.decapAvg.toFixed(1)} mm${far.length?' · 먼 캡 '+far.slice(0,4).map(x=>`${x.ref}→${x.to} ${x.d.toFixed(1)} mm`).join(', '):''}`,fix:far.length?'먼 캡을 해당 IC 전원 핀 옆으로 (place --strategy noise 또는 move)':''};}
-    case'pw_solid_gnd':{if(!X.pour)return{status:'fail',score:0,ev:'GND 동박면 없음',fix:'하단 전면 GND 동박면'};
+    case'pw_solid_gnd':{if(X.plane)return{status:'pass',score:1,ev:`내층 ${X.plane.net} 플레인 L${X.plane.idx} (${PCB.cuName(X.plane.layer)}) — 트랙 없는 전면 동박`};if(!X.pour)return{status:'fail',score:0,ev:'GND 동박면 없음',fix:'하단 전면 GND 동박면'};
       const L=X.pour.layer;let cut=0;segsOf(B,L).forEach(s=>{if(s.net&&!isGnd(s.net))cut+=len(s);});const ratio=cut/(B.W+B.H);const slots=R?R.slots.length:0;
       const split=Object.keys(B.nets).filter(n=>/^(AGND|DGND|PGND|GNDA|GNDD)$/i.test(n));
       const sc=ratio<0.5&&!slots?1:ratio<2?0.5:0.15;
@@ -100,16 +100,16 @@ function checkPcb(B,key,X){
     case'rt_diff_pair':{const pairs=[];const base={};Object.keys(B.nets).forEach(n=>{const m=n.match(/^(.*?)(_?D[PM]|_?[PN]|[+-]|H|L)$/i);if(!m||!/CAN|USB|ETH|LVDS|_D|RS485|[+-]$/i.test(n))return;const k=m[1]+'|'+(/^(_?DP|_?P|\+|H)$/i.test(m[2])?'P':'N');base[k]=n;});
       Object.keys(base).forEach(k=>{if(!k.endsWith('|P'))return;const nk=k.replace(/\|P$/,'|N');if(base[nk])pairs.push([base[k],base[nk]]);});
       if(!pairs.length)return{status:'na',ev:'차동 쌍(CAN/USB/Ethernet) 없음'};
-      const L=n=>{const N=B.nets[n];return N?N.len.T+N.len.B:0;};const rows=pairs.map(([p,n])=>{const a=L(p),b=L(n);const mis=Math.abs(a-b),r=Math.max(a,b)?mis/Math.max(a,b):0;return{p,n,a,b,mis,ok:a>0&&b>0&&(mis<=2||r<=0.1)};});
+      const L=n=>{const N=B.nets[n];return N?Object.values(N.len).reduce((a,v)=>a+(v||0),0):0;};const rows=pairs.map(([p,n])=>{const a=L(p),b=L(n);const mis=Math.abs(a-b),r=Math.max(a,b)?mis/Math.max(a,b):0;return{p,n,a,b,mis,ok:a>0&&b>0&&(mis<=2||r<=0.1)};});
       const sc=rows.filter(r=>r.ok).length/rows.length;
       return{status:sc>=0.999?'pass':sc>0?'partial':'fail',score:sc,ev:rows.map(r=>`${r.p}/${r.n} ${r.a.toFixed(1)}/${r.b.toFixed(1)} mm (차 ${r.mis.toFixed(1)})${r.a&&r.b?'':' 미배선'}`).join(' · ')+' · 차동 임피던스는 SI 시뮬레이션에서 확인',fix:sc<1?'두 선을 같은 층에서 나란히, 길이 차 10% 이내로 (트롬본/우회)':'',manualNote:'CMC·종단 대칭 배치는 육안 확인'};}
     case'pw_via_amp':{const fine=[];B.comps.forEach(c=>c.pads.forEach(p=>{if(Math.min(p.w,p.h)<0.36)fine.push(p);}));const nearFine=q=>fine.some(p=>Math.hypot(p.x-q[0],p.y-q[1])<1.2);
-      let wmin=1e9,thin=[];const lay={};['T','B'].forEach(L=>segsOf(B,L).forEach(s=>{if(!s.net||cls(B,s.net)!=='전원'||/MON|SENSE|SNS|ADC|REF/i.test(s.net))return;(lay[s.net]=lay[s.net]||new Set()).add(L);if(nearFine(s.a)||nearFine(s.b))return;if(s.w<wmin)wmin=s.w;if(s.w<0.4&&!thin.includes(s.net))thin.push(s.net);}));
+      let wmin=1e9,thin=[];const lay={};PCB.cuKeys(B).forEach(L=>segsOf(B,L).forEach(s=>{if(!s.net||cls(B,s.net)!=='전원'||/MON|SENSE|SNS|ADC|REF/i.test(s.net))return;(lay[s.net]=lay[s.net]||new Set()).add(L);if(nearFine(s.a)||nearFine(s.b))return;if(s.w<wmin)wmin=s.w;if(s.w<0.4&&!thin.includes(s.net))thin.push(s.net);}));
       if(wmin===1e9)return{status:'na',ev:'배선된 전원 트랙 없음 (동박면 전원만 있거나 미배선)'};
       const single=Object.keys(lay).filter(n=>lay[n].size>1&&(B.nets[n]?B.nets[n].vias.length:0)<2);
       const sc=(wmin>=0.4?1:wmin>=0.3?0.6:0.2)*(single.length?0.8:1);
       return{status:sc>=0.999?'pass':sc>=0.5?'partial':'fail',score:sc,ev:`전원 트랙 최소 폭 ${wmin.toFixed(2)} mm (미세 피치 핀 근처 넥다운 제외)${thin.length?' · 0.4 mm 미만: '+thin.slice(0,5).join(', '):''}${single.length?' · 층 전환 비아 1개뿐: '+single.join(', '):''}`,fix:sc<1?'전원 폭을 넓혀 다시 배선 (route --power 0.5), 층 전환은 비아 2개 이상 (전류는 IPC-2152 표로 확인)':'',manualNote:'실제 전류값 기준 폭은 시뮬레이션 → 전압 강하·열로 확인'};}
-    case'rt_3w':{const viol=[];['T','B'].forEach(L=>{const ss=segsOf(B,L).filter(s=>s.net&&cls(B,s.net)==='신호'&&len(s)>1.5);
+    case'rt_3w':{const viol=[];PCB.cuKeys(B).forEach(L=>{const ss=segsOf(B,L).filter(s=>s.net&&cls(B,s.net)==='신호'&&len(s)>1.5);
         for(let i=0;i<ss.length;i++)for(let j=i+1;j<ss.length;j++){const a=ss[i],b=ss[j];if(a.net===b.net)continue;
           const ux=(a.b[0]-a.a[0])/len(a),uy=(a.b[1]-a.a[1])/len(a),vx=(b.b[0]-b.a[0])/len(b),vy=(b.b[1]-b.a[1])/len(b);if(Math.abs(ux*vy-uy*vx)>0.17)continue;
           const d=Math.abs((b.a[0]-a.a[0])*uy-(b.a[1]-a.a[1])*ux);const w=Math.max(a.w,b.w);const t0=(b.a[0]-a.a[0])*ux+(b.a[1]-a.a[1])*uy,t1=(b.b[0]-a.a[0])*ux+(b.b[1]-a.a[1])*uy;const ov=Math.min(len(a),Math.max(t0,t1))-Math.max(0,Math.min(t0,t1));
@@ -117,7 +117,7 @@ function checkPcb(B,key,X){
       const xt=R&&R.xt[0];const bad=xt&&xt.ratio>=1;const n=viol.length;
       const sc=(n===0?1:n<=3?0.6:0.2)*(bad?0.5:1);
       return{status:sc>=0.999?'pass':sc>=0.5?'partial':'fail',score:sc,ev:`중심 간격 3W 미만으로 2 mm 넘게 나란한 신호 쌍 ${n}개${n?' ('+viol.slice(0,4).join(', ')+')':''}${xt?` · 최악 누화 ${xt.aggr}→${xt.vict} ${(xt.V*1e3).toFixed(1)} mV (허용의 ${(xt.ratio*100).toFixed(0)}%)`:''}`,fix:sc<1?'평행 구간을 떼어 놓거나 사이에 GND 가드, 스위칭 노드는 5W':''};}
-    case'rt_45deg':{let right=0,acute=0;['T','B'].forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(p.t!=='path')return;for(let i=2;i<p.pts.length;i++){const a=p.pts[i-2],b=p.pts[i-1],c=p.pts[i];const u=[b[0]-a[0],b[1]-a[1]],v=[c[0]-b[0],c[1]-b[1]];const lu=Math.hypot(...u),lv=Math.hypot(...v);if(lu<1e-6||lv<1e-6)continue;
+    case'rt_45deg':{let right=0,acute=0;PCB.cuKeys(B).forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(p.t!=='path')return;for(let i=2;i<p.pts.length;i++){const a=p.pts[i-2],b=p.pts[i-1],c=p.pts[i];const u=[b[0]-a[0],b[1]-a[1]],v=[c[0]-b[0],c[1]-b[1]];const lu=Math.hypot(...u),lv=Math.hypot(...v);if(lu<1e-6||lv<1e-6)continue;
         const cos=(u[0]*v[0]+u[1]*v[1])/(lu*lv);if(cos<-0.05)acute++;else if(cos<0.05)right++;}}));
       const edge=X.drc.filter(d=>d.code==='edge').length,clr=X.drc.filter(d=>d.code==='clearance'||d.code==='short').length;const n=right+acute*2+edge*3+clr*3;
       return{status:n===0?'pass':n<=6?'partial':'fail',score:n===0?1:n<=6?0.6:0.2,ev:`직각 꺾임 ${right} · 예각 ${acute} · 가장자리 ${edge} · 간격/단락 ${clr}`,fix:n?'직각 코너를 45°로(배선 도구 / 키), DRC 위반 해소':''};}
@@ -162,6 +162,7 @@ function evaluate(B,opts){
   if(typeof PCBEDIT!=='undefined')PCBEDIT.prepare(B);
   const X={};const lazy=(k,f)=>Object.defineProperty(X,k,{get(){const v=f();Object.defineProperty(X,k,{value:v});return v;},configurable:true});
   lazy('emc',()=>{try{return EMC.analyze(B,{});}catch(e){return null;}});lazy('met',()=>AUTOPLACE.metrics(B,{}));lazy('drc',()=>PCBEDIT.drc(B));
+  lazy('plane',()=>{const st=PCB.stackOf(B);const i=st.findIndex(x=>x.role==='gnd'&&x.net&&x.k!=='T'&&x.k!=='B');return i<0?null:{layer:st[i].k,net:st[i].net,idx:i+1,n:st.length};});
   lazy('pour',()=>{for(const L of['B','T']){const p=B.layers[L+'.cu'].find(q=>q.t==='pour'&&isGnd(q.net));if(p)return{layer:L,net:p.net};}return null;});
   X.sheets=opts.sheets||null;lazy('parts',()=>partsOf(B,X.sheets));lazy('nets',()=>netsOf(X.parts));
   const rules=RULES.filter(r=>scope==='all'||r.scope===scope);

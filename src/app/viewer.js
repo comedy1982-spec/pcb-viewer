@@ -16,7 +16,7 @@ function dim(hex,k){const n=parseInt(hex.slice(1),16);const r=(n>>16&255)*k|0,g=
 
 /* ---------- state ---------- */
 let BD=null;
-const S={view:'3d',mask:'green',layers:{cuT:true,cuB:true,silk:true,mask:true,drill:true,body2d:false,body3d:true,ghost:false},selRef:null,hlNet:null,explode:0,tab:'sel',q:''};
+const S={view:'3d',mask:'green',layers:{cuT:true,cuB:true,silk:true,mask:true,drill:true,body2d:false,body3d:true,ghost:false,inner:true},selRef:null,hlNet:null,explode:0,tab:'sel',q:''};
 
 /* ---------- 2D primitives ---------- */
 function rr(ctx,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
@@ -94,6 +94,9 @@ function drawSide(ctx,side,o){
     ctx.fillStyle=cu;BD.vias.forEach(v=>circ(ctx,v.x,v.y,v.d/2));
     drawPrims(ctx,cuL,p=>p.t!=='pad'?null:p.clear?base:p.via?cu:fin);
   }
+  // inner signal layers (multilayer boards): seen through the board, one colour per layer
+  if(L.inner&&!o.texture&&(BD.copperLayers||2)>2){const IC=['#4fc38a','#c46bd6','#e0b341','#58b6e0','#e07a58','#9aa0ff'];let j=0;
+    ctx.save();ctx.globalAlpha=0.7;PCB.stackOf(BD).forEach(x=>{if(x.k==='T'||x.k==='B'||x.role!=='sig')return;const col=IC[j++%IC.length];drawPrims(ctx,BD.layers[x.k+'.cu'],p=>(p.t==='seg'||p.t==='path')&&!p.clear?col:null);});ctx.restore();}
   if(L.silk)drawPrims(ctx,BD.layers[side+'.silk'],p=>p.clear?base:M.silk);
   drawOverlay(ctx,side);
   if(S.hlNet){
@@ -511,7 +514,7 @@ function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Ma
 document.querySelectorAll('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 $('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
-['cuT','cuB','silk','mask','drill','ghost'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
+['cuT','cuB','silk','mask','drill','ghost','inner'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
 $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.target.checked;else S.layers.body2d=e.target.checked;refresh(false);});
 $('#explode').addEventListener('input',e=>setExplode(e.target.value/100));
 (function(){const box=$('#masks');Object.entries(MASKS).forEach(([k,m])=>{const b=document.createElement('button');b.className='mk';b.style.background=m.mask;b.title=m.name;b.setAttribute('aria-label','솔더마스크 '+m.name);b.setAttribute('aria-pressed',k===S.mask?'true':'false');
@@ -559,7 +562,7 @@ function netCard(n){
   const pads=N.pads.slice(0,300).map(p=>p.ref?`<button class="lnk" data-ref="${esc(p.ref)}">${esc(p.ref)}${p.n!=null?'.'+esc(p.n):''}</button>`:'').join(' ');
   return`<div class="card"><div class="card-h"><span class="netname">${esc(n)}</span><button class="x" data-clear="net" aria-label="넷 강조 해제">✕</button></div>
   <p class="desc" style="margin-bottom:8px">${BD.netClass(n)} 넷 · 패드 ${N.pads.length}개</p>
-  <dl class="kv"><dt>상단 트랙</dt><dd>${fmt(N.len.T,1)} mm</dd><dt>하단 트랙</dt><dd>${fmt(N.len.B,1)} mm</dd><dt>비아</dt><dd>${N.vias.length}개</dd>${N.zones?`<dt>동박면</dt><dd>${N.zones}개</dd>`:''}</dl>
+  <dl class="kv"><dt>상단 트랙</dt><dd>${fmt(N.len.T,1)} mm</dd><dt>하단 트랙</dt><dd>${fmt(N.len.B,1)} mm</dd>${Object.keys(N.len).filter(k=>k!=='T'&&k!=='B'&&N.len[k]>0).map(k=>`<dt>${k} 트랙</dt><dd>${fmt(N.len[k],1)} mm</dd>`).join('')}<dt>비아</dt><dd>${N.vias.length}개</dd>${N.zones?`<dt>동박면</dt><dd>${N.zones}개</dd>`:''}</dl>
   ${pads?`<div class="sub">연결된 핀</div><div style="line-height:1.9">${pads}${N.pads.length>300?' …':''}</div>`:''}</div>`;
 }
 function renderPane(){
@@ -593,11 +596,12 @@ document.addEventListener('keydown',e=>{
 });
 function header(){
   $('#bName').textContent=BD.name;$('#bTag').textContent=BD.source==='예제'?'예제 보드':BD.source;
-  const n=BD.comps.length;$('#bSub').textContent=`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개`;
+  const n=BD.comps.length;$('#bSub').textContent=`${fmt(BD.W,1)} × ${fmt(BD.H,1)} mm · ${BD.copperLayers||2}층 · FR-4 ${fmt(BD.t,1)} mm · 부품 ${n}개${BD.pcbPending?' · PCB 미배치':''}`;
+  const ir=$('#ly-inner-row');if(ir)ir.hidden=!((BD.copperLayers||2)>2&&PCB.cuKeys(BD).length>2);
   document.title=BD.name+' · AllinOneDesign';
 }
 function stats(){
-  let tl=0,pads=0;Object.values(BD.nets).forEach(N=>{tl+=N.len.T+N.len.B;});
+  let tl=0,pads=0;Object.values(BD.nets).forEach(N=>{Object.values(N.len).forEach(v=>{tl+=v||0;});});
   const prs=new Set();['T.cu','B.cu'].forEach(L=>BD.layers[L].forEach(p=>{if(p.t==='pad'&&!p.via)prs.add(p);}));pads=prs.size;
   $('#stats').innerHTML=`<dt>부품</dt><dd>${BD.comps.length}</dd><dt>상단 / 하단</dt><dd>${BD.comps.filter(c=>c.side==='T').length} / ${BD.comps.filter(c=>c.side==='B').length}</dd><dt>넷</dt><dd>${BD.netOrder.length}</dd><dt>패드</dt><dd>${pads}</dd><dt>비아</dt><dd>${BD.vias.length}</dd><dt>드릴</dt><dd>${BD.drills.length}</dd>${tl?`<dt>트랙 길이</dt><dd>${fmt(tl,0)} mm</dd>`:''}`;
   const src=$('#srcBox');

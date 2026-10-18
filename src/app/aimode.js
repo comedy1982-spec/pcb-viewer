@@ -2,31 +2,55 @@
    'det' (deterministic): commands and buttons run the built-in algorithms; sentences are read by simple rules.
    'ai': sentences, buttons and "guide check" go to Claude, which drives the same commands as a tool.
    Every Claude call reports the model tier that answered and an estimate of the tokens it read and wrote. */
-var AIM={mode:'det',tier:'default',calls:0,inTok:0,outTok:0,last:null};
-try{const v=JSON.parse(localStorage.getItem('pcbv.aimode')||'null');if(v){if(v.mode==='ai'||v.mode==='det')AIM.mode=v.mode;if(/^(quick|default|complex)$/.test(v.tier))AIM.tier=v.tier;}}catch(e){}
+var AIM={mode:'det',tier:'default',qa:'auto',calls:0,inTok:0,outTok:0,last:null};
+try{const v=JSON.parse(localStorage.getItem('pcbv.aimode')||'null');if(v){if(v.mode==='ai'||v.mode==='det')AIM.mode=v.mode;if(/^(quick|default|complex)$/.test(v.tier))AIM.tier=v.tier;if(/^(auto|qa|agent)$/.test(v.qa))AIM.qa=v.qa;}}catch(e){}
+/* AI conversation kind: 'qa' answers a question from the design state (read-only lookups only), 'agent' runs commands that change the design.
+   'auto' decides from the sentence: questions and review/explain requests → qa, instructions → agent. */
+const AIM_QA=[['auto','자동','질문이면 답만 하고, 지시면 실행'],['qa','질문','설계를 바꾸지 않고 답만 함 (조회 명령만 사용)'],['agent','작업','명령을 실행해 설계를 바꿈']];
+function aimIsQuestion(s){s=String(s||'').trim();if(!s)return false;
+  if(/(설명|알려|가르쳐|비교|분석|평가|검토|요약|추천)\s*(해\s*)?(줘|주세요|줄래|주라|봐)/.test(s))return true;
+  const act=/(해\s*줘|해\s*주세요|하세요|해라|하자|바꿔|변경해|만들어|추가해|삭제|지워|배치해|배선해|라우팅해|실행해|생성해|넣어|빼\s*줘|옮겨|늘려|줄여|키워|최소화해|최적화해|적용해|맞춰|그려|정해|설정해|붙여|달아)/.test(s);
+  const ask=/[?？]\s*$|(뭐|무엇|무슨|왜|어떻게|어때|어떤|얼마|몇\s|몇개|언제|어디|누가|인가요|인가|일까|나요|까요|는지|은지|차이|의미|가능해|가능한가|가능할까|맞아|맞나|있어\?|있나|없나|되나|될까|돼\?|좋을까|괜찮|why|what|how|which|is it|can it|does)/i.test(s);
+  return ask&&!act;}
+function aimKind(req,force){if(force)return force;if(AIM.qa!=='auto')return AIM.qa;return aimIsQuestion(req)?'qa':'agent';}
 const AIM_TIERS=[['quick','빠름','Haiku급'],['default','기본','Sonnet급'],['complex','고급','Opus급']];
 const aimTierLabel=t=>{const x=AIM_TIERS.find(q=>q[0]===t);return x?`${x[1]} (${x[2]})`:String(t||'?');};
-function aimSave(){try{localStorage.setItem('pcbv.aimode',JSON.stringify({mode:AIM.mode,tier:AIM.tier}));}catch(e){}}
+function aimSave(){try{localStorage.setItem('pcbv.aimode',JSON.stringify({mode:AIM.mode,tier:AIM.tier,qa:AIM.qa}));}catch(e){}}
 // rough token count: the page is not told the real numbers, so this is an estimate from the text sent and received
 function aimTok(s){s=String(s||'');let a=0,k=0,o=0;for(const ch of s){const c=ch.codePointAt(0);if(c<128)a++;else if((c>=0xAC00&&c<=0xD7A3)||(c>=0x3040&&c<=0x9FFF))k++;else o++;}return Math.round(a/3.8+k*1.1+o*0.6);}
 const AIM_OVERHEAD=450; // platform framing + tool schema per round (estimate)
 const aimFmt=n=>n>=10000?(n/1000).toFixed(1)+'k':n.toLocaleString();
 // header controls for a console: mode switch, model tier, running usage
 function aimControls(){return`<span class="aim" role="group" aria-label="실행 방식"><button type="button" class="aim-b" data-aim="det" title="내장 알고리즘으로 계산 (Claude 사용 안 함)">결정론</button><button type="button" class="aim-b" data-aim="ai" title="Claude가 명령을 골라 실행 (보는 사람의 Claude 사용량)">AI</button></span>
+  <select class="aim-q" aria-label="AI 대화 방식" title="자동: 질문이면 답만, 지시면 실행 · 질문(QnA): 설계를 바꾸지 않고 답함 · 작업(Agent): 명령을 실행">${AIM_QA.map(([k,l,d])=>`<option value="${k}" title="${d}">${l}</option>`).join('')}</select>
   <select class="aim-t" aria-label="AI 모델 등급" title="AI 모드에서 쓸 모델 등급">${AIM_TIERS.map(([k,l,m])=>`<option value="${k}">${l} · ${m}</option>`).join('')}</select>
   <span class="aim-u" title="이 페이지는 실제 토큰·크레딧 값을 받지 못해 보낸·받은 글자 수로 추정합니다. 사용량은 보는 사람의 Claude 플랜 한도에서 차감됩니다."></span>`;}
 function aimBind(root){root.querySelectorAll('[data-aim]').forEach(b=>b.addEventListener('click',()=>{AIM.mode=b.dataset.aim;aimSave();aimPaint();if(AIM.mode==='ai')cliAiProbe().then(aimPaint);}));
-  const t=root.querySelector('.aim-t');if(t)t.addEventListener('change',()=>{AIM.tier=t.value;aimSave();aimPaint();});aimPaint();}
+  const t=root.querySelector('.aim-t');if(t)t.addEventListener('change',()=>{AIM.tier=t.value;aimSave();aimPaint();});
+  const q=root.querySelector('.aim-q');if(q)q.addEventListener('change',()=>{AIM.qa=q.value;aimSave();aimPaint();});aimPaint();}
 function aimPaint(){document.querySelectorAll('.aim-b').forEach(b=>{b.classList.toggle('on',b.dataset.aim===AIM.mode);b.setAttribute('aria-pressed',b.dataset.aim===AIM.mode?'true':'false');});
   document.querySelectorAll('.aim-t').forEach(t=>{t.value=AIM.tier;t.hidden=AIM.mode!=='ai';});
+  document.querySelectorAll('.aim-q').forEach(t=>{t.value=AIM.qa;t.hidden=AIM.mode!=='ai';});
   document.querySelectorAll('.aim-u').forEach(u=>{u.textContent=AIM.calls?`AI ${AIM.calls}회 · 토큰(추정) 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)}`:(AIM.mode==='ai'?(CLI.sample===null?'AI 사용 불가 · 규칙으로 해석':CLI.sample?'AI 대기':'AI 확인 중…'):'');});
   document.querySelectorAll('.cli-in input').forEach(i=>{i.dataset.mode=AIM.mode;});}
+// a question typed while the consoles run deterministically: answer with the state instead of turning the sentence into commands
+async function aimDetQuestion(line,say,status){if(!aimIsQuestion(line))return false;
+  say('out','질문으로 보입니다. 결정론 모드는 명령만 실행하므로 설계를 바꾸지 않았습니다 — 답을 받으려면 AI 모드로 바꾸세요 (대화 방식: 자동 또는 질문). 지금 상태:');
+  try{const o=await status();if(o)say('ok',o);}catch(e){}return true;}
 /* one Claude run: the model calls `run` with console commands until it answers */
 async function aiAgent(o){
   // o: {prompt, toolName, toolDesc, example, run(cmd)→text, allowed(cmd)→error|'' , say(k,t)→entry, set(entry,t), drop(entry), setAbort(ctl), stopped()→bool, max}
+  // o.req: the user's sentence (defaults to the "사용자 요청:" line), o.ro(cmd)→true for read-only commands, o.kind forces 'qa' or 'agent'
   await cliAiProbe();if(!CLI.sample)return false;
-  const ans=o.say('ai','Claude가 생각하는 중…');const ctl=new AbortController();o.setAbort(ctl);
-  const U={tier:AIM.tier,applied:null,model:null,calls:0,rounds:1,inTok:0,outTok:0,t0:performance.now(),spent:true,note:''};
+  const req=o.req!=null?o.req:((String(o.prompt).match(/사용자 요청:\s*([\s\S]*)$/)||[])[1]||'');
+  const kind=o.ro?aimKind(req,o.kind):'agent';
+  if(kind==='qa'){const base=o.allowed;o.allowed=c=>{const e=base(c);if(e)return e;return o.ro(c)?'':'not allowed in question mode: this command changes the design. Answer the question instead and tell the user which command (or 작업 mode) would make the change.';};
+    o.prompt=`QUESTION MODE (질문/QnA): the user is asking a question or asking for an explanation/review, not for a change. Answer in Korean, directly and concretely, from the current design state given below and your engineering knowledge.
+You may call the tool ONLY for read-only lookups${o.roList?` (${o.roList})`:''} when you need numbers you do not have; never change the design. If the user would need a change, say which exact command(s) would do it (they can run them or switch the AI to 작업 mode). Keep the answer to the point (3-10 sentences, short bullet list if it helps). Do not invent numbers.
+
+`+o.prompt;o.max=Math.min(o.max||10,5);}
+  const ans=o.say('ai',kind==='qa'?'Claude가 답을 찾는 중… (질문 모드 · 설계 변경 없음)':'Claude가 생각하는 중…');const ctl=new AbortController();o.setAbort(ctl);
+  const U={tier:AIM.tier,applied:null,model:null,calls:0,rounds:1,inTok:0,outTok:0,t0:performance.now(),spent:true,note:'',kind};
   let ctx=aimTok(o.prompt)+AIM_OVERHEAD;U.inTok=ctx;
   const runOne=async c=>{const err=o.allowed(c);if(err)throw new Error(err);o.say('cmd',c+'   (Claude)');
     try{const out=await o.run(c);if(out)o.say('ok',out);return String(out||'done').slice(0,3500);}catch(e){o.say('err',e.message||String(e));throw e;}};
@@ -41,10 +65,13 @@ async function aiAgent(o){
       U.outTok+=aimTok(r.text);U.applied=r.modelTierApplied||null;U.model=r.modelApplied||null;if(r.truncated)U.note='답이 길이 한도에서 잘림';
       if(U.calls){o.drop(ans);o.say('ai',r.text||'(응답 없음)');}else o.set(ans,r.text||'(응답 없음)');
     }else{
+      if(kind==='qa'){const r=await CLI.sample(o.prompt,{signal:ctl.signal,modelTier:AIM.tier,onText:({text})=>o.set(ans,text)});U.outTok+=aimTok(r.text);U.applied=r.modelTierApplied||null;o.set(ans,r.text||'(응답 없음)');}
+      else{
       const p2=o.prompt+'\n\nReturn ONLY JSON: {"commands":["..."],"note":"Korean one-line plan"}';U.inTok=aimTok(p2)+AIM_OVERHEAD;
       const plan=await CLI.sample.json(p2,{signal:ctl.signal,cache:false,modelTier:AIM.tier});U.outTok+=aimTok(JSON.stringify(plan));
       const list=(plan&&Array.isArray(plan.commands)?plan.commands:[]).slice(0,o.max||8).map(String);o.set(ans,(plan&&plan.note?plan.note+'\n':'')+'실행: '+list.join(' → '));
       for(const c of list){try{await runOne(c);}catch(e){}if(o.stopped())break;}
+      }
     }
   }catch(e){
     if(e&&e.code==='cancelled'){o.set(ans,(e.text||'')+'\n(중지됨)');U.note='중지됨';}
@@ -55,7 +82,7 @@ async function aiAgent(o){
   }
   if(U.spent){AIM.calls++;AIM.inTok+=U.inTok;AIM.outTok+=U.outTok;AIM.last=U;
     const sec=((performance.now()-U.t0)/1000).toFixed(1);
-    o.say('use',`모델 ${aimTierLabel(U.applied||U.tier)}${U.model?' · '+U.model:''}${U.applied&&U.applied!==U.tier?` (요청 ${aimTierLabel(U.tier)} → 플랜에 맞춰 대체)`:''} · 라운드 ${U.rounds} · 명령 ${U.calls}개 · 토큰(추정) 입력 ~${aimFmt(U.inTok)} / 출력 ~${aimFmt(U.outTok)} · ${sec} s${U.note?' · '+U.note:''}\n누적 AI ${AIM.calls}회 · 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)} 토큰(추정) · 크레딧은 보는 사람의 Claude 플랜 사용량에서 차감 (페이지에서 정확한 값은 알 수 없음)`);aimPaint();}
+    o.say('use',`${U.kind==='qa'?'질문(QnA)':'작업(Agent)'} · 모델 ${aimTierLabel(U.applied||U.tier)}${U.model?' · '+U.model:''}${U.applied&&U.applied!==U.tier?` (요청 ${aimTierLabel(U.tier)} → 플랜에 맞춰 대체)`:''} · 라운드 ${U.rounds} · 명령 ${U.calls}개 · 토큰(추정) 입력 ~${aimFmt(U.inTok)} / 출력 ~${aimFmt(U.outTok)} · ${sec} s${U.note?' · '+U.note:''}\n누적 AI ${AIM.calls}회 · 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)} 토큰(추정) · 크레딧은 보는 사람의 Claude 플랜 사용량에서 차감 (페이지에서 정확한 값은 알 수 없음)`);aimPaint();}
   return true;
 }
 

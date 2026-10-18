@@ -21,7 +21,7 @@ function envSync(){
   envSync();if(SR.emc)SR.stale.emc=true;if(SR.ir)SR.stale.ir=true;if(SR.th)SR.stale.th=true;if(SR.si)runSI();renderSim();refresh(false);}));
 
 function simReset(){
-  ENV.h=Math.max(0.1,BD.t-2*ENV.cu*1e-3);SR.ir=SR.si=SR.th=SR.sp=SR.emc=null;SR.fw=null;SR.stale={};SR.cfg={ir:null,th:null,sp:null,emc:null,si:{z:50,zd:90}};
+  const nl=BD.copperLayers||2;ENV.h=nl>2?Math.max(0.08,(BD.t-nl*ENV.cu*1e-3)/(nl-1)):Math.max(0.1,BD.t-2*ENV.cu*1e-3);SR.ir=SR.si=SR.th=SR.sp=SR.emc=null;SR.fw=null;SR.stale={};SR.cfg={ir:null,th:null,sp:null,emc:null,si:{z:50,zd:90}};
   if(S.panel==='sim')renderSim();else simCellsDirty();updateLegend();
 }
 function setPanel(p){
@@ -308,7 +308,7 @@ function thHTML(){
   const cfg=thConfig(),R=SR.th;const comps=BD.comps.filter(c=>c.kind!=='none');const h=SIM.hConv(cfg.conv,cfg.v);
   const ptot=comps.reduce((a,c)=>a+(+cfg.P[c.ref]||0),0),nsrc=comps.filter(c=>(+cfg.P[c.ref]||0)>0).length;
   const oz=v=>v>=100?'3 oz':v>=60?'2 oz':v>=30?'1 oz':'0.5 oz';
-  const steps=[['1','적층',`2층 · ${oz(cfg.cuT)}/${oz(cfg.cuB)} · ${BD.t} mm`,true],['2','발열원',`${nsrc}개 · ${SIM.fmtSI(ptot,'W')}`,nsrc>0],['3','경계 조건',`Ta ${cfg.Ta} °C · h ${h.hT.toFixed(0)} · ε ${cfg.eps}`,true],
+  const steps=[['1','적층',`${BD.copperLayers||2}층${(BD.copperLayers||2)>2?' (열 모델은 외층 2장 + 써멀 비아로 근사)':''} · ${oz(cfg.cuT)}/${oz(cfg.cuB)} · ${BD.t} mm`,true],['2','발열원',`${nsrc}개 · ${SIM.fmtSI(ptot,'W')}`,nsrc>0],['3','경계 조건',`Ta ${cfg.Ta} °C · h ${h.hT.toFixed(0)} · ε ${cfg.eps}`,true],
     ['4','메싱·솔빙',R&&!R.error?`${R.cells} 셀 · ${R.iters} 반복`:`${cfg.res} 칸 격자`,!!(R&&!R.error)],['5','Tj·핫스팟',R&&R.worst?`최소 마진 ${R.worst.margin.toFixed(1)} °C`:'계산 후 판정',!!(R&&R.worst)]];
   const srcRows=comps.filter(c=>thIsJ(c)||(+cfg.P[c.ref]||0)>0||/^(Q|M)\d/.test(c.ref)).map(c=>{const J=cfg.J[c.ref];const k=esc(c.ref).replace(/[^\w]/g,'_');
     return`<tr><td class="mono">${esc(c.ref)}<div class="cls">${esc((c.val||'').slice(0,14))}</div></td><td class="r"><input type="number" min="0" step="0.01" data-pw="${esc(c.ref)}" value="${cfg.P[c.ref]||0}" aria-label="${esc(c.ref)} 소비전력 W" id="pw-${k}"></td>

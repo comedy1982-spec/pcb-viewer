@@ -57,10 +57,10 @@ function snapDelta(c,dx,dy,g){return[snapTo(c.x+dx,g)-c.x,snapTo(c.y+dy,g)-c.y];
 /* ---- nets ---- */
 function rebuildNets(B){
   const keep={};Object.values(B.nets||{}).forEach(n=>{keep[n.name]=n;});
-  const N={};const net=n=>N[n]||(N[n]={name:n,pads:[],tracks:[],vias:[],zones:0,len:{T:0,B:0}});
-  ['T','B'].forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(!p.net||p.clear)return;
-    if(p.t==='seg'){net(p.net).len[s]+=Math.hypot(p.b[0]-p.a[0],p.b[1]-p.a[1]);net(p.net).tracks.push(p);}
-    else if(p.t==='path'){let l=0;for(let i=1;i<p.pts.length;i++)l+=Math.hypot(p.pts[i][0]-p.pts[i-1][0],p.pts[i][1]-p.pts[i-1][1]);net(p.net).len[s]+=l;net(p.net).tracks.push(p);}
+  const N={};const net=n=>N[n]||(N[n]={name:n,pads:[],tracks:[],vias:[],zones:0,len:{T:0,B:0}});const ad=(n,s,l)=>{n.len[s]=(n.len[s]||0)+l;};
+  PCB.cuKeys(B).forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(!p.net||p.clear)return;
+    if(p.t==='seg'){ad(net(p.net),s,Math.hypot(p.b[0]-p.a[0],p.b[1]-p.a[1]));net(p.net).tracks.push(p);}
+    else if(p.t==='path'){let l=0;for(let i=1;i<p.pts.length;i++)l+=Math.hypot(p.pts[i][0]-p.pts[i-1][0],p.pts[i][1]-p.pts[i-1][1]);ad(net(p.net),s,l);net(p.net).tracks.push(p);}
     else if(p.t==='poly'||p.t==='pour')net(p.net).zones++;}));
   const seen=new Set();B.comps.forEach(c=>c.pads.forEach(p=>{if(p.net&&!seen.has(p)){seen.add(p);net(p.net).pads.push(p);}}));
   B.vias.forEach(v=>{if(v.net)net(v.net).vias.push(v);});
@@ -68,13 +68,13 @@ function rebuildNets(B){
 }
 function addTrack(B,layer,net,w,pts){const p=pts.length===2?{t:'seg',a:pts[0].slice(),b:pts[1].slice(),w,net}:{t:'path',pts:pts.map(q=>q.slice()),w,net};p.user=true;B.layers[layer+'.cu'].push(p);return p;}
 function addVia(B,x,y,net,d,drill){const v={x,y,d:d||0.6,drill:drill||0.3,net,user:true};B.vias.push(v);return v;}
-function removePrim(B,p){for(const L of ['T.cu','B.cu']){const i=B.layers[L].indexOf(p);if(i>=0){B.layers[L].splice(i,1);return{L,i};}}const i=B.vias.indexOf(p);if(i>=0){B.vias.splice(i,1);return{L:'via',i};}return null;}
+function removePrim(B,p){for(const L of PCB.cuKeys(B).map(k=>k+'.cu')){const i=B.layers[L].indexOf(p);if(i>=0){B.layers[L].splice(i,1);return{L,i};}}const i=B.vias.indexOf(p);if(i>=0){B.vias.splice(i,1);return{L:'via',i};}return null;}
 function restorePrim(B,p,at){if(at.L==='via')B.vias.splice(at.i,0,p);else B.layers[at.L].splice(at.i,0,p);}
 
 /* ---- ratsnest: islands of each net (copper + pours) joined by a minimum spanning tree ---- */
 function ratsnest(B,onlyNets){
   const S=AUTOROUTE.shapesOfBoard(B);const out=[];
-  const pour={};['T','B'].forEach((s,li)=>B.layers[s+'.cu'].forEach(p=>{if(p.t==='pour'&&p.net)(pour[p.net]=pour[p.net]||new Set()).add(li);}));
+  const pour={};PCB.cuKeys(B).forEach((s,li)=>B.layers[s+'.cu'].forEach(p=>{if(p.t==='pour'&&p.net)(pour[p.net]=pour[p.net]||new Set()).add(li);}));
   const nets=onlyNets?[...onlyNets]:Object.keys(B.nets);
   nets.forEach(n=>{const N=B.nets[n];if(!N||N.pads.length<2)return;
     let isl=AUTOROUTE.components(S,n);if(isl.length<2&&!pour[n])return;
@@ -158,7 +158,7 @@ function roundedRect(W,H,R){const r=Math.min(R,W/2,H/2);if(!(r>0))return[[0,0],[
 function translateAll(B,dx,dy,skip){
   const seen=new Set();const mv=p=>{if(!p||seen.has(p))return;seen.add(p);p[0]+=dx;p[1]+=dy;};
   B.comps.forEach(c=>move(B,c,dx,dy));
-  ['T.cu','B.cu','T.silk','B.silk'].forEach(L=>B.layers[L].forEach(p=>{if(p.own||p.t==='pad'||p.t==='pour')return;if(p.t==='seg'){mv(p.a);mv(p.b);}else if(p.t==='path')p.pts.forEach(mv);else if(p.t==='poly')p.rings.forEach(r=>r.forEach(mv));else if(p.x!=null){p.x+=dx;p.y+=dy;}}));
+  PCB.cuKeys(B).map(k=>k+'.cu').concat(['T.silk','B.silk']).forEach(L=>B.layers[L].forEach(p=>{if(p.own||p.t==='pad'||p.t==='pour')return;if(p.t==='seg'){mv(p.a);mv(p.b);}else if(p.t==='path')p.pts.forEach(mv);else if(p.t==='poly')p.rings.forEach(r=>r.forEach(mv));else if(p.x!=null){p.x+=dx;p.y+=dy;}}));
   B.vias.forEach(v=>{v.x+=dx;v.y+=dy;});B.drills.forEach(d=>{if(d.own||d._pad||(skip&&skip.has(d)))return;d.x+=dx;d.y+=dy;});
 }
 /* resize the board. anchor 'bl' keeps the lower-left corner, 'center' keeps the parts centred. Mounting holes near a corner keep
@@ -172,11 +172,35 @@ function resizeBoard(B,W,H,o){
   if(dx||dy)translateAll(B,dx,dy,holes);
   const old=B.outline;
   B.outline=like?[roundedRect(W,H,R)]:old.map(r=>r.map(p=>[p[0]*W/W0,p[1]*H/H0]));
-  ['T.cu','B.cu'].forEach(L=>{B.layers[L]=B.layers[L].map(p=>p.t==='pour'?Object.assign({},p,{r:Math.max(0,R-(p.inset||0.5))}):p);});
+  PCB.cuKeys(B).map(k=>k+'.cu').forEach(L=>{B.layers[L]=B.layers[L].map(p=>p.t==='pour'?Object.assign({},p,{r:Math.max(0,R-(p.inset||0.5))}):p);});
   B.W=W;B.H=H;
   const ring=B.outline[0];const outside=B.comps.filter(c=>c.kind!=='none'&&c.pads.some(p=>!PCB.inRing(p.x,p.y,ring))).map(c=>c.ref);
   return{W0,H0,W,H,R,anchor,rebuilt:like,outside,holes:holes.size};
 }
+
+/* ---- copper layer count (2/4/6/8/10) with a standard stack-up; inner GND/PWR layers become planes (a pour of their net) ---- */
+const isGndN=n=>/^(GND|AGND|DGND|PGND|VSS|GNDA|GNDD|0V)$/i.test(String(n||'').replace(/^\//,''));
+function planeNets(B,o){o=o||{};let g=null,gn=0,p=null,pn=0;
+  Object.keys(B.nets||{}).forEach(n=>{const k=(B.nets[n].pads||[]).length;if(isGndN(n)){if(k>gn){gn=k;g=n;}return;}
+    // supply plane: the logic rail with the most pins (motor / battery rails stay as wide tracks)
+    if(B.netClass(n)==='전원'&&!/VBAT|VIN|VBUS|VMOT|VM\b|VS\b|12V|24V|48V|HV/i.test(n)&&k>pn){pn=k;p=n;}});
+  if(o.gnd)g=o.gnd;if(o.pwr)p=o.pwr;return{gnd:g,pwr:p};}
+function setLayers(B,n,o){o=o||{};n=+n;if(!PCB.STACKS[n])throw new Error('층 수는 2, 4, 6, 8, 10 중 하나입니다.');
+  if(o.pwr&&!(B.nets||{})[o.pwr])throw new Error('넷 '+o.pwr+'이(가) 없습니다.');
+  const old=PCB.cuKeys(B);let dropped=0;
+  old.slice(1,-1).forEach(k=>{dropped+=B.layers[k+'.cu'].filter(p=>p.t==='seg'||p.t==='path').length;delete B.layers[k+'.cu'];});
+  const roles=PCB.STACKS[n];const pn=planeNets(B,o);const R=cornerRadius(B);
+  B.copperLayers=n;const stack=[];
+  roles.forEach((role,i)=>{const k=i===0?'T':i===n-1?'B':'In'+i;if(k!=='T'&&k!=='B')B.layers[k+'.cu']=[];
+    const net=role==='gnd'?pn.gnd:role==='pwr'?(pn.pwr||pn.gnd):null;const r2=role==='pwr'&&!pn.pwr?'gnd':role;
+    stack.push({k,role:r2,net});if(net&&k!=='T'&&k!=='B')B.layers[k+'.cu'].push({t:'pour',net,inset:0.5,clr:0.3,r:Math.max(0,R-0.5),plane:true});});
+  B.stack=stack;
+  // finished thickness: 1.6 mm up to 8 layers, 2.0 mm for 10
+  if(o.t)B.t=+o.t;else if(n>=10&&B.t<2)B.t=2.0;
+  rebuildNets(B);
+  return{n,stack,dropped,gnd:pn.gnd,pwr:pn.pwr};}
+function stackText(B){const st=PCB.stackOf(B);const n=st.length;const t=B.t||1.6;const d=t/(n-1);
+  return st.map((l,i)=>`L${i+1} ${PCB.cuName(l.k)} · ${l.role==='sig'?'신호':l.role==='gnd'?'GND 플레인':'전원 플레인'}${l.net?' ('+l.net+')':''}${i<n-1?` — 유전체 ~${d.toFixed(2)} mm`:''}`).join('\n');}
 
 /* ---- .kicad_pcb writer (KiCad 7 format) ---- */
 function toKicadPcb(B,meta){
@@ -186,10 +210,10 @@ function toKicadPcb(B,meta){
   let u=0;const uuid=()=>{u++;const h=(u*2654435761>>>0).toString(16).padStart(8,'0');return`${h}-0000-4000-8000-${String(u).padStart(12,'0')}`;};
   const o=[];o.push(`(kicad_pcb (version 20221018) (generator pcb_viewer)`,` (general (thickness ${n(B.t||1.6)}))`,` (paper "A4")`,
     ` (title_block (title ${q(meta.title||B.name||'')}) (date ${q(meta.date||'')}))`,
-    ` (layers (0 "F.Cu" signal) (31 "B.Cu" signal) (32 "B.Adhes" user "B.Adhesive") (33 "F.Adhes" user "F.Adhesive") (34 "B.Paste" user) (35 "F.Paste" user) (36 "B.SilkS" user "B.Silkscreen") (37 "F.SilkS" user "F.Silkscreen") (38 "B.Mask" user) (39 "F.Mask" user) (44 "Edge.Cuts" user) (46 "B.CrtYd" user "B.Courtyard") (47 "F.CrtYd" user "F.Courtyard") (48 "B.Fab" user) (49 "F.Fab" user))`,
+    ` (layers (0 "F.Cu" signal)${PCB.cuKeys(B).slice(1,-1).map((k,i)=>` (${i+1} "${k}.Cu" ${(PCB.stackOf(B)[i+1]||{}).role==='sig'?'signal':'power'})`).join('')} (31 "B.Cu" signal) (32 "B.Adhes" user "B.Adhesive") (33 "F.Adhes" user "F.Adhesive") (34 "B.Paste" user) (35 "F.Paste" user) (36 "B.SilkS" user "B.Silkscreen") (37 "F.SilkS" user "F.Silkscreen") (38 "B.Mask" user) (39 "F.Mask" user) (44 "Edge.Cuts" user) (46 "B.CrtYd" user "B.Courtyard") (47 "F.CrtYd" user "F.Courtyard") (48 "B.Fab" user) (49 "F.Fab" user))`,
     ` (setup (pad_to_mask_clearance 0) (pcbplotparams (layerselection 0x00010fc_ffffffff) (outputdirectory "")))`);
   nets.forEach((x,i)=>o.push(` (net ${i} ${q(x)})`));
-  const cuL=s=>s==='B'?'B.Cu':'F.Cu',silkL=s=>s==='B'?'B.SilkS':'F.SilkS';
+  const cuL=s=>PCB.cuName(s),silkL=s=>s==='B'?'B.SilkS':'F.SilkS';
   B.comps.forEach(c=>{if(c.kind==='none'&&!c.pads.length)return;
     const a=(c.rot||0)*D2R,ca=Math.cos(a),sa=Math.sin(a);
     // world (y up) → footprint local (KiCad y down)
@@ -221,7 +245,7 @@ function toKicadPcb(B,meta){
   B.outline.forEach(r=>{for(let k=0;k<r.length;k++){const a=r[k],b=r[(k+1)%r.length];if(Math.hypot(a[0]-b[0],a[1]-b[1])<1e-6)continue;o.push(` (gr_line (start ${P(a)}) (end ${P(b)}) (stroke (width 0.1) (type solid)) (layer "Edge.Cuts"))`);}});
   let hn=0;B.drills.forEach(d=>{if(d.plated||d.own||d._pad)return;hn++;o.push(` (footprint "pcb_viewer:MountingHole" (layer "F.Cu") (at ${P([d.x,d.y])}) (fp_text reference "H${hn}" (at 0 0) (layer "F.Fab") hide (effects (font (size 1 1))))`,
     `  (pad "" np_thru_hole circle (at 0 0) (size ${n(d.d)} ${n(d.d)}) (drill ${n(d.d)}) (layers "*.Cu" "*.Mask"))`,' )');});
-  ['T','B'].forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(p.clear||p.own)return;
+  PCB.cuKeys(B).forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(p.clear||p.own)return;
     if(p.t==='seg')o.push(` (segment (start ${P(p.a)}) (end ${P(p.b)}) (width ${n(p.w)}) (layer "${cuL(s)}")${NID(p.net)} (tstamp ${q(uuid())}))`);
     else if(p.t==='path')for(let k=1;k<p.pts.length;k++)o.push(` (segment (start ${P(p.pts[k-1])}) (end ${P(p.pts[k])}) (width ${n(p.w)}) (layer "${cuL(s)}")${NID(p.net)} (tstamp ${q(uuid())}))`);
     else if(p.t==='poly'&&p.net)p.rings.slice(0,1).forEach(r=>o.push(` (zone${NET(p.net).replace(/^ \(net (\d+) ("[^"]*")\)$/,' (net $1) (net_name $2)')} (layer "${cuL(s)}") (tstamp ${q(uuid())}) (hatch edge 0.5) (connect_pads (clearance 0.3)) (min_thickness 0.25) (filled_areas_thickness no) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5)) (polygon (pts ${r.map(v=>`(xy ${P(v)})`).join(' ')})))`));
@@ -230,6 +254,6 @@ function toKicadPcb(B,meta){
   o.push(')');return o.join('\n')+'\n';
 }
 
-return{prepare,applyComp,move,rotate,flip,snapDelta,snapTo,bbox,rebuildNets,cornerRadius,rectLike,roundedRect,translateAll,resizeBoard,addTrack,addVia,removePrim,restorePrim,ratsnest,drc,posture,itemAt,toKicadPcb,DRC_DEF};
+return{setLayers,planeNets,stackText,prepare,applyComp,move,rotate,flip,snapDelta,snapTo,bbox,rebuildNets,cornerRadius,rectLike,roundedRect,translateAll,resizeBoard,addTrack,addVia,removePrim,restorePrim,ratsnest,drc,posture,itemAt,toKicadPcb,DRC_DEF};
 })();
 if(typeof module!=='undefined')module.exports=PCBEDIT;

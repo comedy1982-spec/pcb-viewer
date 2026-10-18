@@ -660,9 +660,9 @@ function finalize(B){
   });
   // nets
   const N={};const net=n=>N[n]||(N[n]={name:n,pads:[],tracks:[],vias:[],zones:0,len:{T:0,B:0}});
-  ['T','B'].forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(!p.net||p.clear)return;
-    if(p.t==='seg'){const l=Math.hypot(p.b[0]-p.a[0],p.b[1]-p.a[1]);net(p.net).len[s]+=l;net(p.net).tracks.push(p);}
-    else if(p.t==='path'){let l=0;for(let i=1;i<p.pts.length;i++)l+=Math.hypot(p.pts[i][0]-p.pts[i-1][0],p.pts[i][1]-p.pts[i-1][1]);net(p.net).len[s]+=l;net(p.net).tracks.push(p);}
+  cuKeys(B).forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(!p.net||p.clear)return;
+    if(p.t==='seg'){const l=Math.hypot(p.b[0]-p.a[0],p.b[1]-p.a[1]);net(p.net).len[s]=(net(p.net).len[s]||0)+l;net(p.net).tracks.push(p);}
+    else if(p.t==='path'){let l=0;for(let i=1;i<p.pts.length;i++)l+=Math.hypot(p.pts[i][0]-p.pts[i-1][0],p.pts[i][1]-p.pts[i-1][1]);net(p.net).len[s]=(net(p.net).len[s]||0)+l;net(p.net).tracks.push(p);}
     else if(p.t==='poly'||p.t==='pour')net(p.net).zones++;}));
   const seenP=new Set();B.comps.forEach(c=>c.pads.forEach(p=>{if(p.net&&!seenP.has(p)){seenP.add(p);net(p.net).pads.push(p);}}));
   ['T','B'].forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(p.t==='pad'&&p.net&&!seenP.has(p)&&!p.via){seenP.add(p);net(p.net).pads.push(p);}}));
@@ -731,6 +731,13 @@ function build(entries){
   return finalize(B);
 }
 
-return{sexp,parseKicad,parseGerber,parseExcellon,parsePnP,parseBOM,parseIPC356,fromSpec,assembleGerber,finalize,build,detectRole,ROLES,FP,pkgSize,inRing,segDist,arcPts,D2R};
+/* ---------- copper layer stack ----------
+   Copper arrays live in B.layers: 'T.cu' (top), 'In1.cu' … 'In(n-2).cu' (inner), 'B.cu' (bottom). Pads sit on T/B only (through pads on both);
+   vias are through vias. B.stack lists the layers top → bottom with a role: sig (routing), gnd / pwr (plane with a pour of B.stack[i].net). */
+const STACKS={2:['sig','sig'],4:['sig','gnd','pwr','sig'],6:['sig','gnd','sig','pwr','gnd','sig'],8:['sig','gnd','sig','gnd','pwr','sig','gnd','sig'],10:['sig','gnd','sig','sig','gnd','pwr','sig','sig','gnd','sig']};
+function cuKeys(B){const n=Math.max(2,B.copperLayers||2);const k=['T'];for(let i=1;i<=n-2;i++)if(B.layers['In'+i+'.cu'])k.push('In'+i);k.push('B');return k;}
+function stackOf(B){const keys=cuKeys(B);if(B.stack&&B.stack.length===keys.length)return B.stack;return keys.map(k=>({k,role:'sig'}));}
+const cuName=k=>k==='T'?'F.Cu':k==='B'?'B.Cu':k+'.Cu';
+return{STACKS,cuKeys,stackOf,cuName,sexp,parseKicad,parseGerber,parseExcellon,parsePnP,parseBOM,parseIPC356,fromSpec,assembleGerber,finalize,build,detectRole,ROLES,FP,pkgSize,inRing,segDist,arcPts,D2R};
 })();
 if(typeof module!=='undefined')module.exports=PCB;

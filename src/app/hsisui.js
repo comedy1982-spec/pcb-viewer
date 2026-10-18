@@ -384,7 +384,7 @@ function arNets(){
 function arHTML(){
   const A=HS.ar,open=arNets(),pending=HS.rec.res&&HS.rec.res.recs?HS.rec.res.recs.filter(r=>r.status==='change'||r.status==='new').length:0;
   const L=A.last;const auto=BD.vias.some(v=>v.auto)||['T','B'].some(s=>BD.layers[s+'.cu'].some(p=>p.auto));
-  return`<div class="arbox"><div class="arh"><b>자동 배선</b><span class="rid">2층 · 격자 0.1 mm · 비아 0.6/0.3 mm</span></div>
+  return`<div class="arbox"><div class="arh"><b>자동 배선</b><span class="rid">${BD.copperLayers||2}층 · 격자 0.1 mm · 비아 ${(BD.copperLayers||2)>2?"0.45/0.2":"0.6/0.3"} mm</span></div>
     <div class="arset"><label>신호 폭<input type="number" step="0.05" min="0.1" max="1" id="arSig" value="${A.sig}"> mm</label><label>전원 폭<input type="number" step="0.05" min="0.1" max="1.5" id="arPwr" value="${A.pwr}"> mm</label><label>간격<input type="number" step="0.05" min="0.1" max="1" id="arClr" value="${A.clr}"> mm</label>
       <label class="chkl"><input type="checkbox" id="arPower" ${A.power?'checked':''}> 전원 넷 포함 (GND·동박면 넷 제외)</label></div>
     <div class="acts"><button class="btn primary sm" id="arRun" ${A.running||!open.length?'disabled':''}>${A.running?'배선 중…':`자동 배선 (${open.length}개 넷)`}</button>${auto&&!A.running?'<button class="btn ghost sm" id="arClear">자동 배선 지우기</button><button class="btn sm" id="arView">보드에서 보기</button>':''}</div>

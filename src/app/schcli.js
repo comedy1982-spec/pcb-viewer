@@ -210,7 +210,7 @@ async function scRun(line,by){
     case'clear':{const L=$('#scLog');if(L)L.innerHTML='';SCLI.log=[];return'';}
     case'history':return SCLI.hist.slice(-20).join('\n');
     case'guide':{const r=guideRun(a,'sch',{by});if(typeof r==='string')return r;const useAI=by!=='ai'&&(a.ai||(AIM.mode==='ai'&&!a.det));const txt=guideText(r,useAI?'ai':'det');
-      if(useAI){scSay('ok',txt);const ok=await scAgent(GUIDE_AI+`\n\n점검 결과:\n${txt}\n\n사용자 요청: 가이드라인 점검 결과를 검토해줘`);if(!ok)scSay('err','Claude를 쓸 수 없어 결정론 결과만 표시했습니다.');return'';}return txt;}
+      if(useAI){scSay('ok',txt);const ok=await scAgent(GUIDE_AI+`\n\n점검 결과:\n${txt}\n\n사용자 요청: 가이드라인 점검 결과를 검토해줘`,'agent');if(!ok)scSay('err','Claude를 쓸 수 없어 결정론 결과만 표시했습니다.');return'';}return txt;}
     case'ai':return await scAI(t.slice(1).join(' '));
     default:throw new Error(`알 수 없는 명령: ${cmd}`);
   }
@@ -229,6 +229,7 @@ async function scExec(line){
   try{const first=(cliTok(line)[0]||'').toLowerCase();
     if(SCLI_CMDS.has(first)){const o=await scRun(line);if(o)scSay('ok',o);}
     else{if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample){await scAI(line);scBusy(false);return;}scSay('out','Claude를 쓸 수 없어 규칙으로 해석합니다.');}
+      if(await aimDetQuestion(line,scSay,()=>scRun('status'))){scBusy(false);return;}
       {const cmds=scNL(line);if(!cmds.length)scSay('err','명령을 알아듣지 못했습니다. help로 목록을 보세요. (문장 해석은 Claude가 필요합니다)');else{scSay('out','해석: '+cmds.join(' → '));for(const c of cmds){scSay('cmd',c);const o=await scRun(c);if(o)scSay('ok',o);}}}}
   }catch(e){console.error(e);scSay('err',e&&e.message?e.message:String(e));}
   scBusy(false);
@@ -243,8 +244,8 @@ const SC_SYS=`You are a schematic-editing assistant embedded in a PCB/schematic 
 Commands (exactly this syntax):
 \${CMDS}
 Notes: two-pin parts are R, C, CP (electrolytic), L, FB (ferrite bead), D, LED; "add ... --pins A,B" connects pin 1 to A and pin 2 to B (for D/LED pin 1 is K, pin 2 is A). Power and ground nets get power symbols automatically. Inspect before you edit: use "pins <ref> --free" or "net <name>" to learn real pin numbers and net names; never guess them. Typical decoupling: one 100nF C per supply pin of an IC, "add C 100nF --pins <supply>,GND --near <IC>". Use at most 8 commands. Finish with "erc" when you added or rewired something, and run "apply" only if the user asked to update the board. Then answer in Korean in 2-5 short sentences: what changed (refs, nets), ERC result, and a next step. Do not invent numbers.`;
-async function scAgent(prompt){
-  return aiAgent({prompt,toolName:'run_sch',toolDesc:'Run one schematic console command (see the command list) and return its text output.',example:'"pins U4 --free" or "add C 100nF --pins +3V3,GND --near U4"',
+async function scAgent(prompt,kind){
+  return aiAgent({prompt,kind,ro:c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase();return['help','?','status','pages','parts','pins','nets','net','find','erc','diff','history'].includes(f)||(f==='guide'&&(!t[1]||/^(check|list|show)$/i.test(t[1])));},roList:'status, pages, parts, pins, nets, net, find, erc, diff, guide check',toolName:'run_sch',toolDesc:'Run one schematic console command (see the command list) and return its text output.',example:'"pins U4 --free" or "add C 100nF --pins +3V3,GND --near U4"',
     run:c=>scRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!SCLI_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='regen'&&!SCLI.allowRegen)return'not allowed: regen (the user did not ask to regenerate)';return'';},
     say:scSay,set:scSet,drop:e=>{const el=$('#scLog')&&$('#scLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();SCLI.log=SCLI.log.filter(x=>x!==e);},
     setAbort:c=>{SCLI.abort=c;},stopped:()=>SCLI.stopReq,max:12});}

@@ -38,6 +38,7 @@
         <p class="h">레이어</p>
         <label class="ly"><input type="checkbox" id="ly-cuT" checked><i class="sw" style="background:#c9773e"></i><span class="lbl">상단 동박</span><span class="code">F.Cu</span></label>
         <label class="ly"><input type="checkbox" id="ly-cuB" checked><i class="sw" style="background:#3f78c4"></i><span class="lbl">하단 동박</span><span class="code">B.Cu</span></label>
+        <label class="ly" id="ly-inner-row" hidden><input type="checkbox" id="ly-inner" checked><i class="sw" style="background:linear-gradient(90deg,#4fc38a,#c46bd6)"></i><span class="lbl" id="lbl-inner">내층 신호</span><span class="code">In*.Cu</span></label>
         <label class="ly"><input type="checkbox" id="ly-silk" checked><i class="sw" style="background:#f4f4ec"></i><span class="lbl">실크스크린</span><span class="code">SilkS</span></label>
         <label class="ly"><input type="checkbox" id="ly-mask" checked><i class="sw" id="sw-mask" style="background:#1e6a3e"></i><span class="lbl">솔더마스크</span><span class="code">Mask</span></label>
         <label class="ly"><input type="checkbox" id="ly-drill" checked><i class="sw" style="background:#0c0e0f"></i><span class="lbl">드릴·비아</span><span class="code">Drill</span></label>
@@ -129,10 +130,12 @@
           <div class="acts"><button class="btn primary sm" id="npPlan">블록 다이어그램 만들기</button><span class="np-hint" id="npPlanHint"></span></div></section>
         <section><h3>HW 블록 (부품 미정)</h3><div id="arBlocks"></div>
           <div class="np-add"><select id="arGroup" aria-label="블록 그룹"></select><input id="arLabel" placeholder="블록 이름 (예: Relay Driver)" aria-label="새 블록 이름"><button class="btn sm" id="arAdd">추가</button></div></section>
-        <section><h3>회로 생성 옵션</h3><div class="np-board">
-          <label>가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> mm</label><label>세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
+        <section><h3>PCB 조건 <span class="np-hint">3단계 PCB 시작 때 적용</span></h3><div class="np-board">
+          <label>동박 층 <select id="npLayers"><option value="2">2층</option><option value="4">4층</option><option value="6">6층</option><option value="8">8층</option><option value="10">10층</option></select></label>
+          <label>보드 크기 <select id="npSize"><option value="auto">자동</option><option value="min">최소화</option><option value="fix">직접 입력</option></select></label>
+          <label id="npWH">가로 <input type="number" id="npW" min="20" max="400" step="5" placeholder="자동"> × 세로 <input type="number" id="npH" min="20" max="400" step="5" placeholder="자동"> mm</label>
           <label>배치 전략 <select id="npStrat"><option value="balanced">균형</option><option value="thermal">열 분산</option><option value="noise">노이즈 최소화</option><option value="compact">소형화</option></select></label>
-          <label class="chkl"><input type="checkbox" id="npRoute" checked> 생성 후 자동 배선</label></div></section>
+          <label class="chkl"><input type="checkbox" id="npRoute" checked> PCB 시작 때 자동 배선</label></div></section>
   </aside>
   <div class="sys-mid">
     <section class="sys-dia" id="sysDia" aria-label="시스템 다이어그램">

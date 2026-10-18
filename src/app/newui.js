@@ -18,9 +18,9 @@ const NP_HELP=[
   ['auto','요구사항 문장을 규칙으로 블록 계획으로 바꿈 (결정론)'],['blocks · mcus','블록 라이브러리와 파라미터 · MCU 목록'],
   ['add <블록> [--파라미터 값]','블록 추가 (예: add led --n 3 --color 빨강, add ldo --vout 5, add pwr_in --vin 24)'],
   ['set <블록ID> <파라미터> <값> · remove <블록ID>','블록 수정·삭제 (ID는 plan에 표시)'],['mcu <stm32|tc364>','MCU 바꾸기'],
-  ['board <가로> <세로> | board auto · strategy <balanced|thermal|noise|compact>','보드 크기 · 배치 전략'],
+  ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
   ['diagram','시스템 다이어그램을 글로 (블록 · 전원 레일 · MCU 신호 · 외부 연결)'],
-  ['generate [--route] [--view sch|pcb]','다이어그램의 블록으로 보드·회로도 생성 (자동 배치, --route면 이어서 자동 배선) → 2단계 회로'],
+  ['generate [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
 const NP_CMDS=new Set(['arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
@@ -41,7 +41,7 @@ function npInit(){
 function npRender(){
   const P=NP.plan;$('#npPlanHint').textContent=AIM.mode==='ai'?'AI: Claude가 블록·인터페이스를 설계 (보는 사람의 사용량)':'결정론: 낱말 규칙으로 블록 설계';
   if(P){if(document.activeElement!==$('#npName'))$('#npName').value=P.name;if(document.activeElement!==$('#npReq')&&P.req)$('#npReq').value=P.req;$('#npStrat').value=P.strategy||'balanced';
-    $('#npW').value=P.board?P.board.w:'';$('#npH').value=P.board?P.board.h:'';}
+    $('#npW').value=P.board?P.board.w:'';$('#npH').value=P.board?P.board.h:'';const pc=P.pcb||{};$('#npLayers').value=String(pc.layers||2);$('#npSize').value=pc.min?'min':P.board?'fix':'auto';$('#npWH').hidden=$('#npSize').value!=='fix';$('#npRoute').checked=pc.route!==false;}
   if(P&&P.blocks.length){const k=JSON.stringify(P.blocks);if(SYS.pk!==k){SYS.pk=k;SYS.src='plan';}}sysRender();
   {const h=$('#implHint');if(h)h.textContent=P&&P.blocks.length?` · 회로 블록 ${P.blocks.length}개${NP.planManual?' (직접 수정)':' (아키텍처에서 자동)'}`:'';}
   if(NP.arch&&document.activeElement!==$('#npName')&&NP.arch.name)$('#npName').value=NP.arch.name;
@@ -74,16 +74,21 @@ async function npRun(line,by){
     case'name':{npPush();npEnsure().name=a._.join(' ')||'새 프로젝트';npRender();return'이름: '+NP.plan.name;}
     case'req':{npPush();npEnsure().req=a._.join(' ');npRender();return'요구사항을 저장했습니다.';}
     case'auto':{const req=a._.join(' ')||(NP.plan&&NP.plan.req)||$('#npReq').value.trim();if(!req)throw new Error('요구사항이 비어 있습니다 (req <문장> 또는 왼쪽 칸)');
-      if(NP.plan)npPush();const r=NEWPROJ.planFrom(req,$('#npName').value.trim()||null);NP.plan=r.plan;npRender();return'규칙 해석: '+r.log.join(' · ')+'\n'+NEWPROJ.summary(NP.plan).text;}
+      if(NP.plan)npPush();const prevP=NP.plan;const r=NEWPROJ.planFrom(req,$('#npName').value.trim()||null);NP.plan=r.plan;if(prevP&&prevP.pcb)NP.plan.pcb=prevP.pcb;npRender();return'규칙 해석: '+r.log.join(' · ')+'\n'+NEWPROJ.summary(NP.plan).text;}
     case'blocks':return Object.entries(NEWPROJ.LIB).map(([k,v])=>`${k.padEnd(8)} ${v.label} — ${v.desc}${Object.keys(v.params).length?'\n    '+Object.entries(v.params).map(([p,d])=>`--${p} (${d.def}) ${d.desc}`).join(' · '):''}`).join('\n');
     case'mcus':return Object.entries(NEWPROJ.MCUS).map(([k,v])=>`${k} — ${v.label}`).join('\n');
     case'add':{npPush();NP.planManual=true;const params={};Object.keys(a).forEach(k=>{if(k!=='_')params[k]=a[k];});try{const b=NEWPROJ.addBlock(npEnsure(),a._[0],params);npRender();return`${b.id} 추가 · ${NEWPROJ.LIB[b.type].label} ${Object.entries(b.params).map(([k,v])=>`${k}=${v}`).join(' ')}`;}catch(e){NP.hist.pop();throw e;}}
     case'set':{npPush();NP.planManual=true;try{NEWPROJ.setParam(npEnsure(),a._[0],a._[1],a._.slice(2).join(' '));}catch(e){NP.hist.pop();throw e;}npRender();return`${a._[0]}.${a._[1]} = ${a._.slice(2).join(' ')}`;}
     case'remove':{npPush();NP.planManual=true;try{NEWPROJ.removeBlock(npEnsure(),a._[0]);}catch(e){NP.hist.pop();throw e;}npRender();return`${a._[0]} 삭제`;}
     case'mcu':{const k=NEWPROJ.mcuKey(a._[0]);if(!k)throw new Error('MCU: '+Object.keys(NEWPROJ.MCUS).join(', '));npPush();const P=npEnsure();const b=P.blocks.find(x=>x.type==='mcu');if(b)b.params.part=k;else NEWPROJ.addBlock(P,'mcu',{part:k});npRender();return'MCU → '+k;}
-    case'board':{npPush();const P=npEnsure();if(a._[0]==='auto'||!a._.length){P.board=null;}else{let w=+a._[0],h=+a._[1];if(!h&&/x|×/i.test(a._[0])){[w,h]=a._[0].split(/x|×/i).map(Number);}if(!(w>=20&&h>=20))throw new Error('board <가로> <세로> (mm, 20 이상) 또는 board auto');P.board={w,h};}npRender();return P.board?`보드 ${P.board.w} × ${P.board.h} mm`:'보드 크기 자동';}
+    case'board':{npPush();const P=npEnsure();const s0=String(a._[0]||'').toLowerCase();P.pcb=P.pcb||{};
+      const live=()=>BD&&!BD.pcbPending&&BD.newPlan?'\n지금 보드는 이미 PCB가 배치돼 있습니다. 3단계 배치·배선 CLI에서 같은 명령(board layers / board minimize --route)을 실행하면 바로 바뀝니다.':(BD&&BD.pcbPending?(BD.pcbPlan=Object.assign(BD.pcbPlan||{},P.pcb,P.board?{board:{w:P.board.w,h:P.board.h}}:{}),''):'');
+      if(s0==='layers'||s0==='layer'){const n=+a._[1];if(!PCB.STACKS[n])throw new Error('board layers <2|4|6|8|10>');P.pcb.layers=n;npRender();return`PCB 조건: ${n}층 (${PCB.STACKS[n].map(x=>x==='sig'?'S':x==='gnd'?'GND':'PWR').join('·')}) — 3단계 PCB 시작 때 적용`+live();}
+      if(/^(min|minimize|minimise|최소|최소화)$/.test(s0)){P.board=null;P.pcb.min=true;npRender();return'PCB 조건: 보드 크기 최소화 — 3단계에서 부품이 들어가고 배선되는 가장 작은 크기를 찾습니다.'+live();}
+      if(s0==='route'){P.pcb.route=!/^(off|0|false|no)$/i.test(a._[1]||'on');npRender();return`PCB 조건: 자동 배선 ${P.pcb.route?'켬':'끔'}`;}
+      if(a._[0]==='auto'||!a._.length){P.board=null;P.pcb.min=false;}else{let w=+a._[0],h=+a._[1];if(!h&&/x|×/i.test(a._[0])){[w,h]=a._[0].split(/x|×/i).map(Number);}if(!(w>=20&&h>=20))throw new Error('board <가로> <세로> (mm, 20 이상) 또는 board auto');P.board={w,h};P.pcb.min=false;}npRender();return(P.board?`보드 ${P.board.w} × ${P.board.h} mm`:'보드 크기 자동')+' — 3단계 PCB 시작 때 적용';}
     case'strategy':{const k=AUTOPLACE.strategy(a._[0]);if(!k)throw new Error('balanced · thermal · noise · compact');npPush();npEnsure().strategy=k;npRender();return'배치 전략 '+k;}
-    case'generate':return await npGenerate({route:a.route!=null?a.route!=='0'&&a.route!=='false':$('#npRoute').checked,view:a.view||'sch',strategy:a.strategy,by});
+    case'generate':return await npGenerate({pcb:!!(a.pcb||a.route===true||a.route==='1'||a.view==='pcb'),strategy:a.strategy,by});
     case'undo':{if(!NP.hist.length)return'되돌릴 것이 없습니다.';const h=JSON.parse(NP.hist.pop());if(h&&'plan' in h){NP.plan=h.plan;NP.arch=h.arch;}else NP.plan=h;npRender();return'되돌렸습니다.';}
     case'clear':{$('#npLog').innerHTML='';NP.log=[];return'';}
     case'ai':return await npAI(t.slice(1).join(' '));
@@ -95,26 +100,65 @@ async function npExec(line){
   try{const f=(cliTok(line)[0]||'').toLowerCase();
     if(NP_CMDS.has(f)){const o=await npRun(line);if(o)npSay('ok',o);}
     else if(AIM.mode==='ai'&&(await cliAiProbe(),CLI.sample))await npAI(line);
+    else if(await aimDetQuestion(line,npSay,()=>npRun('status'))){}
+    else if(npNL(line)){const cmds=npNL(line);npSay('out','해석: '+cmds.join(' → '));for(const c of cmds){npSay('cmd',c);const o=await npRun(c);if(o)npSay('ok',o);}}
     else{npSay('out','문장을 요구사항으로 보고 규칙으로 HW 블록 다이어그램을 만듭니다.');const o=await npRun('arch '+line);npSay('ok',o);}
   }catch(e){console.error(e);npSay('err',e.message||String(e));}
   npBusy(false);
 }
+// PCB wishes typed as a sentence in steps 1–2 (layer count, minimum size, exact size) → board commands, not a new architecture
+function npNL(t){const s=t.toLowerCase();const out=[];const ly=s.match(/(\d+)\s*(?:층|레이어|layers?)/);if(ly&&PCB.STACKS[+ly[1]])out.push(`board layers ${ly[1]}`);
+  if(/(최소화|최소로|최소\s*크기|minimi[sz]e|줄여|작게)/.test(s)&&/(크기|사이즈|싸이즈|size|보드|기판|면적)/.test(s))out.push('board min');
+  const m=s.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*[x×*]\s*(\d+(?:\.\d+)?)/);if(m&&/보드|기판|board|크기|사이즈/.test(s))out.push(`board ${m[1]} ${m[2]}`);
+  return out.length?out:null;}
 // build the board from the plan and load it into the viewer
 async function npGenerate(o){
   if(NP.arch&&!NP.planManual)archToPlan(true);const P=npEnsure();if(!P.blocks.length)throw new Error('회로로 구현할 블록이 없습니다 (HW 블록에 impl을 지정하세요)');
-  if(NP.arch){const um=NP.arch.blocks.filter(b=>!b.ext&&!(b.impl||[]).length).map(b=>b.label);if(um.length)npSay('out',`회로 라이브러리에 대응 블록이 없는 HW 블록: ${um.join(', ')} — 회로 단계에서 회로 CLI(add)로 직접 추가하세요.`);}const st=o.strategy?AUTOPLACE.strategy(o.strategy):P.strategy;
-  const prog=npSay('out','보드를 만들고 부품을 배치하는 중…');await new Promise(r=>setTimeout(r,20));
-  const{B,r}=NEWPROJ.toBoard(P,{strategy:st||'balanced',seed:1+Math.floor(Math.random()*1e5)});
-  B.notes.push(`새 설계: ${P.blocks.length}개 블록에서 부품 ${r.parts.length}개를 만들고 ${st} 전략으로 배치했습니다.`);r.warn.forEach(w=>B.warnings.push(w));
+  if(NP.arch){const um=NP.arch.blocks.filter(b=>!b.ext&&!(b.impl||[]).length).map(b=>b.label);if(um.length)npSay('out',`회로 라이브러리에 대응 블록이 없는 HW 블록: ${um.join(', ')} — 회로 단계에서 회로 CLI(add)로 직접 추가하세요.`);}
+  const st=o.strategy?AUTOPLACE.strategy(o.strategy):P.strategy;
+  const prog=npSay('out','부품을 고르고 넷리스트·회로도를 만드는 중…');await new Promise(r=>setTimeout(r,20));
+  // step 2 is the circuit only: parts, nets and schematic. Placement and routing wait for step 3 (B.pcbPending).
+  const{B,r}=NEWPROJ.toBoard(P,{place:false});B.pcbPending=true;
+  B.pcbPlan=Object.assign({layers:2,min:false,route:true},P.pcb||{},{strategy:st||'balanced',board:P.board?{w:P.board.w,h:P.board.h}:null});
+  B.notes.push(`새 설계: ${P.blocks.length}개 블록에서 부품 ${r.parts.length}개와 회로도를 만들었습니다. 부품 배치·배선은 3단계(PCB)에서 시작합니다.`);r.warn.forEach(w=>B.warnings.push(w));
   setBoard(B);
   const sheets=BD.schSheets||(schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:'sch',sheets});
-  npSet(prog,`생성: 부품 ${B.comps.length}개 · 넷 ${Object.keys(B.nets).length}개 · 보드 ${f1(B.W)} × ${f1(B.H)} mm · 회로도 ${sheets?sheets.length:0}쪽 · 배치 ${st}${r.place&&r.place.fails.length?` (겹침 가능: ${r.place.fails.join(', ')})`:''}\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>`\n  ! ${x.title}: ${x.ev}`).join('')}${r.warn.length?'\n경고: '+r.warn.join(' / '):''}`);
-  SYS.src='plan';setStep(o.route||o.view==='pcb'?3:2);
-  if(o.route){setView('T');if(!PE.on)peBegin();cliToggle(true);await cliExec(`auto ${st} --tries 2`);}
-  if(o.view==='pcb'||o.route){if(S.view!=='T')setView('T');}else setView('sch');
-  toast(`${P.name}: 부품 ${B.comps.length}개로 회로도와 보드를 만들었습니다.${o.route?' 배선 결과는 CLI에 있습니다.':' TOP 보기에서 배치를 확인하세요.'}`);
-  return'생성 완료 — 회로도는 회로도 보기, 배치·배선은 TOP 보기에서 확인합니다.';
+  npSet(prog,`회로 생성: 부품 ${B.comps.length}개 · 넷 ${Object.keys(B.nets).length}개 · 회로도 ${sheets?sheets.length:0}쪽 · MCU 핀 배정 ${r.assigned.length}개\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>'\n  △ '+x.title).join('')}\nPCB 조건(3단계에서 적용): ${pcbPlanText(B.pcbPlan)}`);
+  SYS.src='plan';setStep(2);
+  if(o.pcb){setStep(3);await pcbStart(B.pcbPlan);return'회로 생성 후 PCB 설계를 시작했습니다 — 결과는 배치·배선 CLI에 있습니다.';}
+  toast(`${P.name}: 부품 ${B.comps.length}개로 회로를 만들었습니다. 회로도를 검토한 뒤 3단계에서 PCB를 시작하세요.`);
+  return'회로 생성 완료 — 2단계(회로도)에서 검토·수정하고, 3단계 PCB에서 배치·배선을 시작합니다.';
 }
+const pcbPlanText=p=>`${p.layers||2}층 · ${p.min?'크기 최소화':p.board?`${p.board.w} × ${p.board.h} mm`:'크기 자동'} · ${AUTOPLACE.STRATS[p.strategy]?AUTOPLACE.STRATS[p.strategy].label:p.strategy} 배치 · 자동 배선 ${p.route===false?'끔':'켬'}`;
+/* ---------- step 3 gate: the PCB is started explicitly (layers, size, strategy, routing), the console shows each command ---------- */
+function pcbGatePaint(){
+  const show=!!(BD&&BD.pcbPending&&HS.ws==='board'&&S.sch!=='full');let el=$('#pcbGate');
+  if(!show){if(el)el.remove();return;}
+  if(el)return;const p=Object.assign({layers:2,min:false,route:true,strategy:'balanced',board:null},BD.pcbPlan||{});
+  el=document.createElement('div');el.id='pcbGate';el.className='pcb-gate';
+  el.innerHTML=`<form class="pg-in" data-f><b>3단계 · PCB 설계 시작</b>
+    <p class="lead">회로(부품 ${BD.comps.length}개 · 넷 ${BD.netOrder.length}개)는 준비됐고 아직 배치·배선 전입니다. 조건을 정하면 배치·배선 CLI가 명령을 차례로 실행합니다 (Ctrl+Z로 되돌릴 수 있음).</p>
+    <div class="pg-grid">
+      <label>동박 층 <select name="layers">${[2,4,6,8,10].map(n=>`<option value="${n}"${n===+p.layers?' selected':''}>${n}층 · ${PCB.STACKS[n].map(x=>x==='sig'?'S':x==='gnd'?'G':'P').join('')}</option>`).join('')}</select></label>
+      <label>보드 크기 <select name="size"><option value="min"${p.min?' selected':''}>최소화 (가장 작은 크기 탐색)</option><option value="auto"${!p.min&&!p.board?' selected':''}>자동 (여유 있게)</option><option value="fix"${!p.min&&p.board?' selected':''}>직접 입력</option></select></label>
+      <label class="pg-wh">가로 <input type="number" name="w" min="10" max="1000" step="0.5" value="${p.board?p.board.w:f1(BD.W)}"> × 세로 <input type="number" name="h" min="10" max="1000" step="0.5" value="${p.board?p.board.h:f1(BD.H)}"> mm</label>
+      <label>배치 전략 <select name="s">${Object.entries(AUTOPLACE.STRATS).map(([k,v])=>`<option value="${k}"${k===p.strategy?' selected':''}>${v.label}</option>`).join('')}</select></label>
+      <label class="chkl"><input type="checkbox" name="route"${p.route!==false?' checked':''}> 이어서 자동 배선${'' }</label></div>
+    <p class="lead pg-note">PCB 단계에서는 배선을 위해 MCU 핀 배정을 바꾸는 등 회로를 함께 고칠 수 있습니다 (CLI pinswap · 분할 보기에서 회로도 편집).</p>
+    <div class="acts"><button type="button" class="btn sm" data-sch>회로도로 돌아가기</button><button type="button" class="btn sm" data-cli title="배치·배선 CLI에 명령이나 문장(AI 모드)으로 지시">CLI로 지시</button><button class="btn primary sm">PCB 설계 시작</button></div></form>`;
+  $('#vp').appendChild(el);const F=el.querySelector('[data-f]');const wh=F.querySelector('.pg-wh');const sz=F.querySelector('[name=size]');const upd=()=>{wh.hidden=sz.value!=='fix';};sz.addEventListener('change',upd);upd();
+  el.querySelector('[data-sch]').addEventListener('click',()=>setStep(2));
+  el.querySelector('[data-cli]').addEventListener('click',()=>{if(S.view!=='T'&&S.view!=='B')setView('T');cliToggle(true);});
+  F.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(F);const q={layers:+d.get('layers'),min:d.get('size')==='min',board:d.get('size')==='fix'?{w:+d.get('w'),h:+d.get('h')}:null,strategy:d.get('s'),route:!!d.get('route')};BD.pcbPlan=q;pcbStart(q);});
+}
+async function pcbStart(p){
+  p=Object.assign({layers:2,min:false,route:true,strategy:'balanced',board:null},p||{});const g=$('#pcbGate');if(g)g.remove();
+  if(S.sch==='full'||!(S.view==='T'||S.view==='B'))setView('T');if(!PE.on)peBegin();cliToggle(true);
+  const cmds=[];if(+p.layers!==(BD.copperLayers||2))cmds.push(`board layers ${p.layers}`);
+  if(p.min)cmds.push(`board minimize --strategy ${p.strategy}${p.route?' --route':''}`);
+  else{if(p.board)cmds.push(`board size ${p.board.w} ${p.board.h} --anchor center`);cmds.push(`reset --strategy ${p.strategy}${p.route?' --route':''}`);}
+  cliSay('out','PCB 설계 시작: '+cmds.join(' → '));for(const c of cmds){await cliExec(c);if(CLI.stopReq)break;}
+  stepPaint();}
 /* Claude plans with the same commands */
 const NP_SYS=`You are a hardware system architect working inside a design tool. The user writes in Korean. Step 1 is a HW ARCHITECTURE BLOCK DIAGRAM: functional blocks without part numbers (e.g. "Battery Input (12 V)", "PMIC / LDO / Buck", "CAN-FD Transceiver", "Main MCU", "H-Bridge / Gate Driver IC", "Current Sensing & Temp. Sensor", "Debug / Calib. Interface", "External Connector") grouped in bands power · comm · ctrl · io · ext, with labelled interfaces (rails such as VCC_MCU 3.3 V, buses such as CAN_H / CAN_L, control and feedback signals). Build it with arch / block / feat / link commands through the run_np tool, one command at a time. Use impl only to say which library circuit block will realise a block in step 2; never put part numbers in labels or features unless the user names them.
 Commands:
@@ -122,15 +166,15 @@ Commands:
 Blocks (type: label — description; params with defaults):
 \${BLOCKS}
 MCUs: \${MCUS}
-Rules for the diagram: start from "arch <requirement>" when the diagram is empty or the user asks for a new one, then refine with block/feat/link/rename/del so it matches the request (safety: watchdog, ASIL; diagnostics; calibration such as XCP); every block that needs power gets a rail link or the regulator lists the rail; keep 4–12 blocks; finish with "diagram". Only touch the circuit plan (add/set/mcu) or run generate when the user asks for circuits. Rules for the plan (step 2): pick an input block (pwr_in with the right vin, or usb_in), regulators so every used rail exists (CAN needs +5V and +3V3, BLDC needs ≥8 V on VM, AURIX needs a crystal), one mcu, then the function blocks. Use "plan" to see rails, MCU pin assignment, BOM and warnings, and fix warnings (e.g. high LDO loss → lower input or add a 5 V stage). Pick a placement strategy (thermal for motor drivers, noise for CAN/mixed-signal). Only run "generate" if the user asked to create the board now. Parts outside the library cannot be added here — say which and suggest adding them later in the schematic console. At most 14 commands. Answer in Korean, 3-6 short lines: chosen parts and why, open warnings, next step.`;
+Rules for the diagram: start from "arch <requirement>" when the diagram is empty or the user asks for a new one, then refine with block/feat/link/rename/del so it matches the request (safety: watchdog, ASIL; diagnostics; calibration such as XCP); every block that needs power gets a rail link or the regulator lists the rail; keep 4–12 blocks; finish with "diagram". Only touch the circuit plan (add/set/mcu) or run generate when the user asks for circuits. Rules for the plan (step 2): pick an input block (pwr_in with the right vin, or usb_in), regulators so every used rail exists (CAN needs +5V and +3V3, BLDC needs ≥8 V on VM, AURIX needs a crystal), one mcu, then the function blocks. Use "plan" to see rails, MCU pin assignment, BOM and warnings, and fix warnings (e.g. high LDO loss → lower input or add a 5 V stage). Pick a placement strategy (thermal for motor drivers, noise for CAN/mixed-signal). Only run "generate" if the user asked to create the circuit now; generate makes the circuit (parts, netlist, schematic = step 2) only — the PCB is placed and routed in step 3. PCB wishes given now (layer count such as "8층", "크기 최소화", exact size, routing on/off) are recorded with "board layers N", "board min", "board W H", "board route on|off" and applied when the PCB starts; use "generate --pcb" only when the user explicitly asks to go on to the PCB now. Parts outside the library cannot be added here — say which and suggest adding them later in the schematic console. At most 14 commands. Answer in Korean, 3-6 short lines: chosen parts and why, open warnings, next step.`;
 async function npAI(req){
   if(!req.trim())return'요청을 적어 주세요.';
   const cmds=NP_HELP.filter(x=>!/^ai /.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
   const blocks=Object.entries(NEWPROJ.LIB).map(([k,v])=>`- ${k}: ${v.label} — ${v.desc}; params ${Object.entries(v.params).map(([p,d])=>`${p}=${d.def} (${d.desc})`).join(', ')||'none'}`).join('\n');
   const prompt=NP_SYS.replace('${CMDS}',cmds).replace('${BLOCKS}',blocks).replace('${MCUS}',Object.entries(NEWPROJ.MCUS).map(([k,v])=>k+' = '+v.label).join('; '))+
     `\n\n현재 HW 블록 다이어그램:\n${NP.arch?HWARCH.text(NP.arch):'(비어 있음)'}\n\n현재 회로 계획 (2단계):\n${NP.plan?NEWPROJ.summary(NP.plan).text.split('\n').slice(0,14).join('\n'):'(비어 있음)'}\n\n사용자 요청: ${req}`;
-  const ok=await aiAgent({prompt,toolName:'run_np',toolDesc:'Run one new-design console command (add/set/remove/mcu/board/strategy/plan/generate) and return its text output.',example:'"add pwr_in --vin 12" or "plan"',
-    run:c=>npRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!NP_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='generate'&&!/(회로|보드|PCB|기판)[^.]{0,10}(생성|만들|그려|까지)|generate/i.test(req))return'not allowed: generate (the user did not ask to create the board yet)';return'';},
+  const ok=await aiAgent({prompt,ro:c=>['help','?','status','blocks','mcus','view','diagram'].includes((cliTok(c)[0]||'').toLowerCase()),roList:'status, blocks, mcus, diagram',toolName:'run_np',toolDesc:'Run one new-design console command (add/set/remove/mcu/board/strategy/plan/generate) and return its text output.',example:'"add pwr_in --vin 12" or "plan"',
+    run:c=>npRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!NP_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='generate'&&/--pcb/.test(c)&&!/(보드|PCB|기판|배치|배선)[^.]{0,12}(생성|만들|그려|까지|시작|진행)/i.test(req))return'not allowed: generate --pcb (the user did not ask to start the PCB yet; record PCB wishes with board commands)';if(f==='generate'&&!/(회로|보드|PCB|기판)[^.]{0,10}(생성|만들|그려|까지)|generate/i.test(req))return'not allowed: generate (the user did not ask to create the board yet)';return'';},
     say:npSay,set:npSet,drop:e=>{const el=$('#npLog')&&$('#npLog').querySelector(`[data-id="${e.id}"]`);if(el)el.remove();NP.log=NP.log.filter(x=>x!==e);},setAbort:c=>{NP.abort=c;},stopped:()=>NP.stopReq,max:16});
   if(!ok){npSay('out','Claude를 쓸 수 없어 규칙으로 HW 블록 다이어그램을 만듭니다.');return await npRun('arch '+req);}
   return'';
@@ -149,8 +193,11 @@ $('#npPlan').addEventListener('click',async()=>{const req=$('#npReq').value.trim
 $('#npAdd').addEventListener('click',()=>npExec('add '+$('#npAddSel').value));
 $('#npName').addEventListener('change',()=>{const v=$('#npName').value.trim();if(NP.arch&&v)NP.arch.name=v;if(NP.plan){NP.plan.name=v||NP.plan.name;}npRender();});
 $('#npStrat').addEventListener('change',()=>{if(NP.plan){NP.plan.strategy=$('#npStrat').value;npRender();}});
-['#npW','#npH'].forEach(id=>$(id).addEventListener('change',()=>{const w=+$('#npW').value,h=+$('#npH').value;npExec(w>=20&&h>=20?`board ${w} ${h}`:'board auto');}));
-$('#npGen').addEventListener('click',()=>{if(NP.busy)return;npExec(`generate${$('#npRoute').checked?' --route':' --route 0'}`);});
+['#npW','#npH'].forEach(id=>$(id).addEventListener('change',()=>{const w=+$('#npW').value,h=+$('#npH').value;if(w>=20&&h>=20)npExec(`board ${w} ${h}`);}));
+$('#npLayers').addEventListener('change',()=>npExec(`board layers ${$('#npLayers').value}`));
+$('#npSize').addEventListener('change',()=>{const v=$('#npSize').value;$('#npWH').hidden=v!=='fix';if(v==='min')npExec('board min');else if(v==='auto')npExec('board auto');else{const w=+$('#npW').value,h=+$('#npH').value;if(w>=20&&h>=20)npExec(`board ${w} ${h}`);}});
+$('#npRoute').addEventListener('change',()=>npExec(`board route ${$('#npRoute').checked?'on':'off'}`));
+$('#npGen').addEventListener('click',()=>{if(NP.busy)return;npExec('generate');});
 $('#npForm').addEventListener('submit',e=>{e.preventDefault();const v=$('#npIn').value.trim();if(!v||NP.busy)return;$('#npIn').value='';NP.inHist.push(v);NP.hi=NP.inHist.length;npExec(v);});
 $('#npIn').addEventListener('keydown',e=>{const i=e.target;if(e.key==='ArrowUp'){if(NP.hi>0){NP.hi--;i.value=NP.inHist[NP.hi]||'';}e.preventDefault();}else if(e.key==='ArrowDown'){if(NP.hi<NP.inHist.length){NP.hi++;i.value=NP.inHist[NP.hi]||'';}e.preventDefault();}});
 $('#npStop').addEventListener('click',()=>{NP.stopReq=true;if(NP.abort)NP.abort.abort();});
@@ -159,7 +206,7 @@ $('#npStop').addEventListener('click',()=>{NP.stopReq=true;if(NP.abort)NP.abort.
 var SYS={sel:null,src:null,D:null,view:'hw',A:null};
 function archEnsure(){if(!NP.arch)NP.arch=HWARCH.blank($('#npName').value.trim()||(BD&&BD.name)||null);return NP.arch;}
 // the circuit plan follows the architecture until the user edits the plan by hand
-function archToPlan(force){if(!NP.arch)return;if(NP.planManual&&!force)return;const prev=NP.plan;const t=HWARCH.toPlan(NP.arch);NP.plan=t.plan;NP.planManual=false;if(prev){NP.plan.board=prev.board;if(prev.strategy&&prev.strategy!=='balanced')NP.plan.strategy=prev.strategy;}}
+function archToPlan(force){if(!NP.arch)return;if(NP.planManual&&!force)return;const prev=NP.plan;const t=HWARCH.toPlan(NP.arch);NP.plan=t.plan;NP.planManual=false;if(prev){NP.plan.board=prev.board;if(prev.pcb)NP.plan.pcb=prev.pcb;if(prev.strategy&&prev.strategy!=='balanced')NP.plan.strategy=prev.strategy;}}
 function sysArch(){if(NP.arch&&NP.arch.blocks.length)return NP.arch;if(BD){const D=SYSDIAG.fromBoard(BD);return HWARCH.fromDiagram(D);}return null;}
 function sysDiagram(){
   if(SYS.src!=='board'&&NP.plan&&NP.plan.blocks.length){SYS.D=SYSDIAG.fromPlan(NP.plan);SYS.D.from='plan';}
@@ -227,10 +274,12 @@ function setStep(n){n=+n;
   if(n===1)setWorkspace('sys');
   else if(n===2){if(!BD){toast('먼저 1단계에서 회로를 생성하거나 보드를 불러오세요.');return;}setWorkspace('board');if(S.sch!=='full')setView('sch');}
   else if(n===3){if(!BD){toast('보드가 없습니다.');return;}setWorkspace('board');if(S.sch==='full')setView(S.view&&S.view!=='sch'?S.view:'3d');}
-  else if(n===4){if(!BD){toast('보드가 없습니다.');return;}setWorkspace('cad');}
+  else if(n===4){if(!BD){toast('보드가 없습니다.');return;}if(BD.pcbPending){toast('4단계 기구 설계는 PCB(3단계)를 배치한 뒤에 할 수 있습니다.');setStep(3);return;}setWorkspace('cad');}
   stepPaint();}
 function stepCur(){const w=HS.ws;return w==='sys'?1:w==='cad'?4:w==='board'?(S.sch==='full'?2:3):0;}
-function stepPaint(){const cur=stepCur();const done={1:!!(NP.plan&&NP.plan.blocks.length)||!!BD,2:!!BD,3:!!(BD&&BD.comps.length),4:!!(BD&&BD.housing&&BD.housing.R)};
+function stepPaint(){const cur=stepCur();const done={1:!!(NP.plan&&NP.plan.blocks.length)||!!BD,2:!!BD,3:!!(BD&&BD.comps.length&&!BD.pcbPending),4:!!(BD&&BD.housing&&BD.housing.R)};
+  pcbGatePaint();
+  document.querySelectorAll('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>1&&!BD;b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
   document.querySelectorAll('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
   const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');}
 document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));
