@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AllinOneDesign 사용 설명서</title>
+<style>
+:root{--bg:#f4f5f7;--surface:#fff;--fg:#1d2126;--muted:#5a6872;--line:#d8dde2;--accent:#b5541c;--soft:#f3e3d6;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans KR","Noto Sans KR",system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.65;word-break:keep-all}
+a{color:var(--accent)}
+.wrap{display:grid;grid-template-columns:240px minmax(0,1fr);gap:0;max-width:1240px;margin:0 auto;min-height:100vh}
+nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:24px 16px;border-right:1px solid var(--line);background:var(--surface);font-size:13.5px}
+nav.toc b{display:block;font-size:12px;letter-spacing:.1em;color:var(--accent);margin:0 0 8px}
+nav.toc a{display:block;color:var(--fg);text-decoration:none;padding:4px 8px;border-radius:6px}
+nav.toc a:hover{background:var(--soft)}
+nav.toc a.sub{padding-left:20px;color:var(--muted);font-size:12.5px}
+main{padding:32px 40px 80px;background:var(--surface)}
+h1{font-size:30px;margin:0 0 6px}
+h2{font-size:22px;margin:48px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--fg)}
+h3{font-size:16px;margin:26px 0 8px}
+p.lead{color:var(--muted);margin:0 0 16px}
+figure{margin:14px 0 22px}
+figure img{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0 16px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:#f1f3f5}
+code,kbd{font-family:var(--mono);font-size:12.5px;background:#f1f3f5;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+kbd{background:#fff}
+.tip{border-left:4px solid var(--accent);background:var(--soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.warn{border-left:4px solid #d9952a;background:#fbf0d8;padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.steps{counter-reset:s;list-style:none;padding:0;margin:10px 0}
+.steps li{counter-increment:s;position:relative;padding:6px 0 6px 36px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:7px;width:24px;height:24px;border-radius:50%;background:var(--fg);color:#fff;font:600 12px var(--mono);display:grid;place-items:center}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fcfcfb}
+.card b{display:block;margin-bottom:4px}
+.meta{font-size:13px;color:var(--muted)}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}nav.toc{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}main{padding:20px 16px 60px}.grid2{grid-template-columns:1fr}}
+@media print{nav.toc{display:none}.wrap{grid-template-columns:1fr}main{padding:0}figure{break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" aria-label="목차">
+  <b>사용 설명서</b>
+  <a href="#intro">소개</a>
+  <a href="#start">시작하기</a>
+  <a href="#layout">화면 구성</a>
+  <a href="#new">신규 설계 4단계</a>
+  <a class="sub" href="#s1">1 시스템 다이어그램</a>
+  <a class="sub" href="#s2">2 회로</a>
+  <a class="sub" href="#s3">3 PCB</a>
+  <a class="sub" href="#s4">4 기구 CAD</a>
+  <a href="#existing">기존 프로젝트 열기</a>
+  <a href="#copilot">설계 도우미(AI)</a>
+  <a href="#views">보기 · 새 창</a>
+  <a href="#strip">지표 띠 · 전체 보기</a>
+  <a href="#sim">시뮬레이션</a>
+  <a href="#hsis">HSIS</a>
+  <a href="#rev">리비전 기록 · 비교</a>
+  <a href="#export">내보내기 · 보고서</a>
+  <a href="#keys">단축키</a>
+  <a href="#cli">명령어 요약</a>
+  <a href="#faq">자주 묻는 질문</a>
+</nav>
+<main>
+<h1>AllinOneDesign 사용 설명서</h1>
+<p class="lead">요구사항에서 시스템 다이어그램 → 회로 → PCB → 기구까지, 브라우저 하나에서 AI와 함께 설계하는 도구입니다. 이 설명서는 화면 순서대로 따라가며 읽도록 썼습니다.</p>
+
+<h2 id="intro">소개</h2>
+<p>AllinOneDesign은 단일 HTML 파일로 동작하는 하드웨어 설계 작업 공간입니다. 한 프로젝트의 산출물(HW 블록 다이어그램, 회로도·넷리스트·BOM, 배치·배선된 PCB, 보호 하우징 도면·BOM, HSIS, 시뮬레이션, 리비전 이력)이 한 곳에 있고, 어느 단계에서든 설계 도우미(AI)에게 말이나 명령으로 지시할 수 있습니다.</p>
+<div class="grid2">
+  <div class="card"><b>신규 설계</b>요구사항 한 줄에서 시작해 4단계를 차례로 진행합니다. 빠진 정보는 AI가 질문합니다.</div>
+  <div class="card"><b>기존 프로젝트</b>KiCad · Gerber · 뷰어 JSON을 열어 보고, 편집하고, 시뮬레이션·HSIS·기구까지 이어 갑니다.</div>
+  <div class="card"><b>AI 설계 도우미</b>네 단계의 콘솔을 하나의 대화로. 변경은 "변경 요청 카드"로 검토·승인·되돌리기.</div>
+  <div class="card"><b>리비전·내보내기</b>바뀔 때마다 자동 기록, 두 시점 비교, SVG/PNG/Excel/설계 보고서(HTML→PDF).</div>
+</div>
+<div class="warn">열·진동·EMC·단가·하우징 수치는 초기 설계용 추정입니다. 양산 전에는 전문 도구와 시험으로 확인하세요.</div>
+
+<h2 id="start">시작하기</h2>
+<ol class="steps">
+  <li><code>dist/index.html</code>을 브라우저(Chrome·Edge 권장)로 엽니다. 3D·zip·엑셀 라이브러리만 CDN에서 불러오므로 인터넷이 필요합니다. 설계 파일은 브라우저 안에서만 처리됩니다.</li>
+  <li>첫 화면에서 <b>신규 설계</b> 또는 <b>기존 프로젝트</b>를 고릅니다. 아래의 예제 칩(SENSE-32, MCU DC 모터, MCU BLDC 3상, AURIX TC364)을 누르면 바로 둘러볼 수 있습니다.</li>
+  <li>머리의 로고 아이콘을 누르면 언제든 첫 화면으로 돌아옵니다.</li>
+</ol>
+<figure><img src="img/home.jpg" alt="첫 화면: 신규 설계와 기존 프로젝트 카드, 예제 칩"><figcaption>첫 화면</figcaption></figure>
+
+<h2 id="layout">화면 구성</h2>
+<table>
+<tr><th style="width:160px">영역</th><th>내용</th></tr>
+<tr><td>머리</td><td>프로젝트 이름·리비전, <b>전체</b>(전체 보기), <b>단계 표시줄</b>(1 시스템 · 2 회로 · 3 PCB · 4 기구 CAD), <b>HSIS</b>, 파일 불러오기, 내보내기, 리비전, 보기 전환(3D · TOP · BOTTOM · 층 선택 · 회로도), 나란히, 새 창, 도우미 접기</td></tr>
+<tr><td>지표 띠</td><td>BOM 참고가 · 가이드라인 · DRC · HSIS · 최고 Tj · 하우징. 타일을 누르면 해당 화면으로 갑니다.</td></tr>
+<tr><td>작업 공간</td><td>단계에 따라 바뀝니다: 보드(레이어·보드 요약 + 3D/2D/회로도), 시스템 다이어그램, 기구 CAD, HSIS, 전체 보기.</td></tr>
+<tr><td>도킹 패널(오른쪽)</td><td><b>설계 도우미</b> · <b>정보</b>(선택·부품·넷·데이터) · <b>시뮬레이션</b> · <b>데이터시트</b>. 각 탭의 ↗로 새 창에 띄울 수 있고(메인 창과 연동), 경계선을 끌어 너비를 바꿉니다.</td></tr>
+</table>
+<p>모든 버튼·탭에는 기능을 나타내는 아이콘이 붙어 있고, 지금 단계·선택된 탭은 강조색으로 표시됩니다.</p>
+
+<h2 id="new">신규 설계 4단계</h2>
+<p class="lead">첫 화면의 <b>신규 설계</b>를 누르면 빈 프로젝트가 열리고 1단계부터 시작합니다. 단계는 순서대로 열립니다(회로 없이는 3단계로 못 가고, PCB 배치 전에는 4단계가 잠깁니다).</p>
+
+<h3 id="s1">1단계 · 시스템 다이어그램</h3>
+<ol class="steps">
+  <li>왼쪽 패널에 <b>프로젝트 이름</b>과 <b>요구사항</b>(무엇을 만들지 · 입력 전원 · 통신 · 구동/센싱 · 안전 등급)을 적습니다. 예제 칩을 누르면 문장이 채워집니다.</li>
+  <li><b>블록 다이어그램 만들기</b>를 누르거나, 오른쪽 도우미에 문장을 바로 보냅니다.</li>
+  <li>빠진 필수 정보가 있으면 도우미에 <b>질문 카드</b>가 뜹니다. 선택지를 누르거나 직접 적어 답하세요(건너뛰면 기본값). 답은 요구사항에 <code>보강: …</code>으로 합쳐집니다.</li>
+  <li>HW 블록 다이어그램이 그려집니다. 블록을 누르면 왼쪽 아래에서 기능·인터페이스·회로 구현을 고칠 수 있고, 명령(<code>block</code> · <code>link</code> · <code>feat</code> · <code>rename</code> · <code>del</code>)으로도 편집합니다.</li>
+  <li><b>다음: 회로 생성 →</b>으로 2단계로 갑니다.</li>
+</ol>
+<figure><img src="img/step1-ask.jpg" alt="1단계: AI가 입력 전원을 묻는 질문 카드"><figcaption>필수 정보를 묻는 질문 카드 — 선택지를 누르거나 직접 적습니다</figcaption></figure>
+<figure><img src="img/step1.jpg" alt="1단계: HW 블록 다이어그램"><figcaption>요구사항에서 만든 HW 블록 다이어그램(전원 → 통신 → 제어 → 구동·센싱 → 외부 연결)</figcaption></figure>
+<div class="tip">AI 모드(도우미 머리의 <b>AI</b>)에서는 Claude가 질문을 고르고 블록을 설계합니다. 결정론 모드에서는 규칙으로 같은 일을 합니다. 1단계에서는 PCB 조건을 묻지 않으며, 도킹 패널도 설계 도우미만 보입니다.</div>
+
+<h3 id="s2">2단계 · 회로</h3>
+<ol class="steps">
+  <li>다이어그램이 <b>저가형 · 표준 · 확장형</b> 세 회로 안으로 풀립니다. BOM 참고가, 부품 수, 여유 MCU 핀, 레귤레이터 손실, 가격·기능·확장성 점수와 기준 안과의 차이를 비교합니다. 위의 <b>우선순위</b>(가격 · 균형 · 기능 · 확장성)로 추천이 바뀝니다.</li>
+  <li><b>이 안으로 회로 생성</b>을 누르면 실제 부품 선정 · 넷리스트 · MCU 핀 배정 · 회로도(여러 시트)가 만들어집니다. 이 단계에서는 회로도만 보이고 PCB 관련 화면은 숨겨집니다.</li>
+  <li><b>데이터시트</b> 탭에서 회로 부품 목록(참고 단가 합)과 부품별 정리 페이지를 봅니다. 회로도는 <b>회로 편집</b>으로 직접 고치거나 회로도 CLI(<code>add</code> · <code>move</code> · <code>wire</code> · <code>erc</code>)로 편집합니다.</li>
+</ol>
+<figure><img src="img/step2-variants.jpg" alt="2단계: 저가형·표준·확장형 회로 안 비교 카드"><figcaption>회로 안 고르기</figcaption></figure>
+<figure><img src="img/step2-sch.jpg" alt="2단계: 생성된 회로도와 데이터시트 탭"><figcaption>생성된 회로도와 데이터시트 탭</figcaption></figure>
+
+<h3 id="s3">3단계 · PCB</h3>
+<ol class="steps">
+  <li>처음 들어오면 <b>PCB 설계 시작</b> 카드가 열립니다. 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략(균형 · 열 분산 · 노이즈 최소화 …), 이어서 자동 배선을 고릅니다.</li>
+  <li>도우미가 <code>board layers</code> → <code>board minimize</code>/<code>reset</code> → <code>route</code>를 차례로 실행합니다. 결과는 <b>변경 요청 카드</b>로 남고, 되돌릴 수 있습니다.</li>
+  <li><b>PCB 편집</b>(2D 보기 위)에서 부품을 끌어 옮기고(<kbd>R</kbd> 회전, <kbd>F</kbd> 뒤집기), 배선(<kbd>X</kbd>)·비아(<kbd>V</kbd>)를 그리며, 래츠네스트와 DRC 수를 확인합니다. 4층 이상이면 보기 탭 옆 <b>층 선택</b>(또는 <kbd>[</kbd> <kbd>]</kbd>)으로 내층을 한 층씩 봅니다.</li>
+  <li>배선을 위해 회로를 함께 고칠 수 있습니다: <code>pinswap</code>으로 MCU 핀 배정을 바꾸면 보드 넷·회로도·HSIS가 함께 바뀝니다.</li>
+</ol>
+<figure><img src="img/step3-gate.jpg" alt="3단계: PCB 설계 시작 카드"><figcaption>PCB 설계 시작 카드</figcaption></figure>
+<figure><img src="img/step3-layer.jpg" alt="3단계: 내층 In1(GND 플레인) 보기"><figcaption>층 선택으로 본 내층 In1.Cu(GND 플레인) — 관통 패드·비아가 함께 보입니다</figcaption></figure>
+<figure><img src="img/step3-cr.jpg" alt="3단계: 배치·배선된 보드 3D와 변경 요청 카드"><figcaption>배치·배선 뒤의 3D와 도우미의 변경 요청 카드</figcaption></figure>
+
+<h3 id="s4">4단계 · 기구 CAD</h3>
+<ol class="steps">
+  <li>왼쪽에서 설계 조건(발열 · IP 등급 · 진동 · 온도 · 재질 · 방열 패드)을 정합니다. 재질 6종(PC/ABS, PA66-GF, SPCC 판금, A6063 압출, ADC12·AZ91D 다이캐스팅)이 모두 계산되고 조건을 만족하는 최저 원가가 자동 선택됩니다.</li>
+  <li>도우미에 문장으로 지시합니다: "오른쪽 벽에 M16 글랜드 2개, 장착 탭 4개 M5, 커버 윗면 R3 둥근모따기". 구멍·사각 구멍·글랜드·벤트·탭·보스·리브·방열 핀·각인, 벽 두께·모서리 R/C·스탠드오프 등을 명령(<code>hole</code> · <code>gland</code> · <code>tabs</code> · <code>fillet</code> · <code>edit</code> …)으로도 넣습니다.</li>
+  <li>3D에서 요소를 <b>클릭 선택</b>(Shift/Ctrl 다중)하거나 형상 트리·<b>부품(BOM 순)</b> 띠에서 고른 뒤 선택 막대에 "지름 12로", "위로 3 mm", "삭제"처럼 적으면 그 요소에만 적용됩니다. <b>분해</b> 슬라이더로 커버를 들어 올립니다.</li>
+  <li>오른쪽 아래에서 <b>CAD 내보내기</b>(SCAD·STL·보고서 zip), <b>도면·BOM</b>(조립도·부품도 SVG/PNG·기구 BOM·SCAD), <b>BOM Excel</b>.</li>
+</ol>
+<figure><img src="img/step4-cad.jpg" alt="4단계: 하우징 3D, 분해 보기, 선택 막대"><figcaption>하우징 분해 보기와 선택한 글랜드에 대한 지시 입력</figcaption></figure>
+
+<h2 id="existing">기존 프로젝트 열기</h2>
+<p>첫 화면의 <b>기존 프로젝트</b> 또는 머리의 <b>파일 불러오기</b>에서 파일을 끌어다 놓습니다. 여러 파일(Gerber 세트 + 드릴 + Pick-and-Place + BOM)도 한 번에 넣을 수 있고, 파일 역할은 자동 판별되며 직접 바꿀 수 있습니다.</p>
+<table>
+<tr><th>형식</th><th>내용</th></tr>
+<tr><td>KiCad <code>.kicad_pcb</code> · <code>.kicad_sch</code></td><td>보드(내층 포함)·넷·부품·회로도. 저장도 KiCad 형식으로.</td></tr>
+<tr><td>Gerber · Excellon · IPC-D-356 · Pick-and-Place · BOM(CSV/XLSX)</td><td>동박(내층 <code>In1_Cu</code>, <code>.G2</code> 등 포함)·실크·외곽·드릴·넷·부품 위치·부품 값</td></tr>
+<tr><td>뷰어 JSON</td><td>이 도구의 보드 형식(예제·생성 보드)</td></tr>
+<tr><td>HSIS 엑셀 · AUTOSAR ARXML</td><td>HSIS 작업 공간에서 불러옵니다</td></tr>
+</table>
+<p>열린 프로젝트에도 단계 표시줄이 보입니다. 1단계는 보드에서 추출한 HW 블록 다이어그램([보드에서 추출]로 편집 가능), 2단계 회로도, 3단계 PCB, 4단계 기구입니다. 이미 산출물이 있으므로 단계가 잠기지 않습니다.</p>
+
+<h2 id="copilot">설계 도우미(AI)</h2>
+<p>오른쪽 도킹 패널의 <b>설계 도우미</b>는 네 단계의 콘솔(시스템 CLI · 회로도 CLI · 배치/배선 CLI · Text-to-CAD)을 하나의 대화로 합친 것입니다. 입력은 <b>지금 단계</b>의 콘솔로 가고(머리의 선택 상자로 단계를 고정할 수 있음), 출력에는 어느 단계에서 나온 것인지 표시됩니다.</p>
+<table>
+<tr><th>모드</th><th>동작</th></tr>
+<tr><td><b>결정론</b></td><td>문장을 규칙으로 명령으로 바꿔 실행합니다. 예: "8층으로 바꾸고 크기 최소화" → <code>board layers 8</code> → <code>board minimize</code>. 명령을 직접 적어도 됩니다.</td></tr>
+<tr><td><b>AI</b></td><td>Claude가 같은 명령을 도구로 하나씩 실행하고, 매 명령 뒤의 결과(경고·온도·원가·DRC)를 보고 고칩니다. 대화 방식(자동 · 질문 · 작업)과 모델 등급을 고를 수 있습니다.</td></tr>
+</table>
+<h3>변경 요청 카드</h3>
+<p>설계를 바꾼 실행마다 카드가 붙습니다: <b>시스템 · 회로(+추가 −삭제 값변경) · PCB · HSIS · 기구 · BOM 증감</b> 영향, 변경 요약, 실행한 명령 목록.</p>
+<ul>
+  <li><b>승인 · 리비전 기록</b>: <code>CR-n</code> 이름으로 리비전을 남깁니다.</li>
+  <li><b>겹쳐 보기</b>: 직전 리비전과 현재를 PCB 겹쳐 보기로 엽니다.</li>
+  <li><b>되돌리기</b>: 그 실행이 더한 단계만큼 정확히 되돌립니다(그 뒤에 다른 변경이 있으면 <kbd>Ctrl</kbd>+<kbd>Z</kbd> 안내).</li>
+</ul>
+<p>빠른 요청 칩은 단계마다 바뀌고, <kbd>`</kbd> 키로 어디서든 입력창으로 갑니다. <kbd>Enter</kbd> 보내기, <kbd>Shift</kbd>+<kbd>Enter</kbd> 줄바꿈, <kbd>↑</kbd> 이전 입력.</p>
+
+<h2 id="views">보기 · 새 창</h2>
+<ul>
+  <li><b>3D</b>(드래그 회전 · 우클릭/Shift 드래그 이동 · 휠 확대 · 클릭 선택, 등각/위/아래), <b>TOP · BOTTOM</b>(드래그 이동 · 더블클릭 맞춤), <b>층 선택</b>(4층 이상, 내층), <b>회로도</b>(시트 탭, 넷 강조).</li>
+  <li><b>나란히</b>: 회로도와 보드를 함께. 회로도에서 부품을 누르면 보드에서도 강조됩니다.</li>
+  <li><b>새 창</b>: 1×1 · 1×2 · 1×4 · 2×2 격자에 TOP · 내층 · BOTTOM · 3D · 회로도 · 시스템 다이어그램 · 부품 구성도 · 기구 3D · 기구 도면 · HSIS · 시뮬레이션을 배치합니다. 메인 창과 연동되고, 칸마다 SVG/PNG/Excel 버튼이 있습니다. 브라우저가 새 창을 막으면 화면 위에 떠 있는 창으로 열립니다.</li>
+  <li>레이어 패널: 상단/하단/내층 동박, 실크, 솔더마스크(색 5종), 드릴·비아, 3D 부품/부품 외형, 반대면 비침, 3D 분해.</li>
+  <li>정보 패널: 선택(패드·넷·부품), 부품 목록, 넷 목록, 데이터(불러온 파일·경고). 검색창에서 <code>U1</code>, <code>100nF</code>, <code>SDA</code>처럼 찾습니다.</li>
+</ul>
+
+<h2 id="strip">지표 띠 · 전체 보기</h2>
+<figure><img src="img/overview.jpg" alt="전체 보기: 네 단계 프레임과 AI 바"><figcaption>전체 보기 — 시스템 → 회로 → PCB → 기구가 화살표로 이어집니다</figcaption></figure>
+<table>
+<tr><th>타일</th><th>값</th><th>누르면</th></tr>
+<tr><td>BOM 참고가</td><td>부품 참고 단가 합(추정), 이름 붙인 마지막 리비전 대비 증감</td><td>데이터시트 탭</td></tr>
+<tr><td>가이드라인</td><td>회로·PCB 설계 가이드라인 점수, 미준수 수</td><td>도우미 <code>guide check</code></td></tr>
+<tr><td>DRC</td><td>DRC 문제 수, 미배선 수, 층 수</td><td>PCB 편집 + DRC 목록</td></tr>
+<tr><td>HSIS</td><td>정상 신호/전체, 오류 수</td><td>HSIS</td></tr>
+<tr><td>최고 Tj</td><td>열 해석이 있으면 그 값, 없으면 하우징 추정</td><td>시뮬레이션 · 열</td></tr>
+<tr><td>하우징</td><td>무게 · 재질 · IP · 조건 만족 여부</td><td>4단계</td></tr>
+</table>
+<p><b>전체</b> 버튼은 네 단계를 한 화면에 모읍니다. 프레임마다 그 단계의 그림(다이어그램 · 회로도 · TOP · 조립도)과 요약 수치가 있고, 화살표에는 무엇이 그 다음을 만들었는지(회로 안, 층·전략, 재질·IP)가 적힙니다. 프레임을 누르면 그 단계로 가고, 아래 AI 바에 적으면 지금 단계 콘솔로 보냅니다.</p>
+
+<h2 id="sim">시뮬레이션</h2>
+<figure><img src="img/sim.jpg" alt="시뮬레이션 패널: 열 분포"><figcaption>시뮬레이션 탭 — 열 분포</figcaption></figure>
+<table>
+<tr><th>탭</th><th>내용</th></tr>
+<tr><td>전원 경로(IR drop)</td><td>공급 핀에서 부하 핀까지 동박을 따라 흐르는 전류로 전압 강하와 트랙 발열. 부하 전류는 IC 핀에 나눠 넣습니다.</td></tr>
+<tr><td>신호</td><td>트랙 길이·임피던스·반사·크로스토크 추정, 차동 쌍 점검.</td></tr>
+<tr><td>열</td><td>부품 손실 → 보드 온도 분포(격자 해석), 부품별 Tj, 하우징과의 연계.</td></tr>
+<tr><td>EMC</td><td>모터 제어기 파라미터(PWM·슬루·루프 면적)로 방사 추정과 대책.</td></tr>
+<tr><td>회로</td><td>MNA 회로 해석과 MCU 펌웨어 코시뮬레이션(1 ms). 펌웨어 파라미터를 바꾸고 <b>빌드 &amp; 시뮬레이션</b>을 누르면 3D에서 LED·모터가 움직입니다.</td></tr>
+</table>
+<p>2D 보기 위에 결과를 겹쳐 볼 수 있고(범례 표시), 결과는 설계 보고서에 들어갑니다.</p>
+
+<h2 id="hsis">HSIS (HW/SW 인터페이스 사양)</h2>
+<figure><img src="img/hsis.jpg" alt="HSIS 작업 공간: 신호 표와 핀 맵"><figcaption>HSIS 작업 공간</figcaption></figure>
+<ul>
+  <li><b>신호 표</b>: 엑셀 HSIS(또는 보드에서 만든 초안)의 신호·분류·MCU 핀·포트·방향·넷. 상태(정상·경고·오류)와 필터.</li>
+  <li><b>MCU 핀 맵</b>: 패키지 핀 배치 위에 신호를 그립니다. 핀을 누르면 보드·회로도에서 강조.</li>
+  <li><b>추적성</b>: 요구사항 ↔ HSIS ↔ 테스트 연결(SYS.4).</li>
+  <li><b>검사 결과</b>: 회로도 넷·보드·펌웨어·ARXML과 대조한 오류·경고 목록.</li>
+  <li><b>핀 추천</b>: MCU 핀 기능 DB로 역할(PWM·ADC·CAN·SPI …)에 맞는 핀을 추천(같은 주변장치 묶음, 헝가리안 매칭)하고 적용합니다.</li>
+  <li><b>MCAL 설정</b> · <b>테스트 케이스</b>(SWE.6/SYS.4) 생성과 내려받기.</li>
+</ul>
+<p>탭 머리의 <b>Excel</b>은 지금 탭의 표를, 내보내기 창의 "HSIS 전체"는 모든 표를 시트별로 저장합니다.</p>
+
+<h2 id="rev">리비전 기록 · 비교</h2>
+<figure><img src="img/revisions.jpg" alt="리비전 기록 창: 원장 보기와 비교"><figcaption>리비전 기록 — 원장 보기와 A↔B 비교</figcaption></figure>
+<ul>
+  <li>설계를 바꾸면 2–4초 뒤 자동으로 리비전 <code>r1, r2 …</code>가 기록됩니다(원인 = 그 사이 실행한 명령, 단계, 변경 요약). 바뀐 게 없으면 기록하지 않습니다.</li>
+  <li><b>지금 저장…</b>으로 이름(A01, EVT1), 단계(Proto · EVT · DVT · PVT · MP), 메모를 붙입니다. 이름 붙인 리비전은 정리되지 않습니다(자동 리비전은 프로젝트당 최근 150개).</li>
+  <li><b>비교</b>: 목록에서 A·B를 고르거나(현재 포함) 원장의 열을 누릅니다(클릭 = B, Shift+클릭 = A). 탭: 요약 · 부품 · 배치 · 넷 · <b>PCB 겹쳐 보기</b>(같음 회색 / A에만 빨강 / B에만 초록, 층 선택) · 다이어그램·계획 · HSIS · 기구. <b>Excel</b>로 저장.</li>
+  <li><b>복원</b>: 지금 상태를 먼저 기록한 뒤 그 리비전으로 되돌립니다.</li>
+  <li>기록은 이 브라우저(IndexedDB)에 프로젝트별로 남습니다. <b>기록 내보내기</b>로 JSON 한 파일을 받아 설계 파일과 함께 Git에 커밋하고, 다른 PC에서 <b>불러오기</b>로 이어 봅니다.</li>
+</ul>
+
+<h2 id="export">내보내기 · 보고서</h2>
+<figure><img src="img/export.jpg" alt="내보내기 창"><figcaption>내보내기 창</figcaption></figure>
+<table>
+<tr><th>종류</th><th>항목</th></tr>
+<tr><td>그림 (SVG · PNG)</td><td>지금 보기, TOP · 내층 · BOTTOM(화면과 같은 벡터 SVG), 회로도 시트, HW 블록 다이어그램, 부품 구성도, 3D, 기구 조립도·부품도(HSG-01 베이스 · HSG-02 커버), 모든 층 + 회로도 zip</td></tr>
+<tr><td>표 (Excel)</td><td>HSIS 전체(신호 표 · 핀 맵 · 추적성 · 검사 · 핀 추천 · MCAL · 테스트), BOM, 부품 배치, 넷리스트, 기구 BOM, 설계 데이터 전체(요약 · BOM · 배치 · 넷 · 층 · HSIS · 하우징 · 리비전)</td></tr>
+<tr><td>설계 보고서</td><td>항목(개요 · 시스템 다이어그램 · 회로/BOM/회로도 · PCB 층별 · 3D · 시뮬레이션 · HSIS · 기구 보고/BOM/조립도/부품도/3D · 리비전 · 도우미 기록)을 골라 <b>HTML 파일 하나</b>로 저장하거나 바로 인쇄 → PDF</td></tr>
+<tr><td>설계 파일</td><td>KiCad PCB · 회로도 저장, OpenSCAD · STL, HSIS CSV, MCAL 설정, 리비전 기록 JSON</td></tr>
+</table>
+
+<h2 id="keys">단축키</h2>
+<table>
+<tr><th>키</th><th>동작</th></tr>
+<tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></td><td>3D · TOP · BOTTOM · 회로도</td></tr>
+<tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>동박 층 위/아래 (4층 이상)</td></tr>
+<tr><td><kbd>Esc</kbd></td><td>선택 해제 · 창 닫기</td></tr>
+<tr><td><kbd>`</kbd></td><td>설계 도우미 입력창으로</td></tr>
+<tr><td><kbd>X</kbd> <kbd>V</kbd> <kbd>Del</kbd> <kbd>R</kbd> <kbd>F</kbd></td><td>PCB 편집: 배선 · 비아 · 삭제 · 회전 · 뒤집기 (방향키 0.5 mm, Shift ×10)</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></td><td>실행 취소 / 다시 실행</td></tr>
+<tr><td><kbd>Shift</kbd>/<kbd>Ctrl</kbd>+클릭</td><td>기구 요소 다중 선택 · 원장에서 A 지정</td></tr>
+</table>
+
+<h2 id="cli">명령어 요약</h2>
+<p>각 콘솔에서 <code>help</code>를 치면 전체 목록이 나옵니다. 자주 쓰는 것만 모았습니다.</p>
+<table>
+<tr><th>단계</th><th>명령</th></tr>
+<tr><td>1 시스템</td><td><code>arch &lt;문장&gt;</code> · <code>block &lt;그룹&gt; "&lt;이름&gt;" --feat "…"</code> · <code>link A B "라벨" --kind power|signal|bus</code> · <code>rename</code> · <code>del</code> · <code>impl</code> · <code>variants [pick cost|std|ext]</code> · <code>generate [cost|std|ext]</code></td></tr>
+<tr><td>2 회로도</td><td><code>add &lt;부품&gt;</code> · <code>move</code> · <code>wire</code> · <code>net</code> · <code>erc</code> · <code>guide check</code> · <code>pins U1 --free</code></td></tr>
+<tr><td>3 PCB</td><td><code>board 100 60 | auto | min</code> · <code>board layers 4</code> · <code>strategy noise</code> · <code>reset</code> · <code>auto</code> · <code>route</code> · <code>pinswap</code> · <code>drc</code> · <code>housing [check|compare]</code></td></tr>
+<tr><td>4 기구</td><td><code>set wall|corner|stand|top|gap|split</code> · <code>fillet|chamfer top|bottom|vertical|all &lt;mm|off&gt;</code> · <code>hole &lt;면&gt; --d</code> · <code>gland &lt;면&gt; M16</code> · <code>vent</code> · <code>slot</code> · <code>tabs 4 --screw M5</code> · <code>boss</code> · <code>rib</code> · <code>fins</code> · <code>label "…"</code> · <code>edit F1 --d 12 --z 6</code> · <code>del F1</code> · <code>open|close</code> · <code>export zip|scad|stl</code></td></tr>
+</table>
+
+<h2 id="faq">자주 묻는 질문</h2>
+<p><b>3D가 안 보입니다.</b> Three.js를 CDN에서 불러오지 못한 경우입니다. 인터넷 연결을 확인하거나 TOP·BOTTOM 보기를 쓰세요.</p>
+<p><b>AI 모드가 "규칙으로 해석"으로 바뀝니다.</b> Claude를 쓸 수 없는 환경(허용되지 않은 호스팅)에서는 결정론 규칙으로 대신 실행합니다. 기능은 같고 해석 폭이 좁습니다.</p>
+<p><b>리비전이 다른 PC에서 안 보입니다.</b> 기록은 브라우저 안에 저장됩니다. <b>기록 내보내기</b>로 JSON을 받아 Git에 두고, 다른 곳에서 <b>불러오기</b>하세요.</p>
+<p><b>단가가 실제와 다릅니다.</b> 참고 단가는 데이터시트 페이지의 <code>data-price</code>(약 1k 수량, 추정) 또는 분류별 기본값입니다. <code>datasheets/db/</code>의 페이지를 채우면 정확해집니다.</p>
+<p><b>하우징 벤트가 "부품 높이를 벗어남"으로 표시됩니다.</b> 자동 벤트가 얇은 베이스에 다 들어가지 않는 경우입니다. <code>edit F# --z &lt;mm&gt;</code>로 커버 쪽으로 옮기세요.</p>
+<p class="meta">AllinOneDesign · 사용 설명서 · 화면은 CAN 센서 노드 예시로 만든 것입니다.</p>
+</main>
+</div>
+</body>
+</html>
