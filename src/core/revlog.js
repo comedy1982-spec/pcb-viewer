@@ -33,10 +33,10 @@ function dec(E){const T=E.t||[];const live=new Array(T.length);
     for(const k in v)o[k==='$$'?'$':k]=val(v[k]);return o;};
   T.forEach((v,i)=>fill(live[i],v));return val(E.r);}
 /* ---- snapshot of the app state. st = {board, np:{name,req,plan,arch,answers,vkey}, hsis, sys} ---- */
-function snapshot(st){const B=st.board;return{v:VER,board:B?enc(B):null,np:st.np?enc(st.np):null,hsis:st.hsis?enc(st.hsis):null,stats:B?stats(B,st):null};}
+function snapshot(st){const B=st.board;return{v:VER,mb:st.mb||null,board:B?enc(B):null,np:st.np?enc(st.np):null,hsis:st.hsis?enc(st.hsis):null,stats:B?stats(B,st):null};}
 function restore(S,PCB){const B=S.board?dec(S.board):null;if(B){if(!B.layers['T.cu'])B.layers['T.cu']=[];if(!B.layers['B.cu'])B.layers['B.cu']=[];
     B.comps.forEach(c=>{if(!c.f&&PCB.FP&&PCB.FP[c.fp])c.f=PCB.FP[c.fp];});PCB.finalize(B);}
-  return{board:B,np:S.np?dec(S.np):null,hsis:S.hsis?dec(S.hsis):null};}
+  return{board:B,np:S.np?dec(S.np):null,hsis:S.hsis?dec(S.hsis):null,mb:S.mb||null};}
 /* ---- numbers that describe one revision ---- */
 function trackLen(L){let l=0;(L||[]).forEach(p=>{if(p.clear)return;if(p.t==='seg')l+=Math.hypot(p.b[0]-p.a[0],p.b[1]-p.a[1]);else if(p.t==='path')for(let i=1;i<p.pts.length;i++)l+=Math.hypot(p.pts[i][0]-p.pts[i-1][0],p.pts[i][1]-p.pts[i-1][1]);});return l;}
 function cuKeysOf(B){return Object.keys(B.layers).filter(k=>/\.cu$/.test(k)).map(k=>k.slice(0,-3)).sort((a,b)=>(a==='T'?-1:a==='B'?1e3:+a.slice(2))-(b==='T'?-1:b==='B'?1e3:+b.slice(2)));}

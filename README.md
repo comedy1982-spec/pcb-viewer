@@ -36,24 +36,28 @@
 - 엑셀 HSIS와 AUTOSAR ARXML을 읽어 **신호 표 · MCU 핀 맵 · 추적성(요구사항↔테스트) · 검사 결과 · 핀 추천(헝가리안 매칭) · MCAL 설정 · 테스트 케이스(SWE.6/SYS.4)**를 만들고 회로도·보드·펌웨어와 대조합니다.
 - 보드에 HSIS가 없으면 MCU 핀과 넷으로 초안을 만듭니다.
 
-### 5. 리비전 기록 · 비교
+### 5. 멀티보드 시스템
+- 메인 + 센서 보드처럼 **보드 둘 이상을 커넥터로 잇는 제품**을 한 시스템으로 묶습니다. 머리글의 보드 선택 상자로 보드를 추가(파일·신규 설계·예제)하고 오갑니다.
+- **시스템 연결** 탭: 보드·커넥터 짝으로 연결(케이블/B2B)을 만들고 핀을 번호·넷 이름·직접으로 매핑, 핀 수·짝 없는 핀·접지/전원/신호 충돌·레일 전압·차동 쌍 점검, 보드 연결도(SVG/PNG), 시스템 넷, 시스템 BOM(보드별 수량) → Excel·보고서.
+
+### 6. 리비전 기록 · 비교
 - 설계가 바뀌면 자동으로 리비전이 쌓이고(원인·단계·변경 요약 포함), 이름·단계(Proto~MP)·메모를 붙여 저장할 수 있습니다.
 - **비교**: 요약 · 부품 · 배치 · 넷/핀 · **PCB 겹쳐 보기**(같음/A에만/B에만) · 다이어그램·계획 · HSIS · 기구. **원장** 보기는 리비전×영역 표.
 - **복원**, 이력 JSON 내보내기/불러오기(Git에 함께 커밋).
 
-### 6. 내보내기
+### 7. 내보내기
 - 그림: 2D 보드(층별)·회로도는 화면과 동일한 **SVG**, PNG, 시스템 다이어그램, 3D·기구 3D PNG, 기구 조립도·부품도, 모든 층 zip.
 - 표: HSIS(시트별), BOM, 부품 배치, 넷리스트, 층 구성, 기구 BOM, 리비전 기록, 비교 결과 → **Excel**.
 - **설계 보고서**: 항목을 골라 그림·표를 모두 담은 HTML 한 파일(브라우저 인쇄로 PDF). KiCad PCB/회로도 저장, OpenSCAD·STL·HSIS CSV·MCAL 파일.
 
-### 7. 실제 부품 데이터
+### 8. 실제 부품 데이터
 - 부품 DB(제조사·사양·데이터시트 링크·참고 단가)와 MCU 핀 기능 DB(TC364DP, STM32F042), 부품당 한 페이지인 **데이터시트 HTML DB**(`datasheets/db/`, `npm run dsdb`).
 
 ## 화면 구성
 
 ```
-┌ 머리: 프로젝트 · [전체] [1 시스템 · 2 회로 · 3 PCB · 4 기구] [HSIS] · 불러오기 · 내보내기 · 리비전 · 보기 전환 · 도우미 ┐
-├ 지표 띠: BOM · 가이드라인 · DRC · HSIS · 최고 Tj · 하우징                                                             ┤
+┌ 머리: 프로젝트 · [전체] [1 시스템 · 2 회로 · 3 PCB · 4 기구] [HSIS] [시스템 연결] · 불러오기 · 내보내기 · 리비전 · 보기 전환 · 도우미 ┐
+├ 지표 띠: BOM · 가이드라인 · DRC · HSIS · 최고 Tj · 시스템 연결 · 하우징                                                       ┤
 ├ 작업 공간 (단계마다 바뀜)                                            │ 도킹 패널: 설계 도우미 · 정보 · 시뮬레이션 · 데이터시트 ┤
 │   레이어/보드 요약 · 3D/TOP/BOTTOM/층별/회로도 · 시스템 다이어그램 · 기구 CAD · HSIS │   (탭마다 새 창으로 뗄 수 있음)              │
 └──────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────┘
@@ -70,14 +74,14 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl)
 
 | 경로 | 내용 |
 |---|---|
-| `src/core/` | 보드 모델·파서(`pcb-core`), 편집(`pcbedit`), 자동 배치(`autoplace`), HW 아키텍처(`hwarch`), 시스템 다이어그램(`sysdiag`), 새 회로 설계(`newproj`), 하우징(`housing`), Text-to-CAD(`text2cad`), 가이드라인(`guide`), 리비전 스냅샷·비교(`revlog`) |
+| `src/core/` | 보드 모델·파서(`pcb-core`), 편집(`pcbedit`), 자동 배치(`autoplace`), HW 아키텍처(`hwarch`), 시스템 다이어그램(`sysdiag`), 새 회로 설계(`newproj`), 하우징(`housing`), Text-to-CAD(`text2cad`), 가이드라인(`guide`), 리비전 스냅샷·비교(`revlog`), 멀티보드 시스템(`multiboard`) |
 | `src/route/autoroute.js` | 다층 자동 배선 |
 | `src/sch/` | KiCad 회로도 파서·생성·편집 |
 | `src/sim/` | 전기·열·EMC 해석, MNA 회로 해석 |
 | `src/hsis/` | HSIS 파서·검사·추적성, 핀 추천, MCAL, 테스트 케이스 생성 |
 | `src/parts/` | 부품 DB, MCU 핀 DB, 데이터시트 DB 번들 |
 | `src/fw/fw.js` | MCU 펌웨어 런타임 (샌드박스, 회로와 1 ms 코시뮬레이션) |
-| `src/app/` | 화면: `viewer`(2D/3D), `newui`(단계·회로 안), `copilot`(도우미), `pcbui`·`pcbcli`(PCB 편집·CLI), `schui`·`schcli`, `mechui`(기구), `hsisui`, `simui`, `popui`(새 창), `exportui`, `revui`, `nextui`(지표·전체 보기·변경 요청·원장·분해), `iconui`, `modeui`, `dsui`, `aimode` |
+| `src/app/` | 화면: `viewer`(2D/3D), `newui`(단계·회로 안), `copilot`(도우미), `pcbui`·`pcbcli`(PCB 편집·CLI), `schui`·`schcli`, `mechui`(기구), `hsisui`, `simui`, `popui`(새 창), `exportui`, `revui`, `nextui`(지표·전체 보기·변경 요청·원장·분해), `iconui`, `mbui`(멀티보드), `modeui`, `dsui`, `aimode` |
 | `datasheets/db/` | 부품별 데이터시트 HTML 페이지 |
 | `docs/` | 사용 설명서(`manual.html`), 기능 상세 노트(`DETAILS.md`), 화면 캡처(`img/`) |
 | `test/` | `node --test` 테스트 |

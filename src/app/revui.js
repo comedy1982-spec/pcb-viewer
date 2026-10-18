@@ -24,14 +24,15 @@ async function revState(id,fresh){if(!fresh&&REV.cache.has(id))return REV.cache.
   const st=REVLOG.restore(JSON.parse(raw),PCB);if(!fresh){REV.cache.set(id,st);if(REV.cache.size>6)REV.cache.delete(REV.cache.keys().next().value);}return st;}
 async function revRaw(id){return revUnpack(await revData(id));}
 /* ---- what is recorded ---- */
-function revLive(){return{board:BD,np:{name:($('#npName')||{}).value||'',req:($('#npReq')||{}).value||'',plan:NP.plan||null,arch:NP.arch||null,answers:NP.answers||{},vkey:NP.vkey||null,picked:NP.picked||null},hsis:HS.H||null};}
+function revLive(){return{mb:typeof MB!=='undefined'?{name:MB.name,boards:MB.boards.map(b=>({id:b.id,name:b.B.name,role:b.role||''})),links:JSON.parse(JSON.stringify(MB.links||[])),cur:MB.cur}:null,board:BD,np:{name:($('#npName')||{}).value||'',req:($('#npReq')||{}).value||'',plan:NP.plan||null,arch:NP.arch||null,answers:NP.answers||{},vkey:NP.vkey||null,picked:NP.picked||null},hsis:HS.H||null};}
 // a cheap fingerprint of everything a revision holds; the auto recorder only snapshots when it changes and then holds still
 function revSig(){if(!BD)return'';let h=2166136261;const H=s=>{s=String(s);for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}};
   H(`${BD.pid}|${BD.name}|${BD.W}x${BD.H}|${BD.copperLayers}|${BD.t}|${!!BD.blank}${!!BD.pcbPending}|${BD.variantLabel||''}`);
   BD.comps.forEach(c=>{H(`${c.ref}${c.val}${c.mpn}${c.fp}${c.side}${(+c.x).toFixed(3)},${(+c.y).toFixed(3)},${c.rot||0}`);c.pads.forEach(p=>H(p.net||'-'));});
   Object.keys(BD.layers).forEach(k=>{const L=BD.layers[k];let s=0;for(const p of L){if(p.a)s+=p.a[0]+p.a[1]*3+p.b[0]*5+p.b[1]*7+(p.w||0);else if(p.pts)s+=p.pts.length+p.pts[0][0]+p.pts[p.pts.length-1][1];else if(p.x!=null)s+=p.x*0.7+p.y*1.3;else if(p.rings)s+=p.rings.length;}H(`${k}${L.length}:${s.toFixed(3)}`);});
   BD.vias.forEach(v=>H(`${(+v.x).toFixed(3)},${(+v.y).toFixed(3)}`));
-  try{H(JSON.stringify(NP.arch||null));H(JSON.stringify(NP.plan||null));}catch(e){}H(($('#npReq')||{}).value||'');H(($('#npName')||{}).value||'');
+  try{H(JSON.stringify(NP.arch||null));H(JSON.stringify(NP.plan||null));}catch(e){}
+  try{if(typeof MB!=='undefined')H(`${MB.name}|${MB.boards.map(b=>b.id+b.role).join(',')}|${JSON.stringify(MB.links||[])}`);}catch(e){}H(($('#npReq')||{}).value||'');H(($('#npName')||{}).value||'');
   if(BD.housing)H(JSON.stringify({i:BD.housing.inp,c:BD.housing.cad}));if(HS.H){try{H(JSON.stringify(HS.H.items||[]));}catch(e){}}
   return(h>>>0).toString(36);}
 // what the person or Claude ran since the last revision (copilot log)
@@ -133,6 +134,7 @@ async function revRestore(id){const r=REV.list.find(x=>x.id===id);if(!r)return;i
   if(st.np){NP.plan=st.np.plan||null;NP.arch=st.np.arch||null;NP.answers=st.np.answers||{};NP.vkey=st.np.vkey||null;NP.picked=st.np.picked||null;const n=$('#npName'),q=$('#npReq');if(n)n.value=st.np.name||'';if(q)q.value=st.np.req||'';
     try{if(typeof npRender==='function')npRender();if(typeof sysRender==='function')sysRender();}catch(e){console.warn(e);}}
   if(st.hsis){HS.H=st.hsis;HS.res=null;try{hsisRun();}catch(e){console.warn(e);}}
+  if(st.mb&&typeof MB!=='undefined'&&st.mb.boards&&st.mb.boards.every(b=>MB.boards.some(x=>x.id===b.id))){MB.name=st.mb.name||'';MB.links=st.mb.links||[];st.mb.boards.forEach(b=>{const x=MB.boards.find(y=>y.id===b.id);if(x)x.role=b.role||'';});if(typeof mbPaint==='function')mbPaint();}
   try{if(typeof stepPaint==='function')stepPaint();refresh(true);if(typeof cadRefresh==='function')cadRefresh();}catch(e){}
   await revRecord({kind:'restore',cause:`${revLabel(r)} 복원`});REV.a=id;REV.b='cur';revRender();toast(`${revLabel(r)}(으)로 되돌렸습니다.`);}
 /* ---- export / import of the whole history ---- */

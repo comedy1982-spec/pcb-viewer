@@ -40,9 +40,10 @@ function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')rende
 function setWorkspace(w){
   const prev=HS.ws;if(prev==='cad'&&w!=='cad')cadLeave();
   HS.ws=w;$$('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
-  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';const ov=$('#ovWs');if(ov)ov.hidden=w!=='ov';const ob=$('#ovBtn');if(ob)ob.setAttribute('aria-pressed',w==='ov'?'true':'false');$('#boardCtl').hidden=w!=='board';tip.hidden=true;
+  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';const ov=$('#ovWs');if(ov)ov.hidden=w!=='ov';const mbw=$('#mbWs');if(mbw)mbw.hidden=w!=='mb';const ob=$('#ovBtn');if(ob)ob.setAttribute('aria-pressed',w==='ov'?'true':'false');$('#boardCtl').hidden=w!=='board';tip.hidden=true;
   if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(w==='ov'){if(typeof nxOvRender==='function')setTimeout(()=>nxOvRender(true),0);return;}
+  if(w==='mb'){if(typeof mbRender==='function')setTimeout(mbRender,0);return;}
   if(w==='cad'){cadEnter();return;}
   if(w==='sys'){sysEnter();return;}
   if(w==='hsis'){if(!HS.H)hsisLoadSample();renderHSIS();}

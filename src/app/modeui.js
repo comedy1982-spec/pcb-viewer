@@ -15,7 +15,7 @@ function modePaint(){
   const bc=$('#boardCtl');if(bc)bc.hidden=m==='home'||early;
   const tg=$('#dockTg');if(tg)tg.hidden=m==='home';
   document.body.dataset.mode=m;document.body.dataset.step=m==='steps'?String(st):'';
-  const hb=$('#homeBtn');if(hb)hb.setAttribute('aria-pressed',m==='home'?'true':'false');
+  const hb=$('#homeBtn');if(hb)hb.setAttribute('aria-pressed',m==='home'?'true':'false');if(typeof mbPaint==='function')mbPaint();
   if(typeof dockPaint==='function')dockPaint();}
 function setMode(m){APP.mode=m;modePaint();if(m!=='home'){measure.done=0;setTimeout(()=>{relayoutViews();if(typeof stepPaint==='function')stepPaint();},0);}}
 // 신규 설계: an empty project board so the header, dock and steps start clean; the real board arrives from step 2

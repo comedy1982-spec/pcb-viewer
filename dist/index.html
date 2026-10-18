@@ -1158,6 +1158,35 @@ button[aria-selected="true"]>svg.ic,.steps button.on>svg.ic{color:var(--accent);
 .home-card .hc-ico{color:var(--accent)}
 #hsisWs .tabs{overflow-x:auto;flex-wrap:nowrap}#hsisWs .tabs button{white-space:nowrap;flex:none}
 @media (max-width:1500px){#hsisWs .tabs button>svg.ic{display:none}}
+
+/* ---------- 멀티보드 시스템 ---------- */
+.mb-sel{margin-top:4px;max-width:260px;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--muted)}
+.mb-sel.multi{color:var(--fg);border-color:var(--accent)}
+.mb-sel[hidden]{display:none}
+.mb-ws{min-height:0;overflow:auto}.mb-ws[hidden]{display:none}
+.mb-wrap{display:grid;grid-template-columns:300px minmax(0,1fr) 380px;gap:12px;min-height:100%}
+.mb-left,.mb-right{overflow:auto}
+.mb-mid{display:contents}.mb-dia{grid-column:1/-1;order:-1}.mb-left{order:0}.mb-nets{order:1;align-self:start}.mb-right{order:2}
+.mb-dia{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;overflow:auto}.mb-dia svg{width:100%;height:auto;max-height:300px}
+.mb-nets{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.mb-netl{display:flex;flex-wrap:wrap;gap:6px}.mb-netl .pill small{color:var(--muted);margin-left:4px}
+.mb-f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}.mb-f input{font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.mb-boards{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.mb-boards li{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface)}.mb-boards li.cur{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.mb-bh{display:flex;gap:8px;align-items:baseline}.mb-bh b{color:var(--accent)}.mb-bh span{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-bs{font-size:11.5px;color:var(--muted);margin:2px 0 6px}
+.mb-ba{display:flex;gap:6px;align-items:center}.mb-ba input{flex:1;min-width:0;font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg)}
+.mb-bom div{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:6px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--line)}.mb-bom b{font-family:var(--f-mono)}.mb-bom span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mb-bom small{color:var(--muted)}
+.mb-form{display:flex;flex-direction:column;gap:8px}.mb-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.mb-row label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}.mb-row select,.mb-row input{font:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-width:0}
+.mb-links{display:flex;flex-direction:column;gap:6px}
+.mb-link{border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--surface)}.mb-link.sel{border-color:var(--accent)}
+.mb-link summary{cursor:pointer;font-size:13px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.mb-link summary .cls{flex:1;min-width:0}
+.mb-la{display:flex;gap:8px;align-items:center;margin:8px 0;font-size:12px;color:var(--muted)}.mb-la select{font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.mb-pins{width:100%;font-size:12px}.mb-pins tr.err td{background:color-mix(in srgb,#d9534f 12%,transparent)}.mb-pins tr.warn td{background:color-mix(in srgb,#d9952a 14%,transparent)}.mb-pins tr.none td{color:var(--muted)}
+.mb-pins select{font:inherit;font-size:12px;padding:2px 4px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--fg)}
+.mb-ck{list-style:none;margin:6px 0 0;padding:0;font-size:12px;display:flex;flex-direction:column;gap:3px}.mb-ck li.err{color:#d9534f}.mb-ck li.warn{color:#b5541c}.mb-ck li.info{color:var(--muted)}
+@media (max-width:1300px){.mb-wrap{grid-template-columns:1fr 1fr}.mb-nets{grid-column:1/-1}}
 </style>
 
 </head>
@@ -1170,6 +1199,7 @@ button[aria-selected="true"]>svg.ic,.steps button.on>svg.ic{color:var(--accent);
         <div class="b-app">AllinOneDesign</div>
         <div class="b-name"><span id="bName">SENSE-32 DEV v1.2</span><span class="tag" id="bTag">예제 보드</span></div>
         <div class="b-sub" id="bSub"></div>
+        <select id="mbSel" class="mb-sel" aria-label="시스템의 보드 선택 · 보드 추가" title="이 시스템의 보드. 다른 보드를 추가해 커넥터로 잇습니다" hidden></select>
       </div>
     </div>
     <div class="top-r">
@@ -1180,7 +1210,7 @@ button[aria-selected="true"]>svg.ic,.steps button.on>svg.ic{color:var(--accent);
         <button type="button" data-step="3" id="st-3" title="부품 배치·배선 (PCB)"><i>3</i><span>PCB</span></button>
         <button type="button" data-step="4" id="st-4" title="보호 하우징 (Text-to-CAD)"><i>4</i><span>기구 CAD</span></button>
       </nav>
-      <div class="seg ws" role="tablist" aria-label="보조 도구"><button role="tab" data-ws="board" aria-selected="true" id="ws-board" hidden>보드</button><button role="tab" data-ws="hsis" aria-selected="false" id="ws-hsis" title="HW/SW 인터페이스 사양 (MCU 핀 기준)">HSIS</button><button role="tab" data-ws="cad" aria-selected="false" id="ws-cad" hidden>기구 CAD</button></div>
+      <div class="seg ws" role="tablist" aria-label="보조 도구"><button role="tab" data-ws="board" aria-selected="true" id="ws-board" hidden>보드</button><button role="tab" data-ws="hsis" aria-selected="false" id="ws-hsis" title="HW/SW 인터페이스 사양 (MCU 핀 기준)">HSIS</button><button role="tab" data-ws="cad" aria-selected="false" id="ws-cad" hidden>기구 CAD</button><button role="tab" data-ws="mb" aria-selected="false" id="ws-mb" title="여러 보드를 커넥터로 잇는 시스템 연결" hidden>시스템 연결</button></div>
       <div class="top-r" id="boardCtl">
             <button class="btn primary" id="openImp"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.6 8 2.4l3.2 3.2M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>파일 불러오기</button><button class="btn sm" id="expBtn" title="그림(SVG·PNG) · 표(Excel) · 설계 보고서(HTML→PDF) 내보내기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v8M4.8 7.4 8 10.6l3.2-3.2M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>내보내기</button><button class="btn sm rv-btn" id="revBtn" title="리비전 기록"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9"/><path d="M2.3 2.6v2.6h2.6"/><path d="M8 5v3.2l2.1 1.3"/></svg>리비전 <span class="rv-n mono">—</span><i class="rv-dot" aria-hidden="true"></i></button>
       <div class="seg" role="tablist" aria-label="보기 전환">
@@ -1309,6 +1339,7 @@ button[aria-selected="true"]>svg.ic,.steps button.on>svg.ic{color:var(--accent);
   </aside>
 </div>
 <section class="ov-ws" id="ovWs" hidden aria-label="전체 보기"></section>
+<section class="mb-ws" id="mbWs" hidden aria-label="시스템 연결"></section>
 <div class="cad-ws" id="cadWs" hidden>
   <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
   <div class="cad-mid"><div class="cad-sel" id="cadSel" hidden role="region" aria-label="선택한 기구 요소"><div class="cad-sel-top"><b>선택</b><span id="cadSelChips" class="sel-chips"></span><button type="button" class="btn sm" id="cadSelClr">선택 해제</button></div><div class="cad-sel-in"><input id="cadSelIn" type="text" autocomplete="off" aria-label="선택한 요소에 대한 요청"><button type="button" class="btn primary sm" id="cadSelMode">적용</button></div></div><div class="cad-vp" id="cadVpSlot"></div></div>
@@ -7587,10 +7618,10 @@ function dec(E){const T=E.t||[];const live=new Array(T.length);
     for(const k in v)o[k==='$$'?'$':k]=val(v[k]);return o;};
   T.forEach((v,i)=>fill(live[i],v));return val(E.r);}
 /* ---- snapshot of the app state. st = {board, np:{name,req,plan,arch,answers,vkey}, hsis, sys} ---- */
-function snapshot(st){const B=st.board;return{v:VER,board:B?enc(B):null,np:st.np?enc(st.np):null,hsis:st.hsis?enc(st.hsis):null,stats:B?stats(B,st):null};}
+function snapshot(st){const B=st.board;return{v:VER,mb:st.mb||null,board:B?enc(B):null,np:st.np?enc(st.np):null,hsis:st.hsis?enc(st.hsis):null,stats:B?stats(B,st):null};}
 function restore(S,PCB){const B=S.board?dec(S.board):null;if(B){if(!B.layers['T.cu'])B.layers['T.cu']=[];if(!B.layers['B.cu'])B.layers['B.cu']=[];
     B.comps.forEach(c=>{if(!c.f&&PCB.FP&&PCB.FP[c.fp])c.f=PCB.FP[c.fp];});PCB.finalize(B);}
-  return{board:B,np:S.np?dec(S.np):null,hsis:S.hsis?dec(S.hsis):null};}
+  return{board:B,np:S.np?dec(S.np):null,hsis:S.hsis?dec(S.hsis):null,mb:S.mb||null};}
 /* ---- numbers that describe one revision ---- */
 function trackLen(L){let l=0;(L||[]).forEach(p=>{if(p.clear)return;if(p.t==='seg')l+=Math.hypot(p.b[0]-p.a[0],p.b[1]-p.a[1]);else if(p.t==='path')for(let i=1;i<p.pts.length;i++)l+=Math.hypot(p.pts[i][0]-p.pts[i-1][0],p.pts[i][1]-p.pts[i-1][1]);});return l;}
 function cuKeysOf(B){return Object.keys(B.layers).filter(k=>/\.cu$/.test(k)).map(k=>k.slice(0,-3)).sort((a,b)=>(a==='T'?-1:a==='B'?1e3:+a.slice(2))-(b==='T'?-1:b==='B'?1e3:+b.slice(2)));}
@@ -7664,6 +7695,99 @@ function summaryText(d){const c=d.counts,b=d.board,P=[];if(!d.total)return'변�
   if(c.arch)P.push(`다이어그램 ${c.arch}`);if(c.plan)P.push(`회로 계획 ${c.plan}`);if(c.hsis)P.push(`HSIS ${c.hsis}`);if(c.housing)P.push(`기구 ${c.housing}`);
   return P.join(' · ');}
 return{VER,enc,dec,snapshot,restore,stats,compare,summaryText,cuKeysOf,trackLen};
+})();
+
+
+</script>
+<script>
+/* Multi-board systems: several boards joined through connector pairs (cable harness or board-to-board).
+   Pure data over the viewer's board objects — the app keeps the live project in MB (src/app/mbui.js).
+   project = {boards:[{id,name,role}], links:[{id,a:{board,ref},b:{board,ref},kind:'cable'|'b2b',label,pins:[[pinA,pinB]…],auto:'number'|'net'|'manual'}]}
+   Boards are passed in as a map id → board object (BD-like, finalized). */
+const MULTIBOARD=(function(){
+"use strict";
+const isConn=c=>/^(J|P|CN|X|CON|USB)\d/i.test(c.ref||'')||/^(usb|hdr|conn)$/.test(c.kind||'');
+const RAIL=/^(\+?\d+(\.\d+)?V\d*|V(CC|DD|BUS|IN|BAT|SYS|EXT|REF)|\+[0-9.]+V|[0-9.]+V\d*|3V3|5V|12V|VBAT)$/i;
+const GND=/^(GND|AGND|DGND|PGND|VSS|EARTH|0V|CHASSIS)$/i;
+const nrm=n=>String(n||'').replace(/^\//,'').replace(/^NET-?/i,'').toUpperCase();
+const seq=p=>'L'+(((p.links||[]).reduce((m,l)=>Math.max(m,+String(l.id||'L0').slice(1)||0),0))+1);
+function connectors(B){return(B&&B.comps||[]).filter(isConn).map(c=>({ref:c.ref,val:c.val||'',mpn:c.mpn||'',fp:c.fp||'',side:c.side,pins:c.pads.filter(p=>p.n!=null).map(p=>({n:String(p.n),net:p.net||null,fn:p.fn||''}))}));}
+function connOf(boards,bref){const B=boards[bref.board];if(!B)return null;const c=B.byRef&&B.byRef[bref.ref]||B.comps.find(x=>x.ref===bref.ref);if(!c)return null;return{board:bref.board,c,pins:c.pads.filter(p=>p.n!=null).map(p=>({n:String(p.n),net:p.net||null,fn:p.fn||''}))};}
+// pin pairs between two connectors: by pin number (1↔1), by net name, or keep the manual list
+function mapPins(A,B,mode,keep){if(!A||!B)return[];const out=[];
+  if(mode==='net'){B.pins.forEach(pb=>{if(!pb.net)return;const pa=A.pins.find(x=>x.net&&nrm(x.net)===nrm(pb.net)&&!out.some(o=>o[0]===x.n));if(pa)out.push([pa.n,pb.n]);});
+    A.pins.forEach(pa=>{if(out.some(o=>o[0]===pa.n))return;const pb=B.pins.find(x=>x.n===pa.n&&!out.some(o=>o[1]===x.n));if(pb)out.push([pa.n,pb.n]);});return out.sort((x,y)=>(+x[0]||0)-(+y[0]||0));}
+  if(mode==='manual'&&keep)return keep.filter(([a,b])=>A.pins.some(p=>p.n===a)&&B.pins.some(p=>p.n===b));
+  A.pins.forEach(pa=>{const pb=B.pins.find(x=>x.n===pa.n);if(pb)out.push([pa.n,pb.n]);});return out;}
+function addLink(project,a,b,o){o=o||{};const l={id:seq(project),a:{board:a.board,ref:a.ref},b:{board:b.board,ref:b.ref},kind:o.kind||'cable',label:o.label||'',auto:o.auto||'number',pins:o.pins||[]};project.links=project.links||[];project.links.push(l);return l;}
+function resolve(project,boards){return(project.links||[]).map(l=>{const A=connOf(boards,l.a),B=connOf(boards,l.b);const pins=l.auto==='manual'?mapPins(A,B,'manual',l.pins):mapPins(A,B,l.auto||'number');if(l.auto!=='manual')l.pins=pins;
+    return{l,A,B,pins,rows:pins.map(([pa,pb])=>{const x=A&&A.pins.find(p=>p.n===pa),y=B&&B.pins.find(p=>p.n===pb);return{pa,pb,na:x&&x.net||'',nb:y&&y.net||'',fa:x&&x.fn||'',fb:y&&y.fn||''};})};});}
+/* ---- checks across the links ---- */
+function check(project,boards){const out=[];const add=(sev,code,link,msg)=>out.push({sev,code,link:link&&link.id,msg});
+  const R=resolve(project,boards);
+  R.forEach(({l,A,B,rows})=>{const nm=`${l.a.board}.${l.a.ref} ↔ ${l.b.board}.${l.b.ref}`;
+    if(!A||!B){add('err','MISSING',l,`${nm}: 커넥터를 찾지 못했습니다 (보드 또는 참조 번호 확인).`);return;}
+    if(A.pins.length!==B.pins.length)add('warn','PINCOUNT',l,`${nm}: 핀 수가 다릅니다 (${A.pins.length} ↔ ${B.pins.length}).`);
+    if(!rows.length)add('err','NOPINS',l,`${nm}: 짝지어진 핀이 없습니다. 매핑 방식(번호/넷/직접)을 확인하세요.`);
+    const unA=A.pins.filter(p=>p.net&&!rows.some(r=>r.pa===p.n)),unB=B.pins.filter(p=>p.net&&!rows.some(r=>r.pb===p.n));
+    if(unA.length)add('warn','UNMAPPED',l,`${nm}: ${l.a.board}.${l.a.ref} 핀 ${unA.map(p=>p.n+'('+p.net+')').slice(0,6).join(', ')}${unA.length>6?' …':''}이(가) 연결되지 않습니다.`);
+    if(unB.length)add('warn','UNMAPPED',l,`${nm}: ${l.b.board}.${l.b.ref} 핀 ${unB.map(p=>p.n+'('+p.net+')').slice(0,6).join(', ')}${unB.length>6?' …':''}이(가) 연결되지 않습니다.`);
+    rows.forEach(r=>{if(!r.na&&!r.nb)return;if(!r.na||!r.nb){add('info','OPEN',l,`${nm} 핀 ${r.pa}↔${r.pb}: 한쪽만 넷이 있습니다 (${r.na||'—'} ↔ ${r.nb||'—'}).`);return;}
+      const a=nrm(r.na),b=nrm(r.nb);if(a===b)return;const ga=GND.test(a),gb=GND.test(b),ra=RAIL.test(a),rb=RAIL.test(b);
+      if(ga!==gb)add('err','GND_MIX',l,`${nm} 핀 ${r.pa}↔${r.pb}: 접지와 신호/전원이 만납니다 (${r.na} ↔ ${r.nb}).`);
+      else if(ra&&rb&&a!==b)add('err','RAIL',l,`${nm} 핀 ${r.pa}↔${r.pb}: 다른 전원 레일이 만납니다 (${r.na} ↔ ${r.nb}).`);
+      else if(ra!==rb)add('warn','RAIL_SIG',l,`${nm} 핀 ${r.pa}↔${r.pb}: 전원과 신호가 만납니다 (${r.na} ↔ ${r.nb}).`);
+      else add('info','NAME',l,`${nm} 핀 ${r.pa}↔${r.pb}: 넷 이름이 다릅니다 (${r.na} ↔ ${r.nb}) — 같은 신호면 이름을 맞추세요.`);});
+    // differential pairs should stay paired across the link
+    const dp=rows.filter(r=>/(_P|_N|\+|-|H|L)$/i.test(r.na)&&/(CAN|USB|LVDS|ETH|RX|TX|D)/i.test(r.na));if(dp.length===1)add('info','DIFF',l,`${nm}: 차동 신호 ${dp[0].na}의 짝이 같은 커넥터에 없습니다.`);});
+  // connectors with nets but no link on any board
+  Object.entries(boards).forEach(([id,B])=>{connectors(B).forEach(c=>{if(!c.pins.some(p=>p.net))return;const used=(project.links||[]).some(l=>(l.a.board===id&&l.a.ref===c.ref)||(l.b.board===id&&l.b.ref===c.ref));if(!used)add('info','UNLINKED',null,`${id}.${c.ref} (${c.val||c.fp}): 연결이 정해지지 않은 커넥터입니다 (외부 케이블이면 무시).`);});});
+  return out;}
+/* ---- system-level nets: union-find over (board, net) through link pins ---- */
+function systemNets(project,boards){const par={};const find=k=>{while(par[k]!==undefined&&par[k]!==k)k=par[k];return k;};const uni=(a,b)=>{const x=find(a),y=find(b);if(x!==y)par[x]=y;};
+  Object.entries(boards).forEach(([id,B])=>{(B.netOrder||Object.keys(B.nets||{})).forEach(n=>{const k=id+':'+n;par[k]=k;});});
+  resolve(project,boards).forEach(({l,rows})=>rows.forEach(r=>{if(r.na&&r.nb)uni(l.a.board+':'+r.na,l.b.board+':'+r.nb);}));
+  const groups={};Object.keys(par).forEach(k=>{const r=find(k);(groups[r]=groups[r]||[]).push(k);});
+  return Object.values(groups).filter(g=>g.length>1).map(g=>{const names=g.map(k=>k.split(':')[1]);const name=names.find(n=>GND.test(nrm(n)))||names.find(n=>RAIL.test(nrm(n)))||names.sort()[0];return{name,members:g.map(k=>{const i=k.indexOf(':');return{board:k.slice(0,i),net:k.slice(i+1)};}),boards:[...new Set(g.map(k=>k.split(':')[0]))].length};}).sort((a,b)=>b.boards-a.boards||a.name.localeCompare(b.name));}
+/* ---- aggregated BOM over boards ---- */
+function systemBom(project,boards){const m=new Map();Object.entries(boards).forEach(([id,B])=>{(B.comps||[]).forEach(c=>{const k=[c.val,c.fp,c.mpn||''].join('|');const it=m.get(k)||{val:c.val,fp:c.fp,mpn:c.mpn||'',desc:c.desc||'',qty:0,by:{}};it.qty++;(it.by[id]=it.by[id]||[]).push(c.ref);m.set(k,it);});});
+  return[...m.values()].sort((a,b)=>b.qty-a.qty||String(a.val).localeCompare(String(b.val)));}
+/* ---- interconnect diagram SVG: boards as boxes, connectors on their edge, links as cables with pin counts ---- */
+function svg(project,boards,opts){opts=opts||{};const ids=(project.boards||[]).map(b=>b.id).filter(id=>boards[id]);if(!ids.length)return'';
+  const xe=v=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const f=v=>(Math.round(v*10)/10).toString();
+  const R=resolve(project,boards);const checks=check(project,boards);const bad=new Set(checks.filter(c=>c.sev==='err').map(c=>c.link));
+  const W=opts.width||Math.max(760,ids.length*300+60),bw=240,gap=(W-60-ids.length*bw)/Math.max(1,ids.length-1);
+  const pos={};ids.forEach((id,i)=>{pos[id]={x:30+i*(bw+(ids.length>1?gap:0)),y:60};});
+  const cons={};ids.forEach(id=>{cons[id]=connectors(boards[id]);});
+  const rowH=20;const bh=id=>70+Math.max(1,cons[id].length)*rowH+14;const H=Math.max(...ids.map(bh))+180;
+  const o=[`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(W)} ${f(H)}" width="${f(W)}" height="${f(H)}" font-family="IBM Plex Sans KR, system-ui, sans-serif" style="background:#fff">`,`<rect width="${f(W)}" height="${f(H)}" fill="#fff"/>`];
+  o.push(`<text x="30" y="34" font-size="15" font-weight="700" fill="#1d2126">${xe(opts.title||project.name||'시스템')} · 보드 ${ids.length}개 · 연결 ${(project.links||[]).length}개</text>`);
+  const pinPos={};
+  ids.forEach(id=>{const B=boards[id],p=pos[id],meta=(project.boards||[]).find(b=>b.id===id)||{};const h=bh(id);
+    o.push(`<rect x="${f(p.x)}" y="${f(p.y)}" width="${bw}" height="${f(h)}" rx="12" fill="#f6f3ec" stroke="#1d2126" stroke-width="1.4"/>`);
+    o.push(`<rect x="${f(p.x+14)}" y="${f(p.y+14)}" width="${bw-28}" height="30" rx="5" fill="#1e5b3e"/>`);
+    o.push(`<text x="${f(p.x+bw/2)}" y="${f(p.y+34)}" font-size="12.5" font-weight="700" fill="#fff" text-anchor="middle">${xe(B.name||id)}</text>`);
+    o.push(`<text x="${f(p.x+bw/2)}" y="${f(p.y+58)}" font-size="10.5" fill="#5a6872" text-anchor="middle">${xe(meta.role||'')}${meta.role?' · ':''}${f(B.W)} × ${f(B.H)} mm · ${B.copperLayers||2}층 · 부품 ${B.comps.length}</text>`);
+    cons[id].forEach((c,i)=>{const y=p.y+70+i*rowH;const linked=(project.links||[]).some(l=>(l.a.board===id&&l.a.ref===c.ref)||(l.b.board===id&&l.b.ref===c.ref));
+      o.push(`<rect x="${f(p.x+14)}" y="${f(y)}" width="${bw-28}" height="${rowH-4}" rx="4" fill="${linked?'#fff':'#eceae4'}" stroke="${linked?'#b5541c':'#c9c5ba'}"/>`);
+      o.push(`<text x="${f(p.x+20)}" y="${f(y+12)}" font-size="10.5" font-family="JetBrains Mono, monospace" fill="#1d2126">${xe(c.ref)}</text><text x="${f(p.x+bw-20)}" y="${f(y+12)}" font-size="10" fill="#5a6872" text-anchor="end">${xe((c.mpn||c.val||c.fp).slice(0,18))} · ${c.pins.length}핀</text>`);
+      pinPos[id+'.'+c.ref]={l:[p.x+14,y+rowH/2-2],r:[p.x+bw-14,y+rowH/2-2]};});});
+  R.forEach(({l,A,B,rows},k)=>{const a=pinPos[l.a.board+'.'+l.a.ref],b=pinPos[l.b.board+'.'+l.b.ref];if(!a||!b)return;const ia=ids.indexOf(l.a.board),ib=ids.indexOf(l.b.board);
+    const p1=ia<=ib?a.r:a.l,p2=ia<=ib?b.l:b.r;const same=ia===ib;const col=bad.has(l.id)?'#c0392b':l.kind==='b2b'?'#2f6fb5':'#b5541c';
+    const mx=(p1[0]+p2[0])/2;const d=same?`M${f(p1[0])} ${f(p1[1])} C${f(p1[0]+70)} ${f(p1[1])} ${f(p2[0]+70)} ${f(p2[1])} ${f(p2[0])} ${f(p2[1])}`:`M${f(p1[0])} ${f(p1[1])} C${f(mx)} ${f(p1[1])} ${f(mx)} ${f(p2[1])} ${f(p2[0])} ${f(p2[1])}`;
+    o.push(`<path d="${d}" fill="none" stroke="${col}" stroke-width="${l.kind==='b2b'?3:2.2}"${l.kind==='b2b'?'':' stroke-dasharray="7 4"'}/>`);
+    const ly=(p1[1]+p2[1])/2-8;o.push(`<rect x="${f(mx-46)}" y="${f(ly-10)}" width="92" height="20" rx="10" fill="#fff" stroke="${col}"/><text x="${f(mx)}" y="${f(ly+4)}" font-size="10" text-anchor="middle" fill="#1d2126">${xe(l.label||l.id)} · ${rows.length}핀${l.kind==='b2b'?' · B2B':''}</text>`);});
+  const errs=checks.filter(c=>c.sev==='err').length,warns=checks.filter(c=>c.sev==='warn').length;
+  o.push(`<text x="30" y="${f(H-24)}" font-size="11" fill="#5a6872">실선 = 보드 간 직결(B2B) · 점선 = 케이블/하네스 · 빨강 = 오류 있는 연결 · 점검: 오류 ${errs} · 경고 ${warns}</text>`);
+  o.push('</svg>');return o.join('\n');}
+function linksAoa(project,boards){const rows=[['연결','종류','라벨','A 보드','A 커넥터','A 핀','A 넷','B 보드','B 커넥터','B 핀','B 넷','상태']];const ck=check(project,boards);
+  resolve(project,boards).forEach(({l,rows:R})=>{if(!R.length)rows.push([l.id,l.kind,l.label,l.a.board,l.a.ref,'','',l.b.board,l.b.ref,'','','핀 없음']);
+    R.forEach(r=>{const st=ck.find(c=>c.link===l.id&&c.msg.includes(`핀 ${r.pa}↔${r.pb}`));rows.push([l.id,l.kind,l.label,l.a.board,l.a.ref,r.pa,r.na,l.b.board,l.b.ref,r.pb,r.nb,st?st.sev+': '+st.code:'OK']);});});return rows;}
+function text(project,boards){const ck=check(project,boards);const sn=systemNets(project,boards);const L=[`시스템 ${project.name||''}: 보드 ${(project.boards||[]).length}개 · 연결 ${(project.links||[]).length}개 · 시스템 넷 ${sn.length}개`];
+  (project.boards||[]).forEach(b=>{const B=boards[b.id];if(!B)return;L.push(`  ${b.id} ${B.name}${b.role?' ('+b.role+')':''}: ${B.comps.length}부품 · ${(B.netOrder||[]).length}넷 · 커넥터 ${connectors(B).map(c=>c.ref).join(', ')||'없음'}`);});
+  resolve(project,boards).forEach(({l,rows})=>L.push(`  ${l.id} ${l.kind} ${l.label||''}: ${l.a.board}.${l.a.ref} ↔ ${l.b.board}.${l.b.ref} · ${rows.length}핀 (${l.auto})`));
+  if(ck.length){L.push('점검:');ck.forEach(c=>L.push(`  ${c.sev==='err'?'!!':c.sev==='warn'?'!':'·'} ${c.msg}`));}return L.join('\n');}
+return{isConn,connectors,connOf,mapPins,addLink,resolve,check,systemNets,systemBom,svg,linksAoa,text,nrm};
 })();
 
 
@@ -8712,7 +8836,7 @@ function setBoard(B){
   header();stats();renderPane();simReset();hsisOnBoard();SV.data=null;SV.lastKey='';measure.done=0;measure();fit2();
   if(S.view==='3d'){if(G3)rebuild3D();}else paint2D();
   if(S.sch!=='off'){schData();renderSchOv();paintSch();}
-  popsRefresh(true);cuSelPaint();if(typeof revOnBoard==='function')revOnBoard();
+  popsRefresh(true);cuSelPaint();if(typeof mbOnBoard==='function')mbOnBoard(B);if(typeof revOnBoard==='function')revOnBoard();
 }
 new ResizeObserver(()=>{if(!BD)return;if(S.sch!=='off'){schResize();if(!SV.userMoved)schFit();paintSch();}if(S.view==='3d')resize3D();else{measure();paint2D();}}).observe(vp);
 
@@ -9834,9 +9958,10 @@ function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')rende
 function setWorkspace(w){
   const prev=HS.ws;if(prev==='cad'&&w!=='cad')cadLeave();
   HS.ws=w;$$('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
-  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';const ov=$('#ovWs');if(ov)ov.hidden=w!=='ov';const ob=$('#ovBtn');if(ob)ob.setAttribute('aria-pressed',w==='ov'?'true':'false');$('#boardCtl').hidden=w!=='board';tip.hidden=true;
+  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';const ov=$('#ovWs');if(ov)ov.hidden=w!=='ov';const mbw=$('#mbWs');if(mbw)mbw.hidden=w!=='mb';const ob=$('#ovBtn');if(ob)ob.setAttribute('aria-pressed',w==='ov'?'true':'false');$('#boardCtl').hidden=w!=='board';tip.hidden=true;
   if(typeof stepPaint==='function')setTimeout(stepPaint,0);
   if(w==='ov'){if(typeof nxOvRender==='function')setTimeout(()=>nxOvRender(true),0);return;}
+  if(w==='mb'){if(typeof mbRender==='function')setTimeout(mbRender,0);return;}
   if(w==='cad'){cadEnter();return;}
   if(w==='sys'){sysEnter();return;}
   if(w==='hsis'){if(!HS.H)hsisLoadSample();renderHSIS();}
@@ -12653,7 +12778,7 @@ function modePaint(){
   const bc=$('#boardCtl');if(bc)bc.hidden=m==='home'||early;
   const tg=$('#dockTg');if(tg)tg.hidden=m==='home';
   document.body.dataset.mode=m;document.body.dataset.step=m==='steps'?String(st):'';
-  const hb=$('#homeBtn');if(hb)hb.setAttribute('aria-pressed',m==='home'?'true':'false');
+  const hb=$('#homeBtn');if(hb)hb.setAttribute('aria-pressed',m==='home'?'true':'false');if(typeof mbPaint==='function')mbPaint();
   if(typeof dockPaint==='function')dockPaint();}
 function setMode(m){APP.mode=m;modePaint();if(m!=='home'){measure.done=0;setTimeout(()=>{relayoutViews();if(typeof stepPaint==='function')stepPaint();},0);}}
 // 신규 설계: an empty project board so the header, dock and steps start clean; the real board arrives from step 2
@@ -12835,14 +12960,14 @@ function expPartsAoa(){const rows=[['참조','값','풋프린트','부품 번호
 function expStackAoa(){const st=PCB.stackOf(BD);const rows=[['층','이름','역할','넷','프리미티브 수']];st.forEach((x,i)=>rows.push([i+1,PCB.cuName(x.k),x.role==='gnd'?'GND 플레인':x.role==='pwr'?'전원 플레인':'신호',x.net||'',(BD.layers[x.k+'.cu']||[]).length]));return rows;}
 async function exportDesignXlsx(){if(!BD)return;const items=[{name:'보드 요약',aoa:expSummaryAoa()},{name:'BOM',aoa:expBomAoa()},{name:'부품 배치',aoa:expPartsAoa()},{name:'넷리스트',aoa:expNetAoa()},{name:'층 구성',aoa:expStackAoa()}];
   if(HS.H)items.push(...hsisSheets(true));if(!BD.blank&&!BD.pcbPending&&typeof mechRun==='function'){mechCfg();try{items.push({name:'기구 BOM',aoa:HOUSING.mechBomAoa(mechRun())});}catch(e){}try{items.push({name:'하우징 형상',aoa:expHousingAoa()});}catch(e){}}
-  if(typeof REV!=='undefined'&&REV.list.length)items.push({name:'리비전 기록',aoa:revAoa()});
+  if(typeof REV!=='undefined'&&REV.list.length)items.push({name:'리비전 기록',aoa:revAoa()});if(typeof mbMetrics==='function'&&mbMetrics())items.push(...mbSheets());
   return exportXlsx(items,expName()+'_design.xlsx','설계 데이터를 엑셀로 내려받았습니다.');}
 function expSummaryAoa(){const rows=[['항목','값']];rows.push(['프로젝트',BD.name],['출처',BD.source],['크기',`${BD.W.toFixed(1)} × ${BD.H.toFixed(1)} mm`],['두께',`${BD.t} mm`],['동박 층',BD.copperLayers||2],['부품',BD.comps.length],['넷',BD.netOrder.length],['비아',BD.vias.length],['드릴',BD.drills.length],['회로 안',BD.variantLabel||''],['내보낸 날짜',new Date().toISOString().slice(0,10)]);
   if(typeof NP!=='undefined'&&$('#npReq')&&$('#npReq').value)rows.push(['요구사항',$('#npReq').value]);BD.warnings.forEach(w=>rows.push(['경고',w]));BD.notes.forEach(n=>rows.push(['참고',n]));return rows;}
 function expHousingAoa(){const R=mechRun(),d=R.d,g=d.geo;const rows=[['항목','값']];rows.push(['재질',d.m.label],['IP',d.ip],['외형',`${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm`],['벽 두께',g.t],['모서리',HOUSING.edgeText(g)],['무게 g',+d.mass.toFixed(0)],['원가 지수',R.idx.cost],['PCB 온도',+d.th.Tboard.toFixed(1)],['진동 SF',+d.vib.sf.toFixed(2)]);
   rows.push([],['형상','설명']);d.feats.forEach(f=>rows.push([f.id,HOUSING.featLabel(Object.assign({},f,{id:''})).trim()]));rows.push([],['경고']);R.warn.forEach(w=>rows.push([w]));return rows;}
 /* ---- the whole design as one HTML document (sections chosen in the dialog); the document prints to PDF ---- */
-const REPORT_SECTIONS=[['overview','개요 · 요구사항'],['sys','시스템 다이어그램'],['circuit','회로 · BOM · 회로도'],['pcb','PCB 층별 보기 · 층 구성'],['3d','3D 보기'],['sim','시뮬레이션 결과'],['hsis','HSIS (신호 표 · 핀 맵 · 검사)'],['housing','기구 (보고 · BOM · 조립도 · 부품도 · 3D)'],['rev','리비전 기록'],['log','설계 도우미 기록']];
+const REPORT_SECTIONS=[['overview','개요 · 요구사항'],['sys','시스템 다이어그램'],['circuit','회로 · BOM · 회로도'],['pcb','PCB 층별 보기 · 층 구성'],['3d','3D 보기'],['sim','시뮬레이션 결과'],['hsis','HSIS (신호 표 · 핀 맵 · 검사)'],['housing','기구 (보고 · BOM · 조립도 · 부품도 · 3D)'],['rev','리비전 기록'],['system','시스템 보드 연결'],['log','설계 도우미 기록']];
 const rh=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function aoaTable(aoa,cls){if(!aoa||!aoa.length)return'';const [h,...b]=aoa;return`<table class="${cls||''}"><thead><tr>${h.map(c=>`<th>${rh(c)}</th>`).join('')}</tr></thead><tbody>${b.map(r=>`<tr>${r.map(c=>`<td>${rh(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
 async function buildReport(sel){const on=k=>!sel||sel.has(k);const P=[];const base=BD.name||'board';const date=new Date().toLocaleString('ko-KR');
@@ -12864,6 +12989,7 @@ async function buildReport(sel){const on=k=>!sel||sel.has(k);const P=[];const ba
     sec('sim','시뮬레이션',b||'<p>실행한 시뮬레이션이 없습니다. 시뮬레이션 탭에서 실행한 뒤 다시 내보내면 결과가 들어갑니다.</p>');}
   if(on('hsis')){const sh=hsisSheets(true);if(sh.length){let b='';sh.forEach(it=>{if(it.aoa){b+=`<h3>${rh(it.name)}</h3>`+aoaTable(it.aoa,'wide');return;}const tbls=xlsxTablesFrom(it.html);if(!tbls.length)return;b+=`<h3>${rh(it.name)}</h3>`+tbls.map(t=>aoaTable(tableAoa(t),'wide')).join('');});sec('hsis','HSIS',b);}}
   if(on('housing')&&!BD.blank&&!BD.pcbPending&&typeof mechRun==='function'){mechCfg();try{const R=mechRun();const rev=expRevLabel();let b=`<pre>${rh(HOUSING.text(R))}</pre><h3>기구 BOM</h3>${aoaTable(HOUSING.mechBomAoa(R),'wide')}<p class="meta">참고 단가는 초기 견적용 추정치입니다 (USD). 품번 HSG-01/02는 아래 부품도와 같습니다.</p>`;b+=`<h3>조립도</h3>`+fig(HOUSING.drawingSVG(R,BD.name),'조립도 — 평면 · 정면 · 우측면');b+=`<h3>부품도</h3>`+fig(HOUSING.partSVG(R,BD.name,'base',{rev}),'HSG-01 베이스 부품도')+fig(HOUSING.partSVG(R,BD.name,'lid',{rev}),'HSG-02 커버 부품도');b+=`<h3>재질 비교</h3><pre>${rh(HOUSING.compareText(R))}</pre>`;const u=board3DPNG({iso:true,size:1200,housing:true});if(u)b+=fig(u,'하우징 3D',true);sec('housing','기구 설계',b);}catch(e){console.warn(e);}}
+  if(on('system')&&typeof mbReportHTML==='function'){const h=mbReportHTML();if(h)sec('system','시스템 보드 연결',h);}
   if(on('rev')&&typeof REV!=='undefined'&&REV.list.length)sec('rev','리비전 기록',aoaTable(revAoa(),'wide'));
   if(on('log')){const L=(typeof COP!=='undefined'&&COP.log||[]).filter(e=>e.k==='cmd'||e.k==='user'||e.k==='ai');if(L.length)sec('log','설계 도우미 기록',`<ol class="log">${L.slice(-400).map(e=>`<li class="${e.k}"><span>${e.src||''}</span> ${rh(e.t)}</li>`).join('')}</ol>`);}
   const toc=P.map(p=>{const m=p.match(/id="([^"]+)"><h2>([^<]+)/);return m?`<a href="#${m[1]}">${m[2]}</a>`:'';}).join('');
@@ -12890,8 +13016,8 @@ function expDialogHTML(){const st=BD?PCB.stackOf(BD):[];const multi=st.length>2;
   const grp=(t,b)=>`<div class="exp-g"><p class="h">${t}</p><div class="exp-b">${b}</div></div>`;const btn=(a,l,t)=>`<button type="button" class="btn sm" data-x="${a}"${t?` title="${rh(t)}"`:''}>${l}</button>`;
   return`<div class="sheet exp" role="dialog" aria-modal="true" aria-labelledby="expT"><div class="sheet-h"><h2 id="expT">내보내기</h2><button class="x" data-close aria-label="닫기">✕</button></div><div class="sheet-b">
   ${grp('그림 (SVG · PNG)',`${btn('view:svg','지금 보기 SVG')}${btn('view:png','지금 보기 PNG')}${['T','B'].map(k=>btn(`layer:${k}:svg`,`${k==='T'?'TOP':'BOTTOM'} SVG`)).join('')}${multi?st.filter(x=>x.k!=='T'&&x.k!=='B').map(x=>btn(`layer:${x.k}:svg`,`${PCB.cuName(x.k)} SVG`)).join(''):''}${btn('layers:zip','모든 층 + 회로도 SVG (zip)')}
-    ${schN?Array.from({length:schN},(_,i)=>btn(`sch:${i}:svg`,`회로도 ${i+1} SVG`)+btn(`sch:${i}:png`,`회로도 ${i+1} PNG`)).join(''):''}${btn('sys:hw:svg','HW 블록 다이어그램 SVG')}${btn('sys:hw:png','HW 블록 PNG')}${btn('sys:parts:svg','부품 구성도 SVG')}${btn('3d:png','3D PNG')}${btn('housing:drawing','기구 조립도 SVG')}${btn('housing:drawing-png','기구 조립도 PNG')}${btn('mech:base','HSG-01 베이스 부품도 SVG')}${btn('mech:lid','HSG-02 커버 부품도 SVG')}${btn('mech:zip','기구 도면 묶음 (zip: 조립도·부품도·BOM·SCAD)')}${btn('housing:3d','기구 3D PNG')}`)}
-  ${grp('표 (Excel)',`${btn('xlsx:hsis','HSIS 전체 (신호 표·핀 맵·추적성·검사·핀 추천·MCAL·테스트)')}${btn('xlsx:hsis1','HSIS 신호 표만')}${btn('xlsx:bom','BOM')}${btn('xlsx:parts','부품 배치')}${btn('xlsx:nets','넷리스트')}${btn('mech:bom','기구 BOM')}${btn('xlsx:design','설계 데이터 전체 (요약·BOM·배치·넷·층·HSIS·하우징)')}`)}
+    ${schN?Array.from({length:schN},(_,i)=>btn(`sch:${i}:svg`,`회로도 ${i+1} SVG`)+btn(`sch:${i}:png`,`회로도 ${i+1} PNG`)).join(''):''}${btn('sys:hw:svg','HW 블록 다이어그램 SVG')}${btn('sys:hw:png','HW 블록 PNG')}${btn('sys:parts:svg','부품 구성도 SVG')}${btn('3d:png','3D PNG')}${btn('housing:drawing','기구 조립도 SVG')}${btn('housing:drawing-png','기구 조립도 PNG')}${btn('mech:base','HSG-01 베이스 부품도 SVG')}${btn('mech:lid','HSG-02 커버 부품도 SVG')}${btn('mech:zip','기구 도면 묶음 (zip: 조립도·부품도·BOM·SCAD)')}${btn('housing:3d','기구 3D PNG')}${typeof mbMetrics==='function'&&mbMetrics()?btn('mb:svg','보드 연결도 SVG')+btn('mb:png','보드 연결도 PNG'):''}`)}
+  ${grp('표 (Excel)',`${btn('xlsx:hsis','HSIS 전체 (신호 표·핀 맵·추적성·검사·핀 추천·MCAL·테스트)')}${btn('xlsx:hsis1','HSIS 신호 표만')}${btn('xlsx:bom','BOM')}${btn('xlsx:parts','부품 배치')}${btn('xlsx:nets','넷리스트')}${btn('mech:bom','기구 BOM')}${typeof mbMetrics==='function'&&mbMetrics()?btn('mb:xlsx','시스템 연결·BOM'):''}${btn('xlsx:design','설계 데이터 전체 (요약·BOM·배치·넷·층·HSIS·하우징)')}`)}
   ${grp('설계 보고서 (HTML → PDF)',`<div class="exp-secs">${REPORT_SECTIONS.map(([k,l])=>`<label><input type="checkbox" data-sec="${k}" checked> ${l}</label>`).join('')}</div><div class="acts">${btn('report:html','HTML 파일로 저장')}${btn('report:print','바로 인쇄 → PDF')}</div><p class="lead">보고서 HTML은 그림(SVG·PNG)과 표를 모두 안에 품은 파일 하나입니다. 열어서 [PDF로 저장]을 누르거나 브라우저 인쇄에서 PDF로 저장하세요.</p>`)}
   </div></div>`;}
 function openExport(){if(!BD){toast('먼저 보드를 열거나 신규 설계를 시작하세요.');return;}let m=$('#expDlg');if(!m){m=document.createElement('div');m.className='modal';m.id='expDlg';document.body.appendChild(m);
@@ -12904,6 +13030,7 @@ async function runExport(x,sel){const[a,b,c]=x.split(':');
     case'3d':{const u=board3DPNG({iso:S.view!=='3d',size:1600,housing:false});return u?expSave(expName()+'_3D.png',dataUrlBytes(u),'image/png'):toast('3D를 그리지 못했습니다.');}
     case'housing':return exportHousing(b);
     case'mech':return exportMechParts(b);
+    case'mb':return mbExport(b);
     case'xlsx':{const n=expName();if(b==='hsis')return exportXlsx(hsisSheets(true),n+'_hsis.xlsx');if(b==='hsis1')return exportXlsx(hsisSheets(false),n+'_hsis_signals.xlsx');if(b==='bom')return exportXlsx([{name:'BOM',aoa:expBomAoa()}],n+'_bom.xlsx');if(b==='parts')return exportXlsx([{name:'부품 배치',aoa:expPartsAoa()}],n+'_parts.xlsx');if(b==='nets')return exportXlsx([{name:'넷리스트',aoa:expNetAoa()}],n+'_nets.xlsx');return exportDesignXlsx();}
     case'report':return exportReport(sel,b==='print'?'print':'html');}}
 {const hb=$('#expBtn');if(hb)hb.addEventListener('click',openExport);}
@@ -12936,14 +13063,15 @@ async function revState(id,fresh){if(!fresh&&REV.cache.has(id))return REV.cache.
   const st=REVLOG.restore(JSON.parse(raw),PCB);if(!fresh){REV.cache.set(id,st);if(REV.cache.size>6)REV.cache.delete(REV.cache.keys().next().value);}return st;}
 async function revRaw(id){return revUnpack(await revData(id));}
 /* ---- what is recorded ---- */
-function revLive(){return{board:BD,np:{name:($('#npName')||{}).value||'',req:($('#npReq')||{}).value||'',plan:NP.plan||null,arch:NP.arch||null,answers:NP.answers||{},vkey:NP.vkey||null,picked:NP.picked||null},hsis:HS.H||null};}
+function revLive(){return{mb:typeof MB!=='undefined'?{name:MB.name,boards:MB.boards.map(b=>({id:b.id,name:b.B.name,role:b.role||''})),links:JSON.parse(JSON.stringify(MB.links||[])),cur:MB.cur}:null,board:BD,np:{name:($('#npName')||{}).value||'',req:($('#npReq')||{}).value||'',plan:NP.plan||null,arch:NP.arch||null,answers:NP.answers||{},vkey:NP.vkey||null,picked:NP.picked||null},hsis:HS.H||null};}
 // a cheap fingerprint of everything a revision holds; the auto recorder only snapshots when it changes and then holds still
 function revSig(){if(!BD)return'';let h=2166136261;const H=s=>{s=String(s);for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}};
   H(`${BD.pid}|${BD.name}|${BD.W}x${BD.H}|${BD.copperLayers}|${BD.t}|${!!BD.blank}${!!BD.pcbPending}|${BD.variantLabel||''}`);
   BD.comps.forEach(c=>{H(`${c.ref}${c.val}${c.mpn}${c.fp}${c.side}${(+c.x).toFixed(3)},${(+c.y).toFixed(3)},${c.rot||0}`);c.pads.forEach(p=>H(p.net||'-'));});
   Object.keys(BD.layers).forEach(k=>{const L=BD.layers[k];let s=0;for(const p of L){if(p.a)s+=p.a[0]+p.a[1]*3+p.b[0]*5+p.b[1]*7+(p.w||0);else if(p.pts)s+=p.pts.length+p.pts[0][0]+p.pts[p.pts.length-1][1];else if(p.x!=null)s+=p.x*0.7+p.y*1.3;else if(p.rings)s+=p.rings.length;}H(`${k}${L.length}:${s.toFixed(3)}`);});
   BD.vias.forEach(v=>H(`${(+v.x).toFixed(3)},${(+v.y).toFixed(3)}`));
-  try{H(JSON.stringify(NP.arch||null));H(JSON.stringify(NP.plan||null));}catch(e){}H(($('#npReq')||{}).value||'');H(($('#npName')||{}).value||'');
+  try{H(JSON.stringify(NP.arch||null));H(JSON.stringify(NP.plan||null));}catch(e){}
+  try{if(typeof MB!=='undefined')H(`${MB.name}|${MB.boards.map(b=>b.id+b.role).join(',')}|${JSON.stringify(MB.links||[])}`);}catch(e){}H(($('#npReq')||{}).value||'');H(($('#npName')||{}).value||'');
   if(BD.housing)H(JSON.stringify({i:BD.housing.inp,c:BD.housing.cad}));if(HS.H){try{H(JSON.stringify(HS.H.items||[]));}catch(e){}}
   return(h>>>0).toString(36);}
 // what the person or Claude ran since the last revision (copilot log)
@@ -13045,6 +13173,7 @@ async function revRestore(id){const r=REV.list.find(x=>x.id===id);if(!r)return;i
   if(st.np){NP.plan=st.np.plan||null;NP.arch=st.np.arch||null;NP.answers=st.np.answers||{};NP.vkey=st.np.vkey||null;NP.picked=st.np.picked||null;const n=$('#npName'),q=$('#npReq');if(n)n.value=st.np.name||'';if(q)q.value=st.np.req||'';
     try{if(typeof npRender==='function')npRender();if(typeof sysRender==='function')sysRender();}catch(e){console.warn(e);}}
   if(st.hsis){HS.H=st.hsis;HS.res=null;try{hsisRun();}catch(e){console.warn(e);}}
+  if(st.mb&&typeof MB!=='undefined'&&st.mb.boards&&st.mb.boards.every(b=>MB.boards.some(x=>x.id===b.id))){MB.name=st.mb.name||'';MB.links=st.mb.links||[];st.mb.boards.forEach(b=>{const x=MB.boards.find(y=>y.id===b.id);if(x)x.role=b.role||'';});if(typeof mbPaint==='function')mbPaint();}
   try{if(typeof stepPaint==='function')stepPaint();refresh(true);if(typeof cadRefresh==='function')cadRefresh();}catch(e){}
   await revRecord({kind:'restore',cause:`${revLabel(r)} 복원`});REV.a=id;REV.b='cur';revRender();toast(`${revLabel(r)}(으)로 되돌렸습니다.`);}
 /* ---- export / import of the whole history ---- */
@@ -13164,6 +13293,7 @@ function nxMetrics(){if(!BD)return null;const key=(typeof revSig==='function'?re
   if(HS.H){try{if(!HS.res)hsisRun();const st=Object.values(HS.res.status||{});m.hsis={ok:st.filter(x=>x==='ok').length,n:st.length,err:st.filter(x=>x==='err').length};}catch(e){}}
   if(typeof SR!=='undefined'&&SR.th&&SR.th.parts){const hot=SR.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'sim'};}
   if(m.pcb&&typeof mechRun==='function'&&BD.housing){try{const R=mechRun();m.house={mass:R.d.mass,ok:R.d.feasible,ip:R.d.ip,mat:R.d.m.short,warn:R.warn.length};if(!m.tj){const hot=R.d.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'housing',lim:R.inp.tj};}}catch(e){}}
+  if(typeof mbMetrics==='function')m.mb=mbMetrics();
   const A=typeof sysArch==='function'?sysArch():NP.arch;if(A)m.blocks={n:A.blocks.length,links:(A.links||[]).length,fromBoard:!NP.arch};m.answers=NP.answers?Object.keys(NP.answers).length:0;
   NX.key=key;NX.m=m;return m;}
 /* ---- status strip under the header ---- */
@@ -13180,6 +13310,7 @@ function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP
     else T.push(tile('pcb','PCB','3단계','배치·배선 전','', 'PCB 설계 시작'));
     T.push(tile('hsis','HSIS',m.hsis?`${m.hsis.ok}/${m.hsis.n}`:'—',m.hsis?(m.hsis.err?`오류 ${m.hsis.err}`:'모두 정상'):'HSIS 없음',m.hsis&&m.hsis.err?'err':m.hsis?'ok':'','HW/SW 인터페이스 사양 검사'));
     T.push(tile('tj','최고 Tj',m.tj?f(m.tj.v)+' °C':'—',m.tj?`${m.tj.ref} · ${m.tj.src==='sim'?'열 해석':'하우징 추정'}`:'시뮬레이션 전',m.tj&&m.tj.lim&&m.tj.v>m.tj.lim?'err':m.tj&&m.tj.v>100?'warn':'','열 분포 시뮬레이션'));
+    if(m.mb)T.push(tile('mb','시스템 연결',`${m.mb.boards}보드 · ${m.mb.links}연결`,m.mb.err?`오류 ${m.mb.err} · 경고 ${m.mb.warn}`:m.mb.warn?`경고 ${m.mb.warn}`:'문제 없음',m.mb.err?'err':m.mb.warn?'warn':'ok','보드 간 커넥터 연결 점검'));
     T.push(tile('house','하우징',m.house?f(m.house.mass)+' g':'—',m.house?`${m.house.mat} · ${m.house.ip}${m.house.ok?' · 조건 만족':' · 조건 미달'}`:(m.pcb?'4단계':'PCB 뒤'),m.house?(m.house.ok?'ok':'warn'):'','기구 CAD'));}
   const html=T.join('');if(el.dataset.h!==html){el.dataset.h=html;el.innerHTML=`<div class="st-row">${html}</div>`;}}
 {const el=$('#strip');if(el)el.addEventListener('click',e=>{const b=e.target.closest('[data-st]');if(!b)return;const k=b.dataset.st;
@@ -13187,7 +13318,7 @@ function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP
   else if(k==='guide'){if(typeof copSubmit==='function'){setStep(BD.pcbPending?2:3);copSubmit('guide check');}}
   else if(k==='drc'){setStep(3);if(typeof peDrcList==='function'){if(!PE.on&&typeof peBegin==='function')peBegin();peDrcList();}}
   else if(k==='hsis')setWorkspace('hsis');else if(k==='tj'){setStep(3);if(typeof dockTab==='function')dockTab('sim');if(typeof SR!=='undefined'){SR.tab='th';if(typeof renderSim==='function')renderSim();}}
-  else if(k==='house')setStep(4);});}
+  else if(k==='house')setStep(4);else if(k==='mb')setWorkspace('mb');});}
 /* ---- overview workspace: the four stages as connected frames (what made what), plus the AI bar ---- */
 function nxOvShow(){if(!BD)return;setWorkspace('ov');}
 function nxOvRender(force){const host=$('#ovWs');if(!host||host.hidden)return;const key=(typeof revSig==='function'?revSig():'')+'|'+(typeof REV!=='undefined'?REV.list.length:0);if(!force&&key===NX.ovKey)return;NX.ovKey=key;
@@ -13316,7 +13447,7 @@ const ICON_PATHS={
 function icon(name,cls){const d=ICON_PATHS[name];if(!d)return'';return`<svg class="ic${cls?' '+cls:''}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;}
 // selector → icon; `swap` replaces an svg the markup already has
 const ICON_MAP=[
-  ['#ovBtn','grid',1],['#st-1','sys'],['#st-2','sch'],['#st-3','pcb'],['#st-4','cad'],['#ws-hsis','hsis'],['#ws-cad','cad'],['#ws-board','pcb'],
+  ['#ovBtn','grid',1],['#st-1','sys'],['#st-2','sch'],['#st-3','pcb'],['#st-4','cad'],['#ws-hsis','hsis'],['#ws-cad','cad'],['#ws-mb','link'],['[data-mbx=svg]','export'],['[data-mbx=png]','image'],['[data-mbx=xlsx]','table'],['#ws-board','pcb'],
   ['#openImp','upload',1],['#expBtn','export',1],['#revBtn','history',1],
   ['#v-3d','cube'],['#v-top','top'],['#v-bot','bottom'],['#v-sch','sch'],['#splitBtn','split',1],['#winBtn','window',1],['#dockTg','chat',1],
   ['#dk-ai','ai'],['#dk-info','info'],['#dk-sim','sim'],['#dk-ds','doc'],['#p-info','info'],['#p-sim','sim'],
@@ -13338,6 +13469,106 @@ function iconApply(root){root=root||document;ICON_MAP.forEach(([sel,name,swap])=
     el.insertAdjacentHTML('afterbegin',icon(name));});});}
 {let raf=0;const kick=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;iconApply();});};iconApply();
   new MutationObserver(ms=>{for(const m of ms){if(m.addedNodes&&m.addedNodes.length){kick();return;}}}).observe(document.body,{childList:true,subtree:true});}
+
+/* ---------- 멀티보드 시스템: a project made of several boards joined through connectors ----------
+   MB holds the live project: boards (each with its board object and its own step-1/HSIS state), links, and the current board.
+   The viewer still works on one board at a time (BD); switching saves and restores per-board state. */
+var MB={name:'',boards:[],links:[],cur:null,adding:null,seq:0,sel:null,mode:'number',form:{}};
+const mbId=()=>'B'+(++MB.seq);
+function mbBoards(){const m={};MB.boards.forEach(b=>{m[b.id]=b.B;});return m;}
+function mbCur(){return MB.boards.find(b=>b.B===BD)||null;}
+function mbProject(){return{name:MB.name||(MB.boards[0]&&MB.boards[0].B.name)||'시스템',boards:MB.boards.map(b=>({id:b.id,name:b.B.name,role:b.role||''})),links:MB.links};}
+// per-board state the rest of the app keeps in globals
+function mbSaveState(b){if(!b)return;b.st={np:{name:($('#npName')||{}).value||'',req:($('#npReq')||{}).value||'',plan:NP.plan,arch:NP.arch,answers:NP.answers,vkey:NP.vkey,picked:NP.picked,chooser:NP.chooser,variants:NP.variants,hist:NP.hist,planManual:NP.planManual},hsis:{H:HS.H,arxml:HS.arxml,arxmlFile:HS.arxmlFile,mcu:HS.mcu,sample:HS.sample},sys:{src:SYS.src},mode:typeof APP!=='undefined'?APP.mode:null};}
+function mbLoadState(b){const s=b.st;if(!s){NP.plan=null;NP.arch=null;NP.answers={};NP.vkey=null;NP.picked=null;NP.chooser=false;NP.variants=null;NP.hist=[];const n=$('#npName'),q=$('#npReq');if(n)n.value='';if(q)q.value='';return;}
+  Object.assign(NP,{plan:s.np.plan,arch:s.np.arch,answers:s.np.answers||{},vkey:s.np.vkey,picked:s.np.picked,chooser:!!s.np.chooser,variants:s.np.variants,hist:s.np.hist||[],planManual:!!s.np.planManual});const n=$('#npName'),q=$('#npReq');if(n)n.value=s.np.name||'';if(q)q.value=s.np.req||'';
+  HS.H=s.hsis.H;HS.arxml=s.hsis.arxml;HS.arxmlFile=s.hsis.arxmlFile||'';HS.mcu=s.hsis.mcu;HS.sample=s.hsis.sample;HS.res=null;SYS.src=s.sys&&s.sys.src||null;}
+// called from setBoard: a board opened normally replaces the project; one opened while "adding" joins it
+function mbOnBoard(B){if(!B)return;const known=MB.boards.find(b=>b.B===B);if(known){MB.cur=known.id;mbPaint();return;}
+  if(MB.adding&&MB.boards.length){const prev=MB.boards.find(b=>b.id===MB.cur);if(prev&&prev.B!==B){/* state of the previous board was saved when the add started */}
+    const b={id:mbId(),B,role:MB.adding.role||'',st:null};MB.boards.push(b);MB.cur=b.id;MB.adding=null;mbPaint();toast(`보드 ${b.id} 추가: ${B.name}. 머리의 보드 선택에서 오가고, [시스템 연결]에서 커넥터를 잇습니다.`);return;}
+  MB.boards=[{id:'B1',B,role:'',st:null}];MB.seq=1;MB.links=[];MB.cur='B1';MB.name='';MB.adding=null;mbPaint();}
+function mbSwitch(id){const to=MB.boards.find(b=>b.id===id);if(!to||to.B===BD)return;const from=mbCur();if(from)mbSaveState(from);
+  MB.cur=id;const keepWs=HS.ws;setBoard(to.B);mbLoadState(to);
+  if(typeof APP!=='undefined'){const m=to.st&&to.st.mode||(to.B.blank||to.B.source==='신규 설계'?'steps':'viewer');if(APP.mode!==m)setMode(m);}
+  try{if(typeof npRender==='function')npRender();if(typeof sysRender==='function')sysRender();if(typeof stepPaint==='function')stepPaint();refresh(true);}catch(e){console.warn(e);}
+  if(keepWs==='mb')setWorkspace('mb');mbPaint();}
+function mbRemove(id){const b=MB.boards.find(x=>x.id===id);if(!b||MB.boards.length<2)return;if(!confirm(`${id} ${b.B.name}을(를) 시스템에서 뺄까요? (보드 자체는 다시 열 수 있습니다)`))return;
+  MB.links=MB.links.filter(l=>l.a.board!==id&&l.b.board!==id);MB.boards=MB.boards.filter(x=>x!==b);if(MB.cur===id)mbSwitch(MB.boards[0].id);else mbPaint();mbRender();}
+// add flows: a file, an example or a fresh design joins the project
+function mbAdd(kind,arg){const cur=mbCur();if(cur)mbSaveState(cur);MB.adding={role:''};
+  if(kind==='file'){openImport();toast('파일을 고르면 지금 시스템에 보드로 추가됩니다.');return;}
+  if(kind==='example'){loadExample(arg||'mcu');if(typeof APP!=='undefined'&&APP.mode==='home')setMode('viewer');return;}
+  if(kind==='new'){newProject();return;}}
+/* ---- header switcher ---- */
+function mbPaint(){const sel=$('#mbSel');if(!sel)return;const multi=MB.boards.length>1;sel.hidden=!BD||(typeof APP!=='undefined'&&APP.mode==='home');
+  sel.innerHTML=MB.boards.map(b=>`<option value="${b.id}"${b.B===BD?' selected':''}>${esc(b.id)} · ${esc(b.B.name)}${b.role?' ('+esc(b.role)+')':''}</option>`).join('')+`<optgroup label="보드 추가"><option value="+file">파일에서…</option><option value="+new">신규 설계…</option><option value="+ex:mcu">예제: MCU DC 모터</option><option value="+ex:bldc">예제: MCU BLDC</option><option value="+ex:tc364">예제: AURIX TC364</option><option value="+ex:sense">예제: SENSE-32</option></optgroup><optgroup label="시스템"><option value="+links">시스템 연결 (커넥터 짝짓기)…</option></optgroup>`;
+  sel.classList.toggle('multi',multi);const t=$('#ws-mb');if(t)t.hidden=!multi&&!MB.links.length;if(typeof nxStripPaint==='function')nxStripPaint();}
+{const sel=$('#mbSel');if(sel)sel.addEventListener('change',()=>{const v=sel.value;if(v==='+file')mbAdd('file');else if(v==='+new')mbAdd('new');else if(v.startsWith('+ex:'))mbAdd('example',v.slice(4));else if(v==='+links')setWorkspace('mb');else mbSwitch(v);setTimeout(mbPaint,0);});}
+/* ---- 시스템 연결 workspace ---- */
+function mbRender(){if(typeof nxStripPaint==='function')try{nxStripPaint();}catch(e){}const host=$('#mbWs');if(!host||host.hidden)return;const boards=mbBoards();const P=mbProject();const M=MULTIBOARD;
+  const res=M.resolve(P,boards);const ck=M.check(P,boards);const sn=M.systemNets(P,boards);const bom=M.systemBom(P,boards);
+  const opt=(arr,v,f)=>arr.map(x=>`<option value="${esc(f?f(x):x)}"${(f?f(x):x)===v?' selected':''}>${esc(f?f(x):x)}</option>`).join('');
+  const F=MB.form;const connList=id=>id&&boards[id]?M.connectors(boards[id]):[];
+  const sevIc={err:'!!',warn:'!',info:'·'};
+  host.innerHTML=`<div class="mb-wrap">
+    <aside class="panel mb-left">
+      <p class="h">시스템</p>
+      <label class="mb-f"><span>이름</span><input id="mbName" type="text" value="${esc(MB.name)}" placeholder="예: 인버터 ECU 시스템"></label>
+      <p class="h" style="margin-top:12px">보드 ${MB.boards.length}개</p>
+      <ul class="mb-boards">${MB.boards.map(b=>`<li class="${b.B===BD?'cur':''}"><div class="mb-bh"><b class="mono">${esc(b.id)}</b><span>${esc(b.B.name)}</span></div><div class="mb-bs">${b.B.W.toFixed(0)} × ${b.B.H.toFixed(0)} mm · ${b.B.copperLayers||2}층 · 부품 ${b.B.comps.length} · 커넥터 ${M.connectors(b.B).length}${b.B.pcbPending?' · PCB 전':''}</div>
+        <div class="mb-ba"><input type="text" value="${esc(b.role||'')}" placeholder="역할 (제어·구동·전원·표시…)" data-role="${esc(b.id)}" aria-label="${esc(b.id)} 역할"><button type="button" class="pill vbtn" data-open="${esc(b.id)}">열기</button>${MB.boards.length>1?`<button type="button" class="pill vbtn" data-del="${esc(b.id)}" aria-label="${esc(b.id)} 제거">×</button>`:''}</div></li>`).join('')}</ul>
+      <div class="acts" style="flex-wrap:wrap;margin-top:8px"><button type="button" class="btn sm" data-add="file">파일 추가</button><button type="button" class="btn sm" data-add="new">신규 설계 추가</button><select id="mbAddEx" class="btn sm" aria-label="예제 추가"><option value="">예제 추가…</option><option value="mcu">MCU DC 모터</option><option value="bldc">MCU BLDC 3상</option><option value="tc364">AURIX TC364</option><option value="sense">SENSE-32</option></select></div>
+      <p class="h" style="margin-top:14px">시스템 BOM <span class="cls">${bom.reduce((a,r)=>a+r.qty,0)}개 · ${bom.length}종</span></p>
+      <div class="mb-bom">${bom.slice(0,12).map(r=>`<div><b>${r.qty}</b><span>${esc(r.mpn||r.val)}</span><small>${esc(Object.entries(r.by).map(([k,v])=>k+':'+v.length).join(' '))}</small></div>`).join('')}${bom.length>12?`<p class="lead">… 외 ${bom.length-12}종 (내보내기 → Excel)</p>`:''}</div>
+    </aside>
+    <div class="mb-mid"><div class="mb-dia">${M.svg(P,boards,{title:P.name})||'<p class="lead">보드를 추가하면 연결도가 그려집니다.</p>'}</div>
+      <div class="mb-nets"><p class="h">시스템 넷 (보드를 건너는 넷) <span class="cls">${sn.length}</span></p>${sn.length?`<div class="mb-netl">${sn.slice(0,40).map(n=>`<span class="pill" title="${esc(n.members.map(m=>m.board+':'+m.net).join(' · '))}">${esc(n.name)} <small>${n.boards}보드</small></span>`).join('')}</div>`:'<p class="lead">연결을 만들면 커넥터 핀으로 이어진 넷이 여기 나옵니다.</p>'}</div></div>
+    <aside class="panel mb-right">
+      <p class="h">연결 추가</p>
+      <form id="mbLink" class="mb-form">
+        <div class="mb-row"><label>A 보드<select name="ab">${opt(MB.boards.map(b=>b.id),F.ab||MB.boards[0]&&MB.boards[0].id)}</select></label><label>커넥터<select name="ac">${opt(connList(F.ab||MB.boards[0]&&MB.boards[0].id).map(c=>c.ref),F.ac)}</select></label></div>
+        <div class="mb-row"><label>B 보드<select name="bb">${opt(MB.boards.map(b=>b.id),F.bb||(MB.boards[1]||MB.boards[0]||{}).id)}</select></label><label>커넥터<select name="bc">${opt(connList(F.bb||(MB.boards[1]||MB.boards[0]||{}).id).map(c=>c.ref),F.bc)}</select></label></div>
+        <div class="mb-row"><label>종류<select name="kind"><option value="cable">케이블 · 하네스</option><option value="b2b"${F.kind==='b2b'?' selected':''}>보드 간 직결 (B2B)</option></select></label><label>핀 매핑<select name="auto"><option value="number">핀 번호 (1↔1)</option><option value="net"${F.auto==='net'?' selected':''}>넷 이름이 같은 핀</option><option value="manual"${F.auto==='manual'?' selected':''}>직접</option></select></label></div>
+        <div class="mb-row"><label>라벨<input name="label" type="text" placeholder="예: 모터 하네스 W1" value="${esc(F.label||'')}"></label><button type="submit" class="btn primary sm">연결 만들기</button></div>
+      </form>
+      <p class="h" style="margin-top:12px">연결 ${MB.links.length}개</p>
+      <div class="mb-links">${res.map(({l,A,B,rows})=>{const bad=ck.filter(c=>c.link===l.id);const e=bad.filter(c=>c.sev==='err').length,w=bad.filter(c=>c.sev==='warn').length;
+        return`<details class="mb-link${MB.sel===l.id?' sel':''}" data-link="${esc(l.id)}"${MB.sel===l.id?' open':''}><summary><b class="mono">${esc(l.id)}</b> ${esc(l.label||'')} <span class="cls">${esc(l.a.board)}.${esc(l.a.ref)} ↔ ${esc(l.b.board)}.${esc(l.b.ref)} · ${rows.length}핀 · ${l.kind==='b2b'?'B2B':'케이블'}</span>${e?`<span class="sv err">${e}</span>`:''}${w?`<span class="sv warn">${w}</span>`:''}</summary>
+          <div class="mb-la"><label>매핑 <select data-auto="${esc(l.id)}"><option value="number"${l.auto==='number'?' selected':''}>핀 번호</option><option value="net"${l.auto==='net'?' selected':''}>넷 이름</option><option value="manual"${l.auto==='manual'?' selected':''}>직접</option></select></label><button type="button" class="pill vbtn" data-ldel="${esc(l.id)}">연결 삭제</button></div>
+          ${A&&B?`<table class="stbl mb-pins"><thead><tr><th>${esc(l.a.ref)} 핀</th><th>넷</th><th></th><th>${esc(l.b.ref)} 핀</th><th>넷</th></tr></thead><tbody>${A.pins.map(pa=>{const r=rows.find(x=>x.pa===pa.n);const pb=r?B.pins.find(x=>x.n===r.pb):null;const c=r&&bad.find(x=>x.msg.includes(`핀 ${r.pa}↔${r.pb}`));
+            return`<tr class="${c?c.sev:r?'ok':'none'}"><td class="mono">${esc(pa.n)}</td><td>${esc(pa.net||'')}</td><td>${r?'↔':''}</td><td>${l.auto==='manual'?`<select data-pin="${esc(l.id)}" data-pa="${esc(pa.n)}"><option value="">—</option>${B.pins.map(x=>`<option value="${esc(x.n)}"${r&&r.pb===x.n?' selected':''}>${esc(x.n)}</option>`).join('')}</select>`:`<span class="mono">${r?esc(r.pb):'—'}</span>`}</td><td>${pb?esc(pb.net||''):''}</td></tr>`;}).join('')}</tbody></table>`:'<p class="errline">커넥터를 찾지 못했습니다.</p>'}
+          ${bad.length?`<ul class="mb-ck">${bad.map(c=>`<li class="${c.sev}">${sevIc[c.sev]} ${esc(c.msg)}</li>`).join('')}</ul>`:''}</details>`;}).join('')||'<p class="lead">아직 연결이 없습니다. 위에서 두 보드의 커넥터를 골라 만드세요.</p>'}</div>
+      <p class="h" style="margin-top:12px">점검 <span class="cls">오류 ${ck.filter(c=>c.sev==='err').length} · 경고 ${ck.filter(c=>c.sev==='warn').length}</span></p>
+      <ul class="mb-ck">${ck.filter(c=>!c.link).map(c=>`<li class="${c.sev}">${sevIc[c.sev]} ${esc(c.msg)}</li>`).join('')||'<li class="info">· 연결 밖 문제 없음</li>'}</ul>
+      <div class="acts" style="margin-top:10px;flex-wrap:wrap"><button type="button" class="btn sm" data-mbx="svg">연결도 SVG</button><button type="button" class="btn sm" data-mbx="png">PNG</button><button type="button" class="btn sm" data-mbx="xlsx">연결·BOM Excel</button></div>
+    </aside></div>`;
+  mbBind(host);}
+function mbBind(host){
+  const F=host.querySelector('#mbLink');const sync=()=>{const d=new FormData(F);MB.form={ab:d.get('ab'),ac:d.get('ac'),bb:d.get('bb'),bc:d.get('bc'),kind:d.get('kind'),auto:d.get('auto'),label:d.get('label')};};
+  F.querySelectorAll('select[name=ab],select[name=bb]').forEach(s=>s.addEventListener('change',()=>{sync();MB.form.ac=MB.form.bc=null;const d=new FormData(F);MB.form.ac=null;mbRender();}));
+  F.addEventListener('submit',e=>{e.preventDefault();sync();const f=MB.form;if(!f.ac||!f.bc){toast('두 보드 모두 커넥터가 있어야 합니다.');return;}if(f.ab===f.bb&&f.ac===f.bc){toast('같은 커넥터끼리는 이을 수 없습니다.');return;}
+    const l=MULTIBOARD.addLink(mbProject(),{board:f.ab,ref:f.ac},{board:f.bb,ref:f.bc},{kind:f.kind,label:f.label,auto:f.auto});MB.links=mbProject().links;MB.sel=l.id;MB.form.label='';mbRender();mbPaint();if(typeof revOnBoard==='function')revOnBoard('시스템 연결 추가 '+l.id);});
+  host.querySelector('#mbName').addEventListener('change',e=>{MB.name=e.target.value.trim();mbRender();});
+  host.querySelectorAll('[data-role]').forEach(i=>i.addEventListener('change',()=>{const b=MB.boards.find(x=>x.id===i.dataset.role);if(b)b.role=i.value.trim();mbRender();mbPaint();}));
+  host.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;
+    if(d.open){mbSwitch(d.open);return;}if(d.del){mbRemove(d.del);return;}if(d.add){mbAdd(d.add);return;}
+    if(d.ldel){MB.links=MB.links.filter(l=>l.id!==d.ldel);mbRender();mbPaint();return;}
+    if(d.mbx){mbExport(d.mbx);return;}});
+  host.querySelector('#mbAddEx').addEventListener('change',e=>{if(e.target.value)mbAdd('example',e.target.value);});
+  host.querySelectorAll('[data-auto]').forEach(s=>s.addEventListener('change',()=>{const l=MB.links.find(x=>x.id===s.dataset.auto);if(!l)return;if(s.value==='manual'&&l.auto!=='manual'){const r=MULTIBOARD.resolve(mbProject(),mbBoards()).find(x=>x.l===l);l.pins=r?r.pins.slice():[];}l.auto=s.value;MB.sel=l.id;mbRender();}));
+  host.querySelectorAll('[data-pin]').forEach(s=>s.addEventListener('change',()=>{const l=MB.links.find(x=>x.id===s.dataset.pin);if(!l)return;const pa=s.dataset.pa;l.pins=(l.pins||[]).filter(p=>p[0]!==pa&&p[1]!==s.value);if(s.value)l.pins.push([pa,s.value]);MB.sel=l.id;mbRender();}));
+  host.querySelectorAll('details[data-link]').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)MB.sel=d.dataset.link;}));}
+async function mbExport(kind){const P=mbProject(),boards=mbBoards(),M=MULTIBOARD;const base=expName()+'_system';
+  if(kind==='svg')return expSave(base+'_interconnect.svg',M.svg(P,boards,{title:P.name}),'image/svg+xml');
+  if(kind==='png'){const cv=await svgToPng(M.svg(P,boards,{title:P.name}),2);if(cv)return expSaveCanvas(base+'_interconnect.png',cv);return;}
+  return exportXlsx(mbSheets(),base+'.xlsx','시스템 연결·BOM을 엑셀로 내려받았습니다.');}
+function mbSheets(){const P=mbProject(),boards=mbBoards(),M=MULTIBOARD;const bom=M.systemBom(P,boards);
+  return[{name:'시스템 연결',aoa:M.linksAoa(P,boards)},{name:'시스템 BOM',aoa:[['수량','값','풋프린트','부품 번호','설명',...P.boards.map(b=>b.id+' '+b.name)],...bom.map(r=>[r.qty,r.val,r.fp,r.mpn,r.desc,...P.boards.map(b=>(r.by[b.id]||[]).join(', '))])]},
+    {name:'시스템 넷',aoa:[['시스템 넷','보드 수','구성'],...M.systemNets(P,boards).map(n=>[n.name,n.boards,n.members.map(m=>m.board+':'+m.net).join(' · ')])]},{name:'시스템 점검',aoa:[['심각도','코드','연결','메시지'],...M.check(P,boards).map(c=>[c.sev,c.code,c.link||'',c.msg])]}];}
+function mbReportHTML(){if(MB.boards.length<2&&!MB.links.length)return'';const P=mbProject(),boards=mbBoards(),M=MULTIBOARD;const ck=M.check(P,boards);
+  return`<p>${rh(M.text(P,boards)).replace(/\n/g,'<br>')}</p><figure>${M.svg(P,boards,{title:P.name})}<figcaption>보드 연결도</figcaption></figure><h3>연결 핀 표</h3>${aoaTable(M.linksAoa(P,boards),'wide')}<h3>시스템 넷</h3>${aoaTable([['시스템 넷','보드 수','구성'],...M.systemNets(P,boards).map(n=>[n.name,n.boards,n.members.map(m=>m.board+':'+m.net).join(' · ')])],'wide')}<h3>시스템 BOM</h3>${aoaTable(mbSheets()[1].aoa,'wide')}${ck.length?`<h3>점검</h3><ul>${ck.map(c=>`<li>${rh(c.sev)} · ${rh(c.msg)}</li>`).join('')}</ul>`:''}`;}
+function mbMetrics(){if(MB.boards.length<2&&!MB.links.length)return null;const ck=MULTIBOARD.check(mbProject(),mbBoards());return{boards:MB.boards.length,links:MB.links.length,err:ck.filter(c=>c.sev==='err').length,warn:ck.filter(c=>c.sev==='warn').length};}
 
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));

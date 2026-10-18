@@ -70,7 +70,7 @@ const ICON_PATHS={
 function icon(name,cls){const d=ICON_PATHS[name];if(!d)return'';return`<svg class="ic${cls?' '+cls:''}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;}
 // selector → icon; `swap` replaces an svg the markup already has
 const ICON_MAP=[
-  ['#ovBtn','grid',1],['#st-1','sys'],['#st-2','sch'],['#st-3','pcb'],['#st-4','cad'],['#ws-hsis','hsis'],['#ws-cad','cad'],['#ws-board','pcb'],
+  ['#ovBtn','grid',1],['#st-1','sys'],['#st-2','sch'],['#st-3','pcb'],['#st-4','cad'],['#ws-hsis','hsis'],['#ws-cad','cad'],['#ws-mb','link'],['[data-mbx=svg]','export'],['[data-mbx=png]','image'],['[data-mbx=xlsx]','table'],['#ws-board','pcb'],
   ['#openImp','upload',1],['#expBtn','export',1],['#revBtn','history',1],
   ['#v-3d','cube'],['#v-top','top'],['#v-bot','bottom'],['#v-sch','sch'],['#splitBtn','split',1],['#winBtn','window',1],['#dockTg','chat',1],
   ['#dk-ai','ai'],['#dk-info','info'],['#dk-sim','sim'],['#dk-ds','doc'],['#p-info','info'],['#p-sim','sim'],

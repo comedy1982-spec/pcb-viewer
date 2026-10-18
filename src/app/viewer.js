@@ -642,7 +642,7 @@ function setBoard(B){
   header();stats();renderPane();simReset();hsisOnBoard();SV.data=null;SV.lastKey='';measure.done=0;measure();fit2();
   if(S.view==='3d'){if(G3)rebuild3D();}else paint2D();
   if(S.sch!=='off'){schData();renderSchOv();paintSch();}
-  popsRefresh(true);cuSelPaint();if(typeof revOnBoard==='function')revOnBoard();
+  popsRefresh(true);cuSelPaint();if(typeof mbOnBoard==='function')mbOnBoard(B);if(typeof revOnBoard==='function')revOnBoard();
 }
 new ResizeObserver(()=>{if(!BD)return;if(S.sch!=='off'){schResize();if(!SV.userMoved)schFit();paintSch();}if(S.view==='3d')resize3D();else{measure();paint2D();}}).observe(vp);
 
