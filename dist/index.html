@@ -1017,6 +1017,15 @@ body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-ste
 .ftree.sel-tree .fl{display:flex;flex-direction:column;min-width:0}
 .ftree.sel-tree .fl small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ftree.sel-tree li.fe{grid-template-columns:34px minmax(0,1fr) auto}
+
+/* ---------- 내보내기 ---------- */
+.sheet.exp{width:min(760px,calc(100vw - 32px))}
+.exp-g{margin:10px 0 14px}.exp-g>.h{margin:0 0 6px}
+.exp-b{display:flex;flex-wrap:wrap;gap:6px}
+.exp-secs{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin-bottom:8px}
+.exp-secs label{display:inline-flex;align-items:center;gap:5px}
+.hs-xlsx{margin-left:auto;align-self:center}
+#hsisWs .tabs{display:flex;align-items:center}
 </style>
 
 </head>
@@ -1040,7 +1049,7 @@ body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-ste
       </nav>
       <div class="seg ws" role="tablist" aria-label="보조 도구"><button role="tab" data-ws="board" aria-selected="true" id="ws-board" hidden>보드</button><button role="tab" data-ws="hsis" aria-selected="false" id="ws-hsis" title="HW/SW 인터페이스 사양 (MCU 핀 기준)">HSIS</button><button role="tab" data-ws="cad" aria-selected="false" id="ws-cad" hidden>기구 CAD</button></div>
       <div class="top-r" id="boardCtl">
-            <button class="btn primary" id="openImp"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.6 8 2.4l3.2 3.2M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>파일 불러오기</button>
+            <button class="btn primary" id="openImp"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.6 8 2.4l3.2 3.2M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>파일 불러오기</button><button class="btn sm" id="expBtn" title="그림(SVG·PNG) · 표(Excel) · 설계 보고서(HTML→PDF) 내보내기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v8M4.8 7.4 8 10.6l3.2-3.2M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>내보내기</button>
       <div class="seg" role="tablist" aria-label="보기 전환">
         <button role="tab" data-view="3d" aria-selected="true" id="v-3d">3D</button>
         <button role="tab" data-view="T" aria-selected="false" id="v-top">TOP</button>
@@ -6660,6 +6669,69 @@ function featLabel(f){const id=f.id?f.id+' ':'';switch(f.type){
   case'tabs':return`${id}장착 탭 ${f.tabs?f.tabs.length:f.n}개 (${f.screw||'M5'})`;case'rib':return`${id}바닥 리브 (${f.axis} = ${(+f.pos).toFixed?(+f.pos).toFixed(1):f.pos})`;
   case'label':return`${id}커버 각인 "${f.text}"`;case'boss':return`${id}PCB 보스 ${f.x==null?'(보드 가운데)':`(${f.x}, ${f.y})`}`;case'fins':return f.off?`${id}방열 핀 없음`:`${id}방열 핀 ${f.n}개 ${f.h||12} mm`;default:return id+f.type;}}
 function compareText(R){return['재질 비교 (같은 조건):',...R.all.map(d=>`  ${d===R.d?'▶':' '} ${d.m.short.padEnd(14)} 벽 ${d.geo.t} mm · PCB ${d.th.Tboard.toFixed(0)} °C (여유 ${(d.th.margin*100).toFixed(0)}%) · 진동 SF ${d.vib.sf.toFixed(2)} · ${d.mass.toFixed(0)} g · 원가 ${d.costIdx}${d.fins?` · 핀 ${d.fins.n}개`:''}${d.th.peds.length?' · TIM':''} · ${d.feasible?'적합':'부적합: '+d.why.join(', ')}`)].join('\n');}
+/* ---- 2D drawing (기구 도면): top view + front (S) + right (E) elevations with the main dimensions, as SVG (mm → px) ---- */
+function drawingSVG(R,name,opts){opts=opts||{};const d=R.d,g=d.geo,S=opts.scale||4,M=18*S/4;const xe=v=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const f=v=>(Math.round(v*10)/10).toString(),f2=v=>(Math.round(v*100)/100).toString();
+  const Zb=g.zFloor-g.t,Zt=g.zLid+g.t,Ho=Zt-Zb;const gap=26*S/4;
+  // sheet layout: top view (Lo × Wo) above the front elevation (Lo × Ho), right elevation (Wo × Ho) beside it
+  const dimPad=16*S/4;const ext={W:0,E:0,S:0,N:0};d.feats.filter(fe=>fe.type==='tabs').forEach(fe=>fe.tabs.forEach(t=>{ext.W=Math.max(ext.W,g.x0-(t.cx-t.sx/2));ext.E=Math.max(ext.E,t.cx+t.sx/2-g.x0-g.Lo);ext.S=Math.max(ext.S,g.y0-(t.cy-t.sy/2));ext.N=Math.max(ext.N,t.cy+t.sy/2-g.y0-g.Wo);}));
+  const x0=M+dimPad*2.3+ext.W*S,yTop=M+dimPad+ext.N*S;const yFront=yTop+g.Wo*S+ext.S*S+gap+dimPad*1.3+14;const xRight=x0+g.Lo*S+ext.E*S+gap+dimPad*1.6;
+  const W=xRight+g.Wo*S+M+dimPad,H=yFront+Ho*S+M+dimPad*1.3+30*S/4;
+  const o=[];const line=(x1,y1,x2,y2,c,w,dash)=>o.push(`<line x1="${f2(x1)}" y1="${f2(y1)}" x2="${f2(x2)}" y2="${f2(y2)}" stroke="${c||'#1d2126'}" stroke-width="${w||1}"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  const text=(x,y,t,sz,anchor,rot)=>o.push(`<text x="${f2(x)}" y="${f2(y)}" font-size="${sz||10}" text-anchor="${anchor||'middle'}" fill="#1d2126"${rot?` transform="rotate(${rot} ${f2(x)} ${f2(y)})"`:''}>${xe(t)}</text>`);
+  const rect=(x,y,w,h,rx,fill,stroke,sw,dash)=>o.push(`<rect x="${f2(x)}" y="${f2(y)}" width="${f2(w)}" height="${f2(h)}"${rx?` rx="${f2(rx)}"`:''} fill="${fill||'none'}" stroke="${stroke||'#1d2126'}" stroke-width="${sw||1.2}"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  const circle=(x,y,r,fill,stroke,dash)=>o.push(`<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(r)}" fill="${fill||'none'}" stroke="${stroke||'#1d2126'}" stroke-width="1"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  // dimension line with arrows and a label; horizontal (dir 'h') below/above or vertical (dir 'v')
+  const dim=(x1,y1,x2,y2,label,dir,off)=>{const a=3.2;if(dir==='h'){const y=y1+off;line(x1,y1,x1,y+(off>0?a:-a),'#5a6872',.8);line(x2,y2,x2,y+(off>0?a:-a),'#5a6872',.8);line(x1,y,x2,y,'#5a6872',.9);
+      o.push(`<path d="M${f2(x1)} ${f2(y)} l${a*1.6} ${-a*.55} v${a*1.1} z M${f2(x2)} ${f2(y)} l${-a*1.6} ${-a*.55} v${a*1.1} z" fill="#5a6872"/>`);text((x1+x2)/2,y-3,label,9.5);}
+    else{const x=x1+off;line(x1,y1,x+(off>0?a:-a),y1,'#5a6872',.8);line(x2,y2,x+(off>0?a:-a),y2,'#5a6872',.8);line(x,y1,x,y2,'#5a6872',.9);
+      o.push(`<path d="M${f2(x)} ${f2(y1)} l${-a*.55} ${a*1.6} h${a*1.1} z M${f2(x)} ${f2(y2)} l${-a*.55} ${-a*1.6} h${a*1.1} z" fill="#5a6872"/>`);text(x+(off>0?10:-10),(y1+y2)/2,label,9.5,'middle',90);}};
+  const TX=x=>x0+(x-g.x0)*S,TY=y=>yTop+(g.y0+g.Wo-y)*S;   // top view: board y up → svg y down
+  const FY=z=>yFront+(Zt-z)*S;                              // elevations: z up → svg y down
+  o.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f2(W)} ${f2(H)}" width="${f2(W)}" height="${f2(H)}" font-family="IBM Plex Sans KR, system-ui, sans-serif" style="background:#fff">`);
+  o.push(`<rect x="0" y="0" width="${f2(W)}" height="${f2(H)}" fill="#fff"/>`);
+  // ---- top view
+  text(x0,yTop-dimPad-4*S/4,'평면도 (커버 위에서)',11,'start');
+  rect(TX(g.x0),TY(g.y0+g.Wo),g.Lo*S,g.Wo*S,g.r*S,'#f6f3ec','#1d2126',1.4);
+  rect(TX(g.x0+g.rim),TY(g.y0+g.Wo-g.rim),(g.Lo-2*g.rim)*S,(g.Wo-2*g.rim)*S,Math.max(0,g.r-g.rim)*S,'none','#9aa3ab',.8,'3 2');
+  // board outline (hidden)
+  rect(TX(R.N.bb[0]),TY(R.N.bb[1]+R.N.H),R.N.W*S,R.N.H*S,0,'none','#2f7d4f',.9,'4 2');
+  d.sup.forEach(s=>{circle(TX(s.x),TY(s.y),3.5*S,'none','#1d2126','3 2');circle(TX(s.x),TY(s.y),(s.d>3.4?1.65:1.25)*S,'none','#1d2126');});
+  d.screws.forEach(s=>{circle(TX(s.x),TY(s.y),(d.screwM==='M4'?2.25:1.75)*S,'#fff','#1d2126');line(TX(s.x)-2.6*S,TY(s.y),TX(s.x)+2.6*S,TY(s.y),'#1d2126',.6);line(TX(s.x),TY(s.y)-2.6*S,TX(s.x),TY(s.y)+2.6*S,'#1d2126',.6);});
+  d.feats.forEach(fe=>{if(fe.type==='tabs')fe.tabs.forEach(t=>{rect(TX(t.cx-t.sx/2),TY(t.cy+t.sy/2),t.sx*S,t.sy*S,1.5*S,'#fff','#1d2126',1.1);circle(TX(t.hx),TY(t.hy),fe.hd/2*S,'#fff','#1d2126');});
+    else if((fe.type==='hole'||fe.type==='slot')&&(fe.side==='T'||fe.side==='B')){if(fe.type==='hole')circle(TX(fe.x),TY(fe.y),fe.w/2*S,'#fff','#1d2126',fe.side==='B'?'3 2':null);else rect(TX(fe.x-fe.w/2),TY(fe.y+fe.h/2),fe.w*S,fe.h*S,0,'#fff','#1d2126',1,fe.side==='B'?'3 2':null);text(TX(fe.x),TY(fe.y)-fe.h/2*S-3,`${fe.id} ${fe.type==='hole'?'Ø'+f(fe.w):f(fe.w)+'×'+f(fe.h)}`,8.5);}
+    else if(fe.type==='label'){text(TX(fe.x),TY(fe.y)+3,fe.text,Math.max(8,fe.size*S*0.9));}
+    else if(fe.type==='fins'&&d.fins){for(let k=0;k<d.fins.n;k++){const x=g.x0+5+k*d.fins.pitch;if(x+d.fins.t>g.x0+g.Lo-2)break;rect(TX(x),TY(g.y0+4+d.fins.len),d.fins.t*S,d.fins.len*S,0,'#e6e2d8','#6b7076',.6);}}});
+  if(d.fins&&!d.feats.some(fe=>fe.type==='fins'))for(let k=0;k<d.fins.n;k++){const x=g.x0+5+k*d.fins.pitch;if(x+d.fins.t>g.x0+g.Lo-2)break;rect(TX(x),TY(g.y0+4+d.fins.len),d.fins.t*S,d.fins.len*S,0,'#e6e2d8','#6b7076',.6);}
+  // wall openings seen from the top as marks on the edge
+  R.N.cuts.concat(d.feats.filter(fe=>(fe.type==='hole'||fe.type==='slot')&&!/^[TB]$/.test(fe.side)).map(fe=>({ref:fe.id,side:fe.side,a:fe.a-fe.w/2,b:fe.a+fe.w/2}))).forEach(c=>{const col='#c0392b';
+    if(c.side==='S')line(TX(c.a),TY(g.y0),TX(c.b),TY(g.y0),col,3);else if(c.side==='N')line(TX(c.a),TY(g.y0+g.Wo),TX(c.b),TY(g.y0+g.Wo),col,3);else if(c.side==='W')line(TX(g.x0),TY(c.a),TX(g.x0),TY(c.b),col,3);else line(TX(g.x0+g.Lo),TY(c.a),TX(g.x0+g.Lo),TY(c.b),col,3);});
+  dim(TX(g.x0),TY(g.y0),TX(g.x0+g.Lo),TY(g.y0),`${f(g.Lo)}`,'h',dimPad*0.75);
+  dim(TX(g.x0),TY(g.y0+g.Wo),TX(g.x0),TY(g.y0),`${f(g.Wo)}`,'v',-dimPad*0.75);
+  // ---- front elevation (wall S, looking from -y): x along, z up
+  text(x0,yFront-dimPad*1.3-16,'정면도 (앞 벽 S)',11,'start');
+  const frontWall=(side,X,len)=>{const xw=u=>X+(u)*S;rect(X,FY(Zt),len*S,Ho*S,0,'#f6f3ec','#1d2126',1.4);
+    line(X,FY(g.zSplit),X+len*S,FY(g.zSplit),'#1d2126',.9,'6 3');text(X+4,FY(g.zSplit)-3,'분할면 (베이스 / 커버)',8,'start');
+    line(X,FY(R.N.t/2),X+len*S,FY(R.N.t/2),'#2f7d4f',.8,'4 2');line(X,FY(-R.N.t/2),X+len*S,FY(-R.N.t/2),'#2f7d4f',.8,'4 2');
+    const o0=side==='S'||side==='N'?g.x0:g.y0;const mir=side==='N'||side==='W';const U=a=>mir?xw(o0+len-a):xw(a-o0);
+    R.N.cuts.filter(c=>c.side===side).forEach(c=>{const a=U(c.a),b=U(c.b);rect(Math.min(a,b),FY(c.z1),Math.abs(b-a),(c.z1-c.z0)*S,0,'#fff','#c0392b',1);text((a+b)/2,FY(c.z1)-3,c.ref,8.5);});
+    d.feats.filter(fe=>(fe.type==='hole'||fe.type==='slot')&&fe.side===side).forEach(fe=>{const u=U(fe.a);if(fe.type==='hole'){circle(u,FY(fe.z),fe.w/2*S,'#fff','#1d2126');text(u,FY(fe.z)-fe.w/2*S-3,`${fe.id} Ø${f(fe.w)}`,8.5);}
+      else{rect(u-fe.w/2*S,FY(fe.z+fe.h/2),fe.w*S,fe.h*S,0,'#fff','#1d2126');text(u,FY(fe.z+fe.h/2)-3,`${fe.id} ${f(fe.w)}×${f(fe.h)}`,8.5);}
+      dim(U(o0),FY(Zt),u,FY(Zt),`${f(mir?o0+len-fe.a:fe.a-o0)}`,'h',-dimPad*0.6-(fe.z>g.zSplit?0:9));dim(u,FY(Zb),u,FY(fe.z),`${f(fe.z-Zb)}`,'v',(mir?-1:1)*(fe.w/2*S+9));});
+    d.feats.filter(fe=>fe.type==='tabs').forEach(fe=>fe.tabs.forEach(t=>{const horiz=side==='S'||side==='N';const span=horiz?[t.cx-t.sx/2,t.cx+t.sx/2]:[t.cy-t.sy/2,t.cy+t.sy/2];const a=U(span[0]),b=U(span[1]);rect(Math.min(a,b),FY(fe.z0+fe.tt),Math.abs(b-a),fe.tt*S,0,'#fff','#1d2126',1);}));};
+  frontWall('S',x0,g.Lo);
+  dim(x0,FY(Zb),x0+g.Lo*S,FY(Zb),`${f(g.Lo)}`,'h',dimPad*0.75);
+  dim(x0,FY(Zt),x0,FY(Zb),`${f(Ho)}`,'v',-dimPad*0.75);
+  dim(x0,FY(g.zSplit),x0,FY(Zb),`${f(g.zSplit-Zb)}`,'v',-dimPad*0.75-24);
+  // ---- right elevation (wall E, looking from +x): y along (front at left), z up
+  text(xRight,yFront-dimPad*1.3-16,'우측면도 (오른쪽 벽 E)',11,'start');
+  frontWall('E',xRight,g.Wo);
+  dim(xRight,FY(Zb),xRight+g.Wo*S,FY(Zb),`${f(g.Wo)}`,'h',dimPad*0.75);
+  // title block
+  const tb=[`${name||'board'} 하우징`,`${d.m.label} · 벽 ${g.t} mm${g.rim>g.t?` · 플랜지 ${g.rim} mm`:''} · ${d.ip} · 모서리 ${edgeText(g)}`,`외형 ${f(g.Lo)} × ${f(g.Wo)} × ${f(Ho)} mm · 단위 mm · 축척 1:1 기준 (${S} px/mm) · AllinOneDesign 기구 설계`];
+  o.push(`<rect x="${f2(M)}" y="${f2(H-M-26*S/4)}" width="${f2(W-2*M)}" height="${f2(26*S/4)}" fill="#fff" stroke="#1d2126" stroke-width="1"/>`);
+  tb.forEach((t,i)=>text(M+6,H-M-26*S/4+10+i*8.5*S/4,t,i?8.5:10.5,'start'));
+  o.push('</svg>');return o.join('\n');}
 /* ---- OpenSCAD source (parametric, real CSG) ---- */
 function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString();
   const o=[`// ${name||'board'} 하우징 — AllinOneDesign 기구 설계 (${d.m.label}, ${d.ip}, 진동 ${R.inp.vib} Grms)`,`// 좌표: 보드 왼쪽 아래 = (0,0), 보드 중간면 z = 0 (mm)`,`$fn=40;`,
@@ -6692,7 +6764,7 @@ function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString(
     `module lid(){intersection(){union(){shell(); pedestals(); fins();} translate([x0-1,y0-1,zSplit]) cube([Lo+2,Wo+2,zLid+wall+40-zSplit]);}}`,
     `base();`,`translate([0,0,15]) lid(); // 열린 상태로 보기 — 조립은 translate 제거`];
   return o.join('\n')+'\n';}
-return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,featLabel,edgeText,edgeLayers,boardNeeds,pcbVibration,analyze,text,compareText,scad};
+return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,featLabel,edgeText,edgeLayers,drawingSVG,boardNeeds,pcbVibration,analyze,text,compareText,scad};
 })();
 
 
@@ -7676,7 +7748,7 @@ function bodyColor(c){
 }
 const padOn=(p,side)=>p.side==='both'||p.side===side||!p.side;
 // the inner copper layer shown in the 2D view (null = the outer layer of `side`)
-const innerKey=(side,o)=>side==='T'&&S.cu&&!(o&&o.texture)&&BD&&BD.layers[S.cu+'.cu']?S.cu:null;
+const innerKey=(side,o)=>{const k=o&&o.cu!==undefined?o.cu:S.cu;return side==='T'&&k&&!(o&&o.texture)&&BD&&BD.layers[k+'.cu']?k:null;};
 const CORE='#4a4230',CU_IN='#d4844a';
 function drawSide(ctx,side,o){
   const L=S.layers,M=MASKS[S.mask];const ik=innerKey(side,o);
@@ -7739,9 +7811,9 @@ function inPad(p,x,y,g){
   if(p.lbb)return lx>=p.lbb[0]-g&&lx<=p.lbb[2]+g&&ly>=p.lbb[1]-g&&ly<=p.lbb[3]+g;
   return Math.abs(lx)<=p.w/2+g&&Math.abs(ly)<=p.h/2+g;
 }
-function hit(x,y,side,tol){
+function hit(x,y,side,tol,cu){
   if(!BD||x<-1||y<-1||x>BD.W+1||y>BD.H+1)return null;
-  const ik=innerKey(side);const L=ik?BD.layers[ik+'.cu'].concat(BD.layers['T.cu'].filter(p=>p.t==='pad'&&(p.side==='both'||p.drill))):BD.layers[side+'.cu'],cuOn=ik?true:side==='T'?S.layers.cuT:S.layers.cuB;if(ik)side=ik;
+  const ik=innerKey(side,cu!==undefined?{cu}:undefined);const L=ik?BD.layers[ik+'.cu'].concat(BD.layers['T.cu'].filter(p=>p.t==='pad'&&(p.side==='both'||p.drill))):BD.layers[side+'.cu'],cuOn=ik?true:side==='T'?S.layers.cuT:S.layers.cuB;if(ik)side=ik;
   if(cuOn){
     for(let i=L.length-1;i>=0;i--){const p=L[i];if(p.t==='pad'&&!p.clear&&!p.via&&inPad(p,x,y,tol*0.3))return{type:'pad',p,c:p.ref?BD.byRef[p.ref]:null,net:p.net};}
     for(const v of BD.vias)if(Math.hypot(x-v.x,y-v.y)<=v.d/2+tol*0.3)return{type:'via',v,net:v.net};
@@ -8115,7 +8187,7 @@ function setView(v){
   $('#hint').textContent=is3?'드래그 회전 · 우클릭/Shift 드래그 이동 · 휠 확대 · 클릭 선택':'드래그 이동 · 휠 확대 · 더블클릭 맞춤 · 클릭 선택';
   $('#lbl-body').textContent=is3?'3D 부품':'부품 외형 겹쳐 보기';
   $('#ly-body').checked=is3?S.layers.body3d:S.layers.body2d;
-  $('#ctl').innerHTML=(is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>')+(is3?'':`<button class="pill vbtn${PE&&PE.on?' on':''}" data-pe="1" title="부품 배치·배선을 편집합니다 (Pcbnew 단축키)">${PE&&PE.on?'편집 끝내기':'PCB 편집'}</button>`)+'<button class="pill vbtn" data-pop="1" title="보드를 새 창으로 엽니다">새 창</button>';
+  $('#ctl').innerHTML=(is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>')+(is3?'':`<button class="pill vbtn${PE&&PE.on?' on':''}" data-pe="1" title="부품 배치·배선을 편집합니다 (Pcbnew 단축키)">${PE&&PE.on?'편집 끝내기':'PCB 편집'}</button>`)+'<button class="pill vbtn" data-pop="1" title="보드를 새 창으로 엽니다">새 창</button><button class="pill vbtn" data-exp="svg" title="지금 보기를 SVG로 저장">SVG</button><button class="pill vbtn" data-exp="png" title="지금 보기를 PNG로 저장">PNG</button>';
   const lk=S.sch;const relayout=setView.lk!==lk;setView.lk=lk;
   if(S.sch!=='off'){schResize();schData();if(relayout){schFit();SV.fromMe=false;SV.lastKey='';}renderSchOv();schFocus();paintSch();}
   if(PE&&typeof peBar==='function')peBar();
@@ -8127,7 +8199,7 @@ function setView(v){
 function tipAt(cv,x,y){const vr=vp.getBoundingClientRect(),cr=cv.getBoundingClientRect();tip.style.left=(x+cr.left-vr.left)+'px';tip.style.top=(y+cr.top-vr.top)+'px';}
 function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
 $$('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
-$('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
+$('#ctl').addEventListener('click',e=>{const ex=e.target.closest('[data-exp]');if(ex){exportCurrentView(ex.dataset.exp);return;}if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
 ['cuT','cuB','silk','mask','drill','ghost','inner'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
 $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.target.checked;else S.layers.body2d=e.target.checked;refresh(false);});
@@ -9023,7 +9095,7 @@ function cadRender(){if(!BD||!$('#cadLeft'))return;const keep=[$('#cadLeft').scr
   $('#cadLeft').innerHTML=cadLeftHTML();$('#cadRight').innerHTML=cadRightHTML();
   [...$('#cadRight').querySelectorAll('details')].forEach((x,k)=>{if(open[k]!=null)x.open=open[k];});
   $('#cadLeft').scrollTop=keep[0];$('#cadRight').scrollTop=keep[1];cadBind();cadSelPaint();}
-function cadRefresh(){if(HS.ws!=='cad')return;cadRender();mech3D();}
+function cadRefresh(){if(HS.ws==='cad'){cadRender();mech3D();}if(typeof POPS!=='undefined'&&[...POPS].some(C=>C.kind==='cadd'||C.kind==='cad3')){if(HS.ws!=='cad'&&BD.housing&&BD.housing.show)mech3D();popsRefresh();}}
 /* ---- workspace switch: the board viewport moves into the CAD centre column ---- */
 const CADVP={home:null};
 function cadEnter(){if(!BD)return;const H=mechCfg();
@@ -9031,7 +9103,7 @@ function cadEnter(){if(!BD)return;const H=mechCfg();
   $('#cadVpSlot').appendChild(vp);if(S.sch!=='off')S.sch='off';setView('3d');
   H.show=true;cadConsole();cadRender();
   setTimeout(()=>{resize3D();mech3D();const R=mechRun(),g=R.d.geo;if(G3){const a=G3.cam.aspect||1.5,tt=Math.tan(G3.cam.fov*D2R/2);camTo(-1.95,0.95,Math.max(g.Wo*1.6/(2*tt),(g.Lo+90)*1.15/(2*tt*a)),true);}},0);}
-function cadLeave(){setTimeout(()=>{if(typeof cadSelPaint==='function')cadSelPaint();},0);const H=BD&&BD.housing;if(H){H.show=false;mech3D();}if(CADVP.home&&vp.parentNode!==CADVP.home.parentNode)CADVP.home.parentNode.insertBefore(vp,CADVP.home);}
+function cadLeave(){setTimeout(()=>{if(typeof cadSelPaint==='function')cadSelPaint();},0);const H=BD&&BD.housing;if(H){H.show=typeof POPS!=='undefined'&&[...POPS].some(C=>C.kind==='cad3');mech3D();}if(CADVP.home&&vp.parentNode!==CADVP.home.parentNode)CADVP.home.parentNode.insertBefore(vp,CADVP.home);}
 /* ---- 3D: base + cover around the board (board frame: x,y on the board, z = 0 at the board mid-plane) ---- */
 function mechGroup(R){
   const d=R.d,g=d.geo,T=R.N.t,THR=THREE;const grp=new THR.Group();grp.userData.housing=true;const base=new THR.Group(),lid=new THR.Group();grp.add(base);grp.add(lid);
@@ -10166,16 +10238,22 @@ const WINS=new Set();
 const HKINDS={'h-table':['신호 표','table'],'h-pins':['핀 맵','pins'],'h-trace':['추적성','trace'],'h-checks':['검사 결과','checks'],'h-detail':['신호 상세','detail']};
 const SKINDS={'s-ir':['전압 강하','ir'],'s-si':['신호 무결성','si'],'s-th':['열 분포','th'],'s-sp':['회로 동작','sp'],'s-emc':['EMC/EMI','emc']};
 const OV_LABEL={auto:'자동',none:'없음',ir:'전압 강하',si:'신호 무결성',th:'열 분포',sp:'회로 동작',emc:'EMC/EMI'};
-const KINDS=['T','B','3d','sch'].concat(Object.keys(HKINDS),Object.keys(SKINDS));
-const KIND_LABEL=Object.assign({T:'TOP',B:'BOTTOM',sch:'회로도','3d':'3D'},Object.fromEntries(Object.entries(HKINDS).map(([k,v])=>[k,'HSIS '+v[0]])),Object.fromEntries(Object.entries(SKINDS).map(([k,v])=>[k,'시뮬 '+v[0]])));
+const DKINDS={sys:'시스템 다이어그램',parts:'부품 구성도',cad3:'기구 3D',cadd:'기구 도면'};
+const KINDS=['T','B','3d','sch'].concat(Object.keys(HKINDS),Object.keys(SKINDS),Object.keys(DKINDS));
+// inner copper layers are kinds too ('In1', 'In2' …) — they exist per board
+const isIn=k=>/^In\d+$/.test(k||'');
+const kindOk=k=>KINDS.includes(k)||(isIn(k)&&BD&&!!BD.layers[k+'.cu']);
+const kindLabel=k=>isIn(k)?(typeof cuLabel==='function'?cuLabel(k):PCB.cuName(k)):KIND_LABEL[k]||k;
+const isD=k=>!!DKINDS[k];
+const KIND_LABEL=Object.assign({T:'TOP',B:'BOTTOM',sch:'회로도','3d':'3D'},DKINDS,Object.fromEntries(Object.entries(HKINDS).map(([k,v])=>[k,'HSIS '+v[0]])),Object.fromEntries(Object.entries(SKINDS).map(([k,v])=>[k,'시뮬 '+v[0]])));
 const isH=k=>k&&k[0]==='h'&&k[1]==='-';
 const isS=k=>k&&k[0]==='s'&&k[1]==='-';
-const isHtml=k=>isH(k)||isS(k);
+const isHtml=k=>isH(k)||isS(k)||k==='sys'||k==='parts'||k==='cadd';
 // overlay drawn on a TOP/BOTTOM cell: its own choice; "자동" = the first simulation cell in the same window, else the main window's sim panel
 function cellOv(C){if(C.ov==='none')return null;if(C.ov&&C.ov!=='auto')return C.ov;const sc=C.W.cells.find(x=>isS(x.kind));if(sc)return SKINDS[sc.kind][1];return S.panel==='sim'?SR.tab:null;}
 // grouped <option>s for every viewer kind
-function kindOptions(sel){const o=k=>`<option value="${k}"${k===sel?' selected':''}>${KIND_LABEL[k]}</option>`;
-  return`<optgroup label="보드">${['T','B','3d'].map(o).join('')}</optgroup><optgroup label="회로">${o('sch')}</optgroup><optgroup label="HSIS">${Object.keys(HKINDS).map(o).join('')}</optgroup><optgroup label="시뮬레이션">${Object.keys(SKINDS).map(o).join('')}</optgroup>`;}
+function kindOptions(sel){const o=k=>`<option value="${k}"${k===sel?' selected':''}>${esc(kindLabel(k))}</option>`;const inner=BD?PCB.stackOf(BD).filter(x=>isIn(x.k)).map(x=>x.k):[];
+  return`<optgroup label="보드">${['T'].concat(inner,['B','3d']).map(o).join('')}</optgroup><optgroup label="회로">${o('sch')}</optgroup><optgroup label="시스템 · 기구">${Object.keys(DKINDS).map(o).join('')}</optgroup><optgroup label="HSIS">${Object.keys(HKINDS).map(o).join('')}</optgroup><optgroup label="시뮬레이션">${Object.keys(SKINDS).map(o).join('')}</optgroup>`;}
 const PRESETS=[[1,1],[1,2],[1,4],[2,2]];
 const MAXR=2,MAXC=4;
 function defaultKinds(r,c){const n=r*c;if(n===1)return['sch'];if(n===2)return['sch','T'];if(n===4)return['T','B','sch','3d'];const cyc=['T','sch','B','3d'];return Array.from({length:n},(_,i)=>cyc[i%4]);}
@@ -10214,6 +10292,8 @@ const WIN_CSS=`
 .pw .clegend{position:absolute;left:8px;bottom:8px;z-index:2;pointer-events:none;background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);border-radius:8px;max-width:calc(100% - 16px);font-size:12px}
 .pw .hview .simenv{font-size:12px;color:var(--muted);margin:0 0 10px;padding:6px 9px;border:1px dashed var(--line);border-radius:8px}
 .pw .hview .sim .scroll{max-height:none}
+.pw .sysd-wrap{padding:6px}.pw .sysd-wrap svg{width:100%;height:auto;display:block;background:var(--surface)}
+.pw .chead .cexp{font-family:var(--f-mono);font-size:10.5px;padding:2px 6px}
 .pw .cmsg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);padding:16px;text-align:center}
 .pw .ptip{position:absolute;pointer-events:none;background:var(--raised);border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.18);white-space:nowrap;transform:translate(12px,12px);z-index:3}
 .pw .ptip.flip{transform:translate(calc(-100% - 12px),12px)}
@@ -10233,7 +10313,7 @@ function winMarkup(floating){
 }
 function openWindow(rows,cols,kinds){
   rows=Math.max(1,Math.min(MAXR,rows|0));cols=Math.max(1,Math.min(MAXC,cols|0));
-  const def=defaultKinds(rows,cols);kinds=Array.from({length:rows*cols},(_,i)=>(kinds&&KINDS.includes(kinds[i]))?kinds[i]:def[i]);
+  const def=defaultKinds(rows,cols);kinds=Array.from({length:rows*cols},(_,i)=>(kinds&&kindOk(kinds[i]))?kinds[i]:def[i]);
   let w=null;
   try{w=window.open('','_blank',`popup=yes,width=${cols>2?1440:1240},height=${rows>1?860:720}`);
     if(w){w.document.open();w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(BD.name)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"><style>${pageCSS()}${tokenCSS()}${POP_BASE}${WIN_CSS}</style></head><body>${winMarkup(false)}</body></html>`);w.document.close();}}
@@ -10248,7 +10328,7 @@ function openWindow(rows,cols,kinds){
   if(!openWindow.warned){openWindow.warned=1;toast('브라우저가 새 창을 막아 화면 안에 떠 있는 창으로 열었습니다. 제목 줄을 끌어 옮기고 오른쪽 아래 모서리로 크기를 바꿀 수 있습니다.');}
   return W;
 }
-function openPop(kind){return openWindow(1,1,[KINDS.includes(kind)?kind:'T']);}
+function openPop(kind){return openWindow(1,1,[kindOk(kind)?kind:'T']);}
 
 function mountWindow(win,doc,root,floating,rows,cols,kinds){
   const q=s=>root.querySelector(s);
@@ -10258,7 +10338,7 @@ function mountWindow(win,doc,root,floating,rows,cols,kinds){
     W.divs.forEach(d=>{const a=W.cells[d.a].root.getBoundingClientRect(),b=W.cells[d.b].root.getBoundingClientRect();
       if(d.axis==='c'){d.el.style.left=((a.right+b.left)/2-g.left)+'px';d.el.style.top=(a.top-g.top)+'px';d.el.style.height=(W.cells[(W.rows-1)*W.cols+d.i].root.getBoundingClientRect().bottom-a.top)+'px';}
       else{d.el.style.top=((a.bottom+b.top)/2-g.top)+'px';d.el.style.left=(a.left-g.left)+'px';d.el.style.width=(W.cells[d.a+W.cols-1].root.getBoundingClientRect().right-a.left)+'px';}});};
-  W.sync=()=>{q('.ptitle').textContent=BD.name;const t=`${BD.name} · ${W.cells.map(C=>KIND_LABEL[C.kind]).join(' / ')}`;
+  W.sync=()=>{q('.ptitle').textContent=BD.name;const t=`${BD.name} · ${W.cells.map(C=>kindLabel(C.kind)).join(' / ')}`;
     if(!floating)try{doc.title=t;}catch(e){}else root.setAttribute('aria-label',t);
     root.querySelectorAll('[data-lay]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lay===`${W.rows}x${W.cols}`?'true':'false'));
     W.cells.forEach(C=>C.sync());};
@@ -10313,28 +10393,29 @@ function makeDivider(W,axis,i,a,b){
 
 function makeCell(W,kind,idx){
   const doc=W.doc,win=W.win,el=doc.createElement('div');el.className='cell';
-  el.innerHTML=`<div class="chead"><span class="cn" aria-hidden="true">${idx+1}</span><select class="ckind" aria-label="${idx+1}번 칸 보기">${kindOptions(kind)}</select><select class="cpage" aria-label="회로도 시트" hidden></select><select class="cov" aria-label="시뮬레이션 결과 겹쳐 보기" title="시뮬레이션 결과 겹쳐 보기" hidden>${Object.entries(OV_LABEL).map(([k,v])=>`<option value="${k}">겹치기: ${v}</option>`).join('')}</select><span class="sp"></span><span class="c3" hidden><button data-c="iso" title="등각 보기">등각</button><button data-c="top" title="위에서 보기">위</button><button data-c="bot" title="아래에서 보기">아래</button></span><button class="cfit" title="화면 맞춤 (더블클릭)">맞춤</button></div><div class="cbody"><div class="ptip" hidden></div><div class="clegend legend" hidden></div></div>`;
+  el.innerHTML=`<div class="chead"><span class="cn" aria-hidden="true">${idx+1}</span><select class="ckind" aria-label="${idx+1}번 칸 보기">${kindOptions(kind)}</select><select class="cpage" aria-label="회로도 시트" hidden></select><select class="cov" aria-label="시뮬레이션 결과 겹쳐 보기" title="시뮬레이션 결과 겹쳐 보기" hidden>${Object.entries(OV_LABEL).map(([k,v])=>`<option value="${k}">겹치기: ${v}</option>`).join('')}</select><span class="sp"></span><span class="c3" hidden><button data-c="iso" title="등각 보기">등각</button><button data-c="top" title="위에서 보기">위</button><button data-c="bot" title="아래에서 보기">아래</button></span><button class="cfit" title="화면 맞춤 (더블클릭)">맞춤</button><button class="cexp" data-x="svg" title="이 칸을 SVG로 저장">SVG</button><button class="cexp" data-x="png" title="이 칸을 PNG로 저장">PNG</button><button class="cexp" data-x="xlsx" title="이 칸의 표를 엑셀로 저장" hidden>Excel</button></div><div class="cbody"><div class="ptip" hidden></div><div class="clegend legend" hidden></div></div>`;
   const q=s=>el.querySelector(s),body=q('.cbody');
   const C={kind:null,W,win,doc,root:el,cv:null,tip:q('.ptip'),ctx:null,dpr:1,w:0,h:0,s:3,ox:0,oy:0,page:0,fitted:-1,hover:null,lastKey:'',fromMe:false,userMoved:false,raf:0,g:null,ro:null,ov:'auto',leg:q('.clegend')};
-  C.sync=()=>{q('.ckind').value=C.kind;const pg=q('.cpage');q('.c3').hidden=C.kind!=='3d';const ov=q('.cov');ov.hidden=!(C.kind==='T'||C.kind==='B');ov.value=C.ov;
+  C.sync=()=>{const ks=q('.ckind');if(!ks.querySelector(`option[value="${C.kind}"]`)||ks.dataset.n!==String(BD.copperLayers||2)){ks.innerHTML=kindOptions(C.kind);ks.dataset.n=String(BD.copperLayers||2);}ks.value=C.kind;const pg=q('.cpage');q('.c3').hidden=!(C.kind==='3d'||C.kind==='cad3');const ov=q('.cov');ov.hidden=!(C.kind==='T'||C.kind==='B');ov.value=C.ov;
+    const html=isHtml(C.kind);q('[data-x="svg"]').hidden=C.kind==='3d'||C.kind==='cad3'||(html&&!isD(C.kind));q('[data-x="png"]').hidden=html&&!isD(C.kind);q('[data-x="xlsx"]').hidden=!(isH(C.kind)||isS(C.kind));
     if(C.kind==='sch'){const d=schData();pg.hidden=d.sheets.length<2;pg.innerHTML=d.sheets.map((s,i)=>`<option value="${i}"${i===C.page?' selected':''}>${esc(s.name||'시트 '+(i+1))}</option>`).join('');}else pg.hidden=true;};
   C.resize=()=>{if(!C.cv)return;const r=C.cv.getBoundingClientRect();if(!r.width||!r.height)return;const d=Math.min(win.devicePixelRatio||1,2);C.w=r.width;C.h=r.height;C.dpr=d;
     if(C.g){C.g.renderer.setPixelRatio(d);C.g.renderer.setSize(r.width,r.height,false);C.g.cam.aspect=r.width/r.height;C.g.cam.updateProjectionMatrix();if(!C.g.homed){C.g.homed=true;C.g.home(false);}C.g.dirty=true;}
     else{C.cv.width=Math.round(r.width*d);C.cv.height=Math.round(r.height*d);}};
   C.fit=()=>{if(C.kind==='sch'){schFit(C);return;}C.s=Math.min((C.w-30)/BD.W,(C.h-30)/BD.H);C.ox=(C.w-BD.W*C.s)/2;C.oy=(C.h-BD.H*C.s)/2;C.fitted=0;};
   C.refit=()=>{if(!C.w)return;if(C.g){C.g.home(false);return;}C.fitted=-1;C.fit();};
-  C.paint=()=>{if(C.hv){if(isS(C.kind))paintSimCell(C);else paintHsCell(C);return;}if(!BD||!C.w)return;
+  C.paint=()=>{if(C.hv){if(isS(C.kind))paintSimCell(C);else if(isD(C.kind))paintDesignCell(C);else paintHsCell(C);return;}if(!BD||!C.w)return;
     if(C.g){C.g.dirty=true;return;}if(!C.ctx)return;
     if(C.kind==='sch'){paintSchV(C);return;}
-    if(C.fitted<0)C.fit();const c=C.ctx,mir=C.kind==='B',s=C.s,d=C.dpr;
+    if(C.fitted<0)C.fit();const c=C.ctx,mir=C.kind==='B',s=C.s,d=C.dpr;const cu=isIn(C.kind)?C.kind:null,side=mir?'B':'T';
     c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,C.cv.width,C.cv.height);
     c.setTransform(d*s*(mir?-1:1),0,0,-d*s,d*(C.ox+(mir?BD.W*s:0)),d*(C.oy+BD.H*s));
     c.save();c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=18*d;c.shadowOffsetY=6*d;outlinePath(c);c.fillStyle='#000';c.fill('evenodd');c.restore();
-    const ov=cellOv(C);OV_FORCE=ov;try{drawSide(c,C.kind,{hover:C.hover&&C.hover.type==='comp'?C.hover.c:null});C.ovk=ovKey();}finally{OV_FORCE=undefined;}
+    const ov=cu?null:cellOv(C);OV_FORCE=ov;try{drawSide(c,side,{cu,hover:C.hover&&C.hover.type==='comp'?C.hover.c:null});C.ovk=cu?null:ovKey();}finally{OV_FORCE=undefined;}
     const lg=C.ovk?legendHTML(C.ovk):'';C.leg.hidden=!lg;if(lg&&C.leg.innerHTML!==lg)C.leg.innerHTML=lg;};
   C.draw=()=>{if(C.g){C.g.dirty=true;return;}if(C.hv){if(C.raf)return;C.raf=win.requestAnimationFrame(()=>{C.raf=0;C.paint();});return;}if(C.raf)return;C.raf=win.requestAnimationFrame(()=>{C.raf=0;C.paint();});};
   C.s2w=(px,py)=>{if(C.kind==='sch')return schS2W(C,px,py);let x=(px-C.ox)/C.s;if(C.kind==='B')x=BD.W-x;return[x,BD.H-(py-C.oy)/C.s];};
-  C.hit=(px,py)=>{const[x,y]=C.s2w(px,py);return C.kind==='sch'?schHit(C,x,y):hit(x,y,C.kind,3/C.s);};
+  C.hit=(px,py)=>{const[x,y]=C.s2w(px,py);return C.kind==='sch'?schHit(C,x,y):hit(x,y,C.kind==='B'?'B':'T',3/C.s,isIn(C.kind)?C.kind:null);};
   C.showTip=(html,x,y)=>{if(!html){C.tip.hidden=true;return;}C.tip.innerHTML=html;C.tip.hidden=false;C.tip.style.left=x+'px';C.tip.style.top=y+'px';C.tip.classList.toggle('flip',x>C.w*0.58);};
   C.setKind=k=>{
     if(C.g){C.g.dispose();C.g=null;}if(C.cv){C.cv.remove();C.cv=null;}if(C.hv){C.hv.remove();C.hv=null;}const m=body.querySelector('.cmsg');if(m)m.remove();
@@ -10342,7 +10423,7 @@ function makeCell(W,kind,idx){
     q('.cfit').hidden=isHtml(k);C.leg.hidden=true;C.simDirty=true;
     if(isHtml(k)){C.w=0;const hv=doc.createElement('div');hv.className='hview';hv.tabIndex=0;hv.setAttribute('aria-label',KIND_LABEL[k]);body.insertBefore(hv,C.tip);C.hv=hv;C.sync();C.paint();if(W.alive&&W.cells.includes(C)){W.sync();W.cells.forEach(x=>x!==C&&x.draw());}return;}
     const cv=doc.createElement('canvas');cv.setAttribute('aria-label',KIND_LABEL[k]+' 보기');body.insertBefore(cv,C.tip);C.cv=cv;
-    if(k==='3d'){if(!mount3DCell(C)){cv.remove();C.cv=null;body.insertAdjacentHTML('afterbegin','<div class="cmsg">이 브라우저에서 3D(WebGL)를 표시할 수 없습니다.<br>TOP·BOTTOM 보기를 사용하세요.</div>');}}
+    if(k==='3d'||k==='cad3'){if(k==='cad3'&&!BD.blank&&!BD.pcbPending&&typeof mechCfg==='function'){mechCfg().show=true;if(typeof mech3D==='function')mech3D();}if(!mount3DCell(C)){cv.remove();C.cv=null;body.insertAdjacentHTML('afterbegin','<div class="cmsg">이 브라우저에서 3D(WebGL)를 표시할 수 없습니다.<br>TOP·BOTTOM 보기를 사용하세요.</div>');}}
     else{C.ctx=cv.getContext('2d');bind2DCell(C);}
     C.sync();C.resize();if(C.kind==='sch')schFocus(C);C.paint();if(W.alive&&W.cells.includes(C)){W.sync();W.cells.forEach(x=>x!==C&&x.draw());}};
   C.observe=()=>{C.ro=new win.ResizeObserver(()=>{if(C.hv){if(C.kind==='h-detail')drawMini(C.hv);if(C.kind==='s-sp'){C.simDirty=true;C.draw();}return;}C.resize();if(!C.userMoved)C.refit();C.paint();});C.ro.observe(body);};
@@ -10351,6 +10432,7 @@ function makeCell(W,kind,idx){
   q('.cov').addEventListener('change',e=>{C.ov=e.target.value;C.paint();});
   q('.cpage').addEventListener('change',e=>{C.page=+e.target.value;C.fitted=-1;C.userMoved=false;C.paint();});
   q('.cfit').addEventListener('click',()=>{C.userMoved=false;C.refit();C.paint();});
+  el.querySelectorAll('.cexp').forEach(b=>b.addEventListener('click',()=>cellExport(C,b.dataset.x)));
   q('.c3').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b||!C.g)return;const g=C.g,r=g.fitR();C.userMoved=true;
     if(b.dataset.c==='iso')g.home(true);else if(b.dataset.c==='top')g.to(-Math.PI/2,0.02,r,true);else g.to(Math.PI/2,Math.PI-0.02,r,true);});
   POPS.add(C);C.setKind(kind);
@@ -10453,12 +10535,24 @@ function bind3DCell(C){
   cv.addEventListener('wheel',e=>{e.preventDefault();const g=C.g;if(!g)return;g.anim=null;const o=g.orb;o.r=Math.max(5,Math.min(3000,o.r*Math.exp(e.deltaY*0.0012)));C.userMoved=true;g.place();},{passive:false});
   cv.addEventListener('dblclick',()=>{if(C.g){C.userMoved=false;C.g.home(true);}});
 }
+// system diagram / housing drawing cells: live SVG, re-rendered when the data changes
+function paintDesignCell(C){if(!BD)return;const hv=C.hv;let key,html;
+  try{if(C.kind==='sys'||C.kind==='parts'){const svg=sysSVG(C.kind==='sys'?'hw':'parts');key=C.kind+'|'+svg.length+'|'+svg.slice(0,400);if(key===C.hkey)return;C.hkey=key;hv.innerHTML=svg?`<div class="sysd-wrap">${svg}</div>`:'<div class="hnone">시스템 다이어그램이 없습니다.<br>1단계에서 요구사항을 분석하거나 [보드에서 추출]을 누르세요.</div>';}
+    else{if(typeof mechRun!=='function'||BD.blank||BD.pcbPending){hv.innerHTML='<div class="hnone">하우징은 PCB가 배치된 뒤(3단계 이후) 만들어집니다.</div>';return;}mechCfg();const R=mechRun();key='cadd|'+JSON.stringify(BD.housing.cad)+'|'+JSON.stringify(BD.housing.inp)+'|'+BD.name;if(key===C.hkey)return;C.hkey=key;hv.innerHTML=`<div class="sysd-wrap">${HOUSING.drawingSVG(R,BD.name)}</div>`;}}
+  catch(e){console.error(e);hv.innerHTML=`<p class="errline">${esc(e.message)}</p>`;}}
+// export one cell as SVG / PNG / Excel
+async function cellExport(C,fmt){if(!BD)return;const k=C.kind;
+  try{if(fmt==='xlsx'){const tbls=[...C.hv.querySelectorAll('table')];return exportXlsx(tbls.map((t,i)=>({name:kindLabel(k)+(tbls.length>1?' '+(i+1):''),table:t})),expName()+'_'+k.replace(/^[hs]-/,'')+'.xlsx');}
+    if(k==='3d'||k==='cad3'){if(!C.g)return;const url=threePNG(C.g.renderer,C.g.cam,C.cv);return url?expSave(expName()+(k==='cad3'?'_housing_3D.png':'_3D.png'),dataUrlBytes(url),'image/png'):null;}
+    if(k==='sch')return exportSch(fmt,C.page);if(k==='sys'||k==='parts')return exportSys(fmt,k==='sys'?'hw':'parts');if(k==='cadd')return exportHousing(fmt==='png'?'drawing-png':'drawing');
+    return exportLayer(fmt,k==='B'?'B':'T',isIn(k)?k:null);}
+  catch(e){console.error(e);toast('내보내기 실패: '+e.message);}}
 function popsRefresh(boardChanged){
   WINS.forEach(W=>{let gone=false;try{gone=!W.floating&&W.win.closed;}catch(e){gone=true;}if(gone)W.drop();});
   let has3=false;POPS.forEach(C=>{if(C.g)has3=true;});
   if(has3&&G3){if(G3.board!==BD){rebuild3D();sync3D();}else if(S.view!=='3d')sync3D();}
   POPS.forEach(C=>{
-    if(boardChanged){C.fitted=-1;C.page=0;C.hover=null;C.lastKey='';C.userMoved=false;if(C.g){C.g.homed=false;C.g.ver=-1;}C.resize();C.refit();}
+    if(boardChanged){if(isIn(C.kind)&&!BD.layers[C.kind+'.cu']){C.setKind('T');}C.fitted=-1;C.page=0;C.hover=null;C.lastKey='';C.userMoved=false;C.hkey='';if(C.g){C.g.homed=false;C.g.ver=-1;}C.resize();C.refit();}
     if(C.kind==='sch')schFocus(C);C.draw();});
   if(boardChanged)WINS.forEach(W=>W.sync());
 }
@@ -11797,7 +11891,7 @@ function sysDiagram(){
   if(SYS.src!=='board'&&NP.plan&&NP.plan.blocks.length){SYS.D=SYSDIAG.fromPlan(NP.plan);SYS.D.from='plan';}
   else if(BD){SYS.D=SYSDIAG.fromBoard(BD);SYS.D.from='board';}else SYS.D=null;
   return SYS.D;}
-function sysRender(){const host=$('#sysSvg');if(!host||HS.ws!=='sys')return;
+function sysRender(){if(typeof POPS!=='undefined'&&[...POPS].some(C=>C.kind==='sys'||C.kind==='parts'))popsRefresh();const host=$('#sysSvg');if(!host||HS.ws!=='sys')return;
   $$('[data-sv]').forEach(b=>b.setAttribute('aria-selected',b.dataset.sv===SYS.view?'true':'false'));
   if(SYS.view==='hw'){const A=sysArch();SYS.A=A;
     if(!A){host.innerHTML='<p class="lead" style="padding:20px">요구사항을 적고 [블록 다이어그램 만들기]를 누르세요.</p>';return;}
@@ -12166,6 +12260,229 @@ $('#home').addEventListener('click',e=>{const b=e.target.closest('[data-hex]');i
 $('#homeBtn').addEventListener('click',()=>{if(APP.mode==='home'){if(BD&&!BD.blank)setMode(NP.plan&&NP.plan.blocks.length?'steps':'viewer');return;}setMode('home');});
 // a file loaded from the import dialog while on the home screen opens the viewer
 const _impGo=$('#impGo');if(_impGo)_impGo.addEventListener('click',()=>{if(APP.mode==='home')setTimeout(()=>{if(BD&&!BD.blank)setMode('viewer');},80);});
+
+/* ---------- export: SVG / PNG of any view, Excel of any table, and a whole-design HTML report (print → PDF) ----------
+   SvgCtx records the same 2D-canvas calls the viewer paints with (drawSide, paintSchV) and writes them out as SVG, so the vector
+   export is exactly what the screen shows. Everything lands in a file through offerFile (File System Access or a download). */
+
+/* ---- a CanvasRenderingContext2D look-alike that records to SVG ---- */
+function SvgCtx(w,h){
+  this.w=w;this.h=h;this.out=[];this.defs=[];this.stack=[];this.path=[];this.cur=null;this.nclip=0;this.canvas={width:w,height:h};
+  this.st={m:[1,0,0,1,0,0],alpha:1,fill:'#000',stroke:'#000',lw:1,cap:'butt',join:'miter',dash:null,font:'10px sans-serif',align:'start',base:'alphabetic',groups:0};
+  const P=(k,key)=>Object.defineProperty(this,k,{get:()=>this.st[key],set:v=>{this.st[key]=v;}});
+  P('fillStyle','fill');P('strokeStyle','stroke');P('lineWidth','lw');P('lineCap','cap');P('lineJoin','join');P('globalAlpha','alpha');P('font','font');P('textAlign','align');P('textBaseline','base');
+  ['shadowColor','shadowBlur','shadowOffsetX','shadowOffsetY','imageSmoothingEnabled','miterLimit','globalCompositeOperation'].forEach(k=>{this[k]=0;});
+}
+SvgCtx.prototype={
+  _n(v){return(Math.round(v*100)/100).toString();},
+  _pt(x,y){const m=this.st.m;return[m[0]*x+m[2]*y+m[4],m[1]*x+m[3]*y+m[5]];},
+  _scale(){const m=this.st.m;return Math.sqrt(Math.abs(m[0]*m[3]-m[1]*m[2]))||1;},
+  _mul(a){const m=this.st.m;this.st.m=[m[0]*a[0]+m[2]*a[1],m[1]*a[0]+m[3]*a[1],m[0]*a[2]+m[2]*a[3],m[1]*a[2]+m[3]*a[3],m[0]*a[4]+m[2]*a[5]+m[4],m[1]*a[4]+m[3]*a[5]+m[5]];},
+  setTransform(a,b,c,d,e,f){this.st.m=typeof a==='object'?[a.a,a.b,a.c,a.d,a.e,a.f]:[a,b,c,d,e,f];},
+  resetTransform(){this.st.m=[1,0,0,1,0,0];},
+  getTransform(){const m=this.st.m;return{a:m[0],b:m[1],c:m[2],d:m[3],e:m[4],f:m[5]};},
+  transform(a,b,c,d,e,f){this._mul([a,b,c,d,e,f]);},
+  translate(x,y){this._mul([1,0,0,1,x,y]);},
+  scale(x,y){this._mul([x,0,0,y,0,0]);},
+  rotate(r){const c=Math.cos(r),s=Math.sin(r);this._mul([c,s,-s,c,0,0]);},
+  save(){this.stack.push(Object.assign({},this.st,{m:this.st.m.slice(),groups:0}));},
+  restore(){const g=this.st.groups;for(let i=0;i<g;i++)this.out.push('</g>');const s=this.stack.pop();if(s)this.st=s;},
+  beginPath(){this.path=[];this.cur=null;},
+  closePath(){if(this.path.length)this.path.push('Z');},
+  moveTo(x,y){const p=this._pt(x,y);this.path.push('M'+this._n(p[0])+' '+this._n(p[1]));this.cur=[x,y];},
+  lineTo(x,y){const p=this._pt(x,y);this.path.push((this.path.length?'L':'M')+this._n(p[0])+' '+this._n(p[1]));this.cur=[x,y];},
+  rect(x,y,w,h){this.moveTo(x,y);this.lineTo(x+w,y);this.lineTo(x+w,y+h);this.lineTo(x,y+h);this.closePath();this.cur=[x,y];},
+  arc(x,y,r,a0,a1,ccw){if(!(r>=0))return;let d=a1-a0;if(ccw){if(d>0)d-=Math.PI*2*Math.ceil(d/(Math.PI*2));if(d===0&&a1!==a0)d=-Math.PI*2;}else{if(d<0)d+=Math.PI*2*Math.ceil(-d/(Math.PI*2));}
+    if(Math.abs(d)>Math.PI*2)d=Math.sign(d)*Math.PI*2;const n=Math.max(4,Math.ceil(Math.abs(d)/(Math.PI/12)*Math.max(1,Math.min(3,r*this._scale()/8))));
+    for(let i=0;i<=n;i++){const a=a0+d*i/n;const px=x+r*Math.cos(a),py=y+r*Math.sin(a);if(i===0&&this.cur==null)this.moveTo(px,py);else this.lineTo(px,py);}},
+  arcTo(x1,y1,x2,y2,r){const p0=this.cur||[x1,y1];if(!this.cur)this.moveTo(x1,y1);
+    const v1=[p0[0]-x1,p0[1]-y1],v2=[x2-x1,y2-y1];const l1=Math.hypot(v1[0],v1[1]),l2=Math.hypot(v2[0],v2[1]);if(!l1||!l2||r<=0){this.lineTo(x1,y1);return;}
+    const u1=[v1[0]/l1,v1[1]/l1],u2=[v2[0]/l2,v2[1]/l2];const cosT=Math.max(-1,Math.min(1,u1[0]*u2[0]+u1[1]*u2[1]));const th=Math.acos(cosT);if(th<1e-6||Math.abs(th-Math.PI)<1e-6){this.lineTo(x1,y1);return;}
+    const t=r/Math.tan(th/2);const t1=[x1+u1[0]*t,y1+u1[1]*t],t2=[x1+u2[0]*t,y1+u2[1]*t];const bis=[u1[0]+u2[0],u1[1]+u2[1]],bl=Math.hypot(bis[0],bis[1]);const c=[x1+bis[0]/bl*r/Math.sin(th/2),y1+bis[1]/bl*r/Math.sin(th/2)];
+    const a0=Math.atan2(t1[1]-c[1],t1[0]-c[0]),a1=Math.atan2(t2[1]-c[1],t2[0]-c[0]);const cross=u1[0]*u2[1]-u1[1]*u2[0];this.lineTo(t1[0],t1[1]);this.arc(c[0],c[1],r,a0,a1,cross>0);this.cur=t2;},
+  ellipse(x,y,rx,ry,rot,a0,a1,ccw){const n=24;let d=a1-a0;if(ccw&&d>0)d-=Math.PI*2;if(!ccw&&d<0)d+=Math.PI*2;for(let i=0;i<=n;i++){const a=a0+d*i/n;const ex=rx*Math.cos(a),ey=ry*Math.sin(a);const px=x+ex*Math.cos(rot)-ey*Math.sin(rot),py=y+ex*Math.sin(rot)+ey*Math.cos(rot);if(i===0&&this.cur==null)this.moveTo(px,py);else this.lineTo(px,py);}},
+  quadraticCurveTo(cx,cy,x,y){const p0=this.cur||[cx,cy];for(let i=1;i<=8;i++){const t=i/8,a=1-t;this.lineTo(a*a*p0[0]+2*a*t*cx+t*t*x,a*a*p0[1]+2*a*t*cy+t*t*y);}},
+  bezierCurveTo(c1x,c1y,c2x,c2y,x,y){const p0=this.cur||[c1x,c1y];for(let i=1;i<=10;i++){const t=i/10,a=1-t;this.lineTo(a*a*a*p0[0]+3*a*a*t*c1x+3*a*t*t*c2x+t*t*t*x,a*a*a*p0[1]+3*a*a*t*c1y+3*a*t*t*c2y+t*t*t*y);}},
+  _d(){return this.path.join(' ');},
+  _col(c){return typeof c==='string'?c:'#000';},
+  _alpha(){return this.st.alpha<1?` opacity="${this._n(this.st.alpha)}"`:'';},
+  fill(rule){if(!this.path.length)return;this.out.push(`<path d="${this._d()}" fill="${this._col(this.st.fill)}"${rule==='evenodd'?' fill-rule="evenodd"':''}${this._alpha()}/>`);},
+  stroke(){if(!this.path.length)return;const s=this._scale();const dash=this.st.dash&&this.st.dash.length?` stroke-dasharray="${this.st.dash.map(v=>this._n(v*s)).join(' ')}"`:'';
+    this.out.push(`<path d="${this._d()}" fill="none" stroke="${this._col(this.st.stroke)}" stroke-width="${this._n(Math.max(0.1,this.st.lw*s))}" stroke-linecap="${this.st.cap}" stroke-linejoin="${this.st.join}"${dash}${this._alpha()}/>`);},
+  clip(rule){if(!this.path.length)return;const id='c'+(++this.nclip);this.defs.push(`<clipPath id="${id}"><path d="${this._d()}"${rule==='evenodd'?' clip-rule="evenodd"':''}/></clipPath>`);this.out.push(`<g clip-path="url(#${id})">`);this.st.groups++;},
+  fillRect(x,y,w,h){const p=this.path,c=this.cur;this.path=[];this.cur=null;this.rect(x,y,w,h);this.fill();this.path=p;this.cur=c;},
+  strokeRect(x,y,w,h){const p=this.path,c=this.cur;this.path=[];this.cur=null;this.rect(x,y,w,h);this.stroke();this.path=p;this.cur=c;},
+  clearRect(){},
+  _font(){const f=this.st.font||'';const sz=(f.match(/(\d+(?:\.\d+)?)px/)||[])[1]||10;const wt=/\b(bold|[5-9]00)\b/.test(f)?(f.match(/\b([5-9]00)\b/)||[])[1]||700:400;const fam=(f.split(/\d+px\s*/)[1]||'sans-serif').replace(/"/g,"'");return{sz:+sz,wt,fam};},
+  fillText(s,x,y){if(s==null||s==='')return;const{sz,wt,fam}=this._font();const m=this.st.m;const anchor=this.st.align==='center'?'middle':this.st.align==='right'||this.st.align==='end'?'end':'start';
+    const base=this.st.base==='middle'?'central':this.st.base==='top'||this.st.base==='hanging'?'hanging':this.st.base==='bottom'||this.st.base==='ideographic'?'text-after-edge':'alphabetic';
+    const t=String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+    this.out.push(`<text transform="matrix(${m.map(v=>this._n(v)).join(' ')})" x="${this._n(x)}" y="${this._n(y)}" font-size="${sz}" font-weight="${wt}" font-family="${fam}" text-anchor="${anchor}" dominant-baseline="${base}" fill="${this._col(this.st.fill)}"${this._alpha()}>${t}</text>`);},
+  strokeText(){},
+  measureText(s){const{sz}=this._font();return{width:String(s||'').length*sz*0.6};},
+  setLineDash(a){this.st.dash=a&&a.length?a.slice():null;},
+  getLineDash(){return this.st.dash?this.st.dash.slice():[];},
+  drawImage(){},createLinearGradient(){return{addColorStop(){}};},createRadialGradient(){return{addColorStop(){}};},createPattern(){return null;},
+  isPointInPath(){return false;},
+  svg(opts){opts=opts||{};while(this.stack.length)this.restore();for(let i=0;i<this.st.groups;i++)this.out.push('</g>');this.st.groups=0;
+    const bg=opts.bg?`<rect width="${this.w}" height="${this.h}" fill="${opts.bg}"/>`:'';
+    return`<svg xmlns="http://www.w3.org/2000/svg" width="${this.w}" height="${this.h}" viewBox="0 0 ${this.w} ${this.h}"${opts.title?` aria-label="${opts.title.replace(/"/g,'&quot;')}"`:''}>${this.defs.length?'<defs>'+this.defs.join('')+'</defs>':''}${bg}${this.out.join('\n')}</svg>`;}
+};
+/* ---- renderers: what each view looks like as SVG / PNG ---- */
+const EXP={ppm:20,maxPx:4096};
+function expName(){return(BD&&BD.name||'board').replace(/[^\w\-가-힣]+/g,'_').replace(/^_+|_+$/g,'')||'board';}
+function expBoardSize(){const m=6;const s=Math.min(EXP.ppm,EXP.maxPx/(BD.W+2*m),EXP.maxPx/(BD.H+2*m));return{m,s,w:Math.ceil((BD.W+2*m)*s),h:Math.ceil((BD.H+2*m)*s)};}
+// paints one copper view (side T/B, or inner layer `cu` seen from the top) into any 2D context, in device pixels
+function expPaintBoard(ctx,side,cu,o){const{m,s}=expBoardSize();const mir=side==='B';
+  ctx.setTransform(s*(mir?-1:1),0,0,-s,m*s+(mir?BD.W*s:0),m*s+BD.H*s);
+  if(typeof ctx.fillRect==='function'&&o&&o.shadow){ctx.save();ctx.shadowColor='rgba(0,0,0,.3)';ctx.shadowBlur=10;ctx.shadowOffsetY=4;outlinePath(ctx);ctx.fillStyle='#000';ctx.fill('evenodd');ctx.restore();}
+  const keep=OV_FORCE;OV_FORCE=o&&o.ov!==undefined?o.ov:null;try{drawSide(ctx,side,{cu:cu||null,hover:null});}finally{OV_FORCE=keep;}}
+function boardSVG(side,cu,o){const{w,h}=expBoardSize();const c=new SvgCtx(w,h);expPaintBoard(c,side,cu,o);return c.svg({bg:o&&o.bg||'#eceff2',title:`${BD.name} ${cu?PCB.cuName(cu):side==='T'?'TOP':'BOTTOM'}`});}
+function boardCanvas(side,cu,o){const{w,h}=expBoardSize();const cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');c.fillStyle=o&&o.bg||'#eceff2';c.fillRect(0,0,w,h);expPaintBoard(c,side,cu,Object.assign({shadow:true},o||{}));return cv;}
+// schematic sheet
+function expSchView(page,w,h){const d=schData(),sh=d.sheets[page||0];if(!sh)return null;const s=Math.min((w-40)/sh.w,(h-40)/sh.h);return{page:page||0,w,h,dpr:1,s,ox:(w-sh.w*s)/2,oy:(h-sh.h*s)/2,fitted:page||0,hover:null,userMoved:true,cv:{width:w,height:h}};}
+function schSVG(page){const d=schData(),sh=d.sheets[page||0];if(!sh)return'';const s=Math.min(EXP.ppm*0.5,EXP.maxPx/(sh.w+40),EXP.maxPx/(sh.h+40));const w=Math.ceil(sh.w*s+40),h=Math.ceil(sh.h*s+40);
+  const V=expSchView(page,w,h);const c=new SvgCtx(w,h);V.ctx=c;paintSchV(V);return c.svg({bg:'#e9ebee',title:`${BD.name} 회로도 ${(page||0)+1}`});}
+function schCanvas(page){const d=schData(),sh=d.sheets[page||0];if(!sh)return null;const s=Math.min(EXP.ppm*0.5,EXP.maxPx/(sh.w+40),EXP.maxPx/(sh.h+40));const w=Math.ceil(sh.w*s+40),h=Math.ceil(sh.h*s+40);
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;const V=expSchView(page,w,h);V.ctx=cv.getContext('2d');V.cv=cv;V.ctx.fillStyle='#e9ebee';V.ctx.fillRect(0,0,w,h);paintSchV(V);return cv;}
+// system diagram (HW blocks or part composition) — already SVG
+function sysSVG(kind){try{if(kind==='parts'){const D=typeof sysDiagram==='function'?sysDiagram():null;return D?SYSDIAG.svg(D):'';}const A=typeof sysArch==='function'?sysArch():null;if(A)return HWARCH.svg(A);const D=typeof sysDiagram==='function'?sysDiagram():null;return D?SYSDIAG.svg(D):'';}catch(e){console.error(e);return'';}}
+const svgStandalone=svg=>svg?svg.replace(/^<svg /,'<svg xmlns="http://www.w3.org/2000/svg" style="color:#1d2126;background:#fff;--surface:#fff;--raised:#fff;--line:#d8dde2;--muted:#5a6872;--fg:#1d2126;--accent:#b5541c;--accent-soft:#f3e3d6" ').replace(/xmlns="http:\/\/www.w3.org\/2000\/svg"(.*?)xmlns="http:\/\/www.w3.org\/2000\/svg"/,'xmlns="http://www.w3.org/2000/svg"$1'):'';
+function svgToPng(svg,scale){return new Promise((res,rej)=>{if(!svg)return res(null);const m=svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/)||svg.match(/width="([\d.]+)"[^>]*height="([\d.]+)"/);const w=m?+m[1]:1200,h=m?+m[2]:800;const k=Math.min(scale||2,EXP.maxPx/w,EXP.maxPx/h);
+  const img=new Image();const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));img.onload=()=>{const cv=document.createElement('canvas');cv.width=Math.ceil(w*k);cv.height=Math.ceil(h*k);const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,cv.width,cv.height);c.drawImage(img,0,0,cv.width,cv.height);URL.revokeObjectURL(url);res(cv);};img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('SVG를 그리지 못했습니다'));};img.src=url;});}
+// 3D: render the shared scene with a camera into a canvas and read it back right away
+function threePNG(renderer,cam,cv,scene){try{renderer.render(scene||G3.scene,cam);return cv.toDataURL('image/png');}catch(e){console.error(e);return null;}}
+function board3DPNG(o){if(!G3||!init3D())return null;if(G3.board!==BD){rebuild3D();sync3D();}const orb=Object.assign({},G3.orb,{t:G3.orb.t.clone()});const H=BD.housing;const had=H&&H.show;
+  if(o&&o.housing&&H){H.show=true;mech3D();}else if(o&&o.housing===false&&H&&H.show){H.show=false;mech3D();}
+  if(o&&o.iso){G3.anim=null;G3.orb.th=-1.95;G3.orb.ph=0.95;G3.orb.r=fitR()*1.05;G3.orb.t.set(0,0,0);placeCam();}
+  const w=cv3.width,h=cv3.height;const big=o&&o.size&&(w<o.size);if(big){G3.renderer.setSize(o.size,Math.round(o.size*h/Math.max(1,w)),false);G3.cam.aspect=o.size/Math.round(o.size*h/Math.max(1,w));G3.cam.updateProjectionMatrix();}
+  const url=threePNG(G3.renderer,G3.cam,cv3);
+  if(big){resize3D();}if(o&&o.iso){Object.assign(G3.orb,orb);G3.orb.t.copy(orb.t);placeCam();}
+  if(H&&H.show!==!!had){H.show=!!had;mech3D();}G3.dirty=true;return url;}
+/* ---- files ---- */
+async function expSave(name,data,type,msg){const fn=await offerFile(name,data,type);if(fn&&msg!==false)toast(msg||`${fn} 내려받기`);return fn;}
+function canvasBlob(cv){return new Promise(r=>cv.toBlob(b=>r(b),'image/png'));}
+async function expSaveCanvas(name,cv){const b=await canvasBlob(cv);if(!b)return null;return expSave(name,new Uint8Array(await b.arrayBuffer()),'image/png');}
+function dataUrlBytes(u){const b=atob(u.split(',')[1]);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
+// the view the main window shows right now (or a pop-out cell), as SVG or PNG
+async function exportCurrentView(fmt){if(!BD)return;const base=expName();
+  if(S.sch==='full'){return exportSch(fmt,SV.page);}
+  if(S.view==='3d'){if(fmt==='svg'){toast('3D 보기는 PNG로만 저장됩니다. 2D(TOP·BOTTOM·층)는 SVG로 저장할 수 있습니다.');}const url=board3DPNG({size:1600});if(!url)return toast('3D를 그리지 못했습니다.');return expSave(base+'_3D.png',dataUrlBytes(url),'image/png');}
+  return exportLayer(fmt,S.view,S.cu);}
+async function exportLayer(fmt,side,cu){const base=expName();const tag=cu?PCB.cuName(cu).replace('.','_'):side==='T'?'TOP':'BOTTOM';
+  if(fmt==='svg')return expSave(`${base}_${tag}.svg`,boardSVG(side,cu),'image/svg+xml');return expSaveCanvas(`${base}_${tag}.png`,boardCanvas(side,cu));}
+async function exportSch(fmt,page){const base=expName();if(fmt==='svg')return expSave(`${base}_sch${(page||0)+1}.svg`,schSVG(page),'image/svg+xml');const cv=schCanvas(page);if(cv)return expSaveCanvas(`${base}_sch${(page||0)+1}.png`,cv);}
+async function exportSys(fmt,kind){const svg=svgStandalone(sysSVG(kind));if(!svg)return toast('시스템 다이어그램이 없습니다. 1단계에서 요구사항을 분석하거나 보드에서 추출하세요.');const base=expName();
+  if(fmt==='svg')return expSave(`${base}_${kind==='parts'?'parts':'hw'}_diagram.svg`,svg,'image/svg+xml');const cv=await svgToPng(svg,2);if(cv)return expSaveCanvas(`${base}_${kind==='parts'?'parts':'hw'}_diagram.png`,cv);}
+async function exportAllLayers(){if(!BD)return;if(typeof JSZip==='undefined')return toast('zip 라이브러리를 불러오지 못했습니다.');const z=new JSZip();const base=expName();
+  PCB.stackOf(BD).forEach(x=>{const side=x.k==='B'?'B':'T',cu=x.k==='T'||x.k==='B'?null:x.k;z.file(`${base}_${PCB.cuName(x.k).replace('.','_')}.svg`,boardSVG(side,cu));});
+  try{schData().sheets.forEach((s,i)=>z.file(`${base}_sch${i+1}.svg`,schSVG(i)));}catch(e){}
+  const data=await z.generateAsync({type:'uint8array'});return expSave(base+'_layers_svg.zip',data,'application/zip','동박 층·회로도 SVG를 zip으로 내려받았습니다.');}
+async function exportHousing(fmt){if(!BD||typeof mechRun!=='function')return;if(BD.blank||BD.pcbPending)return toast('하우징은 PCB가 배치된 뒤(3단계 이후) 만들 수 있습니다.');mechCfg();const base=expName();
+  if(fmt==='drawing'){const R=mechRun();return expSave(base+'_housing_drawing.svg',HOUSING.drawingSVG(R,BD.name),'image/svg+xml','기구 도면(SVG)을 내려받았습니다.');}
+  if(fmt==='drawing-png'){const R=mechRun();const cv=await svgToPng(HOUSING.drawingSVG(R,BD.name),2);if(cv)return expSaveCanvas(base+'_housing_drawing.png',cv);return;}
+  const url=board3DPNG({housing:true,size:1600,iso:HS.ws!=='cad'});if(!url)return toast('3D를 그리지 못했습니다.');return expSave(base+'_housing_3D.png',dataUrlBytes(url),'image/png');}
+/* ---- Excel ---- */
+function xlsxTablesFrom(html){const d=document.createElement('div');d.innerHTML=html;return[...d.querySelectorAll('table')];}
+function xlsxSheetName(n,used){let s=String(n||'Sheet').replace(/[\\/?*[\]:]/g,' ').trim().slice(0,28)||'Sheet';let k=s,i=2;while(used.has(k))k=s+' '+(i++);used.add(k);return k;}
+function tableAoa(tbl){const rows=[];tbl.querySelectorAll('tr').forEach(tr=>{if(tr.closest('table')!==tbl)return;const r=[];tr.querySelectorAll('th,td').forEach(c=>{if(c.closest('tr')!==tr)return;let t=c.innerText!=null?c.innerText:c.textContent;t=String(t).replace(/\s+/g,' ').trim();const n=t!==''&&/^-?\d+(\.\d+)?$/.test(t)?+t:t;r.push(n);for(let k=1;k<(+c.colSpan||1);k++)r.push('');});rows.push(r);});return rows;}
+// items: [{name, table?: HTMLTableElement, html?: string (tables inside), aoa?: rows}]
+async function exportXlsx(items,fname,msg){const sheets=[];items.forEach(it=>{if(it.aoa){sheets.push([it.name,it.aoa]);return;}const tbls=it.table?[it.table]:it.html?xlsxTablesFrom(it.html):[];tbls.forEach((t,i)=>{const rows=tableAoa(t);if(rows.length)sheets.push([tbls.length>1?`${it.name} ${i+1}`:it.name,rows]);});});
+  if(!sheets.length)return toast('내보낼 표가 없습니다.');
+  if(!window.XLSX){const csv='﻿'+sheets[0][1].map(r=>r.map(v=>{v=String(v==null?'':v);return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',')).join('\r\n');toast('엑셀 라이브러리를 불러오지 못해 첫 표를 CSV로 내려받습니다.');return expSave(fname.replace(/\.xlsx$/,'')+'.csv',csv,'text/csv;charset=utf-8');}
+  const wb=XLSX.utils.book_new(),used=new Set();sheets.forEach(([name,aoa])=>{const ws=XLSX.utils.aoa_to_sheet(aoa);const cols=[];aoa.forEach(r=>r.forEach((v,i)=>{cols[i]=Math.max(cols[i]||6,Math.min(60,String(v==null?'':v).length*1.1+2));}));ws['!cols']=cols.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,xlsxSheetName(name,used));});
+  const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});return expSave(fname,new Uint8Array(buf),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',msg||`${fname} 내려받기 (시트 ${sheets.length}개)`);}
+// every HSIS view as sheets
+// pin map and check results as rows (their views are a drawing and a list, not tables)
+function expPinmapAoa(){const c=BD.byRef[HS.mcu];if(!c)return null;const owner={};HS.H.items.forEach(it=>(it._pins||[]).forEach(n=>{if(!owner[n])owner[n]=it;}));const mdb=typeof MCU_PINS!=='undefined'?(MCU_PINS.find(c.mpn)||MCU_PINS.find(c.val)):null;
+  const res={};HS.res.results.forEach(r=>{if(r.pin)(res[r.pin]=res[r.pin]||[]).push(`${r.sev}: ${r.msg}`);});
+  const rows=[['핀','핀 이름','넷','HSIS ID','신호','분류','방향','점검']];c.pads.slice().sort((a,b)=>String(a.n).localeCompare(String(b.n),undefined,{numeric:true})).forEach(p=>{const it=owner[p.n];const nm=mdb&&mdb.pins&&mdb.pins[p.n]?mdb.pins[p.n].name||'':p.fn||'';
+    rows.push([p.n,nm,p.net||'',it?it.id||'':'',it?it.signal||it.name||'':'',it?it.cat||'':'',it?it.dir||'':'',(res[p.n]||[]).join(' · ')]);});return rows;}
+function expChecksAoa(){const rows=[['심각도','ID / 핀','메시지','코드']];(HS.res.results||[]).forEach(r=>rows.push([r.sev,r.id||(r.pin?`${HS.mcu}.${r.pin}`:''),r.msg,r.code||'']));return rows;}
+function hsisSheets(all){if(!HS.H){try{hsisLoadSample();}catch(e){}}if(!HS.H)return[];if(!HS.res)hsisRun();const out=[];const add=(name,fn)=>{try{out.push({name,html:fn()});}catch(e){console.warn(name,e);}};
+  add('신호 표',tableHTML);if(all!==false){try{const pm=expPinmapAoa();if(pm)out.push({name:'MCU 핀 맵',aoa:pm});}catch(e){console.warn(e);}add('추적성',traceHTML);try{out.push({name:'검사 결과',aoa:expChecksAoa()});}catch(e){console.warn(e);}add('핀 추천',recHTML);add('MCAL 설정',mcalHTML);add('테스트 케이스',tcHTML);}
+  return out;}
+function expBomAoa(){const m=new Map();BD.comps.forEach(c=>{const k=[c.val,c.fp,c.mpn||''].join('|');const it=m.get(k)||{refs:[],val:c.val,fp:c.fp,mpn:c.mpn||'',desc:c.desc||'',side:new Set()};it.refs.push(c.ref);it.side.add(c.side);m.set(k,it);});
+  const P=typeof PARTS!=='undefined'?PARTS:null;const rows=[['#','수량','참조','값','풋프린트','부품 번호','설명','면','참고 단가(USD, 추정)','소계']];let i=0,tot=0;
+  [...m.values()].sort((a,b)=>a.refs[0].localeCompare(b.refs[0],undefined,{numeric:true})).forEach(it=>{const info=P&&(P.find(it.mpn)||P.find(it.val));const pr=P?P.price(it.mpn,info&&info.cat):null;const sub=pr!=null?+(pr*it.refs.length).toFixed(3):'';if(pr!=null)tot+=pr*it.refs.length;
+    rows.push([++i,it.refs.length,it.refs.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).join(', '),it.val,it.fp,it.mpn,it.desc||(info?info.title:''),[...it.side].join('/'),pr!=null?pr:'',sub]);});
+  rows.push(['','','','','','','','','합계',+tot.toFixed(2)]);return rows;}
+function expNetAoa(){const rows=[['넷','분류','패드 수','연결 (부품.핀)','길이 mm']];BD.netOrder.forEach(n=>{const N=BD.nets[n];const len=Object.values(N.len||{}).reduce((a,v)=>a+(v||0),0);rows.push([n,BD.netClass(n),N.pads.length,N.pads.map(p=>`${p.ref||'?'}.${p.n!=null?p.n:''}`).join(' '),+len.toFixed(1)]);});return rows;}
+function expPartsAoa(){const rows=[['참조','값','풋프린트','부품 번호','면','X mm','Y mm','회전','핀 수','종류']];BD.comps.slice().sort((a,b)=>a.ref.localeCompare(b.ref,undefined,{numeric:true})).forEach(c=>rows.push([c.ref,c.val,c.fp,c.mpn||'',c.side,+c.x.toFixed(3),+c.y.toFixed(3),c.rot||0,c.pads.length,c.kind||'']));return rows;}
+function expStackAoa(){const st=PCB.stackOf(BD);const rows=[['층','이름','역할','넷','프리미티브 수']];st.forEach((x,i)=>rows.push([i+1,PCB.cuName(x.k),x.role==='gnd'?'GND 플레인':x.role==='pwr'?'전원 플레인':'신호',x.net||'',(BD.layers[x.k+'.cu']||[]).length]));return rows;}
+async function exportDesignXlsx(){if(!BD)return;const items=[{name:'보드 요약',aoa:expSummaryAoa()},{name:'BOM',aoa:expBomAoa()},{name:'부품 배치',aoa:expPartsAoa()},{name:'넷리스트',aoa:expNetAoa()},{name:'층 구성',aoa:expStackAoa()}];
+  if(HS.H)items.push(...hsisSheets(true));if(!BD.blank&&!BD.pcbPending&&typeof mechRun==='function'){mechCfg();try{items.push({name:'하우징 형상',aoa:expHousingAoa()});}catch(e){}}
+  return exportXlsx(items,expName()+'_design.xlsx','설계 데이터를 엑셀로 내려받았습니다.');}
+function expSummaryAoa(){const rows=[['항목','값']];rows.push(['프로젝트',BD.name],['출처',BD.source],['크기',`${BD.W.toFixed(1)} × ${BD.H.toFixed(1)} mm`],['두께',`${BD.t} mm`],['동박 층',BD.copperLayers||2],['부품',BD.comps.length],['넷',BD.netOrder.length],['비아',BD.vias.length],['드릴',BD.drills.length],['회로 안',BD.variantLabel||''],['내보낸 날짜',new Date().toISOString().slice(0,10)]);
+  if(typeof NP!=='undefined'&&$('#npReq')&&$('#npReq').value)rows.push(['요구사항',$('#npReq').value]);BD.warnings.forEach(w=>rows.push(['경고',w]));BD.notes.forEach(n=>rows.push(['참고',n]));return rows;}
+function expHousingAoa(){const R=mechRun(),d=R.d,g=d.geo;const rows=[['항목','값']];rows.push(['재질',d.m.label],['IP',d.ip],['외형',`${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm`],['벽 두께',g.t],['모서리',HOUSING.edgeText(g)],['무게 g',+d.mass.toFixed(0)],['원가 지수',R.idx.cost],['PCB 온도',+d.th.Tboard.toFixed(1)],['진동 SF',+d.vib.sf.toFixed(2)]);
+  rows.push([],['형상','설명']);d.feats.forEach(f=>rows.push([f.id,HOUSING.featLabel(Object.assign({},f,{id:''})).trim()]));rows.push([],['경고']);R.warn.forEach(w=>rows.push([w]));return rows;}
+/* ---- the whole design as one HTML document (sections chosen in the dialog); the document prints to PDF ---- */
+const REPORT_SECTIONS=[['overview','개요 · 요구사항'],['sys','시스템 다이어그램'],['circuit','회로 · BOM · 회로도'],['pcb','PCB 층별 보기 · 층 구성'],['3d','3D 보기'],['sim','시뮬레이션 결과'],['hsis','HSIS (신호 표 · 핀 맵 · 검사)'],['housing','기구 (하우징 보고 · 도면 · 3D)'],['log','설계 도우미 기록']];
+const rh=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function aoaTable(aoa,cls){if(!aoa||!aoa.length)return'';const [h,...b]=aoa;return`<table class="${cls||''}"><thead><tr>${h.map(c=>`<th>${rh(c)}</th>`).join('')}</tr></thead><tbody>${b.map(r=>`<tr>${r.map(c=>`<td>${rh(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
+async function buildReport(sel){const on=k=>!sel||sel.has(k);const P=[];const base=BD.name||'board';const date=new Date().toLocaleString('ko-KR');
+  const fig=(svgOrUrl,cap,isUrl)=>`<figure>${isUrl?`<img src="${svgOrUrl}" alt="${rh(cap)}">`:svgOrUrl}<figcaption>${rh(cap)}</figcaption></figure>`;
+  const sec=(id,title,body)=>P.push(`<section id="${id}"><h2>${rh(title)}</h2>${body}</section>`);
+  if(on('overview')){const req=$('#npReq')&&$('#npReq').value||'';const ans=typeof NP!=='undefined'&&NP.answers?Object.values(NP.answers).map(a=>`${a.label}: ${a.v}`):[];
+    sec('overview','개요',`${aoaTable(expSummaryAoa().filter(r=>r[0]!=='요구사항'),'kv')}${req?`<h3>요구사항</h3><pre>${rh(req)}</pre>`:''}${ans.length?`<h3>AI 분석 보강</h3><ul>${ans.map(a=>`<li>${rh(a)}</li>`).join('')}</ul>`:''}`);}
+  if(on('sys')){const hw=sysSVG('hw'),pt=sysSVG('parts');if(hw||pt)sec('sys','시스템 다이어그램',(hw?fig(hw,'HW 블록 다이어그램'):'')+(pt?fig(pt,'부품 구성도'):''));}
+  if(on('circuit')){let b='';try{if(typeof NP!=='undefined'&&NP.plan&&typeof NEWPROJ!=='undefined'&&NEWPROJ.summary)b+=`<pre>${rh(NEWPROJ.summary(NP.plan))}</pre>`;}catch(e){}
+    if(BD.variantLabel)b+=`<p>회로 안: <b>${rh(BD.variantLabel)}</b></p>`;b+=`<h3>BOM</h3>${aoaTable(expBomAoa(),'wide')}`;
+    try{const d=schData();d.sheets.forEach((s,i)=>{b+=fig(schSVG(i),`회로도 ${i+1}/${d.sheets.length}${s.name?' · '+s.name:''}`);});}catch(e){console.warn(e);}
+    sec('circuit','회로',b);}
+  if(on('pcb')){let b=aoaTable(expStackAoa());if(!BD.blank&&!BD.pcbPending){PCB.stackOf(BD).forEach(x=>{const side=x.k==='B'?'B':'T',cu=x.k==='T'||x.k==='B'?null:x.k;b+=fig(boardSVG(side,cu),`${PCB.cuName(x.k)} (${x.k==='T'?'TOP':x.k==='B'?'BOTTOM · 아래에서 본 면':'내층 · 위에서 본 면'})`);});}
+    else b+='<p>PCB는 아직 배치되지 않았습니다 (3단계).</p>';if(PE&&PE.drc&&PE.drc.length)b+=`<h3>DRC</h3><ul>${PE.drc.slice(0,200).map(x=>`<li>${rh(x.msg||x)}</li>`).join('')}</ul>`;
+    b+=`<h3>부품 배치</h3>${aoaTable(expPartsAoa(),'wide')}<h3>넷리스트</h3>${aoaTable(expNetAoa(),'wide')}`;sec('pcb','PCB',b);}
+  if(on('3d')&&!BD.blank&&!BD.pcbPending){const u=board3DPNG({iso:true,size:1200,housing:false});if(u)sec('3d','3D 보기',fig(u,'3D 등각 보기',true));}
+  if(on('sim')){let b='';const tabs=[['ir','전압 강하',typeof irHTML==='function'&&irHTML],['si','신호 무결성',typeof siHTML==='function'&&siHTML],['th','열 분포',typeof thHTML==='function'&&thHTML],['emc','EMC/EMI',typeof emcHTML==='function'&&emcHTML]];
+    tabs.forEach(([k,t,fn])=>{if(typeof SR==='undefined'||!SR[k]||SR[k].error||!fn)return;try{b+=`<h3>${t}</h3><div class="simhtml">${fn()}</div>`;}catch(e){}});
+    sec('sim','시뮬레이션',b||'<p>실행한 시뮬레이션이 없습니다. 시뮬레이션 탭에서 실행한 뒤 다시 내보내면 결과가 들어갑니다.</p>');}
+  if(on('hsis')){const sh=hsisSheets(true);if(sh.length){let b='';sh.forEach(it=>{if(it.aoa){b+=`<h3>${rh(it.name)}</h3>`+aoaTable(it.aoa,'wide');return;}const tbls=xlsxTablesFrom(it.html);if(!tbls.length)return;b+=`<h3>${rh(it.name)}</h3>`+tbls.map(t=>aoaTable(tableAoa(t),'wide')).join('');});sec('hsis','HSIS',b);}}
+  if(on('housing')&&!BD.blank&&!BD.pcbPending&&typeof mechRun==='function'){mechCfg();try{const R=mechRun();let b=`<pre>${rh(HOUSING.text(R))}</pre><pre>${rh(HOUSING.compareText(R))}</pre>`;b+=fig(HOUSING.drawingSVG(R,BD.name),'기구 도면 (평면 · 정면 · 우측면)');const u=board3DPNG({iso:true,size:1200,housing:true});if(u)b+=fig(u,'하우징 3D',true);sec('housing','기구 설계',b);}catch(e){console.warn(e);}}
+  if(on('log')){const L=(typeof COP!=='undefined'&&COP.log||[]).filter(e=>e.k==='cmd'||e.k==='user'||e.k==='ai');if(L.length)sec('log','설계 도우미 기록',`<ol class="log">${L.slice(-400).map(e=>`<li class="${e.k}"><span>${e.src||''}</span> ${rh(e.t)}</li>`).join('')}</ol>`);}
+  const toc=P.map(p=>{const m=p.match(/id="([^"]+)"><h2>([^<]+)/);return m?`<a href="#${m[1]}">${m[2]}</a>`:'';}).join('');
+  const css=`body{font-family:"IBM Plex Sans KR",system-ui,-apple-system,sans-serif;color:#1d2126;margin:0;background:#f4f5f7}main{max-width:1180px;margin:0 auto;padding:28px 32px 60px;background:#fff}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:19px;margin:34px 0 10px;padding-bottom:6px;border-bottom:2px solid #1d2126}h3{font-size:15px;margin:20px 0 8px}
+.meta{color:#5a6872;font-size:13px;margin:0 0 12px}.toc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin:10px 0 0}.toc a{color:#b5541c}
+table{border-collapse:collapse;font-size:12.5px;margin:6px 0 10px;max-width:100%}td,th{border:1px solid #d8dde2;padding:4px 7px;text-align:left;vertical-align:top}th{background:#f1f3f5}table.kv td:first-child{color:#5a6872;width:140px}
+table.wide{display:block;overflow:auto;max-height:70vh}@media print{table.wide{display:table;max-height:none;overflow:visible}}
+figure{margin:10px 0 18px}figure svg,figure img{max-width:100%;height:auto;border:1px solid #d8dde2;border-radius:6px;background:#fff}figcaption{font-size:12.5px;color:#5a6872;margin-top:4px}
+pre{white-space:pre-wrap;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;background:#f7f8fa;border:1px solid #e3e6ea;border-radius:6px;padding:10px;line-height:1.5}
+.simhtml button,.simhtml input,.simhtml select,.simhtml .acts{display:none!important}.simhtml{font-size:13px}.simhtml table{width:100%}
+ol.log{font-size:12.5px;font-family:"JetBrains Mono",ui-monospace,monospace;padding-left:22px}ol.log li.user{color:#b5541c}ol.log li span{color:#5a6872;margin-right:6px}
+.tools{position:sticky;top:0;background:#fff;padding:8px 0;border-bottom:1px solid #e3e6ea;display:flex;gap:8px;align-items:center;font-size:13px;z-index:2}.tools button{font:inherit;padding:6px 12px;border:1px solid #b5541c;background:#b5541c;color:#fff;border-radius:7px;cursor:pointer}
+@page{size:A4;margin:14mm}@media print{.tools{display:none}body{background:#fff}main{padding:0;max-width:none}section{break-inside:auto}h2{break-after:avoid}figure{break-inside:avoid}}`;
+  return`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${rh(base)} 설계 보고서</title><style>${css}</style></head><body><main>
+<div class="tools"><button onclick="window.print()">PDF로 저장 (인쇄)</button><span>브라우저 인쇄 대화상자에서 대상을 "PDF로 저장"으로 고르세요.</span></div>
+<h1>${rh(base)} 설계 보고서</h1><p class="meta">AllinOneDesign · ${rh(date)} · ${rh(BD.source)} · ${BD.W.toFixed(1)} × ${BD.H.toFixed(1)} mm · ${BD.copperLayers||2}층 · 부품 ${BD.comps.length} · 넷 ${BD.netOrder.length}</p><nav class="toc">${toc}</nav>
+${P.join('\n')}</main></body></html>`;}
+async function exportReport(sel,mode){if(!BD)return;toast('보고서를 만드는 중…');let html;try{html=await buildReport(sel);}catch(e){console.error(e);return toast('보고서를 만들지 못했습니다: '+e.message);}
+  if(mode==='print'){let w=null;try{w=window.open('','_blank');}catch(e){}if(!w){toast('새 창이 막혀 HTML 파일로 내려받습니다.');return expSave(expName()+'_report.html',html,'text/html;charset=utf-8');}w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print();}catch(e){}},600);return;}
+  return expSave(expName()+'_report.html',html,'text/html;charset=utf-8','설계 보고서(HTML)를 내려받았습니다. 열어서 [PDF로 저장]을 누르면 PDF가 됩니다.');}
+/* ---- dialog ---- */
+function expDialogHTML(){const st=BD?PCB.stackOf(BD):[];const multi=st.length>2;const schN=(()=>{try{return schData().sheets.length;}catch(e){return 0;}})();
+  const grp=(t,b)=>`<div class="exp-g"><p class="h">${t}</p><div class="exp-b">${b}</div></div>`;const btn=(a,l,t)=>`<button type="button" class="btn sm" data-x="${a}"${t?` title="${rh(t)}"`:''}>${l}</button>`;
+  return`<div class="sheet exp" role="dialog" aria-modal="true" aria-labelledby="expT"><div class="sheet-h"><h2 id="expT">내보내기</h2><button class="x" data-close aria-label="닫기">✕</button></div><div class="sheet-b">
+  ${grp('그림 (SVG · PNG)',`${btn('view:svg','지금 보기 SVG')}${btn('view:png','지금 보기 PNG')}${['T','B'].map(k=>btn(`layer:${k}:svg`,`${k==='T'?'TOP':'BOTTOM'} SVG`)).join('')}${multi?st.filter(x=>x.k!=='T'&&x.k!=='B').map(x=>btn(`layer:${x.k}:svg`,`${PCB.cuName(x.k)} SVG`)).join(''):''}${btn('layers:zip','모든 층 + 회로도 SVG (zip)')}
+    ${schN?Array.from({length:schN},(_,i)=>btn(`sch:${i}:svg`,`회로도 ${i+1} SVG`)+btn(`sch:${i}:png`,`회로도 ${i+1} PNG`)).join(''):''}${btn('sys:hw:svg','HW 블록 다이어그램 SVG')}${btn('sys:hw:png','HW 블록 PNG')}${btn('sys:parts:svg','부품 구성도 SVG')}${btn('3d:png','3D PNG')}${btn('housing:drawing','기구 도면 SVG')}${btn('housing:drawing-png','기구 도면 PNG')}${btn('housing:3d','기구 3D PNG')}`)}
+  ${grp('표 (Excel)',`${btn('xlsx:hsis','HSIS 전체 (신호 표·핀 맵·추적성·검사·핀 추천·MCAL·테스트)')}${btn('xlsx:hsis1','HSIS 신호 표만')}${btn('xlsx:bom','BOM')}${btn('xlsx:parts','부품 배치')}${btn('xlsx:nets','넷리스트')}${btn('xlsx:design','설계 데이터 전체 (요약·BOM·배치·넷·층·HSIS·하우징)')}`)}
+  ${grp('설계 보고서 (HTML → PDF)',`<div class="exp-secs">${REPORT_SECTIONS.map(([k,l])=>`<label><input type="checkbox" data-sec="${k}" checked> ${l}</label>`).join('')}</div><div class="acts">${btn('report:html','HTML 파일로 저장')}${btn('report:print','바로 인쇄 → PDF')}</div><p class="lead">보고서 HTML은 그림(SVG·PNG)과 표를 모두 안에 품은 파일 하나입니다. 열어서 [PDF로 저장]을 누르거나 브라우저 인쇄에서 PDF로 저장하세요.</p>`)}
+  </div></div>`;}
+function openExport(){if(!BD){toast('먼저 보드를 열거나 신규 설계를 시작하세요.');return;}let m=$('#expDlg');if(!m){m=document.createElement('div');m.className='modal';m.id='expDlg';document.body.appendChild(m);
+    m.addEventListener('click',async e=>{if(e.target===m||e.target.closest('[data-close]')){m.hidden=true;return;}const b=e.target.closest('[data-x]');if(!b)return;const sel=new Set([...m.querySelectorAll('[data-sec]:checked')].map(i=>i.dataset.sec));
+      b.disabled=true;try{await runExport(b.dataset.x,sel);}catch(err){console.error(err);toast('내보내기 실패: '+(err&&err.message||err));}b.disabled=false;});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.hidden)m.hidden=true;});}
+  m.innerHTML=expDialogHTML();m.hidden=false;setTimeout(()=>{const f=m.querySelector('[data-x]');if(f)f.focus();},30);}
+async function runExport(x,sel){const[a,b,c]=x.split(':');
+  switch(a){case'view':return exportCurrentView(b);case'layer':return exportLayer(c,b==='B'?'B':'T',b==='T'||b==='B'?null:b);case'layers':return exportAllLayers();case'sch':return exportSch(c,+b);case'sys':return exportSys(c,b);
+    case'3d':{const u=board3DPNG({iso:S.view!=='3d',size:1600,housing:false});return u?expSave(expName()+'_3D.png',dataUrlBytes(u),'image/png'):toast('3D를 그리지 못했습니다.');}
+    case'housing':return exportHousing(b);
+    case'xlsx':{const n=expName();if(b==='hsis')return exportXlsx(hsisSheets(true),n+'_hsis.xlsx');if(b==='hsis1')return exportXlsx(hsisSheets(false),n+'_hsis_signals.xlsx');if(b==='bom')return exportXlsx([{name:'BOM',aoa:expBomAoa()}],n+'_bom.xlsx');if(b==='parts')return exportXlsx([{name:'부품 배치',aoa:expPartsAoa()}],n+'_parts.xlsx');if(b==='nets')return exportXlsx([{name:'넷리스트',aoa:expNetAoa()}],n+'_nets.xlsx');return exportDesignXlsx();}
+    case'report':return exportReport(sel,b==='print'?'print':'html');}}
+{const hb=$('#expBtn');if(hb)hb.addEventListener('click',openExport);}
+// Excel button on the HSIS tab bar and the dock's 정보 pane tables
+{const tabs=document.querySelector('#hsisWs .tabs');if(tabs){const b=document.createElement('button');b.type='button';b.className='btn sm hs-xlsx';b.textContent='Excel';b.title='이 탭의 표를 엑셀로 (전체 HSIS는 내보내기 창에서)';b.addEventListener('click',()=>{const tbls=[...document.querySelectorAll('#hsBody table')];const name=(document.querySelector('[data-htab][aria-selected="true"]')||{}).textContent||'HSIS';exportXlsx(tbls.map((t,i)=>({name:name.replace(/\d+$/,'').trim()+(tbls.length>1?' '+(i+1):''),table:t})),expName()+'_hsis_'+name.replace(/\s+/g,'').replace(/\d+$/,'')+'.xlsx');});tabs.appendChild(b);}}
 
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));

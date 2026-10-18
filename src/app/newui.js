@@ -263,7 +263,7 @@ function sysDiagram(){
   if(SYS.src!=='board'&&NP.plan&&NP.plan.blocks.length){SYS.D=SYSDIAG.fromPlan(NP.plan);SYS.D.from='plan';}
   else if(BD){SYS.D=SYSDIAG.fromBoard(BD);SYS.D.from='board';}else SYS.D=null;
   return SYS.D;}
-function sysRender(){const host=$('#sysSvg');if(!host||HS.ws!=='sys')return;
+function sysRender(){if(typeof POPS!=='undefined'&&[...POPS].some(C=>C.kind==='sys'||C.kind==='parts'))popsRefresh();const host=$('#sysSvg');if(!host||HS.ws!=='sys')return;
   $$('[data-sv]').forEach(b=>b.setAttribute('aria-selected',b.dataset.sv===SYS.view?'true':'false'));
   if(SYS.view==='hw'){const A=sysArch();SYS.A=A;
     if(!A){host.innerHTML='<p class="lead" style="padding:20px">요구사항을 적고 [블록 다이어그램 만들기]를 누르세요.</p>';return;}

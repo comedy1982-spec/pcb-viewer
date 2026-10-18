@@ -279,6 +279,69 @@ function featLabel(f){const id=f.id?f.id+' ':'';switch(f.type){
   case'tabs':return`${id}장착 탭 ${f.tabs?f.tabs.length:f.n}개 (${f.screw||'M5'})`;case'rib':return`${id}바닥 리브 (${f.axis} = ${(+f.pos).toFixed?(+f.pos).toFixed(1):f.pos})`;
   case'label':return`${id}커버 각인 "${f.text}"`;case'boss':return`${id}PCB 보스 ${f.x==null?'(보드 가운데)':`(${f.x}, ${f.y})`}`;case'fins':return f.off?`${id}방열 핀 없음`:`${id}방열 핀 ${f.n}개 ${f.h||12} mm`;default:return id+f.type;}}
 function compareText(R){return['재질 비교 (같은 조건):',...R.all.map(d=>`  ${d===R.d?'▶':' '} ${d.m.short.padEnd(14)} 벽 ${d.geo.t} mm · PCB ${d.th.Tboard.toFixed(0)} °C (여유 ${(d.th.margin*100).toFixed(0)}%) · 진동 SF ${d.vib.sf.toFixed(2)} · ${d.mass.toFixed(0)} g · 원가 ${d.costIdx}${d.fins?` · 핀 ${d.fins.n}개`:''}${d.th.peds.length?' · TIM':''} · ${d.feasible?'적합':'부적합: '+d.why.join(', ')}`)].join('\n');}
+/* ---- 2D drawing (기구 도면): top view + front (S) + right (E) elevations with the main dimensions, as SVG (mm → px) ---- */
+function drawingSVG(R,name,opts){opts=opts||{};const d=R.d,g=d.geo,S=opts.scale||4,M=18*S/4;const xe=v=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const f=v=>(Math.round(v*10)/10).toString(),f2=v=>(Math.round(v*100)/100).toString();
+  const Zb=g.zFloor-g.t,Zt=g.zLid+g.t,Ho=Zt-Zb;const gap=26*S/4;
+  // sheet layout: top view (Lo × Wo) above the front elevation (Lo × Ho), right elevation (Wo × Ho) beside it
+  const dimPad=16*S/4;const ext={W:0,E:0,S:0,N:0};d.feats.filter(fe=>fe.type==='tabs').forEach(fe=>fe.tabs.forEach(t=>{ext.W=Math.max(ext.W,g.x0-(t.cx-t.sx/2));ext.E=Math.max(ext.E,t.cx+t.sx/2-g.x0-g.Lo);ext.S=Math.max(ext.S,g.y0-(t.cy-t.sy/2));ext.N=Math.max(ext.N,t.cy+t.sy/2-g.y0-g.Wo);}));
+  const x0=M+dimPad*2.3+ext.W*S,yTop=M+dimPad+ext.N*S;const yFront=yTop+g.Wo*S+ext.S*S+gap+dimPad*1.3+14;const xRight=x0+g.Lo*S+ext.E*S+gap+dimPad*1.6;
+  const W=xRight+g.Wo*S+M+dimPad,H=yFront+Ho*S+M+dimPad*1.3+30*S/4;
+  const o=[];const line=(x1,y1,x2,y2,c,w,dash)=>o.push(`<line x1="${f2(x1)}" y1="${f2(y1)}" x2="${f2(x2)}" y2="${f2(y2)}" stroke="${c||'#1d2126'}" stroke-width="${w||1}"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  const text=(x,y,t,sz,anchor,rot)=>o.push(`<text x="${f2(x)}" y="${f2(y)}" font-size="${sz||10}" text-anchor="${anchor||'middle'}" fill="#1d2126"${rot?` transform="rotate(${rot} ${f2(x)} ${f2(y)})"`:''}>${xe(t)}</text>`);
+  const rect=(x,y,w,h,rx,fill,stroke,sw,dash)=>o.push(`<rect x="${f2(x)}" y="${f2(y)}" width="${f2(w)}" height="${f2(h)}"${rx?` rx="${f2(rx)}"`:''} fill="${fill||'none'}" stroke="${stroke||'#1d2126'}" stroke-width="${sw||1.2}"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  const circle=(x,y,r,fill,stroke,dash)=>o.push(`<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(r)}" fill="${fill||'none'}" stroke="${stroke||'#1d2126'}" stroke-width="1"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  // dimension line with arrows and a label; horizontal (dir 'h') below/above or vertical (dir 'v')
+  const dim=(x1,y1,x2,y2,label,dir,off)=>{const a=3.2;if(dir==='h'){const y=y1+off;line(x1,y1,x1,y+(off>0?a:-a),'#5a6872',.8);line(x2,y2,x2,y+(off>0?a:-a),'#5a6872',.8);line(x1,y,x2,y,'#5a6872',.9);
+      o.push(`<path d="M${f2(x1)} ${f2(y)} l${a*1.6} ${-a*.55} v${a*1.1} z M${f2(x2)} ${f2(y)} l${-a*1.6} ${-a*.55} v${a*1.1} z" fill="#5a6872"/>`);text((x1+x2)/2,y-3,label,9.5);}
+    else{const x=x1+off;line(x1,y1,x+(off>0?a:-a),y1,'#5a6872',.8);line(x2,y2,x+(off>0?a:-a),y2,'#5a6872',.8);line(x,y1,x,y2,'#5a6872',.9);
+      o.push(`<path d="M${f2(x)} ${f2(y1)} l${-a*.55} ${a*1.6} h${a*1.1} z M${f2(x)} ${f2(y2)} l${-a*.55} ${-a*1.6} h${a*1.1} z" fill="#5a6872"/>`);text(x+(off>0?10:-10),(y1+y2)/2,label,9.5,'middle',90);}};
+  const TX=x=>x0+(x-g.x0)*S,TY=y=>yTop+(g.y0+g.Wo-y)*S;   // top view: board y up → svg y down
+  const FY=z=>yFront+(Zt-z)*S;                              // elevations: z up → svg y down
+  o.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f2(W)} ${f2(H)}" width="${f2(W)}" height="${f2(H)}" font-family="IBM Plex Sans KR, system-ui, sans-serif" style="background:#fff">`);
+  o.push(`<rect x="0" y="0" width="${f2(W)}" height="${f2(H)}" fill="#fff"/>`);
+  // ---- top view
+  text(x0,yTop-dimPad-4*S/4,'평면도 (커버 위에서)',11,'start');
+  rect(TX(g.x0),TY(g.y0+g.Wo),g.Lo*S,g.Wo*S,g.r*S,'#f6f3ec','#1d2126',1.4);
+  rect(TX(g.x0+g.rim),TY(g.y0+g.Wo-g.rim),(g.Lo-2*g.rim)*S,(g.Wo-2*g.rim)*S,Math.max(0,g.r-g.rim)*S,'none','#9aa3ab',.8,'3 2');
+  // board outline (hidden)
+  rect(TX(R.N.bb[0]),TY(R.N.bb[1]+R.N.H),R.N.W*S,R.N.H*S,0,'none','#2f7d4f',.9,'4 2');
+  d.sup.forEach(s=>{circle(TX(s.x),TY(s.y),3.5*S,'none','#1d2126','3 2');circle(TX(s.x),TY(s.y),(s.d>3.4?1.65:1.25)*S,'none','#1d2126');});
+  d.screws.forEach(s=>{circle(TX(s.x),TY(s.y),(d.screwM==='M4'?2.25:1.75)*S,'#fff','#1d2126');line(TX(s.x)-2.6*S,TY(s.y),TX(s.x)+2.6*S,TY(s.y),'#1d2126',.6);line(TX(s.x),TY(s.y)-2.6*S,TX(s.x),TY(s.y)+2.6*S,'#1d2126',.6);});
+  d.feats.forEach(fe=>{if(fe.type==='tabs')fe.tabs.forEach(t=>{rect(TX(t.cx-t.sx/2),TY(t.cy+t.sy/2),t.sx*S,t.sy*S,1.5*S,'#fff','#1d2126',1.1);circle(TX(t.hx),TY(t.hy),fe.hd/2*S,'#fff','#1d2126');});
+    else if((fe.type==='hole'||fe.type==='slot')&&(fe.side==='T'||fe.side==='B')){if(fe.type==='hole')circle(TX(fe.x),TY(fe.y),fe.w/2*S,'#fff','#1d2126',fe.side==='B'?'3 2':null);else rect(TX(fe.x-fe.w/2),TY(fe.y+fe.h/2),fe.w*S,fe.h*S,0,'#fff','#1d2126',1,fe.side==='B'?'3 2':null);text(TX(fe.x),TY(fe.y)-fe.h/2*S-3,`${fe.id} ${fe.type==='hole'?'Ø'+f(fe.w):f(fe.w)+'×'+f(fe.h)}`,8.5);}
+    else if(fe.type==='label'){text(TX(fe.x),TY(fe.y)+3,fe.text,Math.max(8,fe.size*S*0.9));}
+    else if(fe.type==='fins'&&d.fins){for(let k=0;k<d.fins.n;k++){const x=g.x0+5+k*d.fins.pitch;if(x+d.fins.t>g.x0+g.Lo-2)break;rect(TX(x),TY(g.y0+4+d.fins.len),d.fins.t*S,d.fins.len*S,0,'#e6e2d8','#6b7076',.6);}}});
+  if(d.fins&&!d.feats.some(fe=>fe.type==='fins'))for(let k=0;k<d.fins.n;k++){const x=g.x0+5+k*d.fins.pitch;if(x+d.fins.t>g.x0+g.Lo-2)break;rect(TX(x),TY(g.y0+4+d.fins.len),d.fins.t*S,d.fins.len*S,0,'#e6e2d8','#6b7076',.6);}
+  // wall openings seen from the top as marks on the edge
+  R.N.cuts.concat(d.feats.filter(fe=>(fe.type==='hole'||fe.type==='slot')&&!/^[TB]$/.test(fe.side)).map(fe=>({ref:fe.id,side:fe.side,a:fe.a-fe.w/2,b:fe.a+fe.w/2}))).forEach(c=>{const col='#c0392b';
+    if(c.side==='S')line(TX(c.a),TY(g.y0),TX(c.b),TY(g.y0),col,3);else if(c.side==='N')line(TX(c.a),TY(g.y0+g.Wo),TX(c.b),TY(g.y0+g.Wo),col,3);else if(c.side==='W')line(TX(g.x0),TY(c.a),TX(g.x0),TY(c.b),col,3);else line(TX(g.x0+g.Lo),TY(c.a),TX(g.x0+g.Lo),TY(c.b),col,3);});
+  dim(TX(g.x0),TY(g.y0),TX(g.x0+g.Lo),TY(g.y0),`${f(g.Lo)}`,'h',dimPad*0.75);
+  dim(TX(g.x0),TY(g.y0+g.Wo),TX(g.x0),TY(g.y0),`${f(g.Wo)}`,'v',-dimPad*0.75);
+  // ---- front elevation (wall S, looking from -y): x along, z up
+  text(x0,yFront-dimPad*1.3-16,'정면도 (앞 벽 S)',11,'start');
+  const frontWall=(side,X,len)=>{const xw=u=>X+(u)*S;rect(X,FY(Zt),len*S,Ho*S,0,'#f6f3ec','#1d2126',1.4);
+    line(X,FY(g.zSplit),X+len*S,FY(g.zSplit),'#1d2126',.9,'6 3');text(X+4,FY(g.zSplit)-3,'분할면 (베이스 / 커버)',8,'start');
+    line(X,FY(R.N.t/2),X+len*S,FY(R.N.t/2),'#2f7d4f',.8,'4 2');line(X,FY(-R.N.t/2),X+len*S,FY(-R.N.t/2),'#2f7d4f',.8,'4 2');
+    const o0=side==='S'||side==='N'?g.x0:g.y0;const mir=side==='N'||side==='W';const U=a=>mir?xw(o0+len-a):xw(a-o0);
+    R.N.cuts.filter(c=>c.side===side).forEach(c=>{const a=U(c.a),b=U(c.b);rect(Math.min(a,b),FY(c.z1),Math.abs(b-a),(c.z1-c.z0)*S,0,'#fff','#c0392b',1);text((a+b)/2,FY(c.z1)-3,c.ref,8.5);});
+    d.feats.filter(fe=>(fe.type==='hole'||fe.type==='slot')&&fe.side===side).forEach(fe=>{const u=U(fe.a);if(fe.type==='hole'){circle(u,FY(fe.z),fe.w/2*S,'#fff','#1d2126');text(u,FY(fe.z)-fe.w/2*S-3,`${fe.id} Ø${f(fe.w)}`,8.5);}
+      else{rect(u-fe.w/2*S,FY(fe.z+fe.h/2),fe.w*S,fe.h*S,0,'#fff','#1d2126');text(u,FY(fe.z+fe.h/2)-3,`${fe.id} ${f(fe.w)}×${f(fe.h)}`,8.5);}
+      dim(U(o0),FY(Zt),u,FY(Zt),`${f(mir?o0+len-fe.a:fe.a-o0)}`,'h',-dimPad*0.6-(fe.z>g.zSplit?0:9));dim(u,FY(Zb),u,FY(fe.z),`${f(fe.z-Zb)}`,'v',(mir?-1:1)*(fe.w/2*S+9));});
+    d.feats.filter(fe=>fe.type==='tabs').forEach(fe=>fe.tabs.forEach(t=>{const horiz=side==='S'||side==='N';const span=horiz?[t.cx-t.sx/2,t.cx+t.sx/2]:[t.cy-t.sy/2,t.cy+t.sy/2];const a=U(span[0]),b=U(span[1]);rect(Math.min(a,b),FY(fe.z0+fe.tt),Math.abs(b-a),fe.tt*S,0,'#fff','#1d2126',1);}));};
+  frontWall('S',x0,g.Lo);
+  dim(x0,FY(Zb),x0+g.Lo*S,FY(Zb),`${f(g.Lo)}`,'h',dimPad*0.75);
+  dim(x0,FY(Zt),x0,FY(Zb),`${f(Ho)}`,'v',-dimPad*0.75);
+  dim(x0,FY(g.zSplit),x0,FY(Zb),`${f(g.zSplit-Zb)}`,'v',-dimPad*0.75-24);
+  // ---- right elevation (wall E, looking from +x): y along (front at left), z up
+  text(xRight,yFront-dimPad*1.3-16,'우측면도 (오른쪽 벽 E)',11,'start');
+  frontWall('E',xRight,g.Wo);
+  dim(xRight,FY(Zb),xRight+g.Wo*S,FY(Zb),`${f(g.Wo)}`,'h',dimPad*0.75);
+  // title block
+  const tb=[`${name||'board'} 하우징`,`${d.m.label} · 벽 ${g.t} mm${g.rim>g.t?` · 플랜지 ${g.rim} mm`:''} · ${d.ip} · 모서리 ${edgeText(g)}`,`외형 ${f(g.Lo)} × ${f(g.Wo)} × ${f(Ho)} mm · 단위 mm · 축척 1:1 기준 (${S} px/mm) · AllinOneDesign 기구 설계`];
+  o.push(`<rect x="${f2(M)}" y="${f2(H-M-26*S/4)}" width="${f2(W-2*M)}" height="${f2(26*S/4)}" fill="#fff" stroke="#1d2126" stroke-width="1"/>`);
+  tb.forEach((t,i)=>text(M+6,H-M-26*S/4+10+i*8.5*S/4,t,i?8.5:10.5,'start'));
+  o.push('</svg>');return o.join('\n');}
 /* ---- OpenSCAD source (parametric, real CSG) ---- */
 function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString();
   const o=[`// ${name||'board'} 하우징 — AllinOneDesign 기구 설계 (${d.m.label}, ${d.ip}, 진동 ${R.inp.vib} Grms)`,`// 좌표: 보드 왼쪽 아래 = (0,0), 보드 중간면 z = 0 (mm)`,`$fn=40;`,
@@ -311,6 +374,6 @@ function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString(
     `module lid(){intersection(){union(){shell(); pedestals(); fins();} translate([x0-1,y0-1,zSplit]) cube([Lo+2,Wo+2,zLid+wall+40-zSplit]);}}`,
     `base();`,`translate([0,0,15]) lid(); // 열린 상태로 보기 — 조립은 translate 제거`];
   return o.join('\n')+'\n';}
-return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,featLabel,edgeText,edgeLayers,boardNeeds,pcbVibration,analyze,text,compareText,scad};
+return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,featLabel,edgeText,edgeLayers,drawingSVG,boardNeeds,pcbVibration,analyze,text,compareText,scad};
 })();
 if(typeof module!=='undefined')module.exports=HOUSING;

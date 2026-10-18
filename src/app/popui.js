@@ -4,16 +4,22 @@ const WINS=new Set();
 const HKINDS={'h-table':['신호 표','table'],'h-pins':['핀 맵','pins'],'h-trace':['추적성','trace'],'h-checks':['검사 결과','checks'],'h-detail':['신호 상세','detail']};
 const SKINDS={'s-ir':['전압 강하','ir'],'s-si':['신호 무결성','si'],'s-th':['열 분포','th'],'s-sp':['회로 동작','sp'],'s-emc':['EMC/EMI','emc']};
 const OV_LABEL={auto:'자동',none:'없음',ir:'전압 강하',si:'신호 무결성',th:'열 분포',sp:'회로 동작',emc:'EMC/EMI'};
-const KINDS=['T','B','3d','sch'].concat(Object.keys(HKINDS),Object.keys(SKINDS));
-const KIND_LABEL=Object.assign({T:'TOP',B:'BOTTOM',sch:'회로도','3d':'3D'},Object.fromEntries(Object.entries(HKINDS).map(([k,v])=>[k,'HSIS '+v[0]])),Object.fromEntries(Object.entries(SKINDS).map(([k,v])=>[k,'시뮬 '+v[0]])));
+const DKINDS={sys:'시스템 다이어그램',parts:'부품 구성도',cad3:'기구 3D',cadd:'기구 도면'};
+const KINDS=['T','B','3d','sch'].concat(Object.keys(HKINDS),Object.keys(SKINDS),Object.keys(DKINDS));
+// inner copper layers are kinds too ('In1', 'In2' …) — they exist per board
+const isIn=k=>/^In\d+$/.test(k||'');
+const kindOk=k=>KINDS.includes(k)||(isIn(k)&&BD&&!!BD.layers[k+'.cu']);
+const kindLabel=k=>isIn(k)?(typeof cuLabel==='function'?cuLabel(k):PCB.cuName(k)):KIND_LABEL[k]||k;
+const isD=k=>!!DKINDS[k];
+const KIND_LABEL=Object.assign({T:'TOP',B:'BOTTOM',sch:'회로도','3d':'3D'},DKINDS,Object.fromEntries(Object.entries(HKINDS).map(([k,v])=>[k,'HSIS '+v[0]])),Object.fromEntries(Object.entries(SKINDS).map(([k,v])=>[k,'시뮬 '+v[0]])));
 const isH=k=>k&&k[0]==='h'&&k[1]==='-';
 const isS=k=>k&&k[0]==='s'&&k[1]==='-';
-const isHtml=k=>isH(k)||isS(k);
+const isHtml=k=>isH(k)||isS(k)||k==='sys'||k==='parts'||k==='cadd';
 // overlay drawn on a TOP/BOTTOM cell: its own choice; "자동" = the first simulation cell in the same window, else the main window's sim panel
 function cellOv(C){if(C.ov==='none')return null;if(C.ov&&C.ov!=='auto')return C.ov;const sc=C.W.cells.find(x=>isS(x.kind));if(sc)return SKINDS[sc.kind][1];return S.panel==='sim'?SR.tab:null;}
 // grouped <option>s for every viewer kind
-function kindOptions(sel){const o=k=>`<option value="${k}"${k===sel?' selected':''}>${KIND_LABEL[k]}</option>`;
-  return`<optgroup label="보드">${['T','B','3d'].map(o).join('')}</optgroup><optgroup label="회로">${o('sch')}</optgroup><optgroup label="HSIS">${Object.keys(HKINDS).map(o).join('')}</optgroup><optgroup label="시뮬레이션">${Object.keys(SKINDS).map(o).join('')}</optgroup>`;}
+function kindOptions(sel){const o=k=>`<option value="${k}"${k===sel?' selected':''}>${esc(kindLabel(k))}</option>`;const inner=BD?PCB.stackOf(BD).filter(x=>isIn(x.k)).map(x=>x.k):[];
+  return`<optgroup label="보드">${['T'].concat(inner,['B','3d']).map(o).join('')}</optgroup><optgroup label="회로">${o('sch')}</optgroup><optgroup label="시스템 · 기구">${Object.keys(DKINDS).map(o).join('')}</optgroup><optgroup label="HSIS">${Object.keys(HKINDS).map(o).join('')}</optgroup><optgroup label="시뮬레이션">${Object.keys(SKINDS).map(o).join('')}</optgroup>`;}
 const PRESETS=[[1,1],[1,2],[1,4],[2,2]];
 const MAXR=2,MAXC=4;
 function defaultKinds(r,c){const n=r*c;if(n===1)return['sch'];if(n===2)return['sch','T'];if(n===4)return['T','B','sch','3d'];const cyc=['T','sch','B','3d'];return Array.from({length:n},(_,i)=>cyc[i%4]);}
@@ -52,6 +58,8 @@ const WIN_CSS=`
 .pw .clegend{position:absolute;left:8px;bottom:8px;z-index:2;pointer-events:none;background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);border-radius:8px;max-width:calc(100% - 16px);font-size:12px}
 .pw .hview .simenv{font-size:12px;color:var(--muted);margin:0 0 10px;padding:6px 9px;border:1px dashed var(--line);border-radius:8px}
 .pw .hview .sim .scroll{max-height:none}
+.pw .sysd-wrap{padding:6px}.pw .sysd-wrap svg{width:100%;height:auto;display:block;background:var(--surface)}
+.pw .chead .cexp{font-family:var(--f-mono);font-size:10.5px;padding:2px 6px}
 .pw .cmsg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);padding:16px;text-align:center}
 .pw .ptip{position:absolute;pointer-events:none;background:var(--raised);border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.18);white-space:nowrap;transform:translate(12px,12px);z-index:3}
 .pw .ptip.flip{transform:translate(calc(-100% - 12px),12px)}
@@ -71,7 +79,7 @@ function winMarkup(floating){
 }
 function openWindow(rows,cols,kinds){
   rows=Math.max(1,Math.min(MAXR,rows|0));cols=Math.max(1,Math.min(MAXC,cols|0));
-  const def=defaultKinds(rows,cols);kinds=Array.from({length:rows*cols},(_,i)=>(kinds&&KINDS.includes(kinds[i]))?kinds[i]:def[i]);
+  const def=defaultKinds(rows,cols);kinds=Array.from({length:rows*cols},(_,i)=>(kinds&&kindOk(kinds[i]))?kinds[i]:def[i]);
   let w=null;
   try{w=window.open('','_blank',`popup=yes,width=${cols>2?1440:1240},height=${rows>1?860:720}`);
     if(w){w.document.open();w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(BD.name)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"><style>${pageCSS()}${tokenCSS()}${POP_BASE}${WIN_CSS}</style></head><body>${winMarkup(false)}</body></html>`);w.document.close();}}
@@ -86,7 +94,7 @@ function openWindow(rows,cols,kinds){
   if(!openWindow.warned){openWindow.warned=1;toast('브라우저가 새 창을 막아 화면 안에 떠 있는 창으로 열었습니다. 제목 줄을 끌어 옮기고 오른쪽 아래 모서리로 크기를 바꿀 수 있습니다.');}
   return W;
 }
-function openPop(kind){return openWindow(1,1,[KINDS.includes(kind)?kind:'T']);}
+function openPop(kind){return openWindow(1,1,[kindOk(kind)?kind:'T']);}
 
 function mountWindow(win,doc,root,floating,rows,cols,kinds){
   const q=s=>root.querySelector(s);
@@ -96,7 +104,7 @@ function mountWindow(win,doc,root,floating,rows,cols,kinds){
     W.divs.forEach(d=>{const a=W.cells[d.a].root.getBoundingClientRect(),b=W.cells[d.b].root.getBoundingClientRect();
       if(d.axis==='c'){d.el.style.left=((a.right+b.left)/2-g.left)+'px';d.el.style.top=(a.top-g.top)+'px';d.el.style.height=(W.cells[(W.rows-1)*W.cols+d.i].root.getBoundingClientRect().bottom-a.top)+'px';}
       else{d.el.style.top=((a.bottom+b.top)/2-g.top)+'px';d.el.style.left=(a.left-g.left)+'px';d.el.style.width=(W.cells[d.a+W.cols-1].root.getBoundingClientRect().right-a.left)+'px';}});};
-  W.sync=()=>{q('.ptitle').textContent=BD.name;const t=`${BD.name} · ${W.cells.map(C=>KIND_LABEL[C.kind]).join(' / ')}`;
+  W.sync=()=>{q('.ptitle').textContent=BD.name;const t=`${BD.name} · ${W.cells.map(C=>kindLabel(C.kind)).join(' / ')}`;
     if(!floating)try{doc.title=t;}catch(e){}else root.setAttribute('aria-label',t);
     root.querySelectorAll('[data-lay]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lay===`${W.rows}x${W.cols}`?'true':'false'));
     W.cells.forEach(C=>C.sync());};
@@ -151,28 +159,29 @@ function makeDivider(W,axis,i,a,b){
 
 function makeCell(W,kind,idx){
   const doc=W.doc,win=W.win,el=doc.createElement('div');el.className='cell';
-  el.innerHTML=`<div class="chead"><span class="cn" aria-hidden="true">${idx+1}</span><select class="ckind" aria-label="${idx+1}번 칸 보기">${kindOptions(kind)}</select><select class="cpage" aria-label="회로도 시트" hidden></select><select class="cov" aria-label="시뮬레이션 결과 겹쳐 보기" title="시뮬레이션 결과 겹쳐 보기" hidden>${Object.entries(OV_LABEL).map(([k,v])=>`<option value="${k}">겹치기: ${v}</option>`).join('')}</select><span class="sp"></span><span class="c3" hidden><button data-c="iso" title="등각 보기">등각</button><button data-c="top" title="위에서 보기">위</button><button data-c="bot" title="아래에서 보기">아래</button></span><button class="cfit" title="화면 맞춤 (더블클릭)">맞춤</button></div><div class="cbody"><div class="ptip" hidden></div><div class="clegend legend" hidden></div></div>`;
+  el.innerHTML=`<div class="chead"><span class="cn" aria-hidden="true">${idx+1}</span><select class="ckind" aria-label="${idx+1}번 칸 보기">${kindOptions(kind)}</select><select class="cpage" aria-label="회로도 시트" hidden></select><select class="cov" aria-label="시뮬레이션 결과 겹쳐 보기" title="시뮬레이션 결과 겹쳐 보기" hidden>${Object.entries(OV_LABEL).map(([k,v])=>`<option value="${k}">겹치기: ${v}</option>`).join('')}</select><span class="sp"></span><span class="c3" hidden><button data-c="iso" title="등각 보기">등각</button><button data-c="top" title="위에서 보기">위</button><button data-c="bot" title="아래에서 보기">아래</button></span><button class="cfit" title="화면 맞춤 (더블클릭)">맞춤</button><button class="cexp" data-x="svg" title="이 칸을 SVG로 저장">SVG</button><button class="cexp" data-x="png" title="이 칸을 PNG로 저장">PNG</button><button class="cexp" data-x="xlsx" title="이 칸의 표를 엑셀로 저장" hidden>Excel</button></div><div class="cbody"><div class="ptip" hidden></div><div class="clegend legend" hidden></div></div>`;
   const q=s=>el.querySelector(s),body=q('.cbody');
   const C={kind:null,W,win,doc,root:el,cv:null,tip:q('.ptip'),ctx:null,dpr:1,w:0,h:0,s:3,ox:0,oy:0,page:0,fitted:-1,hover:null,lastKey:'',fromMe:false,userMoved:false,raf:0,g:null,ro:null,ov:'auto',leg:q('.clegend')};
-  C.sync=()=>{q('.ckind').value=C.kind;const pg=q('.cpage');q('.c3').hidden=C.kind!=='3d';const ov=q('.cov');ov.hidden=!(C.kind==='T'||C.kind==='B');ov.value=C.ov;
+  C.sync=()=>{const ks=q('.ckind');if(!ks.querySelector(`option[value="${C.kind}"]`)||ks.dataset.n!==String(BD.copperLayers||2)){ks.innerHTML=kindOptions(C.kind);ks.dataset.n=String(BD.copperLayers||2);}ks.value=C.kind;const pg=q('.cpage');q('.c3').hidden=!(C.kind==='3d'||C.kind==='cad3');const ov=q('.cov');ov.hidden=!(C.kind==='T'||C.kind==='B');ov.value=C.ov;
+    const html=isHtml(C.kind);q('[data-x="svg"]').hidden=C.kind==='3d'||C.kind==='cad3'||(html&&!isD(C.kind));q('[data-x="png"]').hidden=html&&!isD(C.kind);q('[data-x="xlsx"]').hidden=!(isH(C.kind)||isS(C.kind));
     if(C.kind==='sch'){const d=schData();pg.hidden=d.sheets.length<2;pg.innerHTML=d.sheets.map((s,i)=>`<option value="${i}"${i===C.page?' selected':''}>${esc(s.name||'시트 '+(i+1))}</option>`).join('');}else pg.hidden=true;};
   C.resize=()=>{if(!C.cv)return;const r=C.cv.getBoundingClientRect();if(!r.width||!r.height)return;const d=Math.min(win.devicePixelRatio||1,2);C.w=r.width;C.h=r.height;C.dpr=d;
     if(C.g){C.g.renderer.setPixelRatio(d);C.g.renderer.setSize(r.width,r.height,false);C.g.cam.aspect=r.width/r.height;C.g.cam.updateProjectionMatrix();if(!C.g.homed){C.g.homed=true;C.g.home(false);}C.g.dirty=true;}
     else{C.cv.width=Math.round(r.width*d);C.cv.height=Math.round(r.height*d);}};
   C.fit=()=>{if(C.kind==='sch'){schFit(C);return;}C.s=Math.min((C.w-30)/BD.W,(C.h-30)/BD.H);C.ox=(C.w-BD.W*C.s)/2;C.oy=(C.h-BD.H*C.s)/2;C.fitted=0;};
   C.refit=()=>{if(!C.w)return;if(C.g){C.g.home(false);return;}C.fitted=-1;C.fit();};
-  C.paint=()=>{if(C.hv){if(isS(C.kind))paintSimCell(C);else paintHsCell(C);return;}if(!BD||!C.w)return;
+  C.paint=()=>{if(C.hv){if(isS(C.kind))paintSimCell(C);else if(isD(C.kind))paintDesignCell(C);else paintHsCell(C);return;}if(!BD||!C.w)return;
     if(C.g){C.g.dirty=true;return;}if(!C.ctx)return;
     if(C.kind==='sch'){paintSchV(C);return;}
-    if(C.fitted<0)C.fit();const c=C.ctx,mir=C.kind==='B',s=C.s,d=C.dpr;
+    if(C.fitted<0)C.fit();const c=C.ctx,mir=C.kind==='B',s=C.s,d=C.dpr;const cu=isIn(C.kind)?C.kind:null,side=mir?'B':'T';
     c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,C.cv.width,C.cv.height);
     c.setTransform(d*s*(mir?-1:1),0,0,-d*s,d*(C.ox+(mir?BD.W*s:0)),d*(C.oy+BD.H*s));
     c.save();c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=18*d;c.shadowOffsetY=6*d;outlinePath(c);c.fillStyle='#000';c.fill('evenodd');c.restore();
-    const ov=cellOv(C);OV_FORCE=ov;try{drawSide(c,C.kind,{hover:C.hover&&C.hover.type==='comp'?C.hover.c:null});C.ovk=ovKey();}finally{OV_FORCE=undefined;}
+    const ov=cu?null:cellOv(C);OV_FORCE=ov;try{drawSide(c,side,{cu,hover:C.hover&&C.hover.type==='comp'?C.hover.c:null});C.ovk=cu?null:ovKey();}finally{OV_FORCE=undefined;}
     const lg=C.ovk?legendHTML(C.ovk):'';C.leg.hidden=!lg;if(lg&&C.leg.innerHTML!==lg)C.leg.innerHTML=lg;};
   C.draw=()=>{if(C.g){C.g.dirty=true;return;}if(C.hv){if(C.raf)return;C.raf=win.requestAnimationFrame(()=>{C.raf=0;C.paint();});return;}if(C.raf)return;C.raf=win.requestAnimationFrame(()=>{C.raf=0;C.paint();});};
   C.s2w=(px,py)=>{if(C.kind==='sch')return schS2W(C,px,py);let x=(px-C.ox)/C.s;if(C.kind==='B')x=BD.W-x;return[x,BD.H-(py-C.oy)/C.s];};
-  C.hit=(px,py)=>{const[x,y]=C.s2w(px,py);return C.kind==='sch'?schHit(C,x,y):hit(x,y,C.kind,3/C.s);};
+  C.hit=(px,py)=>{const[x,y]=C.s2w(px,py);return C.kind==='sch'?schHit(C,x,y):hit(x,y,C.kind==='B'?'B':'T',3/C.s,isIn(C.kind)?C.kind:null);};
   C.showTip=(html,x,y)=>{if(!html){C.tip.hidden=true;return;}C.tip.innerHTML=html;C.tip.hidden=false;C.tip.style.left=x+'px';C.tip.style.top=y+'px';C.tip.classList.toggle('flip',x>C.w*0.58);};
   C.setKind=k=>{
     if(C.g){C.g.dispose();C.g=null;}if(C.cv){C.cv.remove();C.cv=null;}if(C.hv){C.hv.remove();C.hv=null;}const m=body.querySelector('.cmsg');if(m)m.remove();
@@ -180,7 +189,7 @@ function makeCell(W,kind,idx){
     q('.cfit').hidden=isHtml(k);C.leg.hidden=true;C.simDirty=true;
     if(isHtml(k)){C.w=0;const hv=doc.createElement('div');hv.className='hview';hv.tabIndex=0;hv.setAttribute('aria-label',KIND_LABEL[k]);body.insertBefore(hv,C.tip);C.hv=hv;C.sync();C.paint();if(W.alive&&W.cells.includes(C)){W.sync();W.cells.forEach(x=>x!==C&&x.draw());}return;}
     const cv=doc.createElement('canvas');cv.setAttribute('aria-label',KIND_LABEL[k]+' 보기');body.insertBefore(cv,C.tip);C.cv=cv;
-    if(k==='3d'){if(!mount3DCell(C)){cv.remove();C.cv=null;body.insertAdjacentHTML('afterbegin','<div class="cmsg">이 브라우저에서 3D(WebGL)를 표시할 수 없습니다.<br>TOP·BOTTOM 보기를 사용하세요.</div>');}}
+    if(k==='3d'||k==='cad3'){if(k==='cad3'&&!BD.blank&&!BD.pcbPending&&typeof mechCfg==='function'){mechCfg().show=true;if(typeof mech3D==='function')mech3D();}if(!mount3DCell(C)){cv.remove();C.cv=null;body.insertAdjacentHTML('afterbegin','<div class="cmsg">이 브라우저에서 3D(WebGL)를 표시할 수 없습니다.<br>TOP·BOTTOM 보기를 사용하세요.</div>');}}
     else{C.ctx=cv.getContext('2d');bind2DCell(C);}
     C.sync();C.resize();if(C.kind==='sch')schFocus(C);C.paint();if(W.alive&&W.cells.includes(C)){W.sync();W.cells.forEach(x=>x!==C&&x.draw());}};
   C.observe=()=>{C.ro=new win.ResizeObserver(()=>{if(C.hv){if(C.kind==='h-detail')drawMini(C.hv);if(C.kind==='s-sp'){C.simDirty=true;C.draw();}return;}C.resize();if(!C.userMoved)C.refit();C.paint();});C.ro.observe(body);};
@@ -189,6 +198,7 @@ function makeCell(W,kind,idx){
   q('.cov').addEventListener('change',e=>{C.ov=e.target.value;C.paint();});
   q('.cpage').addEventListener('change',e=>{C.page=+e.target.value;C.fitted=-1;C.userMoved=false;C.paint();});
   q('.cfit').addEventListener('click',()=>{C.userMoved=false;C.refit();C.paint();});
+  el.querySelectorAll('.cexp').forEach(b=>b.addEventListener('click',()=>cellExport(C,b.dataset.x)));
   q('.c3').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b||!C.g)return;const g=C.g,r=g.fitR();C.userMoved=true;
     if(b.dataset.c==='iso')g.home(true);else if(b.dataset.c==='top')g.to(-Math.PI/2,0.02,r,true);else g.to(Math.PI/2,Math.PI-0.02,r,true);});
   POPS.add(C);C.setKind(kind);
@@ -291,12 +301,24 @@ function bind3DCell(C){
   cv.addEventListener('wheel',e=>{e.preventDefault();const g=C.g;if(!g)return;g.anim=null;const o=g.orb;o.r=Math.max(5,Math.min(3000,o.r*Math.exp(e.deltaY*0.0012)));C.userMoved=true;g.place();},{passive:false});
   cv.addEventListener('dblclick',()=>{if(C.g){C.userMoved=false;C.g.home(true);}});
 }
+// system diagram / housing drawing cells: live SVG, re-rendered when the data changes
+function paintDesignCell(C){if(!BD)return;const hv=C.hv;let key,html;
+  try{if(C.kind==='sys'||C.kind==='parts'){const svg=sysSVG(C.kind==='sys'?'hw':'parts');key=C.kind+'|'+svg.length+'|'+svg.slice(0,400);if(key===C.hkey)return;C.hkey=key;hv.innerHTML=svg?`<div class="sysd-wrap">${svg}</div>`:'<div class="hnone">시스템 다이어그램이 없습니다.<br>1단계에서 요구사항을 분석하거나 [보드에서 추출]을 누르세요.</div>';}
+    else{if(typeof mechRun!=='function'||BD.blank||BD.pcbPending){hv.innerHTML='<div class="hnone">하우징은 PCB가 배치된 뒤(3단계 이후) 만들어집니다.</div>';return;}mechCfg();const R=mechRun();key='cadd|'+JSON.stringify(BD.housing.cad)+'|'+JSON.stringify(BD.housing.inp)+'|'+BD.name;if(key===C.hkey)return;C.hkey=key;hv.innerHTML=`<div class="sysd-wrap">${HOUSING.drawingSVG(R,BD.name)}</div>`;}}
+  catch(e){console.error(e);hv.innerHTML=`<p class="errline">${esc(e.message)}</p>`;}}
+// export one cell as SVG / PNG / Excel
+async function cellExport(C,fmt){if(!BD)return;const k=C.kind;
+  try{if(fmt==='xlsx'){const tbls=[...C.hv.querySelectorAll('table')];return exportXlsx(tbls.map((t,i)=>({name:kindLabel(k)+(tbls.length>1?' '+(i+1):''),table:t})),expName()+'_'+k.replace(/^[hs]-/,'')+'.xlsx');}
+    if(k==='3d'||k==='cad3'){if(!C.g)return;const url=threePNG(C.g.renderer,C.g.cam,C.cv);return url?expSave(expName()+(k==='cad3'?'_housing_3D.png':'_3D.png'),dataUrlBytes(url),'image/png'):null;}
+    if(k==='sch')return exportSch(fmt,C.page);if(k==='sys'||k==='parts')return exportSys(fmt,k==='sys'?'hw':'parts');if(k==='cadd')return exportHousing(fmt==='png'?'drawing-png':'drawing');
+    return exportLayer(fmt,k==='B'?'B':'T',isIn(k)?k:null);}
+  catch(e){console.error(e);toast('내보내기 실패: '+e.message);}}
 function popsRefresh(boardChanged){
   WINS.forEach(W=>{let gone=false;try{gone=!W.floating&&W.win.closed;}catch(e){gone=true;}if(gone)W.drop();});
   let has3=false;POPS.forEach(C=>{if(C.g)has3=true;});
   if(has3&&G3){if(G3.board!==BD){rebuild3D();sync3D();}else if(S.view!=='3d')sync3D();}
   POPS.forEach(C=>{
-    if(boardChanged){C.fitted=-1;C.page=0;C.hover=null;C.lastKey='';C.userMoved=false;if(C.g){C.g.homed=false;C.g.ver=-1;}C.resize();C.refit();}
+    if(boardChanged){if(isIn(C.kind)&&!BD.layers[C.kind+'.cu']){C.setKind('T');}C.fitted=-1;C.page=0;C.hover=null;C.lastKey='';C.userMoved=false;C.hkey='';if(C.g){C.g.homed=false;C.g.ver=-1;}C.resize();C.refit();}
     if(C.kind==='sch')schFocus(C);C.draw();});
   if(boardChanged)WINS.forEach(W=>W.sync());
 }

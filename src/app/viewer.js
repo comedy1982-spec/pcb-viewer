@@ -84,7 +84,7 @@ function bodyColor(c){
 }
 const padOn=(p,side)=>p.side==='both'||p.side===side||!p.side;
 // the inner copper layer shown in the 2D view (null = the outer layer of `side`)
-const innerKey=(side,o)=>side==='T'&&S.cu&&!(o&&o.texture)&&BD&&BD.layers[S.cu+'.cu']?S.cu:null;
+const innerKey=(side,o)=>{const k=o&&o.cu!==undefined?o.cu:S.cu;return side==='T'&&k&&!(o&&o.texture)&&BD&&BD.layers[k+'.cu']?k:null;};
 const CORE='#4a4230',CU_IN='#d4844a';
 function drawSide(ctx,side,o){
   const L=S.layers,M=MASKS[S.mask];const ik=innerKey(side,o);
@@ -147,9 +147,9 @@ function inPad(p,x,y,g){
   if(p.lbb)return lx>=p.lbb[0]-g&&lx<=p.lbb[2]+g&&ly>=p.lbb[1]-g&&ly<=p.lbb[3]+g;
   return Math.abs(lx)<=p.w/2+g&&Math.abs(ly)<=p.h/2+g;
 }
-function hit(x,y,side,tol){
+function hit(x,y,side,tol,cu){
   if(!BD||x<-1||y<-1||x>BD.W+1||y>BD.H+1)return null;
-  const ik=innerKey(side);const L=ik?BD.layers[ik+'.cu'].concat(BD.layers['T.cu'].filter(p=>p.t==='pad'&&(p.side==='both'||p.drill))):BD.layers[side+'.cu'],cuOn=ik?true:side==='T'?S.layers.cuT:S.layers.cuB;if(ik)side=ik;
+  const ik=innerKey(side,cu!==undefined?{cu}:undefined);const L=ik?BD.layers[ik+'.cu'].concat(BD.layers['T.cu'].filter(p=>p.t==='pad'&&(p.side==='both'||p.drill))):BD.layers[side+'.cu'],cuOn=ik?true:side==='T'?S.layers.cuT:S.layers.cuB;if(ik)side=ik;
   if(cuOn){
     for(let i=L.length-1;i>=0;i--){const p=L[i];if(p.t==='pad'&&!p.clear&&!p.via&&inPad(p,x,y,tol*0.3))return{type:'pad',p,c:p.ref?BD.byRef[p.ref]:null,net:p.net};}
     for(const v of BD.vias)if(Math.hypot(x-v.x,y-v.y)<=v.d/2+tol*0.3)return{type:'via',v,net:v.net};
@@ -523,7 +523,7 @@ function setView(v){
   $('#hint').textContent=is3?'드래그 회전 · 우클릭/Shift 드래그 이동 · 휠 확대 · 클릭 선택':'드래그 이동 · 휠 확대 · 더블클릭 맞춤 · 클릭 선택';
   $('#lbl-body').textContent=is3?'3D 부품':'부품 외형 겹쳐 보기';
   $('#ly-body').checked=is3?S.layers.body3d:S.layers.body2d;
-  $('#ctl').innerHTML=(is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>')+(is3?'':`<button class="pill vbtn${PE&&PE.on?' on':''}" data-pe="1" title="부품 배치·배선을 편집합니다 (Pcbnew 단축키)">${PE&&PE.on?'편집 끝내기':'PCB 편집'}</button>`)+'<button class="pill vbtn" data-pop="1" title="보드를 새 창으로 엽니다">새 창</button>';
+  $('#ctl').innerHTML=(is3?'<button class="pill vbtn" data-cam="iso">등각</button><button class="pill vbtn" data-cam="top">위</button><button class="pill vbtn" data-cam="bot">아래</button>':'<button class="pill vbtn" data-cam="fit">화면 맞춤</button>')+(is3?'':`<button class="pill vbtn${PE&&PE.on?' on':''}" data-pe="1" title="부품 배치·배선을 편집합니다 (Pcbnew 단축키)">${PE&&PE.on?'편집 끝내기':'PCB 편집'}</button>`)+'<button class="pill vbtn" data-pop="1" title="보드를 새 창으로 엽니다">새 창</button><button class="pill vbtn" data-exp="svg" title="지금 보기를 SVG로 저장">SVG</button><button class="pill vbtn" data-exp="png" title="지금 보기를 PNG로 저장">PNG</button>';
   const lk=S.sch;const relayout=setView.lk!==lk;setView.lk=lk;
   if(S.sch!=='off'){schResize();schData();if(relayout){schFit();SV.fromMe=false;SV.lastKey='';}renderSchOv();schFocus();paintSch();}
   if(PE&&typeof peBar==='function')peBar();
@@ -535,7 +535,7 @@ function setView(v){
 function tipAt(cv,x,y){const vr=vp.getBoundingClientRect(),cr=cv.getBoundingClientRect();tip.style.left=(x+cr.left-vr.left)+'px';tip.style.top=(y+cr.top-vr.top)+'px';}
 function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Math.min(window.devicePixelRatio||1,2);const changed=Math.abs(r.width-vw)>1||Math.abs(r.height-vh)>1;vw=r.width;vh=r.height;cv2.width=Math.max(1,Math.round(vw*dpr));cv2.height=Math.max(1,Math.round(vh*dpr));if(changed||!measure.done){fit2();measure.done=1;}}
 $$('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
-$('#ctl').addEventListener('click',e=>{if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
+$('#ctl').addEventListener('click',e=>{const ex=e.target.closest('[data-exp]');if(ex){exportCurrentView(ex.dataset.exp);return;}if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
 ['cuT','cuB','silk','mask','drill','ghost','inner'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
 $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.target.checked;else S.layers.body2d=e.target.checked;refresh(false);});

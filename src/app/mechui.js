@@ -83,7 +83,7 @@ function cadRender(){if(!BD||!$('#cadLeft'))return;const keep=[$('#cadLeft').scr
   $('#cadLeft').innerHTML=cadLeftHTML();$('#cadRight').innerHTML=cadRightHTML();
   [...$('#cadRight').querySelectorAll('details')].forEach((x,k)=>{if(open[k]!=null)x.open=open[k];});
   $('#cadLeft').scrollTop=keep[0];$('#cadRight').scrollTop=keep[1];cadBind();cadSelPaint();}
-function cadRefresh(){if(HS.ws!=='cad')return;cadRender();mech3D();}
+function cadRefresh(){if(HS.ws==='cad'){cadRender();mech3D();}if(typeof POPS!=='undefined'&&[...POPS].some(C=>C.kind==='cadd'||C.kind==='cad3')){if(HS.ws!=='cad'&&BD.housing&&BD.housing.show)mech3D();popsRefresh();}}
 /* ---- workspace switch: the board viewport moves into the CAD centre column ---- */
 const CADVP={home:null};
 function cadEnter(){if(!BD)return;const H=mechCfg();
@@ -91,7 +91,7 @@ function cadEnter(){if(!BD)return;const H=mechCfg();
   $('#cadVpSlot').appendChild(vp);if(S.sch!=='off')S.sch='off';setView('3d');
   H.show=true;cadConsole();cadRender();
   setTimeout(()=>{resize3D();mech3D();const R=mechRun(),g=R.d.geo;if(G3){const a=G3.cam.aspect||1.5,tt=Math.tan(G3.cam.fov*D2R/2);camTo(-1.95,0.95,Math.max(g.Wo*1.6/(2*tt),(g.Lo+90)*1.15/(2*tt*a)),true);}},0);}
-function cadLeave(){setTimeout(()=>{if(typeof cadSelPaint==='function')cadSelPaint();},0);const H=BD&&BD.housing;if(H){H.show=false;mech3D();}if(CADVP.home&&vp.parentNode!==CADVP.home.parentNode)CADVP.home.parentNode.insertBefore(vp,CADVP.home);}
+function cadLeave(){setTimeout(()=>{if(typeof cadSelPaint==='function')cadSelPaint();},0);const H=BD&&BD.housing;if(H){H.show=typeof POPS!=='undefined'&&[...POPS].some(C=>C.kind==='cad3');mech3D();}if(CADVP.home&&vp.parentNode!==CADVP.home.parentNode)CADVP.home.parentNode.insertBefore(vp,CADVP.home);}
 /* ---- 3D: base + cover around the board (board frame: x,y on the board, z = 0 at the board mid-plane) ---- */
 function mechGroup(R){
   const d=R.d,g=d.geo,T=R.N.t,THR=THREE;const grp=new THR.Group();grp.userData.housing=true;const base=new THR.Group(),lid=new THR.Group();grp.add(base);grp.add(lid);
