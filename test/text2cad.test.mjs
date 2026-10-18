@@ -97,3 +97,20 @@ test('edge layers run from the bottom band to the top band', () => {
   assert.ok(Math.abs(L[L.length - 1][0] - 20) < 1e-9 && Math.abs(L[L.length - 1][1] - 3) < 1e-9);
   for (let i = 1; i < L.length; i++) assert.ok(L[i][0] >= L[i - 1][0]);
 });
+
+test('edit changes an existing feature in place', () => {
+  const st = fresh();
+  ['gland E M16', 'tabs 4 --screw M5', 'label "ECU"'].forEach(c => TEXT2CAD.exec(st, c, HOUSING));
+  TEXT2CAD.exec(st, 'edit F1 --d 12 --z 6', HOUSING);
+  let f = st.cad.feats.find(x => x.id === 'F1');
+  assert.equal(f.d, 12); assert.equal(f.v, 6); assert.equal(f.label, '케이블 글랜드');
+  TEXT2CAD.exec(st, 'edit F1 --size M20', HOUSING); assert.equal(f.d, 20.5); assert.equal(f.label, '케이블 글랜드 M20');
+  TEXT2CAD.exec(st, 'edit F1 --side left', HOUSING); assert.equal(f.side, 'W');
+  TEXT2CAD.exec(st, 'edit F2 --screw M4 --sides SN', HOUSING);
+  f = st.cad.feats.find(x => x.id === 'F2'); assert.equal(f.screw, 'M4'); assert.equal(f.sides, 'SN');
+  TEXT2CAD.exec(st, 'edit F3 --text "AURIX" --size 8', HOUSING);
+  f = st.cad.feats.find(x => x.id === 'F3'); assert.equal(f.text, 'AURIX'); assert.equal(f.size, 8);
+  assert.equal(analyze(st).d.feats.find(x => x.id === 'F1').side, 'W');
+  assert.throws(() => TEXT2CAD.exec(st, 'edit F9 --d 3', HOUSING), /F9/);
+  assert.throws(() => TEXT2CAD.exec(st, 'edit F1', HOUSING), /바꿀 값/);
+});

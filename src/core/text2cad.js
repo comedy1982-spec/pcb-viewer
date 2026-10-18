@@ -25,12 +25,13 @@ const HELP=[
   ['rib x|y [위치] [--h 3]','바닥 보강 리브'],
   ['fins <개수> [--h 15] [--pitch 8] · fins off · fins auto','커버 방열 핀'],
   ['label "<글자>" [--size 6] [--u --v]','커버 윗면 각인'],
+  ['edit <F번호> [--d --w --h --u --z --side --label | --screw --len --n --sides | --x --y | --pos --axis | --size --text --pitch]','이미 있는 형상의 치수·위치 수정 (구멍 지름, 사각 구멍 크기, 위치 u/z, 면, 탭 나사, 보스 좌표, 리브 위치, 핀 수·높이, 각인 글자). 상대 이동은 --du/--dz (mm)'],
   ['list · del <F번호|all> · reset','형상 목록 · 삭제 · 전부 초기화'],
   ['undo · redo','실행 취소 · 다시 실행'],
   ['show · open · close','3D에서 하우징 보기 · 커버 열기 · 닫기'],
   ['export [zip|scad|stl]','CAD 내보내기'],
   ['ai <문장>','Claude가 위 명령으로 설계 (AI 모드). 결정론 모드에서는 문장을 규칙으로 명령으로 바꿉니다']];
-const CMDS=new Set(['fillet','chamfer','round','help','status','check','compare','set','hole','gland','vent','slot','tabs','boss','rib','fins','label','list','feats','del','delete','reset','undo','redo','show','hide','open','close','export','ai','clear']);
+const CMDS=new Set(['edit','fillet','chamfer','round','help','status','check','compare','set','hole','gland','vent','slot','tabs','boss','rib','fins','label','list','feats','del','delete','reset','undo','redo','show','hide','open','close','export','ai','clear']);
 function tok(s){const out=[];const re=/"([^"]*)"|“([^”]*)”|'([^']*)'|(\S+)/g;let m;while((m=re.exec(s)))out.push(m[1]!=null?m[1]:m[2]!=null?m[2]:m[3]!=null?m[3]:m[4]);return out;}
 function args(t){const a={_:[]};for(let i=0;i<t.length;i++){const x=t[i];if(/^--/.test(x)){const[k,v]=x.slice(2).split('=');if(v!=null)a[k]=v;else if(t[i+1]!=null&&!/^--/.test(t[i+1]))a[k]=t[++i];else a[k]=true;}else a._.push(x);}return a;}
 const side=v=>{const k=String(v||'').toUpperCase();if(SIDES[k])return SIDES[k];for(const[re,s]of SIDE_RE)if(re.test(String(v||'')))return s;return null;};
@@ -101,6 +102,23 @@ function exec(st,line,H){norm(st);const t=tok(line);const cmd=(t[0]||'').toLower
       es.forEach(e=>{if(e==='V'){if(off){C.over.corner=0;delete C.edge.V;}else{C.over.corner=r;if(kind==='chamfer')C.edge.V='chamfer';else delete C.edge.V;}}
         else if(off)delete C.edge[e];else C.edge[e]={k:kind,r};});
       return ok(`${es.map(e=>EDGE_KO[e]).join(', ')}: ${off?'모서리 처리 없음':`${kind==='chamfer'?'각모따기 C':'둥근모따기 R'}${r} mm`} → 모서리 ${edgeText(C)}`);}
+    case'edit':{const id=String(a._[0]||'').toUpperCase();const f=C.feats.find(x=>x.id===id);if(!f)throw new Error(`형상 ${id||'?'}가 없습니다 — list로 번호를 보세요.`);
+      const ch=[];const setN=(k,key,nm,lo,hi)=>{if(a[k]==null||a[k]===true)return;const v=num(a[k],nm||k);if(lo!=null&&!(v>=lo&&v<=hi))throw new Error(`${nm||k} 범위 밖: ${v}`);f[key||k]=v;ch.push(`${nm||k} ${v}`);};
+      const rel=(k,key,nm)=>{if(a[k]==null||a[k]===true)return;const v=num(a[k],nm);f[key]=(f[key]!=null?+f[key]:0)+v;ch.push(`${nm} ${v>0?'+':''}${v}`);};
+      if(f.type==='hole'||f.type==='slot'){if(a.side!=null){const sd=side(a.side);if(!sd)throw new Error('면: left right front back top bottom');f.side=sd;ch.push(SK[sd]);}
+        if(f.type==='hole'){setN('d','d','지름',0.5,200);if(a.d!=null&&f.kind==='gland'&&/글랜드 (M|PG)\d+/.test(f.label||'')){const gk=Object.keys(GLAND).find(k=>Math.abs(GLAND[k]-f.d)<0.01);f.label='케이블 글랜드'+(gk?' '+gk:'');}if(a.size!=null&&f.kind==='gland'){const sz=String(a.size).toUpperCase();if(!GLAND[sz])throw new Error('글랜드: '+Object.keys(GLAND).join(' · '));f.d=GLAND[sz];f.label='케이블 글랜드 '+sz;ch.push(sz);}}
+        else{setN('w','w','폭',0.5,300);setN('h','h','높이',0.5,300);}
+        if(a.u!=null){setN('u','u','u');f.du=null;}if(a.z!=null||a.v!=null){f.v=num(a.z!=null?a.z:a.v,'z');ch.push(`z ${f.v}`);}
+        if(a.du!=null){if(f.u!=null)rel('du','u','u');else rel('du','du','u');}if(a.dz!=null){if(f.v==null)throw new Error(`${id}: 높이가 자동이라 --dz 대신 --z <mm>로 지정하세요.`);rel('dz','v','z');}
+        if(a.label&&a.label!==true){f.label=String(a.label);ch.push(`이름 ${f.label}`);}}
+      else if(f.type==='tabs'){if(a.screw!=null){const sc=String(a.screw).toUpperCase();if(H&&H.SCREW_D&&!H.SCREW_D[sc])throw new Error('나사: '+Object.keys(H.SCREW_D).join(' · '));f.screw=sc;ch.push(sc);}
+        setN('w','w','폭',4,80);setN('len','len','길이',4,80);setN('t','t','두께',1,20);if(a.n!=null){f.n=num(a.n,'개수')>=3?4:2;ch.push(`${f.n}개`);}if(a.sides!=null){f.sides=/^sn$/i.test(a.sides)?'SN':'WE';ch.push(f.sides==='WE'?'좌우':'앞뒤');}}
+      else if(f.type==='boss'){if(a.x!=null||a.y!=null){f.x=num(a.x!=null?a.x:f.x,'x');f.y=num(a.y!=null?a.y:f.y,'y');f.center=false;ch.push(`(${f.x}, ${f.y})`);}setN('d','d','지름',1,20);}
+      else if(f.type==='rib'){if(a.axis!=null){f.axis=/^y$/i.test(a.axis)?'y':'x';ch.push(`${f.axis} 방향`);}setN('pos','pos','위치');setN('h','h','높이',0.5,40);setN('t','t','두께',0.5,10);}
+      else if(f.type==='fins'){if(a.n!=null){f.n=Math.round(num(a.n,'개수'));f.off=false;ch.push(`${f.n}개`);}setN('h','h','높이',1,80);setN('pitch','pitch','피치',2,40);}
+      else if(f.type==='label'){if(a.text&&a.text!==true){f.text=String(a.text).slice(0,40);ch.push(`"${f.text}"`);}setN('size','size','크기',1,40);setN('u','u','u');setN('v','v','v');}
+      if(!ch.length)throw new Error(`edit ${id}: 바꿀 값이 없습니다 — 예: edit ${id} --d 10 --z 6`);
+      return ok(`${id} 수정: ${ch.join(' · ')}`);}
     case'ai':return{out:'',action:'ai',text:t.slice(1).join(' ')};
     default:throw new Error(`알 수 없는 명령: ${cmd} — help`);
   }

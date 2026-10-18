@@ -97,3 +97,33 @@ test('AI conversation kind: questions are answered, instructions are executed', 
   assert.equal(vm.runInContext(`aimKind('왜 이렇게 됐어?','agent')`, ctx), 'agent');
   assert.equal(vm.runInContext(`AIM.qa='agent';aimKind('왜 이렇게 됐어?')`, ctx), 'agent');
 });
+
+test('KiCad and Gerber inner copper layers are read, not dropped', () => {
+  const pcb = `(kicad_pcb (version 20221018) (general (thickness 1.6))
+  (layers (0 "F.Cu" signal) (1 "In1.Cu" power) (2 "In2.Cu" signal) (31 "B.Cu" signal) (44 "Edge.Cuts" user))
+  (net 0 "") (net 1 "GND") (net 2 "SIG")
+  (gr_rect (start 0 0) (end 20 10) (layer "Edge.Cuts") (width 0.1))
+  (segment (start 2 2) (end 8 2) (width 0.2) (layer "In2.Cu") (net 2))
+  (segment (start 2 4) (end 8 4) (width 0.25) (layer "F.Cu") (net 2))
+  (zone (net 1) (net_name "GND") (layer "In1.Cu") (filled_polygon (layer "In1.Cu") (pts (xy 0.5 0.5) (xy 19.5 0.5) (xy 19.5 9.5) (xy 0.5 9.5)))))`;
+  const B = PCB.finalize(PCB.parseKicad(pcb));
+  assert.equal(B.copperLayers, 4);
+  assert.deepEqual([...PCB.cuKeys(B)], ['T', 'In1', 'In2', 'B']);
+  assert.equal(B.layers['In2.cu'].filter(p => p.t === 'seg').length, 1);
+  assert.equal(B.layers['In1.cu'].filter(p => p.t === 'poly' && p.net === 'GND').length, 1);
+  const st = PCB.stackOf(B);
+  assert.equal(st[1].role, 'gnd'); assert.equal(st[1].net, 'GND'); assert.equal(st[2].role, 'sig');
+  assert.ok(!B.notes.some(n => /표시하지 않고/.test(n)));
+  const g = '%FSLAX46Y46*%\n%MOMM*%\n';
+  assert.equal(PCB.detectRole('board-In1_Cu.gbr', g).role, 'icu');
+  assert.equal(PCB.detectRole('board.G2', g).role, 'icu');
+  assert.equal(PCB.detectRole('x.gbr', '%TF.FileFunction,Copper,L3,Inr*%\n' + g).role, 'icu');
+  assert.equal(PCB.detectRole('board.GTL', g).role, 'tcu');
+  // two inner Gerbers land on In1/In2 in stack order
+  const sq = (x) => g + '%ADD10C,0.2*%\nD10*\nX' + x + '000000Y1000000D02*\nX' + (x + 5) + '000000Y1000000D01*\nM02*\n';
+  const E = [['b.GTL', sq(1)], ['b.GBL', sq(2)], ['b-In2_Cu.gbr', sq(3)], ['b-In1_Cu.gbr', sq(4)]].map(([name, text]) => ({ name, text, role: PCB.detectRole(name, text).role }));
+  const G = PCB.build(E);
+  assert.equal(G.copperLayers, 4);
+  assert.ok(G.layers['In1.cu'].length === 1 && G.layers['In2.cu'].length === 1);
+  assert.ok(Math.abs(G.layers['In1.cu'][0].a[0] - G.layers['In2.cu'][0].a[0]) === 1, 'In1 is the file named In1');
+});

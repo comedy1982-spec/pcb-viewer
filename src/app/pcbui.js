@@ -4,7 +4,7 @@ const PE_TOOLS=[['sel','선택·이동','Esc'],['route','배선','X'],['via','�
 const PE_ACTS=[['rot','회전','R'],['flip','뒤집기','F'],['undo','실행 취소','Ctrl+Z'],['redo','다시 실행','Ctrl+Y']];
 const PE_GRIDS=[0.05,0.1,0.25,0.5,1,1.27,2.54];
 const PE_WIDTHS=[0,0.15,0.2,0.25,0.3,0.4,0.5,0.8,1.0];
-function peBegin(){
+function peBegin(){if(S.cu){S.cu=null;setView('T');}
   if(S.view==='3d'||S.view==='sch')setView('T');
   PCBEDIT.prepare(BD);PE.on=true;PE.tool='sel';PE.layer=S.view==='B'?'B':'T';peRecalc(true);peBar();draw2D();
 }

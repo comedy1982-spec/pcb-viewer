@@ -19,7 +19,7 @@ function dim(hex,k){const n=parseInt(hex.slice(1),16);const r=(n>>16&255)*k|0,g=
 
 /* ---------- state ---------- */
 let BD=null;
-const S={view:'3d',mask:'green',layers:{cuT:true,cuB:true,silk:true,mask:true,drill:true,body2d:false,body3d:true,ghost:false,inner:true},selRef:null,hlNet:null,explode:0,tab:'sel',q:''};
+const S={cu:null,view:'3d',mask:'green',layers:{cuT:true,cuB:true,silk:true,mask:true,drill:true,body2d:false,body3d:true,ghost:false,inner:true},selRef:null,hlNet:null,explode:0,tab:'sel',q:''};
 
 /* ---------- 2D primitives ---------- */
 function rr(ctx,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
@@ -83,10 +83,15 @@ function bodyColor(c){
   return{diode:'#1f1f20',motor:'#b8bdc2',ic:'#1d1e21',usb:'#a9afb4',conn:'#2b2c2f',xtal:'#b8bdc2',btn:'#2a2d31',hdr:'#151617',led:'#e6ece6',elcap:'#aeb4ba',tht2:r==='C'?'#2c4f8a':r==='R'?'#d8c9a3':'#232425',box:'#6b7076'}[k]||'#6b7076';
 }
 const padOn=(p,side)=>p.side==='both'||p.side===side||!p.side;
+// the inner copper layer shown in the 2D view (null = the outer layer of `side`)
+const innerKey=(side,o)=>side==='T'&&S.cu&&!(o&&o.texture)&&BD&&BD.layers[S.cu+'.cu']?S.cu:null;
+const CORE='#4a4230',CU_IN='#d4844a';
 function drawSide(ctx,side,o){
-  const L=S.layers,M=MASKS[S.mask];
-  const base=L.mask?M.mask:FR4,cu=L.mask?M.under:CU,fin=L.mask?FIN:CU_PAD;
-  const cuOn=side==='T'?L.cuT:L.cuB,cuL=BD.layers[side+'.cu'],oth=BD.layers[(side==='T'?'B':'T')+'.cu'];
+  const L=S.layers,M=MASKS[S.mask];const ik=innerKey(side,o);
+  const base=ik?CORE:L.mask?M.mask:FR4,cu=ik?CU_IN:L.mask?M.under:CU,fin=ik?CU_IN:L.mask?FIN:CU_PAD;
+  const cuOn=ik?true:side==='T'?L.cuT:L.cuB,cuL=ik?BD.layers[ik+'.cu']:BD.layers[side+'.cu'],oth=BD.layers[(side==='T'&&!ik?'B':'T')+'.cu'];
+  // through pads cross every inner layer: the plated barrel's annular ring is copper there too
+  const thru=ik?BD.layers['T.cu'].filter(p=>p.t==='pad'&&!p.clear&&!p.via&&(p.side==='both'||p.drill)):null;
   ctx.save();
   outlinePath(ctx);ctx.fillStyle=base;ctx.fill('evenodd');
   outlinePath(ctx);ctx.clip('evenodd');
@@ -96,16 +101,18 @@ function drawSide(ctx,side,o){
     drawPrims(ctx,cuL,p=>p.t==='pad'?null:p.clear?base:cu,{clear:base});
     ctx.fillStyle=cu;BD.vias.forEach(v=>circ(ctx,v.x,v.y,v.d/2));
     drawPrims(ctx,cuL,p=>p.t!=='pad'?null:p.clear?base:p.via?cu:fin);
+    if(thru)drawPrims(ctx,thru,()=>fin);
   }
   // inner signal layers (multilayer boards): seen through the board, one colour per layer
-  if(L.inner&&!o.texture&&(BD.copperLayers||2)>2){const IC=['#4fc38a','#c46bd6','#e0b341','#58b6e0','#e07a58','#9aa0ff'];let j=0;
+  if(!ik&&L.inner&&!o.texture&&(BD.copperLayers||2)>2){const IC=['#4fc38a','#c46bd6','#e0b341','#58b6e0','#e07a58','#9aa0ff'];let j=0;
     ctx.save();ctx.globalAlpha=0.7;PCB.stackOf(BD).forEach(x=>{if(x.k==='T'||x.k==='B'||x.role!=='sig')return;const col=IC[j++%IC.length];drawPrims(ctx,BD.layers[x.k+'.cu'],p=>(p.t==='seg'||p.t==='path')&&!p.clear?col:null);});ctx.restore();}
-  if(L.silk)drawPrims(ctx,BD.layers[side+'.silk'],p=>p.clear?base:M.silk);
+  if(L.silk&&!ik)drawPrims(ctx,BD.layers[side+'.silk'],p=>p.clear?base:M.silk);
   drawOverlay(ctx,side);
   if(S.hlNet){
     outlinePath(ctx);ctx.fillStyle='rgba(0,0,0,.52)';ctx.fill('evenodd');
     const n=S.hlNet;
     drawPrims(ctx,cuL,p=>p.net===n&&!p.clear?(p.t==='pour'?'rgba(255,210,63,.55)':HL):null,{clear:dim(base,0.48)});
+    if(thru)drawPrims(ctx,thru,p=>p.net===n?HL:null);
     ctx.fillStyle=HL;BD.vias.forEach(v=>{if(v.net===n)circ(ctx,v.x,v.y,v.d/2);});
   }
   // holes
@@ -116,13 +123,13 @@ function drawSide(ctx,side,o){
   if(L.drill){ctx.fillStyle=HOLE;BD.vias.forEach(v=>circ(ctx,v.x,v.y,v.drill/2));}
   const sel=S.selRef&&BD.byRef[S.selRef];
   if(sel&&(sel.side===side||sel.pads.some(p=>p.side==='both'))){
-    if(!S.hlNet){ctx.fillStyle='rgba(255,210,63,.9)';sel.pads.forEach(p=>{if(padOn(p,side))padPath(ctx,p,0);});}
-    if(sel.side===side)brackets(ctx,sel.bb,HL,Math.max(0.15,BD.W/400));
+    if(!S.hlNet){ctx.fillStyle='rgba(255,210,63,.9)';sel.pads.forEach(p=>{if(ik?p.side==='both'||p.drill:padOn(p,side))padPath(ctx,p,0);});}
+    if(sel.side===side&&!ik)brackets(ctx,sel.bb,HL,Math.max(0.15,BD.W/400));
   }
-  if(o.hover&&o.hover!==sel&&o.hover.side===side)brackets(ctx,o.hover.bb,'rgba(255,255,255,.75)',Math.max(0.1,BD.W/600));
-  if(!o.texture&&typeof recDraw==='function'&&typeof HS!=='undefined'&&HS.ws==='board')recDraw(ctx,side,o);
+  if(!ik&&o.hover&&o.hover!==sel&&o.hover.side===side)brackets(ctx,o.hover.bb,'rgba(255,255,255,.75)',Math.max(0.1,BD.W/600));
+  if(!ik&&!o.texture&&typeof recDraw==='function'&&typeof HS!=='undefined'&&HS.ws==='board')recDraw(ctx,side,o);
   ctx.restore();
-  if(L.body2d&&!o.texture){
+  if(L.body2d&&!o.texture&&!ik){
     BD.comps.forEach(c=>{if(c.side!==side||c.kind==='none')return;const b=c.body;if(!(b.w>0&&b.h>0))return;
       ctx.save();ctx.translate(b.cx,b.cy);ctx.rotate(b.ang*D2R);ctx.globalAlpha=0.82;ctx.fillStyle=bodyColor(c);ctx.beginPath();rr(ctx,-b.w/2,-b.h/2,b.w,b.h,Math.min(0.15,b.w/6));ctx.fill();
       ctx.globalAlpha=1;ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=0.06;ctx.stroke();ctx.restore();
@@ -142,7 +149,7 @@ function inPad(p,x,y,g){
 }
 function hit(x,y,side,tol){
   if(!BD||x<-1||y<-1||x>BD.W+1||y>BD.H+1)return null;
-  const L=BD.layers[side+'.cu'],cuOn=side==='T'?S.layers.cuT:S.layers.cuB;
+  const ik=innerKey(side);const L=ik?BD.layers[ik+'.cu'].concat(BD.layers['T.cu'].filter(p=>p.t==='pad'&&(p.side==='both'||p.drill))):BD.layers[side+'.cu'],cuOn=ik?true:side==='T'?S.layers.cuT:S.layers.cuB;if(ik)side=ik;
   if(cuOn){
     for(let i=L.length-1;i>=0;i--){const p=L[i];if(p.t==='pad'&&!p.clear&&!p.via&&inPad(p,x,y,tol*0.3))return{type:'pad',p,c:p.ref?BD.byRef[p.ref]:null,net:p.net};}
     for(const v of BD.vias)if(Math.hypot(x-v.x,y-v.y)<=v.d/2+tol*0.3)return{type:'via',v,net:v.net};
@@ -151,7 +158,7 @@ function hit(x,y,side,tol){
       if(t.t==='seg'){if(PCB.segDist(x,y,t.a,t.b)<=t.w/2+tol)return{type:'track',t,net:t.net,side};}
       else if(t.t==='path'){for(let k=1;k<t.pts.length;k++)if(PCB.segDist(x,y,t.pts[k-1],t.pts[k])<=t.w/2+tol)return{type:'track',t,net:t.net,side};}}
   }
-  for(const c of BD.comps){if(c.side!==side||c.kind==='none')continue;const b=c.body;if(!(b.w>0))continue;
+  for(const c of BD.comps){if(ik||c.side!==side||c.kind==='none')continue;const b=c.body;if(!(b.w>0))continue;
     const dx=x-b.cx,dy=y-b.cy,a=-b.ang*D2R,lx=dx*Math.cos(a)-dy*Math.sin(a),ly=dx*Math.sin(a)+dy*Math.cos(a);
     if(Math.abs(lx)<=b.w/2&&Math.abs(ly)<=b.h/2)return{type:'comp',c};}
   if(cuOn){for(let i=L.length-1;i>=0;i--){const p=L[i];
@@ -167,13 +174,14 @@ function applyHit(h){
   else{S.selRef=null;S.hlNet=h.net||null;}
   S.tab='sel';refresh(true);
 }
+const sideKo=k=>k==='T'?'상단':k==='B'?'하단':`내층 ${k}`;
 function tipHTML(h){
   if(!h)return'';const net=h.net?` <span class="net">${esc(h.net)}</span>`:'';
   if(h.type==='pad'){const ref=h.p.ref?`${esc(h.p.ref)}${h.p.n!=null?'.'+esc(h.p.n):''}`:'패드';return`<b>${ref}</b> ${esc(h.p.fn||'')}${net}`;}
   if(h.type==='comp')return`<b>${esc(h.c.ref)}</b> ${esc(h.c.val)}`;
   if(h.type==='via')return`비아${net}`;
-  if(h.type==='track')return`트랙 ${h.side==='T'?'상단':'하단'} · ${(+h.t.w).toFixed(2)} mm${net}`;
-  if(h.type==='zone')return`${h.side==='T'?'상단':'하단'} 동박면${net}`;
+  if(h.type==='track')return`트랙 ${sideKo(h.side)} · ${(+h.t.w).toFixed(2)} mm${net}`;
+  if(h.type==='zone')return`${sideKo(h.side)} 동박면${net}`;
   return'';
 }
 
@@ -478,27 +486,39 @@ function bind3D(){
       else{o.th-=dx*0.008;o.ph=Math.max(0.02,Math.min(Math.PI-0.02,o.ph-dy*0.008));}
       placeCam();tip.hidden=true;return;
     }
-    hovQ=p;if(!hraf)hraf=requestAnimationFrame(()=>{hraf=0;if(!hovQ||!G3.board)return;const h=pick3D(hovQ[0],hovQ[1]);
+    hovQ=p;if(!hraf)hraf=requestAnimationFrame(()=>{hraf=0;if(!hovQ||!G3.board)return;if(typeof cadHover3D==='function'&&HS.ws==='cad'){const ht=cadHover3D(hovQ[0],hovQ[1]);if(ht){tip.innerHTML=ht;tip.hidden=false;tipAt(cv3,hovQ[0],hovQ[1]);cv3.style.cursor='pointer';return;}}const h=pick3D(hovQ[0],hovQ[1]);
       const real=h&&h.type!=='none'?h:null;const extra=h?overlayTip(real,h._x,h._y):'';if(real||extra){tip.innerHTML=(real?tipHTML(real):'')+extra;tip.hidden=false;tipAt(cv3,hovQ[0],hovQ[1]);cv3.style.cursor=real?'pointer':'grab';}else{tip.hidden=true;cv3.style.cursor='grab';}});
   });
-  const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);if(pts.size<2)pinch=0;if(pts.size===0&&moved<5&&start&&e.type==='pointerup'&&G3.board)applyHit(pick3D(start[0],start[1]));};
+  const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);if(pts.size<2)pinch=0;if(pts.size===0&&moved<5&&start&&e.type==='pointerup'&&G3.board){if(typeof cadPick3D==='function'&&cadPick3D(start[0],start[1],e))return;applyHit(pick3D(start[0],start[1]));}};
   cv3.addEventListener('pointerup',end);cv3.addEventListener('pointercancel',end);
   cv3.addEventListener('pointerleave',()=>{hovQ=null;tip.hidden=true;});
   cv3.addEventListener('wheel',e=>{e.preventDefault();G3.anim=null;const o=G3.orb;o.r=Math.max(5,Math.min(3000,o.r*Math.exp(e.deltaY*0.0012)));placeCam();},{passive:false});
   cv3.addEventListener('dblclick',()=>homeCam(true));
 }
 
+/* ---------- copper layer selector (multilayer boards) ---------- */
+function cuList(){return BD?PCB.stackOf(BD):[];}
+function cuLabel(k){const st=cuList();const i=st.findIndex(x=>x.k===k);const x=st[i];if(i<0)return k;
+  const role=x.role==='gnd'?'GND 플레인':x.role==='pwr'?`전원 플레인${x.net?' '+x.net:''}`:'신호';return`L${i+1}/${st.length} ${PCB.cuName(k)}${k==='T'?' (TOP)':k==='B'?' (BOTTOM)':''} · ${role}${x.net&&x.role==='gnd'?' '+x.net:''}`;}
+function cuSelPaint(){const sel=$('#vCu');if(!sel)return;const st=cuList();const multi=st.length>2;sel.hidden=!multi;if(!multi){if(S.cu)S.cu=null;return;}
+  const cur=S.view==='3d'||S.sch==='full'?'':S.cu||S.view;const key=st.map(x=>x.k).join(',');
+  if(sel.dataset.k!==key){sel.dataset.k=key;sel.innerHTML='<option value="">층 선택</option>'+st.map((x,i)=>`<option value="${x.k}">${esc(cuLabel(x.k))}</option>`).join('');}
+  sel.value=cur;sel.classList.toggle('on',!!S.cu);}
+function cuStep(d){const st=cuList();if(st.length<3)return false;const cur=S.view==='3d'||S.sch==='full'?null:S.cu||S.view;let i=st.findIndex(x=>x.k===cur);i=i<0?(d>0?0:st.length-1):Math.max(0,Math.min(st.length-1,i+d));setView(st[i].k);return true;}
+{const sel=$('#vCu');if(sel)sel.addEventListener('change',()=>{if(sel.value)setView(sel.value);});}
+
 /* ---------- views & panels ---------- */
 function setView(v){
   if(typeof stepPaint==='function')setTimeout(stepPaint,0);
+  if(/^In\d+$/.test(v||'')){if(!BD||!BD.layers[v+'.cu'])v='T';else{S.cu=v;v='T';if(PE&&PE.on&&typeof peEnd==='function')peEnd();}}else if(v==='T'||v==='B'||v==='3d')S.cu=null;
   if(v==='sch')S.sch='full';else if(v!=='__keep'){S.view=v;if(S.sch==='full')S.sch='off';}
   const full=S.sch==='full',bv=S.view;
-  $$('[data-view]').forEach(b=>b.setAttribute('aria-selected',(full?b.dataset.view==='sch':b.dataset.view===bv)?'true':'false'));
+  $$('[data-view]').forEach(b=>b.setAttribute('aria-selected',(full?b.dataset.view==='sch':b.dataset.view===bv&&!S.cu)?'true':'false'));cuSelPaint();
   $('#splitBtn').setAttribute('aria-pressed',S.sch==='split'?'true':'false');
   vp.classList.toggle('split',S.sch==='split');vp.classList.toggle('schfull',full);
   cvs.hidden=S.sch==='off';$('#schOv').hidden=S.sch==='off';
   const is3=bv==='3d';cv2.hidden=full||is3;cv3.hidden=full||!is3;tip.hidden=true;
-  $('#sideBadge').textContent=is3?'3D':(bv==='T'?'TOP · 위에서 본 면':'BOTTOM · 아래에서 본 면 (좌우 반전)');
+  $('#sideBadge').textContent=is3?'3D':S.cu?`${cuLabel(S.cu)} · 내층 (관통 패드·비아 포함)`:(bv==='T'?'TOP · 위에서 본 면':'BOTTOM · 아래에서 본 면 (좌우 반전)')+(BD&&(BD.copperLayers||2)>2?` · ${cuLabel(bv)}`:'');
   $('#scale').hidden=is3;$('#coord').hidden=is3;
   $('#hint').textContent=is3?'드래그 회전 · 우클릭/Shift 드래그 이동 · 휠 확대 · 클릭 선택':'드래그 이동 · 휠 확대 · 더블클릭 맞춤 · 클릭 선택';
   $('#lbl-body').textContent=is3?'3D 부품':'부품 외형 겹쳐 보기';
@@ -594,6 +614,7 @@ document.addEventListener('keydown',e=>{
   if(!$('#imp').hidden){if(e.key==='Escape')closeImport();return;}
   if(e.target.matches('input,select,textarea'))return;
   if(HS.ws==='hsis')return;
+  if(e.key===']'||e.key==='['){if(cuStep(e.key===']'?1:-1)){e.preventDefault();return;}}
   if(e.key==='1')setView('3d');else if(e.key==='2')setView('T');else if(e.key==='3')setView('B');else if(e.key==='4')setView('sch');
   else if(e.key==='Escape'){S.selRef=null;S.hlNet=null;refresh(true);}
 });
@@ -614,14 +635,14 @@ function stats(){
     BD.warnings.map(w=>`<p class="warnline">${esc(w)}</p>`).join('')+BD.notes.map(w=>`<p class="noteline">${esc(w)}</p>`).join('');}
 }
 $('#srcBox').addEventListener('click',e=>{if(e.target.closest('[data-open]'))openImport();const x=e.target.closest('[data-ex]');if(x)loadExample(x.dataset.ex);if(e.target.closest('[data-fwopen]'))fwOpen();if(e.target.closest('[data-gorec]')){HS.tab='rec';setWorkspace('hsis');}});
-function refresh(pane){if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}popsRefresh();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
+function refresh(pane){cuSelPaint();if(!BD)return;if(S.view==='3d')sync3D();else draw2D();if(S.sch!=='off'){schFocus();drawSch();}popsRefresh();if(pane!==false){renderPane();if(S.panel==='sim'&&SR.tab==='si')renderSim();}}
 function setBoard(B){
-  BD=B;S.selRef=null;S.hlNet=null;S.q='';$('#q').value='';S.tab='sel';hover2=null;
+  BD=B;S.selRef=null;S.hlNet=null;if(typeof CADSEL!=='undefined')CADSEL.keys=[];if(S.cu&&!(B.layers[S.cu+'.cu'])){S.cu=null;}S.q='';$('#q').value='';S.tab='sel';hover2=null;
   if(PE){PE.on=false;PE.undo=[];PE.redo=[];PE.route=null;PE.drag=null;PE.rats=[];PE.drc=[];}
   header();stats();renderPane();simReset();hsisOnBoard();SV.data=null;SV.lastKey='';measure.done=0;measure();fit2();
   if(S.view==='3d'){if(G3)rebuild3D();}else paint2D();
   if(S.sch!=='off'){schData();renderSchOv();paintSch();}
-  popsRefresh(true);
+  popsRefresh(true);cuSelPaint();
 }
 new ResizeObserver(()=>{if(!BD)return;if(S.sch!=='off'){schResize();if(!SV.userMoved)schFit();paintSch();}if(S.view==='3d')resize3D();else{measure();paint2D();}}).observe(vp);
 

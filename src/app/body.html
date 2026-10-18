@@ -22,6 +22,7 @@
         <button role="tab" data-view="3d" aria-selected="true" id="v-3d">3D</button>
         <button role="tab" data-view="T" aria-selected="false" id="v-top">TOP</button>
         <button role="tab" data-view="B" aria-selected="false" id="v-bot">BOTTOM</button>
+        <select id="vCu" class="cu-sel" aria-label="동박 층 보기 (내층 포함)" title="동박 층을 한 층씩 봅니다 · [ ] 키로 위·아래 층" hidden></select>
         <button role="tab" data-view="sch" aria-selected="false" id="v-sch">회로도</button>
       </div>
       <button class="btn sm splitbtn" id="splitBtn" aria-pressed="false" title="회로도와 보드를 나란히 봅니다"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M8 2.5v11"/></svg>나란히</button>
@@ -143,7 +144,7 @@
 </div>
 <div class="cad-ws" id="cadWs" hidden>
   <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
-  <div class="cad-mid"><div class="cad-vp" id="cadVpSlot"></div></div>
+  <div class="cad-mid"><div class="cad-sel" id="cadSel" hidden role="region" aria-label="선택한 기구 요소"><div class="cad-sel-top"><b>선택</b><span id="cadSelChips" class="sel-chips"></span><button type="button" class="btn sm" id="cadSelClr">선택 해제</button></div><div class="cad-sel-in"><input id="cadSelIn" type="text" autocomplete="off" aria-label="선택한 요소에 대한 요청"><button type="button" class="btn primary sm" id="cadSelMode">적용</button></div></div><div class="cad-vp" id="cadVpSlot"></div></div>
   <aside class="panel" id="cadRight" aria-label="형상 트리와 내보내기"></aside>
 </div>
 <div class="hsis-ws" id="hsisWs" hidden>

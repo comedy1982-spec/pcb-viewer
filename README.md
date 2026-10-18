@@ -12,6 +12,17 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 다층 보드 층별 보기 · 기구 요소 선택 (v1.25)
+
+- **동박 층별 보기** — 4층 이상 보드면 보기 탭(3D · TOP · BOTTOM) 옆에 **층 선택**이 나옵니다(`L2/4 In1.Cu · GND 플레인`처럼 층 번호·이름·역할 표시). 내층을 고르면 그 층의 동박(트랙·플레인)만 위에서 본 모습으로 그리고, 모든 층을 지나는 관통 패드·비아와 드릴을 함께 보여 줍니다. `[` `]` 키로 위·아래 층을 오갑니다. 내층 트랙·존을 눌러 넷을 강조할 수 있습니다.
+  - KiCad `.kicad_pcb`의 `In1.Cu … In30.Cu` 트랙·호·채운 존을 이제 읽습니다(예전엔 버렸음). `power` 형식 내층은 플레인으로, 가장 큰 존의 넷을 플레인 넷으로 표시합니다.
+  - Gerber 내층(`In1_Cu.gbr`, Protel `.G1`/`.G2`, `.GP1`, X2 `FileFunction,Copper,L2,Inr`)은 **Gerber · 내층 동박** 역할로 읽고 X2 층 번호나 파일 이름 번호 순서대로 In1, In2…에 놓습니다.
+  - PCB CLI로 층을 늘린 보드(`board layers 4|6|8`)도 같은 방식으로 각 층을 봅니다.
+- **기구 요소 선택 → AI 지시** — 기구 CAD 3D에서 요소를 클릭하거나 형상 트리에서 고릅니다. **Shift/Ctrl+클릭**으로 여러 개를 고르고, 빈 곳을 누르면 선택이 풀립니다. 선택한 요소는 주황색으로 표시되고, 위에 선택 막대(칩 · 요청 입력 · 적용)가 나옵니다.
+  - 고를 수 있는 요소: 베이스·커버, 네 벽, 커버 윗면·바닥, 모서리(윗면 둘레·바닥 둘레·세로 모서리), 추가 형상(F1… 구멍·글랜드·사각 구멍·탭·리브·보스·핀·각인), 자동 요소(PCB 보스, 커버 나사, 방열 페데스탈, 커넥터 창, 자동 방열 핀).
+  - 요청은 선택 막대나 도우미 입력창 어디에 적어도 선택과 함께 갑니다. **AI 모드**에선 Claude가 선택한 요소의 키·위치·쓸 명령을 받아 그 요소에만 적용합니다("이것", "여기" = 선택). **결정론 모드**는 규칙으로 바꿉니다: "지름 12로" → `edit F1 --d 12`, "위로 3mm" → `edit F2 --dz 3`(실제 높이로 환산), "왼쪽 벽으로 옮겨" → `--side W`, "M4로" → 탭 나사, "R3 둥근모따기" → 선택한 모서리, "삭제" → `del`, 벽을 고르고 "M16 글랜드 2개" → 그 벽에 추가.
+  - 새 명령 `edit <F번호> [--d --w --h --u --z --du --dz --side --label --size | --screw --len --n --sides | --x --y | --pos --axis | --text --pitch]`: 이미 있는 형상을 지우지 않고 고칩니다.
+
 ## 첫 화면 · 단계 설계 · 디자인 뷰어 (v1.24)
 
 앱을 열면 **첫 화면**이 나옵니다. 머리의 로고 아이콘으로 언제든 돌아올 수 있습니다.
@@ -116,7 +127,7 @@ PCB 편집 도구 막대의 **보드 W × H mm**, **회로도로 리셋·자동 
 상단 작업 공간 전환의 **기구 CAD**에서 보드를 감싸는 하우징을 설계합니다. 왼쪽은 설계 조건과 결과(카드·트레이드오프·경고), 가운데는 3D 보기와 **Text-to-CAD 콘솔**, 오른쪽은 형상 트리·치수·부품별 방열 경로·재질 비교·CAD 내보내기입니다.
 
 **Text-to-CAD 콘솔** (`src/core/text2cad.js`)
-- 명령: `set power|ip|vib|ta|tmax|tj|mat|tim <값|auto>` · `set wall|corner|stand|top|gap|split <mm|auto>` · `fillet|chamfer <top|bottom|vertical|all> <mm|off>` · `hole <면> --d <mm> [--u --z --n --pitch --label]` · `gland <면> [M16|M20|PG9…]` · `vent <면>` · `slot <면> --w --h` · `tabs <2|4|off> [--screw M5]` · `boss <x> <y>|center` · `rib x|y` · `fins <n> [--h]|off|auto` · `label "<글자>"` · `list` · `del <F번호|all>` · `reset` · `undo`/`redo` · `open`/`close` · `export zip|scad|stl` · `check` · `compare`. 면은 left right front back top bottom (W E S N T B), 벽 구멍의 `--u`는 벽 시작점에서의 거리, `--z`는 높이(보드 두께 중간면 = 0)입니다.
+- 명령: `set power|ip|vib|ta|tmax|tj|mat|tim <값|auto>` · `set wall|corner|stand|top|gap|split <mm|auto>` · `fillet|chamfer <top|bottom|vertical|all> <mm|off>` · `edit <F번호> --d|--w|--h|--u|--z|--side …` · `hole <면> --d <mm> [--u --z --n --pitch --label]` · `gland <면> [M16|M20|PG9…]` · `vent <면>` · `slot <면> --w --h` · `tabs <2|4|off> [--screw M5]` · `boss <x> <y>|center` · `rib x|y` · `fins <n> [--h]|off|auto` · `label "<글자>"` · `list` · `del <F번호|all>` · `reset` · `undo`/`redo` · `open`/`close` · `export zip|scad|stl` · `check` · `compare`. 면은 left right front back top bottom (W E S N T B), 벽 구멍의 `--u`는 벽 시작점에서의 거리, `--z`는 높이(보드 두께 중간면 = 0)입니다.
 - 결정론 모드: 문장을 규칙으로 명령으로 바꿉니다. 예) "알루미늄 다이캐스팅으로 IP67, 진동 6G, 발열 18W" → `set mat adc12 → set ip IP67 → set vib 6 → set power 18`, "오른쪽 벽에 M16 케이블 글랜드 2개, 장착 탭 4개 M5, 커버에 "AURIX ECU" 각인" → `gland E M16 --n 2 → tabs 4 --screw M5 → label "AURIX ECU"`.
 - AI 모드: Claude가 같은 명령을 도구로 하나씩 실행하고, 매 명령 뒤에 나오는 무게·온도·원가·경고를 보고 고칩니다. 내보내기는 사용자만 실행합니다. 모델 등급과 토큰(추정)을 표시합니다.
 - 외곽 모서리 처리: `fillet`(둥근모따기 R) · `chamfer`(각모따기 C)를 커버 윗면 둘레(top), 바닥 둘레(bottom), 세로 모서리 4곳(vertical), 전부(all)에 줍니다. 문장도 됩니다 — "윗면 모서리 R3 둥근모따기" → `fillet top 3`, "바닥은 C1 모따기" → `chamfer bottom 1`, "네 모서리 라운드 5" → `fillet vertical 5`, 위치 없이 "둥근모따기 R2" → `fillet all 2`. ("모서리 R5"처럼 모따기 낱말이 없으면 예전처럼 세로 모서리 `set corner 5`.) 크기는 면에서 분할면까지 높이로 제한되며, 줄어들면 경고와 함께 실제 적용값(`적용된 모서리: 세로 R8 · 윗면 R4 · 바닥 C1.5`)을 출력합니다. R이 벽 두께보다 크면 안쪽도 같은 중심으로 둥글어집니다. 3D 보기(벽·모서리 조각·둘레 띠)와 SCAD(층별로 줄인 윤곽의 hull)에 모두 반영됩니다.

@@ -103,9 +103,13 @@ function parseKicad(text){
   const isSilk=n=>/^[FB]\.(SilkS|Silkscreen)$/.test(n||'');
   const isCu=n=>n==='F.Cu'||n==='B.Cu';
   const K=(x,y)=>[x,-y];
+  // inner copper: KiCad In<k>.Cu → 'In<j>' where j counts the inner layers in stack order (normally j = k)
+  const inMap={};const inType={};
   const g=ch(root,'general');if(g){const t=ch(g,'thickness');if(t)B.t=F(t[1]);}
   const tb=ch(root,'title_block');if(tb){const t=ch(tb,'title');if(t&&t[1])B.name=t[1];}
-  const ly=ch(root,'layers');if(ly){B.copperLayers=ly.slice(1).filter(l=>Array.isArray(l)&&/\.Cu$/.test(l[1])).length||2;}
+  const ly=ch(root,'layers');if(ly){const cu=ly.slice(1).filter(l=>Array.isArray(l)&&/\.Cu$/.test(l[1]));B.copperLayers=cu.length||2;
+    cu.filter(l=>/^In\d+\.Cu$/.test(l[1])).sort((a,b)=>+a[1].slice(2,-3)-+b[1].slice(2,-3)).forEach((l,i)=>{const k='In'+(i+1);inMap[l[1]]=k;inType[k]=l[2]||'signal';B.layers[k+'.cu']=[];});}
+  const cuKey=n=>n==='F.Cu'?'T':n==='B.Cu'?'B':inMap[n]||null;
   const netMap={};all(root,'net').forEach(n=>{netMap[n[1]]=n[2];});
   const netOf=l=>{const c=ch(l,'net');let v=null;if(c){if(c.length>=3)v=c[2];else v=(c[1] in netMap)?netMap[c[1]]:c[1];}if(!v){const nn=ch(l,'net_name');if(nn)v=nn[1];}return v||null;};
   const ptsOf=pl=>{const o=[];if(!pl)return o;for(let i=1;i<pl.length;i++){const c=pl[i];if(!Array.isArray(c))continue;if(c[0]==='xy')o.push([F(c[1]),F(c[2])]);else if(c[0]==='arc'){const a=arc3(xy(c,'start'),xy(c,'mid'),xy(c,'end'));(o.length?a.slice(1):a).forEach(p=>o.push(p));}}return o;};
@@ -130,7 +134,7 @@ function parseKicad(text){
     const bold=!!(f&&(f.indexOf('bold')>0||(ch(f,'bold')&&ch(f,'bold')[1]==='yes')));
     return{t:'text',s:str,x,y,size,ang:at[3]?F(at[3]):0,mir:sideOf(layer)==='B',align,bold,layer};
   }
-  const edges=[],zonesBy={T:[],B:[]};let unfilled=0,innerItems=0;
+  const edges=[],zonesBy={T:[],B:[]};Object.values(inMap).forEach(k=>{zonesBy[k]=[];});let unfilled=0,innerItems=0;
   const pushGfx=(r,tf,owner)=>{
     if(!r)return;const L=r.layer;if(!L)return;
     const polys=r.polys.map(p=>p.map(q=>tf(q[0],q[1])));
@@ -206,20 +210,24 @@ function parseKicad(text){
   // board-level items
   for(let i=1;i<root.length;i++){
     const it=root[i];if(!Array.isArray(it))continue;const h=it[0];
-    if(h==='segment'){const L=layerOf(it);if(!isCu(L)){if(/In\d+\.Cu/.test(L||''))innerItems++;continue;}
-      const s=xy(it,'start'),e=xy(it,'end');B.layers[sideOf(L)+'.cu'].push({t:'seg',a:K(s[0],s[1]),b:K(e[0],e[1]),w:width(it),net:netOf(it)});}
-    else if(h==='arc'&&ch(it,'mid')&&ch(it,'net')!==null&&!ch(it,'stroke')){const L=layerOf(it);if(!isCu(L)){innerItems++;continue;}
-      const p=arc3(xy(it,'start'),xy(it,'mid'),xy(it,'end')).map(q=>K(q[0],q[1]));B.layers[sideOf(L)+'.cu'].push({t:'path',pts:p,w:width(it),net:netOf(it)});}
+    if(h==='segment'){const L=layerOf(it);const ck=cuKey(L);if(!ck){if(/In\d+\.Cu/.test(L||''))innerItems++;continue;}
+      const s=xy(it,'start'),e=xy(it,'end');B.layers[ck+'.cu'].push({t:'seg',a:K(s[0],s[1]),b:K(e[0],e[1]),w:width(it),net:netOf(it)});}
+    else if(h==='arc'&&ch(it,'mid')&&ch(it,'net')!==null&&!ch(it,'stroke')){const L=layerOf(it);const ck=cuKey(L);if(!ck){innerItems++;continue;}
+      const p=arc3(xy(it,'start'),xy(it,'mid'),xy(it,'end')).map(q=>K(q[0],q[1]));B.layers[ck+'.cu'].push({t:'path',pts:p,w:width(it),net:netOf(it)});}
     else if(h==='via'){const a=ch(it,'at'),sz=ch(it,'size'),dr=ch(it,'drill');B.vias.push({x:F(a[1]),y:-F(a[2]),d:sz?F(sz[1]):0.6,drill:dr?F(dr[1]):0.3,net:netOf(it)});}
     else if(h==='zone'){const net=netOf(it);const fps=all(it,'filled_polygon');
       if(!fps.length&&net)unfilled++;
-      fps.forEach(fpg=>{const L=layerOf(fpg);if(!isCu(L))return;const r=ptsOf(ch(fpg,'pts')).map(q=>K(q[0],q[1]));if(r.length>2)zonesBy[sideOf(L)].push({t:'poly',rings:[r],net,zone:true});});}
+      fps.forEach(fpg=>{const L=layerOf(fpg);const ck=cuKey(L);if(!ck)return;const r=ptsOf(ch(fpg,'pts')).map(q=>K(q[0],q[1]));if(r.length>2)zonesBy[ck].push({t:'poly',rings:[r],net,zone:true});});}
     else if(/^gr_(line|rect|circle|arc|poly|curve)$/.test(h)){pushGfx(gfx(it),K);}
     else if(h==='gr_text'){const L=layerOf(it);if(isSilk(L)&&!hidden(it)){const t=textPrim(it,it[1],K);if(t)B.layers[sideOf(L)+'.silk'].push(t);}}
   }
-  ['T','B'].forEach(s=>{B.layers[s+'.cu']=zonesBy[s].concat(B.layers[s+'.cu']);});
+  Object.keys(zonesBy).forEach(s=>{B.layers[s+'.cu']=zonesBy[s].concat(B.layers[s+'.cu']);});
+  // stack: KiCad "power" inner layers are planes; their net is the net of the largest zone on the layer
+  if(Object.keys(inMap).length){const area=r=>{let a=0;for(let i=0,j=r.length-1;i<r.length;j=i++)a+=(r[j][0]+r[i][0])*(r[j][1]-r[i][1]);return Math.abs(a/2);};
+    B.stack=['T',...Object.values(inMap),'B'].map(k=>{if(k==='T'||k==='B'||inType[k]!=='power')return{k,role:'sig'};const by={};zonesBy[k].forEach(z=>{if(z.net)by[z.net]=(by[z.net]||0)+z.rings.reduce((a,r)=>a+area(r),0);});
+      const net=Object.keys(by).sort((a,b)=>by[b]-by[a])[0]||null;return{k,role:net&&!/gnd|vss|0v/i.test(net)?'pwr':'gnd',net};});}
   B.outline=outlineFrom(edges,m=>B.warnings.push(m));
-  if(B.copperLayers>2)B.notes.push(`내층 ${B.copperLayers-2}개는 표시하지 않고 상단·하단 동박만 보여줍니다.`);
+  if(B.copperLayers>2)B.notes.push(`동박 ${B.copperLayers}층: 보기 탭의 층 선택(또는 [ ] 키)으로 내층 ${Object.values(inMap).join(' · ')}을 한 층씩 볼 수 있습니다.`);
   if(unfilled)B.warnings.push(`채워지지 않은 동박 존 ${unfilled}개가 있습니다. KiCad에서 존을 채운(B 키) 뒤 저장하면 표시됩니다.`);
   B.hasNets=true;
   return B;
@@ -565,6 +573,11 @@ function assembleGerber(entries){
   let anyNets=false;const allPads=[];
   [['tcu','T.cu'],['bcu','B.cu'],['tsilk','T.silk'],['bsilk','B.silk']].forEach(([r,L])=>{by(r).forEach(e=>{const g=parseGerber(e.text);g.prims.forEach(p=>B.layers[L].push(p));if(g.nets)anyNets=true;
     if(L.endsWith('cu'))g.prims.forEach(p=>{if(p.t==='pad'&&!p.clear){p.side=L[0];allPads.push(p);}});});});
+  // inner copper: order by X2 "Copper,L<n>" or the number in the file name (In1_Cu, .G2, .GP1, mid layer 3)
+  const inOrder=e=>{const x2=(e.text||'').slice(0,4000).match(/FileFunction,Copper,L(\d+)/i);if(x2)return+x2[1];const b=e.name.toLowerCase().split('/').pop();
+    let m=b.match(/in(\d+)[_.\-]?cu/)||b.match(/mid[_\- ]?layer[_\- ]?(\d+)/)||b.match(/\.g(\d+)l?$/);if(m)return+m[1]+(/\.g\d/.test(b)?0.5:0);m=b.match(/\.gp(\d+)$/);if(m)return 100+(+m[1]);return 200;};
+  by('icu').slice().sort((a,b)=>inOrder(a)-inOrder(b)).forEach((e,i)=>{const k='In'+(i+1);B.layers[k+'.cu']=[];const g=parseGerber(e.text);g.prims.forEach(p=>{if(p.t==='pad')p.inner=true;B.layers[k+'.cu'].push(p);});if(g.nets)anyNets=true;});
+  if(by('icu').length){B.copperLayers=2+by('icu').length;B.notes.push(`내층 동박 ${by('icu').length}개를 ${by('icu').map((e,i)=>'In'+(i+1)+' ← '+e.name.split('/').pop()).sort().join(', ')}로 읽었습니다.`);}
   const edges=[];by('outline').forEach(e=>{const g=parseGerber(e.text);g.prims.forEach(p=>{if(p.t==='seg')edges.push([p.a,p.b]);else if(p.t==='path')edges.push(p.pts);else if(p.t==='poly')p.rings.forEach(r=>edges.push(r.concat([r[0]])));});});
   B.outline=outlineFrom(edges,m=>B.warnings.push(m));
   by('drill').forEach(e=>parseExcellon(e.text,e.name).forEach(h=>B.drills.push(h)));
@@ -678,7 +691,7 @@ function finalize(B){
 }
 
 /* ---------- file role detection ---------- */
-const ROLES={kicad:'KiCad PCB',json:'뷰어 JSON',tcu:'Gerber · 상단 동박',bcu:'Gerber · 하단 동박',tsilk:'Gerber · 상단 실크',bsilk:'Gerber · 하단 실크',outline:'Gerber · 외곽선',drill:'드릴 (Excellon)',sch:'KiCad 회로도',pnp:'Pick-and-Place',bom:'BOM',ipc356:'넷리스트 (IPC-D-356)',ignore:'사용 안 함'};
+const ROLES={kicad:'KiCad PCB',json:'뷰어 JSON',tcu:'Gerber · 상단 동박',icu:'Gerber · 내층 동박',bcu:'Gerber · 하단 동박',tsilk:'Gerber · 상단 실크',bsilk:'Gerber · 하단 실크',outline:'Gerber · 외곽선',drill:'드릴 (Excellon)',sch:'KiCad 회로도',pnp:'Pick-and-Place',bom:'BOM',ipc356:'넷리스트 (IPC-D-356)',ignore:'사용 안 함'};
 function detectRole(name,text){
   const n=(name||'').toLowerCase(),base=n.split('/').pop(),ext=base.includes('.')?base.split('.').pop():'',head=(text||'').slice(0,6000);
   if(text&&/\u0000/.test(text.slice(0,2000)))return{role:'ignore',note:'바이너리 파일'};
@@ -696,7 +709,7 @@ function detectRole(name,text){
   if(isG){
     const ff=(head.match(/%TF\.FileFunction,([^*]+)\*%/)||[])[1];
     if(ff){const f=ff.toLowerCase();
-      if(f.startsWith('copper')){if(/,top/.test(f))return{role:'tcu'};if(/,bot/.test(f))return{role:'bcu'};return{role:'ignore',note:'내층 동박 (표시하지 않음)'};}
+      if(f.startsWith('copper')){if(/,top/.test(f))return{role:'tcu'};if(/,bot/.test(f))return{role:'bcu'};return{role:'icu'};}
       if(f.startsWith('legend')){return{role:/,bot/.test(f)?'bsilk':'tsilk'};}
       if(f.startsWith('profile'))return{role:'outline'};
       if(f.startsWith('soldermask'))return{role:'ignore',note:'솔더마스크 (색상만 사용)'};
@@ -704,7 +717,7 @@ function detectRole(name,text){
     }
     const tests=[['outline',/\.(gko|gm1|gml|gm|gm3|mil|dim|oln|bor)$|edge[_.\- ]?cuts|outline|profile|board[_\- ]?shape|mechanical[_ ]?1/],['ignore:솔더 페이스트',/\.(gtp|gbp|crc|crs)$|paste/],
       ['ignore:솔더마스크 (색상만 사용)',/\.(gts|gbs|stc|sts)$|[fb][_.]mask|soldermask|solder[_\- ]?mask|stop/],['tsilk',/\.(gto|plc)$|f[_.]silk|silk[_\- ]?top|top[_\- ]?silk|legend[_\- ]?top|top[_\- ]?overlay|topoverlay/],
-      ['bsilk',/\.(gbo|pls)$|b[_.]silk|silk[_\- ]?bot|bot(tom)?[_\- ]?silk|legend[_\- ]?bot|bottom[_\- ]?overlay|bottomoverlay/],['ignore:내층 동박 (표시하지 않음)',/\.(g\d+l?|gp\d+|in\d+)$|in\d+[_.]cu|inner/],
+      ['bsilk',/\.(gbo|pls)$|b[_.]silk|silk[_\- ]?bot|bot(tom)?[_\- ]?silk|legend[_\- ]?bot|bottom[_\- ]?overlay|bottomoverlay/],['icu',/\.(g\d+l?|gp\d+|in\d+)$|in\d+[_.\-]?cu|inner|mid[_\- ]?layer/],
       ['tcu',/\.(gtl|cmp|top)$|f[_.]cu|copper[_\- ]?top|top[_\- ]?copper|top[_\- ]?layer|toplayer|\.l1$/],['bcu',/\.(gbl|sol|bot)$|b[_.]cu|copper[_\- ]?bot|bot(tom)?[_\- ]?copper|bottom[_\- ]?layer|bottomlayer/]];
     for(const [r,re] of tests)if(re.test(base)){if(r.startsWith('ignore:'))return{role:'ignore',note:r.slice(7)};return{role:r};}
     return{role:'ignore',note:'역할을 알 수 없는 Gerber. 직접 지정해 주세요.'};

@@ -90,4 +90,27 @@ body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-ste
 .ds-page .todo{background:var(--warn-bg);color:var(--warn-fg);border-radius:8px;padding:8px 10px;font-size:12.5px}
 .ds-page img{max-width:100%;height:auto}
 .ds-page ul{padding-left:18px;margin:6px 0}
+
+/* ---------- 기구 요소 선택 ---------- */
+.cad-sel{background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.cad-sel[hidden]{display:none}
+.cad-sel-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cad-sel-top>b{font-size:13px;color:var(--accent)}
+.sel-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
+.sel-chip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;background:var(--accent-soft);color:var(--fg);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:99px;padding:2px 4px 2px 10px;max-width:260px}
+.sel-chip button{border:0;background:none;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;padding:0 4px;border-radius:99px}
+.sel-chip button:hover{color:var(--fg);background:var(--raised)}
+.cad-sel-in{display:flex;gap:8px}
+.cad-sel-in input{flex:1;min-width:0;font:inherit;font-size:13.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.cad-sel-in input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.ftree.sel-tree li.fg{display:block;padding:8px 6px 2px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted);border:0}
+.ftree.sel-tree li.fe{cursor:pointer}
+.ftree.sel-tree li.fe:hover{background:var(--raised)}
+.ftree.sel-tree li.fe:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ftree.sel-tree li.fe.fu{background:none;border-color:var(--line)}
+.ftree.sel-tree li.fe.sel{background:color-mix(in srgb,#ff8a1f 20%,transparent);border-color:#ff8a1f;box-shadow:inset 3px 0 0 #ff8a1f}
+.ftree.sel-tree li.fe.sel .fl{font-weight:600}
+.ftree.sel-tree .fl{display:flex;flex-direction:column;min-width:0}
+.ftree.sel-tree .fl small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ftree.sel-tree li.fe{grid-template-columns:34px minmax(0,1fr) auto}
 </style>
