@@ -9,6 +9,7 @@
       </div>
     </div>
     <div class="top-r">
+      <button type="button" class="btn sm ov-btn" id="ovBtn" title="전체 보기 — 시스템 → 회로 → PCB → 기구를 한 화면에" aria-label="전체 보기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="5" height="4"/><rect x="9.5" y="2.5" width="5" height="4"/><rect x="1.5" y="9.5" width="5" height="4"/><rect x="9.5" y="9.5" width="5" height="4"/><path d="M6.5 4.5h3M4 6.5v3M12 6.5v3"/></svg>전체</button>
       <nav class="steps" aria-label="설계 단계">
         <button type="button" data-step="1" id="st-1" title="요구사항 → 블록과 인터페이스 (결정론 / AI)"><i>1</i><span>시스템 다이어그램</span></button>
         <button type="button" data-step="2" id="st-2" title="다이어그램의 블록으로 회로도 생성·편집"><i>2</i><span>회로</span></button>
@@ -54,6 +55,7 @@
       <div class="home-ex"><span>예제로 열기</span><button type="button" class="pill vbtn" data-hex="sense">SENSE-32</button><button type="button" class="pill vbtn" data-hex="mcu">MCU DC 모터</button><button type="button" class="pill vbtn" data-hex="bldc">MCU BLDC 3상</button><button type="button" class="pill vbtn" data-hex="tc364">AURIX TC364</button></div>
     </div>
   </section>
+  <div class="strip" id="strip" hidden aria-label="설계 지표"></div>
   <div class="work"><div class="wsa">
   <div class="main">
     <div class="rh" id="hLeft"></div>
@@ -142,6 +144,7 @@
     <div class="sys-next"><span class="msg" id="npMsg"></span><button class="btn primary" id="npGen">다음: 회로 생성 →</button></div>
   </aside>
 </div>
+<section class="ov-ws" id="ovWs" hidden aria-label="전체 보기"></section>
 <div class="cad-ws" id="cadWs" hidden>
   <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
   <div class="cad-mid"><div class="cad-sel" id="cadSel" hidden role="region" aria-label="선택한 기구 요소"><div class="cad-sel-top"><b>선택</b><span id="cadSelChips" class="sel-chips"></span><button type="button" class="btn sm" id="cadSelClr">선택 해제</button></div><div class="cad-sel-in"><input id="cadSelIn" type="text" autocomplete="off" aria-label="선택한 요소에 대한 요청"><button type="button" class="btn primary sm" id="cadSelMode">적용</button></div></div><div class="cad-vp" id="cadVpSlot"></div></div>

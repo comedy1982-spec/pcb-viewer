@@ -332,5 +332,5 @@ function stepPaint(){const cur=stepCur();const real=!!(BD&&!BD.blank);const done
   pcbGatePaint();planGatePaint();
   $$('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>2&&!real||k===2&&!real&&!(NP.chooser&&NP.plan&&NP.plan.blocks.length);b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
   $$('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
-  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');if(typeof copCtx==='function')copCtx();if(typeof modePaint==='function')modePaint();}
+  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');if(typeof copCtx==='function')copCtx();if(typeof modePaint==='function')modePaint();if(typeof nxStripPaint==='function')nxStripPaint();}
 $$('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));

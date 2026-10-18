@@ -1,7 +1,7 @@
 /* ---------- 리비전 기록: every design change becomes a revision (auto), named revisions on request, and a compare view ----------
    Storage: IndexedDB in this browser (meta in "revs", gzip snapshots in "snaps"), memory when IndexedDB is unavailable. The history
    exports to one JSON file (to keep in Git next to the design) and imports back. Snapshots come from REVLOG (src/core/revlog.js). */
-var REV={pid:null,list:[],on:true,sig:null,pend:null,last:null,lastId:null,bdRef:null,logCid:0,busy:false,open:false,a:null,b:'cur',tab:'sum',layer:'T',cache:new Map(),mem:new Map(),view:null,saveOpen:false};
+var REV={lv:'list',pid:null,list:[],on:true,sig:null,pend:null,last:null,lastId:null,bdRef:null,logCid:0,busy:false,open:false,a:null,b:'cur',tab:'sum',layer:'T',cache:new Map(),mem:new Map(),view:null,saveOpen:false};
 try{if(localStorage.getItem('aod.rev.auto')==='0')REV.on=false;}catch(e){}
 const REV_MAX_AUTO=150;
 /* ---- storage ---- */
@@ -70,12 +70,13 @@ async function revTick0(){if(!BD||REV.busy||typeof APP!=='undefined'&&APP.mode==
     if(REV.on||!REV.list.length){const cause=switching?(BD.source==='예제'||BD.demo?`예제 열기 · ${BD.name}`:BD.source==='신규 설계'?'신규 설계 시작':`파일 열기 · ${BD.source||''}`):(revCauses()||(BD.variantLabel?`회로 생성 · ${BD.variantLabel}`:'보드 교체'));
       await revRecord({cause:REV.nextCause||cause,first:REV.nextCause||cause});REV.nextCause=null;}
     else{REV.bdRef=BD;REV.sig=revSig();}revBadge();return;}
+  if(typeof nxStripPaint==='function')nxStripPaint();if(typeof nxOvRender==='function')nxOvRender();
   const s=revSig();if(s===REV.sig){REV.pend=null;revBadge();return;}
   revBadge(true);if(!REV.on)return;if(REV.pend!==s){REV.pend=s;return;}
   await revRecord();}
 setInterval(()=>{if(document.visibilityState!=='hidden')revTick();},2000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&REV.on&&BD&&REV.sig&&revSig()!==REV.sig)revRecord();});
-function revOnBoard(cause){if(cause)REV.nextCause=cause;setTimeout(revTick,60);}
+function revOnBoard(cause){if(typeof nxStripPaint==='function')setTimeout(nxStripPaint,0);if(cause)REV.nextCause=cause;setTimeout(revTick,60);}
 /* ---- header badge ---- */
 function revBadge(dirty){const b=$('#revBtn');if(!b)return;const last=REV.list[REV.list.length-1];const d=dirty!=null?dirty:!!(BD&&REV.sig&&REV.bdRef===BD&&revSig()!==REV.sig);
   const t=b.querySelector('.rv-n');if(t)t.textContent=last?revLabel(last):'—';b.classList.toggle('dirty',d);b.title=`리비전 기록 · ${last?revLabel(last)+' · '+new Date(last.time).toLocaleString('ko-KR'):'아직 없음'}${d?' · 저장되지 않은 변경 있음':''}${REV.on?'':' · 자동 기록 꺼짐'}`;}
@@ -89,20 +90,22 @@ function revListHTML(){const rows=REV.list.slice().reverse();const dirty=!!(BD&&
     <p class="rv-s">${esc(r.summary||'')}</p>${r.cause?`<p class="rv-c" title="${esc(r.cause)}">${esc(r.cause)}</p>`:''}${r.note?`<p class="rv-c">📝 ${esc(r.note)}</p>`:''}</div>
     <div class="rv-act"><button type="button" class="pill vbtn" data-open="${esc(r.id)}" title="이 리비전으로 되돌리기 (지금 상태는 먼저 기록)">복원</button><button type="button" class="pill vbtn" data-name="${esc(r.id)}" title="이름·단계·메모">이름</button>${r.n>1||REV.list.length===1?`<button type="button" class="pill vbtn" data-del="${esc(r.id)}" title="삭제" aria-label="r${r.n} 삭제">×</button>`:''}</div></li>`).join('')}`;}
 function revDialogHTML(){const P=BD?BD.name:'';return`<div class="sheet rv" role="dialog" aria-modal="true" aria-labelledby="rvT"><div class="sheet-h"><h2 id="rvT">리비전 기록 · ${esc(P)}</h2>
-  <div class="rv-tools"><label class="rv-auto"><input type="checkbox" id="rvAuto"${REV.on?' checked':''}> 자동 기록</label><button type="button" class="btn primary sm" data-rv="save">지금 저장…</button><button type="button" class="btn sm" data-rv="export" title="기록 전체를 JSON 파일로 (Git에 함께 커밋)">기록 내보내기</button><button type="button" class="btn sm" data-rv="import">불러오기</button><input type="file" id="rvFile" accept=".json,application/json" hidden></div>
+  <div class="rv-tools"><div class="seg rv-lv" role="tablist" aria-label="보기"><button role="tab" type="button" data-lv="list" aria-selected="${REV.lv!=='ledger'}">목록</button><button role="tab" type="button" data-lv="ledger" aria-selected="${REV.lv==='ledger'}">원장</button></div><label class="rv-auto"><input type="checkbox" id="rvAuto"${REV.on?' checked':''}> 자동 기록</label><button type="button" class="btn primary sm" data-rv="save">지금 저장…</button><button type="button" class="btn sm" data-rv="export" title="기록 전체를 JSON 파일로 (Git에 함께 커밋)">기록 내보내기</button><button type="button" class="btn sm" data-rv="import">불러오기</button><input type="file" id="rvFile" accept=".json,application/json" hidden></div>
   <button class="x" data-close aria-label="닫기">✕</button></div>
   <form class="rv-save" id="rvSave"${REV.saveOpen?'':' hidden'}><input id="rvLbl" placeholder="이름 (예: A01, EVT1, 고객 검토용)" maxlength="40" aria-label="리비전 이름"><select id="rvStage" aria-label="단계">${STAGES.map(s=>`<option value="${s}">${s||'단계 없음'}</option>`).join('')}</select><input id="rvNote" placeholder="메모 (바뀐 이유, ECO 번호…)" maxlength="300" aria-label="메모"><button class="btn primary sm" type="submit">저장</button><button class="btn sm" type="button" data-rv="cancel">취소</button></form>
-  <div class="rv-body"><div class="rv-left"><p class="lead rv-help">설계를 바꾸면 2–4초 뒤 자동으로 기록됩니다. A·B를 골라 비교하고, [복원]으로 되돌립니다.</p><ol class="rv-list" id="rvList">${revListHTML()}</ol></div>
+  <div class="rv-body${REV.lv==='ledger'?' lgmode':''}"><div class="rv-ledger" id="rvLedger"${REV.lv==='ledger'?'':' hidden'}>${REV.lv==='ledger'&&typeof nxLedgerHTML==='function'?nxLedgerHTML():''}</div><div class="rv-left"${REV.lv==='ledger'?' hidden':''}><p class="lead rv-help">설계를 바꾸면 2–4초 뒤 자동으로 기록됩니다. A·B를 골라 비교하고, [복원]으로 되돌립니다.</p><ol class="rv-list" id="rvList">${revListHTML()}</ol></div>
   <div class="rv-right" id="rvCmp"><p class="lead">비교할 두 리비전을 고르세요.</p></div></div></div>`;}
 async function openRevisions(){if(!BD){toast('먼저 보드를 열거나 신규 설계를 시작하세요.');return;}await revTick();if(BD.pid!==REV.pid)await revSwitch(BD.pid||revPidFor(BD));
   let m=$('#revDlg');if(!m){m=document.createElement('div');m.className='modal';m.id='revDlg';document.body.appendChild(m);revBind(m);}
   const dirty=REV.sig&&revSig()!==REV.sig;const L=REV.list;if(REV.a==null||(REV.a!=='cur'&&!L.some(r=>r.id===REV.a))){REV.b=dirty||L.length<2?'cur':L[L.length-1].id;REV.a=L.length?(dirty||L.length<2?L[L.length-1].id:L[L.length-2].id):null;}
   m.innerHTML=revDialogHTML();m.hidden=false;REV.open=true;revCompareRender();}
-function revRender(){const m=$('#revDlg');if(!m||m.hidden)return;const ol=$('#rvList');if(ol)ol.innerHTML=revListHTML();revCompareRender();}
+function revRender(){const m=$('#revDlg');if(!m||m.hidden)return;const ol=$('#rvList');if(ol)ol.innerHTML=revListHTML();const lg=$('#rvLedger');if(lg&&REV.lv==='ledger'&&typeof nxLedgerHTML==='function')lg.innerHTML=nxLedgerHTML();revCompareRender();}
 function revClose(){const m=$('#revDlg');if(m)m.hidden=true;REV.open=false;}
 function revBind(m){
   m.addEventListener('click',async e=>{if(e.target===m||e.target.closest('[data-close]')){revClose();return;}
     const t=e.target.closest('button');if(!t)return;const ds=t.dataset;
+    if(ds.lv){REV.lv=ds.lv;m.innerHTML=revDialogHTML();revCompareRender();return;}
+    if(ds.lcol){const id=ds.lcol;if(e.shiftKey){REV.a=id;if(REV.b===id)REV.b='cur';}else{REV.b=id;if(REV.a===id)REV.a=null;if(REV.a==null){const L=REV.list;const i=L.findIndex(r=>r.id===id);REV.a=id==='cur'?(L.length?L[L.length-1].id:null):(i>0?L[i-1].id:null);}}revRender();return;}
     if(ds.a){REV.a=ds.a;if(REV.b===REV.a)REV.b=ds.a==='cur'?(REV.list[REV.list.length-1]||{}).id:'cur';revRender();return;}
     if(ds.b){REV.b=ds.b;if(REV.a===REV.b)REV.a=ds.b==='cur'?(REV.list[REV.list.length-1]||{}).id:'cur';revRender();return;}
     if(ds.tab){REV.tab=ds.tab;revCompareRender();return;}

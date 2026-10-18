@@ -28,7 +28,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:14px
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.app{height:100%;display:grid;grid-template-rows:auto 1fr;gap:12px;padding:0 16px 16px}
+.app{height:100%;display:grid;grid-template-rows:auto auto 1fr;gap:12px;padding:0 16px 16px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:12px 0}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
 .brand-ico{width:34px;height:34px;border-radius:7px;background:#1e6a3e;position:relative;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
@@ -783,7 +783,8 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 
 <style>
 /* ---------- AI 코파일럿 분할: workspace | right dock (설계 도우미 · 정보 · 시뮬레이션) ---------- */
-.app{grid-template-rows:auto minmax(0,1fr)}
+.app{grid-template-rows:auto auto minmax(0,1fr)}
+.app>.strip[hidden]{display:none}
 .work{position:relative;display:grid;grid-template-columns:minmax(0,1fr) var(--dock,400px);gap:12px;min-height:0;min-width:0}
 .work:has(>.dock.wide){grid-template-columns:minmax(0,1fr) max(var(--dock,400px),452px)}
 .app.dock-off .work,.app.dock-empty .work{grid-template-columns:minmax(0,1fr)}
@@ -1081,6 +1082,67 @@ body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-ste
 .rv-ov{height:min(56vh,520px);border-radius:10px;overflow:hidden;background:#0f1412;border:1px solid var(--line)}
 .rv-ov canvas{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
 @media (max-width:820px){.rv-body{grid-template-columns:1fr;grid-template-rows:minmax(160px,38%) 1fr}.rv-left{border-right:0;border-bottom:1px solid var(--line)}.rv-req{grid-template-columns:1fr}}
+
+/* ---------- 지표 띠 (콕핏) ---------- */
+.strip{min-width:0}
+.st-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.st-t{display:flex;flex-direction:column;gap:2px;align-items:flex-start;min-height:56px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font:inherit;color:var(--fg);text-align:left;cursor:pointer;box-shadow:inset 3px 0 0 var(--line)}
+.st-t:hover{border-color:var(--accent)}
+.st-t.ok{box-shadow:inset 3px 0 0 #2e9e5b}.st-t.warn{box-shadow:inset 3px 0 0 #d9952a}.st-t.err{box-shadow:inset 3px 0 0 #d9534f}
+.st-l{font-size:11.5px;color:var(--muted)}.st-v{font-size:19px;font-weight:700;line-height:1.1}.st-s{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.st-t.err .st-v{color:#d9534f}.st-t.warn .st-v{color:#b5541c}
+body[data-mode="home"] .strip{display:none}
+/* ---------- 전체 보기 (캔버스) ---------- */
+.ov-btn{margin-right:8px}.ov-btn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.ov-ws{min-height:0;overflow:auto;background-color:var(--bg);background-image:radial-gradient(color-mix(in srgb,var(--line) 85%,transparent) 1px,transparent 1px);background-size:22px 22px;border:1px solid var(--line);border-radius:14px}
+.ov-ws[hidden]{display:none}
+.ov-wrap{display:flex;flex-direction:column;gap:16px;padding:18px 20px 22px;min-height:100%;box-sizing:border-box}
+.ov-head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px}.ov-head h2{margin:2px 0 0;font-size:20px}.ov-head h2 small{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:8px}
+.ov-acts{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.ov-grid{display:grid;grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr) 78px minmax(0,1fr) 78px minmax(0,1fr);gap:8px;align-items:stretch}
+.ov-f{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;min-height:260px;transition:border-color .12s,transform .12s}
+.ov-f:hover{border-color:var(--accent);transform:translateY(-1px)}.ov-f.on{border:2px solid var(--accent)}
+.ov-f.empty{background:color-mix(in srgb,var(--surface) 60%,transparent);border-style:dashed}
+.ov-f header{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-bottom:1px solid var(--line)}.ov-f header b{font-size:13px}.ov-f header span{font-size:11.5px;color:var(--muted)}
+.ov-b{flex:1;display:grid;place-items:center;padding:8px;min-height:0}.ov-b .lead{padding:0 8px;text-align:center}
+.ov-svg{width:100%;max-height:300px;display:grid;place-items:center;overflow:hidden}.ov-svg svg{max-width:100%;max-height:300px;height:auto;width:auto}
+.ov-a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--accent);font-size:11px;font-weight:600;text-align:center;padding:0 2px}
+.ov-cmd{display:flex;flex-direction:column;gap:6px;background:var(--fg);color:var(--bg);border-radius:16px;padding:12px 14px;max-width:760px;width:100%;align-self:center;box-shadow:0 14px 34px rgba(0,0,0,.22)}
+.ov-cmd label{font-size:12px;opacity:.75}.ov-in{display:flex;gap:8px}
+.ov-in input{flex:1;min-width:0;min-height:44px;border:1px solid color-mix(in srgb,var(--bg) 25%,transparent);background:color-mix(in srgb,var(--bg) 12%,transparent);color:var(--bg);border-radius:10px;padding:0 12px;font:inherit;font-size:14px}
+.ov-in input::placeholder{color:color-mix(in srgb,var(--bg) 60%,transparent)}
+@media (max-width:1100px){.ov-grid{grid-template-columns:1fr}.ov-a svg{display:none}}
+/* ---------- 변경 요청 카드 ---------- */
+.cp-cr{display:flex;flex-direction:column;gap:8px}
+.cp-cr.open{border-color:var(--accent)}
+.cr-h{display:flex;flex-direction:column;gap:2px}.cr-h b{font-size:13px}.cr-q{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-i{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.cr-c{display:flex;flex-direction:column;gap:1px;padding:6px 8px;border-radius:8px;background:var(--raised);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+.cr-c b{font-size:11px;font-weight:600;color:var(--muted)}.cr-c.on{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 40%,transparent);color:var(--fg)}.cr-c.on b{color:var(--accent)}
+.cr-s{font-size:12.5px}.cr-d summary{font-size:12px;cursor:pointer;color:var(--muted)}.cr-d pre{margin:4px 0 0;font-size:11.5px;white-space:pre-wrap}
+/* ---------- 리비전 원장 ---------- */
+.rv-lv{padding:2px}.rv-lv button{padding:5px 10px;font-size:12.5px;font-family:inherit}
+.rv-body.lgmode{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+.rv-ledger{overflow:auto;padding:10px 14px;border-bottom:1px solid var(--line)}.rv-ledger[hidden]{display:none}
+.rv-left[hidden]{display:none}
+.ledger-wrap{overflow:auto}
+.lgt{border-collapse:separate;border-spacing:0;font-size:12.5px}
+.lgt th,.lgt td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top;white-space:nowrap}
+.lgt thead th{position:sticky;top:0;background:var(--surface);z-index:1}
+.lgt thead th button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid transparent;background:none;font:inherit;color:inherit;cursor:pointer;padding:4px 6px;border-radius:8px;min-width:64px}
+.lgt thead th button:hover{border-color:var(--accent)}
+.lgt thead th button b{font-family:var(--f-mono)}.lgt thead th button small{color:var(--muted);font-size:10.5px}
+.lgt thead th.tag button{box-shadow:inset 0 -3px 0 var(--accent)}
+.lgt th.a button,.lgt td.a{background:color-mix(in srgb,#d9534f 12%,transparent)}.lgt th.b button,.lgt td.b{background:color-mix(in srgb,#2e9e5b 14%,transparent)}
+.lgt tbody th{color:var(--muted);font-weight:600;position:sticky;left:0;background:var(--surface)}
+.lgt td.has{text-align:center}.lc{display:inline-block;min-width:22px;padding:1px 6px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font:600 11.5px var(--f-mono)}
+.lgt tr.lg-st td,.lgt tr.why td{color:var(--muted)}.lgt td.cur{background:color-mix(in srgb,var(--line) 40%,transparent)}
+/* ---------- 분해 · 부품 띠 ---------- */
+.cad-exp{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.cad-exp input{width:110px;accent-color:var(--accent)}
+.pstrip{display:flex;flex-direction:column;gap:4px;margin:4px 0 8px}
+.pchip{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 8px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font:inherit;font-size:12px;color:var(--fg);text-align:left;cursor:pointer}
+.pchip b{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}.pchip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pchip small{color:var(--muted);white-space:nowrap}
+.pchip:hover{border-color:var(--accent)}.pchip.on{border-color:#ff8a1f;background:color-mix(in srgb,#ff8a1f 14%,transparent)}.pchip.na{cursor:default;opacity:.7}
 </style>
 
 </head>
@@ -1096,6 +1158,7 @@ body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-ste
       </div>
     </div>
     <div class="top-r">
+      <button type="button" class="btn sm ov-btn" id="ovBtn" title="전체 보기 — 시스템 → 회로 → PCB → 기구를 한 화면에" aria-label="전체 보기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="5" height="4"/><rect x="9.5" y="2.5" width="5" height="4"/><rect x="1.5" y="9.5" width="5" height="4"/><rect x="9.5" y="9.5" width="5" height="4"/><path d="M6.5 4.5h3M4 6.5v3M12 6.5v3"/></svg>전체</button>
       <nav class="steps" aria-label="설계 단계">
         <button type="button" data-step="1" id="st-1" title="요구사항 → 블록과 인터페이스 (결정론 / AI)"><i>1</i><span>시스템 다이어그램</span></button>
         <button type="button" data-step="2" id="st-2" title="다이어그램의 블록으로 회로도 생성·편집"><i>2</i><span>회로</span></button>
@@ -1141,6 +1204,7 @@ body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-ste
       <div class="home-ex"><span>예제로 열기</span><button type="button" class="pill vbtn" data-hex="sense">SENSE-32</button><button type="button" class="pill vbtn" data-hex="mcu">MCU DC 모터</button><button type="button" class="pill vbtn" data-hex="bldc">MCU BLDC 3상</button><button type="button" class="pill vbtn" data-hex="tc364">AURIX TC364</button></div>
     </div>
   </section>
+  <div class="strip" id="strip" hidden aria-label="설계 지표"></div>
   <div class="work"><div class="wsa">
   <div class="main">
     <div class="rh" id="hLeft"></div>
@@ -1229,6 +1293,7 @@ body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-ste
     <div class="sys-next"><span class="msg" id="npMsg"></span><button class="btn primary" id="npGen">다음: 회로 생성 →</button></div>
   </aside>
 </div>
+<section class="ov-ws" id="ovWs" hidden aria-label="전체 보기"></section>
 <div class="cad-ws" id="cadWs" hidden>
   <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
   <div class="cad-mid"><div class="cad-sel" id="cadSel" hidden role="region" aria-label="선택한 기구 요소"><div class="cad-sel-top"><b>선택</b><span id="cadSelChips" class="sel-chips"></span><button type="button" class="btn sm" id="cadSelClr">선택 해제</button></div><div class="cad-sel-in"><input id="cadSelIn" type="text" autocomplete="off" aria-label="선택한 요소에 대한 요청"><button type="button" class="btn primary sm" id="cadSelMode">적용</button></div></div><div class="cad-vp" id="cadVpSlot"></div></div>
@@ -9386,7 +9451,8 @@ function cadRightHTML(){
       return`<li class="fe${fu?' fu':''}${sel.has(e.key)?' sel':''}" data-el="${esc(e.key)}" tabindex="0" role="option" aria-selected="${sel.has(e.key)}"><span class="fk mono">${fu?esc(e.key):''}</span><span class="fl">${esc(e.label)}<small>${esc(e.desc)}</small></span>${fu?`<button class="pill vbtn" data-fdel="${esc(e.key)}" title="${esc(e.key)} 삭제" aria-label="${esc(e.key)} 삭제">×</button>`:'<span></span>'}</li>`;}).join('');}).join('')}
     ${ov.map(([k,v])=>`<li class="fo"><span class="fk">지정</span><span>${esc(TEXT2CAD.OVER[k]||k)} ${v}</span><button class="pill vbtn" data-oclr="${esc(k)}" title="자동으로" aria-label="${esc(TEXT2CAD.OVER[k]||k)} 자동으로">×</button></li>`).join('')}</ul>
   ${C.feats.length||ov.length?'':'<p class="lead" style="margin:4px 0 0">아래 Text-to-CAD 콘솔에 문장이나 명령으로 형상을 더하세요. 예: 오른쪽 벽에 M16 케이블 글랜드 2개, 장착 탭 4개 M5</p>'}
-  <div class="acts" style="flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="cadOpen">${H.open?'커버 닫기':'커버 열기'}</button><button class="btn primary sm" id="cadExp">CAD 내보내기</button><button class="btn sm" id="cadDwg" title="조립도·부품도(HSG-01 베이스, HSG-02 커버)·기구 BOM·SCAD를 zip으로">도면·BOM</button><button class="btn sm" id="cadBom" title="기구 BOM을 엑셀로">BOM Excel</button><button class="btn sm" id="cadUndo"${H.undo.length?'':' disabled'}>실행 취소</button></div>
+  <div class="acts" style="flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="cadOpen">${H.open?'커버 닫기':'커버 열기'}</button><label class="cad-exp" title="커버를 들어 올려 분해 상태로 봅니다"><span>분해</span><input type="range" id="cadExplode" min="0" max="100" value="${H.open?100:(H.explode||0)}" aria-label="분해 간격"></label><button class="btn primary sm" id="cadExp">CAD 내보내기</button><button class="btn sm" id="cadDwg" title="조립도·부품도(HSG-01 베이스, HSG-02 커버)·기구 BOM·SCAD를 zip으로">도면·BOM</button><button class="btn sm" id="cadBom" title="기구 BOM을 엑셀로">BOM Excel</button><button class="btn sm" id="cadUndo"${H.undo.length?'':' disabled'}>실행 취소</button></div>
+  <p class="h" style="margin-top:12px">부품 (BOM 순)</p>${typeof nxPartStrip==='function'?nxPartStrip(R):''}
   <details class="thsec" open><summary><b>치수 · 해석</b><span>${d.mass.toFixed(0)} g</span></summary>
     <table class="stbl"><tbody>
       <tr><td>외형</td><td class="mono">${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm</td></tr>
@@ -9414,6 +9480,8 @@ function cadBind(){
   Rr.querySelectorAll('[data-oclr]').forEach(b=>b.addEventListener('click',()=>cadExec(`set ${b.dataset.oclr} auto`)));
   Rr.querySelector('#cadOpen')?.addEventListener('click',()=>cadExec(H.open?'close':'open'));
   Rr.querySelector('#cadExp')?.addEventListener('click',()=>cadExec('export zip'));
+  const ex=Rr.querySelector('#cadExplode');if(ex)ex.addEventListener('input',()=>{H.explode=+ex.value;H.open=false;const ob=Rr.querySelector('#cadOpen');if(ob)ob.textContent='커버 열기';mech3D();});
+  Rr.querySelectorAll('[data-pkeys]').forEach(b=>b.addEventListener('click',e=>{const keys=(b.dataset.pkeys||'').split(',').filter(Boolean);if(!keys.length)return;const add=e.shiftKey||e.ctrlKey||e.metaKey;if(add)keys.forEach(k=>{if(!CADSEL.keys.includes(k))CADSEL.keys.push(k);});else CADSEL.keys=keys;cadSelChanged();}));
   Rr.querySelector('#cadDwg')?.addEventListener('click',()=>exportMechParts('zip'));Rr.querySelector('#cadBom')?.addEventListener('click',()=>exportMechParts('bom'));
   Rr.querySelector('#cadUndo')?.addEventListener('click',()=>cadExec('undo'));
 }
@@ -9522,7 +9590,7 @@ function mechGroup(R){
   // selected elements: orange, more opaque
   if(CADSEL.keys.length){const on=new Set(CADSEL.keys);const hi=new THR.MeshStandardMaterial({color:0xff8a1f,emissive:0x7a3300,roughness:0.5,transparent:true,opacity:0.72,side:THR.DoubleSide,depthWrite:false});
     grp.traverse(o=>{if(o.isMesh&&o.userData.el&&(on.has(o.userData.el)||on.has('base')&&o.parent===base&&!/^(boss|screw|ped|F)/.test(o.userData.el)||on.has('lid')&&o.parent===lid&&!/^(ped|F)/.test(o.userData.el)))o.material=hi;});}
-  lid.position.z=mechCfg().open?Math.max(25,g.Ho*0.9):0;grp.userData.base=base;grp.userData.lid=lid;return grp;
+  lid.position.z=typeof nxExplodeZ==='function'?nxExplodeZ(g):(mechCfg().open?Math.max(25,g.Ho*0.9):0);grp.userData.base=base;grp.userData.lid=lid;return grp;
 }
 function mech3D(){if(!G3||!G3.root)return;const old=G3.root.children.find(o=>o.userData&&o.userData.housing);if(old){G3.root.remove(old);disposeTree(old);}
   const H=BD.housing;if(H&&H.show){try{G3.root.add(mechGroup(mechRun()));}catch(e){console.error(e);toast('하우징 3D를 만들지 못했습니다: '+e.message);}}G3.dirty=true;}
@@ -9572,7 +9640,7 @@ async function cadRunCmd(line,by){
     case'report':return HOUSING.text(mechRun());
     case'compare':return HOUSING.compareText(mechRun());
     case'show':case'hide':if(HS.ws!=='cad')setWorkspace('cad');return'3D에 하우징을 표시합니다.';
-    case'open':case'close':H.open=r.action==='open';if(HS.ws!=='cad')setWorkspace('cad');mech3D();cadRender();return H.open?'커버를 열었습니다.':'커버를 닫았습니다.';
+    case'open':case'close':H.open=r.action==='open';H.explode=H.open?100:0;if(HS.ws!=='cad')setWorkspace('cad');mech3D();cadRender();return H.open?'커버를 열었습니다.':'커버를 닫았습니다.';
     case'export':{if(by==='ai')return'내보내기는 사용자가 직접 실행합니다 (export '+r.kind+').';const fn=await mechExport(r.kind);return fn?`${fn} 내려받기`:'내려받기를 취소했습니다.';}
     case'undo':case'redo':{const from=r.action==='undo'?H.undo:H.redo,to=r.action==='undo'?H.redo:H.undo;if(!from.length)return r.action==='undo'?'되돌릴 것이 없습니다.':'다시 실행할 것이 없습니다.';
       to.push(JSON.stringify({inp:H.inp,cad:H.cad}));const s=JSON.parse(from.pop());H.inp=s.inp;H.cad=s.cad;H.R=null;const R=mechRun();cadRefresh();return(r.action==='undo'?'실행 취소':'다시 실행')+'\n'+cadBrief(R);}
@@ -9751,8 +9819,9 @@ function hsisOnFirmware(){if(!HS.H||!BD)return;hsisRun();if(HS.ws==='hsis')rende
 function setWorkspace(w){
   const prev=HS.ws;if(prev==='cad'&&w!=='cad')cadLeave();
   HS.ws=w;$$('[data-ws]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ws===w?'true':'false'));
-  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';$('#boardCtl').hidden=w!=='board';tip.hidden=true;
+  $('.main').hidden=w!=='board';$('#hsisWs').hidden=w!=='hsis';$('#cadWs').hidden=w!=='cad';$('#sysWs').hidden=w!=='sys';const ov=$('#ovWs');if(ov)ov.hidden=w!=='ov';const ob=$('#ovBtn');if(ob)ob.setAttribute('aria-pressed',w==='ov'?'true':'false');$('#boardCtl').hidden=w!=='board';tip.hidden=true;
   if(typeof stepPaint==='function')setTimeout(stepPaint,0);
+  if(w==='ov'){if(typeof nxOvRender==='function')setTimeout(()=>nxOvRender(true),0);return;}
   if(w==='cad'){cadEnter();return;}
   if(w==='sys'){sysEnter();return;}
   if(w==='hsis'){if(!HS.H)hsisLoadSample();renderHSIS();}
@@ -12287,7 +12356,7 @@ function stepPaint(){const cur=stepCur();const real=!!(BD&&!BD.blank);const done
   pcbGatePaint();planGatePaint();
   $$('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>2&&!real||k===2&&!real&&!(NP.chooser&&NP.plan&&NP.plan.blocks.length);b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
   $$('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
-  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');if(typeof copCtx==='function')copCtx();if(typeof modePaint==='function')modePaint();}
+  const hs=$('#ws-hsis');if(hs)hs.setAttribute('aria-selected',HS.ws==='hsis'?'true':'false');if(typeof copCtx==='function')copCtx();if(typeof modePaint==='function')modePaint();if(typeof nxStripPaint==='function')nxStripPaint();}
 $$('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));
 
 /* ---------- AI 코파일럿 분할: 설계 도우미 + 오른쪽 도킹 패널 + 고정 패널 새 창 ----------
@@ -12333,6 +12402,8 @@ function copFill(d,e){
     const msg=e.state==='undone'?`되돌렸습니다 (${e.n}단계).`:e.state==='kept'?`${S0?S0.label+' ':''}변경 ${e.n}단계를 유지했습니다.`
       :e.state==='stale'?'그 뒤에 다른 변경이 있어 여기서는 되돌릴 수 없습니다. 실행 취소(Ctrl+Z)로 한 단계씩 되돌리세요.'
       :`${e.by==='ai'?'Claude가 ':''}${S0?S0.label+' ':''}설계를 ${e.n}단계 바꿨습니다.`;
+    if(e.cr&&e.cr.total){d.className+=' cp-cr'+(e.state==='open'?' open':'');const title=e.state==='open'?`변경 요청 · ${e.by==='ai'?'Claude':'직접 실행'} · ${e.n}건`:e.state==='kept'?`변경 승인${e.rev?' · '+esc(e.rev):''}`:e.state==='undone'?'되돌림':'변경 (되돌리기 불가)';
+      d.innerHTML=tag+`<div class="cr-h"><b>${title}</b>${e.req?`<span class="cr-q">${esc(e.req.slice(0,80))}</span>`:''}</div>`+(typeof nxCrHTML==='function'?nxCrHTML(e):'')+(e.state==='open'?`<span class="cp-acts"><button type="button" class="btn primary sm" data-approve="${e.cid}">승인 · 리비전 기록</button><button type="button" class="btn sm" data-cmp="${e.cid}">겹쳐 보기</button><button type="button" class="btn sm" data-undo="${e.cid}">되돌리기</button></span>`:'');return;}
     d.innerHTML=tag+`<span class="cp-msg">${msg}</span>`+(e.state==='open'?`<span class="cp-acts"><button type="button" class="btn sm" data-keep="${e.cid}">유지</button><button type="button" class="btn sm" data-undo="${e.cid}">되돌리기</button></span>`:'');return;}
   if(k==='ask'){d.className='cp cp-ask'+(e.state==='open'?' open':'');const sel=e.sel||[];
     if(e.state!=='open'){d.innerHTML=tag+`<div class="ask-q">${esc(e.q)}</div><div class="ask-a">${e.answer==null?'건너뜀 (기본값)':'→ '+esc(e.answer)}</div>`;return;}
@@ -12379,11 +12450,11 @@ async function copSubmit(text,opt){
   if(src!=='np'&&!BD){copSay('err','보드가 없습니다. 1단계에서 회로를 만들거나 파일을 불러오세요.');return;}
   COP.hist.push(text);if(COP.hist.length>100)COP.hist.shift();COP.hi=COP.hist.length;
   COP.log.forEach(x=>{if(x.k==='chg'&&x.state==='open'){x.state='kept';copPaint(x.src,x,true);}});
-  const m=copMark(src);COP.pending=text;
+  const m=copMark(src);COP.pending=text;const before=typeof nxCrBefore==='function'?nxCrBefore():null;const cid0=COP.seq;
   try{await COP_EXEC[src](text);}catch(err){console.error(err);copPaint(src,{k:'err',t:err&&err.message||String(err)});}
   finally{COP.pending=null;}
   const n=copDiff(src,m);
-  if(n>0){const u=COP_UNDO[src]();copPaint(src,{k:'chg',t:'',n,by:AIM.mode==='ai'?'ai':'user',state:'open',u,after:u[u.length-1]});}
+  if(n>0){const u=COP_UNDO[src]();const cmds=COP.log.filter(x=>x.cid>cid0&&x.k==='cmd'&&x.t).map(x=>String(x.t).replace(/\s+\(Claude\)$/,'').trim());const cr=typeof nxCrImpact==='function'?nxCrImpact(before):null;copPaint(src,{k:'chg',t:'',n,by:AIM.mode==='ai'?'ai':'user',state:'open',u,after:u[u.length-1],cr,cmds,req:text});}
   copBusyPaint();}
 function copCtx(){
   if(!$('#copilot'))return;const src=copActive(),S0=COP_SRC[src];
@@ -12421,7 +12492,7 @@ function copEnsure(){
   el.querySelector('#copSrc').addEventListener('change',e=>{COP.src=e.target.value;copCtx();});
   el.querySelector('#copClr').addEventListener('click',()=>{COP.log=[];copRebuild();});
   el.querySelector('#copChips').addEventListener('click',e=>{const b=e.target.closest('[data-cchip]');if(!b||copBusyAny())return;const[,c,g]=copChips(copActive())[+b.dataset.cchip]||[];if(c)copSubmit(AIM.mode==='ai'?g:c);});
-  el.querySelector('#copLog').addEventListener('click',e=>{const k=e.target.closest('[data-keep]'),u=e.target.closest('[data-undo]');if(k){copChg(k.dataset.keep,'keep');return;}if(u){copChg(u.dataset.undo,'undo');return;}
+  el.querySelector('#copLog').addEventListener('click',e=>{const k=e.target.closest('[data-keep]'),u=e.target.closest('[data-undo]');const ap=e.target.closest('[data-approve]'),cp=e.target.closest('[data-cmp]');if(ap){const x=COP.log.find(z=>z.cid===+ap.dataset.approve);if(x&&typeof nxCrApprove==='function')nxCrApprove(x);return;}if(cp){if(typeof nxCrCompare==='function')nxCrCompare();return;}if(k){copChg(k.dataset.keep,'keep');return;}if(u){copChg(u.dataset.undo,'undo');return;}
     const d=e.target.closest('.cp-ask');const b=e.target.closest('button');if(d&&b){const ent=COP.log.find(x=>x.cid===+d.dataset.cid);if(ent&&ent.state==='open')copAskClick(d,ent,b);}});
   el.querySelector('#copLog').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const d=e.target.closest('.cp-ask');if(!d||e.target.tagName!=='INPUT')return;e.preventDefault();const ent=COP.log.find(x=>x.cid===+d.dataset.cid);const ok=d.querySelector('[data-ok]');if(ent&&ent.state==='open'&&ok)copAskClick(d,ent,ok);});
   aimBind(el);cliAiProbe().then(aimPaint);
@@ -12827,7 +12898,7 @@ async function runExport(x,sel){const[a,b,c]=x.split(':');
 /* ---------- 리비전 기록: every design change becomes a revision (auto), named revisions on request, and a compare view ----------
    Storage: IndexedDB in this browser (meta in "revs", gzip snapshots in "snaps"), memory when IndexedDB is unavailable. The history
    exports to one JSON file (to keep in Git next to the design) and imports back. Snapshots come from REVLOG (src/core/revlog.js). */
-var REV={pid:null,list:[],on:true,sig:null,pend:null,last:null,lastId:null,bdRef:null,logCid:0,busy:false,open:false,a:null,b:'cur',tab:'sum',layer:'T',cache:new Map(),mem:new Map(),view:null,saveOpen:false};
+var REV={lv:'list',pid:null,list:[],on:true,sig:null,pend:null,last:null,lastId:null,bdRef:null,logCid:0,busy:false,open:false,a:null,b:'cur',tab:'sum',layer:'T',cache:new Map(),mem:new Map(),view:null,saveOpen:false};
 try{if(localStorage.getItem('aod.rev.auto')==='0')REV.on=false;}catch(e){}
 const REV_MAX_AUTO=150;
 /* ---- storage ---- */
@@ -12896,12 +12967,13 @@ async function revTick0(){if(!BD||REV.busy||typeof APP!=='undefined'&&APP.mode==
     if(REV.on||!REV.list.length){const cause=switching?(BD.source==='예제'||BD.demo?`예제 열기 · ${BD.name}`:BD.source==='신규 설계'?'신규 설계 시작':`파일 열기 · ${BD.source||''}`):(revCauses()||(BD.variantLabel?`회로 생성 · ${BD.variantLabel}`:'보드 교체'));
       await revRecord({cause:REV.nextCause||cause,first:REV.nextCause||cause});REV.nextCause=null;}
     else{REV.bdRef=BD;REV.sig=revSig();}revBadge();return;}
+  if(typeof nxStripPaint==='function')nxStripPaint();if(typeof nxOvRender==='function')nxOvRender();
   const s=revSig();if(s===REV.sig){REV.pend=null;revBadge();return;}
   revBadge(true);if(!REV.on)return;if(REV.pend!==s){REV.pend=s;return;}
   await revRecord();}
 setInterval(()=>{if(document.visibilityState!=='hidden')revTick();},2000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&REV.on&&BD&&REV.sig&&revSig()!==REV.sig)revRecord();});
-function revOnBoard(cause){if(cause)REV.nextCause=cause;setTimeout(revTick,60);}
+function revOnBoard(cause){if(typeof nxStripPaint==='function')setTimeout(nxStripPaint,0);if(cause)REV.nextCause=cause;setTimeout(revTick,60);}
 /* ---- header badge ---- */
 function revBadge(dirty){const b=$('#revBtn');if(!b)return;const last=REV.list[REV.list.length-1];const d=dirty!=null?dirty:!!(BD&&REV.sig&&REV.bdRef===BD&&revSig()!==REV.sig);
   const t=b.querySelector('.rv-n');if(t)t.textContent=last?revLabel(last):'—';b.classList.toggle('dirty',d);b.title=`리비전 기록 · ${last?revLabel(last)+' · '+new Date(last.time).toLocaleString('ko-KR'):'아직 없음'}${d?' · 저장되지 않은 변경 있음':''}${REV.on?'':' · 자동 기록 꺼짐'}`;}
@@ -12915,20 +12987,22 @@ function revListHTML(){const rows=REV.list.slice().reverse();const dirty=!!(BD&&
     <p class="rv-s">${esc(r.summary||'')}</p>${r.cause?`<p class="rv-c" title="${esc(r.cause)}">${esc(r.cause)}</p>`:''}${r.note?`<p class="rv-c">📝 ${esc(r.note)}</p>`:''}</div>
     <div class="rv-act"><button type="button" class="pill vbtn" data-open="${esc(r.id)}" title="이 리비전으로 되돌리기 (지금 상태는 먼저 기록)">복원</button><button type="button" class="pill vbtn" data-name="${esc(r.id)}" title="이름·단계·메모">이름</button>${r.n>1||REV.list.length===1?`<button type="button" class="pill vbtn" data-del="${esc(r.id)}" title="삭제" aria-label="r${r.n} 삭제">×</button>`:''}</div></li>`).join('')}`;}
 function revDialogHTML(){const P=BD?BD.name:'';return`<div class="sheet rv" role="dialog" aria-modal="true" aria-labelledby="rvT"><div class="sheet-h"><h2 id="rvT">리비전 기록 · ${esc(P)}</h2>
-  <div class="rv-tools"><label class="rv-auto"><input type="checkbox" id="rvAuto"${REV.on?' checked':''}> 자동 기록</label><button type="button" class="btn primary sm" data-rv="save">지금 저장…</button><button type="button" class="btn sm" data-rv="export" title="기록 전체를 JSON 파일로 (Git에 함께 커밋)">기록 내보내기</button><button type="button" class="btn sm" data-rv="import">불러오기</button><input type="file" id="rvFile" accept=".json,application/json" hidden></div>
+  <div class="rv-tools"><div class="seg rv-lv" role="tablist" aria-label="보기"><button role="tab" type="button" data-lv="list" aria-selected="${REV.lv!=='ledger'}">목록</button><button role="tab" type="button" data-lv="ledger" aria-selected="${REV.lv==='ledger'}">원장</button></div><label class="rv-auto"><input type="checkbox" id="rvAuto"${REV.on?' checked':''}> 자동 기록</label><button type="button" class="btn primary sm" data-rv="save">지금 저장…</button><button type="button" class="btn sm" data-rv="export" title="기록 전체를 JSON 파일로 (Git에 함께 커밋)">기록 내보내기</button><button type="button" class="btn sm" data-rv="import">불러오기</button><input type="file" id="rvFile" accept=".json,application/json" hidden></div>
   <button class="x" data-close aria-label="닫기">✕</button></div>
   <form class="rv-save" id="rvSave"${REV.saveOpen?'':' hidden'}><input id="rvLbl" placeholder="이름 (예: A01, EVT1, 고객 검토용)" maxlength="40" aria-label="리비전 이름"><select id="rvStage" aria-label="단계">${STAGES.map(s=>`<option value="${s}">${s||'단계 없음'}</option>`).join('')}</select><input id="rvNote" placeholder="메모 (바뀐 이유, ECO 번호…)" maxlength="300" aria-label="메모"><button class="btn primary sm" type="submit">저장</button><button class="btn sm" type="button" data-rv="cancel">취소</button></form>
-  <div class="rv-body"><div class="rv-left"><p class="lead rv-help">설계를 바꾸면 2–4초 뒤 자동으로 기록됩니다. A·B를 골라 비교하고, [복원]으로 되돌립니다.</p><ol class="rv-list" id="rvList">${revListHTML()}</ol></div>
+  <div class="rv-body${REV.lv==='ledger'?' lgmode':''}"><div class="rv-ledger" id="rvLedger"${REV.lv==='ledger'?'':' hidden'}>${REV.lv==='ledger'&&typeof nxLedgerHTML==='function'?nxLedgerHTML():''}</div><div class="rv-left"${REV.lv==='ledger'?' hidden':''}><p class="lead rv-help">설계를 바꾸면 2–4초 뒤 자동으로 기록됩니다. A·B를 골라 비교하고, [복원]으로 되돌립니다.</p><ol class="rv-list" id="rvList">${revListHTML()}</ol></div>
   <div class="rv-right" id="rvCmp"><p class="lead">비교할 두 리비전을 고르세요.</p></div></div></div>`;}
 async function openRevisions(){if(!BD){toast('먼저 보드를 열거나 신규 설계를 시작하세요.');return;}await revTick();if(BD.pid!==REV.pid)await revSwitch(BD.pid||revPidFor(BD));
   let m=$('#revDlg');if(!m){m=document.createElement('div');m.className='modal';m.id='revDlg';document.body.appendChild(m);revBind(m);}
   const dirty=REV.sig&&revSig()!==REV.sig;const L=REV.list;if(REV.a==null||(REV.a!=='cur'&&!L.some(r=>r.id===REV.a))){REV.b=dirty||L.length<2?'cur':L[L.length-1].id;REV.a=L.length?(dirty||L.length<2?L[L.length-1].id:L[L.length-2].id):null;}
   m.innerHTML=revDialogHTML();m.hidden=false;REV.open=true;revCompareRender();}
-function revRender(){const m=$('#revDlg');if(!m||m.hidden)return;const ol=$('#rvList');if(ol)ol.innerHTML=revListHTML();revCompareRender();}
+function revRender(){const m=$('#revDlg');if(!m||m.hidden)return;const ol=$('#rvList');if(ol)ol.innerHTML=revListHTML();const lg=$('#rvLedger');if(lg&&REV.lv==='ledger'&&typeof nxLedgerHTML==='function')lg.innerHTML=nxLedgerHTML();revCompareRender();}
 function revClose(){const m=$('#revDlg');if(m)m.hidden=true;REV.open=false;}
 function revBind(m){
   m.addEventListener('click',async e=>{if(e.target===m||e.target.closest('[data-close]')){revClose();return;}
     const t=e.target.closest('button');if(!t)return;const ds=t.dataset;
+    if(ds.lv){REV.lv=ds.lv;m.innerHTML=revDialogHTML();revCompareRender();return;}
+    if(ds.lcol){const id=ds.lcol;if(e.shiftKey){REV.a=id;if(REV.b===id)REV.b='cur';}else{REV.b=id;if(REV.a===id)REV.a=null;if(REV.a==null){const L=REV.list;const i=L.findIndex(r=>r.id===id);REV.a=id==='cur'?(L.length?L[L.length-1].id:null):(i>0?L[i-1].id:null);}}revRender();return;}
     if(ds.a){REV.a=ds.a;if(REV.b===REV.a)REV.b=ds.a==='cur'?(REV.list[REV.list.length-1]||{}).id:'cur';revRender();return;}
     if(ds.b){REV.b=ds.b;if(REV.a===REV.b)REV.a=ds.b==='cur'?(REV.list[REV.list.length-1]||{}).id:'cur';revRender();return;}
     if(ds.tab){REV.tab=ds.tab;revCompareRender();return;}
@@ -13059,6 +13133,101 @@ function revCompareXlsx(){const a=revLabel(rvMeta(REV.a)||'cur').replace(/\s+/g,
 // the revision table, for the design report and the design workbook
 function revAoa(){return[['리비전','이름','단계','시각','위치','변경 요약','원인','메모','부품','넷','층'],...REV.list.map(r=>[`r${r.n}`,r.label,r.stage,new Date(r.time).toLocaleString('ko-KR'),r.where||'',r.summary,r.cause,r.note,r.stats&&r.stats.comps,r.stats&&r.stats.nets,r.stats&&r.stats.layers])];}
 {const b=$('#revBtn');if(b)b.addEventListener('click',openRevisions);}
+
+/* ---------- next UI: status strip (cockpit), overview canvas (pipeline), change-request impact (review studio),
+   revision ledger lanes, exploded housing + part strip. All read the data the app already has; nothing here owns state
+   except the overview/explode view settings. ---------- */
+var NX={key:'',m:null,ovKey:'',ovOn:false,ovRaf:0};
+/* ---- design metrics, cached on the revision fingerprint ---- */
+function nxBomTotal(B){const P=typeof PARTS!=='undefined'?PARTS:null;if(!P||!B)return null;let t=0,n=0;B.comps.forEach(c=>{const info=P.find(c.mpn)||P.find(c.val);const pr=P.price(c.mpn,info&&info.cat);if(pr!=null){t+=pr;n++;}});return{total:+t.toFixed(2),priced:n};}
+function nxMetrics(){if(!BD)return null;const key=(typeof revSig==='function'?revSig():'')+'|'+(PE&&PE.drc?PE.drc.length:-1)+'|'+(typeof SR!=='undefined'&&SR.th?1:0)+'|'+(HS.res?HS.ver:0);if(key===NX.key&&NX.m)return NX.m;
+  const m={blank:!!BD.blank,pcb:!BD.blank&&!BD.pcbPending};
+  const bom=nxBomTotal(BD);m.bom=bom?bom.total:null;m.bomN=bom?bom.priced:0;m.parts=BD.comps.length;
+  try{const last=typeof REV!=='undefined'&&REV.list.slice().reverse().find(r=>r.kind==='tag'||r.label);if(last&&last.stats&&last.stats.bom!=null)m.bomRef={label:revLabel(last),v:last.stats.bom};}catch(e){}
+  if(m.pcb){try{if(PE&&(!PE.drc||!PE.drcKey||PE.drcKey!==key)){PCBEDIT.prepare(BD);PE.drc=PCBEDIT.drc(BD);PE.rats=PCBEDIT.ratsnest(BD);PE.drcKey=key;}m.drc=PE.drc.length;m.open=PE.rats?PE.rats.length:null;}catch(e){m.drc=null;}}
+  try{const sheets=BD.schSheets||(typeof schData==='function'&&schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:m.pcb?'all':'sch',sheets});m.gPct=g.pct;m.gCrit=g.crit;m.gFail=g.rules.filter(r=>r.status==='fail').length;m.gVerdict=g.verdict;}catch(e){}
+  if(HS.H){try{if(!HS.res)hsisRun();const st=Object.values(HS.res.status||{});m.hsis={ok:st.filter(x=>x==='ok').length,n:st.length,err:st.filter(x=>x==='err').length};}catch(e){}}
+  if(typeof SR!=='undefined'&&SR.th&&SR.th.parts){const hot=SR.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'sim'};}
+  if(m.pcb&&typeof mechRun==='function'&&BD.housing){try{const R=mechRun();m.house={mass:R.d.mass,ok:R.d.feasible,ip:R.d.ip,mat:R.d.m.short,warn:R.warn.length};if(!m.tj){const hot=R.d.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'housing',lim:R.inp.tj};}}catch(e){}}
+  if(NP.arch)m.blocks={n:NP.arch.blocks.length,links:(NP.arch.links||[]).length};m.answers=NP.answers?Object.keys(NP.answers).length:0;
+  NX.key=key;NX.m=m;return m;}
+/* ---- status strip under the header ---- */
+function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP!=='undefined'?APP.mode:'viewer';if(!BD||mode==='home'){el.hidden=true;return;}el.hidden=false;
+  const m=nxMetrics();if(!m)return;const st=typeof stepCur==='function'?stepCur():0;const f=(v,d)=>v==null?'—':(+v).toFixed(d==null?0:d);
+  const tile=(k,label,val,sub,tone,title)=>`<button type="button" class="st-t${tone?' '+tone:''}" data-st="${k}" title="${esc(title||'')}"><span class="st-l">${esc(label)}</span><span class="st-v mono">${val}</span><span class="st-s">${sub||''}</span></button>`;
+  const T=[];
+  if(st===1||m.blank){T.push(tile('sys','시스템 블록',m.blocks?m.blocks.n:'—',m.blocks?`연결 ${m.blocks.links}`:'요구사항부터','', '1단계'));T.push(tile('ans','AI 확인 정보',m.answers,'필수 정보 질문·답','', '요구사항 보강'));}
+  if(!m.blank){
+    const dB=m.bomRef&&m.bom!=null?m.bom-m.bomRef.v:null;
+    T.push(tile('bom','BOM 참고가',m.bom!=null?'$'+f(m.bom,2):'—',dB!=null&&Math.abs(dB)>=0.005?`${m.bomRef.label} 대비 ${dB>0?'+':'−'}$${f(Math.abs(dB),2)}`:`부품 ${m.parts} · 단가 ${m.bomN}종`,dB>0.5?'warn':'','참고 단가 합 (추정) · 데이터시트 탭'));
+    T.push(tile('guide','가이드라인',m.gPct!=null?f(m.gPct)+'%':'—',m.gPct!=null?`${m.gVerdict.split(' ')[0]} · 미준수 ${m.gFail}`:'',m.gCrit?'err':m.gPct!=null&&m.gPct<75?'warn':'ok','회로·PCB 설계 가이드라인 점검'));
+    if(m.pcb){T.push(tile('drc','DRC',m.drc==null?'—':m.drc,m.open!=null?`미배선 ${m.open} · ${BD.copperLayers||2}층`:`${BD.copperLayers||2}층`,m.drc>0?'err':m.drc===0?'ok':'','배치·배선 규칙 검사 (누르면 목록)'));}
+    else T.push(tile('pcb','PCB','3단계','배치·배선 전','', 'PCB 설계 시작'));
+    T.push(tile('hsis','HSIS',m.hsis?`${m.hsis.ok}/${m.hsis.n}`:'—',m.hsis?(m.hsis.err?`오류 ${m.hsis.err}`:'모두 정상'):'HSIS 없음',m.hsis&&m.hsis.err?'err':m.hsis?'ok':'','HW/SW 인터페이스 사양 검사'));
+    T.push(tile('tj','최고 Tj',m.tj?f(m.tj.v)+' °C':'—',m.tj?`${m.tj.ref} · ${m.tj.src==='sim'?'열 해석':'하우징 추정'}`:'시뮬레이션 전',m.tj&&m.tj.lim&&m.tj.v>m.tj.lim?'err':m.tj&&m.tj.v>100?'warn':'','열 분포 시뮬레이션'));
+    T.push(tile('house','하우징',m.house?f(m.house.mass)+' g':'—',m.house?`${m.house.mat} · ${m.house.ip}${m.house.ok?' · 조건 만족':' · 조건 미달'}`:(m.pcb?'4단계':'PCB 뒤'),m.house?(m.house.ok?'ok':'warn'):'','기구 CAD'));}
+  const html=T.join('');if(el.dataset.h!==html){el.dataset.h=html;el.innerHTML=`<div class="st-row">${html}</div>`;}}
+{const el=$('#strip');if(el)el.addEventListener('click',e=>{const b=e.target.closest('[data-st]');if(!b)return;const k=b.dataset.st;
+  if(k==='sys'||k==='ans')setStep(1);else if(k==='pcb')setStep(3);else if(k==='bom'){if(typeof dockTab==='function')dockTab('ds');}
+  else if(k==='guide'){if(typeof copSubmit==='function'){setStep(BD.pcbPending?2:3);copSubmit('guide check');}}
+  else if(k==='drc'){setStep(3);if(typeof peDrcList==='function'){if(!PE.on&&typeof peBegin==='function')peBegin();peDrcList();}}
+  else if(k==='hsis')setWorkspace('hsis');else if(k==='tj'){setStep(3);if(typeof dockTab==='function')dockTab('sim');if(typeof SR!=='undefined'){SR.tab='th';if(typeof renderSim==='function')renderSim();}}
+  else if(k==='house')setStep(4);});}
+/* ---- overview workspace: the four stages as connected frames (what made what), plus the AI bar ---- */
+function nxOvShow(){if(!BD)return;setWorkspace('ov');}
+function nxOvRender(force){const host=$('#ovWs');if(!host||host.hidden)return;const key=(typeof revSig==='function'?revSig():'')+'|'+(typeof REV!=='undefined'?REV.list.length:0);if(!force&&key===NX.ovKey)return;NX.ovKey=key;
+  const m=nxMetrics()||{};const real=!!(BD&&!BD.blank);const blocks=NP.arch?NP.arch.blocks.length:0;
+  let sys='',sch='',pcb='',mech='';
+  try{sys=typeof sysSVG==='function'?sysSVG('hw'):'';}catch(e){}
+  try{if(real){const d=schData();if(d&&d.sheets.length)sch=schSVG(0);}}catch(e){}
+  try{if(m.pcb)pcb=boardSVG('T',null,{bg:'#f7f6f2'});}catch(e){}
+  try{if(m.pcb&&BD.housing&&typeof mechRun==='function')mech=HOUSING.drawingSVG(mechRun(),BD.name,{scale:2});}catch(e){}
+  const req=($('#npReq')||{}).value||'';const lastRev=typeof REV!=='undefined'&&REV.list.length?revLabel(REV.list[REV.list.length-1]):'';
+  const fr=(n,title,sub,body,on,empty)=>`<section class="ov-f${on?' on':''}${body?'':' empty'}" data-ov-step="${n}" aria-label="${esc(title)}"><header><b>${n} · ${esc(title)}</b><span>${esc(sub||'')}</span></header><div class="ov-b">${body||`<p class="lead">${esc(empty||'아직 없습니다.')}</p>`}</div></section>`;
+  const arrow=(label)=>`<div class="ov-a" aria-hidden="true"><svg width="100%" height="34" viewBox="0 0 120 34"><path d="M4 17h98" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="5 4" fill="none"/><path d="M100 11l12 6-12 6z" fill="var(--accent)"/></svg><span>${esc(label||'')}</span></div>`;
+  const st=typeof stepCur==='function'?stepCur():0;
+  host.innerHTML=`<div class="ov-wrap">
+    <div class="ov-head"><div><p class="home-k">전체 보기</p><h2>${esc(BD.name)} <small>${esc(lastRev?lastRev+' · ':'')}${esc(BD.source||'')}</small></h2></div>
+      <div class="ov-acts"><button type="button" class="btn sm" data-ov="rev">리비전 기록</button><button type="button" class="btn sm" data-ov="export">내보내기</button><button type="button" class="btn primary sm" data-ov="back">${st>0?`${st}단계로 돌아가기`:'보드 보기로'}</button></div></div>
+    <div class="ov-grid">
+      ${fr(1,'시스템 다이어그램',blocks?`블록 ${blocks} · 연결 ${(NP.arch.links||[]).length}${m.answers?' · AI 확인 '+m.answers:''}`:'요구사항 분석 전',sys?`<div class="ov-svg">${sys}</div>`:'' ,st===1,req?'요구사항은 있지만 다이어그램이 없습니다. [블록 다이어그램 만들기]':'1단계에서 요구사항을 적으면 AI가 블록 다이어그램을 그립니다.')}
+      ${arrow(BD.variantLabel?`회로 생성 · ${BD.variantLabel}`:'회로 생성')}
+      ${fr(2,'회로',real?`부품 ${BD.comps.length} · 넷 ${BD.netOrder.length}${m.bom!=null?' · BOM $'+m.bom.toFixed(2):''}${m.gPct!=null?' · 가이드라인 '+m.gPct.toFixed(0)+'%':''}`:'생성 전',sch?`<div class="ov-svg">${sch}</div>`:'',st===2,'다이어그램에서 회로 안(저가형·표준·확장형)을 골라 생성합니다.')}
+      ${arrow(m.pcb?`배치·배선 · ${BD.copperLayers||2}층${BD.pcbPlan&&BD.pcbPlan.strategy?' · '+BD.pcbPlan.strategy:''}`:'배치·배선')}
+      ${fr(3,'PCB',m.pcb?`${BD.W.toFixed(1)} × ${BD.H.toFixed(1)} mm · ${BD.copperLayers||2}층 · DRC ${m.drc==null?'—':m.drc}${m.open?' · 미배선 '+m.open:''}`:'배치 전',pcb?`<div class="ov-svg">${pcb}</div>`:'',st===3,'3단계 PCB 설계 시작 카드에서 층·크기·전략을 고르면 배치·배선합니다.')}
+      ${arrow(m.house?`하우징 · ${m.house.mat} · ${m.house.ip}`:'하우징')}
+      ${fr(4,'기구',m.house?`${m.house.mass.toFixed(0)} g · ${m.house.ok?'조건 만족':'조건 미달'}${m.house.warn?' · 경고 '+m.house.warn:''}`:'설계 전',mech?`<div class="ov-svg">${mech}</div>`:'',st===4,'PCB가 배치되면 4단계에서 보호 하우징을 설계합니다.')}
+    </div>
+    <form class="ov-cmd" id="ovCmd"><label for="ovIn">AI에게 · 지금 단계 콘솔로 보냅니다</label><div class="ov-in"><input id="ovIn" type="text" autocomplete="off" placeholder="예: CAN 종단을 스플릿으로 바꾸고 PCB·HSIS까지 반영해줘"><button type="submit" class="btn primary">실행</button></div></form>
+  </div>`;}
+{const host=$('#ovWs');if(host){host.addEventListener('click',e=>{const a=e.target.closest('[data-ov]');if(a){const k=a.dataset.ov;if(k==='rev'&&typeof openRevisions==='function')openRevisions();else if(k==='export'&&typeof openExport==='function')openExport();else if(k==='back'){const st=NX.ovFrom||(BD&&BD.blank?1:3);if(st)setStep(st);else setWorkspace('board');}return;}
+    const f=e.target.closest('[data-ov-step]');if(f){const n=+f.dataset.ovStep;if(typeof APP!=='undefined'&&APP.mode==='viewer'&&n!==1&&n!==4){setWorkspace('board');if(n===2)setView('sch');return;}setStep(n);}});
+  host.addEventListener('submit',e=>{if(e.target.id!=='ovCmd')return;e.preventDefault();const i=$('#ovIn');const v=i.value.trim();if(!v)return;i.value='';const st=NX.ovFrom||(BD&&BD.blank?1:3);if(st)setStep(st);else setWorkspace('board');if(typeof dockTab==='function')dockTab('ai');copSubmit(v);});}
+  const b=$('#ovBtn');if(b)b.addEventListener('click',()=>{if(HS.ws==='ov'){const st=NX.ovFrom||3;if(BD&&BD.blank)setStep(1);else if(typeof APP!=='undefined'&&APP.mode==='viewer')setWorkspace('board');else setStep(st);return;}NX.ovFrom=typeof stepCur==='function'?stepCur():0;nxOvShow();});}
+/* ---- change request: what one copilot run changed, as counts the card shows ---- */
+function nxCrBefore(){try{return{json:JSON.stringify(REVLOG.snapshot(revLive())),bom:nxBomTotal(BD)};}catch(e){return null;}}
+function nxCrImpact(before){if(!before||typeof REVLOG==='undefined')return null;try{const A=REVLOG.restore(JSON.parse(before.json),PCB);const B=revLive();const d=REVLOG.compare(A,B);const b2=nxBomTotal(BD);
+    const c=d.counts;const out={summary:d.summary,total:d.total,circuit:c.bom+c.nets+c.pins,pcb:c.place+c.layers+c.board,hsis:c.hsis,house:c.housing,sys:c.arch+c.plan,bomD:before.bom&&b2?+(b2.total-before.bom.total).toFixed(2):null,bom:d.board.bom};return out;}catch(e){console.warn(e);return null;}}
+function nxCrHTML(e){const I=e.cr;if(!I)return'';const chip=(l,v,on)=>`<span class="cr-c${on?' on':''}"><b>${esc(l)}</b>${esc(v)}</span>`;
+  const bom=I.bomD==null||Math.abs(I.bomD)<0.005?'변경 없음':`${I.bomD>0?'+':'−'}$${Math.abs(I.bomD).toFixed(2)}`;
+  const cmds=(e.cmds||[]);
+  return`<div class="cr-i">${chip('시스템',I.sys?I.sys+' 변경':'—',I.sys)}${chip('회로',I.circuit?`${I.bom.added.length?'+'+I.bom.added.length+' ':''}${I.bom.removed.length?'−'+I.bom.removed.length+' ':''}${I.bom.changed.length?'값 '+I.bom.changed.length:''}`.trim()||I.circuit+' 변경':'—',I.circuit)}${chip('PCB',I.pcb?I.pcb+' 변경':'—',I.pcb)}${chip('HSIS',I.hsis?I.hsis+' 변경':'—',I.hsis)}${chip('기구',I.house?I.house+' 변경':'—',I.house)}${chip('BOM',bom,I.bomD!=null&&Math.abs(I.bomD)>=0.005)}</div>
+    <div class="cr-s">${esc(I.summary)}</div>${cmds.length?`<details class="cr-d"><summary>실행한 명령 ${cmds.length}개</summary><pre>${esc(cmds.join('\n'))}</pre></details>`:''}`;}
+async function nxCrApprove(e){if(!e||e.state!=='open')return;e.state='kept';if(typeof revRecord==='function'){const n=(COP.crSeq=(COP.crSeq||0)+1);const r=await revRecord({tag:true,label:`CR-${n}`,note:(e.cr&&e.cr.summary||'').slice(0,300),cause:(e.cmds||[]).slice(0,5).join(' · ')||'변경 요청 승인'});e.rev=r?revLabel(r):'';toast(r?`승인 · ${revLabel(r)}로 기록했습니다.`:'승인했습니다.');}copPaint(e.src,e,true);}
+function nxCrCompare(){if(typeof openRevisions!=='function')return;const L=typeof REV!=='undefined'?REV.list:[];REV.a=L.length?L[L.length-1].id:null;REV.b='cur';REV.tab='pcb';openRevisions();}
+/* ---- revision ledger: lanes (domains) × revisions ---- */
+function nxLedgerHTML(){const L=typeof REV!=='undefined'?REV.list:[];if(!L.length)return'<p class="lead">기록이 없습니다.</p>';const rows=L.slice(-14);
+  const lanes=[['sys','시스템·계획',r=>r.counts?r.counts.arch+r.counts.plan:0],['circuit','회로',r=>r.counts?r.counts.bom+r.counts.nets+r.counts.pins:0],['pcb','PCB',r=>r.counts?r.counts.board+r.counts.place+r.counts.layers:0],['house','기구',r=>r.counts?r.counts.housing:0],['hsis','HSIS',r=>r.counts?r.counts.hsis:0]];
+  const head=rows.map(r=>`<th class="${r.kind==='tag'||r.label?'tag':''}${REV.a===r.id?' a':''}${REV.b===r.id?' b':''}" data-col="${esc(r.id)}" title="${esc(r.summary||'')}"><button type="button" data-lcol="${esc(r.id)}"><b>r${r.n}</b>${r.label?`<span class="rv-tag">${esc(r.label)}</span>`:''}<small>${revTime(r.time)}</small></button></th>`).join('')+`<th class="cur${REV.b==='cur'?' b':''}${REV.a==='cur'?' a':''}"><button type="button" data-lcol="cur"><b>현재</b><small>${REV.sig&&revSig()!==REV.sig?'변경 있음':'같음'}</small></button></th>`;
+  const body=lanes.map(([k,l,f])=>`<tr><th>${esc(l)}</th>${rows.map(r=>{const n=f(r);return`<td class="${n?'has':''}${REV.a===r.id?' a':''}${REV.b===r.id?' b':''}">${n?`<span class="lc">${n}</span>`:''}</td>`;}).join('')}<td class="cur"></td></tr>`).join('');
+  const stats=`<tr class="lg-st"><th>부품 · 넷 · 층</th>${rows.map(r=>`<td class="${REV.a===r.id?'a':''}${REV.b===r.id?' b':''}"><small>${r.stats?`${r.stats.comps}·${r.stats.nets}·${r.stats.layers}`:''}</small></td>`).join('')}<td class="cur"><small>${BD?`${BD.comps.length}·${BD.netOrder.length}·${BD.copperLayers||2}`:''}</small></td></tr>`;
+  const cause=`<tr class="why"><th>원인</th>${rows.map(r=>`<td class="${REV.a===r.id?'a':''}${REV.b===r.id?' b':''}"><small title="${esc(r.cause||'')}">${esc((r.cause||'').slice(0,28))}</small></td>`).join('')}<td class="cur"></td></tr>`;
+  return`<div class="ledger-wrap"><table class="lgt"><thead><tr><th>${L.length>14?`최근 14 / ${L.length}`:'영역 \\ 리비전'}</th>${head}</tr></thead><tbody>${body}${stats}${cause}</tbody></table></div><p class="lead rv-help">열을 누르면 B, Shift+클릭은 A. 숫자는 직전 리비전 대비 바뀐 항목 수입니다.</p>`;}
+/* ---- exploded housing: lid lifts by the slider; the part strip selects BOM items in 3D ---- */
+function nxExplodeZ(g){const H=mechCfg();const k=H.open?1:(H.explode||0)/100;return k*Math.max(25,g.Ho*0.9);}
+function nxPartStrip(R){if(!R)return'';const bom=HOUSING.mechBom(R);const d=R.d;const map=r=>{if(r.pn==='HSG-01')return['base'];if(r.pn==='HSG-02')return['lid'];if(r.pn==='HSG-10')return['edge:T'];if(r.pn==='HSG-20')return d.screws.map((s,i)=>'screw:'+i);if(r.pn==='HSG-22')return d.sup.map((s,i)=>'boss:'+i);
+    if(r.pn==='HSG-30'||r.pn==='HSG-31'){const ids=(r.note||'').match(/F\d+/g)||[];return ids;}if(r.pn==='HSG-40'){const m=r.name.match(/\(([^)]+)\)/);return m?['ped:'+m[1]]:[];}if(r.pn==='HSG-50'){const m=r.name.match(/\(([^)]+)\)/);return m?['win:'+m[1]]:[];}return[];};
+  return`<div class="pstrip" role="list" aria-label="기구 부품">${bom.filter(r=>r.src!=='별도').map(r=>{const keys=map(r);const on=keys.length&&keys.every(k=>CADSEL.keys.includes(k));return`<button type="button" role="listitem" class="pchip${on?' on':''}${keys.length?'':' na'}" data-pkeys="${esc(keys.join(','))}" title="${esc(r.spec)}"><b>${esc(r.pn)}</b><span>${esc(r.name)}</span><small>${r.qty}${r.unit==='EA'?'':r.unit}${r.cost!=null?' · $'+r.cost:''}</small></button>`;}).join('')}</div>`;}
 
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));

@@ -1,6 +1,7 @@
 <style>
 /* ---------- AI 코파일럿 분할: workspace | right dock (설계 도우미 · 정보 · 시뮬레이션) ---------- */
-.app{grid-template-rows:auto minmax(0,1fr)}
+.app{grid-template-rows:auto auto minmax(0,1fr)}
+.app>.strip[hidden]{display:none}
 .work{position:relative;display:grid;grid-template-columns:minmax(0,1fr) var(--dock,400px);gap:12px;min-height:0;min-width:0}
 .work:has(>.dock.wide){grid-template-columns:minmax(0,1fr) max(var(--dock,400px),452px)}
 .app.dock-off .work,.app.dock-empty .work{grid-template-columns:minmax(0,1fr)}

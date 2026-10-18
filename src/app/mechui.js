@@ -48,7 +48,8 @@ function cadRightHTML(){
       return`<li class="fe${fu?' fu':''}${sel.has(e.key)?' sel':''}" data-el="${esc(e.key)}" tabindex="0" role="option" aria-selected="${sel.has(e.key)}"><span class="fk mono">${fu?esc(e.key):''}</span><span class="fl">${esc(e.label)}<small>${esc(e.desc)}</small></span>${fu?`<button class="pill vbtn" data-fdel="${esc(e.key)}" title="${esc(e.key)} 삭제" aria-label="${esc(e.key)} 삭제">×</button>`:'<span></span>'}</li>`;}).join('');}).join('')}
     ${ov.map(([k,v])=>`<li class="fo"><span class="fk">지정</span><span>${esc(TEXT2CAD.OVER[k]||k)} ${v}</span><button class="pill vbtn" data-oclr="${esc(k)}" title="자동으로" aria-label="${esc(TEXT2CAD.OVER[k]||k)} 자동으로">×</button></li>`).join('')}</ul>
   ${C.feats.length||ov.length?'':'<p class="lead" style="margin:4px 0 0">아래 Text-to-CAD 콘솔에 문장이나 명령으로 형상을 더하세요. 예: 오른쪽 벽에 M16 케이블 글랜드 2개, 장착 탭 4개 M5</p>'}
-  <div class="acts" style="flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="cadOpen">${H.open?'커버 닫기':'커버 열기'}</button><button class="btn primary sm" id="cadExp">CAD 내보내기</button><button class="btn sm" id="cadDwg" title="조립도·부품도(HSG-01 베이스, HSG-02 커버)·기구 BOM·SCAD를 zip으로">도면·BOM</button><button class="btn sm" id="cadBom" title="기구 BOM을 엑셀로">BOM Excel</button><button class="btn sm" id="cadUndo"${H.undo.length?'':' disabled'}>실행 취소</button></div>
+  <div class="acts" style="flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="cadOpen">${H.open?'커버 닫기':'커버 열기'}</button><label class="cad-exp" title="커버를 들어 올려 분해 상태로 봅니다"><span>분해</span><input type="range" id="cadExplode" min="0" max="100" value="${H.open?100:(H.explode||0)}" aria-label="분해 간격"></label><button class="btn primary sm" id="cadExp">CAD 내보내기</button><button class="btn sm" id="cadDwg" title="조립도·부품도(HSG-01 베이스, HSG-02 커버)·기구 BOM·SCAD를 zip으로">도면·BOM</button><button class="btn sm" id="cadBom" title="기구 BOM을 엑셀로">BOM Excel</button><button class="btn sm" id="cadUndo"${H.undo.length?'':' disabled'}>실행 취소</button></div>
+  <p class="h" style="margin-top:12px">부품 (BOM 순)</p>${typeof nxPartStrip==='function'?nxPartStrip(R):''}
   <details class="thsec" open><summary><b>치수 · 해석</b><span>${d.mass.toFixed(0)} g</span></summary>
     <table class="stbl"><tbody>
       <tr><td>외형</td><td class="mono">${g.Lo.toFixed(1)} × ${g.Wo.toFixed(1)} × ${g.Ho.toFixed(1)} mm</td></tr>
@@ -76,6 +77,8 @@ function cadBind(){
   Rr.querySelectorAll('[data-oclr]').forEach(b=>b.addEventListener('click',()=>cadExec(`set ${b.dataset.oclr} auto`)));
   Rr.querySelector('#cadOpen')?.addEventListener('click',()=>cadExec(H.open?'close':'open'));
   Rr.querySelector('#cadExp')?.addEventListener('click',()=>cadExec('export zip'));
+  const ex=Rr.querySelector('#cadExplode');if(ex)ex.addEventListener('input',()=>{H.explode=+ex.value;H.open=false;const ob=Rr.querySelector('#cadOpen');if(ob)ob.textContent='커버 열기';mech3D();});
+  Rr.querySelectorAll('[data-pkeys]').forEach(b=>b.addEventListener('click',e=>{const keys=(b.dataset.pkeys||'').split(',').filter(Boolean);if(!keys.length)return;const add=e.shiftKey||e.ctrlKey||e.metaKey;if(add)keys.forEach(k=>{if(!CADSEL.keys.includes(k))CADSEL.keys.push(k);});else CADSEL.keys=keys;cadSelChanged();}));
   Rr.querySelector('#cadDwg')?.addEventListener('click',()=>exportMechParts('zip'));Rr.querySelector('#cadBom')?.addEventListener('click',()=>exportMechParts('bom'));
   Rr.querySelector('#cadUndo')?.addEventListener('click',()=>cadExec('undo'));
 }
@@ -184,7 +187,7 @@ function mechGroup(R){
   // selected elements: orange, more opaque
   if(CADSEL.keys.length){const on=new Set(CADSEL.keys);const hi=new THR.MeshStandardMaterial({color:0xff8a1f,emissive:0x7a3300,roughness:0.5,transparent:true,opacity:0.72,side:THR.DoubleSide,depthWrite:false});
     grp.traverse(o=>{if(o.isMesh&&o.userData.el&&(on.has(o.userData.el)||on.has('base')&&o.parent===base&&!/^(boss|screw|ped|F)/.test(o.userData.el)||on.has('lid')&&o.parent===lid&&!/^(ped|F)/.test(o.userData.el)))o.material=hi;});}
-  lid.position.z=mechCfg().open?Math.max(25,g.Ho*0.9):0;grp.userData.base=base;grp.userData.lid=lid;return grp;
+  lid.position.z=typeof nxExplodeZ==='function'?nxExplodeZ(g):(mechCfg().open?Math.max(25,g.Ho*0.9):0);grp.userData.base=base;grp.userData.lid=lid;return grp;
 }
 function mech3D(){if(!G3||!G3.root)return;const old=G3.root.children.find(o=>o.userData&&o.userData.housing);if(old){G3.root.remove(old);disposeTree(old);}
   const H=BD.housing;if(H&&H.show){try{G3.root.add(mechGroup(mechRun()));}catch(e){console.error(e);toast('하우징 3D를 만들지 못했습니다: '+e.message);}}G3.dirty=true;}
@@ -234,7 +237,7 @@ async function cadRunCmd(line,by){
     case'report':return HOUSING.text(mechRun());
     case'compare':return HOUSING.compareText(mechRun());
     case'show':case'hide':if(HS.ws!=='cad')setWorkspace('cad');return'3D에 하우징을 표시합니다.';
-    case'open':case'close':H.open=r.action==='open';if(HS.ws!=='cad')setWorkspace('cad');mech3D();cadRender();return H.open?'커버를 열었습니다.':'커버를 닫았습니다.';
+    case'open':case'close':H.open=r.action==='open';H.explode=H.open?100:0;if(HS.ws!=='cad')setWorkspace('cad');mech3D();cadRender();return H.open?'커버를 열었습니다.':'커버를 닫았습니다.';
     case'export':{if(by==='ai')return'내보내기는 사용자가 직접 실행합니다 (export '+r.kind+').';const fn=await mechExport(r.kind);return fn?`${fn} 내려받기`:'내려받기를 취소했습니다.';}
     case'undo':case'redo':{const from=r.action==='undo'?H.undo:H.redo,to=r.action==='undo'?H.redo:H.undo;if(!from.length)return r.action==='undo'?'되돌릴 것이 없습니다.':'다시 실행할 것이 없습니다.';
       to.push(JSON.stringify({inp:H.inp,cad:H.cad}));const s=JSON.parse(from.pop());H.inp=s.inp;H.cad=s.cad;H.R=null;const R=mechRun();cadRefresh();return(r.action==='undo'?'실행 취소':'다시 실행')+'\n'+cadBrief(R);}

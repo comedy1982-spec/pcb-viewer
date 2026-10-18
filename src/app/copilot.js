@@ -41,6 +41,8 @@ function copFill(d,e){
     const msg=e.state==='undone'?`되돌렸습니다 (${e.n}단계).`:e.state==='kept'?`${S0?S0.label+' ':''}변경 ${e.n}단계를 유지했습니다.`
       :e.state==='stale'?'그 뒤에 다른 변경이 있어 여기서는 되돌릴 수 없습니다. 실행 취소(Ctrl+Z)로 한 단계씩 되돌리세요.'
       :`${e.by==='ai'?'Claude가 ':''}${S0?S0.label+' ':''}설계를 ${e.n}단계 바꿨습니다.`;
+    if(e.cr&&e.cr.total){d.className+=' cp-cr'+(e.state==='open'?' open':'');const title=e.state==='open'?`변경 요청 · ${e.by==='ai'?'Claude':'직접 실행'} · ${e.n}건`:e.state==='kept'?`변경 승인${e.rev?' · '+esc(e.rev):''}`:e.state==='undone'?'되돌림':'변경 (되돌리기 불가)';
+      d.innerHTML=tag+`<div class="cr-h"><b>${title}</b>${e.req?`<span class="cr-q">${esc(e.req.slice(0,80))}</span>`:''}</div>`+(typeof nxCrHTML==='function'?nxCrHTML(e):'')+(e.state==='open'?`<span class="cp-acts"><button type="button" class="btn primary sm" data-approve="${e.cid}">승인 · 리비전 기록</button><button type="button" class="btn sm" data-cmp="${e.cid}">겹쳐 보기</button><button type="button" class="btn sm" data-undo="${e.cid}">되돌리기</button></span>`:'');return;}
     d.innerHTML=tag+`<span class="cp-msg">${msg}</span>`+(e.state==='open'?`<span class="cp-acts"><button type="button" class="btn sm" data-keep="${e.cid}">유지</button><button type="button" class="btn sm" data-undo="${e.cid}">되돌리기</button></span>`:'');return;}
   if(k==='ask'){d.className='cp cp-ask'+(e.state==='open'?' open':'');const sel=e.sel||[];
     if(e.state!=='open'){d.innerHTML=tag+`<div class="ask-q">${esc(e.q)}</div><div class="ask-a">${e.answer==null?'건너뜀 (기본값)':'→ '+esc(e.answer)}</div>`;return;}
@@ -87,11 +89,11 @@ async function copSubmit(text,opt){
   if(src!=='np'&&!BD){copSay('err','보드가 없습니다. 1단계에서 회로를 만들거나 파일을 불러오세요.');return;}
   COP.hist.push(text);if(COP.hist.length>100)COP.hist.shift();COP.hi=COP.hist.length;
   COP.log.forEach(x=>{if(x.k==='chg'&&x.state==='open'){x.state='kept';copPaint(x.src,x,true);}});
-  const m=copMark(src);COP.pending=text;
+  const m=copMark(src);COP.pending=text;const before=typeof nxCrBefore==='function'?nxCrBefore():null;const cid0=COP.seq;
   try{await COP_EXEC[src](text);}catch(err){console.error(err);copPaint(src,{k:'err',t:err&&err.message||String(err)});}
   finally{COP.pending=null;}
   const n=copDiff(src,m);
-  if(n>0){const u=COP_UNDO[src]();copPaint(src,{k:'chg',t:'',n,by:AIM.mode==='ai'?'ai':'user',state:'open',u,after:u[u.length-1]});}
+  if(n>0){const u=COP_UNDO[src]();const cmds=COP.log.filter(x=>x.cid>cid0&&x.k==='cmd'&&x.t).map(x=>String(x.t).replace(/\s+\(Claude\)$/,'').trim());const cr=typeof nxCrImpact==='function'?nxCrImpact(before):null;copPaint(src,{k:'chg',t:'',n,by:AIM.mode==='ai'?'ai':'user',state:'open',u,after:u[u.length-1],cr,cmds,req:text});}
   copBusyPaint();}
 function copCtx(){
   if(!$('#copilot'))return;const src=copActive(),S0=COP_SRC[src];
@@ -129,7 +131,7 @@ function copEnsure(){
   el.querySelector('#copSrc').addEventListener('change',e=>{COP.src=e.target.value;copCtx();});
   el.querySelector('#copClr').addEventListener('click',()=>{COP.log=[];copRebuild();});
   el.querySelector('#copChips').addEventListener('click',e=>{const b=e.target.closest('[data-cchip]');if(!b||copBusyAny())return;const[,c,g]=copChips(copActive())[+b.dataset.cchip]||[];if(c)copSubmit(AIM.mode==='ai'?g:c);});
-  el.querySelector('#copLog').addEventListener('click',e=>{const k=e.target.closest('[data-keep]'),u=e.target.closest('[data-undo]');if(k){copChg(k.dataset.keep,'keep');return;}if(u){copChg(u.dataset.undo,'undo');return;}
+  el.querySelector('#copLog').addEventListener('click',e=>{const k=e.target.closest('[data-keep]'),u=e.target.closest('[data-undo]');const ap=e.target.closest('[data-approve]'),cp=e.target.closest('[data-cmp]');if(ap){const x=COP.log.find(z=>z.cid===+ap.dataset.approve);if(x&&typeof nxCrApprove==='function')nxCrApprove(x);return;}if(cp){if(typeof nxCrCompare==='function')nxCrCompare();return;}if(k){copChg(k.dataset.keep,'keep');return;}if(u){copChg(u.dataset.undo,'undo');return;}
     const d=e.target.closest('.cp-ask');const b=e.target.closest('button');if(d&&b){const ent=COP.log.find(x=>x.cid===+d.dataset.cid);if(ent&&ent.state==='open')copAskClick(d,ent,b);}});
   el.querySelector('#copLog').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const d=e.target.closest('.cp-ask');if(!d||e.target.tagName!=='INPUT')return;e.preventDefault();const ent=COP.log.find(x=>x.cid===+d.dataset.cid);const ok=d.querySelector('[data-ok]');if(ent&&ent.state==='open'&&ok)copAskClick(d,ent,ok);});
   aimBind(el);cliAiProbe().then(aimPaint);
