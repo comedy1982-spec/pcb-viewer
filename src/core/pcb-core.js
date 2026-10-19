@@ -478,6 +478,10 @@ const FP={};
   FP['HDR-1x2']={kind:'hdr',body:[2.54,5.08,2.5],pads:[1.27,-1.27].map((y,i)=>({n:''+(i+1),x:0,y,w:1.7,h:1.7,round:true,drill:1.0}))};
   FP['SOT-23']={kind:'ic',stand:0.05,body:[2.9,1.3,1.0],pads:[{n:'1',x:-0.95,y:-1.05,w:0.6,h:0.9},{n:'2',x:0.95,y:-1.05,w:0.6,h:0.9},{n:'3',x:0,y:1.05,w:0.6,h:0.9}]};
   FP['SMA']={kind:'diode',body:[4.3,2.6,2.1],pads:[{n:'1',x:-2.0,y:0,w:1.5,h:1.7},{n:'2',x:2.0,y:0,w:1.5,h:1.7}]};
+  FP['SOD-123']={kind:'diode',body:[2.7,1.6,1.2],pads:[{n:'1',x:-1.65,y:0,w:0.9,h:1.2},{n:'2',x:1.65,y:0,w:0.9,h:1.2}]};
+  // test points: a round SMD pad (probe) or a plated hole (pin)
+  FP['TP-1.5']={kind:'tp',body:[1.5,1.5,0.02],pads:[{n:'1',x:0,y:0,w:1.5,h:1.5,round:true}]};FP['TP-1.0']={kind:'tp',body:[1.0,1.0,0.02],pads:[{n:'1',x:0,y:0,w:1.0,h:1.0,round:true}]};
+  FP['TP-TH']={kind:'tp',body:[1.8,1.8,0.02],pads:[{n:'1',x:0,y:0,w:1.8,h:1.8,round:true,drill:1.0}]};
   // board-mount brushed DC motor (130 size can lying on a bracket); the rotor/fan is drawn only in 3D
   FP['MOTOR-130']={kind:'motor',body:[24,16,15.5],pads:[{n:'1',x:-14,y:2.5,w:2.2,h:2.2,round:true,drill:1.1},{n:'2',x:-14,y:-2.5,w:2.2,h:2.2,round:true,drill:1.1}]};
   // 20-pin TSSOP with exposed pad (pin 21)
@@ -552,6 +556,7 @@ function fromSpec(spec){
     else if(f&&kind==='elcap'){const[bw,bh]=f.body,x0=-bw/2-0.15,y0=-bh/2-0.15,x1=bw/2+0.15,y1=bh/2+0.15,ch=bw*0.28,g=1.25;
       S.push({t:'path',pts:[[x0+ch,y0],[x1,y0],[x1,-g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x1,g],[x1,y1],[x0+ch,y1],[x0,y1-ch],[x0,g]].map(p=>xf(p[0],p[1])),w:0.13},{t:'path',pts:[[x0,-g],[x0,y0+ch],[x0+ch,y0]].map(p=>xf(p[0],p[1])),w:0.13});
       const pl=[x0-0.9,y0+0.9];S.push({t:'seg',a:xf(pl[0]-0.5,pl[1]),b:xf(pl[0]+0.5,pl[1]),w:0.15},{t:'seg',a:xf(pl[0],pl[1]-0.5),b:xf(pl[0],pl[1]+0.5),w:0.15});}
+    else if(kind==='tp'){/* test point: the pad is the mark; only the reference text */}
     else if(f&&kind!=='chip'&&kind!=='led'){const m=0.3,[a,b,cc,d]=f.lbb,x0=a-m,y0=b-m,x1=cc+m,y1=d+m,L=Math.min(1.1,(x1-x0)/3,(y1-y0)/3);
       [[x0,y0,1,1],[x1,y0,-1,1],[x1,y1,-1,-1],[x0,y1,1,-1]].forEach(([px,py,sx,sy])=>S.push({t:'path',pts:[xf(px+sx*L,py),xf(px,py),xf(px,py+sy*L)],w:0.13}));
       if(f.dot){const[dx,dy]=xf(f.dot[0],f.dot[1]);S.push({t:'circle',x:dx,y:dy,r:0.25});}}

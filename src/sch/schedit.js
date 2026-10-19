@@ -129,6 +129,10 @@ const LIB=[
   {id:'FB',label:'페라이트 비드',prefix:'FB',val:'600Ω@100MHz',fp:'0603',pins:[['1',''],['2','']]},
   {id:'D',label:'다이오드',prefix:'D',val:'SS14',fp:'SMA',pins:[['1','K'],['2','A']]},
   {id:'LED',label:'LED',prefix:'D',val:'LED',fp:'LED-0603',kind:'led',pins:[['1','K'],['2','A']]},
+  {id:'TP',label:'테스트 포인트',prefix:'TP',val:'TP',fp:'TP-1.5',kind:'tp',pins:[['1','']]},
+  {id:'TVS',label:'TVS 다이오드',prefix:'D',val:'SMAJ5.0A',fp:'SMA',pins:[['1','K'],['2','A']]},
+  {id:'F',label:'퓨즈',prefix:'F',val:'1A',fp:'1206',pins:[['1',''],['2','']]},
+  {id:'Z',label:'제너 다이오드',prefix:'D',val:'BZT52C5V1',fp:'SOD-123',pins:[['1','K'],['2','A']]},
 ];
 function nextRef(sheets,prefix,B){const used=new Set();sheets.forEach(sh=>sh.symbols.forEach(s=>{if(!s.power)used.add(s.ref);}));if(B)B.comps.forEach(c=>used.add(c.ref));
   for(let i=1;;i++)if(!used.has(prefix+i))return prefix+i;}
@@ -137,15 +141,16 @@ function newPart(type,ref,at,vert){
   const pads=L.pins.map(([n,fn])=>({n,fn,net:null}));
   const c={ref,val:L.val,fp:L.fp,kind:L.kind||(type==='LED'?'led':''),pads};
   // diodes: anode left (pin 2), cathode right (pin 1) as drawn
-  const order=/^(D|LED)$/.test(type)?[pads[1],pads[0]]:pads;
-  const s=SCH.twoPin(c,order,!!vert);delete s._c;s.lib='auto';s.fp=L.fp;s.kind=c.kind;s._new=true;
+  const order=/^(D|LED|TVS|Z)$/.test(type)?[pads[1],pads[0]]:pads;
+  const s=pads.length===1?SCH.onePin(c,pads[0]):SCH.twoPin(c,order,!!vert);delete s._c;s.lib='auto';s.fp=L.fp;s.kind=c.kind;s._new=true;
   const a=anchor(s);moveSym(s,snap(at[0])-a[0],snap(at[1])-a[1]);
   return s;
 }
 // a board part that has no symbol yet, as a generic box (or 2-pin symbol)
 function boardPart(c,at){
   const uniq=[...new Map(c.pads.map(p=>[String(p.n),p])).values()];let s;
-  if(uniq.length===2&&/^(R|C|L|FB|D|LED|F|Y|X)\d/i.test(c.ref))s=SCH.twoPin(c,uniq,false);
+  if(uniq.length===1)s=SCH.onePin(c,uniq[0]);
+  else if(uniq.length===2&&/^(R|C|L|FB|D|LED|F|Y|X)\d/i.test(c.ref))s=SCH.twoPin(c,uniq,false);
   else{const half=Math.ceil(uniq.length/2);s=SCH.boxSym(c,{L:uniq.slice(0,half),R:uniq.slice(half),T:[],B:[]},()=>null).s;}
   delete s._c;const a=anchor(s);moveSym(s,snap(at[0])-a[0],snap(at[1])-a[1]);return s;
 }

@@ -59,6 +59,7 @@ kbd{background:#fff}
   <a href="#strip">지표 띠 · 전체 보기</a>
   <a href="#sim">시뮬레이션</a>
   <a href="#hsis">HSIS</a>
+  <a href="#circuit-ai">회로 보강 (TP · NC · 필터)</a>
   <a href="#parts">부품 교체 · 부품 라이브러리</a>
   <a href="#multi">멀티보드 시스템</a>
   <a href="#rev">리비전 기록 · 비교</a>
@@ -215,6 +216,17 @@ kbd{background:#fff}
   <li><b>MCAL 설정</b> · <b>테스트 케이스</b>(SWE.6/SYS.4) 생성과 내려받기.</li>
 </ul>
 <p>탭 머리의 <b>Excel</b>은 지금 탭의 표를, 내보내기 창의 "HSIS 전체"는 모든 표를 시트별로 저장합니다.</p>
+
+<h2 id="circuit-ai">회로 콘솔로 회로 보강 (테스트 포인트 · NC 핀 · 필터)</h2>
+<figure><img src="img/circuit-tp.jpg" alt="테스트 포인트와 직렬 페라이트 비드가 추가된 회로도"><figcaption>tp · insert FB 로 추가된 테스트 포인트와 전원선 비드</figcaption></figure>
+<p>2단계 회로 콘솔(결정론·AI 모드)에서 아래 명령으로 회로를 보강합니다. AI 모드에서는 "HSIS 기준으로 전원·아날로그 신호에 테스트 포인트 전부 달아줘", "U1 안 쓰는 핀 10k로 GND에 묶어줘", "U2 입력에 페라이트 비드 넣고 양쪽에 100nF" 같은 문장을 Claude가 이 명령들로 바꿔 실행하고, 마지막에 <code>apply</code>·<code>erc</code>까지 돌립니다.</p>
+<ul>
+  <li><code>hsis [검색어] [--cat power,analog,comm,…] [--notp]</code> — HSIS 신호 목록(분류 · MCU 핀 · 회로도 넷 · 테스트 포인트 유무). Claude가 대상을 고를 때 먼저 봅니다.</li>
+  <li><code>tp [--cat …] [--port P02*] [--nets A,B] [--fp TP-1.5|TP-1.0|TP-TH]</code> — HSIS 신호 넷마다 1핀 테스트 포인트 <code>TP1, TP2 …</code>를 넷 라벨 옆에 추가(이미 TP가 있는 넷은 건너뜀). <code>apply</code>로 보드에 1.5 mm 테스트 패드가 올라가고, HSIS 표의 <b>TP</b> 열과 검사(전원·아날로그·통신 신호의 TP 유무)에 반영됩니다. TP는 BOM 참고가에서 제외.</li>
+  <li><code>tie U1 --free [--net GND] [--val 10kΩ] [--type R|C] [--direct]</code> — 넷이 없는 핀(NC 표시 포함)을 저항/커패시터로, 또는 직접 넷에 묶습니다. <code>--pins 3,4,PA3</code>로 핀을 지정할 수 있습니다.</li>
+  <li><code>insert FB --at U2.3</code> — 핀의 넷에 직렬 부품(페라이트 비드 · 퓨즈 · 직렬 저항 · 다이오드) 삽입. 핀 쪽에 새 넷(<code>+12V_U2</code>)이 생깁니다. π 필터는 <code>insert FB</code> 뒤에 양쪽 넷에 <code>add C</code>.</li>
+  <li><code>add</code>의 <code>--pins</code>에 <b>부품 핀</b>(<code>U1.12</code>, <code>U1.PA3</code>)을 쓸 수 있습니다. 연결된 핀이면 그 넷을, 빈 핀이면 핀 기능 이름의 새 넷을 만들어 핀과 새 부품을 함께 잇습니다. 추가할 수 있는 종류: R · C · CP · L · FB · D · LED · TVS · Z(제너) · F(퓨즈) · TP.</li>
+</ul>
 
 <h2 id="parts">부품 교체 · 부품 라이브러리</h2>
 <figure><img src="img/parts-replace.jpg" alt="설계 도우미의 부품 교체 카드: 지금 부품과 후보 부품 비교"><figcaption>"U2를 AP2112K-3.3으로 바꿔줘" — 후보 카드(출처 배지 · 사양 · 핀 · 단가 차이)</figcaption></figure>

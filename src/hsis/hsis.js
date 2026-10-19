@@ -122,6 +122,10 @@ function check(B,H,arxml,mcuRef){
       if(okPins===pins.length)add('ok','PIN_NET',it.id,`MCU 핀 ${pins.join(', ')} → 회로도 넷 ${it.net||mcu.pads.find(p=>String(p.n)===pins[0]).net} 일치`);
     }else if(!pins.length)add('info','NO_PIN',it.id,'MCU 핀이 지정되지 않아 회로도 대조를 건너뜁니다.');
     if(it.net&&!B.nets[it.net]&&!Object.keys(B.nets).some(n=>netN(n)===netN(it.net)))add('err','NET_MISSING',it.id,`회로도 넷 ${it.net}이(가) 보드에 없습니다.`);
+    // 1b. test point (DFT): a TP* part on the signal's net
+    {const net=it.net||(mcu&&pins.length?(mcu.pads.find(p=>String(p.n)===pins[0])||{}).net:'');it._tp='';
+      if(net){const tp=B.comps.find(c=>/^TP\d/i.test(c.ref)&&c.pads.some(p=>p.net&&netN(p.net)===netN(net)));if(tp){it._tp=tp.ref;add('ok','TP',it.id,`테스트 포인트 ${tp.ref} (${net})`);}
+        else if(cat==='전원'||cat==='아날로그'||cat==='통신')add('info','TP_MISSING',it.id,`${cat} 신호 ${it.signal}에 테스트 포인트가 없습니다 (회로 콘솔: tp --cat ${cat==='전원'?'power':cat==='아날로그'?'analog':'comm'}).`);}}
     // 2. HW connection refs
     const refs=[...String(it.hw||'').matchAll(/\b([A-Z]{1,3}\d+)(?:\.([A-Za-z0-9]+))?/g)];
     refs.forEach(m=>{const c=B.byRef[m[1]];

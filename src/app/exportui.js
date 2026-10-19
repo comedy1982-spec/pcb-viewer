@@ -149,7 +149,7 @@ function expChecksAoa(){const rows=[['심각도','ID / 핀','메시지','코드'
 function hsisSheets(all){if(!HS.H){try{hsisLoadSample();}catch(e){}}if(!HS.H)return[];if(!HS.res)hsisRun();const out=[];const add=(name,fn)=>{try{out.push({name,html:fn()});}catch(e){console.warn(name,e);}};
   add('신호 표',tableHTML);if(all!==false){try{const pm=expPinmapAoa();if(pm)out.push({name:'MCU 핀 맵',aoa:pm});}catch(e){console.warn(e);}add('추적성',traceHTML);try{out.push({name:'검사 결과',aoa:expChecksAoa()});}catch(e){console.warn(e);}add('핀 추천',recHTML);add('MCAL 설정',mcalHTML);add('테스트 케이스',tcHTML);}
   return out;}
-function expBomAoa(){const m=new Map();BD.comps.forEach(c=>{const k=[c.val,c.fp,c.mpn||''].join('|');const it=m.get(k)||{refs:[],val:c.val,fp:c.fp,mpn:c.mpn||'',desc:c.desc||'',side:new Set()};it.refs.push(c.ref);it.side.add(c.side);m.set(k,it);});
+function expBomAoa(){const m=new Map();BD.comps.forEach(c=>{if(/^TP\d/i.test(c.ref))return;const k=[c.val,c.fp,c.mpn||''].join('|');const it=m.get(k)||{refs:[],val:c.val,fp:c.fp,mpn:c.mpn||'',desc:c.desc||'',side:new Set()};it.refs.push(c.ref);it.side.add(c.side);m.set(k,it);});
   const P=typeof PARTS!=='undefined'?PARTS:null;const rows=[['#','수량','참조','값','풋프린트','부품 번호','설명','면','참고 단가(USD, 추정)','소계']];let i=0,tot=0;
   [...m.values()].sort((a,b)=>a.refs[0].localeCompare(b.refs[0],undefined,{numeric:true})).forEach(it=>{const info=P&&(P.find(it.mpn)||P.find(it.val));const pr=P?P.price(it.mpn,info&&info.cat):null;const sub=pr!=null?+(pr*it.refs.length).toFixed(3):'';if(pr!=null)tot+=pr*it.refs.length;
     rows.push([++i,it.refs.length,it.refs.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).join(', '),it.val,it.fp,it.mpn,it.desc||(info?info.title:''),[...it.side].join('/'),pr!=null?pr:'',sub]);});

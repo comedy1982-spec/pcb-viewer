@@ -169,6 +169,12 @@ function twoPin(c,pads,vert){
   else{bodyOf(s);s.texts.push({s:c.ref,p:[0,-3.0],rot:0,fx:{size:1.27,h:'center',v:'middle'},role:'Reference'},{s:c.val||'',p:[0,3.0],rot:0,fx:{size:1.1,h:'center',v:'middle'},role:'Value'});}
   return finishBB(s,0.3);
 }
+/* one-pin symbol: a test point — small ring on a short stub, pin end below */
+function onePin(c,pad){const s={ref:c.ref,val:c.val,fp:c.fp,lib:'auto',power:false,x:0,y:0,rot:0,mir:'',g:[],pins:[],texts:[],_c:c,_one:true};
+  const p=[];for(let i=0;i<=20;i++){const t=i/20*2*Math.PI;p.push([0.9*Math.cos(t),-1.5+0.9*Math.sin(t)]);}s.g.push({t:'poly',pts:p,fill:'none',w:0.254});
+  s.pins.push({num:String(pad.n),name:'',p:[0,2.54],e:[0,-0.6],nameShow:false,numShow:false,_pad:pad});
+  bodyOf(s);s.texts.push({s:c.ref,p:[1.4,-2.2],rot:0,fx:{size:1.1,h:'left',v:'middle'},role:'Reference'},{s:c.val||'',p:[1.4,-0.6],rot:0,fx:{size:0.9,h:'left',v:'middle'},role:'Value'});
+  return finishBB(s,0.3);}
 // power / ground symbol pointing away from its pin along direction d
 function powerSym(net,at,d,gnd){
   const ux=DX[d],uy=DY[d],vx=-uy,vy=ux;const P=(a,b)=>[at[0]+ux*a+vx*b,at[1]+uy*a+vy*b];
@@ -539,6 +545,6 @@ function build(B,files){
   const c=connect(sheets,B);
   return{sheets,auto,groups:c.groups,matched:c.matched,total:c.total};
 }
-return{parseKicadSch,autoSchematic,connect,build,twoPin,powerSym,boxSym,finishBB,moveSym};
+return{parseKicadSch,autoSchematic,connect,build,twoPin,onePin,powerSym,boxSym,finishBB,moveSym};
 })();
 if(typeof module!=='undefined')module.exports=SCH;
