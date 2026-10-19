@@ -15,6 +15,11 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 아이콘 시안 적용 (v1.32.1)
+
+- 아이콘 제안서(앱 로고 L-04 "Trace A", 설계 단계 S-01~06, 핵심 기능 F-01~08, 지표 띠 M-01~06, 보기·창 V-01~04)를 `iconui.js`의 16-grid 선 아이콘으로 옮겼습니다. 단계 아이콘은 단계 색(파랑·호박·초록·보라), 기능 아이콘은 강조색 하나, 지표 띠 아이콘은 중립색(상태는 타일 테두리·점).
+- 로고: 머리글 브랜드 버튼과 파비콘(SVG data URL)을 배선·패드로 그린 "A"로 교체(`LOGO_SVG`, `logoApply`). `icon()`은 `|` 뒤에 채움 경로를 받습니다(층 선택의 가운데 층).
+
 ## 부품 교체 · 부품 라이브러리 (v1.32)
 
 - `src/core/partlib.js`: 부품 레코드 `{mpn,mfr,title,cat,pkg,fp,val,pins:[{num,name}],specs,price,pdf,page,src:user|builtin|ai|api,status,conf}`. CSV/Excel 표 가져오기(`parseTable`, 머리글 별칭 한/영), `toCsv`, 내장 `PARTS` 변환, `merge`(user > builtin > ai > api), `find/search`, 핀 역할(`role`: VIN/VOUT/GND/VCC/EN/FB/NC/PG/SDA/SCL/…), `mapPins`(이름 → 역할 → 번호, 같은 넷의 중복 핀은 merged), `plan`(경고·단가 차이), `aiPrompt/fromAi`(Claude JSON 스펙), `PROVIDERS`(mouser · nexar · custom), 알려진 핀 배열 `PINOUTS`(1117 계열·SOT-23-5 LDO·MCP1700·SOT-23 MOSFET·SMA 다이오드·CAN 트랜시버), `pageHTML`(데이터시트 요약).

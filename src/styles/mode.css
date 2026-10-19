@@ -241,6 +241,11 @@ body[data-mode="home"] .strip{display:none}
 
 /* ---------- 기능 아이콘 ---------- */
 svg.ic{width:14px;height:14px;flex:none;vertical-align:-2px;margin-right:5px;opacity:.9}
+/* stage colours (blue · amber · green · purple); feature icons one accent; metric tiles neutral */
+#st-1 svg.ic,[data-st="sys"] svg.ic{color:#4f8ff7}#st-2 svg.ic,#v-sch svg.ic{color:#e6a93a}#st-3 svg.ic,#ws-board svg.ic,[data-st="pcb"] svg.ic{color:#2fbf7a}#st-4 svg.ic,#ws-cad svg.ic{color:#9b7bff}
+#homeNew .hc-ico svg.ic{color:#4f8ff7}#homeOpen .hc-ico svg.ic{color:#2fbf7a}.hc-ico svg.ic{width:32px;height:32px;margin:0;opacity:1}#homeNew .hc-ico{background:color-mix(in srgb,#4f8ff7 14%,transparent)}#homeOpen .hc-ico{background:color-mix(in srgb,#2fbf7a 14%,transparent)}
+#dockTg svg.ic,#dk-ai svg.ic,#revBtn svg.ic,#expBtn svg.ic,#plBtn svg.ic,#dk-sim svg.ic,#ws-hsis svg.ic,[data-cmp] svg.ic{color:var(--accent)}
+.st-t svg.ic{color:var(--muted);opacity:1}
 .btn>svg.ic,.pill>svg.ic{width:14px;height:14px}
 .seg button>svg.ic{margin-right:4px}
 .steps button>svg.ic{margin-right:0;margin-left:2px;order:-1}
