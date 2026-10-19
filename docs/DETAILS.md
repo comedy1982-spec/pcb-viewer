@@ -15,6 +15,11 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 회로 해석 명령 analyze (v1.34)
+
+- `src/core/analyze.js`: `powerTree`(SIM.extractCircuit의 REG/LOAD/소스로 레일별 공급원·부하·디커플링·경고), `decap`(IC 전원 핀별 접지 커패시터·거리·심각도), `patterns`(RC/LC/FB-π/분압/풀업·풀다운/션트/LED 전류), `acSweep`(복소 MNA: R·C·L, 비드=0.1 Ω+L(Z@f), 다른 전원 레일 AC 접지, 1 V 소스, 로그 스윕, −3 dB·피크), `dcText`(SIM.dcop 요약). 단위 포맷 `fmt`.
+- `schcli.scAnalyze`(회로 콘솔, PCB 콘솔 `analyze`도 같은 함수): power · decap · rc · ac(--from/--to/--fmin/--fmax) · dc · ir(simui `irConfig/irPickNet/runIR`, --net/--total) · si(`runSI`, zmin/zmax·폭·비아·차동 쌍) · thermal/emc(`cliReport`) · all. 읽기 전용이라 질문 모드에서 허용되고, AI 시스템 프롬프트에 "숫자 질문은 analyze 먼저" 규칙. 규칙 해석: "해석/분석/디커플링/전원 트리/동작점/전압 강하" → analyze.
+
 ## 회로 콘솔 보강 명령 — 테스트 포인트 · NC 핀 · 직렬 삽입 (v1.33)
 
 - `schedit.LIB`에 `TP`(1핀, `SCH.onePin` 심볼, 풋프린트 `TP-1.5`/`TP-1.0`/`TP-TH`), `TVS`, `Z`(SOD-123), `F` 추가. `kindOf`는 `TP*`를 3D 몸체 없음으로, 실크는 참조만, BOM 참고가·BOM 표에서 제외.

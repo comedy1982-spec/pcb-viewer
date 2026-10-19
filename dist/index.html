@@ -8050,6 +8050,113 @@ return{family,make,name,ensure,lbb};
 
 </script>
 <script>
+/* Circuit analysis for the consoles (and Claude): power tree, decoupling audit, passive network patterns (RC/LC/divider/LED),
+   and a small-signal AC sweep of the passive network (complex MNA with R, L, C; ICs open, regulators as ideal sources).
+   Everything here reads the board model only; the MNA DC/transient engine and the copper IR-drop solver live in SIM. */
+const ANALYZE=(function(){
+"use strict";
+const parseVal=s=>{if(typeof SIM!=='undefined'&&SIM.parseVal)return SIM.parseVal(s);const m=String(s||'').replace(/Ω|ohm|F|H/gi,'').match(/^\s*([\d.]+)\s*([pnuµmkMG]?)/);if(!m)return NaN;return parseFloat(m[1])*({p:1e-12,n:1e-9,u:1e-6,'µ':1e-6,m:1e-3,k:1e3,M:1e6,G:1e9}[m[2]]||1);};
+const fmt=(v,u)=>{if(!isFinite(v))return'—';const a=Math.abs(v);const[k,s]=a>=1e9?[1e9,'G']:a>=1e6?[1e6,'M']:a>=1e3?[1e3,'k']:a>=1?[1,'']:a>=1e-3?[1e-3,'m']:a>=1e-6?[1e-6,'µ']:a>=1e-9?[1e-9,'n']:[1e-12,'p'];const x=v/k;return(Math.abs(x)>=100?x.toFixed(0):Math.abs(x)>=10?x.toFixed(1):x.toFixed(2))+' '+s+(u||'');};
+const isGnd=(B,n)=>!!n&&(B.netClass?B.netClass(n)==='접지':/^(GND|VSS|AGND|PGND|DGND|0V)/i.test(n));
+const isPwr=(B,n)=>!!n&&(B.netClass?B.netClass(n)==='전원':/^(\+|V(CC|DD|IN|BAT|BUS|SYS|M)|\d+V)/i.test(n));
+const nomV=n=>typeof SIM!=='undefined'&&SIM.nominalV?SIM.nominalV(n):(()=>{const m=String(n||'').match(/(\d+)V(\d+)?/i);return m?parseFloat(m[1]+'.'+(m[2]||'0')):0;})();
+const two=c=>{const n=[...new Set(c.pads.map(p=>p.net).filter(Boolean))];return n.length===2&&c.pads.length<=4?n:null;};
+const kind=c=>{const r=c.ref.toUpperCase();return/^(R|RN)\d/.test(r)?'R':/^C\d/.test(r)?'C':/^L\d/.test(r)?'L':/^FB\d/.test(r)?'FB':/^(D|LED)\d/.test(r)?(c.kind==='led'||/LED/i.test(c.val+' '+c.fp)?'LED':'D'):/^(U|IC|VR|PS)\d/.test(r)?'U':/^Q\d/.test(r)?'Q':/^(J|P|CN|USB|BT)\d/.test(r)?'J':/^TP\d/.test(r)?'TP':'X';};
+/* ---------- power tree ---------- */
+function powerTree(B){const ckt=typeof SIM!=='undefined'&&SIM.extractCircuit?SIM.extractCircuit(B):{els:[],srcs:[],gnd:null};
+  const regs=ckt.els.filter(e=>e.type==='REG').map(e=>({ref:e.ref,in:e.n[0],out:e.n[1],vset:e.vset,vdo:e.vdo}));
+  const rails=B.netOrder.filter(n=>isPwr(B,n)).map(n=>{const pads=B.nets[n].pads||[];const comps=[...new Set(pads.map(p=>p.ref))].map(r=>B.byRef[r]).filter(Boolean);
+    const ics=comps.filter(c=>kind(c)==='U'||kind(c)==='Q'),caps=comps.filter(c=>kind(c)==='C'&&two(c)&&two(c).some(x=>isGnd(B,x))),conns=comps.filter(c=>kind(c)==='J');
+    const reg=regs.find(r=>r.out===n);const src=ckt.srcs.find(s=>s.n[0]===n);const feeds=regs.filter(r=>r.in===n).map(r=>r.ref);
+    const load=ckt.els.filter(e=>e.type==='LOAD'&&e.n[0]===n).reduce((a,e)=>a+e.I,0)+regs.filter(r=>r.in===n).reduce((a,r)=>a+0.05,0);
+    return{net:n,v:reg?reg.vset:nomV(n),from:reg?`${reg.ref} (${reg.in} → ${fmt(reg.vset,'V')}, 드롭아웃 ${fmt(reg.vdo,'V')})`:src?src.label||'입력 전원':conns.length?`커넥터 ${conns.map(c=>c.ref).join(',')}`:'(출처 불명)',ics:ics.map(c=>c.ref),caps:caps.map(c=>`${c.ref} ${c.val||''}`.trim()),capF:caps.reduce((a,c)=>a+(parseVal(c.val)||0),0),conns:conns.map(c=>c.ref),feeds,loadEst:load,pads:pads.length};});
+  const warn=[];rails.forEach(r=>{if(r.ics.length&&!r.caps.length)warn.push(`${r.net}: IC ${r.ics.length}개가 물려 있는데 접지로 가는 커패시터가 없습니다.`);if(r.from==='(출처 불명)'&&r.pads>=2)warn.push(`${r.net}: 공급원(레귤레이터·커넥터)을 찾지 못했습니다.`);});
+  regs.forEach(r=>{const vin=nomV(r.in);if(vin&&r.vset&&vin<r.vset+r.vdo)warn.push(`${r.ref}: 입력 ${fmt(vin,'V')}이(가) 출력 ${fmt(r.vset,'V')} + 드롭아웃 ${fmt(r.vdo,'V')}보다 낮습니다.`);});
+  return{rails,regs,gnd:ckt.gnd,warn,skipped:ckt.skipped||[]};}
+function powerText(B){const P=powerTree(B);
+  return`[전원 트리] 접지 ${P.gnd||'?'}\n`+P.rails.map(r=>`${r.net} (${fmt(r.v,'V')}) ← ${r.from}\n  부하: ${r.ics.length?r.ics.join(', '):'-'}${r.feeds.length?` · 레귤레이터 입력: ${r.feeds.join(', ')}`:''} · 추정 ${fmt(r.loadEst,'A')}\n  디커플링: ${r.caps.length?r.caps.join(', ')+` (합 ${fmt(r.capF,'F')})`:'없음'}`).join('\n')+(P.warn.length?'\n경고: '+P.warn.join(' / '):'')+(P.skipped.length?`\n모델 제외: ${P.skipped.map(s=>s[0]).join(', ')}`:'');}
+/* ---------- decoupling audit: every IC power pin, the capacitors on that net near the part ---------- */
+function decap(B){const out=[];
+  B.comps.filter(c=>kind(c)==='U').forEach(c=>{const rails=new Map();c.pads.forEach(p=>{if(p.net&&isPwr(B,p.net)&&!rails.has(p.net))rails.set(p.net,[]);if(p.net&&rails.has(p.net))rails.get(p.net).push(String(p.n)+(p.fn?'('+p.fn+')':''));});
+    rails.forEach((pins,net)=>{const caps=B.comps.filter(x=>kind(x)==='C'&&two(x)&&two(x).includes(net)&&two(x).some(n=>isGnd(B,n)));
+      const near=caps.map(x=>({ref:x.ref,val:x.val,F:parseVal(x.val)||0,d:Math.hypot(x.x-c.x,x.y-c.y)})).sort((a,b)=>a.d-b.d);
+      const small=near.filter(x=>x.F>0&&x.F<=2.2e-7),bulk=near.filter(x=>x.F>=1e-6);
+      const sev=!near.length?'err':!small.length?'warn':near[0].d>12?'warn':'ok';
+      out.push({ref:c.ref,val:c.val,net,pins,caps:near,small:small.length,bulk:bulk.length,nearest:near.length?near[0].d:null,sev,
+        msg:!near.length?`${c.ref} ${net} 핀(${pins.join(',')})에 디커플링 커패시터가 없습니다.`:!small.length?`${c.ref} ${net}: 100 nF급 고주파 디커플링이 없습니다 (${near.map(x=>x.ref+' '+x.val).join(', ')}).`:near[0].d>12?`${c.ref} ${net}: 가장 가까운 커패시터 ${near[0].ref}가 ${near[0].d.toFixed(1)} mm 떨어져 있습니다 (배치에서 5 mm 안으로).`:`${c.ref} ${net}: ${near.map(x=>x.ref+' '+x.val).join(', ')} (가장 가까운 ${near[0].d.toFixed(1)} mm)`});});});
+  return out;}
+function decapText(B){const L=decap(B);if(!L.length)return'[디커플링] 전원 핀이 있는 IC가 없습니다.';const n=s=>L.filter(x=>x.sev===s).length;
+  return`[디커플링] IC 전원 핀 ${L.length}곳 · 문제 ${n('err')} · 경고 ${n('warn')} · 양호 ${n('ok')}\n`+L.map(x=>`${x.sev==='err'?'!!':x.sev==='warn'?'!':'·'} ${x.msg}`).join('\n');}
+/* ---------- passive patterns: RC/LC filters, dividers, pull-ups, LED currents ---------- */
+function patterns(B){const out=[];const R=B.comps.filter(c=>kind(c)==='R'&&two(c)),C=B.comps.filter(c=>kind(c)==='C'&&two(c)),L=B.comps.filter(c=>kind(c)==='L'&&two(c)),FB=B.comps.filter(c=>kind(c)==='FB'&&two(c)),LED=B.comps.filter(c=>kind(c)==='LED'&&two(c));
+  const capsToGnd=n=>C.filter(c=>two(c).includes(n)&&two(c).some(x=>isGnd(B,x))).reduce((a,c)=>a+(parseVal(c.val)||0),0);
+  const other=(c,n)=>two(c).find(x=>x!==n);
+  // RC low-pass: R from A to N, C from N to GND, N not a rail
+  R.forEach(r=>{const[a,b]=two(r);[[a,b],[b,a]].forEach(([from,node])=>{if(isGnd(B,node)||isPwr(B,node))return;const Cf=capsToGnd(node);const Rv=parseVal(r.val);if(Cf>0&&Rv>0){const fc=1/(2*Math.PI*Rv*Cf);out.push({type:'RC',parts:[r.ref],from,node,R:Rv,C:Cf,fc,msg:`RC 저역 필터 ${r.ref} ${r.val} + ${fmt(Cf,'F')} → ${node}: fc ≈ ${fmt(fc,'Hz')} (τ = ${fmt(Rv*Cf,'s')})`});}});});
+  // LC / FB-C: L (or bead) from rail A to N, C from N to GND
+  L.concat(FB).forEach(l=>{const[a,b]=two(l);[[a,b],[b,a]].forEach(([from,node])=>{if(isGnd(B,node))return;const Cf=capsToGnd(node);if(!(Cf>0))return;if(kind(l)==='L'){const Lv=parseVal(l.val);if(Lv>0){const fc=1/(2*Math.PI*Math.sqrt(Lv*Cf));out.push({type:'LC',parts:[l.ref],from,node,L:Lv,C:Cf,fc,msg:`LC 필터 ${l.ref} ${l.val} + ${fmt(Cf,'F')} → ${node}: fc ≈ ${fmt(fc,'Hz')} (Q 감쇠 저항 없음 — 공진 주의)`});}}
+      else{const Cin=capsToGnd(from);out.push({type:'FB',parts:[l.ref],from,node,C:Cf,msg:`페라이트 비드 ${l.ref} ${l.val||''}: ${from} → ${node}${Cin>0?` (π 필터: ${fmt(Cin,'F')} | 비드 | ${fmt(Cf,'F')})`:` (출력 쪽 ${fmt(Cf,'F')}, 입력 쪽 커패시터 없음)`}`});}});});
+  // dividers and pull-ups/downs
+  R.forEach(r1=>{const[a,b]=two(r1);[[a,b],[b,a]].forEach(([top,mid])=>{if(!isPwr(B,top)||isGnd(B,mid)||isPwr(B,mid))return;const r2=R.find(x=>x!==r1&&two(x).includes(mid)&&two(x).some(n=>isGnd(B,n)));
+      const R1=parseVal(r1.val);if(r2){const R2=parseVal(r2.val);if(R1>0&&R2>0&&r1.ref<r2.ref){const V=nomV(top);out.push({type:'DIV',parts:[r1.ref,r2.ref],node:mid,ratio:R2/(R1+R2),msg:`분압 ${r1.ref} ${r1.val} / ${r2.ref} ${r2.val}: ${top} → ${mid} = ×${(R2/(R1+R2)).toFixed(3)}${V?` ≈ ${fmt(V*R2/(R1+R2),'V')}`:''} · 소비 ${V?fmt(V*V/(R1+R2),'W'):'?'}`});}}
+      else{const pins=(B.nets[mid]&&B.nets[mid].pads||[]).filter(p=>p.ref!==r1.ref);if(pins.some(p=>/^(D|LED)\d/i.test(p.ref)))return;if(pins.length&&R1>0)out.push({type:'PU',parts:[r1.ref],node:mid,R:R1,msg:`풀업 ${r1.ref} ${r1.val}: ${mid} → ${top} (${pins.map(p=>p.ref+'.'+p.n).slice(0,4).join(', ')})`});}});
+    [[a,b],[b,a]].forEach(([g,mid])=>{if(!isGnd(B,g)||isPwr(B,mid)||isGnd(B,mid))return;const up=R.some(x=>x!==r1&&two(x).includes(mid)&&two(x).some(n=>isPwr(B,n)));if(up)return;const R1=parseVal(r1.val);const pins=(B.nets[mid]&&B.nets[mid].pads||[]).filter(p=>p.ref!==r1.ref);
+      if(pins.some(p=>/^(D|LED)\d/i.test(p.ref)))return;if(pins.length&&R1>0)out.push(R1<=1?{type:'SHUNT',parts:[r1.ref],node:mid,R:R1,msg:`전류 감지 션트 ${r1.ref} ${r1.val}: ${mid} → ${g} (${pins.map(p=>p.ref+'.'+p.n).slice(0,4).join(', ')}) · 1 A당 ${fmt(R1,'V')}`}:{type:'PD',parts:[r1.ref],node:mid,R:R1,msg:`풀다운 ${r1.ref} ${r1.val}: ${mid} → ${g} (${pins.map(p=>p.ref+'.'+p.n).slice(0,4).join(', ')})`});});});
+  // LED current: rail → R → node → LED → GND (or GPIO → R → LED → GND)
+  LED.forEach(d=>{const[x,y]=two(d);const node=isGnd(B,x)?y:isGnd(B,y)?x:null;if(!node)return;const r=R.find(q=>two(q).includes(node));if(!r)return;const top=other(r,node);const V=isPwr(B,top)?nomV(top):3.3;const Rv=parseVal(r.val);const vf=/RED|빨강|적색/i.test(d.val+d.desc)?1.9:/BLUE|WHITE|파랑|흰|백색/i.test(d.val+(d.desc||''))?3.0:2.1;
+    if(Rv>0&&V>vf)out.push({type:'LED',parts:[d.ref,r.ref],I:(V-vf)/Rv,msg:`LED ${d.ref} (${top}${isPwr(B,top)?'':' GPIO 가정 3.3 V'} → ${r.ref} ${r.val} → ${d.ref}): I ≈ ${fmt((V-vf)/Rv,'A')} (Vf ${vf} V 가정)`});});
+  return out;}
+function patternText(B){const P=patterns(B);return P.length?`[수동 소자 패턴] ${P.length}개\n`+P.map(p=>'· '+p.msg).join('\n'):'[수동 소자 패턴] RC/LC 필터·분압·풀업·LED 패턴을 찾지 못했습니다.';}
+/* ---------- AC sweep of the passive network (complex MNA) ---------- */
+function acNetwork(B){const gnd=B.netOrder.find(n=>isGnd(B,n))||null;const els=[];
+  B.comps.forEach(c=>{const k=kind(c);const n=two(c);if(!n)return;const v=parseVal(c.val);
+    if(k==='R'&&v>0)els.push({ref:c.ref,type:'R',n,val:v});else if(k==='C'&&v>0)els.push({ref:c.ref,type:'C',n,val:v});else if(k==='L'&&v>0)els.push({ref:c.ref,type:'L',n,val:v});
+    else if(k==='FB'){const z=(String(c.val||'').match(/(\d+)\s*Ω?\s*@\s*(\d+)\s*M/i));const Z=z?+z[1]:600,f=z?+z[2]*1e6:1e8;els.push({ref:c.ref,type:'R',n,val:0.1},{ref:c.ref+'L',type:'L',n,val:Z/(2*Math.PI*f)});}});
+  return{gnd,els};}
+/* |H(f)| = V(to)/V(from) with a 1 V source at `from`; rails other than `from` are AC-grounded when `acGnd` is true */
+function acSweep(B,from,to,opt){opt=opt||{};const N=acNetwork(B);if(!N.gnd)return{error:'접지 넷을 찾지 못했습니다.'};if(!B.nets[from]||!B.nets[to])return{error:`넷을 찾지 못했습니다: ${!B.nets[from]?from:to}`};
+  const short=new Set([N.gnd]);if(opt.acGnd!==false)B.netOrder.forEach(n=>{if(isPwr(B,n)&&n!==from&&n!==to)short.add(n);});
+  const nodes=new Map();const id=n=>{if(short.has(n))return-1;if(!nodes.has(n))nodes.set(n,nodes.size);return nodes.get(n);};
+  N.els.forEach(e=>e.n.forEach(id));id(from);id(to);const nn=nodes.size;if(nn===0)return{error:'해석할 노드가 없습니다.'};
+  const fr=id(from),tn=id(to);if(fr<0)return{error:`${from}은(는) 접지/고정 레일이라 입력으로 쓸 수 없습니다.`};if(tn<0)return{error:`${to}은(는) 접지/고정 레일이라 출력으로 쓸 수 없습니다.`};
+  const f0=opt.fmin||1,f1=opt.fmax||1e8,pts=opt.points||61;const freqs=[];for(let i=0;i<pts;i++)freqs.push(f0*Math.pow(f1/f0,i/(pts-1)));
+  // complex MNA: unknowns = node voltages (+1 for the source current), solved by Gaussian elimination
+  const M=nn+1;const res=[];
+  freqs.forEach(f=>{const w=2*Math.PI*f;const Ar=Array.from({length:M},()=>new Float64Array(M)),Ai=Array.from({length:M},()=>new Float64Array(M));const br=new Float64Array(M),bi=new Float64Array(M);
+    const stamp=(a,b,gr,gi)=>{if(a>=0){Ar[a][a]+=gr;Ai[a][a]+=gi;}if(b>=0){Ar[b][b]+=gr;Ai[b][b]+=gi;}if(a>=0&&b>=0){Ar[a][b]-=gr;Ai[a][b]-=gi;Ar[b][a]-=gr;Ai[b][a]-=gi;}};
+    N.els.forEach(e=>{const a=id(e.n[0]),b=id(e.n[1]);if(e.type==='R')stamp(a,b,1/e.val,0);else if(e.type==='C')stamp(a,b,0,w*e.val);else if(e.type==='L'){const g=1/(w*e.val);stamp(a,b,1e-9,-g);}});
+    // tiny leak to ground on every node so floating nodes stay solvable
+    for(let i=0;i<nn;i++)Ar[i][i]+=1e-12;
+    // voltage source 1 V at `from`: row/col nn
+    Ar[fr][nn]+=1;Ar[nn][fr]+=1;br[nn]=1;
+    const x=csolve(Ar,Ai,br,bi,M);if(!x)return;const vr=x.r[tn],vi=x.i[tn];const mag=Math.hypot(vr,vi);res.push({f,mag,db:20*Math.log10(Math.max(mag,1e-12)),ph:Math.atan2(vi,vr)*180/Math.PI});});
+  if(!res.length)return{error:'AC 해석이 수렴하지 않았습니다.'};
+  const dc=res[0].mag;let f3=null;for(let i=1;i<res.length;i++){if(res[i].mag<=dc*Math.SQRT1_2){const a=res[i-1],b=res[i];const t=(a.mag-dc*Math.SQRT1_2)/((a.mag-b.mag)||1);f3=a.f*Math.pow(b.f/a.f,Math.max(0,Math.min(1,t)));break;}}
+  let fmax=res[0];res.forEach(r=>{if(r.mag>fmax.mag)fmax=r;});const peak=fmax.mag>dc*1.1?fmax:null;
+  return{from,to,points:res,dc,dcDb:res[0].db,f3,peak,els:N.els.length,shorted:[...short]};}
+function csolve(Ar,Ai,br,bi,M){for(let c=0;c<M;c++){let p=c,best=0;for(let r=c;r<M;r++){const m=Ar[r][c]*Ar[r][c]+Ai[r][c]*Ai[r][c];if(m>best){best=m;p=r;}}if(best<1e-30)return null;
+    if(p!==c){[Ar[p],Ar[c]]=[Ar[c],Ar[p]];[Ai[p],Ai[c]]=[Ai[c],Ai[p]];[br[p],br[c]]=[br[c],br[p]];[bi[p],bi[c]]=[bi[c],bi[p]];}
+    const pr=Ar[c][c],pi=Ai[c][c],den=pr*pr+pi*pi;
+    for(let r=c+1;r<M;r++){const xr=Ar[r][c],xi=Ai[r][c];if(!xr&&!xi)continue;const fr=(xr*pr+xi*pi)/den,fi=(xi*pr-xr*pi)/den;
+      for(let k=c;k<M;k++){Ar[r][k]-=fr*Ar[c][k]-fi*Ai[c][k];Ai[r][k]-=fr*Ai[c][k]+fi*Ar[c][k];}br[r]-=fr*br[c]-fi*bi[c];bi[r]-=fr*bi[c]+fi*br[c];}}
+  const xr=new Float64Array(M),xi=new Float64Array(M);
+  for(let r=M-1;r>=0;r--){let sr=br[r],si=bi[r];for(let k=r+1;k<M;k++){sr-=Ar[r][k]*xr[k]-Ai[r][k]*xi[k];si-=Ar[r][k]*xi[k]+Ai[r][k]*xr[k];}const pr=Ar[r][r],pi=Ai[r][r],den=pr*pr+pi*pi;xr[r]=(sr*pr+si*pi)/den;xi[r]=(si*pr-sr*pi)/den;}
+  return{r:xr,i:xi};}
+function acText(B,from,to,opt){const r=acSweep(B,from,to,opt);if(r.error)return'[AC 해석] '+r.error;if(r.dc<1e-6&&r.points.every(p=>p.mag<1e-6))return`[AC 해석] ${from} → ${to}: 수동 소자(R·L·C)만으로 이어지는 경로가 없습니다 (IC·레귤레이터·트랜지스터는 소신호 해석에서 열린 것으로 봄). 필터 입력·출력 넷을 직접 지정하세요.`;
+  const pick=[1,10,100,1e3,1e4,1e5,1e6,1e7,1e8].filter(f=>f>=r.points[0].f&&f<=r.points[r.points.length-1].f).map(f=>{let b=r.points[0];r.points.forEach(p=>{if(Math.abs(Math.log(p.f/f))<Math.abs(Math.log(b.f/f)))b=p;});return`${fmt(b.f,'Hz')}: ${b.db.toFixed(1)} dB`;});
+  return`[AC 해석] ${from} → ${to} (수동 소자 ${r.els}개 · 1 V 소신호 · 고정 레일은 AC 접지: ${r.shorted.join(', ')})\nDC 이득 ${r.dcDb.toFixed(1)} dB (×${r.dc.toFixed(3)}) · -3 dB ${r.f3?fmt(r.f3,'Hz'):'범위 밖 (평탄)'}${r.peak?` · 피크 ${r.peak.db.toFixed(1)} dB @ ${fmt(r.peak.f,'Hz')} (공진)`:''}\n${pick.join(' · ')}`;}
+/* ---------- DC operating point through SIM.dcop ---------- */
+function dcText(B){if(typeof SIM==='undefined'||!SIM.dcop)return'[DC 동작점] 시뮬레이션 엔진이 없습니다.';const ckt=SIM.extractCircuit(B);if(!ckt.srcs.length)return'[DC 동작점] 전원 소스를 찾지 못했습니다 (전원 넷과 접지 넷이 필요).';
+  const r=SIM.dcop(Object.assign({},ckt,{tDC:1e9}));if(r.error)return'[DC 동작점] '+r.error;
+  const nets=Object.entries(r.nets||{}).filter(([n])=>!/#/.test(n)).sort((a,b)=>b[1]-a[1]).slice(0,40).map(([n,v])=>`${n}=${fmt(v,'V')}`);
+  const parts=(r.parts||[]).filter(p=>p.I!=null&&Math.abs(p.I)>1e-6).sort((a,b)=>Math.abs(b.P||0)-Math.abs(a.P||0)).slice(0,30).map(p=>`${p.ref||p.id} ${fmt(Math.abs(p.I),'A')}${p.P!=null?' · '+fmt(Math.abs(p.P),'W'):''}`);
+  return`[DC 동작점] 소스 ${ckt.srcs.map(s=>`${s.id} ${s.n[0]} ${fmt(s.v,'V')}`).join(', ')}\n노드: ${nets.join(', ')}\n전류·소비: ${parts.join(', ')||'-'}${ckt.skipped.length?`\n모델 제외: ${ckt.skipped.map(s=>`${s[0]}(${s[1]})`).join(', ')}`:''}`;}
+return{powerTree,powerText,decap,decapText,patterns,patternText,acNetwork,acSweep,acText,dcText,fmt,parseVal};
+})();
+
+
+</script>
+<script>
 /* HSIS → test case generator, split by the boundary "how is it measured / which layer is verified":
    - SYS.4 System Integration Test (SYSITS): needs physical instruments (oscilloscope, multimeter, power supply, bus analyser) —
      electrical characteristics, waveforms, HW–SW physical consistency (divider/RC path, PWM frequency/slew/dead-time/reset
@@ -11825,6 +11932,7 @@ var CLI={open:false,log:[],hist:[],hi:-1,busy:false,lock:new Set(),strategy:'bal
 const CLI_HELP=[
   ['help [명령]','명령 목록과 사용법'],
   ['status','보드 크기·부품·넷·배선 상태'],
+  ['analyze [all|power|decap|rc|ac|dc|ir|si|thermal|emc] [--from 넷 --to 넷] [--net 넷 --total mA]','회로·보드 해석(조회): 전원 트리 · 디커플링 · RC/LC 패턴 · AC 응답 · DC 동작점 · IR drop · 신호 무결성 · 열 · EMC'],
   ['board size <가로> <세로> [--anchor center|bl] [--corner R]','보드 크기 변경 (mm). 기본은 왼쪽 아래 기준, center는 부품을 가운데 유지'],
   ['board corner <R>','모서리 반지름 변경'],
   ['board layers <2|4|6|8|10> [--pwr 넷] [--route]','동박 층 수 변경. 표준 스택업(예: 8층 S·GND·S·GND·PWR·S·GND·S)으로 내층 GND/전원 플레인과 내층 신호층을 만들고, 플레인 넷은 비아로 연결 (--route면 이어서 배선)'],
@@ -11873,7 +11981,7 @@ const CLI_CHIPS=[['열 분산 자동 배치·배선','auto thermal','열 분산 
   ['가이드라인 점검','guide check','PCB 설계 가이드라인을 점검하고 가장 중요한 개선 3가지를 알려줘'],
   ['하우징 설계','housing','현재 보드에 맞는 보호 하우징을 설계하고 재질·IP·진동 조건별 트레이드오프를 비교해 추천해줘'],
   ['리포트','report all','배치·열·EMC 리포트를 보고 문제를 우선순위대로 요약해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const CLI_CMDS=new Set(['pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
+const CLI_CMDS=new Set(['analyze','analyse','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
 
 /* ---- snapshots for undo (same objects: tracks, pads and silk keep their identity) ---- */
 function cliSnap(){return{poses:BD.comps.map(c=>({c,x:c.x,y:c.y,rot:c.rot||0,side:c.side})),layers:Object.fromEntries(Object.keys(BD.layers).map(k=>[k,BD.layers[k].slice()])),vias:BD.vias.slice(),
@@ -12105,6 +12213,7 @@ async function cliRun(line,quiet,by){
     case 'drc':{PCBEDIT.prepare(BD);const d=PCBEDIT.drc(BD);if(PE.on)peRecalc(true);return d.length?`DRC ${d.length}건\n`+d.slice(0,15).map(x=>`  ${x.msg}${x.refs&&x.refs.length?' ('+x.refs.join(', ')+')':''}`).join('\n')+(d.length>15?'\n  …':''):'DRC 문제 없음';}
     case 'rats':{const r=PCBEDIT.ratsnest(BD);if(!r.length)return'래츠네스트 없음 — 모든 연결이 동박으로 이어졌습니다.';const by={};r.forEach(x=>{by[x.net]=(by[x.net]||0)+1;});return`래츠네스트 ${r.length}개\n`+Object.entries(by).sort((x,y)=>y[1]-x[1]).slice(0,20).map(([n,k])=>`  ${n} ${k}`).join('\n');}
     case 'report':return cliReport(a);
+    case 'analyze':case 'analyse':return scAnalyze(a);
     case 'undo':if(!PE.undo.length)return'되돌릴 것이 없습니다.';peUndo();return'실행 취소했습니다.';
     case 'redo':if(!PE.redo.length)return'다시 실행할 것이 없습니다.';peRedo();return'다시 실행했습니다.';
     case 'clear':{copClear('pcb');CLI.log=[];return'';}
@@ -12142,7 +12251,7 @@ Strategies: balanced (wirelength/decoupling/heat/noise evenly), thermal (heat so
 Copper layers: "board layers N" (2/4/6/8/10) builds a standard stack-up (e.g. 8 = S/GND/S/GND/PWR/S/GND/S) with inner GND/PWR planes and inner signal layers, and drops plane vias — always run it when the user asks for a layer count (e.g. "8층"). Size: "board minimize --route" finds the smallest board that still places and routes (slow); "board minimize" only re-places; "board size W H" sets an exact size. MCU pins: "pinswap" shows a routing-friendly re-assignment, "pinswap --apply --route" changes the circuit (board nets, schematic, HSIS) and routes — allowed in the PCB step.
 Rules: use at most 6 commands; "reset" re-places everything from the netlist (schematic) and clears copper; "route" auto-routes open nets; run "report" (place, thermal or emc) when the user asks about heat/noise quality; every command is undoable. After the tool calls, answer in Korean in 2-5 short sentences: what you ran, the key numbers from the outputs, and one concrete next step if something is left (unrouted nets, DRC, overlaps). Do not invent numbers.`;
 const CLI_RO=c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase(),s=(t[1]||'').toLowerCase();
-  return['help','?','status','strategies','locks','drc','rats','report','history'].includes(f)||(f==='guide'&&(!s||/^(check|list|show)$/.test(s)))||(f==='housing'&&/^(check|compare)$/.test(s))||(f==='board'&&(!s||s==='info'||s==='stack'));};
+  return['help','?','status','strategies','locks','drc','rats','report','history','analyze','analyse'].includes(f)||(f==='guide'&&(!s||/^(check|list|show)$/.test(s)))||(f==='housing'&&/^(check|compare)$/.test(s))||(f==='board'&&(!s||s==='info'||s==='stack'));};
 async function cliAgent(prompt,kind){
   return aiAgent({prompt,kind,ro:CLI_RO,roList:'status, report place|thermal|emc, drc, rats, guide check, board stack, housing check',toolName:'run_cli',toolDesc:'Run one PCB layout console command (see the command list) and return its text output.',example:'"reset --strategy thermal" or "guide set ds_kelvin fail --note ..."',
     run:c=>cliRun(c,true,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();return!CLI_CMDS.has(f)||f==='ai'?'unknown command: '+f:'';},
@@ -12197,6 +12306,7 @@ const SCLI_HELP=[
   ['disconnect <부품.핀>','핀에 붙은 배선·라벨·전원 심볼 떼기'],
   ['nc <부품.핀>','미연결(NC) 표시'],
   ['value <부품> <값> · fp <부품> <풋프린트> · rename <부품> <새 참조>','속성 변경'],
+  ['analyze [all|power|decap|rc|ac|dc|ir|si|thermal|emc] [--from 넷 --to 넷] [--net 넷 --total mA]','회로 해석(조회): 전원 트리 · 디커플링 감사 · RC/LC·분압·풀업·LED 패턴 · 수동 소자 AC 주파수 응답(ac --from/--to) · DC 동작점(MNA) · IR drop · 신호 무결성 · 열 · EMC'],
   ['hsis [검색어] [--cat power,analog,comm,…] [--port P02*] [--notp]','HSIS 신호 목록 (분류 · MCU 핀 · 회로도 넷 · 테스트 포인트 유무)'],
   ['tp [--cat power,analog,…] [--port P02*] [--nets A,B] [--fp TP-1.5|TP-1.0|TP-TH] [--max n]','테스트 포인트 일괄 추가 — 기본은 HSIS의 모든 신호 넷, 이미 TP가 있는 넷은 건너뜀'],
   ['tie <부품> [--free | --pins 3,4,PA3] [--net GND] [--val 10kΩ] [--type R|C] [--direct] [--max n]','미연결(NC) 핀을 저항/커패시터로(또는 직접) 넷에 묶기'],
@@ -12213,7 +12323,7 @@ const SCLI_HELP=[
 const SC_CHIPS=[['상태','status','회로도 상태를 요약하고 먼저 손볼 곳을 알려줘'],['ERC','erc','ERC 문제를 찾아 원인을 설명하고, 확실한 것은 고쳐줘'],
   ['가이드라인 점검','guide check','회로 설계 가이드라인을 점검하고 빠진 디커플링·보호 소자·부하 캡을 추가하는 명령을 제안해줘 (내가 승인하기 전엔 수정하지 말 것)'],
   ['보드와 다른 점','diff','회로도와 보드가 어떻게 다른지 설명해줘'],['보드에 반영','apply','ERC를 확인한 뒤 문제가 없으면 회로도를 보드에 반영해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const SCLI_CMDS=new Set(['guide','help','?','status','pages','page','parts','pins','nets','net','find','add','replace','tp','tie','insert','hsis','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
+const SCLI_CMDS=new Set(['guide','help','?','status','pages','page','parts','pins','nets','net','find','add','replace','tp','tie','insert','hsis','analyze','analyse','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
 
 /* ---- panel ---- */
 function scSay(k,t){const e={k,t,id:++SCLI.seq};SCLI.log.push(e);if(SCLI.log.length>400)SCLI.log.shift();scPaint(e);return e;}
@@ -12337,6 +12447,21 @@ function scHsisCmd(a){const items=scHsisItems();if(!items.length)return'HSIS가 
   const rows=items.filter(it=>(!cf||cf(it.cat))&&(!q||[it.id,it.signal,it.port,it.func,it.net].join(' ').toLowerCase().includes(q))&&(!a.notp||!it.tp)&&(!a.port||String(it.port||'').toUpperCase().startsWith(String(a.port).toUpperCase().replace(/\*$/,''))));
   const cats=new Map();items.forEach(it=>cats.set(it.cat,(cats.get(it.cat)||0)+1));
   return`HSIS 신호 ${rows.length}/${items.length}개 (분류: ${[...cats.entries()].map(([k,v])=>`${k} ${v}`).join(', ')}) · TP 있음 ${items.filter(x=>x.tp).length}개\n`+rows.slice(0,120).map(it=>`${it.id} ${it.signal} [${it.cat}] 핀 ${it.pins.join('/')||'-'} ${it.port||''} ${it.func||''} → 넷 ${it.net||'(없음)'}${it.tp?' · '+it.tp:''}`).join('\n');}
+/* analyze: numbers for the question mode — power tree, decoupling, passive patterns, AC sweep, DC operating point, IR drop, SI, thermal, EMC */
+async function scAnalyze(a){const what=String(a._[0]||'all').toLowerCase();const out=[];const A=typeof ANALYZE!=='undefined'?ANALYZE:null;if(!A)throw new Error('해석 모듈이 없습니다.');
+  const want=k=>what==='all'||what===k||(what==='filter'&&(k==='rc'||k==='ac'));
+  if(want('power'))out.push(A.powerText(BD));
+  if(want('decap'))out.push(A.decapText(BD));
+  if(want('rc')||what==='pattern')out.push(A.patternText(BD));
+  if(what==='ac'||(what==='filter'&&a.from)){if(!a.from||!a.to)throw new Error('analyze ac --from <넷> --to <넷> [--fmin 1 --fmax 1e8]');out.push(A.acText(BD,String(a.from),String(a.to),{fmin:a.fmin?+a.fmin:undefined,fmax:a.fmax?+a.fmax:undefined}));}
+  if(want('dc'))out.push(A.dcText(BD));
+  if(want('ir')){if(typeof irConfig==='function'&&typeof runIR==='function'){try{const c=irConfig();const net=a.net?String(a.net):c.net;if(!net)out.push('[IR drop] 전원 넷이 없습니다.');else{if(net!==c.net||!c.src)irPickNet(net);if(a.total){c.total=+a.total;irDistribute();}runIR();const R=SR.ir;
+        if(R.error)out.push('[IR drop] '+R.error);else{const f=SIM.fmtSI;out.push(`[IR drop] ${R.net} ${f(R.Vs,'V')} from ${c.src} · 부하 합 ${c.total} mA (${R.loads.length}곳) · 최저 ${f(R.vmin,'V')} (강하 ${f(R.Vs-R.vmin,'V')}${R.worst?` @ ${R.worst.pad.ref}.${R.worst.pad.n}`:''}) · 동손 ${f(R.loss,'W')} · 최대 전류 ${f(R.maxI,'A')} · 최대 온도 상승 ${R.maxDT.toFixed(1)} °C${R.over?` · 10 °C 초과 구간 ${R.over}`:''}${R.unconnected.length?` · 미연결 부하 ${R.unconnected.length}`:''}`);
+          if(what==='ir'){const rails=BD.netOrder.filter(n=>BD.netClass(n)==='전원'&&BD.nets[n].pads.length>=2);out.push('다른 전원 넷: '+rails.filter(n=>n!==net).join(', ')+' (analyze ir --net <넷> --total <mA>)');}}}}catch(e){out.push('[IR drop] 계산 실패: '+(e.message||e));}}else out.push('[IR drop] 보드 배선이 있어야 계산합니다 (3단계).');}
+  if(want('si')){if(typeof runSI==='function'&&BD.layers&&BD.layers['T.cu'].some(p=>p.t==='seg'||p.t==='path')){try{runSI();const S=SR.si;const f=SIM.fmtSI;const top=S.nets.slice(0,12).map(n=>`${n.net}: ${n.len.toFixed(1)} mm · ${f(n.delay*1e-12,'s')} · Z0 ${n.zmin?(n.zmin===n.zmax?n.zmin.toFixed(0):n.zmin.toFixed(0)+'–'+n.zmax.toFixed(0)):'?'} Ω · 폭 ${n.wmin!=null?n.wmin.toFixed(2):'?'} mm${n.vias?` · 비아 ${n.vias}`:''}`);
+        out.push(`[신호 무결성] 기준 ${S.ref.w} mm 트레이스 Z0 ≈ ${S.ref.z0.toFixed(0)} Ω (h ${S.h} mm, εr ${S.er}) · 가장 긴 넷 ${S.nets.length?S.nets[0].net+' '+S.nets[0].len.toFixed(1)+' mm':'-'}\n`+top.join('\n')+(S.pairs.length?'\n차동 쌍: '+S.pairs.map(p=>`${p.base} 길이차 ${p.mis.toFixed(2)} mm · 스큐 ${f(p.skew*1e-12,'s')} · 간격 ${p.spacing!=null?p.spacing.toFixed(2)+' mm':'?'} · Zdiff ${p.zdiff?p.zdiff.toFixed(0)+' Ω':'?'}`).join('; '):''));}catch(e){out.push('[신호 무결성] 계산 실패: '+(e.message||e));}}else out.push('[신호 무결성] 배선된 트레이스가 없습니다 (3단계에서 route 후).');}
+  if((want('thermal')||want('emc'))&&typeof cliReport==='function'){try{if(want('thermal')&&what!=='all')out.push(await cliReport({_:['thermal']}));if(want('emc'))out.push(await cliReport({_:['emc']}));}catch(e){out.push('[열/EMC] '+(e.message||e));}}
+  return out.join('\n\n');}
 /* tp: test points on HSIS signals (default), on given nets, or on every MCU net */
 function scTp(a){const sheets=scSheets();const fp=a.fp?String(a.fp):'TP-1.5';if(!PCB.FP[fp])throw new Error(`풋프린트: TP-1.5 · TP-1.0 · TP-TH`);
   let targets=[];const skip=[];
@@ -12428,6 +12553,7 @@ async function scRun(line,by){
     case'tie':return scTie(a);
     case'insert':return scInsert(a);
     case'hsis':return scHsisCmd(a);
+    case'analyze':case'analyse':return scAnalyze(a);
     case'connect':return scConnect(a._[0],a._[1]);
     case'disconnect':return scDisconnect(a._[0]);
     case'nc':{const h=scPin(a._[0]);return scBatch(()=>{SCHEDIT.addNoConnect(scSheets()[h.page],h.pin.p);return`${h.s.ref}.${h.pin.num} NC`;});}
@@ -12451,6 +12577,7 @@ async function scRun(line,by){
 // sentences → commands when Claude is not available
 function scNL(t){const s=t.toLowerCase();const out=[];
   if(/다시\s*(만들|생성)|재생성|regen|처음부터/.test(s))out.push('regen');
+  if(/해석|분석|analy|전원\s*트리|디커플링|주파수\s*응답|동작점|전압\s*강하|ir\s*drop/.test(s)&&!/추가|넣|달|바꿔/.test(s)){const k=/디커플링|decap/.test(s)?'decap':/전원\s*트리|power/.test(s)?'power':/동작점|dc/.test(s)?'dc':/강하|ir/.test(s)?'ir':/필터|rc|주파수/.test(s)?'rc':'all';out.push('analyze '+k);return out;}
   if(/erc|규칙|검사|오류/.test(s))out.push('erc');
   if(/다른\s*점|차이|diff/.test(s))out.push('diff');
   if(/테스트\s*포인트|test\s*point|\btp\b/.test(s)&&/추가|넣|달|add|붙/.test(s)){const cat=/전원|power|레일/.test(s)?'power':/아날로그|analog|adc/.test(s)?'analog':/통신|comm|can|uart|spi|i2c/.test(s)?'comm':'';out.push('tp'+(cat?' --cat '+cat:'')+(/hsis/i.test(s)?'':''));return out;}
@@ -12480,9 +12607,9 @@ function scBrief(){
 const SC_SYS=`You are a schematic-editing assistant embedded in a PCB/schematic viewer (KiCad-like). The user writes in Korean. You change the schematic only by calling the run_sch tool with one command at a time.
 Commands (exactly this syntax):
 \${CMDS}
-Notes: parts you can add: R, C, CP (electrolytic), L, FB (ferrite bead), D, LED, TVS, Z (zener), F (fuse), TP (one-pin test point); "--pins" accepts net names or part pins like U1.12 / U1.PA3 (a free pin gets a new net and is wired to the new part). Bulk commands: "tp" (test points on HSIS signal nets — use "hsis" first to see signals, categories and nets; filter with --cat power,analog,comm or --port), "tie <ref> --free" (NC pins to GND/+3V3 through R or C, --direct for a plain wire), "insert FB --at U2.3" (series part in a supply/signal line, e.g. a pi filter = insert FB + add C on both sides). When you add or change parts, finish with "apply" so the board gets them, then "erc". two-pin parts are R, C, CP (electrolytic), L, FB (ferrite bead), D, LED; "add ... --pins A,B" connects pin 1 to A and pin 2 to B (for D/LED pin 1 is K, pin 2 is A). Power and ground nets get power symbols automatically. Inspect before you edit: use "pins <ref> --free" or "net <name>" to learn real pin numbers and net names; never guess them. Typical decoupling: one 100nF C per supply pin of an IC, "add C 100nF --pins <supply>,GND --near <IC>". Use at most 8 commands. Finish with "erc" when you added or rewired something, and run "apply" only if the user asked to update the board. Then answer in Korean in 2-5 short sentences: what changed (refs, nets), ERC result, and a next step. Do not invent numbers.`;
+Notes: parts you can add: R, C, CP (electrolytic), L, FB (ferrite bead), D, LED, TVS, Z (zener), F (fuse), TP (one-pin test point); "--pins" accepts net names or part pins like U1.12 / U1.PA3 (a free pin gets a new net and is wired to the new part). Bulk commands: "tp" (test points on HSIS signal nets — use "hsis" first to see signals, categories and nets; filter with --cat power,analog,comm or --port), "tie <ref> --free" (NC pins to GND/+3V3 through R or C, --direct for a plain wire), "insert FB --at U2.3" (series part in a supply/signal line, e.g. a pi filter = insert FB + add C on both sides). For questions about behaviour or numbers, call "analyze" first (analyze power / decap / rc / dc; analyze ac --from <net> --to <net> gives the passive-network frequency response; analyze ir --net <rail> the copper voltage drop; analyze si trace lengths and impedance) and quote its figures instead of guessing. When you add or change parts, finish with "apply" so the board gets them, then "erc". two-pin parts are R, C, CP (electrolytic), L, FB (ferrite bead), D, LED; "add ... --pins A,B" connects pin 1 to A and pin 2 to B (for D/LED pin 1 is K, pin 2 is A). Power and ground nets get power symbols automatically. Inspect before you edit: use "pins <ref> --free" or "net <name>" to learn real pin numbers and net names; never guess them. Typical decoupling: one 100nF C per supply pin of an IC, "add C 100nF --pins <supply>,GND --near <IC>". Use at most 8 commands. Finish with "erc" when you added or rewired something, and run "apply" only if the user asked to update the board. Then answer in Korean in 2-5 short sentences: what changed (refs, nets), ERC result, and a next step. Do not invent numbers.`;
 async function scAgent(prompt,kind){
-  return aiAgent({prompt,kind,ro:c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase();return['help','?','status','pages','parts','pins','nets','net','find','erc','diff','history','hsis'].includes(f)||(f==='guide'&&(!t[1]||/^(check|list|show)$/i.test(t[1])));},roList:'status, pages, parts, pins, nets, hsis, net, find, erc, diff, guide check',toolName:'run_sch',toolDesc:'Run one schematic console command (see the command list) and return its text output.',example:'"pins U4 --free" or "add C 100nF --pins +3V3,GND --near U4"',
+  return aiAgent({prompt,kind,ro:c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase();return['help','?','status','pages','parts','pins','nets','net','find','erc','diff','history','hsis','analyze','analyse'].includes(f)||(f==='guide'&&(!t[1]||/^(check|list|show)$/i.test(t[1])));},roList:'status, pages, parts, pins, nets, hsis, analyze (power/decap/rc/ac/dc/ir/si/thermal/emc), net, find, erc, diff, guide check',toolName:'run_sch',toolDesc:'Run one schematic console command (see the command list) and return its text output.',example:'"pins U4 --free" or "add C 100nF --pins +3V3,GND --near U4"',
     run:c=>scRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!SCLI_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='regen'&&!SCLI.allowRegen)return'not allowed: regen (the user did not ask to regenerate)';return'';},
     say:scSay,set:scSet,drop:e=>{copDrop(e);SCLI.log=SCLI.log.filter(x=>x!==e);},
     setAbort:c=>{SCLI.abort=c;},stopped:()=>SCLI.stopReq,max:40});}

@@ -59,6 +59,7 @@ kbd{background:#fff}
   <a href="#strip">지표 띠 · 전체 보기</a>
   <a href="#sim">시뮬레이션</a>
   <a href="#hsis">HSIS</a>
+  <a href="#circuit-analyze">회로 해석 (analyze)</a>
   <a href="#circuit-ai">회로 보강 (TP · NC · 필터)</a>
   <a href="#parts">부품 교체 · 부품 라이브러리</a>
   <a href="#multi">멀티보드 시스템</a>
@@ -216,6 +217,22 @@ kbd{background:#fff}
   <li><b>MCAL 설정</b> · <b>테스트 케이스</b>(SWE.6/SYS.4) 생성과 내려받기.</li>
 </ul>
 <p>탭 머리의 <b>Excel</b>은 지금 탭의 표를, 내보내기 창의 "HSIS 전체"는 모든 표를 시트별로 저장합니다.</p>
+
+<h2 id="circuit-analyze">회로 해석 — 질문에 숫자로 답하기</h2>
+<figure><img src="img/circuit-analyze.jpg" alt="질문 모드에서 analyze 명령을 불러 디커플링과 AC 응답을 답하는 설계 도우미"><figcaption>질문 모드 — Claude가 analyze decap · analyze ac 를 돌려 수치로 답함</figcaption></figure>
+<p>회로·PCB 콘솔의 <code>analyze</code>는 설계를 바꾸지 않는 조회 명령입니다. 질문 모드의 Claude는 "이 회로 문제 없어?", "필터 컷오프 얼마야?", "3.3 V 레일 전압 강하는?" 같은 질문에 먼저 이 명령을 돌려 나온 숫자를 인용해 답합니다. 결정론 모드에서도 "전원 트리 해석해줘", "디커플링 분석"은 바로 <code>analyze power</code>·<code>analyze decap</code>으로 풀립니다.</p>
+<table><thead><tr><th>명령</th><th>무엇을 계산하나</th></tr></thead><tbody>
+<tr><td><code>analyze power</code></td><td>전원 트리: 접지 · 레일별 공급원(레귤레이터·커넥터) · 물린 IC · 추정 부하 · 디커플링 합 · 드롭아웃 부족 경고</td></tr>
+<tr><td><code>analyze decap</code></td><td>IC 전원 핀마다 접지로 가는 커패시터(값·거리): 없음(!!) · 100 nF급 없음(!) · 12 mm 이상 떨어짐(!)</td></tr>
+<tr><td><code>analyze rc</code></td><td>수동 소자 패턴: RC 저역 필터 fc·τ, LC·π(비드) 필터, 분압비·전압, 풀업/풀다운, 전류 감지 션트, LED 전류(Vf 가정)</td></tr>
+<tr><td><code>analyze ac --from 넷 --to 넷</code></td><td>수동 소자(R·L·C·비드)만으로 만든 소신호 AC 응답: DC 이득 · −3 dB 주파수 · 공진 피크 · 10배 간격 이득표(1 Hz–100 MHz). IC·레귤레이터는 열린 것으로, 다른 전원 레일은 AC 접지로 봅니다.</td></tr>
+<tr><td><code>analyze dc</code></td><td>MNA DC 동작점: 노드 전압, 소자 전류·소비(레귤레이터·LED·부하), 모델 제외 부품</td></tr>
+<tr><td><code>analyze ir [--net 넷 --total mA]</code></td><td>동박 IR drop(3단계 배선 기준): 최저 전압·최악 핀·동손·최대 전류·온도 상승</td></tr>
+<tr><td><code>analyze si</code></td><td>넷별 길이·지연·Z0·폭·비아, 차동 쌍 길이차·스큐·간격·Zdiff</td></tr>
+<tr><td><code>analyze thermal</code> · <code>analyze emc</code></td><td>열 해석·EMC 점검 요약(PCB 콘솔의 report와 같음)</td></tr>
+<tr><td><code>analyze all</code></td><td>위 항목을 한 번에(ac 제외)</td></tr>
+</tbody></table>
+<p class="note">모든 값은 초기 설계용 추정입니다(부품 모델은 R·C·L·비드·다이오드·LED·N-MOSFET·레귤레이터·브리지 드라이버·모터 수준). SPICE 수준의 과도 해석·비선형 AC는 아니며, 정확한 값은 전문 시뮬레이터로 확인하세요.</p>
 
 <h2 id="circuit-ai">회로 콘솔로 회로 보강 (테스트 포인트 · NC 핀 · 필터)</h2>
 <figure><img src="img/circuit-tp.jpg" alt="테스트 포인트와 직렬 페라이트 비드가 추가된 회로도"><figcaption>tp · insert FB 로 추가된 테스트 포인트와 전원선 비드</figcaption></figure>
