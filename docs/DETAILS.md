@@ -15,6 +15,13 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 부품 교체 · 부품 라이브러리 (v1.32)
+
+- `src/core/partlib.js`: 부품 레코드 `{mpn,mfr,title,cat,pkg,fp,val,pins:[{num,name}],specs,price,pdf,page,src:user|builtin|ai|api,status,conf}`. CSV/Excel 표 가져오기(`parseTable`, 머리글 별칭 한/영), `toCsv`, 내장 `PARTS` 변환, `merge`(user > builtin > ai > api), `find/search`, 핀 역할(`role`: VIN/VOUT/GND/VCC/EN/FB/NC/PG/SDA/SCL/…), `mapPins`(이름 → 역할 → 번호, 같은 넷의 중복 핀은 merged), `plan`(경고·단가 차이), `aiPrompt/fromAi`(Claude JSON 스펙), `PROVIDERS`(mouser · nexar · custom), 알려진 핀 배열 `PINOUTS`(1117 계열·SOT-23-5 LDO·MCP1700·SOT-23 MOSFET·SMA 다이오드·CAN 트랜시버), `pageHTML`(데이터시트 요약).
+- `src/core/fpgen.js`: 패키지 이름·핀 수로 풋프린트 생성(0201~2512 · SMA · SOT-23/-5/-6/-8 · SOT-89 · SOT-223 · TO-252/263/220 · SOIC · TSSOP/MSOP · DFN · QFN · QFP · DIP · HDR-NxM), `FPGEN.ensure(PCB,pkg,n)`로 `PCB.FP`에 등록.
+- `src/app/partui.js`: `PL` 상태(IndexedDB `aod-parts`, API 설정 localStorage `aod.partapi`), `plIntent`(문장 → {ref,q}), `plReplaceFlow`(copAsk 카드로 진행: 찾기 → 없으면 Claude 추정/API/파일 → 후보 카드 → 핀 대응 → 짝 없는 핀·EN/전원 핀 질문 → 적용), `plApply`(보드 패드·실크·드릴 교체, 회로도 심볼 갱신 또는 `SCH.boxSym`으로 재생성, HSIS `hw` 참조 재매핑, PE 스택에 되돌리기 한 단계), 라이브러리 창 `openPartLib`(가져오기·템플릿·내보내기·승인·API 설정·조회 테스트), 데이터시트 탭 폴백 `plDsPage`.
+- 콘솔: `replace <ref> [<MPN|설명>]`, `parts lib`; 회로·PCB·시스템 콘솔 모두 "…로 바꿔줘/교체/대신 써" 문장을 가로채 대화형으로 처리(AI 모드의 에이전트 명령 목록에서는 제외). `copSubmit`은 콘솔 자신의 스택이 안 바뀌면 다른 스택(PCB)의 변화를 변경 요청 카드로 올립니다. 카드 종류 `html` 추가.
+
 ## 멀티보드 시스템 — 보드 간 커넥터 연결 (v1.31)
 
 - **시스템 = 보드 여러 장 + 연결(link)**. 머리글의 보드 선택 상자(`#mbSel`)로 보드를 오가고 `파일에서… / 신규 설계… / 예제` 로 보드를 **추가**합니다(첫 화면에서 여는 것은 시스템을 새로 시작). 보드마다 단계·NP·HSIS·모드 상태를 따로 보관(`mbSaveState/mbLoadState`).

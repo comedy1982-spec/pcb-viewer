@@ -14,6 +14,7 @@ const SCLI_HELP=[
   ['disconnect <부품.핀>','핀에 붙은 배선·라벨·전원 심볼 떼기'],
   ['nc <부품.핀>','미연결(NC) 표시'],
   ['value <부품> <값> · fp <부품> <풋프린트> · rename <부품> <새 참조>','속성 변경'],
+  ['replace <부품> [<MPN|설명>]','부품 교체 (대화형) — 승인 목록→내장 DB→Claude 추정→부품 API 순으로 찾고 핀 대응을 확인한 뒤 회로도·보드·BOM·HSIS에 반영. 예: replace U3 AP2112K-3.3'],
   ['move <부품> <x> <y> · rotate <부품> · mirror <부품> [x|y] · delete <부품>','부품 옮기기(배선 유지)·회전·반전·삭제'],
   ['erc','전기 규칙 검사 목록'],
   ['diff · apply','보드와 다른 점 보기 · 보드에 반영 (F8과 같음, 새 부품은 보드 빈 자리에)'],
@@ -25,7 +26,7 @@ const SCLI_HELP=[
 const SC_CHIPS=[['상태','status','회로도 상태를 요약하고 먼저 손볼 곳을 알려줘'],['ERC','erc','ERC 문제를 찾아 원인을 설명하고, 확실한 것은 고쳐줘'],
   ['가이드라인 점검','guide check','회로 설계 가이드라인을 점검하고 빠진 디커플링·보호 소자·부하 캡을 추가하는 명령을 제안해줘 (내가 승인하기 전엔 수정하지 말 것)'],
   ['보드와 다른 점','diff','회로도와 보드가 어떻게 다른지 설명해줘'],['보드에 반영','apply','ERC를 확인한 뒤 문제가 없으면 회로도를 보드에 반영해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const SCLI_CMDS=new Set(['guide','help','?','status','pages','page','parts','pins','nets','net','find','add','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
+const SCLI_CMDS=new Set(['guide','help','?','status','pages','page','parts','pins','nets','net','find','add','replace','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
 
 /* ---- panel ---- */
 function scSay(k,t){const e={k,t,id:++SCLI.seq};SCLI.log.push(e);if(SCLI.log.length>400)SCLI.log.shift();scPaint(e);return e;}
@@ -86,7 +87,7 @@ function scStatus(){
   const nets=new Set(nl.values());const res=SCHEDIT.annotate(sh,BD);const erc=SCHEDIT.erc(sh);
   return[`페이지 ${sh.length}쪽 (지금 ${SV.page+1}쪽) · 부품 ${refs.size}개 · 넷 ${nets.size}개 · 배선 ${sh.reduce((a,x)=>a+x.wires.length,0)}개 · 라벨 ${sh.reduce((a,x)=>a+x.labels.length,0)}개`,
     `ERC ${erc.length}건 · 보드와 다른 점 ${res.changes.length}건${res.changes.length?' (diff로 보기, apply로 반영)':''}${res.missing.length?` · 회로도에 없는 보드 부품 ${res.missing.length}개`:''}`].join('\n');}
-function scParts(q){const nl=scNets();const rows=[];const seen=new Set();scSheets().forEach((sh,pi)=>sh.symbols.forEach(s=>{if(s.power||seen.has(s.ref+'@'+pi))return;seen.add(s.ref+'@'+pi);
+function scParts(q){if(/^lib/i.test(q||'')){if(typeof openPartLib==='function')openPartLib();return'부품 라이브러리 창을 열었습니다.';}const nl=scNets();const rows=[];const seen=new Set();scSheets().forEach((sh,pi)=>sh.symbols.forEach(s=>{if(s.power||seen.has(s.ref+'@'+pi))return;seen.add(s.ref+'@'+pi);
     const used=s.pins.filter(p=>nl.get(s.ref+'.'+p.num)).length;rows.push({ref:s.ref,t:`${s.ref} ${s.val||''} · ${s.fp||'-'} · ${pi+1}쪽 · 핀 ${s.pins.length}(연결 ${used})${BD.byRef[s.ref]?'':' · 보드에 없음'}`});}));
   const qq=(q||'').toLowerCase();const list=rows.filter(r=>!qq||r.t.toLowerCase().includes(qq)).sort((a,b)=>a.ref.localeCompare(b.ref,undefined,{numeric:true}));
   return list.length?list.slice(0,80).map(r=>r.t).join('\n')+(list.length>80?`\n… 외 ${list.length-80}개`:''):'해당 부품이 없습니다.';}
@@ -130,13 +131,15 @@ function scConnect(spec,net){if(!net)throw new Error('connect <부품.핀> <넷>
   if(cur&&!/^Net-\(/.test(cur)){const g=h.pin.g;if(g&&(g.pins.length>1||g.names.size))throw new Error(`${h.s.ref}.${h.pin.num}은(는) 이미 ${cur}에 연결돼 있습니다. 먼저 disconnect ${spec}`);}
   return scBatch(()=>{const sh=scSheets()[h.page];const pin=sh.symbols.find(s=>s.ref===h.s.ref&&s.pins.some(p=>SCHEDIT.same(p.p,h.pin.p))).pins.find(p=>SCHEDIT.same(p.p,h.pin.p));
     sh.nocon=sh.nocon.filter(q=>!SCHEDIT.same(q,pin.p));scAttach(sh,pin,net);SCHEDIT.cleanWires(sh);return`${h.s.ref}.${h.pin.num}${h.pin.name?' ('+h.pin.name+')':''} → ${net} · ${h.page+1}쪽`;});}
+/* take the wires, labels and power symbols off a pin end (p0) on a sheet; returns how many items went */
+function scDetach(sh,p0){let n=0;const ends=[];
+  sh.wires=sh.wires.filter(w=>{if(SCHEDIT.same(w.a,p0)){ends.push(w.b);n++;return false;}if(SCHEDIT.same(w.b,p0)){ends.push(w.a);n++;return false;}return true;});
+  const lone=p=>!sh.wires.some(w=>SCHEDIT.same(w.a,p)||SCHEDIT.same(w.b,p)||SCHEDIT.onSeg(p,w.a,w.b))&&!sh.symbols.some(s=>!s.power&&s.pins.some(q=>SCHEDIT.same(q.p,p)));
+  [p0,...ends].forEach(p=>{if(p!==p0&&!lone(p))return;const kl=sh.labels.filter(l=>SCHEDIT.same(l.p,p));kl.forEach(l=>{sh.labels.splice(sh.labels.indexOf(l),1);n++;});
+    const kp=sh.symbols.filter(s=>s.power&&SCHEDIT.same(s.pins[0].p,p));kp.forEach(s=>{sh.symbols.splice(sh.symbols.indexOf(s),1);n++;});});
+  sh.nocon=sh.nocon.filter(q=>!SCHEDIT.same(q,p0));return n;}
 function scDisconnect(spec){const h=scPin(spec);
-  return scBatch(()=>{const sh=scSheets()[h.page];const p0=h.pin.p;let n=0;const ends=[];
-    sh.wires=sh.wires.filter(w=>{if(SCHEDIT.same(w.a,p0)){ends.push(w.b);n++;return false;}if(SCHEDIT.same(w.b,p0)){ends.push(w.a);n++;return false;}return true;});
-    const lone=p=>!sh.wires.some(w=>SCHEDIT.same(w.a,p)||SCHEDIT.same(w.b,p)||SCHEDIT.onSeg(p,w.a,w.b))&&!sh.symbols.some(s=>!s.power&&s.pins.some(q=>SCHEDIT.same(q.p,p)));
-    [p0,...ends].forEach(p=>{if(p!==p0&&!lone(p))return;const kl=sh.labels.filter(l=>SCHEDIT.same(l.p,p));kl.forEach(l=>{sh.labels.splice(sh.labels.indexOf(l),1);n++;});
-      const kp=sh.symbols.filter(s=>s.power&&SCHEDIT.same(s.pins[0].p,p));kp.forEach(s=>{sh.symbols.splice(sh.symbols.indexOf(s),1);n++;});});
-    sh.nocon=sh.nocon.filter(q=>!SCHEDIT.same(q,p0));SCHEDIT.cleanWires(sh);
+  return scBatch(()=>{const sh=scSheets()[h.page];const n=scDetach(sh,h.pin.p);SCHEDIT.cleanWires(sh);
     if(!n)return`${spec}에 직접 붙은 배선·라벨이 없습니다.`;return`${h.s.ref}.${h.pin.num}에서 ${n}개 항목을 뗐습니다.`;});}
 function scProp(kind,ref,v){if(!v)throw new Error(`${kind} <부품> <값>`);const units=scSyms(ref);
   if(kind==='rename'&&(scSheets().some(sh=>sh.symbols.some(s=>s.ref===v))||BD.byRef[v]))throw new Error(`${v}는 이미 있습니다.`);
@@ -171,6 +174,7 @@ async function scRun(line,by){
     case'nets':return scNetList(a._.join(' '));
     case'net':return scNetPins(a._[0]);
     case'find':return scFind(a._[0]||'');
+    case'replace':{if(typeof plReplaceFlow!=='function')throw new Error('부품 라이브러리 모듈이 없습니다.');await plReplaceFlow({ref:String(a._[0]||'').toUpperCase(),q:a._.slice(1).join(' ')},'sch');return'';}
     case'add':return scAdd(a);
     case'connect':return scConnect(a._[0],a._[1]);
     case'disconnect':return scDisconnect(a._[0]);
@@ -205,6 +209,7 @@ async function scExec(line){
   if(!BD)return;scPanel();scSay('cmd',line);scBusy(true);
   try{const first=(cliTok(line)[0]||'').toLowerCase();
     if(SCLI_CMDS.has(first)){const o=await scRun(line);if(o)scSay('ok',o);}
+    else if(typeof plIntent==='function'&&plIntent(line)){await plReplaceFlow(plIntent(line),'sch');}
     else{if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample){await scAI(line);scBusy(false);return;}scSay('out','Claude를 쓸 수 없어 규칙으로 해석합니다.');}
       if(await aimDetQuestion(line,scSay,()=>scRun('status'))){scBusy(false);return;}
       {const cmds=scNL(line);if(!cmds.length)scSay('err','명령을 알아듣지 못했습니다. help로 목록을 보세요. (문장 해석은 Claude가 필요합니다)');else{scSay('out','해석: '+cmds.join(' → '));for(const c of cmds){scSay('cmd',c);const o=await scRun(c);if(o)scSay('ok',o);}}}}
@@ -229,7 +234,7 @@ async function scAgent(prompt,kind){
 async function scAI(req){
   if(!req.trim())return'요청을 적어 주세요. 예: ai U4 전원 핀에 100nF 디커플링 캡을 달아줘';
   SCLI.allowRegen=/regen|다시\s*(만들|생성)|처음부터|재생성/i.test(req);
-  const cmds=SCLI_HELP.filter(x=>!/^ai /.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
+  const cmds=SCLI_HELP.filter(x=>!/^(ai |replace )/.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
   const ok=await scAgent(SC_SYS.replace('${CMDS}',cmds)+`\n\n현재 회로도:\n${scBrief()}\n\n사용자 요청: ${req}`);
   if(!ok){const list=scNL(req);if(!list.length)return'Claude를 쓸 수 없고 문장도 해석하지 못했습니다. help를 보세요.';scSay('out','Claude를 쓸 수 없어 규칙으로 해석: '+list.join(' → '));for(const c of list){scSay('cmd',c);const o=await scRun(c);if(o)scSay('ok',o);}}
   return'';

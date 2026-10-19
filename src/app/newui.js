@@ -99,6 +99,8 @@ async function npExec(line){
   npSay('cmd',line);npBusy(true);
   try{const f=(cliTok(line)[0]||'').toLowerCase();
     if(NP_CMDS.has(f)){const o=await npRun(line);if(o)npSay('ok',o);}
+    else if(typeof plIntent==='function'&&plIntent(line)&&BD&&!BD.blank){await plReplaceFlow(plIntent(line),'np');}
+    else if(typeof plIntent==='function'&&plIntent(line)){npSay('out','부품 교체는 회로가 만들어진 뒤(2단계 이후) 할 수 있습니다. 블록 수준에서는 impl <블록> <라이브러리 블록>으로 구현을 바꾸세요.');}
     else if(AIM.mode==='ai'&&(await cliAiProbe(),CLI.sample)&&(NP.arch&&NP.arch.blocks.length)&&!npIsReq(line))await npAI(line);
     else if(await aimDetQuestion(line,npSay,()=>npRun('status'))){}
     else if(npNL(line)){const cmds=npNL(line);npSay('out','해석: '+cmds.join(' → '));for(const c of cmds){npSay('cmd',c);const o=await npRun(c);if(o)npSay('ok',o);}}

@@ -24,6 +24,7 @@
 - 오른쪽 도킹 패널의 **설계 도우미**가 네 단계의 콘솔(시스템·회로도·배치/배선·Text-to-CAD)을 하나의 대화로 합칩니다. 결정론 모드는 문장을 규칙으로 명령으로 바꾸고, AI 모드는 Claude가 같은 명령을 골라 실행합니다.
 - 설계를 바꾼 실행마다 **변경 요청 카드**가 붙습니다: 시스템·회로·PCB·HSIS·기구·BOM 영향, 변경 요약, 실행한 명령. **승인**하면 `CR-n` 리비전으로 기록되고, **되돌리기**는 그 실행만 정확히 되돌립니다.
 - 기구 CAD에서는 3D나 형상 트리에서 요소를 고른 뒤(Shift/Ctrl 다중) "이거 M20으로 키우고 윗면은 R2"처럼 지시합니다.
+- **부품 교체(대화형)**: "U2를 AP2112K-3.3으로 바꿔줘"라고 하면 승인 부품 목록 → 내장 DB → Claude 추정 → 부품 API(Mouser·Nexar·사내 서버) 순으로 부품을 찾고, 핀 대응(이름·역할·번호)을 표로 확인받은 뒤 회로도·보드(풋프린트 자동 생성)·BOM·데이터시트·HSIS를 한 번에 바꿉니다. 머리글 **부품** 창에서 회사 승인 부품 목록(CSV/Excel)을 가져오고 추정 결과를 승인·내보냅니다.
 
 ### 3. 보기 · 분석
 - **3D / TOP / BOTTOM / 층별(내층 포함) / 회로도**, 나란히 보기, 여러 보기를 격자로 띄우는 **새 창**(시스템 다이어그램·기구 3D·기구 도면·HSIS·시뮬레이션 포함, 메인 창과 연동).
@@ -52,6 +53,7 @@
 
 ### 8. 실제 부품 데이터
 - 부품 DB(제조사·사양·데이터시트 링크·참고 단가)와 MCU 핀 기능 DB(TC364DP, STM32F042), 부품당 한 페이지인 **데이터시트 HTML DB**(`datasheets/db/`, `npm run dsdb`).
+- **부품 라이브러리**: 승인 부품 목록(CSV/Excel) · Claude 추정 · 부품 API 결과를 브라우저에 쌓아 두고 교체·데이터시트 탭에서 씁니다. 패키지 이름만으로 풋프린트(SOT-23-5, SOIC-14, QFN-24 4x4, DIP-8 …)를 만들어 보드에 올립니다.
 
 ## 화면 구성
 
@@ -74,14 +76,14 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl)
 
 | 경로 | 내용 |
 |---|---|
-| `src/core/` | 보드 모델·파서(`pcb-core`), 편집(`pcbedit`), 자동 배치(`autoplace`), HW 아키텍처(`hwarch`), 시스템 다이어그램(`sysdiag`), 새 회로 설계(`newproj`), 하우징(`housing`), Text-to-CAD(`text2cad`), 가이드라인(`guide`), 리비전 스냅샷·비교(`revlog`), 멀티보드 시스템(`multiboard`) |
+| `src/core/` | 보드 모델·파서(`pcb-core`), 편집(`pcbedit`), 자동 배치(`autoplace`), HW 아키텍처(`hwarch`), 시스템 다이어그램(`sysdiag`), 새 회로 설계(`newproj`), 하우징(`housing`), Text-to-CAD(`text2cad`), 가이드라인(`guide`), 리비전 스냅샷·비교(`revlog`), 멀티보드 시스템(`multiboard`), 부품 라이브러리·핀 대응(`partlib`), 풋프린트 생성(`fpgen`) |
 | `src/route/autoroute.js` | 다층 자동 배선 |
 | `src/sch/` | KiCad 회로도 파서·생성·편집 |
 | `src/sim/` | 전기·열·EMC 해석, MNA 회로 해석 |
 | `src/hsis/` | HSIS 파서·검사·추적성, 핀 추천, MCAL, 테스트 케이스 생성 |
 | `src/parts/` | 부품 DB, MCU 핀 DB, 데이터시트 DB 번들 |
 | `src/fw/fw.js` | MCU 펌웨어 런타임 (샌드박스, 회로와 1 ms 코시뮬레이션) |
-| `src/app/` | 화면: `viewer`(2D/3D), `newui`(단계·회로 안), `copilot`(도우미), `pcbui`·`pcbcli`(PCB 편집·CLI), `schui`·`schcli`, `mechui`(기구), `hsisui`, `simui`, `popui`(새 창), `exportui`, `revui`, `nextui`(지표·전체 보기·변경 요청·원장·분해), `iconui`, `mbui`(멀티보드), `modeui`, `dsui`, `aimode` |
+| `src/app/` | 화면: `viewer`(2D/3D), `newui`(단계·회로 안), `copilot`(도우미), `pcbui`·`pcbcli`(PCB 편집·CLI), `schui`·`schcli`, `mechui`(기구), `hsisui`, `simui`, `popui`(새 창), `exportui`, `revui`, `nextui`(지표·전체 보기·변경 요청·원장·분해), `iconui`, `mbui`(멀티보드), `partui`(부품 교체·라이브러리), `modeui`, `dsui`, `aimode` |
 | `datasheets/db/` | 부품별 데이터시트 HTML 페이지 |
 | `docs/` | 사용 설명서(`manual.html`), 기능 상세 노트(`DETAILS.md`), 화면 캡처(`img/`) |
 | `test/` | `node --test` 테스트 |

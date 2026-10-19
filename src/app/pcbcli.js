@@ -301,6 +301,7 @@ async function cliExec(line){
   try{
     const first=(cliTok(line)[0]||'').toLowerCase();
     if(CLI_CMDS.has(first)){const out=await cliRun(line);if(out)cliSay('ok',out);}
+    else if(typeof plIntent==='function'&&plIntent(line)){await plReplaceFlow(plIntent(line),'pcb');}
     else{if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample){await cliAI(line);cliBusy(false);return;}cliSay('out','Claude를 쓸 수 없어 규칙으로 해석합니다.');}
       if(await aimDetQuestion(line,cliSay,()=>cliRun('status'))){cliBusy(false);return;}
       {const cmds=cliNL(line);if(!cmds.length)cliSay('err','명령을 알아듣지 못했습니다. help로 목록을 보세요.');else{cliSay('out','해석: '+cmds.join(' → '));for(const c of cmds){cliSay('cmd',c);const o=await cliRun(c);if(o)cliSay('ok',o);if(CLI.stopReq)break;}}}}

@@ -49,6 +49,7 @@ function copFill(d,e){
     d.innerHTML=tag+`<div class="ask-q">${esc(e.q)}</div>${e.why?`<div class="ask-w">${esc(e.why)}</div>`:''}
       <div class="ask-o">${(e.opts||[]).map((o,i)=>`<button type="button" class="pill vbtn${sel.includes(i)?' on':''}" data-opt="${i}">${esc(o)}</button>`).join('')}</div>
       <div class="ask-f"><input type="text" placeholder="${e.multi?'직접 적기 (여러 개면 , 로 구분)':'직접 적기'}" aria-label="답"><button type="button" class="btn primary sm" data-ok>${e.multi?'선택 완료':'보내기'}</button><button type="button" class="btn sm" data-skip>건너뛰기</button></div>`;return;}
+  if(k==='html'){d.className='cp cp-html'+(e.cls?' '+e.cls:'');d.innerHTML=tag+t;return;}
   d.className='cp cp-out';d.innerHTML=tag+esc(t);}
 /* a question to the user (step 1 requirement analysis): resolves with the answer text, or null when skipped */
 function copAsk(q){return new Promise(res=>{const e={k:'ask',t:q.q,q:q.q,why:q.why,opts:q.opts||[],multi:!!q.multi,state:'open',sel:[],res};COP.ask=e;copPaint(COP.askSrc||'np',e);copBusyPaint();copFocus();
@@ -85,15 +86,16 @@ async function copSubmit(text,opt){
   text=String(text||'').trim();if(!text)return;
   if(COP.ask&&COP.ask.state==='open'){copAnswer(COP.ask,text);return;}
   if(copBusyAny()){toast('실행 중입니다. 끝나거나 [중지]한 뒤 보내세요.');return;}
-  const src=opt&&opt.src||copActive();
+  let src=opt&&opt.src||copActive();
   if(src!=='np'&&!BD){copSay('err','보드가 없습니다. 1단계에서 회로를 만들거나 파일을 불러오세요.');return;}
   COP.hist.push(text);if(COP.hist.length>100)COP.hist.shift();COP.hi=COP.hist.length;
   COP.log.forEach(x=>{if(x.k==='chg'&&x.state==='open'){x.state='kept';copPaint(x.src,x,true);}});
-  const m=copMark(src);COP.pending=text;const before=typeof nxCrBefore==='function'?nxCrBefore():null;const cid0=COP.seq;
+  const m=copMark(src);const marks={};Object.keys(COP_UNDO).forEach(k=>{if(k!==src)try{marks[k]=copMark(k);}catch(e){}});COP.pending=text;const before=typeof nxCrBefore==='function'?nxCrBefore():null;const cid0=COP.seq;
   try{await COP_EXEC[src](text);}catch(err){console.error(err);copPaint(src,{k:'err',t:err&&err.message||String(err)});}
   finally{COP.pending=null;}
-  const n=copDiff(src,m);
-  if(n>0){const u=COP_UNDO[src]();const cmds=COP.log.filter(x=>x.cid>cid0&&x.k==='cmd'&&x.t).map(x=>String(x.t).replace(/\s+\(Claude\)$/,'').trim());const cr=typeof nxCrImpact==='function'?nxCrImpact(before):null;copPaint(src,{k:'chg',t:'',n,by:AIM.mode==='ai'?'ai':'user',state:'open',u,after:u[u.length-1],cr,cmds,req:text});}
+  let n=copDiff(src,m);let csrc=src;
+  if(!n)for(const k in marks){const d=copDiff(k,marks[k]);if(d>0){n=d;csrc=k;break;}}
+  if(n>0){src=csrc;const u=COP_UNDO[src]();const cmds=COP.log.filter(x=>x.cid>cid0&&x.k==='cmd'&&x.t).map(x=>String(x.t).replace(/\s+\(Claude\)$/,'').trim());const cr=typeof nxCrImpact==='function'?nxCrImpact(before):null;copPaint(src,{k:'chg',t:'',n,by:AIM.mode==='ai'?'ai':'user',state:'open',u,after:u[u.length-1],cr,cmds,req:text});}
   copBusyPaint();}
 function copCtx(){
   if(!$('#copilot'))return;const src=copActive(),S0=COP_SRC[src];
