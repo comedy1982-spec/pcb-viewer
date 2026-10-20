@@ -15,6 +15,13 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 로컬 AI — claude.ai 밖에서 Messages API (v1.38.0)
+
+- `src/app/localai.js`: `window.claude`가 없으면(파일·다른 서버) `[Claude 허용]`이 **로컬 AI 설정**을 엶. 설정(`pcbv.localai`): 직접(API 키 + `anthropic-dangerous-direct-browser-access`) 또는 프록시 URL, 등급별 모델(`claude-haiku-5-5` / `claude-sonnet-5-5` / `claude-opus-5-5`) 또는 고정 모델. `laiBuild()`가 sample 호환 함수 생성: `sample(prompt,{tools,signal,modelTier,onText})` — tool_use 루프(최대 40라운드, execute → tool_result), `sample.json` — 코드펜스/중괄호 추출 후 JSON 파싱, `limits()`. 오류 코드는 기존 처리와 맞춤(401/403 → `not_granted`, 429 → `rate_limited`, 중단 → `cancelled`).
+- `pcbcli.cliAiProbe`: `window.claude` 없고 설정이 있으면 `CLI.sample=laiBuild()`; 머리 표시 "AI 대기 · 로컬 API".
+- `scripts/serve.mjs` (`npm run serve`): dist/ 정적 서빙 + `POST /v1/messages`를 api.anthropic.com으로 전달(브라우저가 키를 안 보내면 `ANTHROPIC_API_KEY` 사용), CORS 허용. 기본 포트 8787.
+- 매뉴얼 "claude.ai 밖에서 AI 쓰기" 절.
+
 ## Claude 허용 버튼 (v1.37.4)
 
 - `aimode.js`: AI 모드인데 `claude.use('sample')`이 null이면 도우미 머리에 **[Claude 허용]** 버튼 표시. 플랫폼 내장 `permissions` 기능으로 `state('sample')` → `prompt`면 `request(['sample'])`(허용 대화상자 1회), `denied`면 `manage()`(권한 설정 창, 클릭 시에만), `unavailable`이면 안내(아티팩트 페이지·로그인 필요, 내려받은 파일에서는 불가). 허용 뒤 `cliAiProbe`를 다시 돌려 "AI 대기"로 전환.

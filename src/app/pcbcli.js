@@ -40,6 +40,7 @@ async function cliAiProbe(){
   const badge=()=>{const b=$('#cliAi');if(!b)return;b.textContent=CLI.sample?'AI 사용 가능':'AI 없음 · 문장은 규칙으로 해석';b.classList.toggle('on',!!CLI.sample);};
   if(CLI.sample!==undefined){badge();return;}
   try{CLI.sample=window.claude&&typeof window.claude.use==='function'?await window.claude.use('sample'):null;}catch(e){CLI.sample=null;}
+  if(!CLI.sample&&!(window.claude&&typeof window.claude.use==='function')&&typeof laiConfigured==='function'&&laiConfigured())CLI.sample=laiBuild(); // outside claude.ai: Messages API (key or proxy)
   try{if(CLI.sample&&CLI.sample.limits){const l=await CLI.sample.limits();CLI.tools=!!(l&&l.tools);}}catch(e){CLI.tools=false;}
   badge();
 }

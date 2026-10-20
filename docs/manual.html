@@ -260,6 +260,14 @@ kbd{background:#fff}
 <li>거부한 뒤에는 같은 페이지에서 다시 묻지 않습니다 — 아티팩트 메뉴(…) → <b>권한(Permissions)</b>에서 켜거나, 새로고침 뒤 [Claude 허용]을 누르세요.</li>
 <li>사용량은 보는 사람의 Claude 플랜 한도에서 차감됩니다. 한도에 걸리면 "사용량 한도" 메시지가 나오고 잠시 뒤 다시 시도합니다.</li>
 </ul>
+<h3 id="ai-local">claude.ai 밖(로컬 파일 · 다른 서버)에서 AI 쓰기</h3>
+<p>claude.ai 아티팩트가 아닌 곳에서 열면 <code>window.claude</code>가 없어 플랜으로는 Claude를 부를 수 없습니다. 이때 <b>[Claude 허용]</b>을 누르면 <b>로컬 AI 설정</b>이 열리고, Anthropic Messages API를 직접 써서 같은 AI 모드(문장 해석·도구 호출·질문)가 동작합니다. 비용은 API 크레딧(console.anthropic.com)입니다.</p>
+<ul>
+<li><b>브라우저에서 직접</b> — API 키를 입력하면 이 브라우저(localStorage)에 저장되고 페이지가 api.anthropic.com을 바로 부릅니다. 가장 간단하지만 키가 평문으로 남으니 개인 PC에서만 쓰세요.</li>
+<li><b>프록시 서버 경유</b> — 소스 폴더에서 <code>set ANTHROPIC_API_KEY=sk-ant-…</code>(Windows) 또는 <code>export ANTHROPIC_API_KEY=…</code> 후 <code>npm run serve</code> → <code>http://localhost:8787</code>에서 앱을 열고, 설정에서 "프록시 서버 경유"를 고릅니다. 키는 서버 프로세스에만 있습니다. (<code>PORT=…</code>로 포트 변경)</li>
+<li><b>모델 이름</b> — 등급(빠름/기본/고급)별 모델 ID를 바꾸거나 고정 모델을 지정할 수 있습니다. [연결 확인]으로 키·모델을 바로 시험합니다.</li>
+<li>상태 표시가 <b>AI 대기 · 로컬 API</b>이면 켜진 것입니다. [지우기]로 키를 삭제합니다.</li>
+</ul>
 <p>회로·PCB 콘솔의 <code>analyze</code>는 설계를 바꾸지 않는 조회 명령입니다. 질문 모드의 Claude는 "이 회로 문제 없어?", "필터 컷오프 얼마야?", "3.3 V 레일 전압 강하는?" 같은 질문에 먼저 이 명령을 돌려 나온 숫자를 인용해 답합니다. 결정론 모드에서도 "전원 트리 해석해줘", "디커플링 분석"은 바로 <code>analyze power</code>·<code>analyze decap</code>으로 풀립니다.</p>
 <table><thead><tr><th>명령</th><th>무엇을 계산하나</th></tr></thead><tbody>
 <tr><td><code>analyze power</code></td><td>전원 트리: 접지 · 레일별 공급원(레귤레이터·커넥터) · 물린 IC · 추정 부하 · 디커플링 합 · 드롭아웃 부족 경고</td></tr>

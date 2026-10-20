@@ -24,7 +24,7 @@ const aimFmt=n=>n>=10000?(n/1000).toFixed(1)+'k':n.toLocaleString();
 function aimControls(){return`<span class="aim" role="group" aria-label="실행 방식"><button type="button" class="aim-b" data-aim="ai" title="Claude가 문장을 해석해 명령으로 실행 (기본) — Claude를 쓸 수 없으면 규칙으로 대체 · 보는 사람의 Claude 사용량">AI</button><button type="button" class="aim-b" data-aim="det" title="내장 알고리즘·규칙만 사용 (Claude 사용 안 함)">결정론</button></span>
   <select class="aim-q" aria-label="AI 대화 방식" title="자동: 질문이면 답만, 지시면 실행 · 질문(QnA): 설계를 바꾸지 않고 답함 · 작업(Agent): 명령을 실행">${AIM_QA.map(([k,l,d])=>`<option value="${k}" title="${d}">${l}</option>`).join('')}</select>
   <select class="aim-t" aria-label="AI 모델 등급" title="AI 모드에서 쓸 모델 등급">${AIM_TIERS.map(([k,l,m])=>`<option value="${k}">${l} · ${m}</option>`).join('')}</select>
-  <span class="aim-u" title="이 페이지는 실제 토큰·크레딧 값을 받지 못해 보낸·받은 글자 수로 추정합니다. 사용량은 보는 사람의 Claude 플랜 한도에서 차감됩니다."></span><button type="button" class="aim-g" hidden title="이 페이지가 Claude에게 질문할 수 있게 허용합니다 (허용 대화상자 또는 권한 설정 창이 열립니다)">Claude 허용</button>`;}
+  <span class="aim-u" title="이 페이지는 실제 토큰·크레딧 값을 받지 못해 보낸·받은 글자 수로 추정합니다. 사용량은 보는 사람의 Claude 플랜 한도에서 차감됩니다."></span><button type="button" class="aim-g" hidden title="claude.ai에서는 허용 대화상자·권한 창, 밖(파일·다른 서버)에서는 로컬 AI 설정(API 키 또는 프록시)을 엽니다">Claude 허용</button>`;}
 function aimBind(root){root.querySelectorAll('[data-aim]').forEach(b=>b.addEventListener('click',()=>{AIM.mode=b.dataset.aim;aimSave();aimPaint();if(AIM.mode==='ai')cliAiProbe().then(aimPaint);}));
   const g=root.querySelector('.aim-g');if(g)g.addEventListener('click',()=>aimGrant(g));
   const t=root.querySelector('.aim-t');if(t)t.addEventListener('change',()=>{AIM.tier=t.value;aimSave();aimPaint();});
@@ -34,7 +34,7 @@ let AIM_NOTED=false;function aimUnavailableNote(say){if(AIM_NOTED)return true;AI
 function aimPaint(){$$('.aim-b').forEach(b=>{b.classList.toggle('on',b.dataset.aim===AIM.mode);b.setAttribute('aria-pressed',b.dataset.aim===AIM.mode?'true':'false');});
   $$('.aim-t').forEach(t=>{t.value=AIM.tier;t.hidden=AIM.mode!=='ai';});
   $$('.aim-q').forEach(t=>{t.value=AIM.qa;t.hidden=AIM.mode!=='ai';});
-  $$('.aim-u').forEach(u=>{u.textContent=AIM.calls?`AI ${AIM.calls}회 · 토큰(추정) 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)}`:(AIM.mode==='ai'?(CLI.sample===null?'AI 사용 불가 · 규칙으로 해석':CLI.sample?'AI 대기':'AI 확인 중…'):'');});
+  $$('.aim-u').forEach(u=>{u.textContent=AIM.calls?`AI ${AIM.calls}회 · 토큰(추정) 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)}`:(AIM.mode==='ai'?(CLI.sample===null?'AI 사용 불가 · 규칙으로 해석':CLI.sample?(CLI.sample.local?'AI 대기 · 로컬 API':'AI 대기'):'AI 확인 중…'):'');});
   $$('.aim-g').forEach(b=>{b.hidden=!(AIM.mode==='ai'&&CLI.sample===null);});
   $$('.cli-in input,#copIn').forEach(i=>{i.dataset.mode=AIM.mode;});if(typeof copCtx==='function')copCtx();}
 /* "Claude 허용": ask the viewer for the sample capability with the platform's permissions API, then probe again.
@@ -45,7 +45,8 @@ async function aimGrant(btn){
   if(btn){btn.disabled=true;btn.textContent='확인 중…';}
   const done=()=>{CLI.sample=undefined;return cliAiProbe().then(()=>{aimPaint();if(btn){btn.disabled=false;btn.textContent='Claude 허용';}
     say(CLI.sample?'ok':'err',CLI.sample?'Claude 사용이 허용되었습니다. 이제 문장형 요청을 Claude가 해석합니다.':'아직 Claude를 쓸 수 없습니다. '+AIM_GRANT_HELP);});};
-  let P=null;try{P=window.claude&&typeof window.claude.use==='function'?await window.claude.use('permissions'):null;}catch(e){P=null;}
+  if(!(window.claude&&typeof window.claude.use==='function')){if(btn){btn.disabled=false;btn.textContent='Claude 허용';}if(typeof openLocalAi==='function'){openLocalAi();return;}say('err',AIM_GRANT_HELP);return;} // not on claude.ai → local API settings
+  let P=null;try{P=await window.claude.use('permissions');}catch(e){P=null;}
   if(!P){if(btn){btn.disabled=false;btn.textContent='Claude 허용';}say('err',AIM_GRANT_HELP);return;}
   let st='unavailable';try{st=await P.state('sample');}catch(e){}
   if(st==='granted')return done();
@@ -98,7 +99,7 @@ You may call the tool ONLY for read-only lookups${o.roList?` (${o.roList})`:''} 
     }
   }catch(e){
     if(e&&e.code==='cancelled'){o.set(ans,(e.text||'')+'\n(중지됨)');U.note='중지됨';}
-    else if(e&&/^(not_granted|sampling_disabled|not_declared|capability_disabled|capability_removed)$/.test(e.code||'')){CLI.sample=null;U.spent=false;o.set(ans,'Claude 사용이 허용되지 않았습니다. 결정론 모드로 실행하세요.');aimPaint();}
+    else if(e&&/^(not_granted|sampling_disabled|not_declared|capability_disabled|capability_removed)$/.test(e.code||'')){U.spent=false;o.set(ans,CLI.sample&&CLI.sample.local||e.message&&/API/.test(e.message)?'로컬 AI 호출 실패: '+e.message+' — [Claude 허용] 버튼에서 설정을 확인하세요.':'Claude 사용이 허용되지 않았습니다. 결정론 모드로 실행하세요.');CLI.sample=null;aimPaint();}
     else if(e&&e.code==='tools_unavailable'){CLI.tools=false;U.spent=false;o.set(ans,'이 화면에서는 Claude 도구 호출을 쓸 수 없어 계획만 받아 실행합니다. 다시 실행해 주세요.');}
     else if(e&&e.code==='rate_limited'){U.spent=!!e.text;o.set(ans,'Claude 사용량 한도에 걸렸습니다. 잠시 뒤 다시 시도하거나 결정론 모드로 실행하세요.');}
     else{o.set(ans,(e&&e.text?e.text+'\n':'')+'Claude 호출 실패: '+(e&&(e.message||e.code)||e));U.note='실패';}
