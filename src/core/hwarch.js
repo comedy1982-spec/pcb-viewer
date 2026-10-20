@@ -54,9 +54,11 @@ function archFrom(text,name){
   if(can){link(A,'canx','mcu','TXD / RXD',{kind:'signal',both:true});link(A,'reg','canx','VCC_5V',{kind:'power'});}
   if(lin)link(A,'linx','mcu','UART (LIN)',{both:true});if(eth)link(A,'phy','mcu','RMII',{both:true});
   // actuation / sensing / diagnostics
-  if(bldc){addBlock(A,'io','3-Phase Inverter / Gate Driver',{id:'drv',feats:['MOSFET 6개 제어 (Gate Driver)','PWM ×3 · 상 전류'],impl:[{type:'bldc',params:{hall:hall?1:0}}]});}
-  else if(dc){addBlock(A,'io','H-Bridge / Gate Driver IC',{id:'drv',feats:['MOSFET Control','과전류 보호'],impl:[{type:'dcmotor',params:{shunt:1}}]});}
-  if(motor){link(A,'mcu','drv','Control (PWM / EN)',{kind:'signal'});link(A,'reg','drv',`VCC_DRV ${vin} V`,{kind:'power'});}
+  const nm=(()=>{const m=lo.match(/(?:bldc|모터|motor|액추에이터)[^.\n]{0,16}?(\d+)\s*(?:개|대|축|ea)/)||lo.match(/(\d+)\s*(?:개|대|축)\s*(?:의\s*)?(?:bldc|모터|motor)/)||lo.match(/(?:듀얼|dual|2축|two)\s*(?:bldc|모터|motor)/);return m?(m[1]?Math.max(1,Math.min(8,+m[1])):2):1;})();
+  for(let i=1;i<=(motor?nm:0);i++){const id=i===1?'drv':'drv'+i,sfx=nm>1?` #${i}`:'';
+    if(bldc)addBlock(A,'io','3-Phase Inverter / Gate Driver'+sfx,{id,feats:['MOSFET 6개 제어 (Gate Driver)','PWM ×3 · 상 전류'],impl:[{type:'bldc',params:{hall:hall?1:0}}]});
+    else addBlock(A,'io','H-Bridge / Gate Driver IC'+sfx,{id,feats:['MOSFET Control','과전류 보호'],impl:[{type:'dcmotor',params:{shunt:1}}]});
+    link(A,'mcu',id,`Control (PWM / EN)${sfx}`,{kind:'signal'});link(A,'reg',id,`VCC_DRV ${vin} V`,{kind:'power'});}
   if(curr||temp||hall){addBlock(A,'io',`${curr?'Current Sensing':''}${curr&&(temp||hall)?' & ':''}${temp?'Temp. Sensor':''}${!curr&&!temp&&hall?'Position Sensor':''}`,{id:'sense',feats:[curr?'전류 센싱 (Shunt + Amp)':null,temp?'온도 센서 (NTC)':null,hall?'홀 / 위치 센서':null,'HW Diagnostics'].filter(Boolean),impl:[{type:'vmon',params:{}}]});
     link(A,'sense','mcu','Analog Feedback (ADC)',{kind:'signal'});if(A.blocks.some(b=>b.id==='reg'))link(A,'reg','sense','VCC_SENS 5 V',{kind:'power'});}
   if(flash){addBlock(A,'io','External Flash',{id:'mem',feats:['데이터 로그 · 설정 저장'],impl:[{type:'flash',params:{}}]});link(A,'mcu','mem','SPI',{both:true});}
@@ -64,8 +66,8 @@ function archFrom(text,name){
   if(nled||nbt){addBlock(A,'io','HMI (LED / Button)',{id:'hmi',feats:[nled?`LED ×${nled}`:null,nbt?`Button ×${nbt}`:null].filter(Boolean),impl:[...(nled?[{type:'led',params:{n:nled}}]:[]),...(nbt?[{type:'button',params:{n:nbt}}]:[])]});link(A,'mcu','hmi','GPIO',{});}
   // external connector
   if(motor||curr||hall){addBlock(A,'ext','External Connector',{id:'conn',ext:true,feats:[`To Electric ${bldc?'BLDC ':dc?'DC ':''}Motor & Sensors`]});
-    if(motor)link(A,'drv','conn','High-Current PWM / Power',{kind:'power'});if(hall||curr)link(A,'conn','sense','Sensor Signals',{});}
-  log.push(`블록 ${A.blocks.length}개 · 연결 ${A.links.length}개 (${[batt?`배터리 ${vin} V`:`${vin} V`,can?(canfd?'CAN-FD':'CAN'):null,bldc?'BLDC':dc?'DC 모터':null,ecu?'ECU/안전':null].filter(Boolean).join(' · ')})`);
+    if(motor)A.blocks.filter(b=>/^drv\d*$/.test(b.id)).forEach(b=>link(A,b.id,'conn',`High-Current PWM / Power${nm>1?' '+b.id.replace('drv','#').replace(/^#$/,'#1'):''}`,{kind:'power'}));if(hall||curr)link(A,'conn','sense','Sensor Signals',{});}
+  log.push(`블록 ${A.blocks.length}개 · 연결 ${A.links.length}개 (${[batt?`배터리 ${vin} V`:`${vin} V`,can?(canfd?'CAN-FD':'CAN'):null,bldc?`BLDC${nm>1?' ×'+nm:''}`:dc?`DC 모터${nm>1?' ×'+nm:''}`:null,ecu?'ECU/안전':null].filter(Boolean).join(' · ')})`);
   return{arch:A,log};}
 
 /* ---- a finished board → architecture: the part-level diagram (SYSDIAG.fromBoard) with the part numbers taken out ---- */

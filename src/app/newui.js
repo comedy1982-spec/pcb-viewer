@@ -15,6 +15,7 @@ const NP_HELP=[
   ['link <A> <B> "<신호/레일>" [--kind power|signal|bus] [--both] · unlink <A> <B>','블록 사이 인터페이스 (화살표와 라벨)'],
   ['impl <ID> <회로블록|none> [--파라미터 값] [--swap <기존블록>] · impl <ID> part <MPN> [--pins SI=SPI_MOSI,…]','HW 블록을 구현할 회로 라이브러리 블록 (2단계 부품 선정용). part <MPN>이면 부품 라이브러리/Claude 추정 핀 배열로 그 부품을 직접 넣음(전원·접지 자동, SPI/I²C/UART/IRQ 핀은 MCU 배정). --swap 이면 기존 구현을 바꿈'],
   ['safety level <QM|A|B|C|D> [--goal "…"] · safety block <ID> <등급|auto> · safety apply [all|sw|uv wdt_ext drv_fb sbc cutoff2 …] · safety sw · safety ffi · safety','기능 안전: 시스템/블록 ASIL, 등급별 권장 HW 메커니즘 블록(전원 감시·외부 워치독·fault 리드백·SBC·이중 차단·리던던트 센서·2채널)과 SW 메커니즘(흐름 감시·BIST·범위 검사·메모리·클럭·ADC·E2E·리드백·타당성·HW 주기 테스트·파티셔닝 — MCU 블록에 기록), HW 부품마다 필요한 SW, FFI 경계, 상태'],
+  ['dup <블록ID|회로블록>','블록 복제 — 같은 구현·연결을 가진 두 번째 블록 (예: 모터 드라이버 2개 → dup drv)'],
   ['bind','블록 이름·기능에 적힌 부품 번호(CC2420 등)를 impl part 로 연결 (AI 모드면 핀 배열 추정)'],
   ['map · view hw|parts','아키텍처 → 회로 블록 대응 · 다이어그램 종류 (HW 블록 / 부품 구성)'],['plan · status','블록·전원 레일·MCU 핀 배정·BOM·경고'],['name <이름> · req <요구사항>','프로젝트 이름·요구사항'],
   ['auto','요구사항 문장을 규칙으로 블록 계획으로 바꿈 (결정론)'],['blocks · mcus','블록 라이브러리와 파라미터 · MCU 목록'],
@@ -25,7 +26,7 @@ const NP_HELP=[
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -80,6 +81,12 @@ async function npRun(line,by){
       if(sub==='sw'){const SW=SAFETY.swMechanisms(A);const N=SAFETY.hwNeeds(A);return`SW 메커니즘 (ASIL ${SAFETY.level(A)} 기준 ${SW.length}개)\n`+SW.map(m=>`${m.present?'✓':'○'} [${m.min}+] ${m.label} — ${m.desc}`).join('\n')+(N.length?'\n\nHW 부품이 등급을 내려면 필요한 SW:\n'+N.map(n=>`• ${n.label} (${n.block}): ${n.needs}`).join('\n'):'');}
       if(sub==='ffi'){const F=SAFETY.boundaries(A);return F.length?F.map(f=>f.msg).join('\n'):'ASIL이 다른 블록 사이의 인터페이스(FFI 경계)가 없습니다.';}
       throw new Error('safety [status|level <QM|A|B|C|D> [--goal "…"]|goal "…"|block <ID> <등급|auto>|apply [all|sw|id…]|sw|ffi]');}
+    case'dup':{npPush();const A=archEnsure();const k=NEWPROJ.blockKey(a._[0])||String(a._[0]||'');const src=HWARCH.find.length&&A.blocks.find(b=>b.id===a._[0])||A.blocks.find(b=>(b.impl||[]).some(i=>i.type===k));
+      if(!src){NP.hist.pop();const o=await npRun('add '+a._[0]);return o;}
+      const n=A.blocks.filter(b=>b.label.replace(/\s*#\d+$/,'')===src.label.replace(/\s*#\d+$/,'')).length+1;if(!/#\d+$/.test(src.label)){src.label=src.label+' #1';}
+      const b=HWARCH.addBlock(A,src.group,src.label.replace(/\s*#\d+$/,'')+' #'+n,{feats:src.feats.filter(f=>!/^SW:/.test(f)).slice(),id:src.id.replace(/\d+$/,'')+n,asil:src.asil});b.impl=JSON.parse(JSON.stringify(src.impl||[]));
+      A.links.filter(l=>l.a===src.id||l.b===src.id).forEach(l=>{const other=l.a===src.id?l.b:l.a;const lab=(l.label||'').replace(/\s*#\d+$/,'')+(l.kind==='power'?'':' #'+n);if(l.a===src.id)HWARCH.link(A,b.id,other,lab,{kind:l.kind,both:l.both});else HWARCH.link(A,other,b.id,lab,{kind:l.kind,both:l.both});});
+      NP.planManual=false;archToPlan(true);npRender();return`${b.id} "${b.label}" 추가 (${src.id} 복제: 구현 ${b.impl.map(i=>i.type).join('+')||'없음'}, 연결 ${A.links.filter(l=>l.a===b.id||l.b===b.id).length}개)`;}
     case'bind':{const r=await npBindParts();return r.length?'부품 번호 → 회로 구현: '+r.join(', '):'블록 이름·기능에서 라이브러리에 있는 부품 번호를 찾지 못했습니다 (impl <ID> part <MPN> 으로 직접 지정).';}
     case'map':{const A=archEnsure();const t=HWARCH.toPlan(A);return`${A.blocks.filter(b=>!b.ext).map(b=>`${b.id} ${b.label} ⇒ ${(b.impl||[]).map(i=>i.type).join(' + ')||'(없음 — 회로 단계에서 직접)'}`).join('\n')}${t.log.length?'\n'+t.log.join(' · '):''}\n\n${NEWPROJ.summary(t.plan).text.split('\n').slice(0,4).join('\n')}`;}
     case'view':{const v=/part|부품/.test(a._[0]||'')?'parts':'hw';SYS.view=v;sysRender();return v==='hw'?'HW 블록 다이어그램':'부품 구성도';}
@@ -129,7 +136,7 @@ async function npExec(line){
   npBusy(false);
 }
 // PCB wishes typed as a sentence in steps 1–2 (layer count, minimum size, exact size) → board commands, not a new architecture
-const npIsChange=t=>/바꿔|바꾸|교체|변경|대체|대신|추가|넣어|넣고|달아|붙여|빼|삭제|제거|없애|늘려|줄여|개로|으로\s*해|로\s*해|하도록|되도록|대응|적용|변경해|바꿔줘|swap|replace|change|remove|add\b/i.test(t);
+const npIsChange=t=>/바꿔|바꾸|교체|변경|대체|대신|추가|넣어|넣고|달아|붙여|빼|삭제|제거|없애|늘려|줄여|개로|으로\s*해|로\s*해|하도록|되도록|대응|적용|필요|개라서|변경해|바꿔줘|swap|replace|change|remove|add\b/i.test(t);
 const NP_WORDS=[[/벅|buck|dc-?dc|스위칭|smps/i,'buck'],[/ldo|리니어|선형|레귤레이터|regulator/i,'ldo'],[/usb/i,'usb_in'],[/dc\s*전원|전원\s*입력|입력\s*전원|배터리|pwr_in|power\s*in/i,'pwr_in'],[/mcu|마이컨|마이크로컨트롤러/i,'mcu'],[/크리스털|crystal|xtal|오실/i,'xtal'],[/\bcan\b/i,'can'],[/bldc|3상/i,'bldc'],[/dc\s*모터|모터|motor/i,'dcmotor'],[/led/i,'led'],[/버튼|button|스위치|switch/i,'button'],[/플래시|flash|메모리|memory/i,'flash'],[/uart|시리얼|serial|디버그|debug/i,'uart'],[/i2c|i²c/i,'i2c'],[/전압\s*감시|vmon|분압/i,'vmon'],[/워치독|watchdog|감시\s*ic|supervisor/i,'supervisor'],[/하이사이드|차단\s*스위치|hs_switch|cut.?off/i,'hs_switch']];
 function npWordKey(seg){for(const[re,k]of NP_WORDS)if(re.test(seg))return k;return null;}
 function npGroupOf(k){return/^(pwr_in|usb_in|ldo|buck|supervisor|hs_switch|vmon)$/.test(k)?'power':/^(can|uart|i2c)$/.test(k)?'comm':/^(mcu|xtal)$/.test(k)?'ctrl':'io';}
@@ -139,7 +146,7 @@ function npArchImpl(idOrType){const A=NP.arch;if(!A)return null;const t=String(i
 /* part-composition sentences → block commands (step 1, deterministic) */
 function npNL2(t){const s=t.trim();const out=[];let m;
   if((m=s.match(/ASIL[\s\-_]*([ABCD])\b/i))&&/대응|적용|맞춰|설계|등급|으로|로\b/.test(s))return[`safety level ${m[1].toUpperCase()}`,'safety apply all'];
-  if((m=s.match(/(bldc|dc\s*모터|모터|motor|can|uart|i2c|버튼|button)\s*(?:motor|모터)?\s*(?:을|를|이|가)?\s*(\d+)\s*개/i))&&/구동|추가|필요|넣|달|써|연결|해야/.test(s)){const k=npWordKey(m[1]);const n=+m[2];if(k&&k!=='led'){const have=NP.arch?NP.arch.blocks.reduce((a,b)=>a+(b.impl||[]).filter(i=>i.type===k).length,0):0;const cmds=[];for(let i=have;i<n;i++)cmds.push(`add ${k}`);return cmds.length?cmds:[`plan`];}}
+  if((m=s.match(/(bldc|dc\s*모터|모터|motor|can|uart|i2c|버튼|button)\s*(?:motor|모터)?\s*(?:은|는|을|를|이|가|도)?\s*(\d+)\s*(?:개|대|축)/i))&&/구동|추가|필요|넣|달|써|연결|해야|드라이버|제어|라서/.test(s)){const k=npWordKey(m[1]);const n=+m[2];if(k&&k!=='led'){const have=NP.arch?NP.arch.blocks.filter(b=>(b.impl||[]).some(i=>i.type===k)).length:0;const cmds=[];for(let i=have;i<n;i++)cmds.push(`dup ${k}`);return cmds.length?cmds:[`plan`];}}
   const mcuOf=x=>{const k=NEWPROJ.mcuKey?NEWPROJ.mcuKey(x):null;if(k)return k;if(/tc364|aurix|tc3/i.test(x))return'tc364';if(/stm32|cortex|st/i.test(x))return'stm32';return null;};
   // "A를 B로 바꿔/교체/대신"
   if((m=s.match(/^(.+?)\s*(?:을|를|은|는)?\s+(.+?)\s*(?:으로|로)\s*(?:바꿔|바꾸|교체|변경|대체|해\s*줘|해줘)/))||(m=s.match(/^(.+?)\s*대신(?:에)?\s+(.+?)\s*(?:을|를)?\s*(?:써|사용|넣|적용)/))){
@@ -280,6 +287,7 @@ async function npAnalyze(req,inner){
 /* Claude plans with the same commands */
 const NP_SYS=`You are a hardware system architect working inside a design tool. The user writes in Korean. Step 1 is a HW ARCHITECTURE BLOCK DIAGRAM: functional blocks without part numbers (e.g. "Battery Input (12 V)", "PMIC / LDO / Buck", "CAN-FD Transceiver", "Main MCU", "H-Bridge / Gate Driver IC", "Current Sensing & Temp. Sensor", "Debug / Calib. Interface", "External Connector") grouped in bands power · comm · ctrl · io · ext, with labelled interfaces (rails such as VCC_MCU 3.3 V, buses such as CAN_H / CAN_L, control and feedback signals). Build it with arch / block / feat / link commands through the run_np tool, one command at a time. Use impl only to say which library circuit block will realise a block in step 2; never put part numbers in labels or features unless the user names them.
 When you choose a specific part number for a block (e.g. CC2420 for an RF block, TJA1051 for CAN, BME280 for a sensor), bind it with: impl <ID> part <MPN> [--pins PIN=NET,…] — only then does the part appear in the parts view and in the step-2 circuit; a part number written only in the block label/feats is just text. Library blocks (ldo, buck, can, mcu …) stay the first choice when they fit.
+Quantities: "BLDC 모터 2개" means two driver blocks (and two connector feeds): use dup drv (copies implementation and links) rather than one block with a note.
 Part-composition changes ("LDO를 벅으로", "LED 3개", "CAN 빼줘", "MCU를 TC364로"): change the HW block's implementation with impl <ID> <circuit block> [--param], or add/remove/set/mcu — these now keep the HW diagram and the circuit plan in sync; never re-create the whole architecture for a small change.
 Functional safety: the architecture carries an ASIL level (safety level QM|A|B|C|D) and per-block levels (safety block <ID> <level>); when the requirement mentions ASIL/ISO 26262 set it, then run "safety" to see the recommended safety-mechanism blocks for that level and "safety apply all" (or specific ids) to add them; "safety ffi" lists interference boundaries between blocks of different ASIL.
 Commands:
