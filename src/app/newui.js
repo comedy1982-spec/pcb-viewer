@@ -14,6 +14,7 @@ const NP_HELP=[
   ['feat <ID> "<기능>" · feat <ID> --clear · rename <ID> "<이름>" · move <ID> <그룹> · del <ID>','블록 기능 줄 · 이름 · 그룹 · 삭제'],
   ['link <A> <B> "<신호/레일>" [--kind power|signal|bus] [--both] · unlink <A> <B>','블록 사이 인터페이스 (화살표와 라벨)'],
   ['impl <ID> <회로블록|none> [--파라미터 값]','HW 블록을 구현할 회로 라이브러리 블록 (2단계 부품 선정용, 다이어그램에는 부품을 쓰지 않음)'],
+  ['safety level <QM|A|B|C|D> [--goal "…"] · safety block <ID> <등급|auto> · safety apply [uv wdt_ext drv_fb sbc cutoff2 …|all] · safety ffi · safety','기능 안전: 시스템/블록 ASIL, 등급별 권장 안전 메커니즘 블록 추가(전원 감시·외부 워치독·fault 리드백·SBC·이중 차단·리던던트 센서·2채널), FFI 경계, 상태'],
   ['map · view hw|parts','아키텍처 → 회로 블록 대응 · 다이어그램 종류 (HW 블록 / 부품 구성)'],['plan · status','블록·전원 레일·MCU 핀 배정·BOM·경고'],['name <이름> · req <요구사항>','프로젝트 이름·요구사항'],
   ['auto','요구사항 문장을 규칙으로 블록 계획으로 바꿈 (결정론)'],['blocks · mcus','블록 라이브러리와 파라미터 · MCU 목록'],
   ['add <블록> [--파라미터 값]','블록 추가 (예: add led --n 3 --color 빨강, add ldo --vout 5, add pwr_in --vin 24)'],
@@ -23,7 +24,7 @@ const NP_HELP=[
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -67,6 +68,14 @@ async function npRun(line,by){
     case'unlink':{npPush();const n=HWARCH.unlink(archEnsure(),a._[0],a._[1]);npRender();return n?`${a._[0]} — ${a._[1]} 연결 삭제`:'그런 연결이 없습니다.';}
     case'del':{npPush();const b=HWARCH.remove(archEnsure(),a._[0]);archToPlan();npRender();return`${b.id} "${b.label}" 삭제`;}
     case'impl':{npPush();const b=HWARCH.find(archEnsure(),a._[0]);const t=String(a._[1]||'').toLowerCase();if(t==='none'||t==='-'){b.impl=[];}else{const k=NEWPROJ.blockKey(t);if(!k)throw new Error('회로 블록: '+Object.keys(NEWPROJ.LIB).join(', ')+' · none');const params={};Object.keys(a).forEach(x=>{if(x!=='_')params[x]=a[x];});b.impl=(b.impl||[]).concat([{type:k,params}]);}archToPlan(true);npRender();return`${b.id} ⇒ ${(b.impl||[]).map(i=>i.type).join(' + ')||'(구현 없음)'}`;}
+    case'safety':{const A=archEnsure();A.safety=A.safety||{level:'QM',goals:[]};const sub=String(a._[0]||'').toLowerCase();
+      if(!sub||sub==='status'||sub==='check'){npRender();return SAFETY.archText(A);}
+      if(sub==='level'){npPush();const lv=SAFETY.parseLevel('ASIL '+String(a._[1]||''))||SAFETY.parseLevel(String(a._[1]||''));if(!lv)throw new Error('safety level <QM|A|B|C|D>');A.safety.level=lv;if(a.goal&&a.goal!==true)A.safety.goals=[String(a.goal)];npRender();return`시스템 ASIL ${lv}${A.safety.goals.length?' · 안전 목표: '+A.safety.goals.join(' / '):''}\n`+SAFETY.archText(A);}
+      if(sub==='goal'){npPush();const g=a._.slice(1).join(' ');if(a.clear)A.safety.goals=[];else if(g)A.safety.goals.push(g);npRender();return'안전 목표: '+(A.safety.goals.join(' / ')||'(없음)');}
+      if(sub==='block'){npPush();const b=HWARCH.find(A,a._[1]);const lv=String(a._[2]||'').toUpperCase();if(lv==='-'||lv==='NONE'||lv==='AUTO')delete b.asil;else{if(!SAFETY.LEVELS.includes(lv))throw new Error('safety block <ID> <QM|A|B|C|D|auto>');b.asil=lv;}npRender();return`${b.id} ${b.label}: ASIL ${SAFETY.blockLevel(A,b)}${b.asil?'':' (시스템 등급 상속)'}`;}
+      if(sub==='apply'){npPush();const ids=a._.length>1&&a._[1]!=='all'?a._.slice(1):'all';const added=SAFETY.apply(A,HWARCH,ids);archToPlan();npRender();return added.length?`안전 메커니즘 블록 ${added.length}개 추가: ${added.map(b=>`${b.id} "${b.label}"${(b.impl||[]).length?' ⇒ '+b.impl.map(i=>i.type).join('+'):' (회로 블록 없음 — 2단계에서 직접)'}`).join(', ')}\n`+SAFETY.archText(A):'추가할 메커니즘이 없습니다 (이미 있거나 SW 항목).';}
+      if(sub==='ffi'){const F=SAFETY.boundaries(A);return F.length?F.map(f=>f.msg).join('\n'):'ASIL이 다른 블록 사이의 인터페이스(FFI 경계)가 없습니다.';}
+      throw new Error('safety [status|level <QM|A|B|C|D> [--goal "…"]|goal "…"|block <ID> <등급|auto>|apply [id…]|ffi]');}
     case'map':{const A=archEnsure();const t=HWARCH.toPlan(A);return`${A.blocks.filter(b=>!b.ext).map(b=>`${b.id} ${b.label} ⇒ ${(b.impl||[]).map(i=>i.type).join(' + ')||'(없음 — 회로 단계에서 직접)'}`).join('\n')}${t.log.length?'\n'+t.log.join(' · '):''}\n\n${NEWPROJ.summary(t.plan).text.split('\n').slice(0,4).join('\n')}`;}
     case'view':{const v=/part|부품/.test(a._[0]||'')?'parts':'hw';SYS.view=v;sysRender();return v==='hw'?'HW 블록 다이어그램':'부품 구성도';}
     case'diagram':{const A=sysArch();if(SYS.view!=='parts'&&A)return HWARCH.text(A);const D=sysDiagram();return D?SYSDIAG.text(D):'다이어그램이 없습니다. 요구사항으로 계획을 세우거나 보드를 불러오세요.';}
@@ -197,7 +206,7 @@ const REQ_Q=[
   {key:'mcu',label:'MCU',re:/stm32|aurix|tc3|tc364|cortex|\bmcu\b|마이크로|esp32|\bpic\b|avr|atmega/i,q:'MCU는 어떤 계열을 쓰나요?',why:'핀 수·주변장치·안전 기능이 달라 회로 안이 달라집니다.',opts:['STM32 (Cortex-M, 범용·저가)','AURIX TC364 (차량·기능 안전)','상관없음 — 추천해 주세요']},
   {key:'comm',label:'통신',re:/\bcan\b|can-?fd|\blin\b|uart|usb|i2c|i²c|spi|ethernet|이더넷|통신|\bble\b|wifi|무선|rs-?485/i,q:'외부와 어떤 통신을 하나요?',why:'트랜시버·커넥터·MCU 핀 배정에 필요합니다.',opts:['CAN','CAN-FD','UART (디버그·시리얼)','USB','통신 없음'],multi:true},
   {key:'func',label:'기능',re:/모터|motor|bldc|팬|\bfan\b|센서|sens|led|버튼|button|릴레이|relay|밸브|valve|측정|adc|전류|온도|홀|hall|솔레노이드|플래시|flash|로그/i,q:'보드가 하는 주요 기능은 무엇인가요?',why:'구동·센싱 블록과 전원 용량을 정합니다.',opts:['DC 모터 구동','BLDC 모터 구동 (홀 센서)','센서 측정 (전류·온도·전압)','LED·버튼 (표시·입력)','데이터 로그 (플래시)'],multi:true},
-  {key:'env',label:'환경·안전',re:/asil|iso\s*26262|기능\s*안전|safety|산업|industrial|차량|automotive|\becu\b|실내|옥외|-40|온도\s*범위|\bqm\b/i,q:'사용 환경과 안전 등급은요?',why:'워치독·보호 회로·부품 등급이 달라집니다.',opts:['일반 (실내 · QM)','차량용 (ASIL B)','산업용 (-40~85 °C)','모름 — 일반으로']}];
+  {key:'env',label:'환경·안전',re:/asil|iso\s*26262|기능\s*안전|safety|산업|industrial|차량|automotive|\becu\b|실내|옥외|-40|온도\s*범위|\bqm\b/i,q:'사용 환경과 안전 등급은요?',why:'워치독·보호 회로·부품 등급이 달라집니다.',opts:['일반 (실내 · QM)','차량용 (ASIL A)','차량용 (ASIL B)','차량용 (ASIL C)','차량용 (ASIL D)','산업용 (-40~85 °C)','모름 — 일반으로']}];
 const npIsReq=t=>REQ_Q.filter(f=>f.re.test(t)).length>=2||/요구|설계|만들|보드|노드|컨트롤러|ecu|모듈/i.test(t);
 async function npAskAI(req){
   const prompt=`You are a hardware system architect. A user wrote this requirement for a new electronics board (Korean). Decide which ESSENTIAL facts are still missing before an HW block diagram can be drawn: input power (voltage/source), MCU family, external communication, main functions (actuation/sensing/UI/storage), environment & safety level, and anything the request makes necessary (e.g. motor rating, sensor type, bus speed). Ask ONLY about missing or ambiguous facts, at most 4 questions, each with 3-5 concrete answer options in Korean (short labels that include the key words a rules engine can read, e.g. "12 V 차량 배터리", "AURIX TC364", "CAN-FD", "BLDC 모터 구동 (홀 센서)", "ASIL B"). If nothing essential is missing return an empty list.
@@ -220,11 +229,13 @@ async function npAnalyze(req){
     npPush();if(!NP.arch)NP.arch=HWARCH.blank(name||null);NP.arch.req=full;if(name)NP.arch.name=name;SYS.view='hw';
     if(AIM.mode==='ai'&&CLI.sample){await npAI(`${name?'프로젝트 이름: '+name+'. ':''}요구사항: ${full}. 이 요구사항으로 HW 블록 다이어그램(부품 미정)을 ${NP.arch.blocks.length?'다시 ':''}만들어줘.`);archToPlan();npRender();}
     else{const o=await npRun('arch '+full);npSay('ok',o);}
+    try{const lv=typeof SAFETY!=='undefined'?SAFETY.parseLevel(full):null;if(lv&&NP.arch&&NP.arch.blocks.length&&(!NP.arch.safety||NP.arch.safety.level==='QM')){const o=await npRun(`safety level ${lv}`);npSay('ok',o);if(lv!=='QM'){const M=SAFETY.mechanisms(NP.arch,lv).filter(m=>!m.present&&!m.sw);if(M.length){const a=await copAsk({q:`ASIL ${lv} 권장 안전 메커니즘 ${M.length}개가 다이어그램에 없습니다. 추가할까요?`,why:M.map(m=>m.label).join(' · '),opts:['모두 추가','전원 감시·워치독만','나중에']});if(a==='모두 추가'){npSay('ok',await npRun('safety apply all'));}else if(a&&/전원/.test(a)){npSay('ok',await npRun('safety apply uv wdt_ext'));}}}}}catch(e){console.warn(e);}
     copSay('out','다이어그램을 확인하고 블록·기능·인터페이스를 고친 뒤 [다음: 회로 생성]을 누르세요. 부품과 PCB는 다음 단계에서 정합니다.');
   }catch(e){console.error(e);npSay('err',e.message||String(e));}
   npBusy(false);}
 /* Claude plans with the same commands */
 const NP_SYS=`You are a hardware system architect working inside a design tool. The user writes in Korean. Step 1 is a HW ARCHITECTURE BLOCK DIAGRAM: functional blocks without part numbers (e.g. "Battery Input (12 V)", "PMIC / LDO / Buck", "CAN-FD Transceiver", "Main MCU", "H-Bridge / Gate Driver IC", "Current Sensing & Temp. Sensor", "Debug / Calib. Interface", "External Connector") grouped in bands power · comm · ctrl · io · ext, with labelled interfaces (rails such as VCC_MCU 3.3 V, buses such as CAN_H / CAN_L, control and feedback signals). Build it with arch / block / feat / link commands through the run_np tool, one command at a time. Use impl only to say which library circuit block will realise a block in step 2; never put part numbers in labels or features unless the user names them.
+Functional safety: the architecture carries an ASIL level (safety level QM|A|B|C|D) and per-block levels (safety block <ID> <level>); when the requirement mentions ASIL/ISO 26262 set it, then run "safety" to see the recommended safety-mechanism blocks for that level and "safety apply all" (or specific ids) to add them; "safety ffi" lists interference boundaries between blocks of different ASIL.
 Commands:
 \${CMDS}
 Blocks (type: label — description; params with defaults):
@@ -291,13 +302,15 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
     box.innerHTML=`<div class="np-blk"><div class="np-bh"><b>${esc(b.label)}</b><span class="mono">${esc(b.id)}</span></div>
       ${editable?`<label class="fld"><span>이름</span><input data-ar="label" value="${esc(b.label)}"></label>
       <label class="fld"><span>그룹</span><select data-ar="group">${HWARCH.GROUPS.map(g=>`<option value="${g[0]}"${g[0]===b.group?' selected':''}>${esc(g[1])} · ${esc(g[2])}</option>`).join('')}</select></label>
-      <label class="fld"><span>기능 (줄마다 하나)</span><textarea data-ar="feats" rows="3">${esc(b.feats.join('\n'))}</textarea></label>`:`<div class="np-bd">${esc(b.feats.join(' · '))}</div>`}
+      <label class="fld"><span>기능 (줄마다 하나)</span><textarea data-ar="feats" rows="3">${esc(b.feats.join('\n'))}</textarea></label>
+      <label class="fld"><span>ASIL (시스템 ${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</span><select data-ar="asil"><option value="auto"${b.asil?'':' selected'}>상속 (${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</option>${['QM','A','B','C','D'].map(l=>`<option value="${l}"${b.asil===l?' selected':''}>ASIL ${l}</option>`).join('')}</select></label>`:`<div class="np-bd">${esc(b.feats.join(' · '))}${b.asil?' · ASIL '+esc(b.asil):''}</div>`}
       <ul class="sys-io">${io.map(l=>{const o=N(l.a===b.id?l.b:l.a);return`<li><span class="k-${l.kind==='bus'?'ext':l.kind}">${l.a===b.id?(l.both?'↔':'→'):(l.both?'↔':'←')}</span> ${esc(o?o.label:'')} <span class="mono">${esc(l.label)}</span></li>`;}).join('')}</ul>
       ${editable&&!b.ext?`<div class="np-bd" style="margin-top:6px">회로 구현 (2단계): <b>${(b.impl||[]).map(i=>esc(NEWPROJ.LIB[i.type]?NEWPROJ.LIB[i.type].label:i.type)).join(' + ')||'없음'}</b></div>
       <div class="np-add"><select data-ar="impl"><option value="">회로 블록 지정…</option>${Object.entries(NEWPROJ.LIB).map(([k,v])=>`<option value="${k}">${esc(v.label)}</option>`).join('')}<option value="none">구현 지우기</option></select></div>`:''}
       ${editable?'':'<p class="lead" style="margin:6px 0 0">보드에서 추출한 블록입니다. [보드에서 추출]로 가져오면 편집할 수 있습니다.</p>'}</div>`;
     box.querySelector('[data-ar="label"]')?.addEventListener('change',e=>npExec(`rename ${b.id} "${e.target.value.replace(/"/g,'')}"`));
     box.querySelector('[data-ar="group"]')?.addEventListener('change',e=>npExec(`move ${b.id} ${e.target.value}`));
+    box.querySelector('[data-ar="asil"]')?.addEventListener('change',e=>npExec(`safety block ${b.id} ${e.target.value}`));
     box.querySelector('[data-ar="feats"]')?.addEventListener('change',e=>{npPush();b.feats=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);npRender();});
     box.querySelector('[data-ar="impl"]')?.addEventListener('change',e=>{if(e.target.value)npExec(`impl ${b.id} ${e.target.value}`);});
     return;}

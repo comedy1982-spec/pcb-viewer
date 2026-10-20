@@ -111,10 +111,19 @@ const LIB={
   i2c:{label:'I²C 확장 헤더',desc:'SDA·SCL 4.7 kΩ 풀업 + 헤더',params:{},
     build(ctx){ctx.use('+3V3');ctx.part('J','I²C','HDR-1x4',{1:'+3V3',2:'I2C_SDA',3:'I2C_SCL',4:'GND'},{mpn:'61300411121',desc:'I²C 확장 헤더',pinNames:{1:'3V3',2:'SDA',3:'SCL',4:'GND'}});
       ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:'I2C_SDA'},{desc:'SDA 풀업'});ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:'I2C_SCL'},{desc:'SCL 풀업'});ctx.sig('I2C_SCL','i2c_scl','i2c');ctx.sig('I2C_SDA','i2c_sda','i2c');}},
+  supervisor:{label:'전원 감시 + 외부 워치독',desc:'TPS3823 (SOT-23-5): VDD 감시 리셋 + WDI 윈도우 워치독 → MCU 리셋 · WDI는 MCU GPIO',params:{rail:{def:'+3V3',desc:'감시할 코어 레일'},wdt:{def:1,desc:'WDI 워치독 연결 (1/0)'}},
+    build(ctx,p){const rail=p.rail||'+3V3';ctx.use(rail);const rst=ctx.mcu()==='tc364'?'PORST':'NRST';
+      ctx.part('U','TPS3823-33','SOT-23-5',{1:rst,2:rail,3:'GND',4:rail,5:+p.wdt?'WDI':''},{mpn:'TPS3823DBVR',desc:'전원 감시 리셋 + 윈도우 워치독 (1.6 s)',pinNames:{1:'RESET',2:'VDD',3:'GND',4:'MR',5:'WDI'}});
+      ctx.cap(rail,'100nF','감시 IC 디커플링');if(+p.wdt)ctx.sig('WDI','gpio_out');}},
+  hs_switch:{label:'하이사이드 전원 스위치 (세이프 스테이트)',desc:'P-MOSFET 하이사이드 + N-MOSFET 레벨시프트 · MCU SAFE_EN이 High일 때만 부하 전원 공급 (이중 차단)',params:{rail:{def:'auto',desc:'끊을 전원 레일 (auto = 입력)'}},
+    build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);const out=r+'_SW';ctx.provide(out,ctx.railV?ctx.railV(r):12,'스위치');
+      ctx.part('Q','AO3401A','SOT-23',{1:'HS_G',2:out,3:r},{mpn:'AO3401A',desc:'하이사이드 P-MOSFET (부하 전원 차단)',pinNames:{1:'G',2:'D',3:'S'}});
+      ctx.part('R','10kΩ','0603',{1:r,2:'HS_G'},{desc:'게이트 풀업 (기본 OFF)'});ctx.part('Q','AO3400A','SOT-23',{1:'SAFE_EN',2:'HS_G',3:'GND'},{mpn:'AO3400A',desc:'레벨 시프트 N-MOSFET'});
+      ctx.part('R','10kΩ','0603',{1:'SAFE_EN',2:'GND'},{desc:'SAFE_EN 풀다운 (MCU 리셋 중 OFF)'});ctx.sig('SAFE_EN','gpio_out');}},
   vmon:{label:'전압 감시',desc:'100 kΩ/22 kΩ 분압 + 100 nF → ADC (입력 레일 감시)',params:{rail:{def:'auto',desc:'감시할 레일 (auto = 입력)'}},
     build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);ctx.part('R','100kΩ','0603',{1:r,2:'VMON'},{desc:'분압 상단'});ctx.part('R','22kΩ','0603',{1:'VMON',2:'GND'},{desc:'분압 하단'});ctx.part('C','100nF','0603',{1:'VMON',2:'GND'},{desc:'ADC 필터'});ctx.sig('VMON','adc');}}};
 const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'pwr_in',dc:'pwr_in',input:'pwr_in',usb:'usb_in',usbc:'usb_in',regulator:'ldo',reg:'ldo',crystal:'xtal',osc:'xtal',motor:'dcmotor',dc_motor:'dcmotor',
-  bldc3:'bldc',led:'led',leds:'led',btn:'button',sw:'button',spi:'flash',memory:'flash',serial:'uart',debug:'uart',monitor:'vmon',adc:'vmon'};
+  bldc3:'bldc',led:'led',leds:'led',btn:'button',sw:'button',spi:'flash',memory:'flash',serial:'uart',debug:'uart',monitor:'vmon',adc:'vmon',wdt:'supervisor',watchdog:'supervisor',reset:'supervisor',sbc:'supervisor',cutoff:'hs_switch',hsswitch:'hs_switch',hs:'hs_switch'};
 const blockKey=s=>{const k=String(s||'').toLowerCase();return LIB[k]?k:BLOCK_ALIAS[k]||null;};
 
 /* ---------- plan ---------- */
@@ -162,9 +171,9 @@ function build(plan){
   const ctx={
     part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,ldo:o.ldo,mcu:!!o.mcu};parts.push(c);return c;},
     cap(rail,val,desc){if(!rail)return;used.add(rail);return ctx.part('C',val,capFp(val),{1:rail,2:'GND'},{desc,mpn:capMpn[val]});},
-    provide(rail,v,by){rails[rail]={v,by,block:ctx._b};},use(r){if(r)used.add(r);},has,
+    provide(rail,v,by){rails[rail]={v,by,block:ctx._b};},railV(r){return rails[r]?rails[r].v:(typeof SIM!=='undefined'&&SIM.nominalV?SIM.nominalV(r):0);},use(r){if(r)used.add(r);},has,
     highest(min){const r=Object.entries(rails).filter(([,x])=>x.v>=min).sort((a,b)=>b[1].v-a[1].v)[0];if(!r){warn.push(`${min} V 이상 레일이 없음 — 전원 블록을 먼저 넣으세요`);return'+12V';}return r[0];},
-    setMcu(k){mcu=k;},mcuPin(n,net){fixedPins[n]=net;},need(t){if(!has(t))warn.push(`${t} 블록이 필요합니다 (예: add ${t})`);},
+    setMcu(k){mcu=k;},mcu(){return mcu;},mcuPin(n,net){fixedPins[n]=net;},need(t){if(!has(t))warn.push(`${t} 블록이 필요합니다 (예: add ${t})`);},
     sig(net,role,group){sigs.push({net,role,group:group||null,block:ctx._b});},xtal(a,b){xt.push(a,b);},
     uniq(base){uq[base]=(uq[base]||0)+1;return uq[base]===1&&base!=='LED'&&base!=='BTN'?base:base+uq[base];}};
   // power first (rails), then MCU, then the rest

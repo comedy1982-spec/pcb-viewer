@@ -97,10 +97,10 @@ function renderHSIS(){
 function tableHTML(){
   const rows=filtered();
   if(!rows.length)return'<p class="empty">조건에 맞는 신호가 없습니다.</p>';
-  return`<div class="tscroll"><table class="stbl hs"><thead><tr><th>상태</th><th>ID</th><th>신호</th><th>분류</th><th class="r">MCU 핀</th><th>포트 · 기능</th><th>방향</th><th>회로도 넷</th><th>TP</th><th>SW 모듈</th><th>요구사항</th><th>테스트</th></tr></thead><tbody>
+  return`<div class="tscroll"><table class="stbl hs"><thead><tr><th>상태</th><th>ID</th><th>신호</th><th>분류</th><th class="r">MCU 핀</th><th>포트 · 기능</th><th>방향</th><th>회로도 넷</th><th>TP</th><th>ASIL · 안전 메커니즘</th><th>SW 모듈</th><th>요구사항</th><th>테스트</th></tr></thead><tbody>
   ${rows.map(it=>`<tr class="click${HS.sel===it.id?' on':!HS.sel&&S.hlNet&&hsisNetOf(it)===S.hlNet?' hlrow':''}" data-item="${esc(it.id)}"><td>${pill(HS.res.status[it.id])}</td><td class="mono">${esc(it.id)}</td><td class="mono"><b>${esc(it.signal)}</b></td>
     <td><span class="cat"><i style="background:${catColor(it._cat)}"></i>${esc(it._cat)}</span></td><td class="r mono">${esc(it.pins)}</td><td class="mono">${esc([it.port,it.func].filter(Boolean).join(' · '))}</td><td>${esc(it.dir)}</td>
-    <td class="mono">${esc(it.net)}</td><td class="mono">${it._tp?esc(it._tp):'<span class="miss">—</span>'}</td><td>${esc(it.swmod)}</td><td class="mono">${it.req?esc(it.req):'<span class="miss">없음</span>'}</td><td class="mono">${it.test?esc(it.test):'<span class="miss">없음</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+    <td class="mono">${esc(it.net)}</td><td class="mono">${it._tp?esc(it._tp):'<span class="miss">—</span>'}</td><td>${it.asil||it.sm?esc([it.asil,it.sm].filter(Boolean).join(' · ')):'<span class="miss">—</span>'}</td><td>${esc(it.swmod)}</td><td class="mono">${it.req?esc(it.req):'<span class="miss">없음</span>'}</td><td class="mono">${it.test?esc(it.test):'<span class="miss">없음</span>'}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function pinmapHTML(){
   const c=BD.byRef[HS.mcu];if(!c)return'<p class="empty">MCU 부품을 고르면 핀 맵을 그립니다.</p>';

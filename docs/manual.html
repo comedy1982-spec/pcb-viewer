@@ -59,6 +59,7 @@ kbd{background:#fff}
   <a href="#strip">지표 띠 · 전체 보기</a>
   <a href="#sim">시뮬레이션</a>
   <a href="#hsis">HSIS</a>
+  <a href="#safety">기능 안전 (ASIL)</a>
   <a href="#circuit-analyze">회로 해석 (analyze)</a>
   <a href="#circuit-ai">회로 보강 (TP · NC · 필터)</a>
   <a href="#parts">부품 교체 · 부품 라이브러리</a>
@@ -217,6 +218,19 @@ kbd{background:#fff}
   <li><b>MCAL 설정</b> · <b>테스트 케이스</b>(SWE.6/SYS.4) 생성과 내려받기.</li>
 </ul>
 <p>탭 머리의 <b>Excel</b>은 지금 탭의 표를, 내보내기 창의 "HSIS 전체"는 모든 표를 시트별로 저장합니다.</p>
+
+<h2 id="safety">기능 안전 — ASIL 등급별 설계</h2>
+<figure><img src="img/safety.jpg" alt="ASIL B 시스템 다이어그램: 블록마다 ASIL 배지, 세이프 스테이트 경로, 안전 메커니즘 추가 질문"><figcaption>ASIL B 요구사항 → 블록 배지 · 세이프 스테이트(빨강) 경로 · 권장 안전 메커니즘 추가 카드</figcaption></figure>
+<p>요구사항에 <b>ASIL A~D</b>(또는 SIL 1~3, QM)를 적으면 1단계가 그 등급으로 시작합니다. 질문 카드의 "환경·안전" 항목에서도 고를 수 있습니다.</p>
+<ol>
+  <li><b>등급과 안전 목표</b> — <code>safety level B --goal "의도치 않은 모터 구동 방지"</code>. 블록마다 다른 등급은 <code>safety block dbg QM</code> 또는 선택 패널의 ASIL 선택. 다이어그램에 블록 테두리 색·배지(A 파랑 · B 초록 · C 호박 · D 빨강)가 붙습니다.</li>
+  <li><b>권장 안전 메커니즘</b> — 등급이 정해지면 빠진 메커니즘을 묻는 카드가 뜹니다. <code>safety</code>로 상태를 보고 <code>safety apply all</code>(또는 <code>uv wdt_ext drv_fb sbc cutoff2 sensor_red …</code>)로 블록을 추가합니다. 전원 감시·외부 워치독은 회로 블록 <code>supervisor</code>(TPS3823, nRESET + WDI), 이중 차단은 <code>hs_switch</code>(하이사이드 P-FET + SAFE_EN)로 2단계에서 실제 부품이 됩니다.
+    <table><thead><tr><th>ASIL</th><th>권장 메커니즘</th></tr></thead><tbody><tr><td>A</td><td>전원 감시(UV/OV 리셋) · 내부 워치독(SW)</td></tr><tr><td>B</td><td>+ 외부 윈도우 워치독 · ADC 레퍼런스/자가 진단(SW) · 커넥터 open/short 진단 · 드라이버 fault·전류 리드백</td></tr><tr><td>C</td><td>+ SBC(질의응답 워치독·FS0B) · 독립 모니터 경로 · 리던던트 센서(이종) · 이중 차단 세이프 스테이트</td></tr><tr><td>D</td><td>+ ASIL 분해 2채널 · 락스텝/2-MCU 상호 감시</td></tr></tbody></table></li>
+  <li><b>FFI 경계</b> — 등급이 다른 블록 사이의 인터페이스는 다이어그램에 <code>FFI ⚠</code>로 표시되고 <code>safety ffi</code>로 목록을 봅니다(낮은 쪽이 높은 쪽을 방해하지 못하도록 진단·격리).</li>
+  <li><b>회로 점검</b> — 2·3단계 콘솔 <code>safety check</code>: 전원 감시 IC, 외부 워치독(MCU 연결), 질의응답 워치독, 역전압 보호, TVS, 드라이버 fault 리드백·EN 차단 경로(이산 FET면 게이트 풀다운), 전류 감지 션트, 이중 차단(하이사이드 스위치), 센서 리던던시, 커넥터 핀 분리(고전압 옆 안전 신호), 클럭 감시. 항목마다 최소 등급과 조치 명령이 붙고, AI 모드 "ASIL B로 올리려면 뭘 더해야 해?"는 이 결과를 근거로 답하고 실행합니다.</li>
+  <li><b>FMEDA 추정</b> — <code>safety fmeda</code>: 부품 등급별 기본 FIT, 발견된 메커니즘 기준 진단 커버리지(DC)로 잔류 FIT·SPFM·LFM(추정)·PMHF를 계산해 ISO 26262-5 목표(B: SPFM ≥ 90 %, PMHF &lt; 100 FIT …)와 비교합니다. 지표 띠 <b>기능 안전</b> 타일, 설계 보고서 "기능 안전" 절, 설계 데이터 Excel의 FMEDA·점검 시트, HSIS 표의 ASIL·안전 메커니즘 열에 반영됩니다.</li>
+</ol>
+<p class="note">FIT·DC는 초기 설계용 가정값입니다. 실제 FMEDA·안전 분석은 부품 데이터시트의 FIT, 고장 모드 분포, 안전 개념 문서로 수행하세요.</p>
 
 <h2 id="circuit-analyze">회로 해석 — 질문에 숫자로 답하기</h2>
 <figure><img src="img/circuit-analyze.jpg" alt="질문 모드에서 analyze 명령을 불러 디커플링과 AC 응답을 답하는 설계 도우미"><figcaption>질문 모드 — Claude가 analyze decap · analyze ac 를 돌려 수치로 답함</figcaption></figure>

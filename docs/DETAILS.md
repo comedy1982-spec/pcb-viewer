@@ -15,6 +15,13 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 기능 안전 — ASIL 등급별 설계 (v1.35)
+
+- `src/core/safety.js`: `LEVELS/parseLevel/TARGETS`, `MECH`(등급별 권장 메커니즘: 인식 키워드 · 추가 블록 · 회로 impl · DC), `mechanisms(A)`, `boundaries(A)`(FFI), `apply(A,HWARCH,ids)`(블록·세이프 스테이트 링크 추가), `archText`, `circuitChecks(B,{level,arch})`(supervisor·wdt·wdt_qa·revpol·tvs·drv_fault·drv_en·isense·cutoff2·can_tx·sensor_red·conn_adj·clk), `fmeda`(부품 등급 FIT, 클래스별 DC, SPFM/LFM/PMHF, 목표 판정), `fmedaAoa`, `circuitText`.
+- `hwarch`: `A.safety{level,goals}`, `b.asil`, 링크 종류 `safe`(빨강), 블록 ASIL 배지·테두리, FFI 라벨, 범례, `text()`에 안전 요약; 규칙 해석의 Watchdog 블록은 `supervisor` 구현·`safe` 링크.
+- `newproj`: 회로 블록 `supervisor`(TPS3823 SOT-23-5: nRESET/PORST + WDI gpio_out), `hs_switch`(AO3401 하이사이드 + AO3400 레벨시프트 + SAFE_EN), `ctx.mcu()/railV()`; `pcb-core` FP `SOT-23-5`.
+- `newui`: `safety [status|level|goal|block|apply|ffi]`, 요구사항의 ASIL 자동 적용 + 빠진 메커니즘 질문 카드, 블록 패널 ASIL 선택, 질문 카드 환경 항목에 ASIL A~D, NP_SYS 안내. `schcli/pcbcli`: `safety [check|fmeda|level]`(조회, `analyze safety`), AI 프롬프트 안내. `exportui`: 보고서 "기능 안전" 절, Excel FMEDA·점검 시트. `nextui`: 기능 안전 타일. `hsis`: `asil`·`sm` 필드와 표 열.
+
 ## 회로 해석 명령 analyze (v1.34)
 
 - `src/core/analyze.js`: `powerTree`(SIM.extractCircuit의 REG/LOAD/소스로 레일별 공급원·부하·디커플링·경고), `decap`(IC 전원 핀별 접지 커패시터·거리·심각도), `patterns`(RC/LC/FB-π/분압/풀업·풀다운/션트/LED 전류), `acSweep`(복소 MNA: R·C·L, 비드=0.1 Ω+L(Z@f), 다른 전원 레일 AC 접지, 1 V 소스, 로그 스윕, −3 dB·피크), `dcText`(SIM.dcop 요약). 단위 포맷 `fmt`.

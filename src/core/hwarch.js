@@ -9,13 +9,14 @@ const HWARCH=(function(){
 const GROUPS=[['power','전원','Power Supply Block'],['comm','통신','Communication Block'],['ctrl','제어','Microcontroller Unit'],['io','구동 · 센싱 · 진단','Actuation · Sensing · Diag.'],['ext','외부 연결','External Interface']];
 const GK=Object.fromEntries(GROUPS.map(g=>[g[0],g]));
 const gAlias=s=>{s=String(s||'').toLowerCase();if(GK[s])return s;if(/전원|power|pwr|psu/.test(s))return'power';if(/통신|comm|bus|can|lin|eth/.test(s))return'comm';if(/제어|mcu|ctrl|control|micro/.test(s))return'ctrl';if(/외부|ext|conn|커넥터/.test(s))return'ext';if(/구동|센|진단|io|act|sens|diag|drv/.test(s))return'io';return null;};
-const KINDS=['power','signal','bus'];
-function blank(name){return{name:name||'새 프로젝트',req:'',blocks:[],links:[],seq:0};}
+const KINDS=['power','signal','bus','safe'];
+const ASIL_HUE={QM:null,A:'#4f8ff7',B:'#2fbf7a',C:'#e6a93a',D:'#d9534f'};
+function blank(name){return{name:name||'새 프로젝트',req:'',blocks:[],links:[],seq:0,safety:{level:'QM',goals:[]}};}
 function uid(A,base){base=String(base||'blk').toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,16)||'blk';let id=base,k=1;while(A.blocks.some(b=>b.id===id))id=base+(++k);return id;}
 function addBlock(A,group,label,o){o=o||{};const g=gAlias(group);if(!g)throw new Error('그룹: '+GROUPS.map(x=>x[0]).join(' · '));if(!label)throw new Error('블록 이름이 필요합니다');
-  const b={id:o.id&&!A.blocks.some(x=>x.id===o.id)?o.id:uid(A,o.id||label),group:g,label:String(label).slice(0,40),feats:(o.feats||[]).filter(Boolean).map(String),impl:o.impl||[],ext:!!o.ext,rails:o.rails||[]};A.blocks.push(b);return b;}
+  const b={id:o.id&&!A.blocks.some(x=>x.id===o.id)?o.id:uid(A,o.id||label),group:g,label:String(label).slice(0,40),feats:(o.feats||[]).filter(Boolean).map(String),impl:o.impl||[],ext:!!o.ext,rails:o.rails||[]};if(o.asil)b.asil=String(o.asil).toUpperCase();A.blocks.push(b);return b;}
 function find(A,id){const b=A.blocks.find(x=>x.id===id)||A.blocks.find(x=>x.id.toLowerCase()===String(id).toLowerCase());if(!b)throw new Error(`블록 ${id}가 없습니다 — diagram으로 ID를 보세요`);return b;}
-function link(A,a,b,label,o){o=o||{};const x=find(A,a),y=find(A,b);const kind=KINDS.includes(o.kind)?o.kind:/v\b|vcc|vdd|vbat|전원|\d\s*v/i.test(label||'')?'power':/can|lin|eth|bus|버스/i.test(label||'')&&(x.ext||y.ext)?'bus':'signal';
+function link(A,a,b,label,o){o=o||{};const x=find(A,a),y=find(A,b);const kind=KINDS.includes(o.kind)?o.kind:/safe|세이프|reset|nreset|fs0b|wdi|차단/i.test(label||'')?'safe':/v\b|vcc|vdd|vbat|전원|\d\s*v/i.test(label||'')?'power':/can|lin|eth|bus|버스/i.test(label||'')&&(x.ext||y.ext)?'bus':'signal';
   A.links=A.links.filter(l=>!(l.a===x.id&&l.b===y.id));const l={a:x.id,b:y.id,label:String(label||'').slice(0,40),kind,both:!!o.both};A.links.push(l);return l;}
 function unlink(A,a,b){const n=A.links.length;A.links=A.links.filter(l=>!((l.a===a&&l.b===b)||(l.a===b&&l.b===a)));return n-A.links.length;}
 function remove(A,id){const b=find(A,id);A.blocks=A.blocks.filter(x=>x!==b);A.links=A.links.filter(l=>l.a!==b.id&&l.b!==b.id);return b;}
@@ -38,7 +39,7 @@ function archFrom(text,name){
   const rails=[{name:'VCC_MCU',v:3.3}];if(need5)rails.unshift({name:need5&&can?'VCC_5V':'VCC_SENS',v:5});if(curr||hall)rails.some(r=>r.name==='VCC_SENS')||rails.push({name:'VCC_SENS',v:5});if(motor)rails.push({name:'VCC_DRV',v:vin});
   const implReg=vin>5.5&&need5?[{type:'ldo',params:{vout:5}},{type:'ldo',params:{vout:3.3,vin:'+5V'}}]:[{type:'ldo',params:{vout:3.3}}];
   addBlock(A,'power',ecu?'PMIC / LDO / Buck':'Voltage Regulators (LDO / Buck)',{id:'reg',feats:[ecu?'전압 레귤레이터 (Voltage Regulators)':'전압 변환',...rails.map(r=>`${r.name} ${r.v} V`)].slice(0,4),rails,impl:implReg});
-  if(ecu||asil)addBlock(A,'power','Watchdog / Reset',{id:'wdg',feats:['외부 워치독 (Window WDT)','리셋 감시 (Reset Supervisor)']});
+  if(ecu||asil){const w=addBlock(A,'power','Watchdog / Reset',{id:'wdg',feats:['외부 워치독 (Window WDT)','리셋 감시 (Reset Supervisor)']});w.impl=[{type:'supervisor',params:{}}];w.safety='wdt_ext';}
   link(A,'pin','reg',batt?`VBAT ${vin} V`:`${vin} V`,{kind:'power'});
   // communication
   if(can){addBlock(A,'comm',`${canfd?'CAN-FD':'CAN'} Bus (H / L)`,{id:'canbus',ext:true,feats:['차량 네트워크']});addBlock(A,'comm',`${canfd?'CAN-FD':'CAN'} Transceiver`,{id:'canx',feats:['물리 계층 (5 V)','스플릿 종단 · ESD'],impl:[{type:'can',params:{}}]});link(A,'canbus','canx','CAN_H / CAN_L',{kind:'bus',both:true});}
@@ -49,7 +50,7 @@ function archFrom(text,name){
   addBlock(A,'ctrl','Main MCU',{id:'mcu',feats:[`Core: ${core}`,'ADC (Analog-to-Digital)',motor?'PWM Output / Timer Modules':'GPIO / Timer',ecu?`Watchdog & Safety${asil?` (ASIL ${asil.toUpperCase()})`:' (ASIL B/D Support)'}`:'Watchdog'],
     impl:[{type:'mcu',params:{part:tc?'TC364DP-64F300F':'STM32F042K6U6'}},...(tc||can?[{type:'xtal',params:{}}]:[])]});
   link(A,'reg','mcu','VCC_MCU 3.3 V',{kind:'power'});
-  if(A.blocks.some(b=>b.id==='wdg'))link(A,'wdg','mcu','WDI / RESET',{kind:'signal',both:true});
+  if(A.blocks.some(b=>b.id==='wdg'))link(A,'wdg','mcu','WDI / nRESET',{kind:'safe',both:true});
   if(can){link(A,'canx','mcu','TXD / RXD',{kind:'signal',both:true});link(A,'reg','canx','VCC_5V',{kind:'power'});}
   if(lin)link(A,'linx','mcu','UART (LIN)',{both:true});if(eth)link(A,'phy','mcu','RMII',{both:true});
   // actuation / sensing / diagnostics
@@ -108,7 +109,7 @@ function layout(A){
     r.bs.forEach(b=>{b.w=wOf(b);b.h=bh(b);b.x=x;b.y=y+BAND+(h-b.h)/2;x+=b.w+GX;});y+=r.h+18;});
   const W=LW+PAD*2+inner+40,H=y+28;return{rows,W,H,inner};}
 const xe=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const HUE={power:'#d9822b',signal:'#3d7fd9',bus:'#8a5cd6'};
+const HUE={power:'#d9822b',signal:'#3d7fd9',bus:'#8a5cd6',safe:'#d9534f'};
 function svg(A,opts){opts=opts||{};const sel=opts.sel||null;const L=layout(A);const B=id=>A.blocks.find(b=>b.id===id);const rowOf=b=>L.rows.findIndex(r=>r.g[0]===b.group);
   const o=[];o.push(`<svg class="hwa" viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="${xe(`${A.name} HW 아키텍처 블록 다이어그램: ${A.blocks.length}개 블록, ${A.links.length}개 인터페이스`)}" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans KR, system-ui, sans-serif">`);
   o.push(`<defs>${Object.entries(HUE).map(([k,c])=>`<marker id="hw-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join('')}</defs>`);
@@ -124,7 +125,7 @@ function svg(A,opts){opts=opts||{};const sel=opts.sel||null;const L=layout(A);co
     else{mode='lane';sa=ra<rb?'B':'T';sb=ra<rb?'T':'B';}
     cnt[key(a.id,sa)]=(cnt[key(a.id,sa)]||0)+1;cnt[key(b.id,sb)]=(cnt[key(b.id,sb)]||0)+1;return{l,a,b,sa,sb,mode};}).filter(Boolean);
   const port=(n,s)=>{const k=key(n.id,s);ports[k]=(ports[k]||0)+1;const f=ports[k]/(cnt[k]+1);return s==='B'?[n.x+n.w*f,n.y+n.h]:s==='T'?[n.x+n.w*f,n.y]:s==='R'?[n.x+n.w,n.y+n.h*f]:[n.x,n.y+n.h*f];};
-  const labels=[];const tags={};
+  const labels=[];const tags={};const ffi=new Set(typeof SAFETY!=='undefined'?SAFETY.boundaries(A).map(f=>f.link):[]);const lvOf=b=>typeof SAFETY!=='undefined'?SAFETY.blockLevel(A,b):'QM';const sysLv=typeof SAFETY!=='undefined'?SAFETY.level(A):'QM';
   plan.forEach(p=>{const{l,a,b}=p;if(p.mode==='tag'){(tags[b.id]=tags[b.id]||[]).push(l);return;}const[x1,y1]=port(a,p.sa),[x2,y2]=port(b,p.sb);let d,lx,ly;
     if(p.mode==='v'){const my=(y1+y2)/2;d=`M${x1},${y1} V${my} H${x2} V${y2}`;lx=x2;ly=my+(y2>y1?8:-8)*0;}
     else if(p.mode==='h'){const mx=(x1+x2)/2;d=`M${x1},${y1} H${mx} V${y2} H${x2}`;lx=mx;ly=Math.min(y1,y2)-13;}
@@ -132,7 +133,7 @@ function svg(A,opts){opts=opts||{};const sel=opts.sel||null;const L=layout(A);co
       const ca=down?RA.y+RA.h-7-k*3:RA.y+7+k*3,cb=down?RB.y+7+k*3:RB.y+RB.h-7-k*3;d=`M${x1},${y1} V${ca} H${lx0} V${cb} H${x2} V${y2}`;lx=lx0;ly=(ca+cb)/2;}
     const on=sel&&(l.a===sel||l.b===sel),dim=sel&&!on;const c=HUE[l.kind]||'currentColor';
     o.push(`<path d="${d}" fill="none" stroke="${c}" stroke-width="${on?2.4:1.5}"${l.kind==='power'?' stroke-dasharray="6 4"':''} stroke-linejoin="round" opacity="${dim?0.2:0.95}" marker-end="url(#hw-${l.kind})"${l.both?` marker-start="url(#hw-${l.kind})"`:''}/>`);
-    if(l.label)labels.push({x:lx,y:ly,t:l.label,c,dim,on,lane:p.mode==='lane'});});
+    if(l.label||ffi.has(l))labels.push({x:lx,y:ly,t:(ffi.has(l)?'FFI ⚠ ':'')+(l.label||''),c:ffi.has(l)?HUE.safe:c,dim,on,lane:p.mode==='lane'});});
   labels.sort((p,q)=>p.y-q.y);for(let i=1;i<labels.length;i++)for(let j=0;j<i;j++){const p=labels[i],q=labels[j];const w=(p.t.length+q.t.length)*3.4+12;if(Math.abs(p.x-q.x)<w&&Math.abs(p.y-q.y)<15)p.y=q.y+15;}
   labels.forEach(lb=>{const w=Math.min(190,lb.t.length*6.4+12);const x=lb.lane?lb.x-w-4:lb.x-w/2;o.push(`<g opacity="${lb.dim?0.25:1}"><rect x="${x}" y="${lb.y-8.5}" width="${w}" height="17" rx="4" fill="var(--surface,#fff)" stroke="${lb.c}" stroke-opacity="0.4"/><text x="${x+w/2}" y="${lb.y+4}" text-anchor="middle" font-size="11" fill="currentColor"${lb.on?' font-weight="600"':''}>${xe(lb.t.length>28?lb.t.slice(0,27)+'…':lb.t)}</text></g>`);});
   // rail tags: rails arriving from a band further away
@@ -141,7 +142,8 @@ function svg(A,opts){opts=opts||{};const sel=opts.sel||null;const L=layout(A);co
   // blocks
   A.blocks.forEach(b=>{const on=sel===b.id,dim=sel&&!on&&!A.links.some(l=>(l.a===sel&&l.b===b.id)||(l.b===sel&&l.a===b.id));
     o.push(`<g class="sd-n" data-n="${xe(b.id)}" tabindex="0" role="button" aria-label="${xe(b.label)}" opacity="${dim?0.4:1}" style="cursor:pointer">`);
-    o.push(`<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${b.ext?16:6}" fill="var(--raised,#fff)" stroke="${on?'#3d7fd9':'currentColor'}" stroke-opacity="${on?1:0.55}" stroke-width="${on?2.2:1.2}"${b.ext?' stroke-dasharray="5 3"':''}/>`);
+    const lv=lvOf(b),lc=ASIL_HUE[lv];o.push(`<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${b.ext?16:6}" fill="var(--raised,#fff)" stroke="${on?'#3d7fd9':lc||'currentColor'}" stroke-opacity="${on?1:lc?0.95:0.55}" stroke-width="${on?2.2:lc?2:1.2}"${b.ext?' stroke-dasharray="5 3"':''}/>`);
+    if(lc){o.push(`<rect x="${b.x+b.w-46}" y="${b.y-8}" width="42" height="15" rx="7" fill="${lc}"/><text x="${b.x+b.w-25}" y="${b.y+3.5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">ASIL ${lv}</text>`);}if(b.safety)o.push(`<text x="${b.x+6}" y="${b.y+b.h-5}" font-size="9" fill="${HUE.safe}">안전 메커니즘</text>`);
     o.push(`<text x="${b.x+b.w/2}" y="${b.y+21}" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">${xe(b.label.length>30?b.label.slice(0,29)+'…':b.label)}</text>`);
     b.feats.slice(0,4).forEach((f,i)=>o.push(`<text x="${b.x+12}" y="${b.y+40+i*LH}" font-size="10.5" fill="currentColor" opacity="0.72">· ${xe(f.length>34?f.slice(0,33)+'…':f)}</text>`));
     if(!(b.impl||[]).length&&!b.ext)o.push(`<circle cx="${b.x+b.w-9}" cy="${b.y+9}" r="3.2" fill="none" stroke="currentColor" stroke-opacity="0.5"><title>회로 구현 블록 없음</title></circle>`);
@@ -149,11 +151,12 @@ function svg(A,opts){opts=opts||{};const sel=opts.sel||null;const L=layout(A);co
   const ly=L.H-12;o.push(`<g font-size="10.5" fill="currentColor" opacity="0.78"><line x1="${PAD}" y1="${ly}" x2="${PAD+24}" y2="${ly}" stroke="${HUE.power}" stroke-width="1.5" stroke-dasharray="6 4"/><text x="${PAD+30}" y="${ly+3.5}">전원 · 고전류</text>
     <line x1="${PAD+120}" y1="${ly}" x2="${PAD+144}" y2="${ly}" stroke="${HUE.signal}" stroke-width="1.5"/><text x="${PAD+150}" y="${ly+3.5}">제어 · 피드백 신호</text>
     <line x1="${PAD+262}" y1="${ly}" x2="${PAD+286}" y2="${ly}" stroke="${HUE.bus}" stroke-width="1.5"/><text x="${PAD+292}" y="${ly+3.5}">외부 버스</text>
-    <rect x="${PAD+372}" y="${ly-7}" width="22" height="13" rx="6" fill="none" stroke="currentColor" stroke-dasharray="5 3"/><text x="${PAD+400}" y="${ly+3.5}">보드 밖</text></g>`);
+    <rect x="${PAD+372}" y="${ly-7}" width="22" height="13" rx="6" fill="none" stroke="currentColor" stroke-dasharray="5 3"/><text x="${PAD+400}" y="${ly+3.5}">보드 밖</text>${sysLv!=='QM'?`<line x1="${PAD+450}" y1="${ly}" x2="${PAD+474}" y2="${ly}" stroke="${HUE.safe}" stroke-width="1.5"/><text x="${PAD+480}" y="${ly+3.5}">세이프 스테이트 · FFI 경계</text><text x="${L.W-PAD}" y="${ly+3.5}" text-anchor="end" font-weight="700">시스템 ASIL ${sysLv}</text>`:''}</g>`);
   o.push('</svg>');return o.join('');}
 function text(A){const B=id=>A.blocks.find(b=>b.id===id);const L=[`HW 아키텍처 · ${A.name} · 블록 ${A.blocks.length} · 인터페이스 ${A.links.length}`];
-  GROUPS.forEach(g=>{const bs=A.blocks.filter(b=>b.group===g[0]);if(!bs.length)return;L.push(`[${g[1]} · ${g[2]}]`);bs.forEach(b=>L.push(`  ${b.id}: ${b.label}${b.ext?' (보드 밖)':''}${b.feats.length?' — '+b.feats.join(' · '):''}${(b.impl||[]).length?`  ⇒ 회로: ${b.impl.map(i=>i.type+(i.params&&Object.keys(i.params).length?`(${Object.entries(i.params).map(([k,v])=>k+'='+v).join(',')})`:'')).join(' + ')}`:b.ext?'':'  ⇒ 회로: (없음)'}`));});
-  L.push('인터페이스:');A.links.forEach(l=>{const a=B(l.a),b=B(l.b);L.push(`  ${l.a} ${l.both?'↔':'→'} ${l.b} : ${l.label} [${{power:'전원',signal:'신호',bus:'버스'}[l.kind]}]${a&&b?'':' (끊김)'}`);});
+  GROUPS.forEach(g=>{const bs=A.blocks.filter(b=>b.group===g[0]);if(!bs.length)return;L.push(`[${g[1]} · ${g[2]}]`);bs.forEach(b=>L.push(`  ${b.id}: ${b.label}${b.asil?' [ASIL '+b.asil+']':''}${b.ext?' (보드 밖)':''}${b.feats.length?' — '+b.feats.join(' · '):''}${(b.impl||[]).length?`  ⇒ 회로: ${b.impl.map(i=>i.type+(i.params&&Object.keys(i.params).length?`(${Object.entries(i.params).map(([k,v])=>k+'='+v).join(',')})`:'')).join(' + ')}`:b.ext?'':'  ⇒ 회로: (없음)'}`));});
+  L.push('인터페이스:');A.links.forEach(l=>{const a=B(l.a),b=B(l.b);L.push(`  ${l.a} ${l.both?'↔':'→'} ${l.b} : ${l.label} [${{power:'전원',signal:'신호',bus:'버스',safe:'세이프 스테이트'}[l.kind]}]${a&&b?'':' (끊김)'}`);});
+  if(typeof SAFETY!=='undefined'&&SAFETY.level(A)!=='QM')L.push(SAFETY.archText(A));
   return L.join('\n');}
 return{GROUPS,gAlias,blank,addBlock,find,link,unlink,remove,archFrom,fromDiagram,toPlan,layout,svg,text};
 })();

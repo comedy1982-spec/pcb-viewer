@@ -478,6 +478,7 @@ const FP={};
   FP['HDR-1x2']={kind:'hdr',body:[2.54,5.08,2.5],pads:[1.27,-1.27].map((y,i)=>({n:''+(i+1),x:0,y,w:1.7,h:1.7,round:true,drill:1.0}))};
   FP['SOT-23']={kind:'ic',stand:0.05,body:[2.9,1.3,1.0],pads:[{n:'1',x:-0.95,y:-1.05,w:0.6,h:0.9},{n:'2',x:0.95,y:-1.05,w:0.6,h:0.9},{n:'3',x:0,y:1.05,w:0.6,h:0.9}]};
   FP['SMA']={kind:'diode',body:[4.3,2.6,2.1],pads:[{n:'1',x:-2.0,y:0,w:1.5,h:1.7},{n:'2',x:2.0,y:0,w:1.5,h:1.7}]};
+  FP['SOT-23-5']={kind:'ic',stand:0.05,body:[2.9,1.6,1.1],pads:[{n:'1',x:-0.95,y:-1.3,w:0.6,h:0.9},{n:'2',x:0,y:-1.3,w:0.6,h:0.9},{n:'3',x:0.95,y:-1.3,w:0.6,h:0.9},{n:'4',x:0.95,y:1.3,w:0.6,h:0.9},{n:'5',x:-0.95,y:1.3,w:0.6,h:0.9}],dot:[-1.3,-1.2]};
   FP['SOD-123']={kind:'diode',body:[2.7,1.6,1.2],pads:[{n:'1',x:-1.65,y:0,w:0.9,h:1.2},{n:'2',x:1.65,y:0,w:0.9,h:1.2}]};
   // test points: a round SMD pad (probe) or a plated hole (pin)
   FP['TP-1.5']={kind:'tp',body:[1.5,1.5,0.02],pads:[{n:'1',x:0,y:0,w:1.5,h:1.5,round:true}]};FP['TP-1.0']={kind:'tp',body:[1.0,1.0,0.02],pads:[{n:'1',x:0,y:0,w:1.0,h:1.0,round:true}]};

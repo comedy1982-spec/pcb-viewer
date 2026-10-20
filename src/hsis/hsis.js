@@ -7,6 +7,7 @@ const FIELDS={
   pins:['mcu핀','핀','핀번호','pin','pins','pinno','pinnumber','ball','mcupin'],port:['포트','port','gpio','portpin'],
   func:['핀기능','기능','function','altfunction','af','대체기능','pinfunction'],periph:['주변장치','peripheral','ip'],
   dir:['방향','direction','dir','io'],init:['초기값','init','initial','initialvalue','초기상태','initiallevel'],active:['활성레벨','활성','active','activelevel','polarity'],
+  asil:['asil','안전등급','sil','safetylevel','안전레벨'],sm:['안전메커니즘','safetymechanism','sm','진단','diagnostic','dc'],
   pull:['풀업풀다운','풀업','pull','pullupdown','bias','풀'],net:['회로도넷','넷','net','netname','schematicnet','신호넷'],
   hw:['hw연결','hw','연결','connector','hwconnection','하드웨어연결','연결부품'],elec:['전기적특성','전기특성','electrical','전압레벨','level'],
   scale:['변환식','스케일','scaling','conversion','formula','물리값변환'],timing:['타이밍','주기','timing','frequency','속도','speed'],

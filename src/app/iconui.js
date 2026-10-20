@@ -94,7 +94,7 @@ const ICON_MAP=[
   ['[data-rv="save"]','save'],['[data-rv="export"]','download'],['[data-rv="import"]','upload'],['[data-rv="xlsx"]','table'],['[data-rv="fit"]','fit'],['[data-lv="list"]','list'],['[data-lv="ledger"]','table'],
   ['[data-ov="rev"]','history'],['[data-ov="export"]','export'],['[data-ov="back"]','next'],
   ['[data-approve]','check'],['[data-cmp]','compare'],['.cr-h','card'],['[data-undo]','undo'],['[data-keep]','check'],
-  ['[data-st="bom"]','dollar'],['[data-st="guide"]','badge'],['[data-st="drc"]','ruler'],['[data-st="hsis"]','chipok'],['[data-st="tj"]','thermo'],['[data-st="house"]','box'],['[data-st="sys"]','sys'],['[data-st="ans"]','ai'],['[data-st="pcb"]','pcb'],
+  ['[data-st="bom"]','dollar'],['[data-st="guide"]','badge'],['[data-st="drc"]','ruler'],['[data-st="hsis"]','chipok'],['[data-st="safety"]','badge'],['[data-st="tj"]','thermo'],['[data-st="house"]','box'],['[data-st="sys"]','sys'],['[data-st="ans"]','ai'],['[data-st="pcb"]','pcb'],
   ['#homeNew .hc-ico','newdoc',1],['#homeOpen .hc-ico','folder',1],['#cadSelClr','close'],['#copStop','stop'],['#copSend','next']];
 function iconApply(root){root=root||document;ICON_MAP.forEach(([sel,name,swap])=>{let els;try{els=root.querySelectorAll(sel);}catch(e){return;}els.forEach(el=>{if(el.querySelector(':scope>svg.ic'))return;const had=el.dataset.ic===name;el.dataset.ic=name;
     const old=el.querySelector(':scope>svg:not(.ic)');if(old&&swap&&!had){old.outerHTML=icon(name);return;}if(el.classList.contains('hc-ico')){el.innerHTML=icon(name,'big');return;}

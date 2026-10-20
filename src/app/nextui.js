@@ -14,6 +14,7 @@ function nxMetrics(){if(!BD)return null;const key=(typeof revSig==='function'?re
   if(typeof SR!=='undefined'&&SR.th&&SR.th.parts){const hot=SR.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'sim'};}
   if(m.pcb&&typeof mechRun==='function'&&BD.housing){try{const R=mechRun();m.house={mass:R.d.mass,ok:R.d.feasible,ip:R.d.ip,mat:R.d.m.short,warn:R.warn.length};if(!m.tj){const hot=R.d.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'housing',lim:R.inp.tj};}}catch(e){}}
   if(typeof mbMetrics==='function')m.mb=mbMetrics();
+  if(typeof SAFETY!=='undefined'){const A=typeof NP!=='undefined'?NP.arch:null;const lv=A&&A.safety&&A.safety.level||(BD.safety&&BD.safety.level)||'QM';if(lv!=='QM'){try{const R=SAFETY.circuitChecks(BD,{level:lv,arch:A});const F=SAFETY.fmeda(BD,{level:lv,arch:A});m.safety={level:lv,err:R.checks.filter(c=>c.sev==='err').length,warn:R.checks.filter(c=>c.sev==='warn').length,spfm:F.spfm,ok:F.verdict.every(v=>v.ok)};}catch(e){console.warn(e);}}}
   const A=typeof sysArch==='function'?sysArch():NP.arch;if(A)m.blocks={n:A.blocks.length,links:(A.links||[]).length,fromBoard:!NP.arch};m.answers=NP.answers?Object.keys(NP.answers).length:0;
   NX.key=key;NX.m=m;return m;}
 /* ---- status strip under the header ---- */
@@ -30,6 +31,7 @@ function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP
     else T.push(tile('pcb','PCB','3단계','배치·배선 전','', 'PCB 설계 시작'));
     T.push(tile('hsis','HSIS',m.hsis?`${m.hsis.ok}/${m.hsis.n}`:'—',m.hsis?(m.hsis.err?`오류 ${m.hsis.err}`:'모두 정상'):'HSIS 없음',m.hsis&&m.hsis.err?'err':m.hsis?'ok':'','HW/SW 인터페이스 사양 검사'));
     T.push(tile('tj','최고 Tj',m.tj?f(m.tj.v)+' °C':'—',m.tj?`${m.tj.ref} · ${m.tj.src==='sim'?'열 해석':'하우징 추정'}`:'시뮬레이션 전',m.tj&&m.tj.lim&&m.tj.v>m.tj.lim?'err':m.tj&&m.tj.v>100?'warn':'','열 분포 시뮬레이션'));
+    if(m.safety)T.push(tile('safety','기능 안전',`ASIL ${m.safety.level}`,`${m.safety.err?'오류 '+m.safety.err+' · ':''}${m.safety.warn?'경고 '+m.safety.warn+' · ':''}SPFM ${m.safety.spfm.toFixed(0)}%`,m.safety.err?'err':m.safety.warn||!m.safety.ok?'warn':'ok','기능 안전 점검 · FMEDA'));
     if(m.mb)T.push(tile('mb','시스템 연결',`${m.mb.boards}보드 · ${m.mb.links}연결`,m.mb.err?`오류 ${m.mb.err} · 경고 ${m.mb.warn}`:m.mb.warn?`경고 ${m.mb.warn}`:'문제 없음',m.mb.err?'err':m.mb.warn?'warn':'ok','보드 간 커넥터 연결 점검'));
     T.push(tile('house','하우징',m.house?f(m.house.mass)+' g':'—',m.house?`${m.house.mat} · ${m.house.ip}${m.house.ok?' · 조건 만족':' · 조건 미달'}`:(m.pcb?'4단계':'PCB 뒤'),m.house?(m.house.ok?'ok':'warn'):'','기구 CAD'));}
   const html=T.join('');if(el.dataset.h!==html){el.dataset.h=html;el.innerHTML=`<div class="st-row">${html}</div>`;}}
@@ -38,7 +40,7 @@ function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP
   else if(k==='guide'){if(typeof copSubmit==='function'){setStep(BD.pcbPending?2:3);copSubmit('guide check');}}
   else if(k==='drc'){setStep(3);if(typeof peDrcList==='function'){if(!PE.on&&typeof peBegin==='function')peBegin();peDrcList();}}
   else if(k==='hsis')setWorkspace('hsis');else if(k==='tj'){setStep(3);if(typeof dockTab==='function')dockTab('sim');if(typeof SR!=='undefined'){SR.tab='th';if(typeof renderSim==='function')renderSim();}}
-  else if(k==='house')setStep(4);else if(k==='mb')setWorkspace('mb');});}
+  else if(k==='house')setStep(4);else if(k==='mb')setWorkspace('mb');else if(k==='safety'){setStep(2);setTimeout(()=>copSubmit('safety check',{src:'sch'}),300);}});}
 /* ---- overview workspace: the four stages as connected frames (what made what), plus the AI bar ---- */
 function nxOvShow(){if(!BD)return;setWorkspace('ov');}
 function nxOvRender(force){const host=$('#ovWs');if(!host||host.hidden)return;const key=(typeof revSig==='function'?revSig():'')+'|'+(typeof REV!=='undefined'?REV.list.length:0);if(!force&&key===NX.ovKey)return;NX.ovKey=key;
