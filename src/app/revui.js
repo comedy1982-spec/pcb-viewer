@@ -32,6 +32,7 @@ function revSig(){if(!BD)return'';let h=2166136261;const H=s=>{s=String(s);for(l
   Object.keys(BD.layers).forEach(k=>{const L=BD.layers[k];let s=0;for(const p of L){if(p.a)s+=p.a[0]+p.a[1]*3+p.b[0]*5+p.b[1]*7+(p.w||0);else if(p.pts)s+=p.pts.length+p.pts[0][0]+p.pts[p.pts.length-1][1];else if(p.x!=null)s+=p.x*0.7+p.y*1.3;else if(p.rings)s+=p.rings.length;}H(`${k}${L.length}:${s.toFixed(3)}`);});
   BD.vias.forEach(v=>H(`${(+v.x).toFixed(3)},${(+v.y).toFixed(3)}`));
   try{H(JSON.stringify(NP.arch||null));H(JSON.stringify(NP.plan||null));}catch(e){}
+  H((BD.safety&&BD.safety.level)||'');try{if(typeof NP!=='undefined'&&NP.arch&&NP.arch.safety)H(NP.arch.safety.level||'');}catch(e){}
   try{if(typeof MB!=='undefined')H(`${MB.name}|${MB.boards.map(b=>b.id+b.role).join(',')}|${JSON.stringify(MB.links||[])}`);}catch(e){}H(($('#npReq')||{}).value||'');H(($('#npName')||{}).value||'');
   if(BD.housing)H(JSON.stringify({i:BD.housing.inp,c:BD.housing.cad}));if(HS.H){try{H(JSON.stringify(HS.H.items||[]));}catch(e){}}
   return(h>>>0).toString(36);}

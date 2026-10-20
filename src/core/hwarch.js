@@ -90,7 +90,7 @@ function fromDiagram(D){
 
 /* ---- architecture → circuit plan (step 2): the impl of every block, in order ---- */
 function toPlan(A){
-  if(typeof NEWPROJ==='undefined')throw new Error('NEWPROJ 필요');const P=NEWPROJ.newPlan(A.name);P.req=A.req;const log=[];const map=[];
+  if(typeof NEWPROJ==='undefined')throw new Error('NEWPROJ 필요');const P=NEWPROJ.newPlan(A.name);P.req=A.req;if(A.safety&&A.safety.level&&A.safety.level!=='QM')P.asil=A.safety.level;const log=[];const map=[];
   const order=['power','ctrl','comm','io','ext'];
   order.forEach(g=>A.blocks.filter(b=>b.group===g).forEach(b=>(b.impl||[]).forEach(im=>{try{const x=NEWPROJ.addBlock(P,im.type,im.params||{});map.push({arch:b.id,plan:x.id});}catch(e){log.push(`${b.id}: ${e.message}`);}})));
   NEWPROJ.ldoToBuck(P,log,false);

@@ -15,6 +15,13 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 등급 부품 자동 적용 · 점검 (v1.36)
+
+- `partlib`: 레코드 필드 `grade`(`gradeOf` 정규화: Q100-0~3 · Q101 · Q200 · industrial · commercial, MPN 접미 -Q1/Q 시리즈 추정) · `temp` · `asil` · `fitv`; CSV 열 Grade/Temp/ASIL/FIT, Claude 추정 프롬프트·Mouser/Nexar 속성 파싱에 반영. `AUTO_PARTS`(차량용 내장 레코드: TPS3823-Q1 · TLV1117LV-Q1 · TPS54331-Q1 · NVTR4502N · DMP2035UQ · NRVB140SF · SMAJ15A-Q · GCM 커패시터), `AUTO_ALT`(상용 → 핀 호환 대체), `AUTO_HINT`(핀 호환 없음 안내), `autoAlt`, `requiredGrade(level)`, `gradeOk(rec,kind,level)`.
+- `parts.js` 내장 DB에 grade/temp/asil/fit 필드(TC364 ASIL D · TLE9251 Q100 · STM32F042 산업용 등).
+- `newproj.build`: `plan.asil`(hwarch.toPlan이 A.safety.level에서 복사)이 A 이상이면 `autoAlt` 핀 호환 대체를 자동 적용하고 경고 메시지에 요약; 핀 호환 없는 IC는 힌트 경고.
+- `safety.parts/partsText`: 안전 관련 부품의 등급 판정·대체품·힌트, `fmeda`는 레코드 FIT 우선(`fitSrc`)과 등급 열. `schcli`/`pcbcli`: `safety parts [--apply]`(PARTLIB.plan 번호 매핑으로 `plApply` 일괄), `safety check`에 부품 요약 포함. 보고서 "등급 부품" 표, Excel 시트, 지표 타일 "등급 미달 n", 라이브러리/카드 등급 배지, `revSig`에 안전 등급.
+
 ## 기능 안전 — ASIL 등급별 설계 (v1.35)
 
 - `src/core/safety.js`: `LEVELS/parseLevel/TARGETS`, `MECH`(등급별 권장 메커니즘: 인식 키워드 · 추가 블록 · 회로 impl · DC), `mechanisms(A)`, `boundaries(A)`(FFI), `apply(A,HWARCH,ids)`(블록·세이프 스테이트 링크 추가), `archText`, `circuitChecks(B,{level,arch})`(supervisor·wdt·wdt_qa·revpol·tvs·drv_fault·drv_en·isense·cutoff2·can_tx·sensor_red·conn_adj·clk), `fmeda`(부품 등급 FIT, 클래스별 DC, SPFM/LFM/PMHF, 목표 판정), `fmedaAoa`, `circuitText`.

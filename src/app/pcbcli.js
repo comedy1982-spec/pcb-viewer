@@ -4,7 +4,7 @@ var CLI={open:false,log:[],hist:[],hi:-1,busy:false,lock:new Set(),strategy:'bal
 const CLI_HELP=[
   ['help [명령]','명령 목록과 사용법'],
   ['status','보드 크기·부품·넷·배선 상태'],
-  ['safety [check|fmeda] [--asil B]','기능 안전 점검 · FMEDA 추정 (조회)'],
+  ['safety [check|parts [--apply]|fmeda] [--asil B]','기능 안전 점검 · 등급 부품 점검/교체 · FMEDA 추정'],
   ['analyze [all|power|decap|rc|ac|dc|ir|si|thermal|emc] [--from 넷 --to 넷] [--net 넷 --total mA]','회로·보드 해석(조회): 전원 트리 · 디커플링 · RC/LC 패턴 · AC 응답 · DC 동작점 · IR drop · 신호 무결성 · 열 · EMC'],
   ['board size <가로> <세로> [--anchor center|bl] [--corner R]','보드 크기 변경 (mm). 기본은 왼쪽 아래 기준, center는 부품을 가운데 유지'],
   ['board corner <R>','모서리 반지름 변경'],

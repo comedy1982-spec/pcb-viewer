@@ -41,3 +41,19 @@ test('safety: circuit checks and FMEDA on a generated board with supervisor + hs
   assert.ok(F1.spfm > F0.spfm, `${F1.spfm} > ${F0.spfm}`); assert.ok(F1.residual < F0.residual);
   assert.ok(SAFETY.fmedaAoa(F1).length > 5); assert.ok(SAFETY.circuitText(B1, { level: 'B' }).includes('SPFM'));
 });
+
+test('safety: part qualification and the ASIL part policy in the circuit library', () => {
+  assert.equal(SAFETY.partKind('R'), 'passive');
+  const P = NEWPROJ.newPlan('t'); ['pwr_in', 'ldo', 'mcu', 'dcmotor', 'supervisor'].forEach(t => NEWPROJ.addBlock(P, t, {}));
+  const B0 = NEWPROJ.toBoard(P, { place: false }).B;
+  const Q0 = SAFETY.parts(B0, { level: 'B' });
+  assert.ok(Q0.dropIn.some(r => r.ref === 'U1' && /TLV1117/.test(r.alt)), 'AMS1117 gets a drop-in');
+  assert.ok(Q0.manual.some(r => /STM32/.test(r.mpn) && r.hint));
+  P.asil = 'B';
+  const B1 = NEWPROJ.toBoard(P, { place: false }).B;
+  assert.ok(B1.comps.some(c => c.mpn === 'TLV1117LV33QDCYRQ1') && B1.comps.some(c => c.mpn === 'TPS3823-33QDBVRQ1'));
+  const Q1 = SAFETY.parts(B1, { level: 'B' });
+  assert.ok(Q1.bad.length < Q0.bad.length && Q1.dropIn.length === 0);
+  const F = SAFETY.fmeda(B1, { level: 'B' }); assert.ok(F.rows.some(r => r.fitSrc === '공급사'));
+  assert.ok(SAFETY.partsText(B1, { level: 'B' }).includes('등급 충족'));
+});

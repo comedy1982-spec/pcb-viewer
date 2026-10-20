@@ -230,7 +230,15 @@ kbd{background:#fff}
   <li><b>회로 점검</b> — 2·3단계 콘솔 <code>safety check</code>: 전원 감시 IC, 외부 워치독(MCU 연결), 질의응답 워치독, 역전압 보호, TVS, 드라이버 fault 리드백·EN 차단 경로(이산 FET면 게이트 풀다운), 전류 감지 션트, 이중 차단(하이사이드 스위치), 센서 리던던시, 커넥터 핀 분리(고전압 옆 안전 신호), 클럭 감시. 항목마다 최소 등급과 조치 명령이 붙고, AI 모드 "ASIL B로 올리려면 뭘 더해야 해?"는 이 결과를 근거로 답하고 실행합니다.</li>
   <li><b>FMEDA 추정</b> — <code>safety fmeda</code>: 부품 등급별 기본 FIT, 발견된 메커니즘 기준 진단 커버리지(DC)로 잔류 FIT·SPFM·LFM(추정)·PMHF를 계산해 ISO 26262-5 목표(B: SPFM ≥ 90 %, PMHF &lt; 100 FIT …)와 비교합니다. 지표 띠 <b>기능 안전</b> 타일, 설계 보고서 "기능 안전" 절, 설계 데이터 Excel의 FMEDA·점검 시트, HSIS 표의 ASIL·안전 메커니즘 열에 반영됩니다.</li>
 </ol>
-<p class="note">FIT·DC는 초기 설계용 가정값입니다. 실제 FMEDA·안전 분석은 부품 데이터시트의 FIT, 고장 모드 분포, 안전 개념 문서로 수행하세요.</p>
+<h3>등급 부품 — 자동 적용과 점검</h3>
+<figure><img src="img/safety-parts.jpg" alt="safety parts --apply 로 상용 부품을 차량용 핀 호환 부품으로 교체한 콘솔"><figcaption>safety parts → 미달 부품과 차량용 대체품 · --apply 로 일괄 교체</figcaption></figure>
+<ul>
+  <li><b>자동 적용</b> — 시스템 ASIL이 A 이상이면 2단계 회로 생성 때 라이브러리의 상용 부품이 <b>핀 호환 차량용 부품</b>으로 바뀝니다: AMS1117 → TLV1117LV-Q1, TPS3823 → TPS3823-Q1, TPS54331 → TPS54331-Q1, AO3400/AO3401 → NVTR4502N/DMP2035UQ(AEC-Q101), SS14 → NRVB140SF, SMAJ15A → SMAJ15A-Q, Samsung/Murata GRM 커패시터 → Murata GCM(AEC-Q200). 바뀐 부품은 설명에 "(ASIL B: Q100-1 대체)"가 붙고 데이터시트 탭에 등급 배지가 보입니다. MCU처럼 핀 호환 변형이 없는 부품(STM32F042)은 경고와 대안(S32K1xx · AURIX)을 안내하고, AURIX TC364(ASIL D)는 그대로 둡니다.</li>
+  <li><b>점검</b> — <code>safety parts</code>: 안전 관련 부품마다 등급(AEC-Q100 Grade 0~3 · Q101 · Q200 · 산업용 · 상용 · 미상)과 ASIL 요구(Q100 Grade 1 / Q101 / Q200, -40~125 °C) 충족 여부, 차량용 대체품(핀 호환 여부)을 표로. <code>safety parts --apply</code>는 핀 호환 대체품을 한 번에 교체(회로도·보드·BOM·HSIS 반영)하고, 핀이 다른 부품은 <code>replace</code> 대화형 교체로 넘깁니다. 등급을 모르는 부품은 "미상"으로 남겨 승인 목록·Claude 추정·부품 API로 확인하게 합니다.</li>
+  <li><b>부품 레코드의 자격 필드</b> — 승인 목록 CSV의 <code>Grade</code>(AEC-Q100 Grade 1 · Q200 …) · <code>Temp</code>(-40~125) · <code>ASIL</code>(ASIL-ready, SafeAssure) · <code>FIT</code>(공급사 고장률) 열을 읽고, Claude 추정과 Mouser/Nexar 조회도 같은 필드를 채웁니다. 라이브러리 창과 교체 후보 카드에 등급 배지가 붙습니다.</li>
+  <li><b>FMEDA 연동</b> — 레코드에 FIT가 있으면 기본값 대신 그 값을 쓰고 표에 "FIT 출처(공급사/기본값)"와 등급 열이 들어갑니다. 지표 띠 기능 안전 타일에 "등급 미달 n"이 표시됩니다.</li>
+</ul>
+<p class="note">FIT·DC는 초기 설계용 가정값입니다. 실제 FMEDA·안전 분석은 부품 데이터시트의 FIT, 고장 모드 분포, 안전 개념 문서로 수행하세요. 차량용 대체품 목록은 내장 기본값이라 회사 승인 부품 목록으로 덮어쓰는 것을 권합니다.</p>
 
 <h2 id="circuit-analyze">회로 해석 — 질문에 숫자로 답하기</h2>
 <figure><img src="img/circuit-analyze.jpg" alt="질문 모드에서 analyze 명령을 불러 디커플링과 AC 응답을 답하는 설계 도우미"><figcaption>질문 모드 — Claude가 analyze decap · analyze ac 를 돌려 수치로 답함</figcaption></figure>

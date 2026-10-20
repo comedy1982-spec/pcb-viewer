@@ -165,7 +165,7 @@ function ldoToBuck(plan,log,keep){log=log||[];const r0=build(plan);r0.parts.filt
 function guessName(s){const lo=s.toLowerCase();const bl=/bldc|3상/.test(lo);const k=[bl?'BLDC':'',/\bcan\b/.test(lo)?'CAN':'',!bl&&/(^|[^l])dc\s*모터|팬|fan/.test(lo)?'DC-MOTOR':'',/usb/.test(lo)?'USB':''].filter(Boolean);return(k.join('-')||'NEW')+' BOARD v0.1';}
 
 /* ---------- build: plan → parts, nets, MCU pin assignment, board spec ---------- */
-function build(plan){
+function build(plan){const asil=plan.asil&&String(plan.asil).toUpperCase()!=='QM'?String(plan.asil).toUpperCase():null;
   const parts=[],warn=[],rails={},used=new Set(),sigs=[],fixedPins={},xt=[];let mcu=null;const cnt={};const uq={};
   const has=t=>plan.blocks.some(b=>b.type===t);
   const ctx={
@@ -224,6 +224,8 @@ function build(plan){
   // board size from the part area
   let area=0;parts.forEach(c=>{const f=PCB.FP[c.fp];const b=f?f.lbb:[-1,-1,1,1];area+=(b[2]-b[0]+1.6)*(b[3]-b[1]+1.6);});
   let W,H;if(plan.board){W=plan.board.w;H=plan.board.h;}else{const A=Math.max(1200,area*4.2);W=Math.ceil(Math.sqrt(A*1.6)/5)*5;H=Math.ceil(A/W/5)*5;}
+  // functional-safety part policy: an ASIL plan swaps commercial parts for automotive drop-ins (same package & pinout)
+  if(asil&&typeof PARTLIB!=='undefined'){let n=0;parts.forEach(c=>{const alt=PARTLIB.autoAlt(c.mpn||c.val);if(alt&&alt.mpn&&alt.dropIn){const rec=alt.rec;if(/^U|^Q|^D/.test(c.ref)&&rec&&rec.mpn!==c.val)c.val=rec.mpn;c.mpn=alt.mpn;c.desc=(c.desc||'')+` (ASIL ${asil}: ${rec&&rec.grade?rec.grade:'AEC'} 대체)`;n++;}else if(alt&&alt.hint&&/^U/.test(c.ref))warn.push(`${c.ref} ${c.val}: ${alt.hint}`);});if(n)warn.push(`ASIL ${asil} 부품 정책: 상용 부품 ${n}개를 차량용(AEC) 핀 호환 부품으로 바꿨습니다 (safety parts 로 확인)`);}
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
   return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P}))};
