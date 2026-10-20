@@ -15,6 +15,11 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 1단계 부품 구성 변경 요청 수정 (v1.36.2)
+
+- 원인: 다이어그램이 있는 상태에서 "LDO를 벅으로 바꿔줘" 같은 변경 문장이 규칙 해석에 걸리지 않으면 **요구사항에 덧붙여 다시 분석**(npAnalyze)되어 아무것도 바뀌지 않았고, AI 모드에서도 "보드/모듈" 같은 단어가 있으면 재분석으로 빠졌음. 또 `add/set/remove`로 회로 계획만 바꾸면(`planManual`) 이후 `impl`·`safety apply`의 `archToPlan()`이 무시되어 부품 구성도에 반영되지 않았음.
+- 수정: `npIsChange`(바꿔·교체·추가·빼·n개로 …)면 재분석하지 않음 — AI 모드는 `npAI`, 결정론은 `npNL2` 규칙("A를 B로", "LED 3개로", "CAN 빼줘", "버튼 추가", "MCU를 TC364로", "입력 24V로"), 못 알아들으면 예시와 함께 안내. `impl --swap <기존>`(파라미터 승계, 첫 일치 항목만 교체). `add/set/remove/mcu`는 아키텍처가 있으면 HW 블록·impl을 함께 고치고 `archToPlan(true)`로 동기화(`npArchImpl`), `safety apply`도 강제 동기화. AI 프롬프트에 "작은 변경은 impl/add/set/remove로, 전체 재생성 금지" 안내.
+
 ## HW·SW 안전 메커니즘 추천 (v1.36.1)
 
 - `safety.MECH`에 HW 메커니즘별 `needs`(그 부품이 DC를 내기 위해 필요한 SW), `SW_MECH` 11종(최소 등급·설명·DC), `swMechanisms(A)`(A.safety.sw / MCU 블록 `SW:` 기능 줄로 존재 판정), `hwNeeds(A)`. `apply`는 SW 항목을 ctrl 블록 feats에 `SW: …`로 기록하고 `A.safety.sw`에 저장(`safety apply sw`); `hasMech`는 SW 줄을 무시. `archText` HW/SW/필요한 SW 구분, `fmeda`는 기록된 SW 메커니즘의 DC를 반영.

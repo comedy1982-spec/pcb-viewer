@@ -146,6 +146,9 @@ kbd{background:#fff}
 </ol>
 <figure><img src="img/step4-cad.jpg" alt="4단계: 하우징 3D, 분해 보기, 선택 막대"><figcaption>하우징 분해 보기와 선택한 글랜드에 대한 지시 입력</figcaption></figure>
 
+<h3>다이어그램 만든 뒤 부품 구성 바꾸기</h3>
+<p>1단계 콘솔에 "LDO를 벅으로 바꿔줘", "LED 3개로", "CAN 빼줘", "버튼 추가", "MCU를 TC364로 바꿔줘", "입력 전원 24V로"처럼 적으면(결정론·AI 모드 모두) 해당 HW 블록의 회로 구현(<code>impl --swap</code>)·파라미터·블록이 바뀌고 <b>HW 블록 다이어그램과 부품 구성도가 함께</b> 갱신됩니다. 명령으로는 <code>impl reg buck --swap ldo</code>, <code>set led n 3</code>, <code>add button</code>, <code>remove can</code>, <code>mcu tc364</code>. 변경 문장은 요구사항에 덧붙여 다시 분석하지 않으므로 손으로 고친 블록이 사라지지 않습니다.</p>
+
 <h2 id="existing">기존 프로젝트 열기</h2>
 <p>첫 화면의 <b>기존 프로젝트</b> 또는 머리의 <b>파일 불러오기</b>에서 파일을 끌어다 놓습니다. 여러 파일(Gerber 세트 + 드릴 + Pick-and-Place + BOM)도 한 번에 넣을 수 있고, 파일 역할은 자동 판별되며 직접 바꿀 수 있습니다.</p>
 <table>
