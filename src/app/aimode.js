@@ -21,13 +21,14 @@ function aimTok(s){s=String(s||'');let a=0,k=0,o=0;for(const ch of s){const c=ch
 const AIM_OVERHEAD=450; // platform framing + tool schema per round (estimate)
 const aimFmt=n=>n>=10000?(n/1000).toFixed(1)+'k':n.toLocaleString();
 // header controls for a console: mode switch, model tier, running usage
-function aimControls(){return`<span class="aim" role="group" aria-label="실행 방식"><button type="button" class="aim-b" data-aim="det" title="내장 알고리즘으로 계산 (Claude 사용 안 함)">결정론</button><button type="button" class="aim-b" data-aim="ai" title="Claude가 명령을 골라 실행 (보는 사람의 Claude 사용량)">AI</button></span>
+function aimControls(){return`<span class="aim" role="group" aria-label="실행 방식"><button type="button" class="aim-b" data-aim="ai" title="Claude가 문장을 해석해 명령으로 실행 (기본) — Claude를 쓸 수 없으면 규칙으로 대체 · 보는 사람의 Claude 사용량">AI</button><button type="button" class="aim-b" data-aim="det" title="내장 알고리즘·규칙만 사용 (Claude 사용 안 함)">결정론</button></span>
   <select class="aim-q" aria-label="AI 대화 방식" title="자동: 질문이면 답만, 지시면 실행 · 질문(QnA): 설계를 바꾸지 않고 답함 · 작업(Agent): 명령을 실행">${AIM_QA.map(([k,l,d])=>`<option value="${k}" title="${d}">${l}</option>`).join('')}</select>
   <select class="aim-t" aria-label="AI 모델 등급" title="AI 모드에서 쓸 모델 등급">${AIM_TIERS.map(([k,l,m])=>`<option value="${k}">${l} · ${m}</option>`).join('')}</select>
   <span class="aim-u" title="이 페이지는 실제 토큰·크레딧 값을 받지 못해 보낸·받은 글자 수로 추정합니다. 사용량은 보는 사람의 Claude 플랜 한도에서 차감됩니다."></span>`;}
 function aimBind(root){root.querySelectorAll('[data-aim]').forEach(b=>b.addEventListener('click',()=>{AIM.mode=b.dataset.aim;aimSave();aimPaint();if(AIM.mode==='ai')cliAiProbe().then(aimPaint);}));
   const t=root.querySelector('.aim-t');if(t)t.addEventListener('change',()=>{AIM.tier=t.value;aimSave();aimPaint();});
   const q=root.querySelector('.aim-q');if(q)q.addEventListener('change',()=>{AIM.qa=q.value;aimSave();aimPaint();});aimPaint();}
+if(typeof document!=='undefined')document.addEventListener('DOMContentLoaded',()=>{if(AIM.mode==='ai')cliAiProbe().then(()=>{aimPaint();if(!CLI.sample)console.info('AI 모드: Claude를 쓸 수 없어 규칙으로 대체합니다.');});});
 function aimPaint(){$$('.aim-b').forEach(b=>{b.classList.toggle('on',b.dataset.aim===AIM.mode);b.setAttribute('aria-pressed',b.dataset.aim===AIM.mode?'true':'false');});
   $$('.aim-t').forEach(t=>{t.value=AIM.tier;t.hidden=AIM.mode!=='ai';});
   $$('.aim-q').forEach(t=>{t.value=AIM.qa;t.hidden=AIM.mode!=='ai';});

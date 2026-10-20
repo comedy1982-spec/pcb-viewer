@@ -246,6 +246,7 @@ kbd{background:#fff}
 
 <h2 id="circuit-analyze">회로 해석 — 질문에 숫자로 답하기</h2>
 <figure><img src="img/circuit-analyze.jpg" alt="질문 모드에서 analyze 명령을 불러 디커플링과 AC 응답을 답하는 설계 도우미"><figcaption>질문 모드 — Claude가 analyze decap · analyze ac 를 돌려 수치로 답함</figcaption></figure>
+<p class="note">실행 방식은 기본이 <b>AI</b>입니다(도우미 위 토글 "AI · 결정론"). AI 모드에서는 모든 문장을 Claude가 먼저 해석해 명령으로 실행하고, Claude를 쓸 수 없을 때만 규칙 해석으로 대체합니다. 결정론은 Claude 없이 내장 규칙·알고리즘만 쓰고 싶을 때 고릅니다.</p>
 <p>회로·PCB 콘솔의 <code>analyze</code>는 설계를 바꾸지 않는 조회 명령입니다. 질문 모드의 Claude는 "이 회로 문제 없어?", "필터 컷오프 얼마야?", "3.3 V 레일 전압 강하는?" 같은 질문에 먼저 이 명령을 돌려 나온 숫자를 인용해 답합니다. 결정론 모드에서도 "전원 트리 해석해줘", "디커플링 분석"은 바로 <code>analyze power</code>·<code>analyze decap</code>으로 풀립니다.</p>
 <table><thead><tr><th>명령</th><th>무엇을 계산하나</th></tr></thead><tbody>
 <tr><td><code>analyze power</code></td><td>전원 트리: 접지 · 레일별 공급원(레귤레이터·커넥터) · 물린 IC · 추정 부하 · 디커플링 합 · 드롭아웃 부족 경고</td></tr>
