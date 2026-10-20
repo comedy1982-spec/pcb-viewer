@@ -212,4 +212,4 @@ function plBind(m){
 function plDsPage(mpn){const p=plFind(mpn);if(!p||p.src==='builtin')return null;return{mpn:p.mpn,file:'',mfr:p.mfr,cat:p.cat,price:p.price,status:p.src==='ai'?'stub':'done',title:`${p.mpn} · ${p.title||''}`,html:PARTLIB.pageHTML(p,esc),gen:true};}
 /* ---- CLI help lines (schematic console) ---- */
 const PL_HELP=[['replace <부품> [<MPN|설명>]','부품 교체 — 승인 목록→내장 DB→Claude 추정→부품 API 순으로 찾고, 핀 대응을 확인한 뒤 회로도·보드·BOM·HSIS에 반영 (대화형)'],['parts lib','부품 라이브러리 창 (승인 목록 가져오기 · API 설정)']];
-document.addEventListener('DOMContentLoaded',()=>{plLoad();const b=$('#plBtn');if(b)b.addEventListener('click',openPartLib);});
+document.addEventListener('DOMContentLoaded',()=>{plLoad().then(()=>{if(typeof NEWPROJ!=='undefined')NEWPROJ.partLookup=mpn=>{const r=plFind(mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;};});const b=$('#plBtn');if(b)b.addEventListener('click',openPartLib);});

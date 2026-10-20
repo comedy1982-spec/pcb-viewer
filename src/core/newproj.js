@@ -120,6 +120,19 @@ const LIB={
       ctx.part('Q','AO3401A','SOT-23',{1:'HS_G',2:out,3:r},{mpn:'AO3401A',desc:'하이사이드 P-MOSFET (부하 전원 차단)',pinNames:{1:'G',2:'D',3:'S'}});
       ctx.part('R','10kΩ','0603',{1:r,2:'HS_G'},{desc:'게이트 풀업 (기본 OFF)'});ctx.part('Q','AO3400A','SOT-23',{1:'SAFE_EN',2:'HS_G',3:'GND'},{mpn:'AO3400A',desc:'레벨 시프트 N-MOSFET'});
       ctx.part('R','10kΩ','0603',{1:'SAFE_EN',2:'GND'},{desc:'SAFE_EN 풀다운 (MCU 리셋 중 OFF)'});ctx.sig('SAFE_EN','gpio_out');}},
+  part:{label:'지정 부품 (MPN)',desc:'부품 라이브러리(승인 목록·내장·Claude 추정)의 핀 배열로 심볼·풋프린트를 만들어 넣음 · 전원/접지 핀은 레일에, SPI/I²C/UART/IRQ 핀은 MCU에 자동 배정',params:{mpn:{def:'',desc:'부품 번호 (예: CC2420RTCR)'},pins:{def:'',desc:'핀=넷 지정 (SI=SPI_MOSI,CSn=RF_CS …)'},vcc:{def:'auto',desc:'전원 핀 레일 (auto = 3.3 V급 레일)'}},
+    build(ctx,p){const mpn=String(p.mpn||'').trim();if(!mpn){ctx.warn('part 블록: --mpn 부품 번호가 필요합니다');return;}const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(mpn):null;
+      if(!rec||!(rec.pins&&rec.pins.length)){ctx.warn(`${mpn}: 라이브러리에 핀 정보가 없어 회로에 넣지 못했습니다 — 2단계 회로 콘솔에서 "add part ${mpn}" (Claude 추정)`);return;}
+      const R=typeof PARTLIB!=='undefined'?PARTLIB.role:()=>'';const W={};String(p.pins||'').split(/[,\s]+/).filter(Boolean).forEach(t=>{const m=t.match(/^([^=:]+)[=:](.+)$/);if(m)W[m[1].toUpperCase()]=m[2];});
+      const vcc=p.vcc&&p.vcc!=='auto'?p.vcc:(ctx.railNear?ctx.railNear(3.3):ctx.highest(0));ctx.use(vcc);const short=mpn.replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase()+String(ctx._b||'').replace(/\D/g,'');
+      const pins={},names={};const sig=[];rec.pins.forEach(q=>{const nm=String(q.name||''),num=String(q.num);names[num]=nm;const r=R(nm);const w=W[nm.toUpperCase()]||W[num];
+        if(w){pins[num]=w;return;}if(r==='GND'){pins[num]='GND';return;}if(r==='VCC'||r==='VIN'||/^(VDD|VCC|AVDD|DVDD|VDDIO|VBAT)/i.test(nm)){pins[num]=vcc;return;}
+        const role=r==='MOSI'||/^(SI|SDI|MOSI|DIN)$/i.test(nm)?'spi_mosi':r==='MISO'||/^(SO|SDO|MISO|DOUT)$/i.test(nm)?'spi_miso':r==='SCL'&&/SCK|SCLK|CLK/i.test(nm)?'spi_sck':r==='CS'?'spi_cs':r==='SDA'?'i2c_sda':r==='SCL'?'i2c_scl':/^(TX|TXD)$/i.test(nm)?'uart_rx':/^(RX|RXD)$/i.test(nm)?'uart_tx':/INT|IRQ|FIFOP|DRDY|ALERT/i.test(nm)?'irq_in':/^(RESET|RESETN|RST|NRST|EN|CE|SHDN|VREG_EN|STB)/i.test(nm)?'gpio_out':null;
+        if(role){const net=`${short}_${nm.replace(/[^A-Za-z0-9]/g,'').toUpperCase()}`;pins[num]=net;sig.push([net,role]);}});
+      const fp=rec.fp&&typeof PCB!=='undefined'&&PCB.FP[rec.fp]?rec.fp:(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'&&rec.pkg?FPGEN.ensure(PCB,rec.pkg,rec.pins.length):'')||rec.pkg||'SOIC-8';
+      const prefix=/connector|커넥터/i.test(rec.cat||'')?'J':/mosfet|fet|transistor/i.test(rec.cat||'')?'Q':/diode|tvs/i.test(rec.cat||'')?'D':'U';
+      ctx.part(prefix,rec.mpn,fp,pins,{mpn:rec.mpn,desc:(rec.title||rec.desc||'지정 부품')+(rec.src==='ai'?' (Claude 추정 핀 배열)':''),pinNames:names,P:0.05});
+      ctx.cap(vcc,'100nF',`${rec.mpn} 디커플링`);sig.forEach(([n,r])=>ctx.sig(n,r));}},
   vmon:{label:'전압 감시',desc:'100 kΩ/22 kΩ 분압 + 100 nF → ADC (입력 레일 감시)',params:{rail:{def:'auto',desc:'감시할 레일 (auto = 입력)'}},
     build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);ctx.part('R','100kΩ','0603',{1:r,2:'VMON'},{desc:'분압 상단'});ctx.part('R','22kΩ','0603',{1:'VMON',2:'GND'},{desc:'분압 하단'});ctx.part('C','100nF','0603',{1:'VMON',2:'GND'},{desc:'ADC 필터'});ctx.sig('VMON','adc');}}};
 const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'pwr_in',dc:'pwr_in',input:'pwr_in',usb:'usb_in',usbc:'usb_in',regulator:'ldo',reg:'ldo',crystal:'xtal',osc:'xtal',motor:'dcmotor',dc_motor:'dcmotor',
@@ -172,8 +185,9 @@ function build(plan){const asil=plan.asil&&String(plan.asil).toUpperCase()!=='QM
     part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,ldo:o.ldo,mcu:!!o.mcu};parts.push(c);return c;},
     cap(rail,val,desc){if(!rail)return;used.add(rail);return ctx.part('C',val,capFp(val),{1:rail,2:'GND'},{desc,mpn:capMpn[val]});},
     provide(rail,v,by){rails[rail]={v,by,block:ctx._b};},railV(r){return rails[r]?rails[r].v:(typeof SIM!=='undefined'&&SIM.nominalV?SIM.nominalV(r):0);},use(r){if(r)used.add(r);},has,
+    railNear(v){const r=Object.entries(rails).filter(([,x])=>x.v>0).sort((a,b)=>Math.abs(a[1].v-v)-Math.abs(b[1].v-v))[0];return r?r[0]:ctx.highest(0);},
     highest(min){const r=Object.entries(rails).filter(([,x])=>x.v>=min).sort((a,b)=>b[1].v-a[1].v)[0];if(!r){warn.push(`${min} V 이상 레일이 없음 — 전원 블록을 먼저 넣으세요`);return'+12V';}return r[0];},
-    setMcu(k){mcu=k;},mcu(){return mcu;},mcuPin(n,net){fixedPins[n]=net;},need(t){if(!has(t))warn.push(`${t} 블록이 필요합니다 (예: add ${t})`);},
+    setMcu(k){mcu=k;},mcu(){return mcu;},warn(t){warn.push(t);},mcuPin(n,net){fixedPins[n]=net;},need(t){if(!has(t))warn.push(`${t} 블록이 필요합니다 (예: add ${t})`);},
     sig(net,role,group){sigs.push({net,role,group:group||null,block:ctx._b});},xtal(a,b){xt.push(a,b);},
     uniq(base){uq[base]=(uq[base]||0)+1;return uq[base]===1&&base!=='LED'&&base!=='BTN'?base:base+uq[base];}};
   // power first (rails), then MCU, then the rest
@@ -306,6 +320,6 @@ function variants(plan){
 // weighted pick: w = {price,feat,ext} in 0..1
 function recommend(vs,w){w=Object.assign({price:1,feat:1,ext:1},w||{});let best=null;vs.forEach(v=>{const s=v.score.price*w.price+v.score.feat*w.feat+v.score.ext*w.ext;v.total=Math.round(s/(w.price+w.feat+w.ext));if(!best||v.total>best.total)best=v;});return best;}
 function variantsText(vs){return vs.map(v=>`[${v.key}] ${v.label} (${v.tag}) · BOM 약 $${v.m.price}${v.m.unknown?' (+미정 '+v.m.unknown+')':''} · 부품 ${v.m.parts}개 · 기능 ${v.m.feat} · 여유 핀 ${v.m.spare} · MCU ${v.m.mcu||'-'} · 손실 ${v.m.loss} W\n  ${v.diff.join(' · ')}`).join('\n');}
-return{LIB,MCUS,mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
+return{LIB,MCUS,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
 })();
 if(typeof module!=='undefined')module.exports=NEWPROJ;

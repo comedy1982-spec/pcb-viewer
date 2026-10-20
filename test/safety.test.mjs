@@ -57,3 +57,15 @@ test('safety: part qualification and the ASIL part policy in the circuit library
   const F = SAFETY.fmeda(B1, { level: 'B' }); assert.ok(F.rows.some(r => r.fitSrc === '공급사'));
   assert.ok(SAFETY.partsText(B1, { level: 'B' }).includes('등급 충족'));
 });
+
+test('part block: a library record becomes a part in the plan with power/ground and bus pins wired', () => {
+  const P = NEWPROJ.newPlan('t'); ['pwr_in', 'ldo', 'mcu'].forEach(t => NEWPROJ.addBlock(P, t, {}));
+  NEWPROJ.addBlock(P, 'part', { mpn: 'TLE9251VSJ' });
+  const r = NEWPROJ.build(P);
+  const u = r.parts.find(c => c.mpn === 'TLE9251VSJ'); assert.ok(u, 'part placed'); assert.equal(u.fp, 'SOIC-8');
+  assert.equal(u.pins['2'], 'GND'); assert.ok(/^\+/.test(u.pins['3']));
+  assert.ok(Object.values(u.pins).some(n => /TLE9251V\d*_TXD/.test(n)));
+  const mcu = r.parts.find(c => /STM32/.test(c.val)); assert.ok(Object.values(mcu.pins).some(n => /TLE9251V\d*_/.test(n)), 'bus pins assigned on the MCU');
+  const P2 = NEWPROJ.newPlan('t'); NEWPROJ.addBlock(P2, 'pwr_in', {}); NEWPROJ.addBlock(P2, 'part', { mpn: 'NOPE-123' });
+  assert.ok(NEWPROJ.build(P2).warn.some(w => /NOPE-123/.test(w)));
+});

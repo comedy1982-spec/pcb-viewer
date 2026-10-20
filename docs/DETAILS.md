@@ -15,6 +15,12 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 블록의 부품 번호 → 회로 구현 (v1.37.1)
+
+- 원인: 부품 구성도·2단계 회로는 `impl`로만 만들어지는데 Claude가 블록 라벨/기능에 부품 번호를 글자로만 적음.
+- `newproj.LIB.part`(`--mpn`, `--pins`, `--vcc`): `NEWPROJ.partLookup`(앱이 `plFind`로 덮어씀, 기본은 내장 DB + 알려진 핀 배열) 레코드로 `ctx.part` 생성 — 전원/접지 자동, SPI/I²C/UART/IRQ/RESET·EN 핀은 `ctx.sig`로 MCU 배정(넷 `<MPN8><블록번호>_<핀>`), 풋프린트는 `FPGEN.ensure`, 100 nF 디커플링; 핀 정보 없으면 경고. `ctx.railNear(v)`, `ctx.warn`.
+- `newui`: `impl <ID> part <MPN> [--pins …]`(AI 모드면 라이브러리에 없을 때 Claude 추정), `bind` 명령·`npBindParts`(블록 라벨/기능의 부품 번호 토큰 → impl part, AI 생성 뒤 자동 실행), NP_SYS에 "부품을 고르면 impl part로 묶기" 안내.
+
 ## 아무 부품이나 추가 — add part (v1.37)
 
 - `schcli.scAddPart(part,o)`: 라이브러리 레코드(핀 배열)로 `SCH.boxSym` 심볼을 만들어 현재 쪽 빈 자리에 놓고, `--pins 핀=넷`(이름/번호) 지정 연결 + 전원·접지 핀 자동 연결(`scRailFor`: GND 넷, VCC는 ≤3.6 V 중 가장 높은 레일, VIN/VBAT는 가장 높은 레일), 나머지 열림. 심볼에 `mpn/desc` 보관 → `apply`(`seAddBoardPart`)가 mpn·설명을 보드 부품에 넘기고 미등록 풋프린트는 `FPGEN.ensure`로 생성. 참조 접두는 분류(커넥터 J · FET Q · 다이오드 D · 기타 U).
