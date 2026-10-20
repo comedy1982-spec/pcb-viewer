@@ -24,17 +24,38 @@ const aimFmt=n=>n>=10000?(n/1000).toFixed(1)+'k':n.toLocaleString();
 function aimControls(){return`<span class="aim" role="group" aria-label="실행 방식"><button type="button" class="aim-b" data-aim="ai" title="Claude가 문장을 해석해 명령으로 실행 (기본) — Claude를 쓸 수 없으면 규칙으로 대체 · 보는 사람의 Claude 사용량">AI</button><button type="button" class="aim-b" data-aim="det" title="내장 알고리즘·규칙만 사용 (Claude 사용 안 함)">결정론</button></span>
   <select class="aim-q" aria-label="AI 대화 방식" title="자동: 질문이면 답만, 지시면 실행 · 질문(QnA): 설계를 바꾸지 않고 답함 · 작업(Agent): 명령을 실행">${AIM_QA.map(([k,l,d])=>`<option value="${k}" title="${d}">${l}</option>`).join('')}</select>
   <select class="aim-t" aria-label="AI 모델 등급" title="AI 모드에서 쓸 모델 등급">${AIM_TIERS.map(([k,l,m])=>`<option value="${k}">${l} · ${m}</option>`).join('')}</select>
-  <span class="aim-u" title="이 페이지는 실제 토큰·크레딧 값을 받지 못해 보낸·받은 글자 수로 추정합니다. 사용량은 보는 사람의 Claude 플랜 한도에서 차감됩니다."></span>`;}
+  <span class="aim-u" title="이 페이지는 실제 토큰·크레딧 값을 받지 못해 보낸·받은 글자 수로 추정합니다. 사용량은 보는 사람의 Claude 플랜 한도에서 차감됩니다."></span><button type="button" class="aim-g" hidden title="이 페이지가 Claude에게 질문할 수 있게 허용합니다 (허용 대화상자 또는 권한 설정 창이 열립니다)">Claude 허용</button>`;}
 function aimBind(root){root.querySelectorAll('[data-aim]').forEach(b=>b.addEventListener('click',()=>{AIM.mode=b.dataset.aim;aimSave();aimPaint();if(AIM.mode==='ai')cliAiProbe().then(aimPaint);}));
+  const g=root.querySelector('.aim-g');if(g)g.addEventListener('click',()=>aimGrant(g));
   const t=root.querySelector('.aim-t');if(t)t.addEventListener('change',()=>{AIM.tier=t.value;aimSave();aimPaint();});
   const q=root.querySelector('.aim-q');if(q)q.addEventListener('change',()=>{AIM.qa=q.value;aimSave();aimPaint();});aimPaint();}
 if(typeof document!=='undefined')document.addEventListener('DOMContentLoaded',()=>{if(AIM.mode==='ai')cliAiProbe().then(()=>{aimPaint();if(!CLI.sample)console.info('AI 모드: Claude를 쓸 수 없어 규칙으로 대체합니다.');});});
-let AIM_NOTED=false;function aimUnavailableNote(say){if(AIM_NOTED)return true;AIM_NOTED=true;(say||((k,t)=>copSay(k,t)))('err','AI 모드지만 지금은 Claude를 쓸 수 없습니다 (사용 허용 안 됨 · 한도 · 이 화면에서 지원 안 함). 규칙 해석으로 대체합니다 — 문장형 요청은 제한되며, 명령(help)은 그대로 동작합니다. 권한을 허용하거나 잠시 뒤 다시 시도하세요.');return true;}
+let AIM_NOTED=false;function aimUnavailableNote(say){if(AIM_NOTED)return true;AIM_NOTED=true;(say||((k,t)=>copSay(k,t)))('err','AI 모드지만 지금은 Claude를 쓸 수 없습니다 (사용 허용 안 됨 · 한도 · 이 화면에서 지원 안 함). 규칙 해석으로 대체합니다 — 문장형 요청은 제한되며, 명령(help)은 그대로 동작합니다. 콘솔 머리의 [Claude 허용] 버튼을 눌러 허용하거나, 잠시 뒤 다시 시도하세요.');return true;}
 function aimPaint(){$$('.aim-b').forEach(b=>{b.classList.toggle('on',b.dataset.aim===AIM.mode);b.setAttribute('aria-pressed',b.dataset.aim===AIM.mode?'true':'false');});
   $$('.aim-t').forEach(t=>{t.value=AIM.tier;t.hidden=AIM.mode!=='ai';});
   $$('.aim-q').forEach(t=>{t.value=AIM.qa;t.hidden=AIM.mode!=='ai';});
   $$('.aim-u').forEach(u=>{u.textContent=AIM.calls?`AI ${AIM.calls}회 · 토큰(추정) 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)}`:(AIM.mode==='ai'?(CLI.sample===null?'AI 사용 불가 · 규칙으로 해석':CLI.sample?'AI 대기':'AI 확인 중…'):'');});
+  $$('.aim-g').forEach(b=>{b.hidden=!(AIM.mode==='ai'&&CLI.sample===null);});
   $$('.cli-in input,#copIn').forEach(i=>{i.dataset.mode=AIM.mode;});if(typeof copCtx==='function')copCtx();}
+/* "Claude 허용": ask the viewer for the sample capability with the platform's permissions API, then probe again.
+   prompt → one consent dialog · denied → open the Permissions panel (only on this click) · unavailable → explain where it works. */
+const AIM_GRANT_HELP='이 화면에서는 Claude를 쓸 수 없습니다. claude.ai에 로그인한 상태로 아티팩트 페이지(claude.ai/artifact/…)를 열어야 하며, 내려받은 파일(dist/index.html)이나 일부 모바일 화면에서는 지원되지 않습니다. 이전에 "허용 안 함"을 눌렀다면 아티팩트 메뉴(…) → 권한(Permissions)에서 Claude(sample)를 켜고 새로고침하세요.';
+async function aimGrant(btn){
+  const say=(k,t)=>{if(typeof copSay==='function')copSay(k,t);else console.info(t);};
+  if(btn){btn.disabled=true;btn.textContent='확인 중…';}
+  const done=()=>{CLI.sample=undefined;return cliAiProbe().then(()=>{aimPaint();if(btn){btn.disabled=false;btn.textContent='Claude 허용';}
+    say(CLI.sample?'ok':'err',CLI.sample?'Claude 사용이 허용되었습니다. 이제 문장형 요청을 Claude가 해석합니다.':'아직 Claude를 쓸 수 없습니다. '+AIM_GRANT_HELP);});};
+  let P=null;try{P=window.claude&&typeof window.claude.use==='function'?await window.claude.use('permissions'):null;}catch(e){P=null;}
+  if(!P){if(btn){btn.disabled=false;btn.textContent='Claude 허용';}say('err',AIM_GRANT_HELP);return;}
+  let st='unavailable';try{st=await P.state('sample');}catch(e){}
+  if(st==='granted')return done();
+  if(st==='prompt'){let r={};try{r=await P.request(['sample']);}catch(e){}
+    if(r.sample==='granted')return done();
+    if(r.sample==='denied'){if(btn){btn.disabled=false;btn.textContent='Claude 허용';}say('err','Claude 사용을 허용하지 않았습니다. 다시 허용하려면 "Claude 허용"을 눌러 권한 창을 열거나, 페이지를 새로고침한 뒤 허용을 누르세요.');return;}
+    return done();}
+  if(st==='denied'){try{await P.manage();}catch(e){if(btn){btn.disabled=false;btn.textContent='Claude 허용';}say('err','권한 창을 열지 못했습니다. 아티팩트 메뉴(…) → 권한(Permissions)에서 Claude(sample)를 켜고 새로고침하세요.');return;}return done();}
+  if(btn){btn.disabled=false;btn.textContent='Claude 허용';}say('err',AIM_GRANT_HELP);
+}
 // a question typed while the consoles run deterministically: answer with the state instead of turning the sentence into commands
 async function aimDetQuestion(line,say,status){if(!aimIsQuestion(line))return false;
   say('out','질문으로 보입니다. 결정론 모드는 명령만 실행하므로 설계를 바꾸지 않았습니다 — 답을 받으려면 AI 모드로 바꾸세요 (대화 방식: 자동 또는 질문). 지금 상태:');

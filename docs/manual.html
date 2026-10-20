@@ -253,6 +253,13 @@ kbd{background:#fff}
 <h2 id="circuit-analyze">회로 해석 — 질문에 숫자로 답하기</h2>
 <figure><img src="img/circuit-analyze.jpg" alt="질문 모드에서 analyze 명령을 불러 디커플링과 AC 응답을 답하는 설계 도우미"><figcaption>질문 모드 — Claude가 analyze decap · analyze ac 를 돌려 수치로 답함</figcaption></figure>
 <p class="note">실행 방식은 기본이 <b>AI</b>입니다(도우미 위 토글 "AI · 결정론"). AI 모드에서는 모든 문장을 Claude가 먼저 해석해 명령으로 실행하고, Claude를 쓸 수 없을 때만 규칙 해석으로 대체합니다. 결정론은 Claude 없이 내장 규칙·알고리즘만 쓰고 싶을 때 고릅니다.</p>
+<h3 id="ai-grant">Claude 사용 허용</h3>
+<p>도우미 머리에 <b>AI 사용 불가 · 규칙으로 해석</b>이 보이면 이 페이지가 Claude에게 질문할 권한이 없는 상태입니다. 그 옆의 <b>[Claude 허용]</b> 버튼을 누르면 허용 대화상자가 뜨고(처음), 이전에 "허용 안 함"을 눌렀다면 권한 설정 창이 열립니다 — 거기서 Claude(질문, <code>sample</code>)를 켜면 바로 <b>AI 대기</b>로 바뀝니다. 버튼 없이도 첫 AI 요청 때 허용 대화상자가 뜹니다.</p>
+<ul>
+<li>claude.ai에 <b>로그인한 상태</b>로 아티팩트 페이지(claude.ai/artifact/…)에서 열어야 합니다. 내려받은 <code>dist/index.html</code>이나 다른 서버에 올린 사본에서는 Claude를 쓸 수 없고 항상 규칙으로 해석합니다.</li>
+<li>거부한 뒤에는 같은 페이지에서 다시 묻지 않습니다 — 아티팩트 메뉴(…) → <b>권한(Permissions)</b>에서 켜거나, 새로고침 뒤 [Claude 허용]을 누르세요.</li>
+<li>사용량은 보는 사람의 Claude 플랜 한도에서 차감됩니다. 한도에 걸리면 "사용량 한도" 메시지가 나오고 잠시 뒤 다시 시도합니다.</li>
+</ul>
 <p>회로·PCB 콘솔의 <code>analyze</code>는 설계를 바꾸지 않는 조회 명령입니다. 질문 모드의 Claude는 "이 회로 문제 없어?", "필터 컷오프 얼마야?", "3.3 V 레일 전압 강하는?" 같은 질문에 먼저 이 명령을 돌려 나온 숫자를 인용해 답합니다. 결정론 모드에서도 "전원 트리 해석해줘", "디커플링 분석"은 바로 <code>analyze power</code>·<code>analyze decap</code>으로 풀립니다.</p>
 <table><thead><tr><th>명령</th><th>무엇을 계산하나</th></tr></thead><tbody>
 <tr><td><code>analyze power</code></td><td>전원 트리: 접지 · 레일별 공급원(레귤레이터·커넥터) · 물린 IC · 추정 부하 · 디커플링 합 · 드롭아웃 부족 경고</td></tr>

@@ -502,6 +502,8 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .aim-t{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--fg);padding:2px 4px}
 .aim-t[hidden]{display:none}
 .aim-u{font-size:11.5px;color:var(--muted);font-family:var(--f-mono)}
+.aim-g{font-size:11.5px;padding:2px 8px;border:1px solid var(--accent,#2f6fed);color:var(--accent,#2f6fed);background:transparent;border-radius:6px;cursor:pointer;font-family:inherit}
+.aim-g:hover{background:rgba(47,111,237,.08)}.aim-g:disabled{opacity:.6;cursor:default}
 .cli-log .cl-use{color:var(--muted);font-size:11px;border-top:1px dashed var(--line);margin:2px 0 6px;padding-top:2px}
 .cli-in input[data-mode="ai"]{border-color:var(--accent)}
 .npsheet{width:min(1180px,100%);height:min(860px,calc(100% - 8px))}
