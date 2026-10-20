@@ -269,6 +269,8 @@ kbd{background:#fff}
   <li><code>tp [--cat …] [--port P02*] [--nets A,B] [--fp TP-1.5|TP-1.0|TP-TH]</code> — HSIS 신호 넷마다 1핀 테스트 포인트 <code>TP1, TP2 …</code>를 넷 라벨 옆에 추가(이미 TP가 있는 넷은 건너뜀). <code>apply</code>로 보드에 1.5 mm 테스트 패드가 올라가고, HSIS 표의 <b>TP</b> 열과 검사(전원·아날로그·통신 신호의 TP 유무)에 반영됩니다. TP는 BOM 참고가에서 제외.</li>
   <li><code>tie U1 --free [--net GND] [--val 10kΩ] [--type R|C] [--direct]</code> — 넷이 없는 핀(NC 표시 포함)을 저항/커패시터로, 또는 직접 넷에 묶습니다. <code>--pins 3,4,PA3</code>로 핀을 지정할 수 있습니다.</li>
   <li><code>insert FB --at U2.3</code> — 핀의 넷에 직렬 부품(페라이트 비드 · 퓨즈 · 직렬 저항 · 다이오드) 삽입. 핀 쪽에 새 넷(<code>+12V_U2</code>)이 생깁니다. π 필터는 <code>insert FB</code> 뒤에 양쪽 넷에 <code>add C</code>.</li>
+  <li><b>아무 부품이나 추가</b> — "CC2420 추가해줘", "회로에 TJA1051T 넣어줘" 또는 <code>add part CC2420 --pins SI=SPI_MOSI,SO=SPI_MISO,SCLK=SPI_SCK,CSn=RF_CS</code>. 승인 목록 → 내장 DB → 이전 추정에서 찾고, 없으면 Claude 추정·부품 API·파일 가져오기를 묻습니다. 핀 배열로 박스 심볼을 그리고 전원/접지 핀(VDD·AVDD·VBAT·GND …)은 레일에 자동 연결, 나머지는 열어 두고 미연결 핀 목록을 알려 줍니다 → <code>connect U9.RESETn MCU_RF_RST</code>로 잇고 <code>apply</code>하면 패키지 이름으로 만든 풋프린트(QFN-48 7x7 등)로 보드에 올라갑니다. 2핀 수동 부품은 여전히 <code>add R/C/…</code>.
+  <figure><img src="img/add-part.jpg" alt="CC2420을 add part로 추가한 회로도: 전원 핀 자동 연결, SPI 핀 지정 연결, 미연결 핀 목록"><figcaption>add part — 전원·접지 자동, 지정 핀 연결, 나머지는 열림</figcaption></figure></li>
   <li><code>add</code>의 <code>--pins</code>에 <b>부품 핀</b>(<code>U1.12</code>, <code>U1.PA3</code>)을 쓸 수 있습니다. 연결된 핀이면 그 넷을, 빈 핀이면 핀 기능 이름의 새 넷을 만들어 핀과 새 부품을 함께 잇습니다. 추가할 수 있는 종류: R · C · CP · L · FB · D · LED · TVS · Z(제너) · F(퓨즈) · TP.</li>
 </ul>
 

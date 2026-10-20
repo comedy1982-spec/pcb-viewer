@@ -301,10 +301,11 @@ function seApplyAnnotation(res){
 }
 // a new schematic part becomes a board footprint parked to the right of the board (like Eeschema → Pcbnew)
 function seAddBoardPart(c,k){
+  if(c.fp&&!PCB.FP[c.fp]&&typeof FPGEN!=='undefined'){const nm=FPGEN.ensure(PCB,c.fp,c.pins.length);if(nm)c.fp=nm;}
   const lib=PCB.FP[c.fp];const xs=BD.outline.flat().map(p=>p[0]).concat(BD.comps.map(o=>o.bb[2]));const ys=BD.outline.flat().map(p=>p[1]);
   const x=Math.max(...xs)+8+(k%4)*8,y=Math.min(...ys)+6+Math.floor(k/4)*8;
   const pins={};c.pins.forEach(p=>{if(p.net)pins[p.num]=p.net;});const pn={};c.pins.forEach(p=>{if(p.name)pn[p.num]=p.name;});
-  const cs={ref:c.ref,value:c.val,footprint:c.fp||'',side:'top',x,y,rotation:0,pins,pinNames:pn,description:'회로도에서 추가'};
+  const cs={ref:c.ref,value:c.val,footprint:c.fp||'',side:'top',x,y,rotation:0,pins,pinNames:pn,mpn:c.sym&&c.sym.mpn||'',description:c.sym&&c.sym.desc||'회로도에서 추가'};
   if(!lib)cs.pads=c.pins.map((p,i)=>({n:p.num,x:i*2.54,y:0,w:1.6,h:1.6}));
   // look for a free spot on the board (no part bodies, no copper of other nets under the pads); otherwise park it outside
   const free=(px,py)=>{const m=PCB.finalize(PCB.fromSpec({board:{width:10,height:10},components:[Object.assign({},cs,{x:px,y:py})]}));const c=m.comps[0];const b=c.bb,g=0.6;

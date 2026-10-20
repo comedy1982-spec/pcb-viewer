@@ -15,6 +15,12 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 아무 부품이나 추가 — add part (v1.37)
+
+- `schcli.scAddPart(part,o)`: 라이브러리 레코드(핀 배열)로 `SCH.boxSym` 심볼을 만들어 현재 쪽 빈 자리에 놓고, `--pins 핀=넷`(이름/번호) 지정 연결 + 전원·접지 핀 자동 연결(`scRailFor`: GND 넷, VCC는 ≤3.6 V 중 가장 높은 레일, VIN/VBAT는 가장 높은 레일), 나머지 열림. 심볼에 `mpn/desc` 보관 → `apply`(`seAddBoardPart`)가 mpn·설명을 보드 부품에 넘기고 미등록 풋프린트는 `FPGEN.ensure`로 생성. 참조 접두는 분류(커넥터 J · FET Q · 다이오드 D · 기타 U).
+- `add part <MPN|설명> [--pins …] [--ref] [--near] [--page] [--noauto]`: `plFind/plSearch` → 핀 없으면 `pinoutFor` → 없으면 `plAskClaude`(AI 모드 에이전트가 호출해도 동작). AI 시스템 프롬프트에 "다른 부품은 add part로 — 추가 못 한다고 하지 말 것".
+- `partui.plAddIntent/plAddFlow`: "CC2420 추가해줘" 문장 가로채기(참조·수동 부품 제외), 라이브러리 → Claude 추정/API/파일 질문 → 부품 카드 → 연결 방식 질문(전원·접지 자동 / 연결 없이 / "핀=넷" 직접 입력) → 추가. 회로·PCB 콘솔 모두.
+
 ## AI 모드 기본값 (v1.36.3)
 
 - `AIM.mode` 기본값 `ai`(저장된 설정에 버전 표식 `v:2`가 없으면 AI로 재설정), 실행 방식 토글은 AI · 결정론 순. 시작 시 Claude 사용 가능 여부를 확인하고(`cliAiProbe`) 쓸 수 없으면 각 콘솔이 규칙으로 대체. 모든 콘솔(1 시스템 · 2 회로 · 3 PCB · 4 기구)은 AI 모드에서 문장을 먼저 Claude에게 보내고, 규칙 해석은 Claude가 없거나 결정론을 고른 경우에만 씁니다.

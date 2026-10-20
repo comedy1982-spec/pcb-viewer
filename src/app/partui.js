@@ -43,6 +43,29 @@ function plIntent(line){const s=String(line||'').trim();if(!s)return null;let m;
   if((m=s.match(/^(?:replace|swap)\s+([A-Za-z]+\d+[A-Za-z]?)\s*$/i)))return{ref:m[1].toUpperCase(),q:''};
   if(/바꿔|교체|변경|대체|replace/i.test(s)&&(m=s.match(/\b([A-Za-z]{1,3}\d+[A-Za-z]?)\b/))&&BD&&BD.byRef[m[1].toUpperCase()])return{ref:m[1].toUpperCase(),q:'',vague:true};
   return null;}
+/* ---- "CC2420 추가해줘" / "add CC2420" → conversational add of any library part ---- */
+function plAddIntent(line){const s=String(line||'').trim();let m;const PASS=/^(R|C|CP|L|FB|D|LED|TVS|Z|F|TP|TP\d*|저항|캐패시터|커패시터|콘덴서|인덕터|비드|다이오드|퓨즈|테스트\s*포인트)$/i;
+  if((m=s.match(/^(?:회로(?:도)?에\s*)?([A-Za-z]{2,}[A-Za-z0-9\-_.\/]*\d[A-Za-z0-9\-_.\/]*)\s*(?:을|를|도|이|가)?\s*(?:추가|넣어|달아|붙여|넣고|add)/i))||(m=s.match(/^add\s+(?!part\b)([A-Za-z]{2,}[A-Za-z0-9\-_.\/]*\d[A-Za-z0-9\-_.\/]*)\s*$/i))){const q=m[1];if((BD&&BD.byRef&&BD.byRef[q.toUpperCase()])||(/^[A-Z]{1,2}\d{1,3}$/i.test(q)&&!/^(CC|LM|NE|TL|OP|AD|MC|LT|SN|TP(?!\d{1,3}$))/i.test(q))||PASS.test(q))return null;if(/^(0402|0603|0805|1206)$/.test(q))return null;return{q,line:s};}
+  return null;}
+async function plAddFlow(it,src){src=src||'sch';const say=(k,t)=>{const e={k,t};copPaint(src,e);return e;};const ask=q=>{COP.askSrc=src;return copAsk(q);};
+  if(!BD||BD.blank){say('err','회로가 없습니다. 먼저 회로를 만들거나 파일을 불러오세요.');return;}
+  const q=it.q;say('out',`"${q}" 부품 추가 — 라이브러리(승인 목록 → 내장 DB → 이전 추정)에서 찾는 중…`);
+  let part=null;const cands=plSearch(q);const exact=cands.find(p=>PARTLIB.norm(p.mpn)===PARTLIB.norm(q)||PARTLIB.norm(p.mpn).startsWith(PARTLIB.norm(q)));
+  if(exact&&exact.pins&&exact.pins.length)part=exact;
+  while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];const O1='Claude 추정 (핀 배열·패키지·사양을 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O4='취소';
+    const a=await ask({q:`"${q}"${exact?'의 핀 정보가 없습니다':'은(는) 라이브러리에 없습니다'}. 어떻게 가져올까요?`,why:'추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다.',opts:[O1,O2,O3,O4]});
+    if(!a||a===O4){say('out','추가를 취소했습니다.');return;}
+    try{if(a===O1){const e=say('ai','Claude가 부품 사양을 찾는 중…');part=await plAskClaude(q,{hint:BD.name,role:'new part to add to the circuit'});copDrop(e);}
+      else if(a===O2){if(!hasApi){plOpenSettings(src);const b=await ask({q:'부품 API를 설정한 뒤 "계속"을 누르세요.',opts:['계속','취소']});if(b!=='계속')return;continue;}const e=say('ai','API 조회 중…');const L=await plAskApi(q);copDrop(e);part=L[0];
+        if(part&&!(part.pins&&part.pins.length)){const e2=say('ai','Claude가 핀 배열을 찾는 중…');try{const p2=await plAskClaude(part.mpn,{hint:part.title});part.pins=p2.pins;part.pkg=part.pkg||p2.pkg;part.fp=p2.fp||part.fp;plRemember(part);}catch(e3){say('err',e3.message);}copDrop(e2);}}
+      else if(a===O3){const files=await plPickFiles();if(!files.length)continue;const r=await plImportFiles(files);say('ok',`가져옴: ${r.msg}`);const f=plFind(q);if(f&&f.pins&&f.pins.length)part=f;else say('out',`가져온 목록에 "${q}"의 핀 정보가 없습니다.`);}
+    }catch(e){say('err',e.message||String(e));}}
+  plSayHTML(src,`<div class="pl-k">추가할 부품</div>${plPartHTML(part)}`);
+  const pw=part.pins.filter(p=>/^(GND|VCC|VIN)$/.test(PARTLIB.role(p.name))||/^(VDD|VCC|AVDD|DVDD|VDDIO|VBAT)/i.test(p.name)).map(p=>p.name).join(', ');
+  const a=await ask({q:`${part.mpn} 핀 ${part.pins.length}개 — 어떻게 연결할까요?`,why:`전원/접지 핀(${pw||'없음'})은 레일에 자동으로 잇고, 나머지는 열어 둡니다. 특정 핀을 바로 이으려면 "SDA=I2C_SDA, SCL=I2C_SCL"처럼 적으세요.`,opts:['전원·접지만 자동 연결','연결하지 않고 추가','취소']});
+  if(!a||a==='취소'){say('out','추가를 취소했습니다.');return;}
+  const opts={auto:a!=='연결하지 않고 추가',pins:/[=:]/.test(a)?a:''};
+  try{const r=scBatch(()=>scAddPart(part,opts).msg);say('ok',r);}catch(e){console.error(e);say('err','추가 실패: '+(e.message||e));}}
 /* ---- helpers for the cards ---- */
 function plPartHTML(p,o){o=o||{};const price=p.price!=null?`$${(+p.price).toFixed(p.price<1?3:2)}`:'—';const badge=`<span class="pl-src pl-${p.src}">${esc(PL_SRC[p.src]||p.src)}${p.src==='ai'&&p.conf!=null?' '+Math.round(p.conf*100)+'%':''}</span>`;
   return`<div class="pl-card"><div class="pl-h"><b class="mono">${esc(p.mpn)}</b>${badge}${plGrade(p)}${p.asil?`<span class="pl-src pl-aec">${esc(p.asil)}</span>`:''}${p.status==='obsolete'?'<span class="pl-src pl-obs">단종</span>':p.status==='preferred'?'<span class="pl-src pl-pref">우선</span>':''}</div>
