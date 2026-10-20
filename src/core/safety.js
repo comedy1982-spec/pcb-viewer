@@ -11,21 +11,38 @@ const TARGETS={QM:{spfm:null,lfm:null,pmhf:null},A:{spfm:null,lfm:null,pmhf:1000
 /* safety mechanisms recommended from a level upward: how to recognise one already in the architecture (kw on label/feats),
    the block to add (group · label · feats · circuit impl), and the diagnostic coverage it brings to which part class */
 const MECH=[
-  {id:'uv',min:'A',label:'전원 감시 (UV/OV 리셋)',group:'power',feats:['입력·코어 전압 저전압/과전압 감시','임계 이하면 MCU 리셋 유지'],impl:'supervisor',kw:/supervis|감시|\buv\b|\bov\b|reset ic|brown|monitor|모니터/i,dc:{power:90,mcu:0},link:{to:'ctrl',label:'nRESET',kind:'safe'}},
+  {id:'uv',min:'A',needs:'리셋 원인 레지스터 읽고 기록 · 기동 시 전원 감시 IC 동작 확인(MR 테스트)',label:'전원 감시 (UV/OV 리셋)',group:'power',feats:['입력·코어 전압 저전압/과전압 감시','임계 이하면 MCU 리셋 유지'],impl:'supervisor',kw:/supervis|감시|\buv\b|\bov\b|reset ic|brown|monitor|모니터/i,dc:{power:90,mcu:0},link:{to:'ctrl',label:'nRESET',kind:'safe'}},
   {id:'wdt_int',min:'A',label:'내부 워치독 (SW)',sw:true,kw:/iwdg|내부 워치독|internal wdt/i,dc:{mcu:60}},
-  {id:'wdt_ext',min:'B',label:'외부 윈도우 워치독',group:'power',feats:['MCU가 주기적으로 WDI 토글','창 밖이면 리셋 → 세이프 스테이트'],impl:'supervisor',kw:/watchdog|워치독|wdt|wdi/i,dc:{mcu:90},link:{to:'ctrl',label:'WDI / nRESET',kind:'safe'}},
+  {id:'wdt_ext',min:'B',needs:'창(window) 안에서만 WDI 토글 — 메인 루프 흐름이 정상일 때만 · 기동 시 워치독 리셋 테스트 · 리셋 뒤 세이프 스테이트 유지',label:'외부 윈도우 워치독',group:'power',feats:['MCU가 주기적으로 WDI 토글','창 밖이면 리셋 → 세이프 스테이트'],impl:'supervisor',kw:/watchdog|워치독|wdt|wdi/i,dc:{mcu:90},link:{to:'ctrl',label:'WDI / nRESET',kind:'safe'}},
   {id:'adc_diag',min:'B',label:'ADC 레퍼런스·자가 진단',sw:true,kw:/adc.*(진단|self|ref)|레퍼런스 검사|자가 진단/i,dc:{sensor:60}},
-  {id:'conn_diag',min:'B',label:'커넥터 open/short 진단',group:'io',feats:['입력 핀 풀업/풀다운으로 open 검출','short-to-BAT/GND 범위 검사'],kw:/open.?short|단선|진단 풀|conn.*diag/i,dc:{conn:60}},
-  {id:'drv_fb',min:'B',label:'드라이버 fault·전류 리드백',group:'io',feats:['드라이버 nFAULT → MCU','전류 감지·과전류 차단'],kw:/fault|리드백|readback|과전류|current sens|전류 감지/i,dc:{driver:90},link:{to:'ctrl',label:'nFAULT / I_SENSE',kind:'signal'}},
-  {id:'sbc',min:'C',label:'SBC (전원 + 질의응답 워치독 + 세이프 스테이트)',group:'power',feats:['PMIC + 질의응답(Q&A) 워치독','FS0B 세이프 스테이트 출력 → 드라이버 비활성'],impl:null,kw:/\bsbc\b|system basis|질의응답|challenge|fs0b|tle92|l99|fs6/i,dc:{power:99,mcu:99},link:{to:'ctrl',label:'SPI · nRESET · FS0B',kind:'safe'}},
-  {id:'monitor',min:'C',label:'독립 모니터 경로',group:'io',feats:['주 경로와 독립된 전압/전류 레퍼런스로 2차 감시','불일치 시 세이프 스테이트'],kw:/독립 모니터|secondary monitor|2차 감시|independent/i,dc:{sensor:90,driver:90}},
-  {id:'sensor_red',min:'C',label:'리던던트 센서 (이종)',group:'io',feats:['주 센서 + 이종 보조 센서','교차 검증 · 공통 원인 고장 분리'],kw:/리던던|redund|이중 센서|보조 센서|dual sensor/i,dc:{sensor:99}},
-  {id:'cutoff2',min:'C',label:'이중 차단 세이프 스테이트',group:'power',feats:['드라이버 EN 차단 + 상위 전원 스위치(하이사이드 FET/릴레이)','전원 상실에도 안전 측으로'],impl:'hs_switch',kw:/이중 차단|cut.?off|하이사이드 스위치|safe state|세이프 스테이트|relay|릴레이/i,dc:{driver:99},link:{to:'ctrl',label:'SAFE_EN',kind:'safe'}},
-  {id:'decomp',min:'D',label:'ASIL 분해 (2채널)',group:'ctrl',feats:['ASIL D = B(D) + B(D)','독립 채널 2개의 비교·투표'],kw:/분해|decompos|2채널|dual channel|two.?channel/i,dc:{mcu:99}},
-  {id:'lockstep',min:'D',label:'락스텝 코어 / 2-MCU 상호 감시',group:'ctrl',feats:['락스텝 MCU 또는 보조 MCU','상호 생존 신호·결과 비교'],kw:/lockstep|락스텝|2-?mcu|상호 감시|checker/i,dc:{mcu:99}}];
+  {id:'conn_diag',min:'B',needs:'입력 범위 검사(open = 풀업 레벨, short-to-GND/BAT = 포화) · 디바운스 후 fault 기록',label:'커넥터 open/short 진단',group:'io',feats:['입력 핀 풀업/풀다운으로 open 검출','short-to-BAT/GND 범위 검사'],kw:/open.?short|단선|진단 풀|conn.*diag/i,dc:{conn:60}},
+  {id:'drv_fb',min:'B',needs:'nFAULT 인터럽트 → 즉시 EN 차단 · 명령 전류 vs 측정 전류 타당성 검사 · 출력 리드백과 명령 비교',label:'드라이버 fault·전류 리드백',group:'io',feats:['드라이버 nFAULT → MCU','전류 감지·과전류 차단'],kw:/fault|리드백|readback|과전류|current sens|전류 감지/i,dc:{driver:90},link:{to:'ctrl',label:'nFAULT / I_SENSE',kind:'signal'}},
+  {id:'sbc',min:'C',needs:'SPI 질의응답(Q&A) 워치독 프로토콜 구현 · FS0B 에러 카운터 처리 · 기동 시 SBC 자가 진단 결과 확인',label:'SBC (전원 + 질의응답 워치독 + 세이프 스테이트)',group:'power',feats:['PMIC + 질의응답(Q&A) 워치독','FS0B 세이프 스테이트 출력 → 드라이버 비활성'],impl:null,kw:/\bsbc\b|system basis|질의응답|challenge|fs0b|tle92|l99|fs6/i,dc:{power:99,mcu:99},link:{to:'ctrl',label:'SPI · nRESET · FS0B',kind:'safe'}},
+  {id:'monitor',min:'C',needs:'주/보조 측정값 비교(허용 오차·시간) · 불일치 시 세이프 스테이트 요청',label:'독립 모니터 경로',group:'io',feats:['주 경로와 독립된 전압/전류 레퍼런스로 2차 감시','불일치 시 세이프 스테이트'],kw:/독립 모니터|secondary monitor|2차 감시|independent/i,dc:{sensor:90,driver:90}},
+  {id:'sensor_red',min:'C',needs:'두 센서 교차 검증·투표 · 한쪽 고장 시 성능 저하 모드(degraded) 정의',label:'리던던트 센서 (이종)',group:'io',feats:['주 센서 + 이종 보조 센서','교차 검증 · 공통 원인 고장 분리'],kw:/리던던|redund|이중 센서|보조 센서|dual sensor/i,dc:{sensor:99}},
+  {id:'cutoff2',min:'C',needs:'SAFE_EN은 모든 자가 진단 통과 후에만 High · 주기적으로 차단 경로 테스트(짧게 OFF 후 리드백) · 리셋·전원 상실 시 자동 OFF 확인',label:'이중 차단 세이프 스테이트',group:'power',feats:['드라이버 EN 차단 + 상위 전원 스위치(하이사이드 FET/릴레이)','전원 상실에도 안전 측으로'],impl:'hs_switch',kw:/이중 차단|cut.?off|하이사이드 스위치|safe state|세이프 스테이트|relay|릴레이/i,dc:{driver:99},link:{to:'ctrl',label:'SAFE_EN',kind:'safe'}},
+  {id:'decomp',min:'D',needs:'채널 간 결과 비교·투표 · 채널 독립성(별도 전원·클럭·메모리) 유지 · 불일치 시 세이프 스테이트',label:'ASIL 분해 (2채널)',group:'ctrl',feats:['ASIL D = B(D) + B(D)','독립 채널 2개의 비교·투표'],kw:/분해|decompos|2채널|dual channel|two.?channel/i,dc:{mcu:99}},
+  {id:'lockstep',min:'D',needs:'락스텝 비교기 오류 처리(SMU) · 2-MCU면 상호 생존 신호·결과 교환 프로토콜',label:'락스텝 코어 / 2-MCU 상호 감시',group:'ctrl',feats:['락스텝 MCU 또는 보조 MCU','상호 생존 신호·결과 비교'],kw:/lockstep|락스텝|2-?mcu|상호 감시|checker/i,dc:{mcu:99}}];
+/* software safety mechanisms (ISO 26262-5 Annex D / -6): implemented in the MCU, recorded on the controller block */
+const SW_MECH=[
+  {id:'sw_wdt',min:'A',label:'내부 워치독 + 프로그램 흐름 감시',desc:'IWDG 서비스는 주요 태스크 체크포인트를 모두 지났을 때만 (제어 흐름 모니터링)',dc:{mcu:60}},
+  {id:'sw_startup',min:'A',label:'기동 자가 진단 (BIST)',desc:'리셋 원인 확인 · RAM 마치 테스트 · 플래시 CRC · 워치독/감시 IC 테스트 · 출력 초기 안전 상태',dc:{mcu:60}},
+  {id:'sw_range',min:'A',label:'입력 신호 범위·타당성 검사',desc:'ADC·센서 값의 물리 범위, 변화율(rate), 고착(stuck-at) 검출 → 대체값·세이프 스테이트',dc:{sensor:60}},
+  {id:'sw_mem',min:'B',label:'메모리 보호·주기 테스트',desc:'안전 변수 이중 저장(값·보수) · 스택 감시 · 주기적 RAM/플래시 테스트 (ECC MCU면 ECC 오류 처리)',dc:{mcu:60}},
+  {id:'sw_clock',min:'B',label:'클럭·타이밍 감시',desc:'클럭 보안 시스템(CSS)·주파수 타당성, 태스크 데드라인 감시',dc:{mcu:60}},
+  {id:'sw_adc',min:'B',label:'ADC 자가 진단',desc:'기준 전압 채널(VREFINT·분압 레퍼런스) 주기 측정, 오프셋·이득 범위 검사, 채널 교차 측정',dc:{sensor:90}},
+  {id:'sw_e2e',min:'B',label:'통신 E2E 보호',desc:'CAN/LIN 메시지 CRC · 시퀀스 카운터 · 타임아웃 · 유효 범위 (AUTOSAR E2E 프로파일)',dc:{comm:90}},
+  {id:'sw_out',min:'B',label:'출력 리드백 · 세이프 스테이트 진입 절차',desc:'명령 출력과 리드백 비교, fault 시 정해진 순서로 구동 정지·전원 차단·사용자 알림, 재시도 정책',dc:{driver:60}},
+  {id:'sw_plaus',min:'C',label:'다중 소스 타당성 (센서 융합·모델 기반)',desc:'리던던트/이종 센서 교차 검증, 물리 모델로 추정값과 비교, 불일치 시간 누적 임계',dc:{sensor:99}},
+  {id:'sw_diag_hw',min:'C',label:'HW 메커니즘 주기 테스트',desc:'워치독 창 위반 테스트 · 차단 경로 OFF 테스트 · 감시 IC MR 테스트를 운행 중 주기적으로 (잠재 고장 LFM)',dc:{driver:90,power:90}},
+  {id:'sw_partition',min:'D',label:'소프트웨어 파티셔닝 · FFI',desc:'MPU로 ASIL/QM 소프트웨어 분리, 시간·메모리 간섭 방지, 채널 간 비교·투표',dc:{mcu:90}}];
+function swMechanisms(A,lv){lv=norm(lv||level(A));const have=new Set(A&&A.safety&&A.safety.sw||[]);const ctrl=(A&&A.blocks||[]).find(b=>b.group==='ctrl');
+  return SW_MECH.filter(m=>rank(m.min)<=rank(lv)).map(m=>Object.assign({},m,{present:have.has(m.id)||!!(ctrl&&(ctrl.feats||[]).some(f=>f.includes(m.label)))}));}
+/* what software each hardware mechanism on the board needs to actually earn its diagnostic coverage */
+function hwNeeds(A,lv){return mechanisms(A,lv).filter(m=>!m.sw&&m.present&&m.needs).map(m=>({id:m.id,label:m.label,block:m.presentLabel,needs:m.needs}));}
 function level(A){return norm(A&&A.safety&&A.safety.level||'QM');}
 function blockLevel(A,b){return b.asil?norm(b.asil):level(A);}
-function hasMech(A,m){return(A.blocks||[]).find(b=>m.kw.test(b.label+' '+(b.feats||[]).join(' ')+' '+(b.impl||[]).map(i=>i.type).join(' ')))||null;}
+function hasMech(A,m){return(A.blocks||[]).find(b=>m.kw.test(b.label+' '+(b.feats||[]).filter(f=>!/^SW:/.test(f)).join(' ')+' '+(b.impl||[]).map(i=>i.type).join(' ')))||null;}
 function mechanisms(A,lv){lv=norm(lv||level(A));return MECH.filter(m=>rank(m.min)<=rank(lv)).map(m=>{const p=hasMech(A,m);return Object.assign({},m,{present:p?p.id:null,presentLabel:p?p.label:''});});}
 /* links whose two blocks have different ASIL: freedom-from-interference boundaries */
 function boundaries(A){const B=id=>(A.blocks||[]).find(b=>b.id===id);return(A.links||[]).map(l=>{const a=B(l.a),b=B(l.b);if(!a||!b)return null;const la=blockLevel(A,a),lb=blockLevel(A,b);if(la===lb)return null;
@@ -37,8 +54,11 @@ function apply(A,HW,ids,lv){lv=norm(lv||level(A));const want=mechanisms(A,lv).fi
     if(m.id==='cutoff2')drv.forEach(d=>HW.link(A,b.id,d.id,'전원 차단',{kind:'safe'}));
     if(m.id==='drv_fb')drv.forEach(d=>HW.link(A,d.id,b.id,'nFAULT · I_SENSE',{kind:'signal'}));
     added.push(b);});
+  // software mechanisms: recorded on the controller block and in A.safety.sw
+  if(ctrl){A.safety=A.safety||{level:lv,goals:[]};A.safety.sw=A.safety.sw||[];swMechanisms(A,lv).filter(m=>!m.present&&(ids==='all'||!ids||ids.includes(m.id)||ids.includes('sw'))).forEach(m=>{A.safety.sw.push(m.id);const f='SW: '+m.label;if(!(ctrl.feats||[]).includes(f))ctrl.feats.push(f);added.push({id:m.id,label:m.label,sw:true,impl:[]});});}
   return added;}
-function archText(A){const lv=level(A);const M=mechanisms(A,lv);const F=boundaries(A);const G=A.safety&&A.safety.goals||[];
+function archText(A){const lv=level(A);const M=mechanisms(A,lv).filter(m=>!m.sw);const SW=swMechanisms(A,lv);const N=hwNeeds(A,lv);const F=boundaries(A);const G=A.safety&&A.safety.goals||[];
+  if(lv!=='QM')return`[기능 안전] 시스템 ASIL ${lv}${G.length?` · 안전 목표: ${G.join(' / ')}`:''}\n블록 등급: ${(A.blocks||[]).map(b=>`${b.id} ${blockLevel(A,b)}`).join(', ')||'-'}\nHW 메커니즘 (${M.filter(m=>m.present).length}/${M.length}): `+M.map(m=>`${m.present?'✓':'✕'} ${m.label}${m.present?' ← '+m.presentLabel:''}`).join('; ')+`\nSW 메커니즘 (${SW.filter(m=>m.present).length}/${SW.length}, MCU 블록에 기록): `+SW.map(m=>`${m.present?'✓':'○'} ${m.label}`).join('; ')+(N.length?`\nHW 부품이 등급을 내려면 필요한 SW: `+N.map(n=>`[${n.label}] ${n.needs}`).join(' / '):'')+(F.length?`\nFFI 경계 ${F.length}: `+F.map(f=>f.msg).join('; '):'')+(M.some(m=>!m.present)||SW.some(m=>!m.present)?'\n→ safety apply all (HW 블록 + SW 항목) · safety apply sw (SW만)':'');
   return`[기능 안전] 시스템 ASIL ${lv}${G.length?` · 안전 목표: ${G.join(' / ')}`:''}\n블록 등급: ${(A.blocks||[]).map(b=>`${b.id} ${blockLevel(A,b)}`).join(', ')||'-'}\n안전 메커니즘 (${lv} 기준 ${M.length}개): `+(M.length?M.map(m=>`${m.present?'✓':m.sw?'○':'✕'} ${m.label}${m.present?' ← '+m.presentLabel:m.sw?' (SW)':' — 없음'}`).join('; '):'QM: 없음')+(F.length?`\nFFI 경계 ${F.length}: `+F.map(f=>f.msg).join('; '):'')+(M.some(m=>!m.present&&!m.sw)?'\n→ safety apply 로 빠진 메커니즘 블록을 추가':'');}
 /* ---------- circuit-level checks on the board ---------- */
 const FIT={R:0.2,C:0.5,CP:2,L:0.5,FB:0.3,D:1,LED:2,TVS:1,Q:3,U:10,MCU:30,REG:8,DRV:15,XCVR:10,J:0.5,Y:5,SW:5,TP:0,M:0,X:2};
@@ -105,17 +125,19 @@ function partsText(B,opt){const P=parts(B,opt);if(!P.required)return'[등급 부
 /* ---------- FMEDA (rough): FIT per part class, diagnostic coverage from the mechanisms found on the board ---------- */
 function fmeda(B,opt){opt=opt||{};const R=circuitChecks(B,opt);const lv=R.level;const ok=id=>R.checks.some(c=>c.id===id&&c.sev==='ok');
   const dc={mcu:ok('wdt_qa')?99:ok('wdt')?90:60,power:ok('supervisor')?90:0,driver:ok('cutoff2')?99:ok('drv_fault')&&ok('isense')?90:ok('drv_en')?60:0,comm:ok('can_tx')?60:0,conn:ok('conn_adj')?60:30,sensor:ok('sensor_red')?99:60,signal:0,other:0};
+  // software mechanisms recorded on the architecture raise coverage where the hardware alone cannot
+  const sw=opt.arch&&opt.arch.safety&&opt.arch.safety.sw||[];SW_MECH.filter(m=>sw.includes(m.id)).forEach(m=>Object.entries(m.dc).forEach(([k,v])=>{if(dc[k]!=null&&v>dc[k])dc[k]=v;}));const swOn=sw.length;
   const PL=typeof PARTLIB!=='undefined'?PARTLIB:null;const lib=opt.lib||(PL?PL.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null):[]);
   const rows=B.comps.filter(c=>cat(c)!=='TP'&&cat(c)!=='M').map(c=>{const k=cat(c);const rec=PL&&c.mpn?PL.find(lib,c.mpn):null;const fitSrc=rec&&rec.fitv!=null?'공급사':'기본값';const fit=rec&&rec.fitv!=null?rec.fitv:k==='J'?FIT.J*c.pads.length:FIT[k]!=null?FIT[k]:FIT.X;const cls=partClass(c,B);const d=dc[cls]||0;const sr=cls!=='other'&&cls!=='signal'||/^(U|Q)/.test(c.ref);
     return{ref:c.ref,val:c.val,cat:k,cls,fit,fitSrc,grade:rec&&rec.grade||'',sr,dc:sr?d:0,res:sr?fit*(1-d/100):0,mech:sr?(cls==='mcu'?(ok('wdt_qa')?'SBC Q&A WDT':ok('wdt')?'외부 WDT':'내부 WDT'):cls==='power'?(ok('supervisor')?'전원 감시':'—'):cls==='driver'?(ok('cutoff2')?'이중 차단':ok('drv_fault')?'fault·전류 리드백':ok('drv_en')?'EN 차단':'—'):cls==='sensor'?'ADC 진단':cls==='conn'?'open/short 진단':'—'):'—'};});
   const tot=rows.reduce((a,r)=>a+r.fit,0),srTot=rows.filter(r=>r.sr).reduce((a,r)=>a+r.fit,0),res=rows.reduce((a,r)=>a+r.res,0);
   const spfm=srTot?100*(1-res/srTot):100;const lfm=Math.min(99,Math.max(0,spfm-10));const pmhf=res;const t=TARGETS[lv];
   const verdict=[];if(t.spfm!=null)verdict.push({k:'SPFM',v:spfm,target:t.spfm,ok:spfm>=t.spfm});if(t.lfm!=null)verdict.push({k:'LFM',v:lfm,target:t.lfm,ok:lfm>=t.lfm});if(t.pmhf!=null)verdict.push({k:'PMHF',v:pmhf,target:t.pmhf,ok:pmhf<=t.pmhf});
-  return{level:lv,rows,total:tot,srTotal:srTot,residual:res,spfm,lfm,pmhf,targets:t,verdict,dc};}
+  return{level:lv,rows,total:tot,srTotal:srTot,residual:res,spfm,lfm,pmhf,targets:t,verdict,dc,sw:swOn};}
 function fmedaAoa(F){return[['참조','값','분류','영향 영역','등급','FIT','FIT 출처','안전 관련','진단 메커니즘','DC %','잔류 FIT'],...F.rows.map(r=>[r.ref,r.val,r.cat,r.cls,r.grade||'',r.fit,r.fitSrc||'',r.sr?'Y':'',r.mech,r.sr?r.dc:'',+r.res.toFixed(2)]),[],['합계','','','',+F.total.toFixed(1),'','','',+F.residual.toFixed(2)],['안전 관련 FIT',+F.srTotal.toFixed(1)],['SPFM %',+F.spfm.toFixed(1),'목표',F.targets.spfm!=null?F.targets.spfm:'-'],['LFM % (추정)',+F.lfm.toFixed(1),'목표',F.targets.lfm!=null?F.targets.lfm:'-'],['PMHF FIT',+F.pmhf.toFixed(1),'목표 <',F.targets.pmhf!=null?F.targets.pmhf:'-']];}
 function circuitText(B,opt){const R=circuitChecks(B,opt);const F=fmeda(B,opt);const n=s=>R.checks.filter(c=>c.sev===s).length;
   return`[기능 안전 점검] ASIL ${R.level}${R.mcu?' · MCU '+R.mcu:''} · 오류 ${n('err')} · 경고 ${n('warn')} · 양호 ${n('ok')} · 해당 없음 ${n('na')}\n`+R.checks.filter(c=>c.sev!=='na').map(c=>`${c.sev==='err'?'!!':c.sev==='warn'?'!':c.sev==='info'?'·':'✓'} [${c.min}+] ${c.label}: ${c.msg}${c.fix&&c.sev!=='ok'?` → ${c.fix}`:''}`).join('\n')+
   `\n[FMEDA 추정] 부품 ${F.rows.length} · 총 ${F.total.toFixed(1)} FIT · 안전 관련 ${F.srTotal.toFixed(1)} FIT · 잔류 ${F.residual.toFixed(1)} FIT → SPFM ${F.spfm.toFixed(1)} %${F.targets.spfm!=null?` (목표 ≥ ${F.targets.spfm})`:''} · PMHF ${F.pmhf.toFixed(1)} FIT${F.targets.pmhf!=null?` (목표 < ${F.targets.pmhf})`:''}${F.verdict.length?' · '+F.verdict.map(v=>`${v.k} ${v.ok?'충족':'미달'}`).join(', '):''}\n(FIT는 부품 등급 기본값, DC는 발견된 메커니즘 기준 가정 — 실제 FMEDA는 부품 데이터시트·고장 모드 분포로 다시 계산)`;}
-return{LEVELS,rank,norm,parseLevel,TARGETS,MECH,FIT,level,blockLevel,mechanisms,boundaries,apply,archText,cat,partClass,circuitChecks,fmeda,fmedaAoa,circuitText,parts,partsText,partKind};
+return{LEVELS,rank,norm,parseLevel,TARGETS,MECH,SW_MECH,swMechanisms,hwNeeds,FIT,level,blockLevel,mechanisms,boundaries,apply,archText,cat,partClass,circuitChecks,fmeda,fmedaAoa,circuitText,parts,partsText,partKind};
 })();
 if(typeof module!=='undefined')module.exports=SAFETY;

@@ -100,7 +100,7 @@ function toPlan(A){
 
 /* ---- layout: bands top to bottom, blocks centred in each band ---- */
 const LW=150,BW=196,GX=84,BAND=30,PAD=22,LH=15;
-function bh(b){return 34+Math.min(4,b.feats.length)*LH+(b.feats.length?6:0);}
+function bh(b){const sw=b.feats.filter(f=>/^SW:/.test(f)).length;const n=Math.min(4,b.feats.length-sw+(sw?1:0));return 34+n*LH+(b.feats.length?6:0);}
 function layout(A){
   const rows=GROUPS.map(g=>A.blocks.filter(b=>b.group===g[0])).map((bs,i)=>({g:GROUPS[i],bs})).filter(r=>r.bs.length);
   const wOf=b=>b.group==='ctrl'?Math.max(BW,300):BW;
@@ -145,7 +145,7 @@ function svg(A,opts){opts=opts||{};const sel=opts.sel||null;const L=layout(A);co
     const lv=lvOf(b),lc=ASIL_HUE[lv];o.push(`<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${b.ext?16:6}" fill="var(--raised,#fff)" stroke="${on?'#3d7fd9':lc||'currentColor'}" stroke-opacity="${on?1:lc?0.95:0.55}" stroke-width="${on?2.2:lc?2:1.2}"${b.ext?' stroke-dasharray="5 3"':''}/>`);
     if(lc){o.push(`<rect x="${b.x+b.w-46}" y="${b.y-8}" width="42" height="15" rx="7" fill="${lc}"/><text x="${b.x+b.w-25}" y="${b.y+3.5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">ASIL ${lv}</text>`);}if(b.safety)o.push(`<text x="${b.x+6}" y="${b.y+b.h-5}" font-size="9" fill="${HUE.safe}">안전 메커니즘</text>`);
     o.push(`<text x="${b.x+b.w/2}" y="${b.y+21}" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">${xe(b.label.length>30?b.label.slice(0,29)+'…':b.label)}</text>`);
-    b.feats.slice(0,4).forEach((f,i)=>o.push(`<text x="${b.x+12}" y="${b.y+40+i*LH}" font-size="10.5" fill="currentColor" opacity="0.72">· ${xe(f.length>34?f.slice(0,33)+'…':f)}</text>`));
+    {const sw=b.feats.filter(f=>/^SW:/.test(f)),hw=b.feats.filter(f=>!/^SW:/.test(f));const show=hw.slice(0,sw.length?3:4);show.forEach((f,i)=>o.push(`<text x="${b.x+12}" y="${b.y+40+i*LH}" font-size="10.5" fill="currentColor" opacity="0.72">· ${xe(f.length>34?f.slice(0,33)+'…':f)}</text>`));if(sw.length)o.push(`<text x="${b.x+12}" y="${b.y+40+show.length*LH}" font-size="10.5" fill="${HUE.safe}" opacity="0.9">⚑ SW 안전 메커니즘 ${sw.length}개</text>`);}
     if(!(b.impl||[]).length&&!b.ext)o.push(`<circle cx="${b.x+b.w-9}" cy="${b.y+9}" r="3.2" fill="none" stroke="currentColor" stroke-opacity="0.5"><title>회로 구현 블록 없음</title></circle>`);
     o.push('</g>');});
   const ly=L.H-12;o.push(`<g font-size="10.5" fill="currentColor" opacity="0.78"><line x1="${PAD}" y1="${ly}" x2="${PAD+24}" y2="${ly}" stroke="${HUE.power}" stroke-width="1.5" stroke-dasharray="6 4"/><text x="${PAD+30}" y="${ly+3.5}">전원 · 고전류</text>

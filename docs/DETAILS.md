@@ -15,6 +15,11 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## HW·SW 안전 메커니즘 추천 (v1.36.1)
+
+- `safety.MECH`에 HW 메커니즘별 `needs`(그 부품이 DC를 내기 위해 필요한 SW), `SW_MECH` 11종(최소 등급·설명·DC), `swMechanisms(A)`(A.safety.sw / MCU 블록 `SW:` 기능 줄로 존재 판정), `hwNeeds(A)`. `apply`는 SW 항목을 ctrl 블록 feats에 `SW: …`로 기록하고 `A.safety.sw`에 저장(`safety apply sw`); `hasMech`는 SW 줄을 무시. `archText` HW/SW/필요한 SW 구분, `fmeda`는 기록된 SW 메커니즘의 DC를 반영.
+- `hwarch.svg`: SW 줄은 "⚑ SW 안전 메커니즘 n개" 한 줄로 요약(`bh` 높이 보정). `newui`: 추가 카드 "HW + SW 모두 / HW만 / SW만", `safety sw` 명령. 보고서: HW 표에 "필요한 SW" 열, SW 메커니즘 표.
+
 ## 등급 부품 자동 적용 · 점검 (v1.36)
 
 - `partlib`: 레코드 필드 `grade`(`gradeOf` 정규화: Q100-0~3 · Q101 · Q200 · industrial · commercial, MPN 접미 -Q1/Q 시리즈 추정) · `temp` · `asil` · `fitv`; CSV 열 Grade/Temp/ASIL/FIT, Claude 추정 프롬프트·Mouser/Nexar 속성 파싱에 반영. `AUTO_PARTS`(차량용 내장 레코드: TPS3823-Q1 · TLV1117LV-Q1 · TPS54331-Q1 · NVTR4502N · DMP2035UQ · NRVB140SF · SMAJ15A-Q · GCM 커패시터), `AUTO_ALT`(상용 → 핀 호환 대체), `AUTO_HINT`(핀 호환 없음 안내), `autoAlt`, `requiredGrade(level)`, `gradeOk(rec,kind,level)`.
