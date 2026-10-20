@@ -5,9 +5,9 @@
    `anthropic-dangerous-direct-browser-access` header) or through the bundled proxy (`npm run serve`), which keeps
    the key on the machine running it. Same call shape as the capability: sample(prompt,{tools,signal,modelTier,onText}),
    sample.json(prompt,opts), sample.limits() → {tools:true}. Errors carry {code,message} like the capability. */
-var LAI={url:'',key:'',model:'',tiers:{quick:'claude-haiku-5-5',default:'claude-sonnet-5-5',complex:'claude-opus-5-5'},max:4096};
-try{const v=JSON.parse(localStorage.getItem('pcbv.localai')||'null');if(v&&typeof v==='object'){if(typeof v.url==='string')LAI.url=v.url;if(typeof v.key==='string')LAI.key=v.key;if(typeof v.model==='string')LAI.model=v.model;if(v.tiers&&typeof v.tiers==='object')Object.assign(LAI.tiers,v.tiers);}}catch(e){}
-function laiSave(){try{localStorage.setItem('pcbv.localai',JSON.stringify({url:LAI.url,key:LAI.key,model:LAI.model,tiers:LAI.tiers}));}catch(e){}}
+var LAI={url:'',key:'',model:'',web:true,tiers:{quick:'claude-haiku-5-5',default:'claude-sonnet-5-5',complex:'claude-opus-5-5'},max:4096};
+try{const v=JSON.parse(localStorage.getItem('pcbv.localai')||'null');if(v&&typeof v==='object'){if(typeof v.url==='string')LAI.url=v.url;if(typeof v.key==='string')LAI.key=v.key;if(typeof v.model==='string')LAI.model=v.model;if(typeof v.web==='boolean')LAI.web=v.web;if(v.tiers&&typeof v.tiers==='object')Object.assign(LAI.tiers,v.tiers);}}catch(e){}
+function laiSave(){try{localStorage.setItem('pcbv.localai',JSON.stringify({url:LAI.url,key:LAI.key,model:LAI.model,web:LAI.web,tiers:LAI.tiers}));}catch(e){}}
 function laiConfigured(){return !!(LAI.url||LAI.key);}
 function laiEndpoint(){const u=(LAI.url||'https://api.anthropic.com').replace(/\/+$/,'');return /\/v1\/messages$/.test(u)?u:u+'/v1/messages';}
 function laiModel(tier){return LAI.model||LAI.tiers[tier]||LAI.tiers.default;}
@@ -33,7 +33,8 @@ function laiBuild(opts){
     const model=laiModel(o.modelTier||'default');let text='',truncated=false,rounds=0;
     while(true){
       if(++rounds>40)throw laiErr('limit','도구 호출 라운드 한도');
-      const body={model,max_tokens:LAI.max,messages:msgs};if(tools.length)body.tools=tools;
+      const body={model,max_tokens:LAI.max,messages:msgs};const tl=tools.slice();if(o.web&&LAI.web!==false)tl.push({type:'web_search_20250305',name:'web_search',max_uses:o.webMax||5}); // server-side web search: datasheets, pinouts
+      if(tl.length)body.tools=tl;
       const res=await laiPost(body,o.signal);
       const parts=res.content||[];const tx=parts.filter(p=>p.type==='text').map(p=>p.text).join('');if(tx){text=(text?text+'\n':'')+tx;if(o.onText)try{o.onText({text,delta:tx});}catch(e){}}
       if(res.stop_reason==='max_tokens')truncated=true;
@@ -47,7 +48,7 @@ function laiBuild(opts){
       msgs.push({role:'user',content:results});
     }
   };
-  f.json=async function(input,o){const r=await f(input,Object.assign({},o,{tools:undefined}));const s=r.text;
+  f.json=async function(input,o){const r=await f(input,Object.assign({},o,{tools:undefined}));const s=r.text.replace(/\s*\[\d+\]/g,'');
     const m=s.match(/```(?:json)?\s*([\s\S]*?)```/)||[null,s];const raw=(m[1]||s).trim();
     try{return JSON.parse(raw);}catch(e){const i=raw.search(/[\[{]/);const j=Math.max(raw.lastIndexOf('}'),raw.lastIndexOf(']'));if(i>=0&&j>i){try{return JSON.parse(raw.slice(i,j+1));}catch(e2){}}throw laiErr('json','JSON 응답이 아닙니다: '+raw.slice(0,120));}};
   f.limits=async()=>({tools:true,images:false});
@@ -66,13 +67,14 @@ function laiDialogHTML(){const esc=s=>String(s||'').replace(/&/g,'&amp;').replac
 <label class="lai-f"><span>빠름</span><input id="laiQ" value="${esc(LAI.tiers.quick)}"></label>
 <label class="lai-f"><span>기본</span><input id="laiD" value="${esc(LAI.tiers.default)}"></label>
 <label class="lai-f"><span>고급</span><input id="laiC" value="${esc(LAI.tiers.complex)}"></label>
-<label class="lai-f"><span>고정 모델</span><input id="laiM" placeholder="비우면 등급별 이름 사용" value="${esc(LAI.model)}"></label></details>
+<label class="lai-f"><span>고정 모델</span><input id="laiM" placeholder="비우면 등급별 이름 사용" value="${esc(LAI.model)}"></label>
+<label class="lai-f"><span>웹 검색</span><span><input id="laiW" type="checkbox"${LAI.web!==false?' checked':''}> 부품 번호 조회 때 Claude가 데이터시트를 웹에서 찾아 핀 배열을 읽음 (API 웹 검색 과금)</span></label></details>
 <p class="note">프록시: 소스의 <code>npm run serve</code> (<code>ANTHROPIC_API_KEY</code> 환경변수)로 띄우면 <code>http://localhost:8787</code>에서 이 페이지도 같이 열립니다. 직접 방식은 키가 브라우저 localStorage에 평문으로 남으니 공용 PC에서는 쓰지 마세요.</p>
 <div class="lai-act"><span id="laiMsg" class="aim-u"></span><button type="button" class="btn" data-test>연결 확인</button><button type="button" class="btn primary" data-save>저장 후 사용</button><button type="button" class="btn sm" data-clear>지우기</button></div>
 </div></div>`;}
 function openLocalAi(){let m=$('#laiDlg');if(!m){m=document.createElement('div');m.className='modal';m.id='laiDlg';document.body.appendChild(m);laiBind(m);}m.innerHTML=laiDialogHTML();m.hidden=false;laiModeRows();const k=$('#laiKey');if(k)k.focus();}
 function laiModeRows(){const d=$('#laiMode');if(!d)return;const px=d.value==='proxy';$('#laiUrlRow').hidden=!px;$('#laiKeyRow').querySelector('span').textContent=px?'API 키 (선택 · 서버에 없을 때만)':'API 키';}
-function laiRead(){LAI.key=($('#laiKey').value||'').trim();LAI.url=$('#laiMode').value==='proxy'?($('#laiUrl').value||'').trim()||'http://localhost:8787':'';LAI.model=($('#laiM').value||'').trim();
+function laiRead(){LAI.key=($('#laiKey').value||'').trim();LAI.url=$('#laiMode').value==='proxy'?($('#laiUrl').value||'').trim()||'http://localhost:8787':'';LAI.model=($('#laiM').value||'').trim();LAI.web=!!($('#laiW')&&$('#laiW').checked);
   LAI.tiers={quick:$('#laiQ').value.trim()||LAI.tiers.quick,default:$('#laiD').value.trim()||LAI.tiers.default,complex:$('#laiC').value.trim()||LAI.tiers.complex};}
 function laiBind(m){
   m.addEventListener('change',e=>{if(e.target.id==='laiMode')laiModeRows();});

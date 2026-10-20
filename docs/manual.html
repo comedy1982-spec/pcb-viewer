@@ -150,7 +150,8 @@ kbd{background:#fff}
 <p>HW 블록 다이어그램은 "기능 블록"이고, <b>부품 구성도·2단계 회로는 블록의 회로 구현(impl)</b>에서 나옵니다. Claude가 블록 이름이나 기능 줄에 "CC2420"처럼 부품 번호만 적으면 그것은 글자일 뿐이라 부품 구성에 나타나지 않았습니다. 이제는 두 가지로 이어집니다.</p>
 <ul>
   <li><code>impl rf part CC2420 [--pins SI=SPI_MOSI,CSn=RF_CS] [--vcc +3V3]</code> — 부품 라이브러리(승인 목록 → 내장 → Claude 추정)의 핀 배열로 그 부품을 회로 구현으로 지정합니다. 전원/접지 핀은 레일에, SPI·I²C·UART·IRQ·RESET/EN 핀은 <b>MCU 핀에 자동 배정</b>되고 디커플링 100 nF가 붙습니다. 부품 구성도에 바로 보이고 2단계에서 실제 부품으로 생성됩니다.</li>
-  <li><code>bind</code> — 블록 이름·기능에 적힌 부품 번호를 찾아 자동으로 <code>impl … part</code>로 연결합니다(AI 모드에서는 라이브러리에 없는 부품의 핀 배열을 Claude가 추정). AI 모드로 다이어그램을 만들면 끝에 자동으로 실행되고, Claude에게도 "부품을 고르면 impl part로 묶으라"고 안내합니다.</li>
+  <li><code>impl &lt;ID&gt; part &lt;MPN&gt;</code> — 블록의 기존 부품(또는 bldc·can 같은 주 구현)을 그 부품으로 <b>교체</b>합니다(둘 다 두려면 <code>--add</code>). <code>remove &lt;MPN&gt;</code>은 부품 번호로 빼고 HW 블록은 남깁니다.</li>
+<li><code>bind</code> — 블록 이름·기능에 적힌 부품 번호를 찾아 자동으로 <code>impl … part</code>로 연결합니다(AI 모드에서는 라이브러리에 없는 부품의 핀 배열을 Claude가 추정). AI 모드로 다이어그램을 만들면 끝에 자동으로 실행되고, Claude에게도 "부품을 고르면 impl part로 묶으라"고 안내합니다.</li>
 </ul>
 <h3>다이어그램 만든 뒤 부품 구성 바꾸기</h3>
 <p>1단계 콘솔에 "LDO를 벅으로 바꿔줘", "LED 3개로", "CAN 빼줘", "버튼 추가", "MCU를 TC364로 바꿔줘", "입력 전원 24V로"처럼 적으면(결정론·AI 모드 모두) 해당 HW 블록의 회로 구현(<code>impl --swap</code>)·파라미터·블록이 바뀌고 <b>HW 블록 다이어그램과 부품 구성도가 함께</b> 갱신됩니다. 명령으로는 <code>impl reg buck --swap ldo</code>, <code>set led n 3</code>, <code>add button</code>, <code>remove can</code>, <code>mcu tc364</code>. 변경 문장은 요구사항에 덧붙여 다시 분석하지 않으므로 손으로 고친 블록이 사라지지 않습니다.</p>
@@ -267,6 +268,7 @@ kbd{background:#fff}
 <li><b>프록시 서버 경유</b> — 소스 폴더에서 <code>set ANTHROPIC_API_KEY=sk-ant-…</code>(Windows) 또는 <code>export ANTHROPIC_API_KEY=…</code> 후 <code>npm run serve</code> → <code>http://localhost:8787</code>에서 앱을 열고, 설정에서 "프록시 서버 경유"를 고릅니다. 키는 서버 프로세스에만 있습니다. (<code>PORT=…</code>로 포트 변경)</li>
 <li><b>모델 이름</b> — 등급(빠름/기본/고급)별 모델 ID를 바꾸거나 고정 모델을 지정할 수 있습니다. [연결 확인]으로 키·모델을 바로 시험합니다.</li>
 <li>상태 표시가 <b>AI 대기 · 로컬 API</b>이면 켜진 것입니다. [지우기]로 키를 삭제합니다.</li>
+<li><b>웹 검색</b>(기본 켬) — 부품 번호를 조회할 때 Claude가 제조사 데이터시트를 웹에서 찾아 핀 배열을 읽습니다(신뢰도·PDF 링크가 레코드에 남음). claude.ai 아티팩트 안의 Claude는 웹에 접근하지 못해 기억으로 추정하므로, 정확한 핀이 필요하면 로컬 모드 또는 부품 라이브러리에 CSV로 가져오세요.</li>
 </ul>
 <p>회로·PCB 콘솔의 <code>analyze</code>는 설계를 바꾸지 않는 조회 명령입니다. 질문 모드의 Claude는 "이 회로 문제 없어?", "필터 컷오프 얼마야?", "3.3 V 레일 전압 강하는?" 같은 질문에 먼저 이 명령을 돌려 나온 숫자를 인용해 답합니다. 결정론 모드에서도 "전원 트리 해석해줘", "디커플링 분석"은 바로 <code>analyze power</code>·<code>analyze decap</code>으로 풀립니다.</p>
 <table><thead><tr><th>명령</th><th>무엇을 계산하나</th></tr></thead><tbody>

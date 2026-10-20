@@ -29,7 +29,7 @@ function plPickFiles(){return new Promise(res=>{const i=document.createElement('
 function plFind(q){const all=plAll();return PARTLIB.find(all,q);}
 function plSearch(q){return PARTLIB.search(plAll(),q);}
 async function plAskClaude(q,ctx){await cliAiProbe();if(!CLI.sample)throw new Error('Claude를 쓸 수 없습니다 (AI 사용 허용 필요). 부품 목록 파일을 가져오거나 부품 API를 설정하세요.');
-  const r=await CLI.sample.json(PARTLIB.aiPrompt(q,ctx),{cache:false,modelTier:AIM.tier});const p=PARTLIB.fromAi(r,q);if(p.error)throw new Error('Claude: '+p.error);
+  const web=!!CLI.sample.local;const r=await CLI.sample.json(PARTLIB.aiPrompt(q,Object.assign({},ctx,{web})),{cache:false,modelTier:AIM.tier,web,webMax:5});const p=PARTLIB.fromAi(r,q);if(web&&p&&!p.error)p.note=('웹 검색'+(p.pdf?' · '+p.pdf:'')+(p.note?' · '+p.note:''));if(p.error)throw new Error('Claude: '+p.error);
   if(typeof FPGEN!=='undefined'&&p.pkg)p.fp=FPGEN.ensure(PCB,p.pkg,p.pins.length)||'';plRemember(p);return p;}
 async function plAskApi(q){const c=PL.api_cfg;const P=PARTLIB.PROVIDERS[c.provider];if(!P)throw new Error('부품 API가 설정되지 않았습니다 (부품 라이브러리 → API 설정).');if(c.provider!=='custom'&&!c.key)throw new Error(`${P.name} 키가 없습니다.`);
   const{url,init}=P.req(c.key,q,c.url);let j;try{const r=await fetch(url,init);if(!r.ok)throw new Error(`HTTP ${r.status}`);j=await r.json();}

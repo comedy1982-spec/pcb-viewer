@@ -15,6 +15,13 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 부품 지정은 교체 · 로컬 AI 웹 검색으로 데이터시트 (v1.38.1)
+
+- `impl <ID> part <MPN>`: 블록에 이미 `part`가 있으면 그 부품을, 없으면 주 라이브러리 구현(bldc·can·mcu … LDO/벅/캡/TVS/LED 제외)을 **교체**(메시지 "(bldc → A4911; 둘 다 두려면 --add)"). `--add`로 추가. `map`/응답에 `part <MPN>` 표시.
+- `remove <MPN>`: 부품 번호로 구현 삭제(블록 ID·종류보다 먼저 매칭), HW 블록은 남김(`--block`이면 블록도 삭제). 삭제 후 블록 ID 재부여 문제 회피.
+- 로컬 AI(Messages API)에서는 부품 조회(`impl … part`, `add part`, `replace`, 라이브러리 "Claude 추정") 때 Anthropic **웹 검색 도구**(`web_search_20250305`, 최대 5회)를 붙여 Claude가 제조사 데이터시트를 찾아 핀 배열을 읽고 `pdf`·`conf`를 채움(레코드 note "웹 검색 · URL"). 설정 "웹 검색" 체크로 끔. claude.ai 아티팩트의 `sample`에는 웹 접근이 없어 기억으로 추정.
+- 시스템 프롬프트: 부품 지정은 교체이므로 먼저 remove 하지 말 것.
+
 ## 로컬 AI — claude.ai 밖에서 Messages API (v1.38.0)
 
 - `src/app/localai.js`: `window.claude`가 없으면(파일·다른 서버) `[Claude 허용]`이 **로컬 AI 설정**을 엶. 설정(`pcbv.localai`): 직접(API 키 + `anthropic-dangerous-direct-browser-access`) 또는 프록시 URL, 등급별 모델(`claude-haiku-5-5` / `claude-sonnet-5-5` / `claude-opus-5-5`) 또는 고정 모델. `laiBuild()`가 sample 호환 함수 생성: `sample(prompt,{tools,signal,modelTier,onText})` — tool_use 루프(최대 40라운드, execute → tool_result), `sample.json` — 코드펜스/중괄호 추출 후 JSON 파싱, `limits()`. 오류 코드는 기존 처리와 맞춤(401/403 → `not_granted`, 429 → `rate_limited`, 중단 → `cancelled`).
