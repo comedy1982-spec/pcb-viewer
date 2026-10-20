@@ -29,6 +29,7 @@ function aimBind(root){root.querySelectorAll('[data-aim]').forEach(b=>b.addEvent
   const t=root.querySelector('.aim-t');if(t)t.addEventListener('change',()=>{AIM.tier=t.value;aimSave();aimPaint();});
   const q=root.querySelector('.aim-q');if(q)q.addEventListener('change',()=>{AIM.qa=q.value;aimSave();aimPaint();});aimPaint();}
 if(typeof document!=='undefined')document.addEventListener('DOMContentLoaded',()=>{if(AIM.mode==='ai')cliAiProbe().then(()=>{aimPaint();if(!CLI.sample)console.info('AI 모드: Claude를 쓸 수 없어 규칙으로 대체합니다.');});});
+let AIM_NOTED=false;function aimUnavailableNote(say){if(AIM_NOTED)return true;AIM_NOTED=true;(say||((k,t)=>copSay(k,t)))('err','AI 모드지만 지금은 Claude를 쓸 수 없습니다 (사용 허용 안 됨 · 한도 · 이 화면에서 지원 안 함). 규칙 해석으로 대체합니다 — 문장형 요청은 제한되며, 명령(help)은 그대로 동작합니다. 권한을 허용하거나 잠시 뒤 다시 시도하세요.');return true;}
 function aimPaint(){$$('.aim-b').forEach(b=>{b.classList.toggle('on',b.dataset.aim===AIM.mode);b.setAttribute('aria-pressed',b.dataset.aim===AIM.mode?'true':'false');});
   $$('.aim-t').forEach(t=>{t.value=AIM.tier;t.hidden=AIM.mode!=='ai';});
   $$('.aim-q').forEach(t=>{t.value=AIM.qa;t.hidden=AIM.mode!=='ai';});

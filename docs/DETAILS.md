@@ -15,6 +15,11 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 1단계 콘솔 무응답 수정 (v1.37.2)
+
+- 원인: `npExec`가 `NP.busy=true`로 둔 채 `npAnalyze`를 부르는데 `npAnalyze`는 `if(NP.busy)return`으로 **조용히 종료** → 규칙에 안 걸리는 문장은 아무 출력이 없었음. `npAnalyze(req,inner)`로 내부 호출 허용.
+- AI 모드인데 Claude를 쓸 수 없으면(권한·한도) 한 번 안내(`aimUnavailableNote`)하고 규칙으로 대체. 규칙 추가: "ASIL-C로 대응" → `safety level C` + `safety apply all`, "BLDC 모터 2개 구동" → 부족한 수만큼 `add bldc`; `npIsChange`에 하도록·되도록·대응·적용.
+
 ## 블록의 부품 번호 → 회로 구현 (v1.37.1)
 
 - 원인: 부품 구성도·2단계 회로는 `impl`로만 만들어지는데 Claude가 블록 라벨/기능에 부품 번호를 글자로만 적음.

@@ -12057,6 +12057,7 @@ function aimBind(root){root.querySelectorAll('[data-aim]').forEach(b=>b.addEvent
   const t=root.querySelector('.aim-t');if(t)t.addEventListener('change',()=>{AIM.tier=t.value;aimSave();aimPaint();});
   const q=root.querySelector('.aim-q');if(q)q.addEventListener('change',()=>{AIM.qa=q.value;aimSave();aimPaint();});aimPaint();}
 if(typeof document!=='undefined')document.addEventListener('DOMContentLoaded',()=>{if(AIM.mode==='ai')cliAiProbe().then(()=>{aimPaint();if(!CLI.sample)console.info('AI 모드: Claude를 쓸 수 없어 규칙으로 대체합니다.');});});
+let AIM_NOTED=false;function aimUnavailableNote(say){if(AIM_NOTED)return true;AIM_NOTED=true;(say||((k,t)=>copSay(k,t)))('err','AI 모드지만 지금은 Claude를 쓸 수 없습니다 (사용 허용 안 됨 · 한도 · 이 화면에서 지원 안 함). 규칙 해석으로 대체합니다 — 문장형 요청은 제한되며, 명령(help)은 그대로 동작합니다. 권한을 허용하거나 잠시 뒤 다시 시도하세요.');return true;}
 function aimPaint(){$$('.aim-b').forEach(b=>{b.classList.toggle('on',b.dataset.aim===AIM.mode);b.setAttribute('aria-pressed',b.dataset.aim===AIM.mode?'true':'false');});
   $$('.aim-t').forEach(t=>{t.value=AIM.tier;t.hidden=AIM.mode!=='ai';});
   $$('.aim-q').forEach(t=>{t.value=AIM.qa;t.hidden=AIM.mode!=='ai';});
@@ -13012,15 +13013,16 @@ async function npExec(line){
     else if(typeof plIntent==='function'&&plIntent(line)&&BD&&!BD.blank){await plReplaceFlow(plIntent(line),'np');}
     else if(typeof plIntent==='function'&&plIntent(line)){npSay('out','부품 교체는 회로가 만들어진 뒤(2단계 이후) 할 수 있습니다. 블록 수준에서는 impl <블록> <라이브러리 블록>으로 구현을 바꾸세요.');}
     else if(AIM.mode==='ai'&&(await cliAiProbe(),CLI.sample)&&(NP.arch&&NP.arch.blocks.length)&&(npIsChange(line)||!npIsReq(line)))await npAI(line);
+    else if(AIM.mode==='ai'&&!CLI.sample&&aimUnavailableNote(npSay)&&false){}
     else if(await aimDetQuestion(line,npSay,()=>npRun('status'))){}
     else if(npNL(line)){const cmds=npNL(line);npSay('out','해석: '+cmds.join(' → '));for(const c of cmds){npSay('cmd',c);const o=await npRun(c);if(o)npSay('ok',o);}}
     else if(NP.arch&&NP.arch.blocks.length&&npIsChange(line)){npSay('err','변경 요청을 규칙으로 해석하지 못했습니다. 예: "LDO를 벅으로 바꿔줘" · "LED 3개로" · "CAN 빼줘" · "MCU를 TC364로" · "버튼 추가" — 또는 impl/add/set/remove/mcu 명령, 아니면 AI 모드로 전환하세요. (문장을 요구사항에 덧붙여 다시 분석하지 않았습니다)');}
-    else{const cur=$('#npReq').value.trim();const req=cur&&NP.arch&&NP.arch.blocks.length&&!/요구|설계|만들|보드|노드|컨트롤러|ecu/i.test(line)?cur+'\n'+line:line;$('#npReq').value=req;await npAnalyze(req);}
+    else{const cur=$('#npReq').value.trim();const req=cur&&NP.arch&&NP.arch.blocks.length&&!/요구|설계|만들|보드|노드|컨트롤러|ecu/i.test(line)?cur+'\n'+line:line;$('#npReq').value=req;await npAnalyze(req,true);}
   }catch(e){console.error(e);npSay('err',e.message||String(e));}
   npBusy(false);
 }
 // PCB wishes typed as a sentence in steps 1–2 (layer count, minimum size, exact size) → board commands, not a new architecture
-const npIsChange=t=>/바꿔|바꾸|교체|변경|대체|대신|추가|넣어|넣고|달아|붙여|빼|삭제|제거|없애|늘려|줄여|개로|으로\s*해|로\s*해|변경해|바꿔줘|swap|replace|change|remove|add\b/i.test(t);
+const npIsChange=t=>/바꿔|바꾸|교체|변경|대체|대신|추가|넣어|넣고|달아|붙여|빼|삭제|제거|없애|늘려|줄여|개로|으로\s*해|로\s*해|하도록|되도록|대응|적용|변경해|바꿔줘|swap|replace|change|remove|add\b/i.test(t);
 const NP_WORDS=[[/벅|buck|dc-?dc|스위칭|smps/i,'buck'],[/ldo|리니어|선형|레귤레이터|regulator/i,'ldo'],[/usb/i,'usb_in'],[/dc\s*전원|전원\s*입력|입력\s*전원|배터리|pwr_in|power\s*in/i,'pwr_in'],[/mcu|마이컨|마이크로컨트롤러/i,'mcu'],[/크리스털|crystal|xtal|오실/i,'xtal'],[/\bcan\b/i,'can'],[/bldc|3상/i,'bldc'],[/dc\s*모터|모터|motor/i,'dcmotor'],[/led/i,'led'],[/버튼|button|스위치|switch/i,'button'],[/플래시|flash|메모리|memory/i,'flash'],[/uart|시리얼|serial|디버그|debug/i,'uart'],[/i2c|i²c/i,'i2c'],[/전압\s*감시|vmon|분압/i,'vmon'],[/워치독|watchdog|감시\s*ic|supervisor/i,'supervisor'],[/하이사이드|차단\s*스위치|hs_switch|cut.?off/i,'hs_switch']];
 function npWordKey(seg){for(const[re,k]of NP_WORDS)if(re.test(seg))return k;return null;}
 function npGroupOf(k){return/^(pwr_in|usb_in|ldo|buck|supervisor|hs_switch|vmon)$/.test(k)?'power':/^(can|uart|i2c)$/.test(k)?'comm':/^(mcu|xtal)$/.test(k)?'ctrl':'io';}
@@ -13029,6 +13031,8 @@ function npArchImpl(idOrType){const A=NP.arch;if(!A)return null;const t=String(i
   for(const b of A.blocks){const im=(b.impl||[]).find(i=>i.type===k);if(im)return{b,im};}return null;}
 /* part-composition sentences → block commands (step 1, deterministic) */
 function npNL2(t){const s=t.trim();const out=[];let m;
+  if((m=s.match(/ASIL[\s\-_]*([ABCD])\b/i))&&/대응|적용|맞춰|설계|등급|으로|로\b/.test(s))return[`safety level ${m[1].toUpperCase()}`,'safety apply all'];
+  if((m=s.match(/(bldc|dc\s*모터|모터|motor|can|uart|i2c|버튼|button)\s*(?:motor|모터)?\s*(?:을|를|이|가)?\s*(\d+)\s*개/i))&&/구동|추가|필요|넣|달|써|연결|해야/.test(s)){const k=npWordKey(m[1]);const n=+m[2];if(k&&k!=='led'){const have=NP.arch?NP.arch.blocks.reduce((a,b)=>a+(b.impl||[]).filter(i=>i.type===k).length,0):0;const cmds=[];for(let i=have;i<n;i++)cmds.push(`add ${k}`);return cmds.length?cmds:[`plan`];}}
   const mcuOf=x=>{const k=NEWPROJ.mcuKey?NEWPROJ.mcuKey(x):null;if(k)return k;if(/tc364|aurix|tc3/i.test(x))return'tc364';if(/stm32|cortex|st/i.test(x))return'stm32';return null;};
   // "A를 B로 바꿔/교체/대신"
   if((m=s.match(/^(.+?)\s*(?:을|를|은|는)?\s+(.+?)\s*(?:으로|로)\s*(?:바꿔|바꾸|교체|변경|대체|해\s*줘|해줘)/))||(m=s.match(/^(.+?)\s*대신(?:에)?\s+(.+?)\s*(?:을|를)?\s*(?:써|사용|넣|적용)/))){
@@ -13147,10 +13151,11 @@ async function npBindParts(){const A=NP.arch;if(!A)return[];const SKIP=/^(ASIL|I
     for(const t of toks){let rec=NEWPROJ.partLookup?NEWPROJ.partLookup(t):null;if(!(rec&&rec.pins&&rec.pins.length)&&AIM.mode==='ai'&&typeof plAskClaude==='function'){try{await cliAiProbe();if(CLI.sample){npSay('out',`${b.id} "${b.label}": 부품 번호 ${t} — Claude가 핀 배열을 찾는 중…`);rec=await plAskClaude(t,{hint:A.name,role:b.label});}}catch(e){npSay('err',`${t}: ${e.message||e}`);}}
       if(rec&&rec.pins&&rec.pins.length){b.impl=[{type:'part',params:{mpn:rec.mpn}}];out.push(`${b.id} ⇒ part ${rec.mpn}${rec.src==='ai'?' (Claude 추정)':''}`);break;}}}
   if(out.length){NP.planManual=false;archToPlan(true);npRender();}return out;}
-async function npAnalyze(req){
-  if(NP.busy)return;npBusy(true);NP.answers=NP.answers||{};const name=$('#npName').value.trim();
+async function npAnalyze(req,inner){
+  if(NP.busy&&!inner)return;npBusy(true);NP.answers=NP.answers||{};const name=$('#npName').value.trim();
   try{
-    copSay('out',`요구사항 분석 중… (${AIM.mode==='ai'?'AI':'규칙'})`);
+    if(AIM.mode==='ai'){await cliAiProbe();if(!CLI.sample)aimUnavailableNote(npSay);}
+    copSay('out',`요구사항 분석 중… (${AIM.mode==='ai'&&CLI.sample?'AI':'규칙'})`);
     let qs=null;if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample)qs=await npAskAI(req);}
     if(!qs)qs=REQ_Q.filter(f=>!f.re.test(req)&&!NP.answers[f.key]).map(f=>({key:f.key,label:f.label,q:f.q,why:f.why,opts:f.opts,multi:!!f.multi}));
     qs=qs.filter(q=>!NP.answers[q.key]);
