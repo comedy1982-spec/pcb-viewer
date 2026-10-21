@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './load.mjs';
-const { PCB, PCBEDIT, SAMPLE, SAMPLE_MCU, SAMPLE_BLDC, SAMPLE_TC364 } = load();
+const { PCB, PCBEDIT, SAMPLE, SAMPLE_MCU, SAMPLE_BLDC, SAMPLE_TC364, HOUSING } = load();
 const board = (spec) => { const B = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))); PCBEDIT.prepare(B); return B; };
 const sig = (B) => B.comps.map(c => c.ref + ':' + c.side + ':' + c.pads.map(p => [p.n, p.x.toFixed(3), p.y.toFixed(3), ((((p.ang || 0) % 360) + 360) % 360).toFixed(1), p.side].join('/')).join(',')).join(';').replace(/-0\.000/g, '0.000');
 
@@ -87,4 +87,17 @@ test('board shapes and cutouts', () => {
   assert.equal(PCBEDIT.clearCutouts(bd), 1);
   PCBEDIT.setShape(bd, 'circle', { d: 70 }); PCBEDIT.resizeBoard(bd, 50, 50, {}); assert.ok(Math.abs(bd.W - 50) < 1e-6 && bd.shape.kind === 'circle');
   assert.throws(() => PCBEDIT.setShape(bd, 'star', {}), /모양/);
+});
+
+test('housing follows a shaped board outline', () => {
+  const bd = board(SAMPLE);
+  PCBEDIT.setShape(bd, 'circle', { d: 70 });
+  const R = HOUSING.analyze(bd, { P: 'auto', ip: 'IP54', vib: 2, ta: 25, tmax: 85, tj: 125, mat: 'auto' });
+  const g = R.d.geo; assert.equal(g.shape, 'circle'); assert.ok(g.ringO && g.ringI && g.ringO.length > 20);
+  assert.ok(Math.abs(g.Lo - (70 + 2 * (g.gap + g.rim))) < 0.2, 'outer size = board + gap + rim');
+  assert.ok(R.d.screws.every(s => PCB.inRing(s.x, s.y, g.ringO)), 'screw bosses inside the outer outline');
+  assert.ok(R.d.sup.every(s => PCB.inRing(s.x, s.y, bd.outline[0])), 'supports inside the board');
+  assert.match(HOUSING.text(R), /원형/); assert.match(HOUSING.scad(R, 't'), /outerPts/); assert.match(HOUSING.drawingSVG(R, 't'), /<path d="M[^"]{300,}/);
+  const o = HOUSING.offsetRing([[0, 0], [10, 0], [10, 10], [0, 10]], 1); assert.equal(o.length, 4); assert.ok(o.every(p => p[0] === -1 || p[0] === 11));
+  const h = HOUSING.ringHit(g.ringO, [35, 35], [1, 0]); assert.ok(h && Math.abs(h.nx - 1) < 0.05 && Math.abs(h.x - (35 + g.Lo / 2)) < 0.5);
 });

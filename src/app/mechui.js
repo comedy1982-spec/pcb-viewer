@@ -113,7 +113,8 @@ function mechGroup(R){
   // wall slabs stop where the corner pieces start (along the wall, from each end)
   const Rp=rv<=0?0:ch?Math.max(rv+0.414*r,r):Math.max(rv,r);
   // outline of the housing plan, shrunk inward by `inset` (corner R/C follow the offset), counter-clockwise, SEG+1 points per corner
-  const planPts=inset=>{const P=[];const cs=[[X0,Y0,1,1,Math.PI],[X1,Y0,-1,1,1.5*Math.PI],[X1,Y1,-1,-1,0],[X0,Y1,1,-1,0.5*Math.PI]];
+  const shaped=!!g.ringO;
+  const planPts=inset=>{if(shaped)return HOUSING.offsetRing(g.ringO,-(inset||0));const P=[];const cs=[[X0,Y0,1,1,Math.PI],[X1,Y0,-1,1,1.5*Math.PI],[X1,Y1,-1,-1,0],[X0,Y1,1,-1,0.5*Math.PI]];
     cs.forEach(([cx,cy,sx,sy,a0])=>{const rr=ch?Math.max(0,rv-0.586*inset):Math.max(0,rv-inset),off=inset+rr,ox=cx+sx*off,oy=cy+sy*off;
       const s0=[ox+rr*Math.cos(a0),oy+rr*Math.sin(a0)],s1=[ox+rr*Math.cos(a0+Math.PI/2),oy+rr*Math.sin(a0+Math.PI/2)];
       for(let i=0;i<=SEG;i++){const k=i/SEG;if(ch)P.push([s0[0]+(s1[0]-s0[0])*k,s0[1]+(s1[1]-s0[1])*k]);else{const a=a0+k*Math.PI/2;P.push([ox+rr*Math.cos(a),oy+rr*Math.sin(a)]);}}});
@@ -146,6 +147,16 @@ function mechGroup(R){
     const me=new THR.Mesh(geo,mat);
     if(side==='S')me.position.set(X0,Y0+r,0);else if(side==='N')me.position.set(X0,Y1,0);else if(side==='W')me.position.set(X0,Y0,0);else me.position.set(X1-r,Y0,0);
     par.add(me);return me;};
+  // outline-following housings: one wall ring (outer outline minus inner outline) instead of four slabs; openings are shown
+  // as markers projected onto the wall where the connector / hole faces it
+  const ringWall=(z0,z1,par)=>{if(z1-z0<0.05)return;const O=planPts(0),I=HOUSING.offsetRing(g.ringO,-r);const sh=new THR.Shape();sh.moveTo(O[0][0],O[0][1]);for(let i=1;i<O.length;i++)sh.lineTo(O[i][0],O[i][1]);sh.closePath();
+    const h=new THR.Path();h.moveTo(I[0][0],I[0][1]);for(let i=1;i<I.length;i++)h.lineTo(I[i][0],I[i][1]);h.closePath();sh.holes.push(h);
+    const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:8}),mat);me.position.z=z0;par.add(me);return me;};
+  const DIR={W:[-1,0],E:[1,0],S:[0,-1],N:[0,1]};
+  const wallMarker=(side,u,w,zc,hz,m,par,key)=>{const dir=DIR[side];const horiz=side==='S'||side==='N';const p0=horiz?[u,(Y0+Y1)/2]:[(X0+X1)/2,u];
+    const hit=HOUSING.ringHit(g.ringO,p0,dir);if(!hit)return null;const me=new THR.Mesh(new THR.PlaneGeometry(w,hz),m);const o=0.06;const px=hit.x+hit.nx*o,py=hit.y+hit.ny*o;
+    me.position.set(px,py,zc);me.up.set(0,0,1);me.lookAt(px+hit.nx,py+hit.ny,zc); // plane normal = wall normal, height stays vertical
+    if(key)me.userData.el=key;par.add(me);return me;};
   // floor / cover plate with user holes
   const plate=(sd,z0,z1,par,inset)=>{const hs=holesOn(sd);
     const sh=planShape(inset||0);
@@ -153,7 +164,7 @@ function mechGroup(R){
     const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:24}),mat);me.position.z=z0;par.add(me);return me;};
   // base: floor, walls up to the split line, PCB supports, lid screw bosses, base pedestals, tabs, ribs
   const zw0=rB>0?Math.min(g.zSplit,Zb+rB):g.zFloor,zw1=rT>0?Math.max(g.zSplit,Zt-rT):g.zLid;
-  TG(plate('B',Zb,g.zFloor,base,rB),'floor');['S','N','W','E'].forEach(s=>TG(wall(s,zw0,g.zSplit,base),'wall:'+s));corner(zw0,g.zSplit,base);TG(loft(bandB,base),'edge:B');
+  TG(plate('B',Zb,g.zFloor,base,rB),'floor');if(shaped){TG(ringWall(zw0,g.zSplit,base),'wall:ring');}else{['S','N','W','E'].forEach(s=>TG(wall(s,zw0,g.zSplit,base),'wall:'+s));corner(zw0,g.zSplit,base);}TG(loft(bandB,base),'edge:B');
   d.sup.forEach((s,i)=>TG(cyl(s.x,s.y,g.zFloor,-Tb/2,s.d>3.4?4.5:3.5,s.kind==='user'?featM:solid,base),'boss:'+i));
   d.screws.forEach((s,i)=>TG(cyl(s.x,s.y,g.zFloor,g.zSplit,d.screwM==='M4'?4.5:3.75,mat,base),'screw:'+i));
   if(R.inp.vib>=4){TG(box(X0+r,(Y0+Y1)/2-1,g.zFloor,X1-r,(Y0+Y1)/2+1,g.zFloor+Math.min(3,g.stand-0.5),mat,base),'rib:auto');}
@@ -161,19 +172,24 @@ function mechGroup(R){
     if(f.type==='tabs')f.tabs.forEach(t=>{TG(box(t.cx-t.sx/2,t.cy-t.sy/2,f.z0,t.cx+t.sx/2,t.cy+t.sy/2,f.z0+f.tt,featM,base),f.id);TG(cyl(t.hx,t.hy,f.z0-0.02,f.z0+f.tt+0.02,f.hd/2,darkM,base),f.id);});
     else if(f.type==='rib'){TG(f.axis==='x'?box(X0+r,f.pos-f.tt/2,g.zFloor,X1-r,f.pos+f.tt/2,g.zFloor+f.h,featM,base):box(f.pos-f.tt/2,Y0+r,g.zFloor,f.pos+f.tt/2,Y1-r,g.zFloor+f.h,featM,base),f.id);}
     // user openings: a thin coloured lid over the opening, so a hole can be seen and picked
-    else if(f.type==='hole'||f.type==='slot'){const H=f.type==='hole';const geo=H?new THR.CircleGeometry(f.w/2,28):new THR.PlaneGeometry(f.w,f.h);const me=new THR.Mesh(geo,holeM);me.userData.el=f.id;const o=0.06;
+    else if((f.type==='hole'||f.type==='slot')&&!(shaped&&/^[WESN]$/.test(f.side))){const H=f.type==='hole';const geo=H?new THR.CircleGeometry(f.w/2,28):new THR.PlaneGeometry(f.w,f.h);const me=new THR.Mesh(geo,holeM);me.userData.el=f.id;const o=0.06;
       if(f.side==='T'){me.position.set(f.x,f.y,Zt+o);}else if(f.side==='B'){me.position.set(f.x,f.y,Zb-o);me.rotation.x=Math.PI;}
       else if(f.side==='S'){me.position.set(f.a,Y0-o,f.z);me.rotation.x=Math.PI/2;}else if(f.side==='N'){me.position.set(f.a,Y1+o,f.z);me.rotation.x=-Math.PI/2;}
       else if(f.side==='W'){me.position.set(X0-o,f.a,f.z);me.rotation.y=-Math.PI/2;me.rotation.z=Math.PI/2;}else{me.position.set(X1+o,f.a,f.z);me.rotation.y=Math.PI/2;me.rotation.z=Math.PI/2;}
       (f.side==='T'||(f.side!=='B'&&f.z>g.zSplit)?lid:base).add(me);}});
   // gasket on the split line
-  if(d.seal.gasket!=='없음'&&d.seal.gasket!=='없음 (정밀 맞춤)'){const m2=new THR.LineBasicMaterial({color:0xe2703a});const ins=r/2;const pts=[[X0+ins,Y0+ins],[X1-ins,Y0+ins],[X1-ins,Y1-ins],[X0+ins,Y1-ins],[X0+ins,Y0+ins]].map(p=>new THR.Vector3(p[0],p[1],g.zSplit+0.05));base.add(new THR.Line(new THR.BufferGeometry().setFromPoints(pts),m2));}
+  if(d.seal.gasket!=='없음'&&d.seal.gasket!=='없음 (정밀 맞춤)'){const m2=new THR.LineBasicMaterial({color:0xe2703a});const ins=r/2;const pts=(shaped?planPts(ins).concat([planPts(ins)[0]]):[[X0+ins,Y0+ins],[X1-ins,Y0+ins],[X1-ins,Y1-ins],[X0+ins,Y1-ins],[X0+ins,Y0+ins]]).map(p=>new THR.Vector3(p[0],p[1],g.zSplit+0.05));base.add(new THR.Line(new THR.BufferGeometry().setFromPoints(pts),m2));}
   // cover: walls from the split line, top plate, pedestals + TIM on the hot parts, fins, engraved label
-  ['S','N','W','E'].forEach(s=>TG(wall(s,g.zSplit,zw1,lid),'wall:'+s));corner(g.zSplit,zw1,lid);TG(loft(bandT,lid),'edge:T');TG(plate('T',g.zLid,Zt,lid,rT),'top');
+  if(shaped){TG(ringWall(g.zSplit,zw1,lid),'wall:ring');
+    // connector windows and user wall openings on the ring wall: markers on the wall face
+    const winM=new THR.MeshBasicMaterial({color:0xc0392b,transparent:true,opacity:0.5,side:THR.DoubleSide,depthWrite:false});
+    R.N.cuts.forEach(c=>{const zc=(c.z0+c.z1)/2;wallMarker(c.side,(c.a+c.b)/2,c.b-c.a,zc,c.z1-c.z0,winM,zc>g.zSplit?lid:base,'win:'+c.ref);});
+    d.feats.filter(f=>(f.type==='hole'||f.type==='slot')&&/^[WESN]$/.test(f.side)).forEach(f=>{wallMarker(f.side,f.a,f.w,f.z,f.type==='hole'?f.w:f.h,holeM,f.z>g.zSplit?lid:base,f.id);});}
+  else{['S','N','W','E'].forEach(s=>TG(wall(s,g.zSplit,zw1,lid),'wall:'+s));corner(g.zSplit,zw1,lid);}TG(loft(bandT,lid),'edge:T');TG(plate('T',g.zLid,Zt,lid,rT),'top');
   d.th.peds.forEach(p=>{const q=p.ped,k='ped:'+p.ref;if(p.kind==='top'){TG(box(q.x,q.y,q.z0,q.x+q.w,q.y+q.h,g.zLid,solid,lid),k);TG(box(q.x,q.y,q.tz,q.x+q.w,q.y+q.h,q.z0,timM,lid),k);}
     else{TG(box(q.x,q.y,g.zFloor,q.x+q.w,q.y+q.h,q.z1,solid,base),k);TG(box(q.x,q.y,q.z1,q.x+q.w,q.y+q.h,-T/2,timM,base),k);}});
   const finK=(d.feats.find(f=>f.type==='fins'&&!f.off)||{}).id||'fins';
-  if(d.fins)for(let k=0;k<d.fins.n;k++){const x=X0+5+k*d.fins.pitch;if(x+d.fins.t>X1-2)break;TG(box(x,Y0+4,Zt,x+d.fins.t,Y0+4+d.fins.len,Zt+d.fins.h,solid,lid),finK);}
+  if(d.fins)for(let k=0;k<d.fins.n;k++){if(d.fins.keep&&!d.fins.keep.includes(k))continue;const x=X0+5+k*d.fins.pitch;if(x+d.fins.t>X1-2)break;TG(box(x,Y0+4,Zt,x+d.fins.t,Y0+4+d.fins.len,Zt+d.fins.h,solid,lid),finK);}
   d.feats.filter(f=>f.type==='label').forEach(f=>{const c=document.createElement('canvas');const s=String(f.text||'');c.width=Math.max(64,s.length*40);c.height=64;const x=c.getContext('2d');
     x.fillStyle='#2a2f35';x.font='600 46px "JetBrains Mono", monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(s,c.width/2,c.height/2);const tx=new THR.CanvasTexture(c);
     const w=f.size*Math.max(1,s.length)*0.68,h=w*c.height/c.width;const me=new THR.Mesh(new THR.PlaneGeometry(w,h),new THR.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false}));me.position.set(f.x,f.y,Zt+(d.fins?d.fins.h+0.06:0.06));me.userData.el=f.id;lid.add(me);});

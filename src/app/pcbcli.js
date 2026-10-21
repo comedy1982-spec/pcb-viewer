@@ -94,7 +94,7 @@ function cliBoard(a){
       if(a.cut){const m=String(a.cut).split(/x|×/i);p.cw=parseFloat(m[0]);p.ch=parseFloat(m[1]||m[0]);}if(a.at)p.at=String(a.at);
       if(a.pts)p.pts=String(a.pts).trim().split(/\s+/).map(t=>t.split(',').map(parseFloat));
       const r=PCBEDIT.setShape(BD,kind,p,{anchor:a.anchor==='center'?'center':'bl'});
-      msg=`보드 모양 → ${r.label} · ${f1(r.W)} × ${f1(r.H)} mm`+(r.outside.length?`\n보드 밖 부품 ${r.outside.length}개: ${r.outside.slice(0,12).join(', ')} → place 또는 reset으로 다시 배치하세요.`:'');}
+      msg=`보드 모양 → ${r.label} · ${f1(r.W)} × ${f1(r.H)} mm${r.holesDropped?` · 외곽 밖 장착 구멍 ${r.holesDropped}개 삭제`:''}`+(r.outside.length?`\n보드 밖 부품 ${r.outside.length}개: ${r.outside.slice(0,12).join(', ')} → place 또는 reset으로 다시 배치하세요.`:'');}
     else{const k=String(a._[1]||'');if(k==='clear'){const n=PCBEDIT.clearCutouts(BD);msg=`컷아웃 ${n}개 삭제`;}
       else{const at=String(a.at||'').split(',').map(parseFloat);const p={x:at[0],y:at[1],r:a.corner!=null?+a.corner:0};
         if(k==='circle')p.d=parseFloat(a._[2]);else if(k==='rect'){const m=String(a._[2]||'').split(/x|×/i);p.w=parseFloat(m[0]);p.h=parseFloat(m[1]||m[0]);}else throw new Error('board cutout circle <지름> --at x,y · rect <가로>x<세로> --at x,y · clear');

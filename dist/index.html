@@ -5708,8 +5708,10 @@ function setShape(B,kind,p,o){o=o||{};p=p||{};if(!SHAPES[kind])throw new Error('
   const ring=shapeRing(kind,p);const bb=ringBB(ring);const W=bb[2]-bb[0],H=bb[3]-bb[1];if(!(W>=5&&H>=5&&W<=1000&&H<=1000))throw new Error('보드 크기는 5–1000 mm 사이여야 합니다.');
   const W0=B.W,H0=B.H;if(o.anchor==='center'){const dx=(W-W0)/2,dy=(H-H0)/2;if(dx||dy)translateAll(B,dx,dy);}
   B.outline=[ring];B.W=W;B.H=H;B.shape=Object.assign({kind},p);
+  // mounting holes that fell off the board go (the housing puts its supports on the new outline)
+  const n0=B.drills.length;B.drills=B.drills.filter(d=>d.plated||d.own||d._pad||PCB.inRing(d.x,d.y,ring));const holesDropped=n0-B.drills.length;
   const outside=B.comps.filter(c=>c.kind!=='none'&&c.pads.some(q=>!PCB.inBoard(q.x,q.y,B.outline))).map(c=>c.ref);
-  return{kind,label:SHAPES[kind],W,H,W0,H0,outside};}
+  return{kind,label:SHAPES[kind],W,H,W0,H0,outside,holesDropped};}
 /* a hole in the board: circle (d) or rect (w×h, corner r) at x,y (centre) */
 function addCutout(B,kind,p){p=p||{};const x=+p.x,y=+p.y;if(!isFinite(x)||!isFinite(y))throw new Error('cutout 위치 --at x,y (mm)');
   let ring;if(kind==='circle'){const d=+p.d;if(!(d>=1))throw new Error('cutout circle <지름>');ring=closeRing(PCB.arcPts(x,y,d/2,0,2*Math.PI));}
@@ -6743,12 +6745,35 @@ const isConn=c=>/^(J|P|CN|X|USB|CON)\d/i.test(c.ref)||/^(usb|hdr|conn)$/.test(c.
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 /* ---- what the board needs from a housing ---- */
+/* ---- outline-following housings: polygon helpers (rings are [x,y] lists, made counter-clockwise) ---- */
+const ringArea=r=>{let a=0;for(let i=0,j=r.length-1;i<r.length;j=i++)a+=(r[j][0]*r[i][1]-r[i][0]*r[j][1]);return a/2;}; // > 0 for counter-clockwise
+const ringCCW=r=>ringArea(r)<0?r.slice().reverse():r.slice();
+const ringPerim=r=>{let p=0;for(let i=0;i<r.length;i++){const a=r[i],b=r[(i+1)%r.length];p+=Math.hypot(b[0]-a[0],b[1]-a[1]);}return p;};
+const ringBBox=r=>[Math.min(...r.map(p=>p[0])),Math.min(...r.map(p=>p[1])),Math.max(...r.map(p=>p[0])),Math.max(...r.map(p=>p[1]))];
+// offset a CCW ring outward by d (inward when d < 0): per-edge offset, mitred at the corners (bevelled when the mitre gets long)
+function offsetRing(ring,d){const r=ringCCW(ring).filter((p,i,a)=>{const q=a[(i+1)%a.length];return Math.hypot(q[0]-p[0],q[1]-p[1])>1e-6;});const n=r.length;if(n<3||!d)return r.slice();const out=[];
+  const E=r.map((p,i)=>{const q=r[(i+1)%n];const dx=q[0]-p[0],dy=q[1]-p[1],L=Math.hypot(dx,dy)||1;return{nx:dy/L,ny:-dx/L};}); // outward normal of edge i (CCW ring)
+  for(let i=0;i<n;i++){const e0=E[(i+n-1)%n],e1=E[i];const p=r[i];const mx=e0.nx+e1.nx,my=e0.ny+e1.ny;const ml=Math.hypot(mx,my);
+    if(ml<1e-6){out.push([p[0]+e1.nx*d,p[1]+e1.ny*d]);continue;}const cos=(mx*e1.nx+my*e1.ny)/ml;const k=d/Math.max(cos,0.35);
+    if(cos<0.35&&d>0){out.push([p[0]+e0.nx*d,p[1]+e0.ny*d]);out.push([p[0]+e1.nx*d,p[1]+e1.ny*d]);}else out.push([p[0]+mx/ml*k,p[1]+my/ml*k]);}
+  return out;}
+// n points spread evenly along a ring by arc length (lid screws)
+function ringPoints(ring,n){const r=ringCCW(ring);const per=ringPerim(r);const pts=[];let i=0,acc=0;
+  for(let k=0;k<n;k++){const s=(k+0.5)/n*per;while(true){const a=r[i],b=r[(i+1)%r.length];const L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(acc+L>=s||i>=r.length*2){const t=L?Math.min(1,Math.max(0,(s-acc)/L)):0;pts.push({x:a[0]+(b[0]-a[0])*t,y:a[1]+(b[1]-a[1])*t});break;}acc+=L;i=(i+1)%r.length;}}
+  return pts;}
+// where a ray from p in direction dir first leaves the ring: point and outward normal of that edge
+function ringHit(ring,p,dir){const r=ringCCW(ring);let best=null;for(let i=0;i<r.length;i++){const a=r[i],b=r[(i+1)%r.length];const ex=b[0]-a[0],ey=b[1]-a[1];const den=dir[0]*ey-dir[1]*ex;if(Math.abs(den)<1e-9)continue;
+    const t=((a[0]-p[0])*ey-(a[1]-p[1])*ex)/den,u=((a[0]-p[0])*dir[1]-(a[1]-p[1])*dir[0])/den;if(t>=0&&u>=0&&u<=1&&(!best||t<best.t)){const L=Math.hypot(ex,ey)||1;best={t,x:p[0]+dir[0]*t,y:p[1]+dir[1]*t,nx:ey/L,ny:-ex/L};}}
+  return best;}
+function shapedBoard(B){const ring=B.outline&&B.outline[0];if(!ring||ring.length<3)return false;if(B.shape)return!/^(rect|round)$/.test(B.shape.kind);
+  const bb=ringBBox(ring);const full=(bb[2]-bb[0])*(bb[3]-bb[1]);return Math.abs(ringArea(ring))<full*0.9;}
 function boardNeeds(B,opts){
   opts=opts||{};const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];
   const bb=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
   const comps=B.comps.filter(c=>c.kind!=='none'&&c.body);
   const htTop=Math.max(0,...comps.filter(c=>c.side!=='B').map(c=>c.body.ht||0)),htBot=Math.max(0,...comps.filter(c=>c.side==='B').map(c=>c.body.ht||0));
   const holes=B.drills.filter(d=>!d.plated&&!d.own&&!d._pad&&d.d>=2).map(d=>({x:d.x,y:d.y,d:d.d}));
+  const shaped=shapedBoard(B),shapeKind=shaped?(B.shape&&B.shape.kind||'poly'):'rect';
   // connectors at an edge need a wall opening on that side
   const cuts=[];
   comps.filter(c=>c.f&&c.f.seal&&c.f.face&&c.side!=='B').forEach(c=>{const q=c.f.seal,a=c.rot*D2R,ca=Math.cos(a),sa=Math.sin(a);
@@ -6769,7 +6794,7 @@ function boardNeeds(B,opts){
   hot.forEach(h=>heatInfo(h,comps));
   const ics=comps.filter(c=>c.pads.length>=8&&!isConn(c)).map(c=>({ref:c.ref,L:Math.max(c.body.w,c.body.h),leadless:/QFN|BGA|LGA|DFN|SON/i.test(c.fp||''),fp:c.fp})).sort((a,b)=>b.L-a.L);
   const compMass=comps.reduce((s,c)=>s+c.body.w*c.body.h*Math.max(0.3,c.body.ht||0.5)*1e-3*(isConn(c)?0.9:1.6)*0.6,0); // g
-  return{bb,W:bb[2]-bb[0],H:bb[3]-bb[1],t:B.t||1.6,htTop,htBot,holes,cuts,hot,Ptot:hot.reduce((s,h)=>s+h.P,0),big:ics[0]||null,compMass};
+  return{bb,W:bb[2]-bb[0],H:bb[3]-bb[1],t:B.t||1.6,ring:ring.map(p=>[p[0],p[1]]),shaped,shapeKind,htTop,htBot,holes,cuts,hot,Ptot:hot.reduce((s,h)=>s+h.P,0),big:ics[0]||null,compMass};
 }
 
 function heatInfo(h,comps){const c=h.c,bd=c.body,A=Math.max(1,bd.w*bd.h);let ep=null;
@@ -6839,7 +6864,9 @@ function design(B,inp,matKey,N){
   const stand=num(O.stand)?Math.max(N.htBot+0.5,1.5,+O.stand):Math.max(4,Math.ceil(N.htBot+2));const top=num(O.top)?Math.max(N.htTop+0.5,1,+O.top):Math.max(3,Math.ceil(N.htTop+2.5));
   const rim=S.groove?Math.max(t,4.6):t; // a groove for the O-ring needs ~4.6 mm of flange
   const geo={t,gap,gaps:gp,stand,top,rim,Li:N.W+gp.W+gp.E,Wi:N.H+gp.S+gp.N,Hi:stand+N.t+top};geo.Lo=geo.Li+2*rim;geo.Wo=geo.Wi+2*rim;geo.Ho=geo.Hi+2*t;
-  geo.x0=N.bb[0]-gp.W-rim;geo.y0=N.bb[1]-gp.S-rim;geo.zFloor=-N.t/2-stand;geo.zLid=N.t/2+top;geo.zSplit=N.t/2+Math.min(top-1,Math.max(1.5,top*0.4));geo.tAuto=tAuto;geo.r=num(O.corner)?Math.max(0,Math.min(+O.corner,geo.Wo/2-1,geo.Lo/2-1)):3;const E=(inp.cad&&inp.cad.edge)||{};geo.vk=E.V==='chamfer'?'chamfer':'fillet';
+  if(N.shaped){geo.shape=N.shapeKind;const gi=Math.max(gp.W,gp.E,gp.S,gp.N);geo.ringI=offsetRing(N.ring,gi);geo.ringO=offsetRing(N.ring,gi+rim);
+    const bo=ringBBox(geo.ringO);geo.Lo=bo[2]-bo[0];geo.Wo=bo[3]-bo[1];geo.Li=geo.Lo-2*rim;geo.Wi=geo.Wo-2*rim;geo.areaO=Math.abs(ringArea(geo.ringO));geo.areaI=Math.abs(ringArea(geo.ringI));geo.perO=ringPerim(geo.ringO);}
+  geo.x0=N.bb[0]-gp.W-rim;geo.y0=N.bb[1]-gp.S-rim;if(geo.ringO){const bo=ringBBox(geo.ringO);geo.x0=bo[0];geo.y0=bo[1];}geo.zFloor=-N.t/2-stand;geo.zLid=N.t/2+top;geo.zSplit=N.t/2+Math.min(top-1,Math.max(1.5,top*0.4));geo.tAuto=tAuto;geo.r=num(O.corner)?Math.max(0,Math.min(+O.corner,geo.Wo/2-1,geo.Lo/2-1)):3;const E=(inp.cad&&inp.cad.edge)||{};geo.vk=E.V==='chamfer'?'chamfer':'fillet';
   // a sealed connector window must lie wholly in the cover: the split line drops below it, leaving a seal land under the window
   const win=N.cuts.filter(c=>c.sealed);if(win.length){geo.zSplit=Math.max(geo.zFloor+2,Math.min(geo.zSplit,Math.min(...win.map(c=>c.z0))-1.8));geo.splitWin=true;}
   if(num(O.split))geo.zSplit=Math.max(geo.zFloor+1,Math.min(geo.zLid-1,+O.split));
@@ -6847,23 +6874,26 @@ function design(B,inp,matKey,N){
   {const Zb=geo.zFloor-t,Zt=geo.zLid+t;const lim=(e,room)=>e&&+e.r>0?{k:e.k==='chamfer'?'chamfer':'fillet',r:+Math.max(0.2,Math.min(+e.r,room,geo.Lo/2-1,geo.Wo/2-1)).toFixed(2),req:+e.r}:null;
     geo.eT=lim(E.T,Zt-geo.zSplit-1);geo.eB=lim(E.B,geo.zSplit-Zb-1);}
   // supports: mounting holes (or corners), centre supports until the PCB safety factor reaches 2
-  let sup=N.holes.length?N.holes.map(h=>({x:h.x,y:h.y,d:h.d,kind:'hole'})):[[3.5,3.5],[N.W-3.5,3.5],[3.5,N.H-3.5],[N.W-3.5,N.H-3.5]].map(([x,y])=>({x:N.bb[0]+x,y:N.bb[1]+y,d:3.2,kind:'corner'}));
+  const inBoard=(x,y)=>{let c=false;const r=N.ring;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))c=!c;}return c;};
+  let sup=N.holes.length?N.holes.map(h=>({x:h.x,y:h.y,d:h.d,kind:'hole'})):N.shaped?ringPoints(offsetRing(N.ring,-4),4).map(p=>({x:p.x,y:p.y,d:3.2,kind:'corner'})):[[3.5,3.5],[N.W-3.5,3.5],[3.5,N.H-3.5],[N.W-3.5,N.H-3.5]].map(([x,y])=>({x:N.bb[0]+x,y:N.bb[1]+y,d:3.2,kind:'corner'}));
   F.filter(f=>f.type==='boss').forEach(f=>sup.push({x:f.x==null?N.bb[0]+N.W/2:+f.x,y:f.y==null?N.bb[1]+N.H/2:+f.y,d:+(f.d||3.2),kind:'user',id:f.id}));
   let vib=pcbVibration(N,sup,inp.vib);const added=[];
   for(let k=0;k<3&&inp.vib>0&&vib.sf<2;k++){const cands=[[0.5,0.5],[0.5,0.25],[0.5,0.75],[0.25,0.5],[0.75,0.5]].map(([u,v])=>({x:N.bb[0]+u*N.W,y:N.bb[1]+v*N.H,d:3.2,kind:'centre'}));
-    const pick=cands.find(c=>!sup.some(s=>Math.hypot(s.x-c.x,s.y-c.y)<15));if(!pick)break;sup=sup.concat([pick]);added.push(pick);vib=pcbVibration(N,sup,inp.vib);}
+    const pick=cands.find(c=>(!N.shaped||inBoard(c.x,c.y))&&!sup.some(s=>Math.hypot(s.x-c.x,s.y-c.y)<15));if(!pick)break;sup=sup.concat([pick]);added.push(pick);vib=pcbVibration(N,sup,inp.vib);}
   // lid screws: pitch from the IP code (even gasket pressure) and vibration
   const screwM=inp.vib>=5||Math.max(N.W,N.H)>150?'M4':'M3';const pitch=Math.min(S.pitch,inp.vib>=5?60:S.pitch);
   const per=2*(geo.Lo+geo.Wo);let ns=Math.max(4,Math.ceil(per/pitch));if(ns%2)ns++;
-  const screws=perimeterPoints(geo,ns,screwM==='M4'?4.5:3.75);
+  const screws=geo.ringO?ringPoints(offsetRing(geo.ringO,-(geo.rim+(screwM==='M4'?4.5:3.75)*0.45)),ns):perimeterPoints(geo,ns,screwM==='M4'?4.5:3.75);
   // fins when the plain box runs too hot (metal only)
   N.nsup=sup.length;let th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,null);let fins=null;const fu=F.find(f=>f.type==='fins');
   if(fu&&!fu.off){const nF=Math.max(1,Math.round(+fu.n||10)),hf=Math.max(2,+fu.h||12),pitchF=+fu.pitch||Math.max(3,(geo.Lo-10)/nF);fins={n:nF,h:hf,t:+fu.t||2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8),user:true};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
   else if(!fu&&m.metal&&matKey!=='spcc'&&(th.margin<0.3||th.hotJ.length)&&inp.fins!==false){const pitchF=8,hf=Math.min(25,Math.max(8,inp.P*0.8)),nF=Math.floor((geo.Lo-10)/pitchF);fins={n:nF,h:hf,t:2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8)};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
+  if(fins&&geo.ringO){const inR=(x,y)=>{let c=false;const r=geo.ringI;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))c=!c;}return c;};
+    const keep=[];for(let k=0;k<fins.n;k++){const x=geo.x0+5+k*fins.pitch+fins.t/2;if(inR(x,geo.y0+4)&&inR(x,geo.y0+4+fins.len))keep.push(k);}fins.keep=keep;fins.area=keep.length*2*fins.h*fins.len;}
   // user CAD features (text-to-CAD console): wall / cover / floor holes and slots, mounting tabs, floor ribs, an engraved label
   const feats=cadFeatures(F,geo,N,sup);const fv=feats.reduce((a,f)=>a+(f.vol||0),0),fc=feats.reduce((a,f)=>a+(f.cost||0),0);
   // mass and a relative cost
-  const vol=fv+(geo.Lo*geo.Wo*geo.Ho-geo.Li*geo.Wi*geo.Hi)+sup.length*Math.PI*9*stand+ns*Math.PI*16*geo.Hi*0.5+(fins?fins.n*fins.t*fins.h*fins.len:0)+th.peds.reduce((a,p)=>a+p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0),0);
+  const vol=fv+(geo.ringO?geo.areaO*geo.Ho-geo.areaI*geo.Hi:geo.Lo*geo.Wo*geo.Ho-geo.Li*geo.Wi*geo.Hi)+sup.length*Math.PI*9*stand+ns*Math.PI*16*geo.Hi*0.5+(fins?fins.n*fins.t*fins.h*fins.len:0)+th.peds.reduce((a,p)=>a+p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0),0);
   const mass=vol*1e-9*m.rho*1000; // g
   const cost=mass/1000*m.costKg*m.proc+S.cost+ns*0.05+(S.breather?1.2:0)+(fins?0.6:0)+th.peds.reduce((a,p)=>a+0.15+TIMS[p.tim].costCm2*p.area/100+p.vias*0.002,0)+(added.length*0.1)+N.cuts.filter(c=>c.sealed).length*0.3+fc;
   const why=[];const ok={thermal:th.margin>=0.25&&!th.hotJ.length,ip:IPN[ip]<=m.maxIP,vib:inp.vib<=m.maxVib&&vib.sf>=1.5};
@@ -6944,7 +6974,7 @@ function analyze(B,input){
     idx:{cost:d.costIdx,mass:d.massIdx,thermal:Math.round(clamp(d.th.margin,0,1)*100),vib:Math.round(clamp(d.vib.sf/2.5,0,1)*100)}};
 }
 /* ---- text report ---- */
-function text(R){const d=R.d,i=R.inp,g=d.geo;const L=[];
+function text(R){const d=R.d,i=R.inp,g=d.geo;const L=[];if(g.ringO)L.push(`보드 외곽을 따르는 하우징 (${({circle:'원형',oval:'타원',hex:'육각형',oct:'팔각형',L:'L자형',T:'T자형',poly:'다각형'})[g.shape]||g.shape}) · 바닥 면적 ${g.areaO.toFixed(0)} mm² · 둘레 ${g.perO.toFixed(0)} mm`);
   L.push(`하우징 설계 · 발열 ${i.P} W · ${d.ip} · 진동 ${i.vib} Grms · 주위 ${i.ta} °C · PCB 한계 ${i.tmax} °C`);
   L.push('설계 조건:');R.conds.forEach(c=>L.push('  • '+c));
   L.push(`재질: ${d.m.label} · 벽두께 ${g.t} mm${g.rim>g.t?` (실링 플랜지 ${g.rim} mm)`:''} · 공정 ${d.m.proc_label}`);
@@ -6999,10 +7029,12 @@ function drawingSVG(R,name,opts){opts=opts||{};const d=R.d,g=d.geo,S=opts.scale|
   o.push(`<rect x="0" y="0" width="${f2(W)}" height="${f2(H)}" fill="#fff"/>`);
   // ---- top view
   text(x0,yTop-dimPad-4*S/4,'평면도 (커버 위에서)',11,'start');
-  rect(TX(g.x0),TY(g.y0+g.Wo),g.Lo*S,g.Wo*S,g.r*S,'#f6f3ec','#1d2126',1.4);
-  rect(TX(g.x0+g.rim),TY(g.y0+g.Wo-g.rim),(g.Lo-2*g.rim)*S,(g.Wo-2*g.rim)*S,Math.max(0,g.r-g.rim)*S,'none','#9aa3ab',.8,'3 2');
+  const poly=(ring,fill,stroke,sw,dash)=>o.push(`<path d="M${ring.map(p=>`${f2(TX(p[0]))} ${f2(TY(p[1]))}`).join(' L')} Z" fill="${fill||'none'}" stroke="${stroke||'#1d2126'}" stroke-width="${sw||1}"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  if(g.ringO){poly(g.ringO,'#f6f3ec','#1d2126',1.4);poly(g.ringI,'none','#9aa3ab',.8,'3 2');}
+  else{rect(TX(g.x0),TY(g.y0+g.Wo),g.Lo*S,g.Wo*S,g.r*S,'#f6f3ec','#1d2126',1.4);
+  rect(TX(g.x0+g.rim),TY(g.y0+g.Wo-g.rim),(g.Lo-2*g.rim)*S,(g.Wo-2*g.rim)*S,Math.max(0,g.r-g.rim)*S,'none','#9aa3ab',.8,'3 2');}
   // board outline (hidden)
-  rect(TX(R.N.bb[0]),TY(R.N.bb[1]+R.N.H),R.N.W*S,R.N.H*S,0,'none','#2f7d4f',.9,'4 2');
+  if(R.N.shaped)poly(R.N.ring,'none','#2f7d4f',.9,'4 2');else rect(TX(R.N.bb[0]),TY(R.N.bb[1]+R.N.H),R.N.W*S,R.N.H*S,0,'none','#2f7d4f',.9,'4 2');
   d.sup.forEach(s=>{circle(TX(s.x),TY(s.y),3.5*S,'none','#1d2126','3 2');circle(TX(s.x),TY(s.y),(s.d>3.4?1.65:1.25)*S,'none','#1d2126');});
   d.screws.forEach(s=>{circle(TX(s.x),TY(s.y),(d.screwM==='M4'?2.25:1.75)*S,'#fff','#1d2126');line(TX(s.x)-2.6*S,TY(s.y),TX(s.x)+2.6*S,TY(s.y),'#1d2126',.6);line(TX(s.x),TY(s.y)-2.6*S,TX(s.x),TY(s.y)+2.6*S,'#1d2126',.6);});
   d.feats.forEach(fe=>{if(fe.type==='tabs')fe.tabs.forEach(t=>{rect(TX(t.cx-t.sx/2),TY(t.cy+t.sy/2),t.sx*S,t.sy*S,1.5*S,'#fff','#1d2126',1.1);circle(TX(t.hx),TY(t.hy),fe.hd/2*S,'#fff','#1d2126');});
@@ -7047,12 +7079,12 @@ const stdLen=v=>STD_L.find(x=>x>=v)||Math.ceil(v/5)*5;
 function rrPerim(L,W,r){r=Math.max(0,Math.min(r,L/2,W/2));return 2*(L+W)-(8-2*Math.PI)*r;}
 // the cover flange a screw clamps: a counterbored pocket from the top leaves this much material under the head
 const screwGrip=g=>Math.min(g.zLid+g.t-g.zSplit,g.t+2);
-function partMass(R){const d=R.d,g=d.geo,m=d.m;const Zb=g.zFloor-g.t,Zt=g.zLid+g.t;const per=rrPerim(g.Lo-g.rim,g.Wo-g.rim,Math.max(0,g.r-g.rim/2));
+function partMass(R){const d=R.d,g=d.geo,m=d.m;const Zb=g.zFloor-g.t,Zt=g.zLid+g.t;const per=g.ringO?ringPerim(offsetRing(g.ringO,-g.rim/2)):rrPerim(g.Lo-g.rim,g.Wo-g.rim,Math.max(0,g.r-g.rim/2));const plate=g.ringO?g.areaO:g.Lo*g.Wo;
   const ring=(Ro,ri,h)=>Math.PI*(Ro*Ro-ri*ri)*Math.max(0,h);
-  let vb=g.Lo*g.Wo*g.t+per*g.rim*Math.max(0,g.zSplit-g.zFloor);
+  let vb=plate*g.t+per*g.rim*Math.max(0,g.zSplit-g.zFloor);
   d.sup.forEach(s=>{vb+=ring(s.d>3.4?4.5:3.5,s.d>3.4?1.65:1.25,g.stand);});d.screws.forEach(()=>{vb+=ring(d.screwM==='M4'?4.5:3.75,d.screwM==='M4'?1.65:1.25,g.zSplit-g.zFloor);});
   d.th.peds.filter(p=>p.kind==='bottom').forEach(p=>{vb+=p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0);});d.feats.forEach(f=>{if(f.type==='tabs'||f.type==='rib')vb+=f.vol||0;});
-  let vl=g.Lo*g.Wo*g.t+per*g.rim*Math.max(0,g.zLid-g.zSplit);d.th.peds.filter(p=>p.kind==='top').forEach(p=>{vl+=p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0);});
+  let vl=plate*g.t+per*g.rim*Math.max(0,g.zLid-g.zSplit);d.th.peds.filter(p=>p.kind==='top').forEach(p=>{vl+=p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0);});
   if(d.fins)vl+=d.fins.n*d.fins.t*d.fins.h*d.fins.len;
   const gk=v=>v*1e-9*m.rho*1000;return{base:gk(vb),lid:gk(vl),hBase:g.zSplit-Zb,hLid:Zt-g.zSplit};}
 function mechBom(R){const d=R.d,g=d.geo,m=d.m,S=d.seal;const PM=partMass(R);const rows=[];let no=0;
@@ -7135,11 +7167,15 @@ function partSVG(R,name,part,opts){opts=opts||{};const d=R.d,g=d.geo,m=d.m;const
   // ---- plan view
   const PX=x=>px+X(x)*S,PY=y=>py+(g.Wo-Y(y))*S;
   text(px,py-8,isBase?'평면도 (안쪽, 위에서 본 면)':'평면도 (바깥, 위에서 본 면) — 안쪽 요소는 점선',10.5,'start','600');
-  rect(px,py,planW,planH,g.r*S,'#f6f3ec','#1d2126',1.4);
+  const polyP=(ring,fill,stroke,sw,dash)=>o.push(`<path d="M${ring.map(q=>`${f2(PX(q[0]))} ${f2(PY(q[1]))}`).join(' L')} Z" fill="${fill||'none'}" stroke="${stroke||'#1d2126'}" stroke-width="${sw||1}"${dash?` stroke-dasharray="${dash}"`:''}/>`);
+  if(g.ringO){polyP(g.ringO,'#f6f3ec','#1d2126',1.4);polyP(g.ringI,'none',isBase?'#1d2126':'#9aa3ab',isBase?1:.8,isBase?null:'3 2');
+    if(!isBase&&g.eT)polyP(offsetRing(g.ringO,-g.eT.r),'none','#6b7076',.7);if(isBase&&g.eB)polyP(offsetRing(g.ringO,-g.eB.r),'none','#9aa3ab',.6,'2 2');
+    if(!isBase&&d.seal.groove){const ins=g.rim/2;polyP(offsetRing(g.ringO,-(ins-0.6)),'none','#2f6fb5',.8,'5 2');}}
+  else{rect(px,py,planW,planH,g.r*S,'#f6f3ec','#1d2126',1.4);
   rect(px+g.rim*S,py+g.rim*S,(g.Lo-2*g.rim)*S,(g.Wo-2*g.rim)*S,Math.max(0,g.r-g.rim)*S,'none',isBase?'#1d2126':'#9aa3ab',isBase?1:.8,isBase?null:'3 2');
   if(!isBase&&g.eT){const i=g.eT.r*S;rect(px+i,py+i,planW-2*i,planH-2*i,Math.max(0,g.r-g.eT.r)*S,'none','#6b7076',.7);}
   if(isBase&&g.eB){const i=g.eB.r*S;rect(px+i,py+i,planW-2*i,planH-2*i,Math.max(0,g.r-g.eB.r)*S,'none','#9aa3ab',.6,'2 2');}
-  if(!isBase&&d.seal.groove){const ins=g.rim/2;rect(px+(ins-0.6)*S,py+(ins-0.6)*S,(g.Lo-2*ins+1.2)*S,(g.Wo-2*ins+1.2)*S,Math.max(0,g.r-ins)*S,'none','#2f6fb5',.8,'5 2');}
+  if(!isBase&&d.seal.groove){const ins=g.rim/2;rect(px+(ins-0.6)*S,py+(ins-0.6)*S,(g.Lo-2*ins+1.2)*S,(g.Wo-2*ins+1.2)*S,Math.max(0,g.r-ins)*S,'none','#2f6fb5',.8,'5 2');}}
   const tag=(x,y,t,dx,dy)=>{text(x+(dx||0),y+(dy||-6),t,8.5,'middle','600','#b5541c');};
   T.forEach(t=>{const x=PX(t.x+g.x0),y=PY(t.y+g.y0);
     if(/^B\d/.test(t.id)){circle(x,y,(d.sup[0]&&d.sup[0].d>3.4?4.5:3.5)*S,'#fff','#1d2126',1);circle(x,y,1.25*S,'none','#1d2126',.8);tag(x,y,t.id,0,-(3.5*S+3));}
@@ -7204,6 +7240,8 @@ function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString(
     (()=>{const ch=g.vk==='chamfer',hO=g.zLid+g.t-(g.zFloor-g.t),hI=g.zLid-g.zFloor;const inE=e=>e?{k:e.k,r:Math.max(0,e.k==='chamfer'?e.r-0.586*g.t:e.r-g.t)}:null;
       const ly=(h,eb,et)=>'['+edgeLayers(h,eb,et).map(([z,s])=>`[${f(Math.min(z,h-0.01))},${f(s)}]`).join(',')+']';
       const ri=Math.max(0,ch?g.r-0.586*g.rim:g.r-g.rim);
+      if(g.ringO){const P=r=>'['+r.map(q=>`[${f(q[0])},${f(q[1])}]`).join(',')+']';
+        return`// 보드 외곽을 따르는 하우징 (${g.shape}): 윤곽 polygon을 층마다 offset 해 hull\nmodule psolid(pts,z,layers){translate([0,0,z]) hull() for(L=layers) translate([0,0,L[0]]) linear_extrude(0.01) if(L[1]>0) offset(r=-L[1]) polygon(pts); else polygon(pts);}\nouterPts=${P(g.ringO)};\ninnerPts=${P(g.ringI)};\nmodule shell(){difference(){psolid(outerPts,zFloor-wall,${ly(hO,g.eB,g.eT)}); psolid(innerPts,zFloor,${ly(hI,inE(g.eB),inE(g.eT))});`;}
       return`module shell(){difference(){rsolid(x0,y0,zFloor-wall,Lo,Wo,r,${ch},${ly(hO,g.eB,g.eT)}); rsolid(x0+rim,y0+rim,zFloor,Lo-2*rim,Wo-2*rim,${f(ri)},${ch},${ly(hI,inE(g.eB),inE(g.eT))});`;})(),
     ...R.N.cuts.map(c=>{const w=c.b-c.a,h=c.z1-c.z0;const nm=c.sealed?`${c.ref} ${c.mpn} 창, 플랜지 실링`:c.ref;c={...c,ref:nm};return c.side==='W'?`  translate([x0-1,${f(c.a)},${f(c.z0)}]) cube([rim+2,${f(w)},${f(h)}]); /* ${c.ref} */`:c.side==='E'?`  translate([x0+Lo-rim-1,${f(c.a)},${f(c.z0)}]) cube([rim+2,${f(w)},${f(h)}]); /* ${c.ref} */`:c.side==='S'?`  translate([${f(c.a)},y0-1,${f(c.z0)}]) cube([${f(w)},rim+2,${f(h)}]); /* ${c.ref} */`:`  translate([${f(c.a)},y0+Wo-rim-1,${f(c.z0)}]) cube([${f(w)},rim+2,${f(h)}]); /* ${c.ref} */`;}),
     ...(d.seal.breather?[`  translate([x0+Lo/2,y0+Wo+1,zSplit-4]) rotate([90,0,0]) cylinder(d=12,h=rim+2); // 벤트 필터 M12`]:[]),
@@ -7218,14 +7256,14 @@ function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString(
     `module lid_screws(){${d.screws.map(s=>`translate([${f(s.x)},${f(s.y)},zFloor]) difference(){cylinder(d=${d.screwM==='M4'?9:7.5},h=zSplit-zFloor); cylinder(d=${d.screwM==='M4'?3.3:2.5},h=zSplit-zFloor+1);}`).join(' ')}}`,
     `module pedestals(){${d.th.peds.filter(p=>p.kind==='top').map(p=>{const q=p.ped;return`translate([${f(q.x)},${f(q.y)},${f(q.z0)}]) cube([${f(q.w)},${f(q.h)},${f(q.z1-q.z0)}]); /* ${p.ref}: ${TIMS[p.tim].short}, BLT ${p.blt} mm */`;}).join(' ')}}`,
     `module base_pedestals(){${d.th.peds.filter(p=>p.kind==='bottom').map(p=>{const q=p.ped;return`translate([${f(q.x)},${f(q.y)},${f(q.z0-0.5)}]) cube([${f(q.w)},${f(q.h)},${f(q.z1-q.z0+0.5)}]); /* ${p.ref}: 서멀 비아 ${p.vias} + ${TIMS[p.tim].short}, BLT ${p.blt} mm */`;}).join(' ')}}`,
-    `module fins(){${d.fins?`for(i=[0:${d.fins.n-1}]) translate([x0+5+i*${d.fins.pitch},y0+4,zLid+wall]) cube([${d.fins.t},${f(d.fins.len)},${f(d.fins.h)}]);`:''}}`,
+    `module fins(){${d.fins?`for(i=${d.fins.keep?'['+d.fins.keep.join(',')+']':'[0:'+(d.fins.n-1)+']'}) translate([x0+5+i*${d.fins.pitch},y0+4,zLid+wall]) cube([${d.fins.t},${f(d.fins.len)},${f(d.fins.h)}]);`:''}}`,
     `module tabs(){${d.feats.filter(x=>x.type==='tabs').map(x=>x.tabs.map(t=>`translate([${f(t.cx-t.sx/2)},${f(t.cy-t.sy/2)},${f(x.z0)}]) difference(){cube([${f(t.sx)},${f(t.sy)},${f(x.tt)}]); translate([${f(t.hx-(t.cx-t.sx/2))},${f(t.hy-(t.cy-t.sy/2))},-1]) cylinder(d=${f(x.hd)},h=${f(x.tt+2)});}`).join(' ')).join(' ')}}`,
     `module ribs(){${d.feats.filter(x=>x.type==='rib').map(x=>x.axis==='x'?`translate([x0+rim,${f(x.pos-x.tt/2)},zFloor]) cube([Lo-2*rim,${f(x.tt)},${f(x.h)}]);`:`translate([${f(x.pos-x.tt/2)},y0+rim,zFloor]) cube([${f(x.tt)},Wo-2*rim,${f(x.h)}]);`).join(' ')}}`,
     `module base(){intersection(){union(){shell(); pcb_bosses(); lid_screws(); base_pedestals(); tabs(); ribs();} translate([x0-60,y0-60,zFloor-wall-1]) cube([Lo+120,Wo+120,zSplit-(zFloor-wall)+1]);}}`,
     `module lid(){intersection(){union(){shell(); pedestals(); fins();} translate([x0-1,y0-1,zSplit]) cube([Lo+2,Wo+2,zLid+wall+40-zSplit]);}}`,
     `base();`,`translate([0,0,15]) lid(); // 열린 상태로 보기 — 조립은 translate 제거`];
   return o.join('\n')+'\n';}
-return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,featLabel,edgeText,edgeLayers,drawingSVG,partSVG,mechBom,mechBomAoa,partMass,boardNeeds,pcbVibration,analyze,text,compareText,scad};
+return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,offsetRing,ringPoints,ringHit,ringCCW,shapedBoard,featLabel,edgeText,edgeLayers,drawingSVG,partSVG,mechBom,mechBomAoa,partMass,boardNeeds,pcbVibration,analyze,text,compareText,scad};
 })();
 
 
@@ -10528,7 +10566,8 @@ function mechGroup(R){
   // wall slabs stop where the corner pieces start (along the wall, from each end)
   const Rp=rv<=0?0:ch?Math.max(rv+0.414*r,r):Math.max(rv,r);
   // outline of the housing plan, shrunk inward by `inset` (corner R/C follow the offset), counter-clockwise, SEG+1 points per corner
-  const planPts=inset=>{const P=[];const cs=[[X0,Y0,1,1,Math.PI],[X1,Y0,-1,1,1.5*Math.PI],[X1,Y1,-1,-1,0],[X0,Y1,1,-1,0.5*Math.PI]];
+  const shaped=!!g.ringO;
+  const planPts=inset=>{if(shaped)return HOUSING.offsetRing(g.ringO,-(inset||0));const P=[];const cs=[[X0,Y0,1,1,Math.PI],[X1,Y0,-1,1,1.5*Math.PI],[X1,Y1,-1,-1,0],[X0,Y1,1,-1,0.5*Math.PI]];
     cs.forEach(([cx,cy,sx,sy,a0])=>{const rr=ch?Math.max(0,rv-0.586*inset):Math.max(0,rv-inset),off=inset+rr,ox=cx+sx*off,oy=cy+sy*off;
       const s0=[ox+rr*Math.cos(a0),oy+rr*Math.sin(a0)],s1=[ox+rr*Math.cos(a0+Math.PI/2),oy+rr*Math.sin(a0+Math.PI/2)];
       for(let i=0;i<=SEG;i++){const k=i/SEG;if(ch)P.push([s0[0]+(s1[0]-s0[0])*k,s0[1]+(s1[1]-s0[1])*k]);else{const a=a0+k*Math.PI/2;P.push([ox+rr*Math.cos(a),oy+rr*Math.sin(a)]);}}});
@@ -10561,6 +10600,16 @@ function mechGroup(R){
     const me=new THR.Mesh(geo,mat);
     if(side==='S')me.position.set(X0,Y0+r,0);else if(side==='N')me.position.set(X0,Y1,0);else if(side==='W')me.position.set(X0,Y0,0);else me.position.set(X1-r,Y0,0);
     par.add(me);return me;};
+  // outline-following housings: one wall ring (outer outline minus inner outline) instead of four slabs; openings are shown
+  // as markers projected onto the wall where the connector / hole faces it
+  const ringWall=(z0,z1,par)=>{if(z1-z0<0.05)return;const O=planPts(0),I=HOUSING.offsetRing(g.ringO,-r);const sh=new THR.Shape();sh.moveTo(O[0][0],O[0][1]);for(let i=1;i<O.length;i++)sh.lineTo(O[i][0],O[i][1]);sh.closePath();
+    const h=new THR.Path();h.moveTo(I[0][0],I[0][1]);for(let i=1;i<I.length;i++)h.lineTo(I[i][0],I[i][1]);h.closePath();sh.holes.push(h);
+    const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:8}),mat);me.position.z=z0;par.add(me);return me;};
+  const DIR={W:[-1,0],E:[1,0],S:[0,-1],N:[0,1]};
+  const wallMarker=(side,u,w,zc,hz,m,par,key)=>{const dir=DIR[side];const horiz=side==='S'||side==='N';const p0=horiz?[u,(Y0+Y1)/2]:[(X0+X1)/2,u];
+    const hit=HOUSING.ringHit(g.ringO,p0,dir);if(!hit)return null;const me=new THR.Mesh(new THR.PlaneGeometry(w,hz),m);const o=0.06;const px=hit.x+hit.nx*o,py=hit.y+hit.ny*o;
+    me.position.set(px,py,zc);me.up.set(0,0,1);me.lookAt(px+hit.nx,py+hit.ny,zc); // plane normal = wall normal, height stays vertical
+    if(key)me.userData.el=key;par.add(me);return me;};
   // floor / cover plate with user holes
   const plate=(sd,z0,z1,par,inset)=>{const hs=holesOn(sd);
     const sh=planShape(inset||0);
@@ -10568,7 +10617,7 @@ function mechGroup(R){
     const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:24}),mat);me.position.z=z0;par.add(me);return me;};
   // base: floor, walls up to the split line, PCB supports, lid screw bosses, base pedestals, tabs, ribs
   const zw0=rB>0?Math.min(g.zSplit,Zb+rB):g.zFloor,zw1=rT>0?Math.max(g.zSplit,Zt-rT):g.zLid;
-  TG(plate('B',Zb,g.zFloor,base,rB),'floor');['S','N','W','E'].forEach(s=>TG(wall(s,zw0,g.zSplit,base),'wall:'+s));corner(zw0,g.zSplit,base);TG(loft(bandB,base),'edge:B');
+  TG(plate('B',Zb,g.zFloor,base,rB),'floor');if(shaped){TG(ringWall(zw0,g.zSplit,base),'wall:ring');}else{['S','N','W','E'].forEach(s=>TG(wall(s,zw0,g.zSplit,base),'wall:'+s));corner(zw0,g.zSplit,base);}TG(loft(bandB,base),'edge:B');
   d.sup.forEach((s,i)=>TG(cyl(s.x,s.y,g.zFloor,-Tb/2,s.d>3.4?4.5:3.5,s.kind==='user'?featM:solid,base),'boss:'+i));
   d.screws.forEach((s,i)=>TG(cyl(s.x,s.y,g.zFloor,g.zSplit,d.screwM==='M4'?4.5:3.75,mat,base),'screw:'+i));
   if(R.inp.vib>=4){TG(box(X0+r,(Y0+Y1)/2-1,g.zFloor,X1-r,(Y0+Y1)/2+1,g.zFloor+Math.min(3,g.stand-0.5),mat,base),'rib:auto');}
@@ -10576,19 +10625,24 @@ function mechGroup(R){
     if(f.type==='tabs')f.tabs.forEach(t=>{TG(box(t.cx-t.sx/2,t.cy-t.sy/2,f.z0,t.cx+t.sx/2,t.cy+t.sy/2,f.z0+f.tt,featM,base),f.id);TG(cyl(t.hx,t.hy,f.z0-0.02,f.z0+f.tt+0.02,f.hd/2,darkM,base),f.id);});
     else if(f.type==='rib'){TG(f.axis==='x'?box(X0+r,f.pos-f.tt/2,g.zFloor,X1-r,f.pos+f.tt/2,g.zFloor+f.h,featM,base):box(f.pos-f.tt/2,Y0+r,g.zFloor,f.pos+f.tt/2,Y1-r,g.zFloor+f.h,featM,base),f.id);}
     // user openings: a thin coloured lid over the opening, so a hole can be seen and picked
-    else if(f.type==='hole'||f.type==='slot'){const H=f.type==='hole';const geo=H?new THR.CircleGeometry(f.w/2,28):new THR.PlaneGeometry(f.w,f.h);const me=new THR.Mesh(geo,holeM);me.userData.el=f.id;const o=0.06;
+    else if((f.type==='hole'||f.type==='slot')&&!(shaped&&/^[WESN]$/.test(f.side))){const H=f.type==='hole';const geo=H?new THR.CircleGeometry(f.w/2,28):new THR.PlaneGeometry(f.w,f.h);const me=new THR.Mesh(geo,holeM);me.userData.el=f.id;const o=0.06;
       if(f.side==='T'){me.position.set(f.x,f.y,Zt+o);}else if(f.side==='B'){me.position.set(f.x,f.y,Zb-o);me.rotation.x=Math.PI;}
       else if(f.side==='S'){me.position.set(f.a,Y0-o,f.z);me.rotation.x=Math.PI/2;}else if(f.side==='N'){me.position.set(f.a,Y1+o,f.z);me.rotation.x=-Math.PI/2;}
       else if(f.side==='W'){me.position.set(X0-o,f.a,f.z);me.rotation.y=-Math.PI/2;me.rotation.z=Math.PI/2;}else{me.position.set(X1+o,f.a,f.z);me.rotation.y=Math.PI/2;me.rotation.z=Math.PI/2;}
       (f.side==='T'||(f.side!=='B'&&f.z>g.zSplit)?lid:base).add(me);}});
   // gasket on the split line
-  if(d.seal.gasket!=='없음'&&d.seal.gasket!=='없음 (정밀 맞춤)'){const m2=new THR.LineBasicMaterial({color:0xe2703a});const ins=r/2;const pts=[[X0+ins,Y0+ins],[X1-ins,Y0+ins],[X1-ins,Y1-ins],[X0+ins,Y1-ins],[X0+ins,Y0+ins]].map(p=>new THR.Vector3(p[0],p[1],g.zSplit+0.05));base.add(new THR.Line(new THR.BufferGeometry().setFromPoints(pts),m2));}
+  if(d.seal.gasket!=='없음'&&d.seal.gasket!=='없음 (정밀 맞춤)'){const m2=new THR.LineBasicMaterial({color:0xe2703a});const ins=r/2;const pts=(shaped?planPts(ins).concat([planPts(ins)[0]]):[[X0+ins,Y0+ins],[X1-ins,Y0+ins],[X1-ins,Y1-ins],[X0+ins,Y1-ins],[X0+ins,Y0+ins]]).map(p=>new THR.Vector3(p[0],p[1],g.zSplit+0.05));base.add(new THR.Line(new THR.BufferGeometry().setFromPoints(pts),m2));}
   // cover: walls from the split line, top plate, pedestals + TIM on the hot parts, fins, engraved label
-  ['S','N','W','E'].forEach(s=>TG(wall(s,g.zSplit,zw1,lid),'wall:'+s));corner(g.zSplit,zw1,lid);TG(loft(bandT,lid),'edge:T');TG(plate('T',g.zLid,Zt,lid,rT),'top');
+  if(shaped){TG(ringWall(g.zSplit,zw1,lid),'wall:ring');
+    // connector windows and user wall openings on the ring wall: markers on the wall face
+    const winM=new THR.MeshBasicMaterial({color:0xc0392b,transparent:true,opacity:0.5,side:THR.DoubleSide,depthWrite:false});
+    R.N.cuts.forEach(c=>{const zc=(c.z0+c.z1)/2;wallMarker(c.side,(c.a+c.b)/2,c.b-c.a,zc,c.z1-c.z0,winM,zc>g.zSplit?lid:base,'win:'+c.ref);});
+    d.feats.filter(f=>(f.type==='hole'||f.type==='slot')&&/^[WESN]$/.test(f.side)).forEach(f=>{wallMarker(f.side,f.a,f.w,f.z,f.type==='hole'?f.w:f.h,holeM,f.z>g.zSplit?lid:base,f.id);});}
+  else{['S','N','W','E'].forEach(s=>TG(wall(s,g.zSplit,zw1,lid),'wall:'+s));corner(g.zSplit,zw1,lid);}TG(loft(bandT,lid),'edge:T');TG(plate('T',g.zLid,Zt,lid,rT),'top');
   d.th.peds.forEach(p=>{const q=p.ped,k='ped:'+p.ref;if(p.kind==='top'){TG(box(q.x,q.y,q.z0,q.x+q.w,q.y+q.h,g.zLid,solid,lid),k);TG(box(q.x,q.y,q.tz,q.x+q.w,q.y+q.h,q.z0,timM,lid),k);}
     else{TG(box(q.x,q.y,g.zFloor,q.x+q.w,q.y+q.h,q.z1,solid,base),k);TG(box(q.x,q.y,q.z1,q.x+q.w,q.y+q.h,-T/2,timM,base),k);}});
   const finK=(d.feats.find(f=>f.type==='fins'&&!f.off)||{}).id||'fins';
-  if(d.fins)for(let k=0;k<d.fins.n;k++){const x=X0+5+k*d.fins.pitch;if(x+d.fins.t>X1-2)break;TG(box(x,Y0+4,Zt,x+d.fins.t,Y0+4+d.fins.len,Zt+d.fins.h,solid,lid),finK);}
+  if(d.fins)for(let k=0;k<d.fins.n;k++){if(d.fins.keep&&!d.fins.keep.includes(k))continue;const x=X0+5+k*d.fins.pitch;if(x+d.fins.t>X1-2)break;TG(box(x,Y0+4,Zt,x+d.fins.t,Y0+4+d.fins.len,Zt+d.fins.h,solid,lid),finK);}
   d.feats.filter(f=>f.type==='label').forEach(f=>{const c=document.createElement('canvas');const s=String(f.text||'');c.width=Math.max(64,s.length*40);c.height=64;const x=c.getContext('2d');
     x.fillStyle='#2a2f35';x.font='600 46px "JetBrains Mono", monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(s,c.width/2,c.height/2);const tx=new THR.CanvasTexture(c);
     const w=f.size*Math.max(1,s.length)*0.68,h=w*c.height/c.width;const me=new THR.Mesh(new THR.PlaneGeometry(w,h),new THR.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false}));me.position.set(f.x,f.y,Zt+(d.fins?d.fins.h+0.06:0.06));me.userData.el=f.id;lid.add(me);});
@@ -12652,7 +12706,7 @@ function cliBoard(a){
       if(a.cut){const m=String(a.cut).split(/x|×/i);p.cw=parseFloat(m[0]);p.ch=parseFloat(m[1]||m[0]);}if(a.at)p.at=String(a.at);
       if(a.pts)p.pts=String(a.pts).trim().split(/\s+/).map(t=>t.split(',').map(parseFloat));
       const r=PCBEDIT.setShape(BD,kind,p,{anchor:a.anchor==='center'?'center':'bl'});
-      msg=`보드 모양 → ${r.label} · ${f1(r.W)} × ${f1(r.H)} mm`+(r.outside.length?`\n보드 밖 부품 ${r.outside.length}개: ${r.outside.slice(0,12).join(', ')} → place 또는 reset으로 다시 배치하세요.`:'');}
+      msg=`보드 모양 → ${r.label} · ${f1(r.W)} × ${f1(r.H)} mm${r.holesDropped?` · 외곽 밖 장착 구멍 ${r.holesDropped}개 삭제`:''}`+(r.outside.length?`\n보드 밖 부품 ${r.outside.length}개: ${r.outside.slice(0,12).join(', ')} → place 또는 reset으로 다시 배치하세요.`:'');}
     else{const k=String(a._[1]||'');if(k==='clear'){const n=PCBEDIT.clearCutouts(BD);msg=`컷아웃 ${n}개 삭제`;}
       else{const at=String(a.at||'').split(',').map(parseFloat);const p={x:at[0],y:at[1],r:a.corner!=null?+a.corner:0};
         if(k==='circle')p.d=parseFloat(a._[2]);else if(k==='rect'){const m=String(a._[2]||'').split(/x|×/i);p.w=parseFloat(m[0]);p.h=parseFloat(m[1]||m[0]);}else throw new Error('board cutout circle <지름> --at x,y · rect <가로>x<세로> --at x,y · clear');

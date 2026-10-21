@@ -15,6 +15,14 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 보드 외곽을 따르는 하우징 (v1.44.0)
+
+- 이전: 하우징은 보드의 바운딩 사각형(Lo×Wo, 코너 R)만 사용 → 원형·타원·L자 보드도 사각 하우징.
+- `housing.js`: 다각형 도우미 `offsetRing`(CCW 링을 d만큼 바깥/안쪽으로 오프셋, 마이터·베벨), `ringPoints`(둘레를 따라 n점), `ringHit`(점에서 방향으로 쏜 선이 링을 만나는 점·법선), `shapedBoard`. `boardNeeds`에 `ring/shaped/shapeKind`. `design()`: shaped면 `geo.ringI`(= 보드 외곽 + gap) · `geo.ringO`(= + rim) · `areaO/areaI/perO`, 외형 치수는 링의 바운딩, 커버 나사는 둘레를 따라 균등 배치, 지지 보스는 구멍이 없으면 외곽 안쪽 4점(중앙 보스 후보는 보드 안만), 핀(fins)은 안쪽 링에 완전히 들어가는 것만(`fins.keep`), 체적·질량은 링 면적·둘레로.
+- 3D(`mechui.mechGroup`): shaped면 네 벽 대신 **링 벽 한 덩어리**(바깥 링 − 안쪽 링 extrude), 바닥·커버 판·R/C 밴드는 링 오프셋으로, 커넥터 창·벽 구멍은 벽 면에 투영한 마커(`ringHit`), 가스켓 선은 링 오프셋.
+- 도면 SVG·부품도 SVG: 평면도가 다각형 경로(외곽·안쪽·R/C·O-링 홈), 보드 외곽도 다각형. OpenSCAD: `psolid(pts,z,layers)` + `outerPts/innerPts` polygon 기반 shell. `HOUSING.text`에 "보드 외곽을 따르는 하우징 (원형) · 바닥 면적 · 둘레".
+- `PCBEDIT.setShape`: 새 외곽 밖으로 나간 장착 구멍은 삭제(메시지에 표시).
+
 ## 양면 배치 옵션 (v1.43.1)
 
 - 기본은 **상단 단면**(SMT 리플로 1회 · 가장 싼 조립 · 커넥터·스루홀·전해 캡은 어차피 상단). `--both`가 있어야 하단을 쓰며, 이전엔 2핀 수동소자만 하단 후보였음.
