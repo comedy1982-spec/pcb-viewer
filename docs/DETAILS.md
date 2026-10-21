@@ -15,6 +15,11 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 부품 이동·뒤집기 뒤 자동 재배선 (v1.42.1)
+
+- `pcbcli.cliOne` (`move`·`rotate`·`flip`): 부품의 패드가 움직이면 트랙은 그 자리에 남아 끊기므로, 그 부품 넷(플레인 넷 제외)의 **자동 배선 트랙·비아를 지우고 바로 `route --nets …`로 다시 배선**. `--no-route`면 지우기만 하고 "열린 연결 N개 → route" 안내. 손으로 그린 트랙은 보존(끊기면 래츠네스트·DRC에 표시). 되돌리기 1회로 이동+재배선 복원.
+- 문장 규칙: "U3를 하단으로/뒤집어", "C5를 20,30으로 옮겨", "U1 90도 돌려", "배선 없이 …" → flip/move/rotate [--no-route]. AI 프롬프트에 동작 설명.
+
 ## 보드 외곽 모양 — 사각형 외 (v1.42.0)
 
 - `pcbedit.js`: `SHAPES` rect · round · circle · oval(스타디움) · L · T · hex · oct · poly. `shapeRing(kind,p)` → 외곽 링, `setShape(B,kind,p,{anchor})` → `B.outline[0]`·W·H·`B.shape` 갱신 + 보드 밖 부품 목록, `addCutout(B,'circle'|'rect',{x,y,d|w,h,r})` → 안쪽 링(구멍) 추가(`B.cutouts`), `clearCutouts`, `shapeText`. `resizeBoard`는 모양 보드를 비례 파라미터로 다시 생성(원형은 min(W,H) 지름). `PCB.inBoard(x,y,outline)` = 외곽 안 ∧ 구멍 밖.
