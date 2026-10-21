@@ -266,6 +266,7 @@ kbd{background:#fff}
 <ul>
 <li><b>브라우저에서 직접</b> — API 키를 입력하면 이 브라우저(localStorage)에 저장되고 페이지가 api.anthropic.com을 바로 부릅니다. 가장 간단하지만 키가 평문으로 남으니 개인 PC에서만 쓰세요.</li>
 <li><b>프록시 서버 경유</b> — 소스 폴더에서 <code>set ANTHROPIC_API_KEY=sk-ant-…</code>(Windows) 또는 <code>export ANTHROPIC_API_KEY=…</code> 후 <code>npm run serve</code> → <code>http://localhost:8787</code>에서 앱을 열고, 설정에서 "프록시 서버 경유"를 고릅니다. 키는 서버 프로세스에만 있습니다. (<code>PORT=…</code>로 포트 변경)</li>
+<li><b>GitHub Copilot으로</b> — API 키 대신 GitHub Copilot 구독으로 쓰려면 소스 폴더에서 <code>npm i</code>(Copilot SDK 설치) 후 <code>npm run serve:copilot</code>. 인증은 <code>gh auth login</code>, 또는 Copilot CLI(<code>npm i -g @github/copilot</code> → <code>copilot</code> → <code>/login</code>), 또는 <code>COPILOT_GITHUB_TOKEN</code> 환경변수 중 하나. 설정에서 "프록시 서버 경유"를 고르면 머리 표시가 <b>AI 대기 · GitHub Copilot</b>이 됩니다. 모델은 Copilot 기본값이며 <code>COPILOT_MODEL=claude-sonnet-4.5</code>처럼 바꿉니다(등급별 모델 이름은 무시). 콘솔 명령 실행(도구 호출)·질문 모드 모두 동일하게 동작하고, Copilot은 이 앱의 명령 외에 파일·셸을 건드리지 않도록 제한됩니다. 웹 검색은 Anthropic API 전용입니다.</li>
 <li><b>모델 이름</b> — 등급(빠름/기본/고급)별 모델 ID를 바꾸거나 고정 모델을 지정할 수 있습니다. [연결 확인]으로 키·모델을 바로 시험합니다.</li>
 <li>상태 표시가 <b>AI 대기 · 로컬 API</b>이면 켜진 것입니다. [지우기]로 키를 삭제합니다.</li>
 <li><b>웹 검색</b>(기본 켬) — 부품 번호를 조회할 때 Claude가 제조사 데이터시트를 웹에서 찾아 핀 배열을 읽습니다(신뢰도·PDF 링크가 레코드에 남음). claude.ai 아티팩트 안의 Claude는 웹에 접근하지 못해 기억으로 추정하므로, 정확한 핀이 필요하면 로컬 모드 또는 부품 라이브러리에 CSV로 가져오세요.</li>

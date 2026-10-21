@@ -19,7 +19,7 @@ async function laiPost(body,signal){
   let r;try{r=await fetch(laiEndpoint(),{method:'POST',headers:h,body:JSON.stringify(body),signal});}
   catch(e){if(e&&e.name==='AbortError')throw laiErr('cancelled','중지됨');throw laiErr('network','연결 실패: '+(LAI.url?LAI.url+' (프록시가 떠 있는지 확인)':'api.anthropic.com (키 또는 네트워크 확인)'));}
   if(!r.ok){let m='';try{const j=await r.json();m=j&&j.error&&j.error.message||'';}catch(e){}
-    if(r.status===401||r.status===403)throw laiErr('not_granted','API 키가 없거나 잘못되었습니다'+(m?': '+m:''));
+    if(r.status===401||r.status===403)throw laiErr('not_granted',/Copilot/.test(m)?m:'API 키가 없거나 잘못되었습니다'+(m?': '+m:''));
     if(r.status===429)throw laiErr('rate_limited','API 사용량 한도'+(m?': '+m:''));
     if(r.status===404&&/model/i.test(m))throw laiErr('model','모델 이름을 확인하세요: '+m);
     throw laiErr('http_'+r.status,m||('HTTP '+r.status));}
@@ -30,12 +30,12 @@ function laiBuild(opts){
     const msgs=typeof input==='string'?[{role:'user',content:input}]:input.map(m=>({role:m.role,content:String(m.content)}));
     const tools=(o.tools||[]).map(t=>({name:t.name,description:t.description||'',input_schema:t.inputSchema||{type:'object',properties:{}}}));
     const byName=Object.fromEntries((o.tools||[]).map(t=>[t.name,t]));
-    const model=laiModel(o.modelTier||'default');let text='',truncated=false,rounds=0;
+    const model=laiModel(o.modelTier||'default');let text='',truncated=false,rounds=0,runId=null; // runId: proxy's Copilot run (tool round trips)
     while(true){
       if(++rounds>40)throw laiErr('limit','도구 호출 라운드 한도');
       const body={model,max_tokens:LAI.max,messages:msgs};const tl=tools.slice();if(o.web&&LAI.web!==false)tl.push({type:'web_search_20250305',name:'web_search',max_uses:o.webMax||5}); // server-side web search: datasheets, pinouts
-      if(tl.length)body.tools=tl;
-      const res=await laiPost(body,o.signal);
+      if(tl.length)body.tools=tl;if(runId)body.copilot_run=runId;
+      const res=await laiPost(body,o.signal);if(res.copilot_run)runId=res.copilot_run;
       const parts=res.content||[];const tx=parts.filter(p=>p.type==='text').map(p=>p.text).join('');if(tx){text=(text?text+'\n':'')+tx;if(o.onText)try{o.onText({text,delta:tx});}catch(e){}}
       if(res.stop_reason==='max_tokens')truncated=true;
       const uses=parts.filter(p=>p.type==='tool_use');
@@ -52,8 +52,12 @@ function laiBuild(opts){
     const m=s.match(/```(?:json)?\s*([\s\S]*?)```/)||[null,s];const raw=(m[1]||s).trim();
     try{return JSON.parse(raw);}catch(e){const i=raw.search(/[\[{]/);const j=Math.max(raw.lastIndexOf('}'),raw.lastIndexOf(']'));if(i>=0&&j>i){try{return JSON.parse(raw.slice(i,j+1));}catch(e2){}}throw laiErr('json','JSON 응답이 아닙니다: '+raw.slice(0,120));}};
   f.limits=async()=>({tools:true,images:false});
-  f.local=true;
+  f.local=true;f.backend=LAI.backend||'';
+  if(LAI.url&&!LAI.backend)laiBackend().then(()=>{if(typeof aimPaint==='function')aimPaint();});
   return f;
+}
+// which backend the proxy runs (anthropic | copilot); remembered in LAI.backend for the header label
+async function laiBackend(){LAI.backend='';if(!LAI.url)return null;try{const r=await fetch((LAI.url||'').replace(/\/+$/,'').replace(/\/v1\/messages$/,'')+'/v1/backend');if(!r.ok)return null;const j=await r.json();LAI.backend=j.backend||'';if(CLI.sample&&CLI.sample.local)CLI.sample.backend=LAI.backend;return j;}catch(e){return null;}
 }
 /* settings sheet: API key / proxy URL / model names; shown by the [Claude 허용] button when window.claude is absent */
 function laiDialogHTML(){const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
@@ -69,7 +73,7 @@ function laiDialogHTML(){const esc=s=>String(s||'').replace(/&/g,'&amp;').replac
 <label class="lai-f"><span>고급</span><input id="laiC" value="${esc(LAI.tiers.complex)}"></label>
 <label class="lai-f"><span>고정 모델</span><input id="laiM" placeholder="비우면 등급별 이름 사용" value="${esc(LAI.model)}"></label>
 <label class="lai-f"><span>웹 검색</span><span><input id="laiW" type="checkbox"${LAI.web!==false?' checked':''}> 부품 번호 조회 때 Claude가 데이터시트를 웹에서 찾아 핀 배열을 읽음 (API 웹 검색 과금)</span></label></details>
-<p class="note">프록시: 소스의 <code>npm run serve</code> (<code>ANTHROPIC_API_KEY</code> 환경변수)로 띄우면 <code>http://localhost:8787</code>에서 이 페이지도 같이 열립니다. 직접 방식은 키가 브라우저 localStorage에 평문으로 남으니 공용 PC에서는 쓰지 마세요.</p>
+<p class="note">프록시: 소스의 <code>npm run serve</code> (<code>ANTHROPIC_API_KEY</code> 환경변수)로 띄우면 <code>http://localhost:8787</code>에서 이 페이지도 같이 열립니다. <b>GitHub Copilot</b>으로 쓰려면 <code>npm run serve:copilot</code> (Copilot CLI 로그인 필요, API 키 불필요). 직접 방식은 키가 브라우저 localStorage에 평문으로 남으니 공용 PC에서는 쓰지 마세요.</p>
 <div class="lai-act"><span id="laiMsg" class="aim-u"></span><button type="button" class="btn" data-test>연결 확인</button><button type="button" class="btn primary" data-save>저장 후 사용</button><button type="button" class="btn sm" data-clear>지우기</button></div>
 </div></div>`;}
 function openLocalAi(){let m=$('#laiDlg');if(!m){m=document.createElement('div');m.className='modal';m.id='laiDlg';document.body.appendChild(m);laiBind(m);}m.innerHTML=laiDialogHTML();m.hidden=false;laiModeRows();const k=$('#laiKey');if(k)k.focus();}
@@ -83,9 +87,9 @@ function laiBind(m){
     laiRead();
     if(!LAI.key&&!LAI.url){msg.textContent='API 키 또는 프록시 주소가 필요합니다.';return;}
     if('test' in b.dataset){msg.textContent='확인 중…';b.disabled=true;
-      try{const f=laiBuild();const r=await f('Reply with the single word OK.',{modelTier:'quick'});msg.textContent='연결됨 · '+(r.modelApplied||'')+' · '+String(r.text).slice(0,20);}
+      try{const bi=await laiBackend();const f=laiBuild();const r=await f('Reply with the single word OK.',{modelTier:'quick'});msg.textContent='연결됨 · '+(bi?(bi.backend==='copilot'?'GitHub Copilot':'Anthropic API')+' · ':'')+(r.modelApplied||'')+' · '+String(r.text).slice(0,20);}
       catch(err){msg.textContent='실패: '+(err.message||err.code);}b.disabled=false;return;}
-    if('save' in b.dataset){laiSave();CLI.sample=undefined;await cliAiProbe();aimPaint();m.hidden=true;
-      if(typeof copSay==='function')copSay(CLI.sample?'ok':'err',CLI.sample?`로컬 AI 사용: ${LAI.url?'프록시 '+LAI.url:'브라우저에서 직접'} · 모델 ${laiModel(AIM.tier)}. 이제 문장형 요청을 Claude가 해석합니다.`:'로컬 AI를 켜지 못했습니다.');}
+    if('save' in b.dataset){laiSave();await laiBackend();CLI.sample=undefined;await cliAiProbe();aimPaint();m.hidden=true;
+      if(typeof copSay==='function')copSay(CLI.sample?'ok':'err',CLI.sample?`로컬 AI 사용: ${LAI.url?'프록시 '+LAI.url+(LAI.backend==='copilot'?' (GitHub Copilot)':''):'브라우저에서 직접'} · 모델 ${LAI.backend==='copilot'?'Copilot 설정':laiModel(AIM.tier)}. 이제 문장형 요청을 AI가 해석합니다.`:'로컬 AI를 켜지 못했습니다.');}
   });
 }

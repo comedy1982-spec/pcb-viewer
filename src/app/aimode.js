@@ -34,7 +34,7 @@ let AIM_NOTED=false;function aimUnavailableNote(say){if(AIM_NOTED)return true;AI
 function aimPaint(){$$('.aim-b').forEach(b=>{b.classList.toggle('on',b.dataset.aim===AIM.mode);b.setAttribute('aria-pressed',b.dataset.aim===AIM.mode?'true':'false');});
   $$('.aim-t').forEach(t=>{t.value=AIM.tier;t.hidden=AIM.mode!=='ai';});
   $$('.aim-q').forEach(t=>{t.value=AIM.qa;t.hidden=AIM.mode!=='ai';});
-  $$('.aim-u').forEach(u=>{u.textContent=AIM.calls?`AI ${AIM.calls}회 · 토큰(추정) 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)}`:(AIM.mode==='ai'?(CLI.sample===null?'AI 사용 불가 · 규칙으로 해석':CLI.sample?(CLI.sample.local?'AI 대기 · 로컬 API':'AI 대기'):'AI 확인 중…'):'');});
+  $$('.aim-u').forEach(u=>{u.textContent=AIM.calls?`AI ${AIM.calls}회 · 토큰(추정) 입력 ~${aimFmt(AIM.inTok)} / 출력 ~${aimFmt(AIM.outTok)}`:(AIM.mode==='ai'?(CLI.sample===null?'AI 사용 불가 · 규칙으로 해석':CLI.sample?(CLI.sample.local?(CLI.sample.backend==='copilot'?'AI 대기 · GitHub Copilot':'AI 대기 · 로컬 API'):'AI 대기'):'AI 확인 중…'):'');});
   $$('.aim-g').forEach(b=>{b.hidden=!(AIM.mode==='ai'&&CLI.sample===null);});
   $$('.cli-in input,#copIn').forEach(i=>{i.dataset.mode=AIM.mode;});if(typeof copCtx==='function')copCtx();}
 /* "Claude 허용": ask the viewer for the sample capability with the platform's permissions API, then probe again.

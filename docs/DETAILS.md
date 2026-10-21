@@ -15,6 +15,12 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## GitHub Copilot CLI 연동 (v1.39.0)
+
+- `scripts/serve.mjs --copilot` (`npm run serve:copilot`, 또는 `AI_BACKEND=copilot`): `POST /v1/messages`(페이지가 쓰는 Anthropic Messages 형식)를 **GitHub Copilot SDK**(`@github/copilot-sdk`, Copilot CLI 런타임 내장)로 처리. 요청의 `tools`를 `defineTool`로 세션에 등록하고, Copilot이 도구를 부르면 핸들러가 대기 → 페이지에 `stop_reason:"tool_use"` + `copilot_run` ID로 응답 → 페이지가 명령을 실행해 `tool_result`를 같은 `copilot_run`으로 보내면 핸들러를 풀어 다음 응답(또 도구 호출 또는 최종 답)을 돌려줌. 세션은 `availableTools`를 앱 도구로 제한하고 시스템 메시지로 파일·셸 금지. 인증: 저장된 Copilot/gh 로그인 또는 `COPILOT_GITHUB_TOKEN`/`GH_TOKEN`; 미로그인은 401 + 안내. 모델: `COPILOT_MODEL` > 요청 모델(Anthropic ID 형식이면 무시) > Copilot 기본. `GET /v1/backend`로 백엔드 알림.
+- `localai.js`: 응답의 `copilot_run`을 다음 라운드에 실어 보냄, `laiBackend()`로 백엔드 조회 → 머리 "AI 대기 · GitHub Copilot", 연결 확인에 백엔드 표시. Anthropic 전달 때는 `copilot_run` 제거.
+- `package.json`: `optionalDependencies` `@github/copilot-sdk`, `serve:copilot` 스크립트, package-lock 추가.
+
 ## 부품 지정은 교체 · 로컬 AI 웹 검색으로 데이터시트 (v1.38.1)
 
 - `impl <ID> part <MPN>`: 블록에 이미 `part`가 있으면 그 부품을, 없으면 주 라이브러리 구현(bldc·can·mcu … LDO/벅/캡/TVS/LED 제외)을 **교체**(메시지 "(bldc → A4911; 둘 다 두려면 --add)"). `--add`로 추가. `map`/응답에 `part <MPN>` 표시.
