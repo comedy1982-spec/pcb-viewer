@@ -132,8 +132,37 @@ T.inv={key:'inv',name:'트랙션 모터 인버터 (HV)',re:/인버터|inverter|�
       options:[{label:'리졸버',effect:{}},{label:'MR/엔코더 (디지털)',effect:{feats:{rdc:['MR 센서 · SPI/ABZ (리졸버 대신)']}}}]},
     {key:'asil',block:'mcu',q:'안전 등급은?',why:'토크 감시·차단 경로.',re:/asil\s*[a-d]/i,
       options:[{label:'ASIL C',effect:{asil:'C',req:'ASIL C'}},{label:'ASIL D (액티브 쇼트 서킷 세이프 스테이트)',effect:{asil:'D',req:'ASIL D',feats:{gate:['ASC (Active Short Circuit) 세이프 스테이트']}}}]}]};
+
+/* ---- part candidates per block (several makers each): [mpn, maker, note] ---- */
+const SBC=[['TLF35584QVVS2','Infineon','안전 PMIC · Q&A 워치독 · FS0B · ASIL D'],['TPS65381A-Q1','TI','안전 PMIC · 워치독 · 진단 · ASIL D'],['FS2600','NXP','FS26 안전 SBC · 다중 레일 · ASIL D'],['L9396','ST','차량용 안전 PMIC · 워치독']];
+const MCU_D=[['TC364DP-64F300F','Infineon','AURIX TC36x 락스텝 · GTM · SENT · ASIL D'],['S32K344','NXP','Cortex-M7 락스텝 · ASIL D'],['SPC58EC80E5','ST','Power Architecture 락스텝 · ASIL D'],['RH850/U2A8','Renesas','락스텝 · ASIL D'],['TMS570LC4357','TI','Cortex-R5F 락스텝 · ASIL D']];
+const MCU_B=[['S32K144','NXP','Cortex-M4F · ASIL B'],['SPC560P50','ST','Power Architecture · ASIL B'],['TC334LP','Infineon','AURIX 저가 · ASIL B'],['RH850/F1KM-S1','Renesas','ASIL B'],['STM32F042K6U6','ST','범용 (시제품)']];
+const CANX=[['TJA1443AT','NXP','CAN-FD 5 Mbps · 슬립/웨이크'],['TLE9251VSJ','Infineon','CAN-FD 5 Mbps'],['TCAN1043-Q1','TI','CAN-FD · 웨이크 · 인히빗'],['MCP2542FD','Microchip','CAN-FD 8 Mbps'],['ATA6563','Microchip','CAN-FD 5 Mbps']];
+const GATE3=[['TLE9180D-31QK','Infineon','3상 게이트 드라이버 · 진단 · 세이프티 FET 출력 · ASIL D'],['L9908','ST','3상 게이트 드라이버 · 안전 기능'],['DRV8353RS-Q1','TI','3상 게이트 드라이버 · 전류 센스 앰프 내장'],['GD3000','NXP','3상 프리드라이버 · 진단'],['A4919','Allegro','3상 게이트 드라이버 · 진단']];
+const FET40=[['IAUC100N04S6N008','Infineon','40 V 0.8 mΩ OptiMOS'],['STL325N4LF8AG','ST','40 V 0.9 mΩ STripFET'],['BUK7S0R5-40H','Nexperia','40 V 0.5 mΩ LFPAK'],['NVMFS5C404N','onsemi','40 V 0.7 mΩ']];
+const ISENSE=[['INA240A2-Q1','TI','션트 앰프 · PWM 제거 · 50 V/V'],['AD8418A','ADI','션트 앰프 · 양방향'],['TLE4972-AE35D5','Infineon','코어리스 전류 센서 · 과전류 핀'],['NCS21671','onsemi','션트 앰프 · 저오프셋']];
+const PIN12=[['LM74700-Q1','TI','이상 다이오드 컨트롤러 (역접속)'],['LTC4359','ADI','이상 다이오드 컨트롤러'],['IPD90P04P4L-04','Infineon','P-FET 역접속 보호'],['SM8S33A','Littelfuse','로드덤프 TVS 6.6 kW']];
+const HSD=[['BTS7008-2EPA','Infineon','PROFET+2 2ch 8 mΩ · 전류 센스'],['VND7050AJ','ST','VIPower 2ch 50 mΩ · 진단'],['TPS1HB16-Q1','TI','1ch 16 mΩ · 진단'],['MC12XS6','NXP','6ch HSD · SPI']];
+const LSD=[['TLE6240GP','Infineon','16ch LSD · SPI 진단'],['L9733','ST','8ch LSD · SPI'],['DRV8912-Q1','TI','12ch 하프브리지 · 릴레이/모터'],['MC33879A','NXP','8ch LSD · 진단']];
+const LINX=[['TJA1021T','NXP','LIN 2.2'],['TLE7259-3GE','Infineon','LIN 2.2A'],['TLIN1029-Q1','TI','LIN · 웨이크'],['MCP2003B','Microchip','LIN 2.2']];
+const SBC_B=[['TLE9471ES','Infineon','SBC · CAN-FD · LDO · 워치독'],['MC33FS4500','NXP','FS45 SBC · CAN/LIN · 워치독'],['L9788','ST','SBC · CAN · LIN · LDO'],['TCAN4550-Q1','TI','CAN-FD SBC · LDO']];
+const ISO_AFE=[['LTC6820','ADI','isoSPI 트랜시버'],['MC33664','NXP','TPL 절연 통신'],['TLE9015DQU','Infineon','isoUART 트랜시버'],['BQ79600-Q1','TI','절연 데이지체인 브리지']];
+const ISOADC=[['AMC1306M05','TI','절연 ΔΣ 변조기 (션트)'],['ACS37002','Allegro','홀 전류 센서 · 400 kHz'],['TLI4971-A120T5','Infineon','코어리스 전류 센서'],['MAX22531','ADI','절연 4ch ADC']];
+const HVM=[['AMC1311-Q1','TI','절연 전압 앰프'],['ACPL-C87B','Broadcom','절연 전압 센서'],['ISO224','TI','절연 앰프 ±12 V'],['ADuM4190','ADI','절연 오차 앰프']];
+const GATEISO=[['1ED3491MC12M','Infineon','절연 게이트 드라이버 · DESAT · ASC'],['UCC5870-Q1','TI','절연 게이트 드라이버 · 진단 · SPI'],['STGAP3S','ST','갈바닉 절연 게이트 드라이버'],['ADuM4135','ADI','절연 게이트 드라이버 · 미러 클램프'],['NCD57000','onsemi','절연 게이트 드라이버 · DESAT']];
+const PM=[['FS820R08A6P2','Infineon','HybridPACK Drive 750 V IGBT'],['CAB450M12XM3','Wolfspeed','1200 V SiC 모듈'],['NXH006P120MNF2','onsemi','1200 V SiC 모듈'],['FS600R10A6P2','Infineon','HybridPACK 1 IGBT']];
+const RDC=[['AD2S1210','ADI','RDC 16비트 · 여자 출력'],['PGA411-Q1','TI','리졸버 IF · 여자 앰프 · 진단'],['TLE5012B','Infineon','GMR 각도 센서 (대체)']];
+const ANG=[['TLE5012B','Infineon','GMR 각도 · SPI/SENT'],['AS5147P-Q1','ams OSRAM','AMR 각도 · SPI'],['ADA4571','ADI','AMR 각도 (아날로그)'],['MLX90380','Melexis','각도 센서 · SENT']];
+const TORQ=[['MLX90372','Melexis','토크/각도 · SENT 이중'],['TLE4998S8','Infineon','선형 홀 · SENT'],['A1346','Allegro','선형 홀 · SENT'],['ADA4571','ADI','AMR (아날로그)']];
+const PARTS={
+  eps:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,gate:GATE3,inv:FET40,pcut:FET40,isense:ISENSE,tsens:TORQ,asens:ANG},
+  bms:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,iso:ISO_AFE,cur:ISOADC,hvm:HVM,ctr:HSD},
+  bcm:{pin:PIN12,sbc:SBC_B,mcu:MCU_B,canx:CANX,lin:LINX,hsd:HSD,lsd:LSD},
+  inv:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,gate:GATEISO,pm:PM,isense:ISOADC,rdc:RDC,hvm:HVM}};
+const normPart=x=>{if(!x)return null;if(typeof x==='string')return{mpn:x,mfr:'',note:''};if(Array.isArray(x))return{mpn:S(x[0]),mfr:S(x[1]),note:S(x[2])};return{mpn:S(x.mpn||x.part),mfr:S(x.mfr||x.maker),note:S(x.note||x.desc),grade:S(x.grade)};};
+function candidates(prof,id){const b=(prof.blocks||[]).find(x=>x.id===id);if(!b)return[];return(b.parts||[]).map(normPart).filter(p=>p&&p.mpn);}
 /* ---- detection ---- */
-function detect(text){const s=String(text||'');for(const k of Object.keys(T)){if(T[k].re.test(s))return clone(T[k]);}return null;}
+function detect(text){const s=String(text||'');for(const k of Object.keys(T)){if(T[k].re.test(s)){const p=clone(T[k]);const P=PARTS[k]||{};for(const b of p.blocks){const c=P[b.id];if(c)b.parts=c.map(normPart);else b.parts=(b.parts||[]).map(normPart);}return p;}}return null;}
 function clone(o){if(o==null||typeof o!=='object')return o;if(o instanceof RegExp||Object.prototype.toString.call(o)==='[object RegExp]')return new RegExp(o.source,o.flags);if(Array.isArray(o))return o.map(clone);const r={};for(const k of Object.keys(o))r[k]=clone(o[k]);return r;}
 /* ---- apply profile + answers → architecture (needs HWARCH) ---- */
 function apply(prof,answers,name,H){H=H||(typeof HWARCH!=='undefined'?HWARCH:null);if(!H)throw new Error('HWARCH 필요');
@@ -162,7 +191,7 @@ function apply(prof,answers,name,H){H=H||(typeof HWARCH!=='undefined'?HWARCH:nul
   return{arch:A,log,reqAdd,asil,req};}
 /* ---- text ---- */
 function summary(prof){const L=[`제품: ${prof.name}`];if(prof.defaults&&prof.defaults.length)L.push('표준 요구사항: '+prof.defaults.join(' · '));
-  L.push(`필요 블록 ${(prof.blocks||[]).length}개:`);for(const b of prof.blocks||[])L.push(`  [${b.id}] ${b.label}${b.parts&&b.parts.length?' ('+b.parts.join(', ')+')':''}${b.why?' — '+b.why:''}`);
+  L.push(`필요 블록 ${(prof.blocks||[]).length}개:`);for(const b of prof.blocks||[])L.push(`  [${b.id}] ${b.label}${b.why?' — '+b.why:''}${b.parts&&b.parts.length?'\n      후보: '+b.parts.map(normPart).filter(Boolean).map(p=>p.mpn+(p.mfr?' ('+p.mfr+')':'')).join(' · '):''}`);
   return L.join('\n');}
 /* ---- Claude: same shape for any product ---- */
 function aiPrompt(req){const ex=clone(T.eps);ex.blocks=ex.blocks.slice(0,4);ex.links=ex.links.slice(0,3);ex.questions=ex.questions.slice(0,1);delete ex.re;
@@ -173,7 +202,7 @@ Rules:
 - "product": null if the request is not a recognizable product (then return {"product":null}).
 - "defaults": 5-8 short Korean lines of the normal requirements (supply, MCU class, bus, actuation/sensing, safety level, temperature/EMC).
 - "req": one Korean line of requirement keywords a rules engine can read (e.g. "12 V 차량 배터리, AURIX TC364, CAN-FD, BLDC 모터 구동(홀), ASIL D").
-- "blocks": EVERY HW block the product normally has (8-16): id (short lowercase ascii), group one of ${GROUPS.join('|')}, Korean/English label ≤ 40 chars, 2-4 feats, optional impl from ${IMPLS.join('|')} with params like the example (mcu part: "TC364DP-64F300F" or "STM32F042K6U6"; ldo vout; pwr_in vin; led n; button n; dcmotor shunt; bldc hall), optional parts (2 typical part numbers), why. Use ids pin, sbc or reg, mcu, canbus, canx, conn, dbg where they apply; set "ext": true for buses/connectors.
+- "blocks": EVERY HW block the product normally has (8-16): id (short lowercase ascii), group one of ${GROUPS.join('|')}, Korean/English label ≤ 40 chars, 2-4 feats, optional impl from ${IMPLS.join('|')} with params like the example (mcu part: "TC364DP-64F300F" or "STM32F042K6U6"; ldo vout; pwr_in vin; led n; button n; dcmotor shunt; bldc hall), parts: 3-5 candidate ICs from DIFFERENT makers as objects {mpn, mfr, note, grade} (real orderable part numbers, AEC-Q100 where it applies; note = one short Korean line on what sets it apart), why. Use ids pin, sbc or reg, mcu, canbus, canx, conn, dbg where they apply; set "ext": true for buses/connectors.
 - "links": every interface between blocks [from, to, label, kind power|signal|bus|safe].
 - "questions": 3-6 questions, each tied to a block, ONLY about facts that change the architecture and that the request does not already state (type/current class, sensor interface, bus, redundancy, safety level, channel counts). Each option has an "effect": feats {blockId:[...]}, add [blocks], links, remove [ids], impl {id,type,params}, dup [{id,n}], asil "A|B|C|D|QM", req "keywords". Use "multi": true only when several options can be chosen together.
 - Answer everything in Korean except ids/part numbers. No prose outside the JSON.
@@ -182,11 +211,11 @@ Request: ${req}`;}
 function fromAi(o){if(!o||typeof o!=='object'||!o.product||!Array.isArray(o.blocks)||!o.blocks.length)return null;
   const p={key:'ai',name:S(o.name||o.product),defaults:Array.isArray(o.defaults)?o.defaults.map(S).filter(Boolean):[],req:S(o.req),blocks:[],links:[],questions:[]};
   const seen=new Set();for(const b of o.blocks){const id=S(b.id).toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,16);if(!id||seen.has(id)||!S(b.label))continue;seen.add(id);
-    p.blocks.push({id,group:S(b.group)||'io',label:S(b.label).slice(0,40),feats:Array.isArray(b.feats)?b.feats.map(S).filter(Boolean).slice(0,6):[],impl:Array.isArray(b.impl)?b.impl.filter(i=>i&&IMPLS.includes(i.type)).map(i=>({type:i.type,params:i.params&&typeof i.params==='object'?i.params:{}})):[],ext:!!b.ext,parts:Array.isArray(b.parts)?b.parts.map(S).filter(Boolean).slice(0,3):[],why:S(b.why)});}
+    p.blocks.push({id,group:S(b.group)||'io',label:S(b.label).slice(0,40),feats:Array.isArray(b.feats)?b.feats.map(S).filter(Boolean).slice(0,6):[],impl:Array.isArray(b.impl)?b.impl.filter(i=>i&&IMPLS.includes(i.type)).map(i=>({type:i.type,params:i.params&&typeof i.params==='object'?i.params:{}})):[],ext:!!b.ext,parts:Array.isArray(b.parts)?b.parts.map(normPart).filter(x=>x&&x.mpn).slice(0,5):[],why:S(b.why)});}
   for(const l of o.links||[]){if(Array.isArray(l)&&l.length>=2)p.links.push([S(l[0]),S(l[1]),S(l[2]),S(l[3])]);else if(l&&l.from)p.links.push([S(l.from),S(l.to),S(l.label),S(l.kind)]);}
   for(const q of o.questions||[]){if(!q||!S(q.q))continue;const opts=(q.options||[]).map(x=>typeof x==='string'?{label:x,effect:{}}:x).filter(x=>x&&S(x.label)).map(x=>({label:S(x.label).slice(0,60),effect:x.effect&&typeof x.effect==='object'?x.effect:{}}));if(!opts.length)continue;
     p.questions.push({key:S(q.key)||'q'+(p.questions.length+1),block:S(q.block),q:S(q.q),why:S(q.why),multi:!!q.multi,options:opts});}
   return p;}
-return{T,detect,apply,summary,aiPrompt,fromAi,GROUPS,IMPLS};
+return{T,PARTS,detect,apply,summary,aiPrompt,fromAi,candidates,normPart,GROUPS,IMPLS};
 })();
 if(typeof module!=='undefined')module.exports=PRODUCTS;

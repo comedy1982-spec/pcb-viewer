@@ -47,3 +47,16 @@ test('products: Claude profile is validated into the same shape', () => {
   assert.match(PRODUCTS.aiPrompt('EPS 설계'), /"questions"/);
   const r = PRODUCTS.apply(p, { k: 'B' }, 'OBC', HWARCH); assert.equal(r.asil, 'B'); assert.equal(r.arch.blocks.length, 2);
 });
+
+test('products: part candidates per block from several makers', () => {
+  const p = PRODUCTS.detect('EPS');
+  const g = PRODUCTS.candidates(p, 'gate');
+  assert.ok(g.length >= 3 && new Set(g.map(x => x.mfr)).size >= 3, 'several makers');
+  assert.ok(g.every(x => x.mpn && x.note));
+  assert.equal(PRODUCTS.candidates(p, 'ign').length, 0);
+  for (const k of Object.keys(PRODUCTS.T)) { const q = PRODUCTS.detect(PRODUCTS.T[k].name); const n = q.blocks.filter(b => PRODUCTS.candidates(q, b.id).length).length; assert.ok(n >= 6, k + ' blocks with candidates: ' + n); }
+  assert.match(PRODUCTS.summary(p), /후보: TLE9180D-31QK \(Infineon\)/);
+  const ai = PRODUCTS.fromAi({ product: 'X', blocks: [{ id: 'a', group: 'io', label: 'A', parts: [{ mpn: 'P1', mfr: 'M', note: 'n' }, 'P2', ['P3', 'M3', 'x']] }, { id: 'b', group: 'ctrl', label: 'B' }, { id: 'c', group: 'power', label: 'C' }, { id: 'd', group: 'comm', label: 'D' }] });
+  assert.deepEqual(PRODUCTS.candidates(ai, 'a').map(x => x.mpn), ['P1', 'P2', 'P3']);
+  assert.match(PRODUCTS.aiPrompt('x'), /DIFFERENT makers/);
+});

@@ -15,6 +15,13 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 블록별 부품 후보 — 제조사별로 고르기 (v1.41.0)
+
+- `products.js` `PARTS`: 템플릿 블록마다 **제조사가 다른 후보 3–5개** `[MPN, 제조사, 한 줄 특징]` — 안전 PMIC(TLF35584·TPS65381A-Q1·FS2600·L9396), 락스텝 MCU(TC364·S32K344·SPC58·RH850/U2A·TMS570), CAN-FD(TJA1443·TLE9251·TCAN1043·MCP2542FD·ATA6563), 3상 게이트 드라이버(TLE9180·L9908·DRV8353·GD3000·A4919), 40 V MOSFET, 션트 앰프/전류 센서, 역접속 보호, HSD/LSD/LIN, 절연 AFE·ΔΣ·전압 앰프, 절연 게이트 드라이버, 파워 모듈, RDC, 각도·토크 센서. `candidates(prof,id)`로 조회(AI 프로필은 `parts` 객체 {mpn,mfr,note,grade}를 같은 형식으로 검증). 요약 출력에 "후보: …" 표시.
+- 1단계 흐름: 블록 Q&A 뒤 **부품 선정 Q&A** — 후보가 있는 블록마다 `[블록] 부품을 고르세요`(선택지: 후보 · 라이브러리 기본 유지 · 나머지 모두 1순위). 건너뛰면 1순위.
+- `npSetPart`: 블록에 `part{mpn,mfr,note}` 기록 + 기능 줄 "부품: MPN (제조사)". 블록이 교체 가능한 단일 IC(can·bldc·dcmotor·hs_switch·vmon·uart·i2c·flash·led·button, 또는 구현 없음)이고 핀을 알면(라이브러리, AI 모드면 Claude 추정) `impl <id> part <MPN>`으로 회로 구현까지 교체; 핀을 못 얻으면 구현을 되돌리고 기록만. 전원/SBC/MCU처럼 복합 블록은 기록만(2단계 `add part`로 교체 가능). `map`에 "· 부품 MPN" 표시.
+- 콘솔 `parts` (후보 목록) · `parts <블록>` · `parts <블록> <번호|MPN>`.
+
 ## 제품 프로필 — 표준 블록 먼저, 블록별 Q&A (v1.40.0)
 
 - `src/core/products.js` (`PRODUCTS`): 제품(차량용 ECU)마다 **표준 구성**을 프로필로 둠 — `defaults`(표준 요구사항 문장), `req`(규칙 엔진용 키워드), `blocks`(id·group·label·feats·impl·parts·why), `links`, `questions`(블록에 매인 질문; 선택지마다 `effect`: feats/add/links/remove/impl/dup/asil/req). `apply(prof,answers,name)`가 HWARCH 아키텍처를 결정론적으로 만들고 답변 효과를 반영(자유 입력은 해당 블록 feats에 "요구: …"로 기록), `req`에 ASIL 충돌을 정리한 요구 키워드 반환.

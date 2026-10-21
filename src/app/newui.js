@@ -17,6 +17,7 @@ const NP_HELP=[
   ['link <A> <B> "<신호/레일>" [--kind power|signal|bus] [--both] · unlink <A> <B>','블록 사이 인터페이스 (화살표와 라벨)'],
   ['impl <ID> <회로블록|none> [--파라미터 값] [--swap <기존블록>] · impl <ID> part <MPN> [--pins SI=SPI_MOSI,…]','HW 블록을 구현할 회로 라이브러리 블록 (2단계 부품 선정용). part <MPN>이면 부품 라이브러리/Claude 추정 핀 배열로 그 부품을 직접 넣음(전원·접지 자동, SPI/I²C/UART/IRQ 핀은 MCU 배정). 블록에 이미 부품·주 구현(bldc, can …)이 있으면 그것을 바꿈(--add 이면 추가). --swap 이면 기존 구현을 바꿈'],
   ['safety level <QM|A|B|C|D> [--goal "…"] · safety block <ID> <등급|auto> · safety apply [all|sw|uv wdt_ext drv_fb sbc cutoff2 …] · safety sw · safety ffi · safety','기능 안전: 시스템/블록 ASIL, 등급별 권장 HW 메커니즘 블록(전원 감시·외부 워치독·fault 리드백·SBC·이중 차단·리던던트 센서·2채널)과 SW 메커니즘(흐름 감시·BIST·범위 검사·메모리·클럭·ADC·E2E·리드백·타당성·HW 주기 테스트·파티셔닝 — MCU 블록에 기록), HW 부품마다 필요한 SW, FFI 경계, 상태'],
+  ['parts [블록ID [번호|MPN]]','제품 프로필의 블록별 부품 후보(제조사별 3–5개) 보기 · 고르기. 고른 부품은 블록에 기록되고, 핀을 아는 단일 IC 블록(CAN·게이트 드라이버·HSD·센서 앰프 …)이면 회로 구현(impl … part)으로 바뀜.'],
   ['dup <블록ID|회로블록>','블록 복제 — 같은 구현·연결을 가진 두 번째 블록 (예: 모터 드라이버 2개 → dup drv)'],
   ['bind','블록 이름·기능에 적힌 부품 번호(CC2420 등)를 impl part 로 연결 (AI 모드면 핀 배열 추정)'],
   ['map · view hw|parts','아키텍처 → 회로 블록 대응 · 다이어그램 종류 (HW 블록 / 부품 구성)'],['plan · status','블록·전원 레일·MCU 핀 배정·BOM·경고'],['name <이름> · req <요구사항>','프로젝트 이름·요구사항'],
@@ -28,7 +29,7 @@ const NP_HELP=[
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -91,6 +92,10 @@ async function npRun(line,by){
       const b=HWARCH.addBlock(A,src.group,src.label.replace(/\s*#\d+$/,'')+' #'+n,{feats:src.feats.filter(f=>!/^SW:/.test(f)).slice(),id:src.id.replace(/\d+$/,'')+n,asil:src.asil});b.impl=JSON.parse(JSON.stringify(src.impl||[]));
       A.links.filter(l=>l.a===src.id||l.b===src.id).forEach(l=>{const other=l.a===src.id?l.b:l.a;const lab=(l.label||'').replace(/\s*#\d+$/,'')+(l.kind==='power'?'':' #'+n);if(l.a===src.id)HWARCH.link(A,b.id,other,lab,{kind:l.kind,both:l.both});else HWARCH.link(A,other,b.id,lab,{kind:l.kind,both:l.both});});
       NP.planManual=false;archToPlan(true);npRender();return`${b.id} "${b.label}" 추가 (${src.id} 복제: 구현 ${b.impl.map(i=>i.type).join('+')||'없음'}, 연결 ${A.links.filter(l=>l.a===b.id||l.b===b.id).length}개)`;}
+    case'parts':{const prof=NP.prof;if(!prof)throw new Error('제품 프로필이 없습니다 — 요구사항에 제품명(EPS·BMS·BCM·인버터 …)을 적고 다시 분석하세요');const A=archEnsure();
+      if(!a._[0])return A.blocks.map(b=>{const c=PRODUCTS.candidates(prof,b.id.replace(/\d+$/,''));return c.length?`${b.id} ${b.label}${b.part?' ⇒ '+b.part.mpn:''}\n`+c.map((p,i)=>`    ${i+1}. ${p.mpn} · ${p.mfr}${p.note?' — '+p.note:''}`).join('\n'):null;}).filter(Boolean).join('\n')||'후보 부품이 있는 블록이 없습니다';
+      const b=HWARCH.find(A,a._[0]);const c=PRODUCTS.candidates(prof,b.id.replace(/\d+$/,''));const key=a._.slice(1).join(' ');if(!key)return c.length?c.map((p,i)=>`${i+1}. ${p.mpn} · ${p.mfr}${p.note?' — '+p.note:''}`).join('\n'):`${b.id}: 후보 없음 — parts ${b.id} <MPN> 으로 직접 지정`;
+      npPush();const sel=/^\d+$/.test(key)?c[+key-1]:(c.find(p=>PARTLIB.norm(p.mpn)===PARTLIB.norm(key))||{mpn:key,mfr:'',note:''});if(!sel)throw new Error('번호 범위: 1–'+c.length);return await npSetPart(b,sel);}
     case'bind':{const r=await npBindParts();return r.length?'부품 번호 → 회로 구현: '+r.join(', '):'블록 이름·기능에서 라이브러리에 있는 부품 번호를 찾지 못했습니다 (impl <ID> part <MPN> 으로 직접 지정).';}
     case'map':{const A=archEnsure();const t=HWARCH.toPlan(A);return`${A.blocks.filter(b=>!b.ext).map(b=>`${b.id} ${b.label} ⇒ ${(b.impl||[]).length?npImplText(b):'(없음 — 회로 단계에서 직접)'}`).join('\n')}${t.log.length?'\n'+t.log.join(' · '):''}\n\n${NEWPROJ.summary(t.plan).text.split('\n').slice(0,4).join('\n')}`;}
     case'view':{const v=/part|부품/.test(a._[0]||'')?'parts':'hw';SYS.view=v;sysRender();return v==='hw'?'HW 블록 다이어그램':'부품 구성도';}
@@ -145,7 +150,7 @@ const NP_WORDS=[[/벅|buck|dc-?dc|스위칭|smps/i,'buck'],[/ldo|리니어|선�
 function npWordKey(seg){for(const[re,k]of NP_WORDS)if(re.test(seg))return k;return null;}
 function npGroupOf(k){return/^(pwr_in|usb_in|ldo|buck|supervisor|hs_switch|vmon)$/.test(k)?'power':/^(can|uart|i2c)$/.test(k)?'comm':/^(mcu|xtal)$/.test(k)?'ctrl':'io';}
 /* the HW block (and its impl entry) that implements a circuit block type or plan id */
-function npImplText(b){return (b.impl||[]).map(i=>i.type==='part'?'part '+(i.params&&i.params.mpn||'?'):i.type).join(' + ')||'(구현 없음)';}
+function npImplText(b){return ((b.impl||[]).map(i=>i.type==='part'?'part '+(i.params&&i.params.mpn||'?'):i.type).join(' + ')||'(구현 없음)')+(b.part&&!(b.impl||[]).some(i=>i.type==='part')?' · 부품 '+b.part.mpn:'');}
 function npArchImpl(idOrType){const A=NP.arch;if(!A)return null;const raw=String(idOrType||'').trim();
   if(raw&&typeof PARTLIB!=='undefined'){const n=PARTLIB.norm(raw);for(const b of A.blocks){const im=(b.impl||[]).find(i=>i.type==='part'&&i.params&&PARTLIB.norm(i.params.mpn||'')===n);if(im)return{b,im};}} // part number first (remove A4918)
   const t=raw.toLowerCase().replace(/\d+$/,'');const k=NEWPROJ.blockKey(t)||t;
@@ -278,6 +283,27 @@ async function npProduct(req){if(typeof PRODUCTS==='undefined')return null;if(/�
   if(AIM.mode==='ai'&&CLI.sample){try{copSay('out','제품 종류와 표준 블록 구성을 Claude가 찾는 중…');const j=await CLI.sample.json(PRODUCTS.aiPrompt(req),{cache:false,modelTier:AIM.tier});prof=j&&j.product===null?null:PRODUCTS.fromAi(j);if(prof&&prof.blocks.length<4)prof=null;}catch(e){npSay('err','제품 프로필(Claude): '+(e.message||e));}}
   if(!prof)prof=PRODUCTS.detect(req);
   return prof;}
+/* part candidates per block (several makers) → the user picks one per block; the pick is recorded on the block and, when the
+   part's pins are known (library or Claude estimate in AI mode) and the block is a single swappable IC, becomes impl … part */
+const NP_SWAP=/^(can|bldc|dcmotor|hs_switch|vmon|uart|i2c|flash|led|button)$/;
+async function npSetPart(b,p){const prev=JSON.parse(JSON.stringify(b.impl||[]));b.part={mpn:p.mpn,mfr:p.mfr||'',note:p.note||''};
+  b.feats=(b.feats||[]).filter(f=>!/^부품: /.test(f));b.feats.push(`부품: ${p.mpn}${p.mfr?' ('+p.mfr+')':''}`);
+  const L=b.impl||[];const single=!L.length||(L.length===1&&NP_SWAP.test(L[0].type))||L.some(i=>i.type==='part');let how='기록 (회로는 라이브러리 블록 구성 유지 · 2단계에서 add part로 교체 가능)';
+  if(single){const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;const pins=r=>!!(r&&r.pins&&r.pins.length);
+    if(pins(rec)||(AIM.mode==='ai'&&CLI.sample)){try{await npRun(`impl ${b.id} part ${p.mpn}`);const r2=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;if(pins(r2))how=`회로 구현 → part ${p.mpn}${r2.src==='ai'?' (Claude 추정 핀)':''}`;else{b.impl=prev;how='핀 정보를 얻지 못해 기록만 (라이브러리 블록 유지)';}}catch(e){b.impl=prev;how='회로 구현 실패: '+(e.message||e)+' → 기록만';}}
+    else how='핀 정보 없음 → 기록만 (AI 모드에서는 Claude가 핀을 추정해 회로에 넣음)';}
+  NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — ${how}`;}
+async function npPickParts(prof){const A=NP.arch;if(!A||!prof)return;
+  const cb=A.blocks.map(b=>({b,c:PRODUCTS.candidates(prof,b.id)||[]})).map(x=>x.c.length?x:{b:x.b,c:PRODUCTS.candidates(prof,x.b.id.replace(/\d+$/,''))}).filter(x=>x.c.length);
+  if(!cb.length)return;
+  copSay('out',`블록별 부품 후보 — ${cb.length}개 블록. 고르거나 건너뛰면 1순위 추천을 쓰고, "나머지 모두 1순위"로 한 번에 정합니다. 나중에 parts <블록> <번호|MPN> 으로 바꿀 수 있습니다.`);
+  let rest=false;const picked=[];
+  for(const{b,c}of cb){let a=null;
+    if(!rest){a=await copAsk({q:`[${b.label}] 부품을 고르세요`,why:c.map((p,i)=>`${i+1}. ${p.mpn} · ${p.mfr}${p.note?' — '+p.note:''}`).join('\n'),opts:c.map(p=>`${p.mpn} · ${p.mfr}`).concat(['라이브러리 기본 유지','나머지 모두 1순위'])});if(NP.stopReq)break;}
+    if(a==='나머지 모두 1순위'){rest=true;a=null;}if(a==='라이브러리 기본 유지')continue;
+    const p=a?(c.find(x=>a.startsWith(x.mpn))||{mpn:a.split(' · ')[0].trim(),mfr:'',note:''}):c[0];
+    try{picked.push(await npSetPart(b,p));}catch(e){picked.push(`${b.id}: ${e.message||e}`);}}
+  if(picked.length)npSay('ok','부품 지정:\n'+picked.join('\n'));}
 async function npAnalyze(req,inner){
   if(NP.busy&&!inner)return;npBusy(true);NP.answers=NP.answers||{};const name=$('#npName').value.trim();
   try{
@@ -295,6 +321,7 @@ async function npAnalyze(req,inner){
       full=base+'\n보강: 제품 '+prof.name+(prodRes.req?' · '+prodRes.req:'');$('#npReq').value=full;if(NP.plan)NP.plan.req=full;
       npPush();NP.arch=prodRes.arch;NP.arch.req=full;NP.arch.product=prof.key||'ai';if(name)NP.arch.name=name;SYS.view='hw';NP.planManual=false;archToPlan(true);npRender();
       npSay('ok',`${prof.name} 표준 구성으로 HW 블록 ${NP.arch.blocks.length}개 · 인터페이스 ${NP.arch.links.length}개를 만들었습니다.${prodRes.log.length?'\n반영: '+prodRes.log.join(' · '):''}`);
+      NP.prof=prof;await npPickParts(prof);
       const bound=await npBindParts();if(bound.length)npSay('ok','블록에 적힌 부품 번호를 회로 구현으로 연결: '+bound.join(', '));
     }else{
     let qs=null;if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample)qs=await npAskAI(req);}
