@@ -14,7 +14,7 @@ const CLI_HELP=[
   ['board stack','층 구성(스택업)과 플레인 넷 보기'],
   ['board minimize [--margin 1] [--strategy compact] [--route] [--keep]','보드 크기 최소화: 부품이 겹치지 않는 가장 작은 크기를 찾아 다시 배치. --route면 배선까지 되는 크기를 찾음 (안 되면 한 단계씩 키움). --keep은 지금 배치 그대로 외곽만 줄임'],
   ['strategies','배치 전략 설명 (balanced · thermal · noise · compact)'],
-  ['reset [--strategy S] [--seed N] [--both] [--route]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. --route면 이어서 자동 배선'],
+  ['reset [--strategy S] [--seed N] [--both] [--route]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립). --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
   ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B]','GND·전원 플레인 비아 팬아웃 후 열린 넷을 자동 배선 (막히면 주변 넷을 뜯고 다시 배선)'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
@@ -300,8 +300,9 @@ function cliNL(t){const s=t.toLowerCase();const out=[];
   const mini=/(최소화|최소로|최소\s*크기|minimi[sz]e|shrink|줄여|작게)/.test(s)&&/(크기|사이즈|싸이즈|size|보드|기판|면적|외곽)/.test(s);
   if(mini){out.push(`board minimize${wantRoute||PCB.cuKeys(BD).some(k=>BD.layers[k+'.cu'].some(p=>p.auto&&!p.fan))?' --route':''}${/유지|그대로|외곽만/.test(s)?' --keep':''}`);return out;}
   if(ly&&!/배치|배선|리셋|place|route/.test(s))return out;
-  if(/리셋|초기화|처음부터|reset|새로|전부\s*다시|싹/.test(s))out.push(`reset${strat?' --strategy '+strat:''}`);
-  else if(/배치|place|옮겨|재배치|정리/.test(s)||(strat&&!wantRoute))out.push(`place${strat?' --strategy '+strat:''}`);
+  const both=/양면|하단(에|으로)?\s*(도|까지)|bottom.?side|both\s*side|뒷면(에|도)/.test(s)&&!/단면|top만|상단만/.test(s)?' --both':'';
+  if(/리셋|초기화|처음부터|reset|새로|전부\s*다시|싹/.test(s))out.push(`reset${strat?' --strategy '+strat:''}${both}`);
+  else if(/배치|place|옮겨|재배치|정리/.test(s)||(strat&&!wantRoute)||both)out.push(`${both&&/처음|새로|다시/.test(s)?'reset':'place'}${strat?' --strategy '+strat:''}${both}`);
   if(wantRoute)out.push(`route${strat?' --strategy '+strat:''}`);
   if(/drc|검사|규칙/.test(s))out.push('drc');
   if(/리포트|보고|report|분석|평가|결과|온도|열\s*해석/.test(s))out.push(`report ${/온도|열/.test(s)?'thermal':/emc|노이즈|잡음/.test(s)?'emc':'place'}`);
@@ -367,6 +368,7 @@ const CLI_SYS=`You are a PCB layout assistant embedded in a PCB viewer. The user
 Commands (exactly this syntax):
 ${'$'}{CMDS}
 Strategies: balanced (wirelength/decoupling/heat/noise evenly), thermal (heat sources spread apart, away from electrolytic caps/crystals/analog), noise (decaps at pins, short switching loops, switching parts far from MCU/crystal/analog, ground plane kept whole), compact (short wiring, parts gathered).
+Sides: parts go on the TOP side only by default (single-sided assembly: one reflow pass, cheapest, connectors/through-hole/electrolytics must be top). "reset --both" / "place --both" also uses the bottom for passives and small ICs (two-sided assembly) — use it when the user asks for 양면/하단 배치 or the board must be smaller than single-sided allows.
 Moving: "move REF x y [deg]", "rotate REF deg", "flip REF" (to the other side) remove that part's auto-routed tracks and re-route its nets right away (add --no-route to leave the ratsnest open); hand-drawn tracks are kept.
 Board shape: "board shape circle 60" / "board shape oval 80 40" / "board shape L 100 60 --cut 40x25 --at tr" / "board shape hex 60" / "board shape round 100 60 --corner 3" / "board shape poly --pts \"0,0 80,0 80,40 40,60 0,40\""; cutouts: "board cutout circle 8 --at 20,20", "board cutout rect 20x10 --at 50,30". After a shape change that leaves parts outside, run "place" or "reset".
 Copper layers: "board layers N" (2/4/6/8/10) builds a standard stack-up (e.g. 8 = S/GND/S/GND/PWR/S/GND/S) with inner GND/PWR planes and inner signal layers, and drops plane vias — always run it when the user asks for a layer count (e.g. "8층"). Size: "board minimize --route" finds the smallest board that still places and routes (slow); "board minimize" only re-places; "board size W H" sets an exact size. MCU pins: "pinswap" shows a routing-friendly re-assignment, "pinswap --apply --route" changes the circuit (board nets, schematic, HSIS) and routes — allowed in the PCB step.

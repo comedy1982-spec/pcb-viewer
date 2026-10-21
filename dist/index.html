@@ -5928,7 +5928,10 @@ function place(B,opts){
     const vx=bd.cx-px,vy=bd.cy-py;if(Math.hypot(vx,vy)<Math.max(1,0.18*Math.max(bd.w,bd.h)))return null;return Math.abs(vx)>Math.abs(vy)?[Math.sign(vx),0]:[0,Math.sign(vy)];});
   const idx=new Map(movable.map((o,i)=>[o.ref,i]));
   const both=opts.both||opts.sides==='both';
-  const canB=movable.map(o=>both&&o.two&&!o.tht&&!o.elcap&&!o.conn);
+  // bottom side (--both): passives, and small SMD ICs (SOT-23 · SOIC-8 class, ≤ 7 mm) that are not heat sources / the MCU;
+  // through-hole parts, connectors and electrolytics stay on top. opts.bothIcs=false limits it to 2-pin parts.
+  const small=o=>{const b=o.c.bb;return b&&(b[2]-b[0])<=7&&(b[3]-b[1])<=7;};
+  const canB=movable.map(o=>both&&!o.tht&&!o.elcap&&!o.conn&&(o.two||(opts.bothIcs!==false&&small(o)&&!o.mcu&&!o.driver&&!o.reg&&!o.fet&&!(o.P>0.3))));
   // obstacles: fixed parts and mounting holes
   const obst=[];info.list.forEach(o=>{if(idx.has(o.ref))return;obst.push({bb:o.c.bb.slice(),side:o.tht?'both':o.c.side,halo:o.halo,o,cx:(o.c.bb[0]+o.c.bb[2])/2,cy:(o.c.bb[1]+o.c.bb[3])/2});});
   B.drills.forEach(d=>{if(d.plated||d.own||d._pad)return;const k=d.d/2+0.8;obst.push({bb:[d.x-k,d.y-k,d.x+k,d.y+k],side:'both',halo:0.4,hole:true,cx:d.x,cy:d.y});});
@@ -12569,7 +12572,7 @@ const CLI_HELP=[
   ['board stack','층 구성(스택업)과 플레인 넷 보기'],
   ['board minimize [--margin 1] [--strategy compact] [--route] [--keep]','보드 크기 최소화: 부품이 겹치지 않는 가장 작은 크기를 찾아 다시 배치. --route면 배선까지 되는 크기를 찾음 (안 되면 한 단계씩 키움). --keep은 지금 배치 그대로 외곽만 줄임'],
   ['strategies','배치 전략 설명 (balanced · thermal · noise · compact)'],
-  ['reset [--strategy S] [--seed N] [--both] [--route]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. --route면 이어서 자동 배선'],
+  ['reset [--strategy S] [--seed N] [--both] [--route]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립). --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
   ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B]','GND·전원 플레인 비아 팬아웃 후 열린 넷을 자동 배선 (막히면 주변 넷을 뜯고 다시 배선)'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
@@ -12855,8 +12858,9 @@ function cliNL(t){const s=t.toLowerCase();const out=[];
   const mini=/(최소화|최소로|최소\s*크기|minimi[sz]e|shrink|줄여|작게)/.test(s)&&/(크기|사이즈|싸이즈|size|보드|기판|면적|외곽)/.test(s);
   if(mini){out.push(`board minimize${wantRoute||PCB.cuKeys(BD).some(k=>BD.layers[k+'.cu'].some(p=>p.auto&&!p.fan))?' --route':''}${/유지|그대로|외곽만/.test(s)?' --keep':''}`);return out;}
   if(ly&&!/배치|배선|리셋|place|route/.test(s))return out;
-  if(/리셋|초기화|처음부터|reset|새로|전부\s*다시|싹/.test(s))out.push(`reset${strat?' --strategy '+strat:''}`);
-  else if(/배치|place|옮겨|재배치|정리/.test(s)||(strat&&!wantRoute))out.push(`place${strat?' --strategy '+strat:''}`);
+  const both=/양면|하단(에|으로)?\s*(도|까지)|bottom.?side|both\s*side|뒷면(에|도)/.test(s)&&!/단면|top만|상단만/.test(s)?' --both':'';
+  if(/리셋|초기화|처음부터|reset|새로|전부\s*다시|싹/.test(s))out.push(`reset${strat?' --strategy '+strat:''}${both}`);
+  else if(/배치|place|옮겨|재배치|정리/.test(s)||(strat&&!wantRoute)||both)out.push(`${both&&/처음|새로|다시/.test(s)?'reset':'place'}${strat?' --strategy '+strat:''}${both}`);
   if(wantRoute)out.push(`route${strat?' --strategy '+strat:''}`);
   if(/drc|검사|규칙/.test(s))out.push('drc');
   if(/리포트|보고|report|분석|평가|결과|온도|열\s*해석/.test(s))out.push(`report ${/온도|열/.test(s)?'thermal':/emc|노이즈|잡음/.test(s)?'emc':'place'}`);
@@ -12922,6 +12926,7 @@ const CLI_SYS=`You are a PCB layout assistant embedded in a PCB viewer. The user
 Commands (exactly this syntax):
 ${'$'}{CMDS}
 Strategies: balanced (wirelength/decoupling/heat/noise evenly), thermal (heat sources spread apart, away from electrolytic caps/crystals/analog), noise (decaps at pins, short switching loops, switching parts far from MCU/crystal/analog, ground plane kept whole), compact (short wiring, parts gathered).
+Sides: parts go on the TOP side only by default (single-sided assembly: one reflow pass, cheapest, connectors/through-hole/electrolytics must be top). "reset --both" / "place --both" also uses the bottom for passives and small ICs (two-sided assembly) — use it when the user asks for 양면/하단 배치 or the board must be smaller than single-sided allows.
 Moving: "move REF x y [deg]", "rotate REF deg", "flip REF" (to the other side) remove that part's auto-routed tracks and re-route its nets right away (add --no-route to leave the ratsnest open); hand-drawn tracks are kept.
 Board shape: "board shape circle 60" / "board shape oval 80 40" / "board shape L 100 60 --cut 40x25 --at tr" / "board shape hex 60" / "board shape round 100 60 --corner 3" / "board shape poly --pts \"0,0 80,0 80,40 40,60 0,40\""; cutouts: "board cutout circle 8 --at 20,20", "board cutout rect 20x10 --at 50,30". After a shape change that leaves parts outside, run "place" or "reset".
 Copper layers: "board layers N" (2/4/6/8/10) builds a standard stack-up (e.g. 8 = S/GND/S/GND/PWR/S/GND/S) with inner GND/PWR planes and inner signal layers, and drops plane vias — always run it when the user asks for a layer count (e.g. "8층"). Size: "board minimize --route" finds the smallest board that still places and routes (slow); "board minimize" only re-places; "board size W H" sets an exact size. MCU pins: "pinswap" shows a routing-friendly re-assignment, "pinswap --apply --route" changes the circuit (board nets, schematic, HSIS) and routes — allowed in the PCB step.
@@ -13562,13 +13567,14 @@ function pcbGatePaint(){
       <label>보드 모양 <select name="shape">${Object.entries(PCBEDIT.SHAPES).filter(([k])=>k!=='poly').map(([k,v])=>`<option value="${k}"${k===(p.shape||'rect')?' selected':''}>${v}</option>`).join('')}</select></label>
       <label class="pg-sh">모양 값 <input type="text" name="shapeArg" placeholder="corner R · circle 지름 · L/T 절개 가로x세로 [tr|tl|br|bl]" value="${esc(p.shapeArg||'')}"></label>
       <label>배치 전략 <select name="s">${Object.entries(AUTOPLACE.STRATS).map(([k,v])=>`<option value="${k}"${k===p.strategy?' selected':''}>${v.label}</option>`).join('')}</select></label>
-      <label class="chkl"><input type="checkbox" name="route"${p.route!==false?' checked':''}> 이어서 자동 배선${'' }</label></div>
+      <label class="chkl"><input type="checkbox" name="route"${p.route!==false?' checked':''}> 이어서 자동 배선${'' }</label>
+      <label class="chkl" title="기본은 상단 단면 조립(리플로 1회, 가장 저렴). 양면이면 수동소자·소형 IC를 하단에도 놓아 보드가 작아지지만 조립 공정이 2회가 됩니다."><input type="checkbox" name="both"${p.both?' checked':''}> 양면 배치 (하단에 수동소자·소형 IC)</label></div>
     <p class="lead pg-note">PCB 단계에서는 배선을 위해 MCU 핀 배정을 바꾸는 등 회로를 함께 고칠 수 있습니다 (CLI pinswap · 분할 보기에서 회로도 편집).</p>
     <div class="acts"><button type="button" class="btn sm" data-sch>회로도로 돌아가기</button><button type="button" class="btn sm" data-cli title="오른쪽 설계 도우미에 명령이나 문장으로 지시">도우미로 지시</button><button class="btn primary sm">PCB 설계 시작</button></div></form>`;
   $('#vp').appendChild(el);const F=el.querySelector('[data-f]');const wh=F.querySelector('.pg-wh');const sz=F.querySelector('[name=size]');const shp=F.querySelector('[name=shape]'),sha=F.querySelector('.pg-sh');const upd=()=>{wh.hidden=sz.value!=='fix';sha.hidden=shp.value==='rect'||shp.value==='oval';const ph={round:'모서리 R (mm) · 비우면 10%',circle:'지름 (mm) · 비우면 가로',L:'절개 가로x세로 [tr|tl|br|bl]',T:'기둥 가로x세로',hex:'폭(평행면 간) mm',oct:'폭 mm'};sha.querySelector('input').placeholder=ph[shp.value]||'';};sz.addEventListener('change',upd);shp.addEventListener('change',upd);upd();
   el.querySelector('[data-sch]').addEventListener('click',()=>setStep(2));
   el.querySelector('[data-cli]').addEventListener('click',()=>{if(S.view!=='T'&&S.view!=='B')setView('T');cliToggle(true);});
-  F.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(F);const q={layers:+d.get('layers'),min:d.get('size')==='min',board:d.get('size')==='fix'?{w:+d.get('w'),h:+d.get('h')}:null,strategy:d.get('s'),route:!!d.get('route'),shape:d.get('shape')||'rect',shapeArg:(d.get('shapeArg')||'').trim()};BD.pcbPlan=q;pcbStart(q);});
+  F.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(F);const q={layers:+d.get('layers'),min:d.get('size')==='min',board:d.get('size')==='fix'?{w:+d.get('w'),h:+d.get('h')}:null,strategy:d.get('s'),route:!!d.get('route'),both:!!d.get('both'),shape:d.get('shape')||'rect',shapeArg:(d.get('shapeArg')||'').trim()};BD.pcbPlan=q;pcbStart(q);});
 }
 async function pcbStart(p){
   p=Object.assign({layers:2,min:false,route:true,strategy:'balanced',board:null},p||{});const g=$('#pcbGate');if(g)g.remove();
@@ -13577,8 +13583,8 @@ async function pcbStart(p){
   if(p.board&&!p.min)cmds.push(`board size ${p.board.w} ${p.board.h} --anchor center`);
   {if(p.shape&&p.shape!=='rect'){const w=p.board?p.board.w:BD.W,h=p.board?p.board.h:BD.H;const arg=String(p.shapeArg||'');const num=parseFloat(arg);const cut=(arg.match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/)||[])[0];const at=(arg.match(/\b(tr|tl|br|bl)\b/i)||[])[1];
       cmds.push(p.shape==='round'?`board shape round ${w} ${h}${isFinite(num)?' --corner '+num:''}`:p.shape==='circle'?`board shape circle ${isFinite(num)?num:Math.min(w,h)}`:p.shape==='hex'||p.shape==='oct'?`board shape ${p.shape} ${isFinite(num)?num:w}`:p.shape==='L'||p.shape==='T'?`board shape ${p.shape} ${w} ${h}${cut?' --cut '+cut.replace(/\s/g,''):''}${at?' --at '+at:''}`:`board shape ${p.shape} ${w} ${h}`);}}
-  if(p.min)cmds.push(`board minimize --strategy ${p.strategy}${p.route?' --route':''}`);
-  else cmds.push(`reset --strategy ${p.strategy}${p.route?' --route':''}`);
+  if(p.min)cmds.push(`board minimize --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
+  else cmds.push(`reset --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
   cliSay('out','PCB 설계 시작: '+cmds.join(' → '));for(const c of cmds){await cliExec(c);if(CLI.stopReq)break;}
   stepPaint();}
 /* ---------- step 2 entry: three circuit variants to pick from (price · features · extensibility) ---------- */

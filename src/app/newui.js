@@ -214,13 +214,14 @@ function pcbGatePaint(){
       <label>보드 모양 <select name="shape">${Object.entries(PCBEDIT.SHAPES).filter(([k])=>k!=='poly').map(([k,v])=>`<option value="${k}"${k===(p.shape||'rect')?' selected':''}>${v}</option>`).join('')}</select></label>
       <label class="pg-sh">모양 값 <input type="text" name="shapeArg" placeholder="corner R · circle 지름 · L/T 절개 가로x세로 [tr|tl|br|bl]" value="${esc(p.shapeArg||'')}"></label>
       <label>배치 전략 <select name="s">${Object.entries(AUTOPLACE.STRATS).map(([k,v])=>`<option value="${k}"${k===p.strategy?' selected':''}>${v.label}</option>`).join('')}</select></label>
-      <label class="chkl"><input type="checkbox" name="route"${p.route!==false?' checked':''}> 이어서 자동 배선${'' }</label></div>
+      <label class="chkl"><input type="checkbox" name="route"${p.route!==false?' checked':''}> 이어서 자동 배선${'' }</label>
+      <label class="chkl" title="기본은 상단 단면 조립(리플로 1회, 가장 저렴). 양면이면 수동소자·소형 IC를 하단에도 놓아 보드가 작아지지만 조립 공정이 2회가 됩니다."><input type="checkbox" name="both"${p.both?' checked':''}> 양면 배치 (하단에 수동소자·소형 IC)</label></div>
     <p class="lead pg-note">PCB 단계에서는 배선을 위해 MCU 핀 배정을 바꾸는 등 회로를 함께 고칠 수 있습니다 (CLI pinswap · 분할 보기에서 회로도 편집).</p>
     <div class="acts"><button type="button" class="btn sm" data-sch>회로도로 돌아가기</button><button type="button" class="btn sm" data-cli title="오른쪽 설계 도우미에 명령이나 문장으로 지시">도우미로 지시</button><button class="btn primary sm">PCB 설계 시작</button></div></form>`;
   $('#vp').appendChild(el);const F=el.querySelector('[data-f]');const wh=F.querySelector('.pg-wh');const sz=F.querySelector('[name=size]');const shp=F.querySelector('[name=shape]'),sha=F.querySelector('.pg-sh');const upd=()=>{wh.hidden=sz.value!=='fix';sha.hidden=shp.value==='rect'||shp.value==='oval';const ph={round:'모서리 R (mm) · 비우면 10%',circle:'지름 (mm) · 비우면 가로',L:'절개 가로x세로 [tr|tl|br|bl]',T:'기둥 가로x세로',hex:'폭(평행면 간) mm',oct:'폭 mm'};sha.querySelector('input').placeholder=ph[shp.value]||'';};sz.addEventListener('change',upd);shp.addEventListener('change',upd);upd();
   el.querySelector('[data-sch]').addEventListener('click',()=>setStep(2));
   el.querySelector('[data-cli]').addEventListener('click',()=>{if(S.view!=='T'&&S.view!=='B')setView('T');cliToggle(true);});
-  F.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(F);const q={layers:+d.get('layers'),min:d.get('size')==='min',board:d.get('size')==='fix'?{w:+d.get('w'),h:+d.get('h')}:null,strategy:d.get('s'),route:!!d.get('route'),shape:d.get('shape')||'rect',shapeArg:(d.get('shapeArg')||'').trim()};BD.pcbPlan=q;pcbStart(q);});
+  F.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(F);const q={layers:+d.get('layers'),min:d.get('size')==='min',board:d.get('size')==='fix'?{w:+d.get('w'),h:+d.get('h')}:null,strategy:d.get('s'),route:!!d.get('route'),both:!!d.get('both'),shape:d.get('shape')||'rect',shapeArg:(d.get('shapeArg')||'').trim()};BD.pcbPlan=q;pcbStart(q);});
 }
 async function pcbStart(p){
   p=Object.assign({layers:2,min:false,route:true,strategy:'balanced',board:null},p||{});const g=$('#pcbGate');if(g)g.remove();
@@ -229,8 +230,8 @@ async function pcbStart(p){
   if(p.board&&!p.min)cmds.push(`board size ${p.board.w} ${p.board.h} --anchor center`);
   {if(p.shape&&p.shape!=='rect'){const w=p.board?p.board.w:BD.W,h=p.board?p.board.h:BD.H;const arg=String(p.shapeArg||'');const num=parseFloat(arg);const cut=(arg.match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/)||[])[0];const at=(arg.match(/\b(tr|tl|br|bl)\b/i)||[])[1];
       cmds.push(p.shape==='round'?`board shape round ${w} ${h}${isFinite(num)?' --corner '+num:''}`:p.shape==='circle'?`board shape circle ${isFinite(num)?num:Math.min(w,h)}`:p.shape==='hex'||p.shape==='oct'?`board shape ${p.shape} ${isFinite(num)?num:w}`:p.shape==='L'||p.shape==='T'?`board shape ${p.shape} ${w} ${h}${cut?' --cut '+cut.replace(/\s/g,''):''}${at?' --at '+at:''}`:`board shape ${p.shape} ${w} ${h}`);}}
-  if(p.min)cmds.push(`board minimize --strategy ${p.strategy}${p.route?' --route':''}`);
-  else cmds.push(`reset --strategy ${p.strategy}${p.route?' --route':''}`);
+  if(p.min)cmds.push(`board minimize --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
+  else cmds.push(`reset --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
   cliSay('out','PCB 설계 시작: '+cmds.join(' → '));for(const c of cmds){await cliExec(c);if(CLI.stopReq)break;}
   stepPaint();}
 /* ---------- step 2 entry: three circuit variants to pick from (price · features · extensibility) ---------- */
