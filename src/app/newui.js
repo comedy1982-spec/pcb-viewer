@@ -192,7 +192,7 @@ async function npGenerate(o){
   if(BD&&BD.pid)B.pid=BD.pid;B.notes.push(`새 설계: ${P.blocks.length}개 블록에서 부품 ${r.parts.length}개와 회로도를 만들었습니다. 부품 배치·배선은 3단계(PCB)에서 시작합니다.`);r.warn.forEach(w=>B.warnings.push(w));
   setBoard(B);
   const sheets=BD.schSheets||(schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:'sch',sheets});
-  npSet(prog,`회로 생성 [${V.label}]: 부품 ${B.comps.length}개 · BOM 약 $${V.m.price} · 넷 ${Object.keys(B.nets).length}개 · 회로도 ${sheets?sheets.length:0}쪽 · MCU 핀 배정 ${r.assigned.length}개\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>'\n  △ '+x.title).join('')}\nPCB 조건(3단계에서 적용): ${pcbPlanText(B.pcbPlan)}`);
+  npSet(prog,`회로 생성 [${V.label}]: 부품 ${B.comps.length}개 · BOM 약 $${V.m.partsPrice} (예상 단가 $${V.m.price}) · 넷 ${Object.keys(B.nets).length}개 · 회로도 ${sheets?sheets.length:0}쪽 · MCU 핀 배정 ${r.assigned.length}개\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>'\n  △ '+x.title).join('')}\nPCB 조건(3단계에서 적용): ${pcbPlanText(B.pcbPlan)}`);
   SYS.src='plan';setStep(2);
   if(o.pcb){setStep(3);await pcbStart(B.pcbPlan);return'회로 생성 후 PCB 설계를 시작했습니다 — 결과는 배치·배선 CLI에 있습니다.';}
   toast(`${P.name}: 부품 ${B.comps.length}개로 회로를 만들었습니다. 회로도를 검토한 뒤 3단계에서 PCB를 시작하세요.`);
@@ -244,12 +244,13 @@ function planGatePaint(){
   const card=v=>`<article class="vcard${v===rec?' rec':''}${NP.picked===v.key&&BD&&BD.variant===v.key?' cur':''}" data-v="${v.key}">
       <div class="vc-h"><b>${esc(v.label)}</b><span class="vc-tag">${esc(v.tag)}</span>${v===rec?'<span class="vc-rec">추천</span>':''}${NP.picked===v.key&&BD&&BD.variant===v.key?'<span class="vc-cur">지금 회로</span>':''}</div>
       <p class="vc-d">${esc(v.desc)}</p>
-      <div class="vc-m"><div><b>$${v.m.price}</b><span>BOM 참고가${v.m.unknown?` (미정 ${v.m.unknown})`:''}</span></div><div><b>${v.m.parts}</b><span>부품</span></div><div><b>${v.m.spare}</b><span>여유 MCU 핀</span></div><div><b>${v.m.loss} W</b><span>레귤레이터 손실</span></div></div>
+      <div class="vc-m"><div><b>$${v.m.price}</b><span>예상 단가${v.m.unknown?` (미정 ${v.m.unknown})`:''}</span></div><div><b>${v.m.parts}</b><span>부품</span></div><div><b>${v.m.spare}</b><span>여유 MCU 핀</span></div><div><b>${v.m.loss} W</b><span>레귤레이터 손실</span></div></div>
+      <div class="vc-c" title="부품은 라이브러리 1k 단가, PCB·조립·등급은 500개 기준 추정">부품 $${v.m.partsPrice} · PCB ${v.m.cost.layers}층 $${v.m.cost.pcb} · 조립 $${v.m.cost.asm}${v.m.cost.grade?` · 등급 +$${v.m.cost.grade}`:''}</div>
       <div class="vc-s">${bar('가격',v.score.price)}${bar('기능',v.score.feat)}${bar('확장성',v.score.ext)}</div>
       <div class="vc-k">MCU ${esc((v.m.mcu||'-').replace(/-.*$/,''))} · 블록 ${v.plan.blocks.length}개${v.m.warn?` · 경고 ${v.m.warn}`:''}</div>
       <ul class="vc-diff">${v.diff.map(d=>`<li>${esc(d)}</li>`).join('')}</ul>
       <div class="acts"><button type="button" class="btn primary sm" data-pick="${v.key}">이 안으로 회로 생성</button><button type="button" class="btn sm" data-bom="${v.key}">BOM 보기</button></div></article>`;
-  const html=`<div class="pg-wrap"><div class="pg-head"><div><b>2단계 · 회로 안 고르기</b><p class="lead">1단계 다이어그램을 세 가지 부품 구성으로 풀었습니다. 가격은 데이터시트 DB의 참고 단가(약 1k 수량, 추정)를 더한 값이고, 기능·확장성은 블록·헤더·여유 핀으로 셈한 상대 점수입니다. 고르면 부품·넷리스트·회로도를 만듭니다 (PCB는 3단계).</p></div>
+  const html=`<div class="pg-wrap"><div class="pg-head"><div><b>2단계 · 회로 안 고르기</b><p class="lead">1단계 다이어그램을 세 가지 부품 구성으로 풀었습니다. 예상 단가는 부품(데이터시트 DB 참고 단가, 약 1k 수량) + PCB 제작(층수×면적) + 조립(부품·패드 수) + 부품 등급 계수(상용/산업/AEC-Q100)를 더한 500개 기준 추정이고, 기능·확장성은 블록·헤더·여유 핀으로 셈한 상대 점수입니다. 고르면 부품·넷리스트·회로도를 만듭니다 (PCB는 3단계).</p></div>
       <div class="pg-w" role="group" aria-label="우선순위"><span>우선순위</span>${[['price','가격'],['bal','균형'],['feat','기능'],['ext','확장성']].map(([k,l])=>`<button type="button" class="pill vbtn${NP.vwk===k||(!NP.vwk&&k==='bal')?' on':''}" data-w="${k}">${l}</button>`).join('')}</div></div>
     <div class="vcards">${vs.map(card).join('')}</div>
     <div class="pg-foot"><button type="button" class="btn sm" data-back>← 1단계 다이어그램 수정</button>${BD&&!BD.blank&&BD.variant?'<button type="button" class="btn sm" data-keep>지금 회로 그대로 보기</button>':''}</div></div>`;
@@ -257,7 +258,7 @@ function planGatePaint(){
     el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
       if(b.dataset.w){NP.vwk=b.dataset.w;NP.vw={price:{price:3,bal:1,feat:1,ext:1}[b.dataset.w],feat:{price:1,bal:1,feat:3,ext:1}[b.dataset.w],ext:{price:1,bal:1,feat:1,ext:3}[b.dataset.w]};planGatePaint();}
       else if(b.dataset.pick){if(NP.busy)return;npExec(`generate ${b.dataset.pick}`);}
-      else if(b.dataset.bom){const v=npVariants().find(x=>x.key===b.dataset.bom);copSay('ok',`[${v.label}] BOM 약 $${v.m.price} (참고 단가)\n`+v.m.bom.items.map(i=>`  ${i.refs.join(',').padEnd(14)} ${(i.mpn||i.val).padEnd(22)} ×${i.refs.length}  $${i.unit}${i.est?'?':''} → $${i.sub.toFixed(2)}`).join('\n'));copFocus();}
+      else if(b.dataset.bom){const v=npVariants().find(x=>x.key===b.dataset.bom);copSay('ok',`[${v.label}] 부품 BOM 약 $${v.m.partsPrice} (참고 단가) · 예상 단가 $${v.m.price} = 부품 + PCB ${v.m.cost.layers}층 $${v.m.cost.pcb} + 조립 $${v.m.cost.asm}${v.m.cost.grade?' + '+v.m.cost.gradeLabel+' $'+v.m.cost.grade:''}\n`+v.m.bom.items.map(i=>`  ${i.refs.join(',').padEnd(14)} ${(i.mpn||i.val).padEnd(22)} ×${i.refs.length}  $${i.unit}${i.est?'?':''} → $${i.sub.toFixed(2)}`).join('\n'));copFocus();}
       else if(b.hasAttribute('data-back'))setStep(1);
       else if(b.hasAttribute('data-keep')){NP.chooser=false;stepPaint();}});}
   el.innerHTML=html;}

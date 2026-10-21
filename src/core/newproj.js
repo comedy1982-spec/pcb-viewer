@@ -272,10 +272,21 @@ function spareMcuPins(r){if(!r.mcu)return 0;const db=MCU_PINS.DB[r.mcu];const M=
   const busy=new Set(Object.keys(U.pins).map(String));M.reserved.forEach(n=>busy.add(String(n)));if(M.boot)busy.add(String(M.boot));if(M.reset)busy.add(String(M.reset));
   return Object.keys(db.pins).filter(n=>!db.pins[n].supply&&!busy.has(String(n))&&(MCU_PINS.options(db,n).length||db.pins[n].an!=null)).length;}
 const FEAT_W={pwr_in:1,usb_in:2,ldo:1,buck:2,mcu:0,xtal:1,can:3,bldc:4,dcmotor:3,led:1,button:1,flash:2,uart:1,i2c:2,vmon:1};
-function planMetrics(plan){const B=bom(plan);const r=B.r;const feat=plan.blocks.reduce((a,b)=>a+(FEAT_W[b.type]||1)*(b.type==='led'||b.type==='button'?Math.min(3,+b.params.n||1):1),0);
+/* unit cost beyond the parts: PCB fabrication (layers × area), assembly (parts, pads, through-hole), part-grade uplift.
+   Rough mid-volume (~500 pcs) figures so the three plans can be compared, not a quote. */
+const PCB_COST={2:0.065,4:0.14,6:0.24,8:0.36,10:0.5};  // $/cm² incl. amortised setup
+const GRADE_K={comm:[1,'상용 등급'],ind:[1.12,'산업 등급 (-40~85 °C)'],core:[1.2,'핵심 IC만 AEC-Q100'],auto:[1.35,'전 IC AEC-Q100'],full:[1.5,'전 부품 AEC-Q100/Q200 + 보호 강화']};
+function costModel(r,B,opt){opt=opt||{};const layers=+opt.layers||2;const area=(r.W*r.H)/100;
+  const pcb=+(area*(PCB_COST[layers]||PCB_COST[2])+0.6).toFixed(2);
+  let pads=0,th=0;r.parts.forEach(c=>{const f=PCB.FP[c.fp];const n=f&&f.pads?f.pads.length:2;pads+=n;if(f&&f.pads&&f.pads.some(p=>p.drill))th+=n;});
+  const asm=+(1.2+r.parts.length*0.03+pads*0.01+th*0.04).toFixed(2);
+  const g=GRADE_K[opt.grade||'comm']||GRADE_K.comm;const ic=B.items.filter(i=>/^(U|Q|D|J|Y)/.test(i.refs[0]||'')).reduce((a,i)=>a+i.sub,0);
+  const grade=+(ic*(g[0]-1)).toFixed(2);
+  return{parts:B.total,pcb,asm,grade,gradeLabel:g[1],layers,area:+area.toFixed(1),pads,th,total:+(B.total+pcb+asm+grade).toFixed(2)};}
+function planMetrics(plan,tier){const B=bom(plan);const r=B.r;const cost=costModel(r,B,tier||plan.pcb||{});const feat=plan.blocks.reduce((a,b)=>a+(FEAT_W[b.type]||1)*(b.type==='led'||b.type==='button'?Math.min(3,+b.params.n||1):1),0);
   const spare=spareMcuPins(r);const headers=plan.blocks.filter(b=>/^(uart|i2c|usb_in)$/.test(b.type)).length;const ext=Math.round(spare*0.5+headers*8+(r.mcu==='TC364DP-64F300F'?15:0)+(plan.blocks.some(b=>b.type==='flash')?6:0));
   const loss=r.power.reduce((a,x)=>a+x.P,0);
-  return{price:B.total,unknown:B.unknown,parts:B.parts,feat,spare,headers,ext,loss:+loss.toFixed(2),mcu:r.mcu,warn:r.warn.length,bom:B};}
+  return{price:cost.total,partsPrice:B.total,cost,unknown:B.unknown,parts:B.parts,feat,spare,headers,ext,loss:+loss.toFixed(2),mcu:r.mcu,warn:r.warn.length,bom:B};}
 const clone=p=>JSON.parse(JSON.stringify(p));
 const has=(p,t)=>p.blocks.some(b=>b.type===t);
 const reqHas=(p,re)=>re.test(String(p.req||'').toLowerCase());
@@ -287,6 +298,7 @@ function variants(plan){
   const c=clone(plan);const dc=[];
   const mcuB=c.blocks.find(b=>b.type==='mcu');const needTc=reqHas(c,/aurix|tc3|tc364|asil|iso\s*26262|기능\s*안전|lockstep|오릭스/);
   if(mcuB&&mcuKey(mcuB.params.part)==='TC364DP-64F300F'&&!needTc){mcuB.params.part='STM32F042K6U6';dc.push('MCU를 STM32F042K6U6로 (요구사항에 AURIX·ASIL이 없음)');}
+  else if(mcuB&&mcuKey(mcuB.params.part)==='TC364DP-64F300F'){dc.push('MCU TC364DP(부품값의 큰 몫)는 요구사항의 AURIX·ASIL 때문에 유지 — 더 싼 안전 MCU(TC334·S32K3)는 부품 라이브러리에 핀 데이터를 넣으면 선택 가능');}
   c.blocks.filter(b=>b.type==='buck').forEach(b=>{b.type='ldo';b.id=b.id.replace(/^buck/,'ldo');b.params={vin:b.params.vin,vout:b.params.vout,iout:'auto'};dc.push(`${b.params.vout} V 벅 컨버터를 LDO로 (부품 7개 → 3개)`);});
   const drop=(t,why,re)=>{const i=c.blocks.findIndex(b=>b.type===t);if(i>=0&&!reqHas(c,re)){c.blocks.splice(i,1);dc.push(why);}};
   drop('flash','SPI 플래시 제거 (요구사항에 로그·저장이 없음)',/플래시|flash|메모리|로그|저장/);
@@ -311,7 +323,12 @@ function variants(plan){
   const mcuE=e.blocks.find(b=>b.type==='mcu');const needPins=e.blocks.reduce((a,b)=>a+({can:2,bldc:9,dcmotor:2,flash:4,uart:2,i2c:2,vmon:1,led:+b.params.n||1,button:+b.params.n||1,usb_in:2}[b.type]||0),0);
   if(mcuE&&mcuKey(mcuE.params.part)==='STM32F042K6U6'&&(needPins>18||reqHas(e,/차량|automotive|ecu|산업|asil/))){mcuE.params.part='TC364DP-64F300F';if(!has(e,'xtal'))addSafe(e,'xtal');de.push('MCU를 AURIX TC364DP로 (핀 여유 · 안전 기능 · 성능)');}
   out.push({key:'ext',label:'확장형',tag:'기능·확장 우선',desc:'나중에 기능을 더할 수 있게 헤더·메모리·감시를 넣고, 핀이 모자라면 큰 MCU로.',plan:e,diff:de});
-  out.forEach(v=>{v.m=planMetrics(v.plan);});
+  // tiers: PCB layers and part grade differ between the plans, and so does the unit cost (parts + PCB + assembly + grade)
+  const auto=reqHas(plan,/차량|automotive|ecu|asil|iso\s*26262|aec/),ind=reqHas(plan,/산업|industrial|-40/),aurix=out[1].m?false:mcuKey((base.blocks.find(b=>b.type==='mcu')||{params:{}}).params.part)==='TC364DP-64F300F';
+  const heavy=has(base,'bldc')||has(base,'dcmotor')||has(base,'can');
+  const tier={cost:{layers:heavy&&aurix?4:2,grade:auto?'core':'comm'},std:{layers:heavy?4:2,grade:auto?'auto':ind?'ind':'comm'},ext:{layers:heavy&&aurix?6:4,grade:auto?'full':'ind'}};
+  out.forEach(v=>{const t=tier[v.key];v.plan.pcb=Object.assign({},v.plan.pcb||{},{layers:t.layers,grade:t.grade});v.m=planMetrics(v.plan,t);
+    const c=v.m.cost;v.diff.push(`PCB ${t.layers}층 (${c.area} cm² · 약 $${c.pcb}) · 조립 약 $${c.asm} (패드 ${c.pads}) · ${c.gradeLabel}${c.grade?` (+$${c.grade})`:''}`);});
   // relative scores 0–100 for the cards
   const mn=k=>Math.min(...out.map(v=>v.m[k])),mx=k=>Math.max(...out.map(v=>v.m[k]));
   const sc=(v,k,inv)=>{const a=mn(k),b=mx(k);if(b-a<1e-9)return 60;const t=(v.m[k]-a)/(b-a);return Math.round(20+80*(inv?1-t:t));};
@@ -319,7 +336,7 @@ function variants(plan){
   return out;}
 // weighted pick: w = {price,feat,ext} in 0..1
 function recommend(vs,w){w=Object.assign({price:1,feat:1,ext:1},w||{});let best=null;vs.forEach(v=>{const s=v.score.price*w.price+v.score.feat*w.feat+v.score.ext*w.ext;v.total=Math.round(s/(w.price+w.feat+w.ext));if(!best||v.total>best.total)best=v;});return best;}
-function variantsText(vs){return vs.map(v=>`[${v.key}] ${v.label} (${v.tag}) · BOM 약 $${v.m.price}${v.m.unknown?' (+미정 '+v.m.unknown+')':''} · 부품 ${v.m.parts}개 · 기능 ${v.m.feat} · 여유 핀 ${v.m.spare} · MCU ${v.m.mcu||'-'} · 손실 ${v.m.loss} W\n  ${v.diff.join(' · ')}`).join('\n');}
-return{LIB,MCUS,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
+function variantsText(vs){return vs.map(v=>`[${v.key}] ${v.label} (${v.tag}) · 예상 단가 약 $${v.m.price} (부품 $${v.m.partsPrice} + PCB $${v.m.cost.pcb} + 조립 $${v.m.cost.asm}${v.m.cost.grade?' + 등급 $'+v.m.cost.grade:''})${v.m.unknown?' (+미정 '+v.m.unknown+')':''} · 부품 ${v.m.parts}개 · 기능 ${v.m.feat} · 여유 핀 ${v.m.spare} · MCU ${v.m.mcu||'-'} · 손실 ${v.m.loss} W\n  ${v.diff.join(' · ')}`).join('\n');}
+return{LIB,MCUS,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,costModel,PCB_COST,GRADE_K,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
 })();
 if(typeof module!=='undefined')module.exports=NEWPROJ;

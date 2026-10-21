@@ -55,3 +55,16 @@ test('plan editing and the generated board / schematic are consistent', () => {
   assert.equal(g.rules.find(x => x.key === 'sch_reset').status, 'pass');
   assert.equal(r.spec._source, '신규 설계');
 });
+
+test('variants: unit cost = parts + PCB + assembly + grade, and the tiers differ', () => {
+  const P = NEWPROJ.planFrom('12V 차량 배터리, AURIX TC364, CAN-FD, BLDC 모터 구동(홀), 전류 온도 센싱, ASIL D');
+  const vs = NEWPROJ.variants(P.plan || P);
+  const [c, s, e] = vs;
+  for (const v of vs) { const k = v.m.cost; assert.ok(Math.abs(k.parts + k.pcb + k.asm + k.grade - k.total) < 0.02); assert.equal(v.m.price, k.total); assert.ok(v.plan.pcb.layers === k.layers); }
+  assert.ok(c.m.price < s.m.price && s.m.price < e.m.price, 'cost < std < ext');
+  assert.equal(c.m.cost.gradeLabel, '핵심 IC만 AEC-Q100'); assert.equal(s.m.cost.gradeLabel, '전 IC AEC-Q100'); assert.equal(e.m.cost.layers, 6);
+  assert.ok(c.diff.some(d => /TC364DP.*유지/.test(d)), 'explains the fixed MCU');
+  assert.match(NEWPROJ.variantsText(vs), /예상 단가 약 \$[\d.]+ \(부품 \$[\d.]+ \+ PCB/);
+  const Q = NEWPROJ.planFrom('USB 5V, STM32, LED 1개'); const qs = NEWPROJ.variants(Q.plan || Q);
+  assert.equal(qs[0].m.cost.layers, 2); assert.equal(qs[0].m.cost.grade, 0);
+});
