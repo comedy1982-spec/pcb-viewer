@@ -85,7 +85,10 @@ function astar(G,k,src,tgt,anchors,o){
   if(!G.gs||G.gs.length!==tot){G.gs=new Float32Array(tot);G.par=new Int32Array(tot);G.stamp=new Uint32Array(tot);G.cl=new Uint32Array(tot);G.dir=new Int8Array(tot);G.gen=0;}
   const gs=G.gs,par=G.par,stamp=G.stamp,cl=G.cl,dir=G.dir;const gen=++G.gen;
   const DX=[1,-1,0,0,1,1,-1,-1],DY=[0,0,1,-1,1,-1,1,-1],DC=[1,1,1,1,Math.SQRT2,Math.SQRT2,Math.SQRT2,Math.SQRT2];
-  const free=(l,i)=>{const v=G.occT[l][i];return v===0||v===k||tgt.has(l*N+i)||src.has(l*N+i);};
+  const dil=o.dil|0;const DIL=[];if(dil>0)for(let dy=-dil;dy<=dil;dy++)for(let dx=-dil;dx<=dil;dx++)if(dx*dx+dy*dy<=dil*dil&&(dx||dy))DIL.push([dx,dy]);
+  const free0=(l,i)=>{const v=G.occT[l][i];return v===0||v===k||tgt.has(l*N+i)||src.has(l*N+i);};
+  // wide tracks: every cell within `dil` cells of the centre line must be free too (the halos were painted for the base width)
+  const free=dil>0?(l,i)=>{if(!free0(l,i))return false;const x=i%nx,y=(i/nx)|0;for(const[dx,dy]of DIL){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=nx||yy>=ny)return false;const v=G.occT[l][yy*nx+xx];if(!(v===0||v===k))return false;}return true;}:free0;
   const freeV=i=>{for(let l=0;l<NL;l++){const a=G.occV[l][i];if(!(a===0||a===k))return false;}return true;};
   const h=(x,y)=>{let m=1e9;for(const p of anchors){const dx=Math.abs(p[0]-x),dy=Math.abs(p[1]-y);const d=Math.max(dx,dy)+(Math.SQRT2-1)*Math.min(dx,dy);if(d<m)m=d;}return m*1.08;};
   // binary heap
@@ -126,7 +129,8 @@ function toCopper(G,path,w,via,net,startShape,endShape){
 
 /* ---------- main ---------- */
 const DEF={grid:0.1,clear:0.2,edge:0.4,width:{signal:0.2,power:0.3},via:{d:0.6,drill:0.3},viaCost:2.0,maxExp:700000,bottomCost:1.05,escCost:0,escape:0.45,reserve:false,neck:0};
-function widthFor(B,net,o){const w=B.netClass&&B.netClass(net)==='전원'?o.width.power:o.width.signal;
+function widthFor(B,net,o){let w=B.netClass&&B.netClass(net)==='전원'?o.width.power:o.width.signal;
+  if(o.netWidth&&o.netWidth[net]>0)w=Math.min(o.netWidth[net],o.widthCap||3); // per-net width (current-based / user)
   // supplies that land on fine-pitch pins neck down so the track fits between the neighbouring pads
   if(o.neck&&w>o.neck&&B.nets[net]&&B.nets[net].pads.some(p=>Math.min(p.w,p.h)<0.36&&!p.drill))return o.neck;return w;}
 function prepare(B,opts){
@@ -176,7 +180,8 @@ function routeNet(P,B,net){
     let anchors=[];rest.forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
     // big nets: keep the heuristic cheap — only the anchors nearest to the group being joined
     if(anchors.length>24){let sx=0,sy=0,sn=0;srcC.forEach(s=>{const p=s.k==='cap'?s.a:[s.x,s.y];sx+=(p[0]-G.ox)/G.g;sy+=(p[1]-G.oy)/G.g;sn++;});sx/=sn;sy/=sn;anchors=anchors.map(a=>[a,Math.abs(a[0]-sx)+Math.abs(a[1]-sy)]).sort((a,b)=>a[1]-b[1]).slice(0,24).map(a=>a[0]);}
-    const r=astar(G,k,src,tgt,anchors,o);
+    const wBase=Math.max(o.width.signal,o.width.power);const dil=w>wBase+1e-6?Math.ceil((w-wBase)/2/G.g):0;
+    const r=astar(G,k,src,tgt,anchors,dil?Object.assign({},o,{dil}):o);
     if(!r.path)return Object.assign(added,{ok:false,why:r.fail});
     const cu=toCopper(G,r.path,w,o.via,net,own.get(r.path[0]),own.get(r.path[r.path.length-1]));
     // commit: board + shapes + grid

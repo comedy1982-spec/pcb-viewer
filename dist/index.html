@@ -5341,7 +5341,10 @@ function astar(G,k,src,tgt,anchors,o){
   if(!G.gs||G.gs.length!==tot){G.gs=new Float32Array(tot);G.par=new Int32Array(tot);G.stamp=new Uint32Array(tot);G.cl=new Uint32Array(tot);G.dir=new Int8Array(tot);G.gen=0;}
   const gs=G.gs,par=G.par,stamp=G.stamp,cl=G.cl,dir=G.dir;const gen=++G.gen;
   const DX=[1,-1,0,0,1,1,-1,-1],DY=[0,0,1,-1,1,-1,1,-1],DC=[1,1,1,1,Math.SQRT2,Math.SQRT2,Math.SQRT2,Math.SQRT2];
-  const free=(l,i)=>{const v=G.occT[l][i];return v===0||v===k||tgt.has(l*N+i)||src.has(l*N+i);};
+  const dil=o.dil|0;const DIL=[];if(dil>0)for(let dy=-dil;dy<=dil;dy++)for(let dx=-dil;dx<=dil;dx++)if(dx*dx+dy*dy<=dil*dil&&(dx||dy))DIL.push([dx,dy]);
+  const free0=(l,i)=>{const v=G.occT[l][i];return v===0||v===k||tgt.has(l*N+i)||src.has(l*N+i);};
+  // wide tracks: every cell within `dil` cells of the centre line must be free too (the halos were painted for the base width)
+  const free=dil>0?(l,i)=>{if(!free0(l,i))return false;const x=i%nx,y=(i/nx)|0;for(const[dx,dy]of DIL){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=nx||yy>=ny)return false;const v=G.occT[l][yy*nx+xx];if(!(v===0||v===k))return false;}return true;}:free0;
   const freeV=i=>{for(let l=0;l<NL;l++){const a=G.occV[l][i];if(!(a===0||a===k))return false;}return true;};
   const h=(x,y)=>{let m=1e9;for(const p of anchors){const dx=Math.abs(p[0]-x),dy=Math.abs(p[1]-y);const d=Math.max(dx,dy)+(Math.SQRT2-1)*Math.min(dx,dy);if(d<m)m=d;}return m*1.08;};
   // binary heap
@@ -5382,7 +5385,8 @@ function toCopper(G,path,w,via,net,startShape,endShape){
 
 /* ---------- main ---------- */
 const DEF={grid:0.1,clear:0.2,edge:0.4,width:{signal:0.2,power:0.3},via:{d:0.6,drill:0.3},viaCost:2.0,maxExp:700000,bottomCost:1.05,escCost:0,escape:0.45,reserve:false,neck:0};
-function widthFor(B,net,o){const w=B.netClass&&B.netClass(net)==='전원'?o.width.power:o.width.signal;
+function widthFor(B,net,o){let w=B.netClass&&B.netClass(net)==='전원'?o.width.power:o.width.signal;
+  if(o.netWidth&&o.netWidth[net]>0)w=Math.min(o.netWidth[net],o.widthCap||3); // per-net width (current-based / user)
   // supplies that land on fine-pitch pins neck down so the track fits between the neighbouring pads
   if(o.neck&&w>o.neck&&B.nets[net]&&B.nets[net].pads.some(p=>Math.min(p.w,p.h)<0.36&&!p.drill))return o.neck;return w;}
 function prepare(B,opts){
@@ -5432,7 +5436,8 @@ function routeNet(P,B,net){
     let anchors=[];rest.forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
     // big nets: keep the heuristic cheap — only the anchors nearest to the group being joined
     if(anchors.length>24){let sx=0,sy=0,sn=0;srcC.forEach(s=>{const p=s.k==='cap'?s.a:[s.x,s.y];sx+=(p[0]-G.ox)/G.g;sy+=(p[1]-G.oy)/G.g;sn++;});sx/=sn;sy/=sn;anchors=anchors.map(a=>[a,Math.abs(a[0]-sx)+Math.abs(a[1]-sy)]).sort((a,b)=>a[1]-b[1]).slice(0,24).map(a=>a[0]);}
-    const r=astar(G,k,src,tgt,anchors,o);
+    const wBase=Math.max(o.width.signal,o.width.power);const dil=w>wBase+1e-6?Math.ceil((w-wBase)/2/G.g):0;
+    const r=astar(G,k,src,tgt,anchors,dil?Object.assign({},o,{dil}):o);
     if(!r.path)return Object.assign(added,{ok:false,why:r.fail});
     const cu=toCopper(G,r.path,w,o.via,net,own.get(r.path[0]),own.get(r.path[r.path.length-1]));
     // commit: board + shapes + grid
@@ -8699,6 +8704,75 @@ function fromAi(o){if(!o||typeof o!=='object'||!o.product||!Array.isArray(o.bloc
     p.questions.push({key:S(q.key)||'q'+(p.questions.length+1),block:S(q.block),q:S(q.q),why:S(q.why),multi:!!q.multi,options:opts});}
   return p;}
 return{T,PARTS,detect,apply,summary,aiPrompt,fromAi,candidates,normPart,GROUPS,IMPLS};
+})();
+
+
+</script>
+<script>
+/* ---------- net current estimate → IPC-2221 track width ----------
+   Which net carries how much current is read off the board: rails by name/voltage, the parts on them (regulators,
+   drivers, MCU, transceivers, LEDs …) by part number or description, motor phases by name. Widths follow IPC-2221
+   (external / internal layers, copper weight, allowed temperature rise). Rough early-design numbers: a load table,
+   not a simulation. */
+const CURRENT=(function(){
+"use strict";
+/* ---- IPC-2221: I = k · ΔT^0.44 · A^0.725, A in mil², k = 0.048 outer / 0.024 inner ---- */
+function ipcWidth(I,o){o=o||{};const k=o.inner?0.024:0.048,dT=o.dT||10,oz=o.oz||1;if(!(I>0))return 0;
+  const A=Math.pow(I/(k*Math.pow(dT,0.44)),1/0.725);const wMil=A/(1.378*oz);return +(wMil*0.0254).toFixed(2);}
+function ipcCurrent(w,o){o=o||{};const k=o.inner?0.024:0.048,dT=o.dT||10,oz=o.oz||1;const A=(w/0.0254)*1.378*oz;return +(k*Math.pow(dT,0.44)*Math.pow(A,0.725)).toFixed(2);}
+function ipcRise(w,I,o){o=o||{};const k=o.inner?0.024:0.048,oz=o.oz||1;if(!(w>0)||!(I>0))return 0;const A=(w/0.0254)*1.378*oz;return +Math.pow(I/(k*Math.pow(A,0.725)),1/0.44).toFixed(1);}
+/* ---- part load table: [regex on mpn|value|description, amps, role] ---- */
+const LOADS=[
+  [/DRV8313|DRV8305|DRV8323|DRV8353|DRV8301/i,2.5,'mdrv'],[/A4910|A4911|A4919|TLE9180|L9908|GD3000|DRV8353R/i,20,'gdrv'],[/DRV8870|DRV8871|DRV8876|DRV8251|BTN8982|VNH/i,3.6,'mdrv'],[/DRV8833|DRV8835|TB6612/i,1.2,'mdrv'],
+  [/TPS5433|TPS5430|LM2596|MP1584|LMR\d|TPS56|AP6\d/i,3,'buck'],[/TPS62|TLV62|MP2|RT8|AP3|TPS5401/i,1.5,'buck'],[/AMS1117|LD1117|NCP1117|AZ1117|LM1117|TLV1117/i,1,'ldo'],[/AP2112|MCP1700|XC6206|ME6211|RT9013|TLV7|AP7\d/i,0.5,'ldo'],[/TLF35584|TPS65381|FS26|L9396|TLE9471|FS45/i,1.2,'pmic'],
+  [/TC3\d\d|AURIX|S32K3|SPC58|RH850|TMS570/i,0.4,'mcu'],[/STM32|S32K1|ATSAM|ESP32|RP2040|LPC|nRF52/i,0.15,'mcu'],[/TJA10|TJA14|TLE92|TCAN|MCP254|MCP251|ATA656|SN65HVD/i,0.1,'can'],[/W25Q|MX25|IS25|AT25|GD25/i,0.03,'flash'],
+  [/INA240|INA2\d\d|AD8418|NCS21|MAX40056|TLE4972|ACS7|TLI497/i,0.01,'sense'],[/TPS3823|TPS382|MAX809|STM6|TLV803|ADM6/i,0.001,'sup'],[/LED|WS2812|SK6812/i,0.02,'led'],[/CC2420|CC25|nRF24|ESP8266|ATWINC|BG9|SIM8/i,0.3,'rf']];
+function partLoad(c){const key=`${c.mpn||''} ${c.val||''} ${c.desc||''}`;for(const[re,I,role]of LOADS){if(re.test(key))return{I,role};}
+  const ref=String(c.ref||'');if(/^D/.test(ref)&&/LED/i.test(key))return{I:0.02,role:'led'};if(/^U/.test(ref))return{I:0.05,role:'ic'};if(/^Q/.test(ref))return{I:1,role:'fet'};return null;}
+/* ---- rails: voltage read from the net name ---- */
+const isGnd=n=>/^(GND|AGND|DGND|PGND|VSS|GNDA|GNDD|EARTH|0V)$/i.test(String(n||'').replace(/^\//,''));
+function railV(n){n=String(n||'').replace(/^\//,'');let m=n.match(/^\+?(\d+)V(\d)?$/i);if(m)return+m[1]+(m[2]?+m[2]/10:0);m=n.match(/^\+?(\d+(?:\.\d+)?)\s*V$/i);if(m)return+m[1];m=n.match(/(?:VCC|VDD|V)_?(\d+)V(\d)/i);if(m)return+m[1]+(+m[2])/10;m=n.match(/(?:VCC|VDD|AVDD|DVDD|VIO|V)[_-]?(\d+(?:\.\d+)?)V?$/i);if(m&&+m[1]<60)return+m[1];
+  if(/VIN|VBAT|VBUS_IN|VIN_RAW|KL30|VBB|VSUP/i.test(n))return 12;if(/^VBUS$|^USB_?5V|^VUSB/i.test(n))return 5;if(/VCC_DRV|VM\b|VMOT|VDRV|PVDD/i.test(n))return 12;if(/VCC_MCU|VDDA|3V3|VCC3/i.test(n))return 3.3;if(/VCC_5V|VCC_SENS|VCC5|5V/i.test(n))return 5;if(/VCC|VDD/i.test(n))return 3.3;return null;}
+const isRail=n=>!isGnd(n)&&!/USB_?D|_D[PM]$|D[+-]$|DATA|_TX|_RX|CAN[HL]|SDA|SCL|SW$|_FB|_EN|_SS|_COMP|BOOT|_RC$|_CP[LH]|VCP|VMON|SENSE|_CS/i.test(String(n||''))&&railV(n)!=null;
+const isPhase=n=>/^(PH_?[UVWABC]|PHASE_?[UVWABC]|MOTOR_?[UVWABC1-4]?|OUT_?[UVWABC1-4]|M[1-4][+-]?|OUT[1-4][+-]?|SH[ABC]|HB_?[AB])$/i.test(String(n||'').replace(/^\//,''));
+/* ---- the estimate ---- */
+function motorCurrent(B){const p=B.newPlan;let I=null;const txt=String(p&&p.req||'');const m=txt.match(/(\d+(?:\.\d+)?)\s*A\b/i);if(m&&+m[1]>=1)I=+m[1];
+  if(p)for(const b of p.blocks||[]){if((b.type==='bldc'||b.type==='dcmotor')&&b.params&&+b.params.i>0)I=+b.params.i;}return I;}
+function netCurrents(B,opt){opt=opt||{};const out={};const rails={};const Im=motorCurrent(B);
+  const nets=Object.keys(B.nets||{});nets.forEach(n=>{out[n]={I:0,cls:isGnd(n)?'gnd':isRail(n)?'rail':isPhase(n)?'phase':'sig',v:railV(n),loads:[]};});
+  // parts: what each one draws from which rail, and what its outputs carry
+  const parts=B.comps.filter(c=>c.kind!=='none');const regs=[];
+  parts.forEach(c=>{const L=partLoad(c);if(!L)return;const netsOf=[...new Set(c.pads.map(p=>p.net).filter(Boolean))];const railsOf=netsOf.filter(isRail).sort((a,b)=>(railV(b)||0)-(railV(a)||0));
+    if(L.role==='buck'||L.role==='ldo'||L.role==='pmic'){const vin=railsOf[0],vouts=railsOf.slice(1);regs.push({c,vin,vouts,I:L.I,role:L.role});return;}
+    if(L.role==='mdrv'||L.role==='gdrv'){const I=Im!=null?Im:L.I;const sup=railsOf[0];const ph=netsOf.filter(isPhase);ph.forEach(n=>{out[n].I=Math.max(out[n].I,I);out[n].loads.push(`${c.ref} 상전류`);});
+      if(sup){const avg=I*0.7;out[sup].I+=avg;out[sup].loads.push(`${c.ref} 모터 전원 ${avg.toFixed(1)} A`);}railsOf.slice(1).forEach(n=>{out[n].I+=0.03;});return;}
+    if(L.role==='fet'){const I=Im!=null?Im:L.I;netsOf.filter(isPhase).forEach(n=>{out[n].I=Math.max(out[n].I,I);});return;}
+    const sup=railsOf[0];if(sup){out[sup].I+=L.I;out[sup].loads.push(`${c.ref} ${L.I} A`);}
+    if(L.role==='led'){netsOf.filter(n=>!isRail(n)&&!isGnd(n)).forEach(n=>{out[n].I=Math.max(out[n].I,L.I);});}});
+  // regulators: output rail current flows in, scaled by voltage ratio (buck) or 1:1 (LDO); walk from the lowest rail up
+  const byV=regs.slice().sort((a,b)=>(railV(a.vin)||0)-(railV(b.vin)||0));
+  byV.forEach(r=>{const Iout=r.vouts.reduce((a,n)=>a+out[n].I,0);if(!r.vin||!Iout)return;const vo=r.vouts.length?railV(r.vouts[0])||3.3:3.3,vi=railV(r.vin)||12;
+    const Iin=r.role==='buck'?Iout*vo/vi/0.9+0.01:Iout+0.005;out[r.vin].I+=Iin;out[r.vin].loads.push(`${r.c.ref} ${r.role==='buck'?'벅':'LDO'} 입력 ${Iin.toFixed(2)} A (출력 ${Iout.toFixed(2)} A)`);});
+  // input protection nets (VIN_RAW → +12V through a diode/FET): same current as the first rail they feed
+  nets.filter(n=>/VIN_RAW|KL30|VIN$/i.test(n)).forEach(n=>{if(out[n].I>0)return;const first=parts.filter(c=>c.pads.some(p=>p.net===n)).flatMap(c=>[...new Set(c.pads.map(p=>p.net))]).filter(x=>x!==n&&isRail(x));const I=Math.max(0,...first.map(x=>out[x].I));if(I){out[n].I=I;out[n].loads.push(`입력 보호단 → ${first[0]} ${I.toFixed(2)} A`);}});
+  nets.forEach(n=>{const o=out[n];if(o.cls==='sig'&&!o.I)o.I=0.02;if(o.cls==='gnd'){o.I=Math.max(...Object.values(out).filter(x=>x.cls==='rail').map(x=>x.I),0);o.loads=['플레인/동박면 귀환'];}});
+  return out;}
+/* ---- widths per net, with the user's overrides (B.netWidth: net → mm, B.netCurrent: net → A) ---- */
+function widths(B,opt){opt=opt||{};const oz=opt.oz||B.oz||1,dT=opt.dT||10,cap=opt.cap||3;const cur=netCurrents(B,opt);const out={};
+  Object.keys(cur).forEach(n=>{const c=cur[n];const I=B.netCurrent&&B.netCurrent[n]!=null?+B.netCurrent[n]:c.I;const ipc=ipcWidth(I,{oz,dT});
+    let w=B.netWidth&&B.netWidth[n]!=null?+B.netWidth[n]:ipc;const min=c.cls==='rail'||c.cls==='phase'?0.3:0.2;w=Math.max(min,w);
+    out[n]={I:+I.toFixed(3),cls:c.cls,v:c.v,ipc,w:+Math.min(cap,w).toFixed(2),pour:ipc>cap,loads:c.loads,manual:!!(B.netWidth&&B.netWidth[n]!=null),manualI:!!(B.netCurrent&&B.netCurrent[n]!=null)};});
+  return out;}
+/* ---- check: routed tracks narrower than the current needs ---- */
+function check(B,opt){opt=opt||{};const W=widths(B,opt);const out=[];const keys=(typeof PCB!=='undefined'?PCB.cuKeys(B):['T','B']);
+  Object.keys(W).forEach(n=>{const w=W[n];if(w.cls!=='rail'&&w.cls!=='phase'||w.I<0.5)return;let minW=null;keys.forEach(k=>(B.layers[k+'.cu']||[]).forEach(p=>{if(p.net!==n||!(p.t==='seg'||p.t==='path'))return;if(minW==null||p.w<minW)minW=p.w;}));
+    if(minW==null)return;const need=w.ipc;if(minW<need*0.85){const rise=ipcRise(minW,w.I,{oz:opt.oz||1});out.push({net:n,I:w.I,w:minW,need,rise,msg:`${n}: 트랙 ${minW} mm 에 ${w.I} A → 온도 상승 약 ${rise} °C (IPC-2221 권장 ${need} mm${w.pour?' → 동박면 권장':''})`});}});
+  return out;}
+function text(B,opt){const W=widths(B,opt);const rows=Object.entries(W).filter(([n,w])=>w.cls!=='sig').sort((a,b)=>b[1].I-a[1].I);
+  const L=[`넷 전류 · 폭 (IPC-2221, ${opt&&opt.oz||1} oz, ΔT ${opt&&opt.dT||10} °C) — 추정값`];
+  rows.forEach(([n,w])=>L.push(`  ${n.padEnd(12)} ${w.cls==='gnd'?'접지':w.cls==='phase'?'모터상':'전원'}${w.v!=null?' '+w.v+' V':''}  ${w.I.toFixed(2)} A → 권장 ${w.ipc} mm${w.pour?' (동박면)':''}${w.manual?` · 지정 ${w.w} mm`:''}${w.manualI?' · 전류 지정':''}${w.loads.length?'  ← '+w.loads.slice(0,3).join(', '):''}`));
+  const sig=Object.values(W).filter(w=>w.cls==='sig').length;L.push(`  신호 넷 ${sig}개: 0.02 A → 0.2 mm`);return L.join('\n');}
+return{ipcWidth,ipcCurrent,ipcRise,partLoad,railV,isRail,isPhase,netCurrents,widths,check,text,LOADS};
 })();
 
 
@@ -12628,8 +12702,9 @@ const CLI_HELP=[
   ['strategies','배치 전략 설명 (balanced · thermal · noise · compact)'],
   ['reset [--strategy S] [--seed N] [--both] [--route]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립). --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
-  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B]','GND·전원 플레인 비아 팬아웃 후 열린 넷을 자동 배선 (막히면 주변 넷을 뜯고 다시 배선)'],
+  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2]','GND·전원 플레인 비아 팬아웃 후 열린 넷을 자동 배선 (막히면 주변 넷을 뜯고 다시 배선). --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로, width 로 지정한 폭은 항상 적용'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
+  ['width [넷 <mm|auto>] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정 · 전류 지정 · 동박 두께/허용 온도 상승. route --iw 로 적용'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
   ['auto [S] [--tries N]','리셋 → 배치 → 배선 → DRC → 리포트를 한 번에. 미배선이 남으면 다른 시드로 다시 시도해 가장 좋은 결과를 남김'],
   ['lock <부품…> · unlock <부품…|all> · locks','자동 배치에서 고정할 부품'],
@@ -12669,15 +12744,15 @@ const CLI_CHIPS=[['열 분산 자동 배치·배선','auto thermal','열 분산 
   ['가이드라인 점검','guide check','PCB 설계 가이드라인을 점검하고 가장 중요한 개선 3가지를 알려줘'],
   ['하우징 설계','housing','현재 보드에 맞는 보호 하우징을 설계하고 재질·IP·진동 조건별 트레이드오프를 비교해 추천해줘'],
   ['리포트','report all','배치·열·EMC 리포트를 보고 문제를 우선순위대로 요약해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const CLI_CMDS=new Set(['analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
+const CLI_CMDS=new Set(['width','analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
 
 /* ---- snapshots for undo (same objects: tracks, pads and silk keep their identity) ---- */
 function cliSnap(){return{poses:BD.comps.map(c=>({c,x:c.x,y:c.y,rot:c.rot||0,side:c.side})),layers:Object.fromEntries(Object.keys(BD.layers).map(k=>[k,BD.layers[k].slice()])),vias:BD.vias.slice(),
-  board:{W:BD.W,H:BD.H,outline:JSON.parse(JSON.stringify(BD.outline)),shape:BD.shape?JSON.parse(JSON.stringify(BD.shape)):null,cut:BD.cutouts?JSON.parse(JSON.stringify(BD.cutouts)):null,holes:BD.drills.filter(d=>!d.own&&!d._pad).map(d=>[d,d.x,d.y]),cl:BD.copperLayers||2,stack:BD.stack,t:BD.t,pend:!!BD.pcbPending}};}
+  board:{W:BD.W,H:BD.H,outline:JSON.parse(JSON.stringify(BD.outline)),shape:BD.shape?JSON.parse(JSON.stringify(BD.shape)):null,cut:BD.cutouts?JSON.parse(JSON.stringify(BD.cutouts)):null,nw:BD.netWidth?Object.assign({},BD.netWidth):null,nc:BD.netCurrent?Object.assign({},BD.netCurrent):null,oz:BD.oz||null,dT:BD.dT||null,holes:BD.drills.filter(d=>!d.own&&!d._pad).map(d=>[d,d.x,d.y]),cl:BD.copperLayers||2,stack:BD.stack,t:BD.t,pend:!!BD.pcbPending}};}
 function cliRestore(s){
   s.poses.forEach(p=>{const c=p.c;if(c.side!==p.side)PCBEDIT.flip(BD,c);const dr=p.rot-(c.rot||0);if(Math.abs(dr)>1e-9)PCBEDIT.rotate(BD,c,dr);if(Math.abs(p.x-c.x)>1e-12||Math.abs(p.y-c.y)>1e-12)PCBEDIT.move(BD,c,p.x-c.x,p.y-c.y);c.rot=p.rot;});
   Object.keys(s.layers).forEach(k=>{BD.layers[k]=s.layers[k].slice();});BD.vias=s.vias.slice();
-  if(s.board){const b=s.board;Object.keys(BD.layers).forEach(k=>{if(!(k in s.layers))delete BD.layers[k];});BD.W=b.W;BD.H=b.H;BD.outline=JSON.parse(JSON.stringify(b.outline));BD.shape=b.shape||null;BD.cutouts=b.cut||null;b.holes.forEach(([d,x,y])=>{d.x=x;d.y=y;});BD.copperLayers=b.cl;BD.stack=b.stack;BD.t=b.t;BD.pcbPending=b.pend;if(typeof pcbGatePaint==='function')setTimeout(pcbGatePaint,0);}
+  if(s.board){const b=s.board;Object.keys(BD.layers).forEach(k=>{if(!(k in s.layers))delete BD.layers[k];});BD.W=b.W;BD.H=b.H;BD.outline=JSON.parse(JSON.stringify(b.outline));BD.shape=b.shape||null;BD.cutouts=b.cut||null;BD.netWidth=b.nw||null;BD.netCurrent=b.nc||null;BD.oz=b.oz||null;BD.dT=b.dT||null;b.holes.forEach(([d,x,y])=>{d.x=x;d.y=y;});BD.copperLayers=b.cl;BD.stack=b.stack;BD.t=b.t;BD.pcbPending=b.pend;if(typeof pcbGatePaint==='function')setTimeout(pcbGatePaint,0);}
   PCBEDIT.rebuildNets(BD);}
 function cliCommit(before,label){const after=cliSnap();pePush({copper:true,label,undo:()=>cliRestore(before),redo:()=>cliRestore(after)});}
 function cliEnsureEdit(){if(!PE.on)peBegin();else PCBEDIT.prepare(BD);if(!(S.view==='T'||S.view==='B'))setView('T');}
@@ -12827,14 +12902,27 @@ async function cliRoute(a){
   let keepOrder=false;if(st==='noise'){const I=AUTOPLACE.classify(BD,{});const sw=new Set(I.switchNets);const cls=n=>BD.netClass(n);
     nets=nets.map(n=>({n,r:sw.has(n)?0:cls(n)==='전원'?1:/XTAL|OSC|CAN|USB/i.test(n)?2:3,e:AUTOROUTE.estimate(BD,n)})).sort((x,y)=>x.r-y.r||x.e-y.e).map(x=>x.n);keepOrder=true;}
   const prog=cliSay('out',`배선 준비 중… (${nets.length}개 넷)`);await cliTick();
-  const it=AUTOROUTE.jobRR(BD,nets,{width:{signal:sig,power:pwr},clear:clr,via,laneVia:ml?2:0,keepOrder,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,rounds:a.rounds!=null?+a.rounds:undefined});
+  // per-net widths: user overrides always; --iw adds IPC-2221 widths for the current-carrying nets (capped, wider → pour)
+  const netWidth={};const WW=typeof CURRENT!=='undefined'?CURRENT.widths(BD,{oz:BD.oz||1,dT:BD.dT||10,cap:a.iwmax?+a.iwmax:2}):{};
+  Object.keys(WW).forEach(n=>{const w=WW[n];if(w.manual)netWidth[n]=w.w;else if(a.iw&&(w.cls==='rail'||w.cls==='phase')&&w.I>=0.5&&w.ipc>pwr)netWidth[n]=w.w;});
+  const iwNote=Object.keys(netWidth).length?` · 넷별 폭 ${Object.keys(netWidth).length}개 (${Object.entries(netWidth).slice(0,4).map(([n,w])=>n+' '+w).join(', ')}${Object.keys(netWidth).length>4?' …':''})`+(a.iw?Object.values(WW).some(w=>w.pour&&netWidth[w]===undefined)?'':'':''):'';
+  if(a.iw){const pours=Object.entries(WW).filter(([n,w])=>w.pour&&!w.manual).map(([n,w])=>`${n} ${w.I.toFixed(1)} A → ${w.ipc} mm`);if(pours.length)lines.push(`동박면 권장 (트랙 ${a.iwmax||2} mm 상한): ${pours.join(' · ')}`);}
+  if(iwNote)lines[0]+=iwNote;
+  const it=AUTOROUTE.jobRR(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,clear:clr,via,laneVia:ml?2:0,keepOrder,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,rounds:a.rounds!=null?+a.rounds:undefined});
   const t0=performance.now();let r,last=performance.now();
   for(;;){r=it.next();if(r.done)break;const p=r.value;
     if(performance.now()-last>80){cliSet(prog,p.phase==='route'?`배선 중… ${p.i+1}/${p.total} · ${p.net}`:`막힌 넷 다시 배선 ${p.round}/${p.max} · ${p.net} (완료 ${p.ok}/${p.total})`);await cliTick();last=performance.now();}
     if(CLI.stopReq){cliSet(prog,'중지했습니다. 지금까지의 배선을 남깁니다.');break;}}
   const fan2=AUTOPLACE.fanout(BD,{thermal:st==='thermal',clear:clr,width:Math.min(0.4,pwr),via});fan.vias+=fan2.vias;fan.fail=fan2.fail;lines[0]=`${PCB.stackOf(BD).some(x=>x.role==='pwr')?'GND·전원 플레인':'GND'} 팬아웃 비아 ${fan.vias}개${fan.fail.length?` (자리 없음: ${fan.fail.slice(0,6).join(', ')})`:''}${ml?` · 비아 ${via.d}/${via.drill} mm · 간격 ${clr} mm`:''}`;
   PCBEDIT.rebuildNets(BD);const res=r&&r.done?r.value:null;const ms=performance.now()-t0;
-  const open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));
+  let open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));
+  // wide nets that did not fit: route them once more at the base width and say so (the user can pour copper instead)
+  const wideOpen=open.map(o=>o.net).filter(n=>netWidth[n]>pwr&&!CLI.stopReq);
+  if(wideOpen.length){cliSet(prog,`폭을 줄여 다시 배선… (${wideOpen.join(', ')})`);await cliTick();const nw2=Object.assign({},netWidth);wideOpen.forEach(n=>{nw2[n]=pwr;});
+    const it2=AUTOROUTE.jobRR(BD,wideOpen,{width:{signal:sig,power:pwr},netWidth:nw2,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,rounds:4});
+    for(;;){const q=it2.next();if(q.done)break;}PCBEDIT.rebuildNets(BD);const still=new Set(AUTOROUTE.openNets(BD).map(o=>o.net));const narrowed=wideOpen.filter(n=>!still.has(n));
+    if(narrowed.length)lines.push(`넓은 폭으로 자리가 없어 기본 폭으로 배선: ${narrowed.map(n=>`${n} (${netWidth[n]} → ${pwr} mm)`).join(', ')} → 동박면(pour)으로 보강하거나 보드를 키우세요`);
+    open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));}
   cliSet(prog,`배선 ${nets.length-open.length}/${nets.length} 넷 · ${(ms/1000).toFixed(1)} s${res?` · 트랙 ${f1(res.len)} mm · 비아 ${res.vias}개${res.rounds?` · 다시 배선 ${res.rounds}회`:''}`:''}`);
   if(open.length)lines.push(`미배선 ${open.length}개: ${open.slice(0,10).map(o=>o.net).join(', ')}${open.length>10?' …':''} → place로 간격을 바꾸거나 board size로 보드를 키우고 다시 route`);
   cliCommit(before,'route');cliAfter(false);
@@ -12907,6 +12995,12 @@ function cliNL(t){const s=t.toLowerCase();const out=[];
     else if(shp==='round')out.push(`board shape round ${m?m[1]+' '+m[2]:f1(BD.W)+' '+f1(BD.H)}${R?' --corner '+R[1]:''}`);
     else out.push(`board shape ${shp} ${m?m[1]+' '+m[2]:f1(BD.W)+' '+f1(BD.H)}`);
     if(m)out.splice(out.indexOf(`board size ${m[1]} ${m[2]}${/가운데|중앙|center/.test(s)?' --anchor center':''}`),1);}
+  // track width by current: "전류 기준으로 폭", "VCC_DRV 폭 1.5mm", "모터 전원 10A로"
+  const wn=t.match(/(?:^|[\s,])([A-Z+][A-Z0-9_+.]{1,15})\s*(?:넷|net)?\s*(?:폭|width)\s*(\d+(?:\.\d+)?)\s*mm/i)||t.match(/(?:폭|width)\s*(?:을|를)?\s*(\d+(?:\.\d+)?)\s*mm\s*(?:로|으로)?\s*.*?\b([A-Z+][A-Z0-9_+.]{1,15})\b/i);
+  if(wn){const net=wn[2]&&/^\d/.test(wn[2])?wn[1]:(/^\d/.test(wn[1])?wn[2]:wn[1]),mm=/^\d/.test(wn[1])?wn[1]:wn[2];if(BD.nets&&BD.nets[net]){out.push(`width ${net} ${mm}`);if(/배선|route/.test(s))out.push('route');return out;}}
+  const wc=t.match(/(?:^|[\s,])([A-Z+][A-Z0-9_+.]{1,15})(?=[\s,가-힣])[^\d]{0,12}(\d+(?:\.\d+)?)\s*A(?![A-Za-z])/);if(wc&&BD.nets&&BD.nets[wc[1]]&&/전류|current|A로|폭/.test(s)){out.push(`width ${wc[1]} --current ${wc[2]}`);if(/배선|route/.test(s))out.push('route --iw');return out;}
+  if(/(전류|current|ipc)\s*(기준|대로|따라|맞춰|based)/.test(s)&&/폭|width|배선|route/.test(s)){out.push(/배선|route/.test(s)?'route --iw':'width');return out;}
+  if(/(폭|width)\s*(표|보여|알려|확인|어때|얼마)/.test(s)){out.push('width');return out;}
   const wantRoute=/배선|라우팅|route|routing|연결/.test(s);
   const ly=s.match(/(\d+)\s*(?:층|레이어|layers?|l\b)/);if(ly&&PCB.STACKS[+ly[1]])out.push(`board layers ${ly[1]}`);
   const mini=/(최소화|최소로|최소\s*크기|minimi[sz]e|shrink|줄여|작게)/.test(s)&&/(크기|사이즈|싸이즈|size|보드|기판|면적|외곽)/.test(s);
@@ -12934,13 +13028,20 @@ async function cliRun(line,quiet,by){
     case 'place':return cliPlace(a,false);
     case 'route':return await cliRoute(a);
     case 'unroute':return cliUnroute();
+    case 'width':{if(typeof CURRENT==='undefined')throw new Error('전류 모듈 없음');if(a.oz){BD.oz=Math.max(0.5,+a.oz);}if(a.dt){BD.dT=Math.max(5,+a.dt);}
+      const net=a._[0];if(net){const key=Object.keys(BD.nets||{}).find(n=>n.toLowerCase()===String(net).toLowerCase());if(!key)throw new Error('넷 '+net+' 없음');
+        BD.netWidth=BD.netWidth||{};BD.netCurrent=BD.netCurrent||{};
+        if(a.current!=null){BD.netCurrent[key]=+a.current;delete BD.netWidth[key];}
+        else{const v=a._[1];if(v==null)throw new Error('width <넷> <mm|auto> 또는 --current A');if(v==='auto'){delete BD.netWidth[key];delete BD.netCurrent[key];}else{const mm=parseFloat(v);if(!(mm>=0.1&&mm<=10))throw new Error('폭 0.1–10 mm');BD.netWidth[key]=mm;}}
+        const w=CURRENT.widths(BD,{oz:BD.oz||1,dT:BD.dT||10})[key];return`${key}: ${w.I.toFixed(2)} A → 권장 ${w.ipc} mm${w.manual?' · 지정 '+w.w+' mm':''}${w.pour?' (동박면 권장)':''} — route --iw 또는 route 로 적용`;}
+      return CURRENT.text(BD,{oz:BD.oz||1,dT:BD.dT||10});}
     case 'pinswap':return await cliPinswap(a);
     case 'auto':return await cliAuto(a);
     case 'lock':cliRefs(a._).forEach(c=>CLI.lock.add(c.ref));return`고정: ${[...CLI.lock].join(', ')||'없음'}`;
     case 'unlock':if(a._[0]==='all'||!a._.length)CLI.lock.clear();else cliRefs(a._).forEach(c=>CLI.lock.delete(c.ref));return`고정: ${[...CLI.lock].join(', ')||'없음'}`;
     case 'locks':return`고정: ${[...CLI.lock].join(', ')||'없음'}`;
     case 'move':case 'rotate':case 'flip':return await cliOne(cmd,a);
-    case 'drc':{PCBEDIT.prepare(BD);const d=PCBEDIT.drc(BD);if(PE.on)peRecalc(true);return d.length?`DRC ${d.length}건\n`+d.slice(0,15).map(x=>`  ${x.msg}${x.refs&&x.refs.length?' ('+x.refs.join(', ')+')':''}`).join('\n')+(d.length>15?'\n  …':''):'DRC 문제 없음';}
+    case 'drc':{PCBEDIT.prepare(BD);const d=PCBEDIT.drc(BD);if(PE.on)peRecalc(true);const cw=typeof CURRENT!=='undefined'?CURRENT.check(BD,{oz:BD.oz||1,dT:BD.dT||10}):[];const extra=cw.length?`\n전류 대비 폭 부족 ${cw.length}건 (route --iw 로 넓히거나 동박면):\n`+cw.map(x=>'  ! '+x.msg).join('\n'):'';return (d.length?`DRC ${d.length}건\n`+d.slice(0,15).map(x=>`  ${x.msg}${x.refs&&x.refs.length?' ('+x.refs.join(', ')+')':''}`).join('\n')+(d.length>15?'\n  …':''):'DRC 문제 없음')+extra;}
     case 'rats':{const r=PCBEDIT.ratsnest(BD);if(!r.length)return'래츠네스트 없음 — 모든 연결이 동박으로 이어졌습니다.';const by={};r.forEach(x=>{by[x.net]=(by[x.net]||0)+1;});return`래츠네스트 ${r.length}개\n`+Object.entries(by).sort((x,y)=>y[1]-x[1]).slice(0,20).map(([n,k])=>`  ${n} ${k}`).join('\n');}
     case 'report':return cliReport(a);
     case 'analyze':case 'analyse':return scAnalyze(a);
@@ -12980,13 +13081,14 @@ const CLI_SYS=`You are a PCB layout assistant embedded in a PCB viewer. The user
 Commands (exactly this syntax):
 ${'$'}{CMDS}
 Strategies: balanced (wirelength/decoupling/heat/noise evenly), thermal (heat sources spread apart, away from electrolytic caps/crystals/analog), noise (decaps at pins, short switching loops, switching parts far from MCU/crystal/analog, ground plane kept whole), compact (short wiring, parts gathered).
+Track width: default 0.2 mm signal / 0.3 mm power by net name. "width" lists the estimated current per net and the IPC-2221 width; "width NET 1.2" fixes a net's width, "width NET --current 4" sets its current; "route --iw" routes power/motor nets at their IPC-2221 width (capped by --iwmax, default 2 mm; wider nets should become copper pours). "drc" also reports tracks too thin for their current. Use these when the user talks about current, heating, motor/power trace width.
 Sides: parts go on the TOP side only by default (single-sided assembly: one reflow pass, cheapest, connectors/through-hole/electrolytics must be top). "reset --both" / "place --both" also uses the bottom for passives and small ICs (two-sided assembly) — use it when the user asks for 양면/하단 배치 or the board must be smaller than single-sided allows.
 Moving: "move REF x y [deg]", "rotate REF deg", "flip REF" (to the other side) remove that part's auto-routed tracks and re-route its nets right away (add --no-route to leave the ratsnest open); hand-drawn tracks are kept.
 Board shape: "board shape circle 60" / "board shape oval 80 40" / "board shape L 100 60 --cut 40x25 --at tr" / "board shape hex 60" / "board shape round 100 60 --corner 3" / "board shape poly --pts \"0,0 80,0 80,40 40,60 0,40\""; cutouts: "board cutout circle 8 --at 20,20", "board cutout rect 20x10 --at 50,30". After a shape change that leaves parts outside, run "place" or "reset".
 Copper layers: "board layers N" (2/4/6/8/10) builds a standard stack-up (e.g. 8 = S/GND/S/GND/PWR/S/GND/S) with inner GND/PWR planes and inner signal layers, and drops plane vias — always run it when the user asks for a layer count (e.g. "8층"). Size: "board minimize --route" finds the smallest board that still places and routes (slow); "board minimize" only re-places; "board size W H" sets an exact size. MCU pins: "pinswap" shows a routing-friendly re-assignment, "pinswap --apply --route" changes the circuit (board nets, schematic, HSIS) and routes — allowed in the PCB step.
 Rules: use at most 6 commands; "reset" re-places everything from the netlist (schematic) and clears copper; "route" auto-routes open nets; run "report" (place, thermal or emc) when the user asks about heat/noise quality; every command is undoable. After the tool calls, answer in Korean in 2-5 short sentences: what you ran, the key numbers from the outputs, and one concrete next step if something is left (unrouted nets, DRC, overlaps). Do not invent numbers.`;
 const CLI_RO=c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase(),s=(t[1]||'').toLowerCase();
-  return['help','?','status','strategies','locks','drc','rats','report','history','analyze','analyse','safety'].includes(f)||(f==='guide'&&(!s||/^(check|list|show)$/.test(s)))||(f==='housing'&&/^(check|compare)$/.test(s))||(f==='board'&&(!s||s==='info'||s==='stack'));};
+  return['help','?','status','strategies','locks','drc','rats','report','history','analyze','analyse','safety'].includes(f)||(f==='width'&&!s)||(f==='guide'&&(!s||/^(check|list|show)$/.test(s)))||(f==='housing'&&/^(check|compare)$/.test(s))||(f==='board'&&(!s||s==='info'||s==='stack'));};
 async function cliAgent(prompt,kind){
   return aiAgent({prompt,kind,ro:CLI_RO,roList:'status, report place|thermal|emc, drc, rats, guide check, board stack, housing check',toolName:'run_cli',toolDesc:'Run one PCB layout console command (see the command list) and return its text output.',example:'"reset --strategy thermal" or "guide set ds_kelvin fail --note ..."',
     run:c=>cliRun(c,true,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();return!CLI_CMDS.has(f)||f==='ai'?'unknown command: '+f:'';},
