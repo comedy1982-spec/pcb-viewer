@@ -8,6 +8,8 @@ const CLI_HELP=[
   ['analyze [all|power|decap|rc|ac|dc|ir|si|thermal|emc] [--from 넷 --to 넷] [--net 넷 --total mA]','회로·보드 해석(조회): 전원 트리 · 디커플링 · RC/LC 패턴 · AC 응답 · DC 동작점 · IR drop · 신호 무결성 · 열 · EMC'],
   ['board size <가로> <세로> [--anchor center|bl] [--corner R]','보드 크기 변경 (mm). 기본은 왼쪽 아래 기준, center는 부품을 가운데 유지'],
   ['board corner <R>','모서리 반지름 변경'],
+  ['board shape <rect|round|circle|oval|L|T|hex|oct|poly> [가로 [세로]] [--corner R] [--cut 가로x세로] [--at tr|tl|br|bl] [--pts "x,y x,y …"] [--anchor center]','보드 외곽 모양. circle은 지름 하나, hex/oct는 폭, L/T는 --cut(절개·기둥 크기)과 --at(절개 모서리), poly는 --pts 꼭짓점'],
+  ['board cutout circle <지름> --at x,y · board cutout rect <가로>x<세로> --at x,y [--corner R] · board cutout clear','보드 안 컷아웃(구멍) 추가/삭제 — 배치·배선이 피함'],
   ['board layers <2|4|6|8|10> [--pwr 넷] [--route]','동박 층 수 변경. 표준 스택업(예: 8층 S·GND·S·GND·PWR·S·GND·S)으로 내층 GND/전원 플레인과 내층 신호층을 만들고, 플레인 넷은 비아로 연결 (--route면 이어서 배선)'],
   ['board stack','층 구성(스택업)과 플레인 넷 보기'],
   ['board minimize [--margin 1] [--strategy compact] [--route] [--keep]','보드 크기 최소화: 부품이 겹치지 않는 가장 작은 크기를 찾아 다시 배치. --route면 배선까지 되는 크기를 찾음 (안 되면 한 단계씩 키움). --keep은 지금 배치 그대로 외곽만 줄임'],
@@ -59,11 +61,11 @@ const CLI_CMDS=new Set(['analyze','analyse','safety','pinswap','housing','guide'
 
 /* ---- snapshots for undo (same objects: tracks, pads and silk keep their identity) ---- */
 function cliSnap(){return{poses:BD.comps.map(c=>({c,x:c.x,y:c.y,rot:c.rot||0,side:c.side})),layers:Object.fromEntries(Object.keys(BD.layers).map(k=>[k,BD.layers[k].slice()])),vias:BD.vias.slice(),
-  board:{W:BD.W,H:BD.H,outline:JSON.parse(JSON.stringify(BD.outline)),holes:BD.drills.filter(d=>!d.own&&!d._pad).map(d=>[d,d.x,d.y]),cl:BD.copperLayers||2,stack:BD.stack,t:BD.t,pend:!!BD.pcbPending}};}
+  board:{W:BD.W,H:BD.H,outline:JSON.parse(JSON.stringify(BD.outline)),shape:BD.shape?JSON.parse(JSON.stringify(BD.shape)):null,cut:BD.cutouts?JSON.parse(JSON.stringify(BD.cutouts)):null,holes:BD.drills.filter(d=>!d.own&&!d._pad).map(d=>[d,d.x,d.y]),cl:BD.copperLayers||2,stack:BD.stack,t:BD.t,pend:!!BD.pcbPending}};}
 function cliRestore(s){
   s.poses.forEach(p=>{const c=p.c;if(c.side!==p.side)PCBEDIT.flip(BD,c);const dr=p.rot-(c.rot||0);if(Math.abs(dr)>1e-9)PCBEDIT.rotate(BD,c,dr);if(Math.abs(p.x-c.x)>1e-12||Math.abs(p.y-c.y)>1e-12)PCBEDIT.move(BD,c,p.x-c.x,p.y-c.y);c.rot=p.rot;});
   Object.keys(s.layers).forEach(k=>{BD.layers[k]=s.layers[k].slice();});BD.vias=s.vias.slice();
-  if(s.board){const b=s.board;Object.keys(BD.layers).forEach(k=>{if(!(k in s.layers))delete BD.layers[k];});BD.W=b.W;BD.H=b.H;BD.outline=JSON.parse(JSON.stringify(b.outline));b.holes.forEach(([d,x,y])=>{d.x=x;d.y=y;});BD.copperLayers=b.cl;BD.stack=b.stack;BD.t=b.t;BD.pcbPending=b.pend;if(typeof pcbGatePaint==='function')setTimeout(pcbGatePaint,0);}
+  if(s.board){const b=s.board;Object.keys(BD.layers).forEach(k=>{if(!(k in s.layers))delete BD.layers[k];});BD.W=b.W;BD.H=b.H;BD.outline=JSON.parse(JSON.stringify(b.outline));BD.shape=b.shape||null;BD.cutouts=b.cut||null;b.holes.forEach(([d,x,y])=>{d.x=x;d.y=y;});BD.copperLayers=b.cl;BD.stack=b.stack;BD.t=b.t;BD.pcbPending=b.pend;if(typeof pcbGatePaint==='function')setTimeout(pcbGatePaint,0);}
   PCBEDIT.rebuildNets(BD);}
 function cliCommit(before,label){const after=cliSnap();pePush({copper:true,label,undo:()=>cliRestore(before),redo:()=>cliRestore(after)});}
 function cliEnsureEdit(){if(!PE.on)peBegin();else PCBEDIT.prepare(BD);if(!(S.view==='T'||S.view==='B'))setView('T');}
@@ -78,12 +80,26 @@ function cliStatus(){
   const keys=PCB.cuKeys(BD);const auto=keys.reduce((a,s)=>a+BD.layers[s+'.cu'].filter(p=>p.auto).length,0);
   const per=keys.length>2?' ('+keys.map(k=>k+' '+BD.layers[k+'.cu'].filter(p=>p.t==='seg'||p.t==='path').length).join(' · ')+')':'';
   const planes=PCB.stackOf(BD).filter(x=>x.net&&x.role!=='sig').map(x=>`${x.k} ${x.net}`);
-  return[`보드 ${f1(BD.W)} × ${f1(BD.H)} mm${R?` · 모서리 R${f1(R)}`:''}${PCBEDIT.rectLike(BD)?'':' · 사각형이 아닌 외곽'} · ${BD.copperLayers||2}층${planes.length?` (플레인 ${planes.join(', ')})`:''} · 두께 ${BD.t} mm${BD.pcbPending?' · PCB 설계 시작 전 (부품 미배치)':''}`,
+  return[`보드 ${f1(BD.W)} × ${f1(BD.H)} mm${R?` · 모서리 R${f1(R)}`:''}${BD.shape&&BD.shape.kind!=='rect'?' · '+PCBEDIT.shapeText(BD):PCBEDIT.rectLike(BD)?'':' · 사각형이 아닌 외곽'} · ${BD.copperLayers||2}층${planes.length?` (플레인 ${planes.join(', ')})`:''} · 두께 ${BD.t} mm${BD.pcbPending?' · PCB 설계 시작 전 (부품 미배치)':''}`,
     `부품 ${BD.comps.length}개 (상단 ${BD.comps.filter(c=>c.side==='T').length} · 하단 ${BD.comps.filter(c=>c.side==='B').length}) · 넷 ${BD.netOrder.length}개 · 비아 ${BD.vias.length}개 · 자동 트랙 ${auto}개${per}`,
     `열린 넷 ${open.length}개 · 래츠네스트 ${rats}개 · DRC ${drc}건 · 기본 전략 ${CLI.strategy} (${AUTOPLACE.STRATS[CLI.strategy].label})${CLI.lock.size?` · 고정 ${[...CLI.lock].join(', ')}`:''}`].join('\n');}
 function cliBoard(a){
   const sub=a._[0];
   if(!sub)return cliStatus().split('\n')[0];
+  if(sub==='shapes')return Object.entries(PCBEDIT.SHAPES).map(([k,v])=>`${k.padEnd(7)} ${v}`).join('\n')+'\n지금: '+PCBEDIT.shapeText(BD);
+  if(sub==='shape'||sub==='cutout'){cliEnsureEdit();const snap=()=>({outline:JSON.parse(JSON.stringify(BD.outline)),W:BD.W,H:BD.H,shape:BD.shape?JSON.parse(JSON.stringify(BD.shape)):null,cut:BD.cutouts?JSON.parse(JSON.stringify(BD.cutouts)):null});
+    const put=o=>{BD.outline=JSON.parse(JSON.stringify(o.outline));BD.W=o.W;BD.H=o.H;BD.shape=o.shape;BD.cutouts=o.cut;};const s0=snap();let msg;
+    if(sub==='shape'){const kind=String(a._[1]||'').replace(/^l$/i,'L').replace(/^t$/i,'T');const dims=a._.slice(2).join(' ').split(/[\sx×]+/).filter(Boolean).map(parseFloat);
+      const p={w:dims[0]||BD.W,h:dims[1]||(kind==='circle'||kind==='hex'||kind==='oct'?dims[0]||BD.W:BD.H),d:dims[0]||Math.min(BD.W,BD.H),r:a.corner!=null?+a.corner:undefined};
+      if(a.cut){const m=String(a.cut).split(/x|×/i);p.cw=parseFloat(m[0]);p.ch=parseFloat(m[1]||m[0]);}if(a.at)p.at=String(a.at);
+      if(a.pts)p.pts=String(a.pts).trim().split(/\s+/).map(t=>t.split(',').map(parseFloat));
+      const r=PCBEDIT.setShape(BD,kind,p,{anchor:a.anchor==='center'?'center':'bl'});
+      msg=`보드 모양 → ${r.label} · ${f1(r.W)} × ${f1(r.H)} mm`+(r.outside.length?`\n보드 밖 부품 ${r.outside.length}개: ${r.outside.slice(0,12).join(', ')} → place 또는 reset으로 다시 배치하세요.`:'');}
+    else{const k=String(a._[1]||'');if(k==='clear'){const n=PCBEDIT.clearCutouts(BD);msg=`컷아웃 ${n}개 삭제`;}
+      else{const at=String(a.at||'').split(',').map(parseFloat);const p={x:at[0],y:at[1],r:a.corner!=null?+a.corner:0};
+        if(k==='circle')p.d=parseFloat(a._[2]);else if(k==='rect'){const m=String(a._[2]||'').split(/x|×/i);p.w=parseFloat(m[0]);p.h=parseFloat(m[1]||m[0]);}else throw new Error('board cutout circle <지름> --at x,y · rect <가로>x<세로> --at x,y · clear');
+        const r=PCBEDIT.addCutout(BD,k,p);msg=`컷아웃 #${r.n} ${k==='circle'?'Ø'+f1(p.d):f1(p.w)+'×'+f1(p.h)} @ ${f1(p.x)},${f1(p.y)}`+(r.outside.length?`\n컷아웃 위 부품 ${r.outside.length}개: ${r.outside.join(', ')} → 옮기세요.`:'');}}
+    const s1=snap();pePush({copper:true,label:'board '+sub,undo:()=>{put(s0);cliAfter(true);},redo:()=>{put(s1);cliAfter(true);}});cliAfter(true);return msg;}
   let W,H,corner=a.corner;
   if(sub==='size'){W=parseFloat(a._[1]);H=parseFloat(a._[2]);if(a._[1]&&/x|×/i.test(a._[1])&&!a._[2]){const m=a._[1].split(/x|×/i);W=parseFloat(m[0]);H=parseFloat(m[1]);}}
   else if(sub==='corner'){W=BD.W;H=BD.H;corner=parseFloat(a._[1]);if(!isFinite(corner))throw new Error('board corner <반지름 mm>');}
@@ -252,6 +268,15 @@ function cliNL(t){const s=t.toLowerCase();const out=[];
   const strat=/열|발열|방열|thermal|heat/.test(s)?'thermal':/노이즈|잡음|emc|emi|noise/.test(s)?'noise':/작게|소형|compact|촘촘|조밀/.test(s)?'compact':/균형|balanced/.test(s)?'balanced':null;
   const m=s.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*[x×*]\s*(\d+(?:\.\d+)?)/)||(/보드|board|크기|사이즈/.test(s)&&s.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*(?:,|와|과|및|by|\s)\s*(\d+(?:\.\d+)?)/));
   if(m&&/보드|board|크기|사이즈|size|mm|x|×/.test(s))out.push(`board size ${m[1]} ${m[2]}${/가운데|중앙|center/.test(s)?' --anchor center':''}`);
+  // board shape: "원형 보드 60mm", "보드를 L자로 (절개 40x25 오른쪽 위)", "육각형 50", "라운드 모서리 3"
+  const shp=/원형|동그란|circle|round\s*board|원판/.test(s)?'circle':/타원|스타디움|oval|stadium|캡슐/.test(s)?'oval':/\bL\s*자|ㄱ\s*자|l-?shape/i.test(s)?'L':/\bT\s*자|t-?shape/i.test(s)?'T':/육각/.test(s)||/\bhex/i.test(s)?'hex':/팔각|octagon/i.test(s)?'oct':/라운드|둥근\s*모서리|rounded/.test(s)?'round':/사각형으로|직사각/.test(s)?'rect':null;
+  if(shp&&/보드|board|기판|모양|외곽|형상|shape|모서리/.test(s)){const d=s.match(/(?:지름|직경|Ø|⌀|φ|diameter)?\s*(\d+(?:\.\d+)?)\s*mm/)||s.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*(?:짜리|의|로)/);const cm=s.match(/(?:절개|컷|cut|기둥|stem)\s*(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/);const pairs=[...s.matchAll(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/g)];const cut=cm||(pairs.length>=2?pairs[1]:(!m?pairs[0]:null));const at=/오른쪽\s*위|우상|top.?right|\btr\b/i.test(s)?'tr':/왼쪽\s*위|좌상|top.?left|\btl\b/i.test(s)?'tl':/오른쪽\s*아래|우하|bottom.?right|\bbr\b/i.test(s)?'br':/왼쪽\s*아래|좌하|bottom.?left|\bbl\b/i.test(s)?'bl':'';
+    const R=s.match(/(?:모서리|corner|R)\s*(\d+(?:\.\d+)?)/i);
+    if(shp==='circle'||shp==='hex'||shp==='oct')out.push(`board shape ${shp} ${d?d[1]:Math.min(BD.W,BD.H)}`);
+    else if(shp==='L'||shp==='T')out.push(`board shape ${shp} ${m?m[1]+' '+m[2]:f1(BD.W)+' '+f1(BD.H)}${cut?' --cut '+cut[1]+'x'+cut[2]:''}${at?' --at '+at:''}`);
+    else if(shp==='round')out.push(`board shape round ${m?m[1]+' '+m[2]:f1(BD.W)+' '+f1(BD.H)}${R?' --corner '+R[1]:''}`);
+    else out.push(`board shape ${shp} ${m?m[1]+' '+m[2]:f1(BD.W)+' '+f1(BD.H)}`);
+    if(m)out.splice(out.indexOf(`board size ${m[1]} ${m[2]}${/가운데|중앙|center/.test(s)?' --anchor center':''}`),1);}
   const wantRoute=/배선|라우팅|route|routing|연결/.test(s);
   const ly=s.match(/(\d+)\s*(?:층|레이어|layers?|l\b)/);if(ly&&PCB.STACKS[+ly[1]])out.push(`board layers ${ly[1]}`);
   const mini=/(최소화|최소로|최소\s*크기|minimi[sz]e|shrink|줄여|작게)/.test(s)&&/(크기|사이즈|싸이즈|size|보드|기판|면적|외곽)/.test(s);
@@ -324,6 +349,7 @@ const CLI_SYS=`You are a PCB layout assistant embedded in a PCB viewer. The user
 Commands (exactly this syntax):
 ${'$'}{CMDS}
 Strategies: balanced (wirelength/decoupling/heat/noise evenly), thermal (heat sources spread apart, away from electrolytic caps/crystals/analog), noise (decaps at pins, short switching loops, switching parts far from MCU/crystal/analog, ground plane kept whole), compact (short wiring, parts gathered).
+Board shape: "board shape circle 60" / "board shape oval 80 40" / "board shape L 100 60 --cut 40x25 --at tr" / "board shape hex 60" / "board shape round 100 60 --corner 3" / "board shape poly --pts \"0,0 80,0 80,40 40,60 0,40\""; cutouts: "board cutout circle 8 --at 20,20", "board cutout rect 20x10 --at 50,30". After a shape change that leaves parts outside, run "place" or "reset".
 Copper layers: "board layers N" (2/4/6/8/10) builds a standard stack-up (e.g. 8 = S/GND/S/GND/PWR/S/GND/S) with inner GND/PWR planes and inner signal layers, and drops plane vias — always run it when the user asks for a layer count (e.g. "8층"). Size: "board minimize --route" finds the smallest board that still places and routes (slow); "board minimize" only re-places; "board size W H" sets an exact size. MCU pins: "pinswap" shows a routing-friendly re-assignment, "pinswap --apply --route" changes the circuit (board nets, schematic, HSIS) and routes — allowed in the PCB step.
 Rules: use at most 6 commands; "reset" re-places everything from the netlist (schematic) and clears copper; "route" auto-routes open nets; run "report" (place, thermal or emc) when the user asks about heat/noise quality; every command is undoable. After the tool calls, answer in Korean in 2-5 short sentences: what you ran, the key numbers from the outputs, and one concrete next step if something is left (unrouted nets, DRC, overlaps). Do not invent numbers.`;
 const CLI_RO=c=>{const t=cliTok(c);const f=(t[0]||'').toLowerCase(),s=(t[1]||'').toLowerCase();

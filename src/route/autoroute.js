@@ -74,6 +74,9 @@ function outlineBlock(B,G,edge){
     for(let x=0;x<G.nx;x++){const px=G.ox+x*G.g;let inside=false;for(let k=0;k+1<xs.length;k+=2)if(px>xs[k]&&px<xs[k+1]){inside=true;break;}
       if(!inside){const i=y*G.nx+x;for(let l=0;l<G.NL;l++){G.occT[l][i]=-1;G.occV[l][i]=-1;}}}}
   for(let i=0,j=ring.length-1;i<ring.length;j=i++)paint(G,{k:'cap',a:ring[j],b:ring[i],r:0,L:ALL(G.NL),net:null},-1,0,0,edge);
+  // cutouts: cells inside any further ring are off the board too
+  for(const h of B.outline.slice(1)){for(let y=0;y<G.ny;y++){const py=G.oy+y*G.g;for(let x=0;x<G.nx;x++){const px=G.ox+x*G.g;if(PCB.inRing(px,py,h)){const i=y*G.nx+x;for(let l=0;l<G.NL;l++){G.occT[l][i]=-1;G.occV[l][i]=-1;}}}}
+    for(let i=0,j=h.length-1;i<h.length;j=i++)paint(G,{k:'cap',a:h[j],b:h[i],r:0,L:ALL(G.NL),net:null},-1,0,0,edge);}
 }
 
 /* ---------- A* ---------- */

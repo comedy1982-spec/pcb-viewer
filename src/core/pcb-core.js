@@ -24,6 +24,7 @@ function arc3(s,m,e){
 }
 function bezier(p0,p1,p2,p3){const o=[];for(let i=0;i<=24;i++){const t=i/24,u=1-t;o.push([u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0],u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1]]);}return o;}
 function area(r){let a=0;for(let i=0,n=r.length;i<n;i++){const p=r[i],q=r[(i+1)%n];a+=p[0]*q[1]-q[0]*p[1];}return a/2;}
+function inBoard(x,y,outline){if(!outline||!outline[0])return true;if(!inRing(x,y,outline[0]))return false;for(let i=1;i<outline.length;i++)if(inRing(x,y,outline[i]))return false;return true;}
 function inRing(x,y,r){let c=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))c=!c;}return c;}
 function segDist(px,py,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy;let t=l?((px-a[0])*dx+(py-a[1])*dy)/l:0;t=t<0?0:t>1?1:t;return Math.hypot(px-a[0]-t*dx,py-a[1]-t*dy);}
 function rotPt(x,y,deg){const r=deg*D2R,c=Math.cos(r),s=Math.sin(r);return[x*c-y*s,x*s+y*c];}
@@ -757,6 +758,6 @@ const STACKS={2:['sig','sig'],4:['sig','gnd','pwr','sig'],6:['sig','gnd','sig','
 function cuKeys(B){const n=Math.max(2,B.copperLayers||2);const k=['T'];for(let i=1;i<=n-2;i++)if(B.layers['In'+i+'.cu'])k.push('In'+i);k.push('B');return k;}
 function stackOf(B){const keys=cuKeys(B);if(B.stack&&B.stack.length===keys.length)return B.stack;return keys.map(k=>({k,role:'sig'}));}
 const cuName=k=>k==='T'?'F.Cu':k==='B'?'B.Cu':k+'.Cu';
-return{STACKS,cuKeys,stackOf,cuName,sexp,parseKicad,parseGerber,parseExcellon,parsePnP,parseBOM,parseIPC356,fromSpec,assembleGerber,finalize,build,detectRole,ROLES,FP,pkgSize,inRing,segDist,arcPts,D2R};
+return{STACKS,cuKeys,inBoard,stackOf,cuName,sexp,parseKicad,parseGerber,parseExcellon,parsePnP,parseBOM,parseIPC356,fromSpec,assembleGerber,finalize,build,detectRole,ROLES,FP,pkgSize,inRing,segDist,arcPts,D2R};
 })();
 if(typeof module!=='undefined')module.exports=PCB;

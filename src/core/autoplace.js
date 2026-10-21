@@ -77,6 +77,7 @@ function place(B,opts){
   const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];
   const ob=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
   const BW=ob[2]-ob[0],BH=ob[3]-ob[1],diag=Math.hypot(BW,BH),edgeM=opts.edge!=null?+opts.edge:1.0;
+  const holesBB=B.outline.slice(1).map(r=>[Math.min(...r.map(p=>p[0]))-0.3,Math.min(...r.map(p=>p[1]))-0.3,Math.max(...r.map(p=>p[0]))+0.3,Math.max(...r.map(p=>p[1]))+0.3]);const holeHit=A=>holesBB.some(h=>A[0]<h[2]&&h[0]<A[2]&&A[1]<h[3]&&h[1]<A[3]);
   const n=movable.length;if(!n)return{moved:0,log:['움직일 부품이 없습니다.'],strategy:sk};
   // previous pose, then canonical (top, 0°) to read the local geometry
   const prev=movable.map(o=>({x:o.c.x,y:o.c.y,v:((Math.round((o.c.rot||0)/90)%4)+4)%4+(o.c.side==='B'?4:0)}));
@@ -150,7 +151,7 @@ function place(B,opts){
     return c;}
   function ownCost(i){bbI(i,A);const o=ROLE[i];let c=0;const m=o.conn?0.35:edgeM;
     const ex=Math.max(0,ob[0]+m-A[0])+Math.max(0,A[2]-(ob[2]-m))+Math.max(0,ob[1]+m-A[1])+Math.max(0,A[3]-(ob[3]-m));if(ex>0)c+=(wOv*4+50)*(ex+ex*ex);
-    if(ring.length>4)[[A[0],A[1]],[A[2],A[1]],[A[2],A[3]],[A[0],A[3]]].forEach(p=>{if(!PCB.inRing(p[0],p[1],ring))c+=wOv*2+20;});
+    if(ring.length>4||B.outline.length>1)[[A[0],A[1]],[A[2],A[1]],[A[2],A[3]],[A[0],A[3]],[(A[0]+A[2])/2,(A[1]+A[3])/2]].forEach(p=>{if(!PCB.inBoard(p[0],p[1],B.outline))c+=wOv*2+20;});if(holeHit(A))c+=wOv*2+20;
     if(o.conn){let d;const f=FACE[i];if(f){const v=XF(f[0],f[1],V[i]);d=v[0]>0.5?ob[2]-A[2]:v[0]<-0.5?A[0]-ob[0]:v[1]>0.5?ob[3]-A[3]:A[1]-ob[1];d*=1.5;}
       else d=Math.min(A[0]-ob[0],ob[2]-A[2],A[1]-ob[1],ob[3]-A[3]);c+=st.edge*Math.max(0,d-0.3)*(1+o.c.pads.length*0.05);}
     else{const cx=(A[0]+A[2])/2-(ob[0]+ob[2])/2,cy=(A[1]+A[3])/2-(ob[1]+ob[3])/2;c+=st.cen*Math.hypot(cx,cy)*Math.sqrt(G[i].area+1);}
@@ -202,7 +203,7 @@ function place(B,opts){
   const order=movable.map((_,i)=>i).sort((a,b)=>(ROLE[b].conn-ROLE[a].conn)||G[b].area-G[a].area);
   const placed=[];const fails=[];
   const ok=(i,f)=>{bbI(i,A);const o=ROLE[i];const m=o.conn?0.35:Math.min(edgeM,0.6+0.4*f);if(A[0]<ob[0]+m||A[1]<ob[1]+m||A[2]>ob[2]-m||A[3]>ob[3]-m)return false;
-    if(ring.length>4&&![[A[0],A[1]],[A[2],A[1]],[A[2],A[3]],[A[0],A[3]]].every(p=>PCB.inRing(p[0],p[1],ring)))return false;
+    if((ring.length>4||B.outline.length>1)&&![[A[0],A[1]],[A[2],A[1]],[A[2],A[3]],[A[0],A[3]],[(A[0]+A[2])/2,(A[1]+A[3])/2]].every(p=>PCB.inBoard(p[0],p[1],B.outline)))return false;if(holeHit(A))return false;
     const si=sideOf(i);const gap=(q,o2)=>{const t=o2&&TG.get(ROLE[i]._id*100000+o2._id);
       // next to a fine-pitch IC keep a fan-out lane even when space is tight (vias and escape tracks need it)
       const fl=t==null&&(ROLE[i].pitch<0.66||(o2&&o2.pitch<0.66))?escG:0.2;return Math.max(fl,t!=null?t*Math.max(f,0.7):(halo(i)+q)*f);};

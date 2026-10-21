@@ -69,3 +69,22 @@ test('.kicad_pcb export reloads with the same pads, nets, tracks and vias', () =
     assert.equal(R.comps.find(c => c.ref === (B.byRef.R5 ? 'R5' : 'C1')).side, 'B');
   }
 });
+
+test('board shapes and cutouts', () => {
+  const bd = board(SAMPLE); PCBEDIT.resizeBoard(bd, 100, 60, {});
+  for (const k of Object.keys(PCBEDIT.SHAPES)) {
+    const r = PCBEDIT.setShape(bd, k, { w: 80, h: 50, d: 60, cw: 30, ch: 20, at: 'tr', r: 3, pts: [[0, 0], [40, 0], [40, 20], [20, 30], [0, 20]] });
+    assert.ok(r.W >= 5 && r.H >= 5 && bd.outline[0].length >= 3 && Array.isArray(r.outside), k);
+    assert.equal(bd.shape.kind, k);
+  }
+  PCBEDIT.setShape(bd, 'L', { w: 90, h: 60, cw: 35, ch: 25, at: 'tr' });
+  assert.ok(!PCB.inBoard(80, 50, bd.outline) && PCB.inBoard(20, 20, bd.outline), 'L cut corner is off-board');
+  const c = PCBEDIT.addCutout(bd, 'circle', { x: 20, y: 40, d: 8 }); assert.equal(c.n, 1);
+  assert.ok(!PCB.inBoard(20, 40, bd.outline) && PCB.inBoard(30, 40, bd.outline), 'cutout is off-board');
+  assert.throws(() => PCBEDIT.addCutout(bd, 'rect', { x: 88, y: 58, w: 20, h: 10 }), /보드 밖/);
+  PCBEDIT.resizeBoard(bd, 180, 120, {}); assert.equal(bd.shape.kind, 'L'); assert.equal(bd.outline.length, 2); assert.ok(Math.abs(bd.shape.cw - 70) < 1e-6);
+  assert.match(PCBEDIT.shapeText(bd), /L자형.*컷아웃 1개/);
+  assert.equal(PCBEDIT.clearCutouts(bd), 1);
+  PCBEDIT.setShape(bd, 'circle', { d: 70 }); PCBEDIT.resizeBoard(bd, 50, 50, {}); assert.ok(Math.abs(bd.W - 50) < 1e-6 && bd.shape.kind === 'circle');
+  assert.throws(() => PCBEDIT.setShape(bd, 'star', {}), /모양/);
+});

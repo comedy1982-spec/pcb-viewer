@@ -15,6 +15,13 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 보드 외곽 모양 — 사각형 외 (v1.42.0)
+
+- `pcbedit.js`: `SHAPES` rect · round · circle · oval(스타디움) · L · T · hex · oct · poly. `shapeRing(kind,p)` → 외곽 링, `setShape(B,kind,p,{anchor})` → `B.outline[0]`·W·H·`B.shape` 갱신 + 보드 밖 부품 목록, `addCutout(B,'circle'|'rect',{x,y,d|w,h,r})` → 안쪽 링(구멍) 추가(`B.cutouts`), `clearCutouts`, `shapeText`. `resizeBoard`는 모양 보드를 비례 파라미터로 다시 생성(원형은 min(W,H) 지름). `PCB.inBoard(x,y,outline)` = 외곽 안 ∧ 구멍 밖.
+- 배치: `autoplace`가 외곽(모든 꼭짓점·중심)과 컷아웃(바운딩 겹침)을 피함. 배선: `autoroute.outlineBlock`이 컷아웃 셀을 막고 테두리 캡을 칠함. 3D·KiCad 내보내기는 이미 다중 링 지원.
+- 3단계 시작 카드: **보드 모양** 선택(사각형·라운드·원형·타원·L자·T자·육각·팔각) + 모양 값(코너 R · 지름 · 절개 가로x세로 [tr|tl|br|bl] · 폭). 최소화와도 조합.
+- 콘솔: `board shapes` · `board shape <kind> [가로 [세로]] [--corner R] [--cut WxH] [--at tr|tl|br|bl] [--pts "x,y …"] [--anchor center]` · `board cutout circle <d> --at x,y` · `board cutout rect WxH --at x,y [--corner R]` · `board cutout clear` (되돌리기 지원). 문장: "보드를 원형 60mm로", "L자로 100x60 절개 40x25 오른쪽 위", "육각형 보드 50mm", "라운드 모서리 R3". AI 프롬프트에 모양·컷아웃 명령 안내. 상태·보고서·요약 시트에 모양 표시, 스냅샷에 shape/cutouts 저장.
+
 ## 블록별 부품 후보 — 제조사별로 고르기 (v1.41.0)
 
 - `products.js` `PARTS`: 템플릿 블록마다 **제조사가 다른 후보 3–5개** `[MPN, 제조사, 한 줄 특징]` — 안전 PMIC(TLF35584·TPS65381A-Q1·FS2600·L9396), 락스텝 MCU(TC364·S32K344·SPC58·RH850/U2A·TMS570), CAN-FD(TJA1443·TLE9251·TCAN1043·MCP2542FD·ATA6563), 3상 게이트 드라이버(TLE9180·L9908·DRV8353·GD3000·A4919), 40 V MOSFET, 션트 앰프/전류 센서, 역접속 보호, HSD/LSD/LIN, 절연 AFE·ΔΣ·전압 앰프, 절연 게이트 드라이버, 파워 모듈, RDC, 각도·토크 센서. `candidates(prof,id)`로 조회(AI 프로필은 `parts` 객체 {mpn,mfr,note,grade}를 같은 형식으로 검증). 요약 출력에 "후보: …" 표시.

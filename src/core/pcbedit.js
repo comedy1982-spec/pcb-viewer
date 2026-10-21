@@ -154,6 +154,42 @@ function cornerRadius(B){const r=B.outline[0];if(!r||r.length<=4)return 0;const 
 // a rectangle, possibly with rounded corners (then the outline can be rebuilt for any size)
 function rectLike(B){const r=B.outline[0];if(!r)return true;if(B.outline.length>1)return false;const b=ringBB(r),R=cornerRadius(B);const full=(b[2]-b[0])*(b[3]-b[1]);return Math.abs(ringArea(r)-(full-(4-Math.PI)*R*R))<Math.max(0.5,full*0.004);}
 function roundedRect(W,H,R){const r=Math.min(R,W/2,H/2);if(!(r>0))return[[0,0],[W,0],[W,H],[0,H]];const o=[];[[W-r,r,-90],[W-r,H-r,0],[r,H-r,90],[r,r,180]].forEach(([cx,cy,a])=>PCB.arcPts(cx,cy,r,a*D2R,(a+90)*D2R).forEach(p=>o.push(p)));return o;}
+/* ---- board shapes: rect · round · circle · oval (stadium) · L · T · hex · oct · poly, plus cutouts (holes in the outline) ---- */
+const SHAPES={rect:'사각형',round:'라운드 사각형',circle:'원형',oval:'타원 (스타디움)',L:'L자형',T:'T자형',hex:'육각형',oct:'팔각형',poly:'다각형 (직접)'};
+const closeRing=r=>{if(r.length>1&&Math.hypot(r[0][0]-r[r.length-1][0],r[0][1]-r[r.length-1][1])<1e-6)r.pop();return r;};
+function shapeRing(kind,p){p=p||{};const W=+p.w||100,H=+p.h||W,R=+p.r||0;
+  switch(kind){
+    case'rect':return roundedRect(W,H,R);
+    case'round':return roundedRect(W,H,R||Math.min(W,H)*0.1);
+    case'circle':{const D=+p.d||W;return closeRing(PCB.arcPts(D/2,D/2,D/2,0,2*Math.PI));}
+    case'oval':return roundedRect(W,H,Math.min(W,H)/2);
+    case'L':{const cw=Math.min(W-5,+p.cw||W/2),ch=Math.min(H-5,+p.ch||H/2),at=p.at||'tr';
+      if(at==='tr')return[[0,0],[W,0],[W,H-ch],[W-cw,H-ch],[W-cw,H],[0,H]];if(at==='tl')return[[0,0],[W,0],[W,H],[cw,H],[cw,H-ch],[0,H-ch]];
+      if(at==='br')return[[0,0],[W-cw,0],[W-cw,ch],[W,ch],[W,H],[0,H]];return[[cw,0],[W,0],[W,H],[0,H],[0,ch],[cw,ch]];}
+    case'T':{const sw=Math.min(W-2,+p.cw||W/2),th=Math.min(H-2,+p.ch||H/2),x0=(W-sw)/2;return[[x0,0],[x0+sw,0],[x0+sw,H-th],[W,H-th],[W,H],[0,H],[0,H-th],[x0,H-th]];}
+    case'hex':{const Rc=W/Math.sqrt(3);const o=[];for(let k=0;k<6;k++){const a=(30+60*k)*D2R;o.push([W/2+Rc*Math.cos(a),Rc+Rc*Math.sin(a)]);}return o;}
+    case'oct':{const c=W/(1+Math.SQRT2);const Hh=+p.h||W;const c2=Hh/(1+Math.SQRT2);return[[c,0],[W-c,0],[W,c2],[W,Hh-c2],[W-c,Hh],[c,Hh],[0,Hh-c2],[0,c2]];}
+    case'poly':{const pts=(p.pts||[]).map(q=>[+q[0],+q[1]]).filter(q=>isFinite(q[0])&&isFinite(q[1]));if(pts.length<3)throw new Error('다각형은 꼭짓점 3개 이상 "x,y x,y …" (mm)');
+      const mx=Math.min(...pts.map(q=>q[0])),my=Math.min(...pts.map(q=>q[1]));return closeRing(pts.map(q=>[q[0]-mx,q[1]-my]));}
+    default:throw new Error('모양: '+Object.keys(SHAPES).join(' · '));}}
+/* set the outline to a shape; parts keep their coordinates (anchor bl) or stay centred (anchor center) */
+function setShape(B,kind,p,o){o=o||{};p=p||{};if(!SHAPES[kind])throw new Error('모양: '+Object.keys(SHAPES).join(' · '));
+  const ring=shapeRing(kind,p);const bb=ringBB(ring);const W=bb[2]-bb[0],H=bb[3]-bb[1];if(!(W>=5&&H>=5&&W<=1000&&H<=1000))throw new Error('보드 크기는 5–1000 mm 사이여야 합니다.');
+  const W0=B.W,H0=B.H;if(o.anchor==='center'){const dx=(W-W0)/2,dy=(H-H0)/2;if(dx||dy)translateAll(B,dx,dy);}
+  B.outline=[ring];B.W=W;B.H=H;B.shape=Object.assign({kind},p);
+  const outside=B.comps.filter(c=>c.kind!=='none'&&c.pads.some(q=>!PCB.inBoard(q.x,q.y,B.outline))).map(c=>c.ref);
+  return{kind,label:SHAPES[kind],W,H,W0,H0,outside};}
+/* a hole in the board: circle (d) or rect (w×h, corner r) at x,y (centre) */
+function addCutout(B,kind,p){p=p||{};const x=+p.x,y=+p.y;if(!isFinite(x)||!isFinite(y))throw new Error('cutout 위치 --at x,y (mm)');
+  let ring;if(kind==='circle'){const d=+p.d;if(!(d>=1))throw new Error('cutout circle <지름>');ring=closeRing(PCB.arcPts(x,y,d/2,0,2*Math.PI));}
+  else{const w=+p.w,h=+p.h||w;if(!(w>=1&&h>=1))throw new Error('cutout rect <가로>x<세로>');ring=roundedRect(w,h,+p.r||0).map(q=>[q[0]+x-w/2,q[1]+y-h/2]);}
+  if(!ring.every(q=>PCB.inRing(q[0],q[1],B.outline[0])))throw new Error('컷아웃이 보드 밖으로 나갑니다');
+  B.outline.push(ring);B.cutouts=(B.cutouts||[]).concat([Object.assign({kind},p)]);
+  const outside=B.comps.filter(c=>c.kind!=='none'&&c.pads.some(q=>PCB.inRing(q.x,q.y,ring))).map(c=>c.ref);
+  return{n:B.outline.length-1,outside};}
+function clearCutouts(B){const n=B.outline.length-1;B.outline=B.outline.slice(0,1);B.cutouts=[];return n;}
+function shapeText(B){const sh=B.shape;if(!sh)return rectLike(B)?(cornerRadius(B)>0?'라운드 사각형':'사각형'):'다각형';const k=sh.kind;
+  return SHAPES[k]+(k==='circle'?` Ø${+sh.d||B.W}`:k==='L'||k==='T'?` (${k==='L'?'절개':'기둥'} ${sh.cw||'-'}×${sh.ch||'-'}${sh.at?' '+sh.at:''})`:'')+((B.outline||[]).length>1?` · 컷아웃 ${B.outline.length-1}개`:'');}
 // shift everything on the board (parts carry their pads, drills and silkscreen)
 function translateAll(B,dx,dy,skip){
   const seen=new Set();const mv=p=>{if(!p||seen.has(p))return;seen.add(p);p[0]+=dx;p[1]+=dy;};
@@ -170,11 +206,13 @@ function resizeBoard(B,W,H,o){
   const holes=new Set();B.drills.forEach(d=>{if(d.plated||d.own||d._pad)return;const cx=d.x<W0/2?0:W0,cy=d.y<H0/2?0:H0;
     if(Math.abs(d.x-cx)<=Math.max(12,R0+6)&&Math.abs(d.y-cy)<=Math.max(12,R0+6)){d.x=(cx?W:0)+(d.x-cx);d.y=(cy?H:0)+(d.y-cy);holes.add(d);}});
   if(dx||dy)translateAll(B,dx,dy,holes);
-  const old=B.outline;
-  B.outline=like?[roundedRect(W,H,R)]:old.map(r=>r.map(p=>[p[0]*W/W0,p[1]*H/H0]));
+  const old=B.outline;const sh=B.shape;
+  if(sh&&sh.kind!=='poly'&&sh.kind!=='rect'&&sh.kind!=='round'){const sx=W/W0,sy=H/H0;const q=Object.assign({},sh,{w:W,h:H,d:sh.kind==='circle'?Math.min(W,H):undefined,cw:sh.cw?sh.cw*sx:undefined,ch:sh.ch?sh.ch*sy:undefined});
+    B.outline=[shapeRing(sh.kind,q)].concat(old.slice(1).map(r=>r.map(p=>[p[0]*sx,p[1]*sy])));B.shape=q;const b2=ringBB(B.outline[0]);W=b2[2]-b2[0];H=b2[3]-b2[1];}
+  else{B.outline=like?[roundedRect(W,H,R)]:old.map(r=>r.map(p=>[p[0]*W/W0,p[1]*H/H0]));if(sh)B.shape=Object.assign({},sh,{w:W,h:H});}
   PCB.cuKeys(B).map(k=>k+'.cu').forEach(L=>{B.layers[L]=B.layers[L].map(p=>p.t==='pour'?Object.assign({},p,{r:Math.max(0,R-(p.inset||0.5))}):p);});
   B.W=W;B.H=H;
-  const ring=B.outline[0];const outside=B.comps.filter(c=>c.kind!=='none'&&c.pads.some(p=>!PCB.inRing(p.x,p.y,ring))).map(c=>c.ref);
+  const outside=B.comps.filter(c=>c.kind!=='none'&&c.pads.some(p=>!PCB.inBoard(p.x,p.y,B.outline))).map(c=>c.ref);
   return{W0,H0,W,H,R,anchor,rebuilt:like,outside,holes:holes.size};
 }
 
@@ -254,6 +292,6 @@ function toKicadPcb(B,meta){
   o.push(')');return o.join('\n')+'\n';
 }
 
-return{setLayers,planeNets,stackText,prepare,applyComp,move,rotate,flip,snapDelta,snapTo,bbox,rebuildNets,cornerRadius,rectLike,roundedRect,translateAll,resizeBoard,addTrack,addVia,removePrim,restorePrim,ratsnest,drc,posture,itemAt,toKicadPcb,DRC_DEF};
+return{setLayers,planeNets,stackText,prepare,applyComp,move,rotate,flip,snapDelta,snapTo,bbox,rebuildNets,cornerRadius,rectLike,roundedRect,SHAPES,shapeRing,setShape,addCutout,clearCutouts,shapeText,translateAll,resizeBoard,addTrack,addVia,removePrim,restorePrim,ratsnest,drc,posture,itemAt,toKicadPcb,DRC_DEF};
 })();
 if(typeof module!=='undefined')module.exports=PCBEDIT;

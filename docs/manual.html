@@ -137,6 +137,7 @@ kbd{background:#fff}
 <h3 id="s3">3단계 · PCB</h3>
 <ol class="steps">
   <li>처음 들어오면 <b>PCB 설계 시작</b> 카드가 열립니다. 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략(균형 · 열 분산 · 노이즈 최소화 …), 이어서 자동 배선을 고릅니다.</li>
+  <li><b>보드 모양</b>도 고릅니다 — 사각형 · 라운드 사각형 · 원형 · 타원(스타디움) · L자 · T자 · 육각형 · 팔각형. "모양 값"에 코너 R, 원형 지름, L/T의 절개(기둥) 가로x세로와 모서리(tr·tl·br·bl), 육각/팔각 폭을 적습니다. 나중에 콘솔에서 <code>board shape circle 60</code>, <code>board shape L 100 60 --cut 40x25 --at tr</code>, <code>board shape poly --pts "0,0 80,0 80,40 40,60 0,40"</code>처럼 바꾸거나, 문장으로 "보드를 원형 60mm로", "육각형 보드 50mm"라고 해도 됩니다. 보드 안 구멍은 <code>board cutout circle 8 --at 20,20</code> / <code>board cutout rect 20x10 --at 50,30</code>(<code>board cutout clear</code>로 삭제). 배치·배선은 외곽과 컷아웃을 피하고, 모양을 바꿔 밖으로 나간 부품은 <code>place</code>/<code>reset</code>으로 다시 넣습니다. 3D·KiCad·보고서에도 모양이 반영됩니다.</li>
   <li>도우미가 <code>board layers</code> → <code>board minimize</code>/<code>reset</code> → <code>route</code>를 차례로 실행합니다. 결과는 <b>변경 요청 카드</b>로 남고, 되돌릴 수 있습니다.</li>
   <li><b>PCB 편집</b>(2D 보기 위)에서 부품을 끌어 옮기고(<kbd>R</kbd> 회전, <kbd>F</kbd> 뒤집기), 배선(<kbd>X</kbd>)·비아(<kbd>V</kbd>)를 그리며, 래츠네스트와 DRC 수를 확인합니다. 4층 이상이면 보기 탭 옆 <b>층 선택</b>(또는 <kbd>[</kbd> <kbd>]</kbd>)으로 내층을 한 층씩 봅니다.</li>
   <li>배선을 위해 회로를 함께 고칠 수 있습니다: <code>pinswap</code>으로 MCU 핀 배정을 바꾸면 보드 넷·회로도·HSIS가 함께 바뀝니다.</li>
