@@ -15,6 +15,13 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 제품 프로필 — 표준 블록 먼저, 블록별 Q&A (v1.40.0)
+
+- `src/core/products.js` (`PRODUCTS`): 제품(차량용 ECU)마다 **표준 구성**을 프로필로 둠 — `defaults`(표준 요구사항 문장), `req`(규칙 엔진용 키워드), `blocks`(id·group·label·feats·impl·parts·why), `links`, `questions`(블록에 매인 질문; 선택지마다 `effect`: feats/add/links/remove/impl/dup/asil/req). `apply(prof,answers,name)`가 HWARCH 아키텍처를 결정론적으로 만들고 답변 효과를 반영(자유 입력은 해당 블록 feats에 "요구: …"로 기록), `req`에 ASIL 충돌을 정리한 요구 키워드 반환.
+- 내장 템플릿: **EPS**(KL30/KL15, Safety PMIC/SBC, 락스텝 MCU, CAN-FD, 게이트 드라이버, 3상 인버터, 페이즈 컷, 상전류·토크·각도 센서 IF; 질문: 타입/상전류, 토크센서 IF, 위치센서, 리던던시(2채널 복제), 추가 통신), **BMS**(절연 AFE 체인, 팩 전류, HV/절연 감시, 컨택터·프리차지; 질문: 팩 전압/셀 수, 전류 방식, ASIL, 밸런싱), **BCM**(SBC, HSD 어레이, LSD/릴레이, 스위치 입력, LIN; 질문: 채널 수, LIN 수, 모터 구동, ASIL), **트랙션 인버터**(절연 게이트 전원·드라이버, 파워 모듈, 리졸버, HV 측정; 질문: 전압/소자, 위치 센서, ASIL).
+- AI 모드: `PRODUCTS.aiPrompt(req)`로 Claude가 **어떤 제품이든** 같은 형태의 프로필(블록 8–16개·질문 3–6개·효과)을 만들고(`fromAi`로 검증), 못 알아보면 `{product:null}` → 내장 템플릿 → 기존 일반 질문 흐름. 규칙 모드는 템플릿 정규식으로 감지.
+- `newui.npAnalyze`: 프로필이 있으면 요약(제품·표준 요구·필요 블록 목록) 출력 → 요구사항에 이미 적힌 질문(`re`)은 건너뛰고 블록별 질문만 copAsk(`[블록명] 질문`) → `apply` → 요구사항 "보강: 제품 … · 키워드" → 기존 ASIL 메커니즘 제안으로 이어짐. 요구사항에 "템플릿 없이/직접 구성"이 있으면 프로필을 쓰지 않음. 빠른 시작 칩 EPS ECU · BMS 추가.
+
 ## GitHub Copilot CLI 연동 (v1.39.0)
 
 - `scripts/serve.mjs --copilot` (`npm run serve:copilot`, 또는 `AI_BACKEND=copilot`): `POST /v1/messages`(페이지가 쓰는 Anthropic Messages 형식)를 **GitHub Copilot SDK**(`@github/copilot-sdk`, Copilot CLI 런타임 내장)로 처리. 요청의 `tools`를 `defineTool`로 세션에 등록하고, Copilot이 도구를 부르면 핸들러가 대기 → 페이지에 `stop_reason:"tool_use"` + `copilot_run` ID로 응답 → 페이지가 명령을 실행해 `tool_result`를 같은 `copilot_run`으로 보내면 핸들러를 풀어 다음 응답(또 도구 호출 또는 최종 답)을 돌려줌. 세션은 `availableTools`를 앱 도구로 제한하고 시스템 메시지로 파일·셸 금지. 인증: 저장된 Copilot/gh 로그인 또는 `COPILOT_GITHUB_TOKEN`/`GH_TOKEN`; 미로그인은 401 + 안내. 모델: `COPILOT_MODEL` > 요청 모델(Anthropic ID 형식이면 무시) > Copilot 기본. `GET /v1/backend`로 백엔드 알림.

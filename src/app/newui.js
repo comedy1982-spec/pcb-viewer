@@ -1,6 +1,8 @@
 /* ---------- new design: project → blocks → board + schematic (NEWPROJ), deterministic or AI ---------- */
 var NP={plan:null,hist:[],log:[],seq:0,busy:false,stopReq:false,abort:null,inHist:[],hi:-1};
 const NP_TPL=[
+  ['EPS ECU','EPS ECU','EPS 전동 파워 스티어링 ECU 설계'],
+  ['BMS 마스터','BMS','BMS 배터리 관리 시스템 마스터 설계'],
   ['eLSD ECU','eLSD ECU','eLSD ECU: 12V 배터리 입력(역전압·서지 보호), AURIX MCU, CAN-FD 통신, DC 모터 H-bridge 게이트 드라이버, 전류·온도 센싱, UART/JTAG 디버그와 XCP 캘리브레이션, 워치독, ASIL B'],
   ['BLDC 팬 컨트롤러','BLDC 팬 컨트롤러 v0.1','12V 입력 BLDC 모터 컨트롤러, STM32, 홀 센서, CAN 통신, 상태 LED 2개, 버튼 1개, 전압 감시'],
   ['CAN 센서 노드','CAN 센서 노드 v0.1','12V 입력 CAN 센서 노드, STM32, I2C 센서 확장, UART 디버그, LED 1개'],
@@ -270,21 +272,42 @@ async function npBindParts(){const A=NP.arch;if(!A)return[];const SKIP=/^(ASIL|I
     for(const t of toks){let rec=NEWPROJ.partLookup?NEWPROJ.partLookup(t):null;if(!(rec&&rec.pins&&rec.pins.length)&&AIM.mode==='ai'&&typeof plAskClaude==='function'){try{await cliAiProbe();if(CLI.sample){npSay('out',`${b.id} "${b.label}": 부품 번호 ${t} — Claude가 핀 배열을 찾는 중…`);rec=await plAskClaude(t,{hint:A.name,role:b.label});}}catch(e){npSay('err',`${t}: ${e.message||e}`);}}
       if(rec&&rec.pins&&rec.pins.length){b.impl=[{type:'part',params:{mpn:rec.mpn}}];out.push(`${b.id} ⇒ part ${rec.mpn}${rec.src==='ai'?' (Claude 추정)':''}`);break;}}}
   if(out.length){NP.planManual=false;archToPlan(true);npRender();}return out;}
+/* which product is this? Claude profiles any product (standard blocks + block-level questions); built-in templates (EPS·BMS·BCM·인버터) are the rules fallback */
+async function npProduct(req){if(typeof PRODUCTS==='undefined')return null;if(/템플릿\s*(없이|끄|안)|표준\s*구성\s*없이|직접\s*구성/.test(req))return null;
+  let prof=null;
+  if(AIM.mode==='ai'&&CLI.sample){try{copSay('out','제품 종류와 표준 블록 구성을 Claude가 찾는 중…');const j=await CLI.sample.json(PRODUCTS.aiPrompt(req),{cache:false,modelTier:AIM.tier});prof=j&&j.product===null?null:PRODUCTS.fromAi(j);if(prof&&prof.blocks.length<4)prof=null;}catch(e){npSay('err','제품 프로필(Claude): '+(e.message||e));}}
+  if(!prof)prof=PRODUCTS.detect(req);
+  return prof;}
 async function npAnalyze(req,inner){
   if(NP.busy&&!inner)return;npBusy(true);NP.answers=NP.answers||{};const name=$('#npName').value.trim();
   try{
     if(AIM.mode==='ai'){await cliAiProbe();if(!CLI.sample)aimUnavailableNote(npSay);}
     copSay('out',`요구사항 분석 중… (${AIM.mode==='ai'&&CLI.sample?'AI':'규칙'})`);
+    /* product profile first: a known product (EPS, BMS, BCM, inverter …) brings its standard blocks; only block-level choices are asked */
+    const prof=(NP.arch&&NP.arch.blocks.length&&NP.arch.product)?null:await npProduct(req);let full,prodRes=null;
+    const base=req.replace(/\n보강:.*$/s,'');
+    if(prof){npSay('ok',PRODUCTS.summary(prof));
+      const pq=(prof.questions||[]).filter(q=>!(q.re&&new RegExp(q.re.source||q.re,q.re.flags||'i').test(base))&&!NP.answers['p_'+q.key]);
+      if(pq.length)copSay('out',`표준 구성을 기준으로 블록별 ${pq.length}가지만 확인합니다 (건너뛰면 표준값).`);
+      for(const q of pq){const bl=(prof.blocks||[]).find(b=>b.id===q.block);const a=await copAsk({q:`[${bl?bl.label:q.block}] ${q.q}`,why:q.why,opts:q.options.map(o=>o.label),multi:!!q.multi});if(a==null)continue;NP.answers['p_'+q.key]={label:bl?bl.label:q.block,v:a};if(NP.stopReq)break;}
+      const ans={};for(const q of prof.questions||[]){const x=NP.answers['p_'+q.key];if(x)ans[q.key]=x.v;}
+      prodRes=PRODUCTS.apply(prof,ans,name||prof.name);
+      full=base+'\n보강: 제품 '+prof.name+(prodRes.req?' · '+prodRes.req:'');$('#npReq').value=full;if(NP.plan)NP.plan.req=full;
+      npPush();NP.arch=prodRes.arch;NP.arch.req=full;NP.arch.product=prof.key||'ai';if(name)NP.arch.name=name;SYS.view='hw';NP.planManual=false;archToPlan(true);npRender();
+      npSay('ok',`${prof.name} 표준 구성으로 HW 블록 ${NP.arch.blocks.length}개 · 인터페이스 ${NP.arch.links.length}개를 만들었습니다.${prodRes.log.length?'\n반영: '+prodRes.log.join(' · '):''}`);
+      const bound=await npBindParts();if(bound.length)npSay('ok','블록에 적힌 부품 번호를 회로 구현으로 연결: '+bound.join(', '));
+    }else{
     let qs=null;if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample)qs=await npAskAI(req);}
     if(!qs)qs=REQ_Q.filter(f=>!f.re.test(req)&&!NP.answers[f.key]).map(f=>({key:f.key,label:f.label,q:f.q,why:f.why,opts:f.opts,multi:!!f.multi}));
     qs=qs.filter(q=>!NP.answers[q.key]);
     if(qs.length){copSay('out',`블록 다이어그램을 그리기 전에 ${qs.length}가지를 확인합니다. 답을 고르거나 적어 주세요 (건너뛰면 기본값).`);
       for(const q of qs){const a=await copAsk(q);if(a==null)continue;NP.answers[q.key]={label:q.label||q.key,v:a};if(NP.stopReq)break;}}
     const add=Object.values(NP.answers).map(x=>`${x.label}: ${x.v}`).join(' · ');
-    const base=req.replace(/\n보강:.*$/s,'');const full=add?base+'\n보강: '+add:base;$('#npReq').value=full;if(NP.plan)NP.plan.req=full;
+    full=add?base+'\n보강: '+add:base;$('#npReq').value=full;if(NP.plan)NP.plan.req=full;
     npPush();if(!NP.arch)NP.arch=HWARCH.blank(name||null);NP.arch.req=full;if(name)NP.arch.name=name;SYS.view='hw';
     if(AIM.mode==='ai'&&CLI.sample){await npAI(`${name?'프로젝트 이름: '+name+'. ':''}요구사항: ${full}. 이 요구사항으로 HW 블록 다이어그램(부품 미정)을 ${NP.arch.blocks.length?'다시 ':''}만들어줘.`);archToPlan();npRender();const bound=await npBindParts();if(bound.length)npSay('ok','블록에 적힌 부품 번호를 회로 구현으로 연결: '+bound.join(', '));}
     else{const o=await npRun('arch '+full);npSay('ok',o);}
+    }
     try{const lv=typeof SAFETY!=='undefined'?SAFETY.parseLevel(full):null;if(lv&&NP.arch&&NP.arch.blocks.length&&(!NP.arch.safety||NP.arch.safety.level==='QM')){const o=await npRun(`safety level ${lv}`);npSay('ok',o);if(lv!=='QM'){const M=SAFETY.mechanisms(NP.arch,lv).filter(m=>!m.present&&!m.sw);const SW=SAFETY.swMechanisms(NP.arch,lv).filter(m=>!m.present);if(M.length||SW.length){const a=await copAsk({q:`ASIL ${lv} 권장 안전 메커니즘 — HW 블록 ${M.length}개, SW 항목 ${SW.length}개가 아직 없습니다. 추가할까요?`,why:`HW: ${M.map(m=>m.label).join(' · ')||'없음'}\nSW(MCU 블록에 기록): ${SW.map(m=>m.label).join(' · ')||'없음'}`,opts:['HW + SW 모두 추가','HW 블록만','SW 항목만','나중에']});if(a&&/모두/.test(a)){npSay('ok',await npRun('safety apply all'));}else if(a==='HW 블록만'){npSay('ok',await npRun('safety apply '+M.map(m=>m.id).join(' ')));}else if(a==='SW 항목만'){npSay('ok',await npRun('safety apply sw'));}}}}}catch(e){console.warn(e);}
     copSay('out','다이어그램을 확인하고 블록·기능·인터페이스를 고친 뒤 [다음: 회로 생성]을 누르세요. 부품과 PCB는 다음 단계에서 정합니다.');
   }catch(e){console.error(e);npSay('err',e.message||String(e));}

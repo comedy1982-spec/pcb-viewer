@@ -59,6 +59,7 @@ ${script(stripExport(read('src/core/partlib.js')))}
 ${script(stripExport(read('src/core/fpgen.js')))}
 ${script(stripExport(read('src/core/analyze.js')))}
 ${script(stripExport(read('src/core/safety.js')))}
+${script(stripExport(read('src/core/products.js')))}
 ${script(stripExport(read('src/hsis/testgen.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}

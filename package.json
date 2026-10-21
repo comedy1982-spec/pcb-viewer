@@ -1,6 +1,6 @@
 {
   "name": "pcb-viewer",
-  "version": "1.39.0",
+  "version": "1.40.0",
   "private": true,
   "description": "Browser-based interactive PCB viewer for KiCad and Gerber files, with 3D and TOP/BOTTOM views and simple IR-drop, signal integrity, thermal and circuit simulations.",
   "type": "module",
