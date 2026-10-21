@@ -96,13 +96,13 @@ function astar(G,k,src,tgt,anchors,o){
   const push=(id,f)=>{if(hn===hid.length){const a=new Int32Array(hn*2);a.set(hid);hid=a;const b=new Float32Array(hn*2);b.set(hf);hf=b;}let i=hn++;while(i>0){const p=(i-1)>>1;if(hf[p]<=f)break;hid[i]=hid[p];hf[i]=hf[p];i=p;}hid[i]=id;hf[i]=f;};
   const pop=()=>{const r=hid[0];hn--;if(hn>0){const id=hid[hn],f=hf[hn];let i=0;for(;;){let c=2*i+1;if(c>=hn)break;if(c+1<hn&&hf[c+1]<hf[c])c++;if(hf[c]>=f)break;hid[i]=hid[c];hf[i]=hf[c];i=c;}hid[i]=id;hf[i]=f;}return r;};
   src.forEach(id=>{gs[id]=0;stamp[id]=gen;par[id]=-1;dir[id]=-1;const i=id%N;push(id,h(i%nx,(i/nx)|0));});
-  let exp=0;const viaC=o.viaCost/G.g,bot=o.bottomCost||1,esc=o.escCost?G.esc:null,escC=o.escCost||0;
+  let exp=0;const viaC=o.viaCost/G.g,bot=o.bottomCost||1,esc=o.escCost?G.esc:null,escC=o.escCost||0,edgeC=o.edgeCost||0;
   while(hn){const id=pop();if(cl[id]===gen)continue;cl[id]=gen;if(tgt.has(id)){const path=[];let c=id;while(c>=0){path.push(c);c=par[c];}return{path:path.reverse(),exp};}
     if(++exp>o.maxExp)return{fail:'탐색 한도 초과',exp};
     const l=(id/N)|0,i=id-l*N,x=i%nx,y=(i/nx)|0,g0=gs[id],d0=dir[id];const lc=l===NL-1?bot:l?(o.innerCost||1):1;
     for(let d=0;d<8;d++){const xx=x+DX[d],yy=y+DY[d];if(xx<0||yy<0||xx>=nx||yy>=ny)continue;const j=yy*nx+xx;if(!free(l,j))continue;
       if(d>=4&&(!free(l,y*nx+xx)||!free(l,yy*nx+x)))continue;
-      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;const ng=g0+DC[d]*lc+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0);
+      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;const ng=g0+DC[d]*lc+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0)+(edgeC&&G.edgeBand&&G.edgeBand[j]?edgeC:0);
       if(stamp[nid]!==gen||ng<gs[nid]){stamp[nid]=gen;gs[nid]=ng;par[nid]=id;dir[nid]=d;push(nid,ng+h(xx,yy));}}
     // via
     let fv=-1;for(const l2 of rl){if(l2===l)continue;const nid=l2*N+i;if(cl[nid]===gen||!free(l2,i))continue;
@@ -112,6 +112,27 @@ function astar(G,k,src,tgt,anchors,o){
   return{fail:'경로 없음 (막힘)',exp};
 }
 
+/* ---------- routing priority (ECU layout practice): 0 high-current power/drive → 1 clocks·high-speed·differential →
+   2 sensitive analog/sensor → 3 general digital. Current-carrying nets come from CURRENT when it is loaded. ---------- */
+const HS_RE=/XTAL|OSC|CLK|CLOCK|MCO|CAN[HL]$|CAN_?[HL]\b|USB_?D[PM]|D[+-]$|LVDS|ETH|MDI|TX[PN]|RX[PN]|RS485|SPI_?SCK|SCK|SCLK|QSPI|SWCLK|JTCK|TCK|PWM_?[UVW]|IN_?[UVW]$|LIN$/i;
+const AN_RE=/ADC|AIN|ANALOG|SENSE|SNS|ISENSE|VSENSE|CS[+-]|SHUNT|VREF|AREF|VMON|TEMP|NTC|THERM|HALL|ENC|RESOLVER|SIN|COS|TORQUE|AMP|OPAMP|MIC|AUDIO/i;
+function netPrio(B,net,W){const n=String(net||'');if(/^(GND|AGND|DGND|PGND|VSS)$/i.test(n))return 0;
+  const cur=W&&W[n];if(cur&&(cur.cls==='phase'||(cur.cls==='rail'&&cur.I>=0.5)))return 0;
+  if(B.netClass&&B.netClass(n)==='전원')return cur?(cur.I>=0.5?0:3):0;
+  if(HS_RE.test(n))return 1;if(AN_RE.test(n))return 2;return 3;}
+const PRIO_LABEL=['대전류 전원·구동','고속·클록·차동','민감 아날로그','일반 디지털'];
+/* ---------- return vias: a GND via next to every signal via of a clock / analog net (return-current continuity) ---------- */
+function returnVias(B,opts){opts=opts||{};const gnd=opts.gnd||Object.keys(B.nets||{}).find(n=>/^GND$/i.test(n))||Object.keys(B.nets||{}).find(n=>/^(AGND|DGND|PGND|VSS)$/i.test(n));if(!gnd)return{added:0,skipped:0,why:'GND 넷 없음'};
+  const keys=PC.cuKeys(B);const hasGndCu=keys.some(k=>B.layers[k+'.cu'].some(p=>p.t==='pour'&&p.net===gnd))||PC.stackOf(B).some(x=>x.net===gnd&&x.role!=='sig');if(!hasGndCu)return{added:0,skipped:0,why:'GND 플레인/동박면 없음'};
+  const d=opts.dist||0.8,clr=opts.clear||0.2,via=Object.assign({d:0.6,drill:0.3},opts.via||{});const want=opts.nets?new Set(opts.nets):null;
+  let S=shapesOfBoard(B);const freeAt=(x,y)=>{const r=via.d/2+clr;for(const s of S){if(s.net===gnd&&s.via)continue;if(s.hole||s.net!==gnd){const bb=bboxOf(s,r);if(x<bb[0]||x>bb[2]||y<bb[1]||y>bb[3])continue;if(dist(s,x,y)<r)return false;}}
+    return x>r&&y>r&&x<B.W-r&&y<B.H-r&&(!B.outline[0]||PC.inRing(x,y,B.outline[0]));};
+  let added=0,skipped=0;const near=(x,y)=>B.vias.some(v=>v.net===gnd&&Math.hypot(v.x-x,v.y-y)<=d*1.3);
+  B.vias.filter(v=>v.auto&&!v.fan&&!v.ret&&v.net&&v.net!==gnd&&(want?want.has(v.net):netPrio(B,v.net,opts.W)<=2)).forEach(v=>{if(near(v.x,v.y))return;let ok=false;
+    for(const rr of[d,d*1.25,d*1.6]){for(let k=0;k<8&&!ok;k++){const a=k*Math.PI/4;const x=+(v.x+rr*Math.cos(a)).toFixed(3),y=+(v.y+rr*Math.sin(a)).toFixed(3);if(!freeAt(x,y))continue;
+        const nv={x,y,d:via.d,drill:via.drill,net:gnd,auto:true,ret:true,layers:'all'};B.vias.push(nv);if(B.nets[gnd])B.nets[gnd].vias.push(nv);S.push({k:'cap',a:[x,y],b:[x,y],r:via.d/2,L:ALL(keys.length),net:gnd,via:nv});added++;ok=true;}if(ok)break;}
+    if(!ok)skipped++;});
+  return{added,skipped,gnd};}
 /* ---------- geometry ---------- */
 function toCopper(G,path,w,via,net,startShape,endShape){
   const N=G.N,P=id=>{const l=(id/N)|0,i=id-l*N;return{l,x:G.ox+(i%G.nx)*G.g,y:G.oy+((i/G.nx)|0)*G.g};};
@@ -136,6 +157,10 @@ function widthFor(B,net,o){let w=B.netClass&&B.netClass(net)==='전원'?o.width.
 function prepare(B,opts){
   const o=Object.assign({},DEF,opts||{});o.width=Object.assign({},DEF.width,(opts||{}).width);o.via=Object.assign({},DEF.via,(opts||{}).via);
   const G=makeGrid(B,o);const S=shapesOfBoard(B);const ids={};let nid=1;const idOf=n=>n==null?-1:(ids[n]||(ids[n]=++nid));
+  // edge band: cells within o.edgeBand mm of the outline (high-speed nets pay extra there — radiation / return path)
+  if(o.edgeBand>0){const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];const band=new Uint8Array(G.N);const bb=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
+    for(let y=0;y<G.ny;y++){const py=G.oy+y*G.g;for(let x=0;x<G.nx;x++){const px=G.ox+x*G.g;if(px-bb[0]<o.edgeBand||bb[2]-px<o.edgeBand||py-bb[1]<o.edgeBand||bb[3]-py<o.edgeBand){band[y*G.nx+x]=1;continue;}
+        if(ring.length>4){let m=1e9;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const dd=PC.segDist(px,py,ring[j],ring[i]);if(dd<m)m=dd;if(m<o.edgeBand)break;}if(m<o.edgeBand)band[y*G.nx+x]=1;}}}G.edgeBand=band;}
   const wMax=Math.max(o.width.signal,o.width.power)/2;
   outlineBlock(B,G,o.edge);
   // plane layers (inner GND / PWR) carry no tracks; through vias pass them with an antipad
@@ -180,8 +205,8 @@ function routeNet(P,B,net){
     let anchors=[];rest.forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
     // big nets: keep the heuristic cheap — only the anchors nearest to the group being joined
     if(anchors.length>24){let sx=0,sy=0,sn=0;srcC.forEach(s=>{const p=s.k==='cap'?s.a:[s.x,s.y];sx+=(p[0]-G.ox)/G.g;sy+=(p[1]-G.oy)/G.g;sn++;});sx/=sn;sy/=sn;anchors=anchors.map(a=>[a,Math.abs(a[0]-sx)+Math.abs(a[1]-sy)]).sort((a,b)=>a[1]-b[1]).slice(0,24).map(a=>a[0]);}
-    const wBase=Math.max(o.width.signal,o.width.power);const dil=w>wBase+1e-6?Math.ceil((w-wBase)/2/G.g):0;
-    const r=astar(G,k,src,tgt,anchors,dil?Object.assign({},o,{dil}):o);
+    const wBase=Math.max(o.width.signal,o.width.power);const dil=w>wBase+1e-6?Math.ceil((w-wBase)/2/G.g):0;const edgeCost=o.edgeBand>0&&netPrio(B,net,o.W)===1?(o.edgeCost||1.5):0;
+    const r=astar(G,k,src,tgt,anchors,(dil||edgeCost)?Object.assign({},o,{dil,edgeCost}):o);
     if(!r.path)return Object.assign(added,{ok:false,why:r.fail});
     const cu=toCopper(G,r.path,w,o.via,net,own.get(r.path[0]),own.get(r.path[r.path.length-1]));
     // commit: board + shapes + grid
@@ -272,6 +297,6 @@ function drc(B,opts){
     const gap=shapeGap(a,b);if(gap<o.clear-0.03)out.push({net:a.net,other:b.net||(b.hole?'구멍':'(넷 없음)'),gap,at:a.k==='cap'?a.a:[a.x,a.y]});});});
   return out;
 }
-return{DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor};
+return{DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

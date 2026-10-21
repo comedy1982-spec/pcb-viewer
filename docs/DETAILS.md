@@ -15,6 +15,14 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## ECU 라우팅 기준 — 우선순위 · 리턴 비아 · 외곽 금지 · 접지 분리 · 써멀 비아 (v1.46.0)
+
+- `autoroute.netPrio(B,net,W)`: 0 대전류 전원·구동(전류 ≥ 0.5 A 레일·모터 상·GND) → 1 고속·클록·차동(`HS_RE`: XTAL·CLK·CAN_H/L·USB D±·SPI SCK·SWCLK·PWM_U/V/W·LIN…) → 2 민감 아날로그(`AN_RE`: ADC·SENSE·VREF·VMON·NTC·HALL·TORQUE…) → 3 일반 디지털. `route`는 모든 전략에서 이 순서(같은 등급 안에서는 짧은 넷 먼저)로 배선하고 "배선 순서" 줄을 출력(`--order length`로 끔). 노이즈 전략은 스위칭 넷을 0등급으로.
+- 외곽 금지 띠: `prepare`가 외곽(다각형 포함) 2 mm 안 셀을 `G.edgeBand`로 표시, 1등급(고속) 넷의 A*에 셀당 1.5 비용 추가(`--edge N`, `--no-edge`).
+- 리턴 비아: `autoroute.returnVias(B,{dist,clear,via,W})` — GND 플레인/동박면이 있을 때 고속·아날로그 넷의 층 전환 비아 0.8 mm(→1.0→1.3) 옆 8방향 중 빈 자리에 GND 비아(`ret:true`) 추가. `route`가 기본 실행(`--retvia 0.8`, `--no-retvia`), 결과 "리턴(GND) 비아 N개 추가 · 자리 없음 M개".
+- 가이드라인 규칙 5개 추가(프리셋별 가중치): `rt_priority`(우선 넷 우회율 = 배선 길이/맨해튼 거리, 2.2× 초과 지적), `rt_return_via`(신호 비아 1 mm 내 GND 비아 비율, 고속 넷 비아 > 2개 지적), `rt_edge_keepout`(고속 트랙 중 외곽 2 mm 띠 비율), `pw_agnd_star`(아날로그 부품군 ↔ 스위칭·구동 부품군 거리 ≥ 8 mm, AGND가 있으면 GND 연결점 1개), `th_via_array`(노출 패드 아래 비아 수 / 필요 수). 디커플링(`pl_decoupling`·`sch_decap`·`sch_bulk`)과 열 패드(`ds_thermal_pad`)는 기존 규칙.
+- AI 프롬프트에 라우팅 기준과 규칙 키 안내.
+
 ## 전류 기반 배선 폭 (v1.45.0)
 
 - 이전: 넷 이름으로 전원(0.3 mm)/신호(0.2 mm)만 구분, 전류는 보지 않음.

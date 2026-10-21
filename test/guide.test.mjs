@@ -7,7 +7,7 @@ const board = (spec) => PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec
 test('guideline check scores weighted rules with P0–P3 priority and a verdict', () => {
   const B = board(SAMPLE_TC364);
   const r = GUIDE.evaluate(B, { scope: 'pcb' });
-  assert.equal(r.rules.length, 12);
+  assert.equal(r.rules.length, 17);
   assert.ok(r.rules.every((x, i) => i === 0 || r.rules[i - 1].w >= x.w), 'sorted by weight');
   assert.equal(r.rules.find(x => x.key === 'ds_kelvin').status, 'na');
   assert.equal(r.rules.find(x => x.key === 'pl_esd_tvs').status, 'fail'); // CAN / Hall connector signals have no TVS
