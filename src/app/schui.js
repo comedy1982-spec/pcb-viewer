@@ -108,8 +108,23 @@ function schApply(h,V){
   else if(h.type==='sym'){S.selRef=BD.byRef[h.s.ref]?h.s.ref:null;S.hlNet=null;if(!S.selRef)toast(`${h.s.ref}는 보드에 없는 부품입니다.`);}
   else if(h.type==='pin'){S.selRef=BD.byRef[h.s.ref]?h.s.ref:null;S.hlNet=h.g&&h.g.net||null;}
   else{S.selRef=null;S.hlNet=h.g&&h.g.net||null;}
-  S.tab='sel';refresh(true);
+  S.tab='sel';refresh(true);if(!V||V===SV)schInfoPaint(h);
 }
+/* floating info card on the schematic: what the clicked part is, its datasheet keys and every pin → net */
+function schInfoPaint(h){const el=$('#schInfo');if(!el)return;
+  if(!h||h.type==='net'){el.hidden=true;el.innerHTML='';return;}
+  const sy=h.s,c=BD.byRef[sy.ref]||null,val=(c&&c.val)||sy.val||'',mpn=(c&&c.mpn)||'',info=typeof PARTS!=='undefined'?(PARTS.find(mpn)||PARTS.find(val)):null;
+  const pins=c&&c.pads&&c.pads.length?c.pads.map(p=>({n:p.n,name:p.fn||'',net:p.net||''})):sy.pins.map(p=>({n:p.num,name:p.name&&p.name!=='~'?p.name:'',net:p.g&&p.g.net||''}));
+  const selN=h.type==='pin'?String(h.p.num):null;
+  const kv=[['풋프린트',c&&c.fp],['부품 번호',mpn],['제조사',info&&info.mfr]].filter(x=>x[1]).concat(info?info.specs.slice(0,6):[]);
+  const links=typeof PARTS!=='undefined'?PARTS.links(info,mpn||val).slice(0,2):[];
+  el.innerHTML=`<div class="si-h"><b>${esc(sy.ref)}</b>${c?'':'<span class="cls">보드에 없음</span>'}<button class="x" data-si-x aria-label="닫기">✕</button></div>
+    <div class="si-v">${esc(val||'값 정보 없음')}</div>${c&&c.desc?`<div class="si-d">${esc(c.desc)}</div>`:''}
+    ${kv.length?`<dl>${kv.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`:''}
+    ${links.length?`<div class="si-l">${links.map(([t,u])=>`<a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join('')}</div>`:''}
+    <div class="si-s">핀 ${pins.length}개</div><table><tbody>${pins.map(p=>`<tr${selN!=null&&String(p.n)===selN?' class="on"':''}><td>${esc(p.n!=null?p.n:'')}</td><td>${esc(p.name)}</td><td class="n">${p.net?esc(p.net):'<span class="cls">미연결</span>'}</td></tr>`).join('')}</tbody></table>`;
+  el.hidden=false;const on=el.querySelector('tr.on');if(on)on.scrollIntoView({block:'nearest'});
+  el.querySelector('[data-si-x]').onclick=()=>{el.hidden=true;};}
 function schFocus(V){V=V||SV;
   const key=(S.selRef||'')+'|'+(S.hlNet||'');if(key===V.lastKey)return;V.lastKey=key;
   if(V.fromMe){V.fromMe=false;return;}if(!S.selRef&&!S.hlNet)return;
