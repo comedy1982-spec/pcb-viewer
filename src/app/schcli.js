@@ -2,6 +2,7 @@
    Commands edit BD.schSheets through SCHEDIT (each one is a single schematic undo step); "apply" back-annotates the board. */
 var SCLI={open:false,log:[],hist:[],hi:-1,busy:false,seq:0,stopReq:false,abort:null};
 const SCLI_HELP=[
+  ['datasheet <MPN> [--pkg SOIC] [--pins 14]','데이터시트 PDF(.pdf/.txt)를 올려 핀 표를 라이브러리에 저장 — 이후 add part / replace가 그 핀을 씀'],
   ['help [명령]','명령 목록과 사용법'],
   ['status','페이지·부품·넷·ERC·보드와 다른 점'],
   ['pages · page <n>','페이지 목록 · 페이지로 이동'],
@@ -33,7 +34,7 @@ const SCLI_HELP=[
 const SC_CHIPS=[['상태','status','회로도 상태를 요약하고 먼저 손볼 곳을 알려줘'],['ERC','erc','ERC 문제를 찾아 원인을 설명하고, 확실한 것은 고쳐줘'],
   ['가이드라인 점검','guide check','회로 설계 가이드라인을 점검하고 빠진 디커플링·보호 소자·부하 캡을 추가하는 명령을 제안해줘 (내가 승인하기 전엔 수정하지 말 것)'],
   ['보드와 다른 점','diff','회로도와 보드가 어떻게 다른지 설명해줘'],['보드에 반영','apply','ERC를 확인한 뒤 문제가 없으면 회로도를 보드에 반영해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const SCLI_CMDS=new Set(['guide','help','?','status','pages','page','parts','pins','nets','net','find','add','replace','tp','tie','insert','hsis','analyze','analyse','safety','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
+const SCLI_CMDS=new Set(['datasheet','guide','help','?','status','pages','page','parts','pins','nets','net','find','add','replace','tp','tie','insert','hsis','analyze','analyse','safety','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
 
 /* ---- panel ---- */
 function scSay(k,t){const e={k,t,id:++SCLI.seq};SCLI.log.push(e);if(SCLI.log.length>400)SCLI.log.shift();scPaint(e);return e;}
@@ -300,6 +301,7 @@ async function scRun(line,by){
     case'net':return scNetPins(a._[0]);
     case'find':return scFind(a._[0]||'');
     case'replace':{if(typeof plReplaceFlow!=='function')throw new Error('부품 라이브러리 모듈이 없습니다.');await plReplaceFlow({ref:String(a._[0]||'').toUpperCase(),q:a._.slice(1).join(' ')},'sch');return'';}
+    case'datasheet':return await dsPdfCmd(a,'sch');
     case'add':if(/^part$/i.test(String(a._[0]||'')))return await scAddAnyPart(a);return scAdd(a);
     case'tp':return scTp(a);
     case'tie':return scTie(a);

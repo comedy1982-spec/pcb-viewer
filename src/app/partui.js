@@ -2,7 +2,7 @@
    PL.user : approved parts list (CSV/Excel import, IndexedDB 'aod-parts')  PL.ai : records Claude estimated  PL.api : records fetched from a distributor
    lookup order: user → built-in PARTS → ai → api.  `replace <ref> <부품>` and sentences like "U3를 AP2112K로 바꿔줘" run the flow in the copilot. */
 var PL={user:[],ai:[],api:[],db:null,api_cfg:{provider:'',key:'',url:''},open:false,q:'',tab:'all',busy:false,last:null};
-const PL_SRC={user:'승인 목록',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'};
+const PL_SRC={user:'승인 목록',ds:'데이터시트',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'};
 function plGrade(p){const g=p&&p.grade;if(!g)return'';const auto=PARTLIB.gradeAuto(g);return`<span class="pl-src ${auto?'pl-aec':'pl-com'}" title="${esc(PARTLIB.GRADE_LABEL[g]||g)}${p.temp?' · '+p.temp[0]+'~'+p.temp[1]+' °C':''}">${esc(auto?g:PARTLIB.GRADE_LABEL[g]||g)}</span>`;}
 function plAll(){const b=typeof PARTS!=='undefined'?PARTLIB.fromBuiltin(PARTS,plBuiltinPins):[];return PARTLIB.merge([PL.user,b,PL.ai,PL.api]);}
 /* pin names for a built-in part: from the open board when a component uses it */
@@ -52,10 +52,11 @@ async function plAddFlow(it,src){src=src||'sch';const say=(k,t)=>{const e={k,t};
   const q=it.q;say('out',`"${q}" 부품 추가 — 라이브러리(승인 목록 → 내장 DB → 이전 추정)에서 찾는 중…`);
   let part=null;const cands=plSearch(q);const exact=cands.find(p=>PARTLIB.norm(p.mpn)===PARTLIB.norm(q)||PARTLIB.norm(p.mpn).startsWith(PARTLIB.norm(q)));
   if(exact&&exact.pins&&exact.pins.length)part=exact;
-  while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];const O1='Claude 추정 (핀 배열·패키지·사양을 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O4='취소';
-    const a=await ask({q:`"${q}"${exact?'의 핀 정보가 없습니다':'은(는) 라이브러리에 없습니다'}. 어떻게 가져올까요?`,why:'추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다.',opts:[O1,O2,O3,O4]});
+  while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];const O1='Claude 추정 (핀 배열·패키지·사양을 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O5='데이터시트 PDF 올리기 (핀 표 추출)',O4='취소';
+    const a=await ask({q:`"${q}"${exact?'의 핀 정보가 없습니다':'은(는) 라이브러리에 없습니다'}. 어떻게 가져올까요?`,why:'추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다. 데이터시트 PDF를 올리면 실제 핀 표를 씁니다.',opts:[O5,O1,O2,O3,O4]});
     if(!a||a===O4){say('out','추가를 취소했습니다.');return;}
-    try{if(a===O1){const e=say('ai','Claude가 부품 사양을 찾는 중…');part=await plAskClaude(q,{hint:BD.name,role:'new part to add to the circuit'});copDrop(e);}
+    try{if(a===O5){const r=await dsPdfFlow(q,src,{});if(r)part=r;else continue;}
+      else if(a===O1){const e=say('ai','Claude가 부품 사양을 찾는 중…');part=await plAskClaude(q,{hint:BD.name,role:'new part to add to the circuit'});copDrop(e);}
       else if(a===O2){if(!hasApi){plOpenSettings(src);const b=await ask({q:'부품 API를 설정한 뒤 "계속"을 누르세요.',opts:['계속','취소']});if(b!=='계속')return;continue;}const e=say('ai','API 조회 중…');const L=await plAskApi(q);copDrop(e);part=L[0];
         if(part&&!(part.pins&&part.pins.length)){const e2=say('ai','Claude가 핀 배열을 찾는 중…');try{const p2=await plAskClaude(part.mpn,{hint:part.title});part.pins=p2.pins;part.pkg=part.pkg||p2.pkg;part.fp=p2.fp||part.fp;plRemember(part);}catch(e3){say('err',e3.message);}copDrop(e2);}}
       else if(a===O3){const files=await plPickFiles();if(!files.length)continue;const r=await plImportFiles(files);say('ok',`가져옴: ${r.msg}`);const f=plFind(q);if(f&&f.pins&&f.pins.length)part=f;else say('out',`가져온 목록에 "${q}"의 핀 정보가 없습니다.`);}
@@ -96,11 +97,12 @@ async function plReplaceFlow(it,src){src=src||'sch';const say=(k,t)=>{const e={k
     if(!a)return;const i=opts.indexOf(a);if(i>=0)part=cands[i];else if(!/새로 찾기/.test(a)){part=plFind(a)||null;if(!part){q=a;}}}
   // 2) not in the library: AI estimate (default) → distributor API → import a file
   while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];
-    const O1='Claude 추정 (사양·핀·단가를 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O4='취소';
-    const a=await ask({q:`"${q}"은(는) 라이브러리에 없습니다. 사양을 어떻게 가져올까요?`,why:'우선순위: 승인 부품 목록 → Claude 추정 → 부품 API. 추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다.',opts:[O1,O2,O3,O4]});
+    const O1='Claude 추정 (사양·핀·단가를 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O5='데이터시트 PDF 올리기 (핀 표 추출)',O4='취소';
+    const a=await ask({q:`"${q}"은(는) 라이브러리에 없습니다. 사양을 어떻게 가져올까요?`,why:'우선순위: 승인 부품 목록 → 데이터시트 PDF → Claude 추정 → 부품 API. 추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다.',opts:[O5,O1,O2,O3,O4]});
     if(!a||a===O4){say('out','교체를 취소했습니다.');return;}
     try{
-      if(a===O1){const e=say('ai','Claude가 부품 사양을 찾는 중…');const ctx={oldPart:`${c.val||''} ${c.mpn||''} (${c.fp||''})`,oldPins:c.pads.map(p=>`${p.n}:${p.fn||'?'}=${p.net||'-'}`).join(', '),role:plRoleOf(c),hint:BD.name};
+      if(a===O5){const r=await dsPdfFlow(q,src,{});if(r)part=r;else continue;}
+      else if(a===O1){const e=say('ai','Claude가 부품 사양을 찾는 중…');const ctx={oldPart:`${c.val||''} ${c.mpn||''} (${c.fp||''})`,oldPins:c.pads.map(p=>`${p.n}:${p.fn||'?'}=${p.net||'-'}`).join(', '),role:plRoleOf(c),hint:BD.name};
         const p=await plAskClaude(q,ctx);copDrop(e);if(p.conf<0.5)say('out',`Claude의 확신도가 낮습니다 (${Math.round(p.conf*100)}%). 부품 번호를 확인해 주세요.`);part=p;}
       else if(a===O2){if(!hasApi){plOpenSettings(src);const b=await ask({q:'부품 API를 설정한 뒤 "계속"을 누르세요.',opts:['계속','취소']});if(b!=='계속')return;continue;}
         const e=say('ai',`${PARTLIB.PROVIDERS[PL.api_cfg.provider].name} 조회 중…`);const L=await plAskApi(q);copDrop(e);
@@ -181,10 +183,10 @@ function plApplySch(ref,c,part,M,oldPins){const units=scSyms(ref);if(!units.leng
 /* ---- library dialog ---- */
 function plDialogHTML(){const all=plAll();const q=PL.q.toLowerCase();const tab=PL.tab;const list=all.filter(p=>tab==='all'||p.src===tab).filter(p=>!q||[p.mpn,p.mfr,p.title,p.cat,p.pkg].join(' ').toLowerCase().includes(q)).sort((a,b)=>a.mpn.localeCompare(b.mpn));
   const cnt=s=>all.filter(p=>p.src===s).length;const onBoard=new Set(BD?BD.comps.map(c=>(c.mpn||'').trim()):[]);const cfg=PL.api_cfg;const P=PARTLIB.PROVIDERS;
-  return`<div class="sheet pl" role="dialog" aria-modal="true" aria-labelledby="plT"><div class="sheet-h"><h2 id="plT">부품 라이브러리</h2><span class="pl-cnt">승인 ${cnt('user')} · 내장 ${cnt('builtin')} · Claude 추정 ${cnt('ai')} · API ${cnt('api')}</span><button type="button" class="btn sm" data-close aria-label="닫기">닫기</button></div>
+  return`<div class="sheet pl" role="dialog" aria-modal="true" aria-labelledby="plT"><div class="sheet-h"><h2 id="plT">부품 라이브러리</h2><span class="pl-cnt">승인 ${cnt('user')} · 데이터시트 ${cnt('ds')} · 내장 ${cnt('builtin')} · Claude 추정 ${cnt('ai')} · API ${cnt('api')}</span><button type="button" class="btn sm" data-close aria-label="닫기">닫기</button></div>
   <div class="sheet-b pl-b"><div class="pl-bar"><div class="seg sm" role="tablist">${[['all','전체'],['user','승인 목록'],['builtin','내장'],['ai','Claude 추정'],['api','API']].map(t=>`<button type="button" role="tab" data-pltab="${t[0]}" aria-selected="${tab===t[0]}">${t[1]}</button>`).join('')}</div>
       <input type="search" id="plQ" placeholder="MPN · 제조사 · 설명 검색" value="${esc(PL.q)}" aria-label="검색"><span class="cop-sp"></span>
-      <button type="button" class="btn sm" data-plimp>목록 가져오기 (CSV/Excel)</button><button type="button" class="btn sm" data-pltpl>CSV 템플릿</button><button type="button" class="btn sm" data-plexp>내보내기</button><button type="button" class="btn sm" data-plapi aria-expanded="${PL.apiOpen?'true':'false'}">API 설정</button></div>
+      <button type="button" class="btn sm" data-plimp>목록 가져오기 (CSV/Excel)</button><button type="button" class="btn sm" data-plpdf title="데이터시트 PDF에서 핀 표를 읽어 저장">데이터시트 PDF → 핀</button><button type="button" class="btn sm" data-pltpl>CSV 템플릿</button><button type="button" class="btn sm" data-plexp>내보내기</button><button type="button" class="btn sm" data-plapi aria-expanded="${PL.apiOpen?'true':'false'}">API 설정</button></div>
     <div class="pl-api" ${PL.apiOpen?'':'hidden'}><label>공급자 <select id="plProv"><option value="">(없음)</option>${Object.keys(P).map(k=>`<option value="${k}" ${cfg.provider===k?'selected':''}>${esc(P[k].name)}</option>`).join('')}</select></label>
       <label>키 / 토큰 <input type="password" id="plKey" value="${esc(cfg.key||'')}" placeholder="브라우저에만 저장됩니다"></label><label>주소 (사내 서버) <input type="text" id="plUrl" value="${esc(cfg.url||'')}" placeholder="https://parts.example.com/find?q={q}"></label>
       <button type="button" class="btn primary sm" data-plsave>저장</button><button type="button" class="btn sm" data-pltest>조회 테스트</button><div class="pl-m">${cfg.provider&&P[cfg.provider]?esc(P[cfg.provider].keyHelp):'우선순위: 승인 부품 목록 → Claude 추정 → 부품 API. Mouser API는 브라우저에서 직접 호출이 막혀 있어(CORS) 사내 프록시가 필요할 수 있습니다.'}</div></div>
@@ -197,6 +199,7 @@ function plBind(m){
   m.addEventListener('click',async e=>{if(e.target===m||e.target.closest('[data-close]')){plClose();return;}const t=e.target.closest('button');if(!t)return;const d=t.dataset;
     try{
       if(d.pltab){PL.tab=d.pltab;plRender();return;}
+      if('plpdf'in d){const mpn=prompt('부품 번호 (MPN)',PL.q||'');if(!mpn)return;plClose();const rec=await dsPdfFlow(mpn.trim(),COP.src||'np');if(rec)toast(`${rec.mpn} ${rec.pins.length}핀 저장`);return;}
       if('plimp'in d){const files=await plPickFiles();if(!files.length)return;const r=await plImportFiles(files);toast(`부품 ${r.n}개 가져옴 — ${r.msg}`);plRender();return;}
       if('pltpl'in d){await expSave('parts_template.csv','﻿'+PARTLIB.toCsv([{mpn:'AP2112K-3.3TRG1',mfr:'Diodes Inc.',title:'LDO 600 mA 3.3 V',cat:'LDO',pkg:'SOT-23-5',fp:'SOT-23-5',val:'3.3V',pins:[{num:'1',name:'VIN'},{num:'2',name:'GND'},{num:'3',name:'EN'},{num:'4',name:'NC'},{num:'5',name:'VOUT'}],specs:[['입력 전압','2.5–6 V'],['출력 전류','600 mA']],price:0.12,pdf:'https://www.diodes.com/assets/Datasheets/AP2112.pdf',page:'',status:'approved',note:'예시 행 — 지우고 쓰세요'}]),'text/csv');return;}
       if('plexp'in d){const L=plAll().filter(p=>p.src!=='builtin');if(!L.length){toast('내보낼 부품이 없습니다.');return;}await expSave('parts_library.csv','﻿'+PARTLIB.toCsv(L),'text/csv');return;}
@@ -204,7 +207,7 @@ function plBind(m){
       if('plsave'in d){PL.api_cfg={provider:$('#plProv').value,key:$('#plKey').value.trim(),url:$('#plUrl').value.trim()};plSaveCfg();toast('API 설정을 이 브라우저에 저장했습니다.');plRender();return;}
       if('pltest'in d){PL.api_cfg={provider:$('#plProv').value,key:$('#plKey').value.trim(),url:$('#plUrl').value.trim()};plSaveCfg();const q=prompt('조회할 부품 번호','AMS1117-3.3');if(!q)return;toast('조회 중…');const L=await plAskApi(q);toast(`${L.length}개: ${L.slice(0,3).map(p=>p.mpn).join(', ')}`);plRender();return;}
       if(d.plpromote){const p=plAll().find(x=>x.mpn===d.plpromote);if(!p||p.src==='user')return;const u=Object.assign({},p,{src:'user',status:'approved',conf:1,note:(p.note?p.note+' · ':'')+`${PL_SRC[p.src]}에서 승인`});PL.user.push(u);await plSave();plRender();return;}
-      if(d.pldel){const L=d.src==='user'?PL.user:d.src==='ai'?PL.ai:PL.api;const i=L.findIndex(x=>x.mpn===d.pldel);if(i>=0)L.splice(i,1);await plSave();plRender();return;}
+      if(d.pldel){const L=d.src==='user'||d.src==='ds'?PL.user:d.src==='ai'?PL.ai:PL.api;const i=L.findIndex(x=>x.mpn===d.pldel);if(i>=0)L.splice(i,1);await plSave();plRender();return;}
     }catch(err){console.error(err);toast(err.message||String(err));}});
   m.addEventListener('input',e=>{if(e.target.id==='plQ'){PL.q=e.target.value;plRender();}});
   m.addEventListener('keydown',e=>{if(e.key==='Escape')plClose();});}

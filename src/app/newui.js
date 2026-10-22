@@ -16,6 +16,7 @@ const NP_HELP=[
   ['feat <ID> "<기능>" · feat <ID> --clear · rename <ID> "<이름>" · move <ID> <그룹> · del <ID>','블록 기능 줄 · 이름 · 그룹 · 삭제'],
   ['link <A> <B> "<신호/레일>" [--kind power|signal|bus] [--both] · unlink <A> <B>','블록 사이 인터페이스 (화살표와 라벨)'],
   ['impl <ID> <회로블록|none> [--파라미터 값] [--swap <기존블록>] · impl <ID> part <MPN> [--pins SI=SPI_MOSI,…]','HW 블록을 구현할 회로 라이브러리 블록 (2단계 부품 선정용). part <MPN>이면 부품 라이브러리/Claude 추정 핀 배열로 그 부품을 직접 넣음(전원·접지 자동, SPI/I²C/UART/IRQ 핀은 MCU 배정). 블록에 이미 부품·주 구현(bldc, can …)이 있으면 그것을 바꿈(--add 이면 추가). --swap 이면 기존 구현을 바꿈'],
+  ['datasheet <MPN> [--pkg SOIC] [--pins 14]','데이터시트 PDF(.pdf/.txt)를 올려 핀 표를 읽고 라이브러리(출처: 데이터시트)에 저장 — 그 부품을 쓰는 블록은 impl … part로 다시 연결. 표가 여럿이면 패키지를 고르고, AI 모드에서는 규칙이 확실하지 않을 때 Claude가 판독'],
   ['sg [list] · sg defaults · sg add "<목표>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "<안전 상태>" --path mcu,gate · sg del SG2 · sg tag <블록> SG1 [--off] · sg variants · sg apply single|dual|decomp · sg verify','안전 목표(SG) 기반 아키텍처: 목표마다 위반 경로 블록·링크에 SG 태그, 구조 변형 3안(단일 MCU+외부 감시 · 메인+세이프티 MCU · ASIL 분해 2채널)을 DC·FTTI·부품·원가로 비교, 규칙으로 검증(감지·독립 차단 경로·FTTI·독립성·공통 원인)'],
   ['safety level <QM|A|B|C|D> [--goal "…"] · safety block <ID> <등급|auto> · safety apply [all|sw|uv wdt_ext drv_fb sbc cutoff2 …] · safety sw · safety ffi · safety','기능 안전: 시스템/블록 ASIL, 등급별 권장 HW 메커니즘 블록(전원 감시·외부 워치독·fault 리드백·SBC·이중 차단·리던던트 센서·2채널)과 SW 메커니즘(흐름 감시·BIST·범위 검사·메모리·클럭·ADC·E2E·리드백·타당성·HW 주기 테스트·파티셔닝 — MCU 블록에 기록), HW 부품마다 필요한 SW, FFI 경계, 상태'],
   ['parts [블록ID [번호|MPN]]','제품 프로필의 블록별 부품 후보(제조사별 3–5개) 보기 · 고르기. 고른 부품은 블록에 기록되고, 핀을 아는 단일 IC 블록(CAN·게이트 드라이버·HSD·센서 앰프 …)이면 회로 구현(impl … part)으로 바뀜.'],
@@ -30,7 +31,7 @@ const NP_HELP=[
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['datasheet','sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -78,6 +79,7 @@ async function npRun(line,by){
       if(k==='part'&&!a.add&&!(sw===true||swK)){const L=b.impl||[];const oldP=L.find(i=>i.type==='part');const oldM=oldP?null:L.find(i=>i.type!=='part'&&!/^(ldo|buck|cap|tvs|led)$/.test(i.type));const gone=oldP||oldM;
         if(gone){b.impl=L.filter(i=>i!==gone);repl=` (${gone.type==='part'?gone.params&&gone.params.mpn||'part':gone.type} → ${params.mpn}; 둘 다 두려면 --add)`;}}
       b.impl=(b.impl||[]).concat([{type:k,params}]);}NP.planManual=false;archToPlan(true);npRender();return`${b.id} ⇒ ${npImplText(b)}${repl}`;}
+    case'datasheet':case'ds':return await dsPdfCmd(a,'np');
     case'sg':{const A=archEnsure();if(typeof SGARCH==='undefined')throw new Error('SGARCH 없음');const sub=String(a._[0]||'list').toLowerCase();
       if(sub==='list'||sub==='status'){return SGARCH.goalsText(A);}
       if(sub==='verify'||sub==='check'){npRender();return SGARCH.verifyText(A);}
@@ -311,7 +313,9 @@ async function npSetPart(b,p){const prev=JSON.parse(JSON.stringify(b.impl||[]));
   const L=b.impl||[];const single=!L.length||(L.length===1&&NP_SWAP.test(L[0].type))||L.some(i=>i.type==='part');let how='기록 (회로는 라이브러리 블록 구성 유지 · 2단계에서 add part로 교체 가능)';
   if(single){const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;const pins=r=>!!(r&&r.pins&&r.pins.length);
     if(pins(rec)||(AIM.mode==='ai'&&CLI.sample)){try{await npRun(`impl ${b.id} part ${p.mpn}`);const r2=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;if(pins(r2))how=`회로 구현 → part ${p.mpn}${r2.src==='ai'?' (Claude 추정 핀)':''}`;else{b.impl=prev;how='핀 정보를 얻지 못해 기록만 (라이브러리 블록 유지)';}}catch(e){b.impl=prev;how='회로 구현 실패: '+(e.message||e)+' → 기록만';}}
-    else how='핀 정보 없음 → 기록만 (AI 모드에서는 Claude가 핀을 추정해 회로에 넣음)';}
+    else{const c=await copAsk({q:`${p.mpn}: 라이브러리에 핀 정보가 없습니다. 데이터시트 PDF를 올려 핀 표를 읽을까요?`,why:'AI 모드에서는 Claude가 핀을 추정할 수도 있습니다. 지금은 기록만 하고 나중에 datasheet '+p.mpn+' 으로도 할 수 있습니다.',opts:['데이터시트 PDF 올리기','기록만']});
+      if(c==='데이터시트 PDF 올리기'){const r=await dsPdfFlow(p.mpn,'np',{});if(r){try{await npRun(`impl ${b.id} part ${p.mpn}`);how=`회로 구현 → part ${p.mpn} (데이터시트 핀 ${r.pins.length}개)`;}catch(e){b.impl=prev;how='회로 구현 실패: '+(e.message||e)+' → 기록만';}}else how='핀 정보 없음 → 기록만';}
+      else how='핀 정보 없음 → 기록만 (datasheet '+p.mpn+' 으로 PDF 핀 추출 가능)';}}
   NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — ${how}`;}
 async function npPickParts(prof){const A=NP.arch;if(!A||!prof)return;
   const cb=A.blocks.map(b=>({b,c:PRODUCTS.candidates(prof,b.id)||[]})).map(x=>x.c.length?x:{b:x.b,c:PRODUCTS.candidates(prof,x.b.id.replace(/\d+$/,''))}).filter(x=>x.c.length);

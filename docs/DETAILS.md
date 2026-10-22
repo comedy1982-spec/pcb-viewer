@@ -15,6 +15,12 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 데이터시트 PDF → 핀 표 → 라이브러리 (v1.50.0)
+
+- `src/core/dspdf.js` (`DSPDF`): 데이터시트 텍스트(페이지별 pdf.js 텍스트 항목 {str,x,y} 또는 일반 텍스트)에서 핀 표를 찾습니다. 같은 y의 항목을 한 줄로 묶고(`linesOf`), "Pin Configuration / Pin Description / Terminal Functions / 핀 설명" 머리 뒤에서 **핀 번호(1, 2 … · BGA A1) + 핀 이름(VIN, nRESET, GPIO_1 …)** 행(번호 먼저 또는 이름 먼저)이 4개 이상 이어지면 표로 보고, "Absolute Maximum / Electrical Characteristics …"에서 끝냅니다. 번호 열이 여럿(SOIC TSSOP …)이면 열마다 후보를 만들고 머리글의 패키지 이름을 열에 붙입니다. 점수 = 번호 연속성·이름 비율·전원 핀 존재. `parse(pages,{mpn,pkg,npins})` → `{mpn,title,pkg,npins,pins:[{num,name,desc}],conf,notes,candidates,packages}`; `/RESET·#RESET·~RESET → nRESET`. `sectionText`(핀 표 페이지만) + `aiPrompt/fromAi`로 Claude 판독, `record(r,file)`는 PARTLIB 레코드(출처 `ds`, 승인 목록에 저장).
+- `src/app/pdfui.js`: pdf.js(3.11.174, cdnjs)를 **필요할 때만** 로드해 PDF 텍스트를 뽑고(최대 60쪽, .txt도 가능), 후보 표가 여럿이면 패키지 선택 카드, 규칙 확신도 < 60 %이거나 표가 없으면 AI 모드에서 Claude가 핀 표 페이지를 읽습니다. 저장 확인 뒤 `plRemember` → IndexedDB. 진입점: 콘솔 `datasheet <MPN> [--pkg SOIC] [--pins 14]`(1단계·회로도 콘솔, 저장 뒤 그 부품을 쓰는 블록은 `impl … part`로 재연결), 1단계 부품 선택에서 핀 정보가 없을 때 "데이터시트 PDF 올리기" 질문, `add part`/`replace` 흐름의 첫 선택지 "데이터시트 PDF 올리기", 부품 라이브러리 대화상자의 **데이터시트 PDF → 핀** 버튼.
+- `PARTLIB.ORDER`에 `ds`(승인 목록 다음, 내장 DB·Claude 추정보다 우선), 출처 표시 "데이터시트". 스캔(이미지) PDF는 텍스트가 없어 읽지 못하며 안내 후 `add part … --pins`를 권합니다.
+
 ## 안전 목표(SG) 기반 아키텍처 추천 · 검증 (v1.49.0)
 
 - `src/core/sgarch.js` (`SGARCH`): 안전 목표 = {id, text, asil, ftti(ms), kind(actuation·loss·thermal·hv·data), state(안전 상태), path(위반 경로 블록)}. `GOALS`에 EPS·BMS·BCM·INV 템플릿별 기본 목표(예: EPS SG1 의도하지 않은 조향 토크 방지 ASIL D FTTI 50 ms → 토크 0·상 차단). `setGoals/addGoal/removeGoal/tag/tagBlock`: 경로 블록·링크에 `sg` 태그, 메커니즘 블록은 감지 종류로 자동 태그, 블록 ASIL을 목표 등급으로 올림, 시스템 ASIL은 최고 목표.

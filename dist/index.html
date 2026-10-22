@@ -8135,7 +8135,7 @@ function parseCsv(text){const rows=[];let row=[],cell='',q=false;const t=String(
 function fromBuiltin(PARTS,pinsOf){const P=PARTS&&PARTS.P||{};return Object.keys(P).map(mpn=>{const d=P[mpn];const pkg=(d.specs||[]).map(s=>s[1]).join(' ').match(/(UFQFPN\d+|TQFP-?\d+|SOT-?223|SOT-?23(?:-\d)?|SOIC-?\d+|HTSSOP-?\d+|TSSOP-?\d+|QFN-?\d+|0603|0805|1206|1210|SMA)/i);
   return{mpn,mfr:d.mfr||'',title:d.title||'',cat:d.cat||'',pkg:pkg?pkg[1]:'',fp:'',val:'',pins:(pinsOf&&pinsOf(mpn)||[]).length?pinsOf(mpn):(pinoutFor(mpn,'',null)||[]),specs:(d.specs||[]).map(s=>[s[0],s[1]]),price:PARTS.price?PARTS.price(mpn,d.cat):null,pdf:d.pdf||'',page:d.page||'',desc:d.title||'',src:'builtin',status:'',conf:1,therm:d.therm||null,grade:d.grade||'',temp:d.temp||null,asil:d.asil||'',fitv:d.fit!=null?d.fit:null};}).concat(AUTO_PARTS.map(p=>Object.assign({src:'builtin',status:'',conf:1,specs:[],pins:[],fp:'',val:'',desc:p.title},p)));}
 /* ---------- lookup ---------- */
-const ORDER={user:0,builtin:1,ai:2,api:3};
+const ORDER={user:0,ds:1,builtin:2,ai:3,api:4};
 function merge(lists){const m=new Map();lists.flat().forEach(p=>{if(!p||!p.mpn)return;const k=norm(p.mpn);const cur=m.get(k);if(!cur||ORDER[p.src]<ORDER[cur.src])m.set(k,p);});return[...m.values()];}
 function find(parts,mpn){const k=norm(mpn);if(!k)return null;return parts.find(p=>norm(p.mpn)===k)||parts.find(p=>norm(p.mpn).startsWith(k)||k.startsWith(norm(p.mpn)))||null;}
 function search(parts,q){const t=S(q);if(!t)return[];const k=norm(t);const words=t.toLowerCase().split(/\s+/).filter(Boolean);
@@ -8217,7 +8217,7 @@ const PROVIDERS={
     req:(key,q,url)=>({url:String(url||'').replace(/\{q\}/,encodeURIComponent(q))+(/\{q\}/.test(url||'')?'':(url&&url.includes('?')?'&':'?')+'q='+encodeURIComponent(q)),init:{headers:key?{Authorization:'Bearer '+key}:{}}}),
     parse:j=>{const L=Array.isArray(j)?j:j&&(j.parts||j.results||j.items)||[];return L.map(p=>Object.assign(fromAi(p,p.mpn),{src:'api',conf:1,note:S(p.note)||'사내 부품 서버'}));}}};
 /* HTML for a one-page datasheet summary of a record (used by the datasheet tab for AI/API/user parts) */
-function pageHTML(p,esc){esc=esc||(s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])));const srcName={user:'승인 부품 목록',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'}[p.src]||p.src;
+function pageHTML(p,esc){esc=esc||(s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])));const srcName={user:'승인 부품 목록',ds:'데이터시트 PDF',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'}[p.src]||p.src;
   return`<h1>${esc(p.mpn)}</h1><p class="meta">${esc(p.mfr||'제조사 미상')}${p.cat?' · '+esc(p.cat):''}${p.pkg?' · '+esc(p.pkg):''}${p.title?' · '+esc(p.title):''}${p.price!=null?` · 참고 단가 약 $${(+p.price).toFixed(p.price<1?3:2)}`:''}</p>
 <p class="meta">출처: ${esc(srcName)}${p.conf!=null&&p.src==='ai'?` (확신도 ${Math.round(p.conf*100)}%)`:''}${p.pdf?` · <a href="${esc(p.pdf)}" target="_blank" rel="noopener">데이터시트</a>`:''}${p.page?` · <a href="${esc(p.page)}" target="_blank" rel="noopener">제품 페이지</a>`:''} · <a href="https://octopart.com/search?q=${encodeURIComponent(p.mpn)}" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
 ${p.src==='ai'?'<p class="todo">이 페이지는 Claude가 추정한 사양입니다. 실제 데이터시트와 대조한 뒤 승인 부품 목록에 넣으세요.</p>':''}${p.note?`<p class="meta">${esc(p.note)}</p>`:''}
@@ -8923,6 +8923,89 @@ function proposeText(A,HW){const P=propose(A,HW);if(!P.length)return'ASIL QM —
   return'[구조 변형 추천] 점수순 — sg apply <single|dual|decomp>\n'+P.map((p,i)=>`${i+1}. ${p.label}${i===0?' ★추천':''} · 점수 ${p.score}\n   ${p.desc}\n   추가 블록 ${p.blocks}개(부품 ~${p.parts}) · 추가 원가 ~$${p.cost} · 평균 DC ${p.dc}% · FTTI 만족 ${p.fttiOk}/${p.verify.n} · 검증 ${p.verify.ok?'✓ 통과':'✗ '+p.verify.errs+'건'} · 복잡도 ${'●'.repeat(p.cx)}${'○'.repeat(3-p.cx)}\n   적합: ${p.use}`).join('\n');}
 function aiRules(A){const G=goals(A);return`Safety goals (ISO 26262): each block/link on a goal's violation path is tagged with the goal id; a goal needs (1) a detection block outside the MCU for its violation kind, (2) an independent reaction link (kind safe) from the monitor/SBC/safety MCU to the actuator cut, (3) detection+reaction latency within the FTTI, (4) for ASIL D a lockstep MCU, a safety MCU or a 2-channel decomposition, (5) a supervised supply. Commands: sg list · sg add "<text>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "<safe state>" --path mcu,gate · sg tag <block> SG1 · sg variants (scores single / dual / decomp) · sg apply <single|dual|decomp> · sg verify. After changing safety-related blocks run sg verify and fix every ✗ before you finish.${G.length?'\nCurrent goals:\n'+goalsText(A):''}`;}
 return{KINDS,GOALS,MECHX,VARIANTS,goals,defaults,setGoals,addGoal,removeGoal,tag,tagBlock,verify,propose,applyVariant,goalsText,verifyText,proposeText,aiRules};
+})();
+
+
+</script>
+<script>
+/* ---------- datasheet PDF → pin table (DSPDF) ----------
+   Pure text parser: takes the text of a datasheet (pdf.js text items with x/y per page, or plain text) and finds the
+   pin table — "Pin Configuration / Pin Description / Terminal Functions / 핀 설명" sections whose rows start with a pin
+   number (1, 2 … or A1, B3 for BGA) followed by a pin name (VIN, nRESET, GPIO_1, VCC/VIN …). Multi-package tables
+   ("1 2 VIN …" = SOIC / TSSOP columns) give one candidate per column; the caller picks by package or pin count.
+   The result is a part record ({mpn, pkg, pins:[{num,name}], conf, notes, candidates}) for the part library. */
+const DSPDF=(()=>{
+const S=v=>v==null?'':String(v).trim();
+const HEAD_RE=/pin\s*(configuration|description|function|assignment|definition|out|list|table)|terminal\s*functions?|pinout|pin\s*names?|핀\s*(설명|배치|기능|구성)|ピン|signal\s*description/i;
+const STOP_RE=/absolute\s*maximum|electrical\s*characteristics|recommended\s*operating|typical\s*(application|characteristics)|package\s*(outline|dimension)|ordering\s*information|mechanical\s*data|functional\s*block|detailed\s*description|specifications?$/i;
+const NAME_RE=/^[A-Za-z~#!\/][A-Za-z0-9_\/\-\.#~+]{0,19}$/;
+const NUM_RE=/^(\d{1,3}|[A-Z]{1,2}\d{1,2})$/;
+const WORDS=/^(pin|pins|no|number|name|type|description|function|functions|i\/o|io|in|out|input|output|power|ground|supply|and|or|the|of|to|for|with|a|an|is|are|this|that|see|note|notes|n\.c\.|table|figure|page|rev|type|symbol|terminal|signal|package|soic|tssop|qfn|dfn|sot|bga|lqfp|tqfp|qfp|wson|msop|vqfn|htssop|ssop|pdip|dip|pwp|rgt|rsa|dgk|dbv|ddc|pw|d|n|ja|ta|tj|pcb|max|min|typ|unit|v|a|ma|ua|mhz|khz|hz|ms|us|ns|ohm|w|mw|c|k|µa|°c|–|-)$/i;
+const PKG_RE=/\b(\d{1,3})-(pin|lead|pins|leads|ball|balls|terminal)s?\b|\b(SOIC|TSSOP|HTSSOP|SSOP|QFN|VQFN|WQFN|DFN|WSON|SON|LQFP|TQFP|QFP|BGA|FBGA|LFBGA|TFBGA|MSOP|SOT-?23|SOT-?223|TO-?220|TO-?252|TO-?263|PDIP|DIP|PQFN|HSOP|PowerPAD|PW|RGT|RSA|DGK|DBV|DDC|QFP)[\s\-(]*(\d{1,3})?\)?/i;
+/* text items → lines per page: items with |Δy| ≤ tol are one line, sorted by x */
+function linesOf(page,tol){tol=tol||2.5;if(typeof page==='string')return page.split(/\r?\n/).map(s=>s.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const it=(page||[]).filter(t=>S(t.str)).map(t=>({s:S(t.str),x:+t.x||0,y:+t.y||0})).sort((a,b)=>b.y-a.y||a.x-b.x);const out=[];let cur=null;
+  for(const t of it){if(cur&&Math.abs(cur.y-t.y)<=tol){cur.it.push(t);}else{cur={y:t.y,it:[t]};out.push(cur);}}
+  return out.map(l=>l.it.sort((a,b)=>a.x-b.x).map(t=>t.s).join(' ').replace(/\s+/g,' ').trim()).filter(Boolean);}
+/* one row: leading pin numbers (one per package column) then a pin name, or name then numbers */
+function row(line){const tk=line.split(/\s+/);let i=0;const nums=[];
+  while(i<tk.length&&NUM_RE.test(tk[i])&&nums.length<6){nums.push(tk[i].toUpperCase());i++;}
+  if(nums.length){const nm=tk[i];if(nm&&NAME_RE.test(nm)&&!WORDS.test(nm)&&/[A-Za-z]/.test(nm)){const extra=[];let j=i+1;while(j<tk.length&&NAME_RE.test(tk[j])&&!WORDS.test(tk[j])&&/^[A-Z0-9_\/~#]+$/.test(tk[j])&&extra.length<2){extra.push(tk[j]);j++;}
+      return{nums,name:nm.replace(/[,;]$/,''),alt:extra,desc:tk.slice(j).join(' ')};}
+    return null;}
+  // name first: VIN 1 2 Input voltage
+  const nm=tk[0];if(nm&&NAME_RE.test(nm)&&!WORDS.test(nm)&&/[A-Za-z]/.test(nm)){let j=1;while(j<tk.length&&NUM_RE.test(tk[j])&&nums.length<6){nums.push(tk[j].toUpperCase());j++;}if(nums.length&&/^\d+$/.test(nums[0]))return{nums,name:nm,alt:[],desc:tk.slice(j).join(' '),nameFirst:true};}
+  return null;}
+/* find pin-table blocks: a run of rows (≥4) after a heading, until a stop heading or a long gap */
+function tables(pages){const out=[];let inSec=false;let cur=null;const push=()=>{if(cur&&cur.rows.length>=4)out.push(cur);cur=null;};
+  pages.forEach((pg,pi)=>{const L=linesOf(pg);let gap=0;const prev=[];for(const line of L){
+    if(STOP_RE.test(line)&&!HEAD_RE.test(line)){push();inSec=false;continue;}
+    if(HEAD_RE.test(line)){inSec=true;if(cur&&cur.rows.length<4)cur=null;if(!cur)cur={page:pi+1,head:line,rows:[],heads:[]};gap=0;continue;}
+    const r=row(line);if(r){if(!cur)cur={page:pi+1,head:inSec?'':'(표 머리 없음)',rows:[],heads:[]};if(!cur.rows.length)cur.heads=prev.slice(-3);cur.rows.push(r);gap=0;}else{prev.push(line);if(prev.length>3)prev.shift();gap++;if(cur&&gap>12)push();}}
+    if(cur&&cur.rows.length>=4&&!inSec)push();});
+  push();return out;}
+/* a table → candidates (one per number column), deduplicated, ordered by pin number */
+const PKG_TOK=/\b(SOIC|TSSOP|HTSSOP|SSOP|QFN|VQFN|WQFN|DFN|WSON|SON|LQFP|TQFP|QFP|BGA|FBGA|MSOP|SOT-?23|SOT-?223|TO-?220|TO-?252|TO-?263|PDIP|DIP|PQFN|HSOP|PW|RGT|RSA|DGK|DBV|DDC|D|N|PWP|RHB|RTE|RGE)\b/gi;
+function candidates(t){const nc=Math.max(...t.rows.map(r=>r.nums.length));const out=[];const colPkgs=nc>1?((t.heads||[]).concat([t.head]).join(' ').match(PKG_TOK)||[]).map(x=>x.toUpperCase()):[];
+  for(let c=0;c<nc;c++){const m=new Map();for(const r of t.rows){const n=r.nums[c];if(!n||n==='0')continue;if(!m.has(n))m.set(n,{num:n,name:r.name,alt:r.alt,desc:r.desc});}
+    const pins=[...m.values()].sort((a,b)=>cmpNum(a.num,b.num));if(pins.length>=4)out.push({col:c,pins,page:t.page,head:t.head,pkg:colPkgs[c]||''});}
+  return out;}
+function cmpNum(a,b){const na=/^\d+$/.test(a),nb=/^\d+$/.test(b);if(na&&nb)return a-b;if(na!==nb)return na?-1:1;return a.localeCompare(b,undefined,{numeric:true});}
+/* package names / pin counts on the first pages */
+function packages(pages){const found=[];pages.slice(0,4).forEach(pg=>{for(const line of linesOf(pg)){const m=line.match(PKG_RE);if(m){const n=+(m[1]||m[4])||null;const nm=(m[3]||'').toUpperCase();found.push({pkg:nm,n,line:line.slice(0,80)});}}});return found;}
+function title(pages,mpn){const L=linesOf(pages[0]||'').slice(0,25);const k=S(mpn).toUpperCase().replace(/[\s\-_]/g,'');
+  const hit=L.find(l=>l.toUpperCase().replace(/[\s\-_]/g,'').includes(k.slice(0,Math.min(8,k.length))));const desc=L.find(l=>l.length>12&&l.length<90&&!/^\s*(www|http|rev|copyright|©|\d)/i.test(l)&&/[a-z]/.test(l)&&!/datasheet|data sheet/i.test(l)&&l!==hit);
+  return{line:hit||'',desc:desc||''};}
+/* quality: contiguity of numbers, known rail names, no duplicates */
+function score(c){const nums=c.pins.map(p=>p.num).filter(n=>/^\d+$/.test(n)).map(Number);let contig=0;if(nums.length){const mx=Math.max(...nums);contig=Math.min(1,nums.length/mx);}
+  const rails=c.pins.filter(p=>/^(V(CC|DD|IN|S|BAT|REF|OUT|DDA|SSA)|GND|VSS|AGND|PGND|EP|PAD|NC)/i.test(p.name)).length;const named=c.pins.filter(p=>/[A-Za-z]/.test(p.name)).length/c.pins.length;
+  return Math.round(100*(0.45*contig+0.35*named+0.2*Math.min(1,rails/3)));}
+/* main entry */
+function parse(pages,opt){opt=opt||{};pages=Array.isArray(pages)?pages:[pages];const T=tables(pages);const all=T.flatMap(candidates).map(c=>Object.assign(c,{score:score(c)}));
+  const want=opt.pkg?S(opt.pkg).toUpperCase():'';const pk=packages(pages);const notes=[];
+  let best=all.slice().sort((a,b)=>b.score-a.score||b.pins.length-a.pins.length)[0]||null;
+  if(opt.npins){const m=all.filter(c=>c.pins.length===+opt.npins).sort((a,b)=>b.score-a.score)[0];if(m)best=m;else notes.push(`핀 수 ${opt.npins}인 표가 없어 가장 그럴듯한 표를 썼습니다`);}
+  if(want){const m=all.filter(c=>c.pkg&&(want.startsWith(c.pkg.replace(/-/g,''))||c.pkg.replace(/-/g,'').startsWith(want.replace(/-/g,'').slice(0,4)))).sort((a,b)=>b.score-a.score)[0];if(m)best=m;}
+  if(want&&!(best&&best.pkg)&&pk.length){const hit=pk.find(p=>p.pkg&&want.startsWith(p.pkg.replace(/-/g,'')));if(hit&&hit.n){const m=all.filter(c=>c.pins.length===hit.n).sort((a,b)=>b.score-a.score)[0];if(m)best=m;}}
+  const ti=title(pages,opt.mpn);const pkg=best?best.pkg||(pk.find(p=>p.n===best.pins.length)||{}).pkg||(pk[0]||{}).pkg||'':'';
+  const pins=best?best.pins.map(p=>({num:p.num,name:cleanName(p.name),desc:p.desc||''})):[];
+  const conf=best?Math.min(0.95,best.score/100*(T.length?1:0.8)):0;
+  if(!best)notes.push('핀 표를 찾지 못했습니다 — 스캔 PDF(이미지)이거나 표가 그림입니다');
+  if(all.length>1)notes.push(`핀 표 후보 ${all.length}개 (${all.map(c=>c.pins.length+'핀').join(' · ')}) — 패키지에 맞는 것을 고르세요`);
+  return{mpn:S(opt.mpn)||'',title:ti.desc||ti.line||'',pkg,npins:pins.length,pins,conf,notes,candidates:all.map(c=>({page:c.page,head:c.head,pkg:c.pkg,n:c.pins.length,score:c.score,pins:c.pins.map(p=>({num:p.num,name:cleanName(p.name),desc:p.desc||''}))})),packages:pk,tables:T.length};}
+function cleanName(n){return S(n).replace(/[,;:]+$/,'').replace(/^\/(?=[A-Z])/,'n').replace(/^#/,'n').replace(/^~/,'n');}
+/* text of the pin-table pages only — what we hand to Claude when the rules are unsure */
+function sectionText(pages,maxChars){maxChars=maxChars||9000;const T=tables(pages);const pg=[...new Set(T.map(t=>t.page))];const txt=(pg.length?pg:[1,2,3]).map(p=>`--- page ${p} ---\n`+linesOf(pages[p-1]||'').join('\n')).join('\n');return txt.slice(0,maxChars);}
+function aiPrompt(mpn,text,hint){return`You are an electronics component librarian. Below is text extracted from the datasheet PDF of ${mpn||'a part'}${hint?' ('+hint+')':''}. Find the pin table and answer with JSON only:
+{"mpn":"…","title":"one-line description","pkg":"package name","pins":[{"num":"1","name":"VIN","desc":"short function"},…],"conf":0.0-1.0,"note":"which table/page you used; say if several packages exist"}
+Rules: one entry per pin number of ONE package (the ${hint||'most common'} one); keep the datasheet's pin names (VIN, nRESET, GPIO1 — write active-low as nNAME); numbers as strings (BGA like "A1"); include the exposed pad as "EP" when the table lists it; conf below 0.5 if the table is unclear.\n\n${text}`;}
+function fromAi(o,mpn){if(!o||typeof o!=='object'||!Array.isArray(o.pins))return null;const pins=o.pins.map(p=>({num:S(p.num),name:cleanName(p.name),desc:S(p.desc)})).filter(p=>p.num&&p.name);if(pins.length<2)return null;
+  return{mpn:S(o.mpn)||S(mpn),title:S(o.title),pkg:S(o.pkg),npins:pins.length,pins,conf:Math.max(0,Math.min(1,+o.conf||0.6)),notes:[S(o.note)].filter(Boolean),candidates:[],ai:true};}
+/* record for PARTLIB (src 'ds' = from a datasheet file) */
+function record(r,file){return{mpn:r.mpn,mfr:r.mfr||'',title:r.title||'',cat:'',pkg:r.pkg||'',fp:r.fp||'',val:r.mpn,pins:r.pins.map(p=>({num:p.num,name:p.name})),specs:[],price:null,pdf:'',url:'',status:'approved',note:`데이터시트 PDF 추출${file?' ('+file+')':''}${r.ai?' · Claude 판독':''} · 확신도 ${Math.round(r.conf*100)}%`,src:'ds',conf:r.conf};}
+function text(r){if(!r.pins.length)return`${r.mpn||'?'}: 핀 표 없음 — ${r.notes.join(' · ')}`;
+  return`${r.mpn||'?'}${r.title?' — '+r.title:''}${r.pkg?' · '+r.pkg:''} · ${r.npins}핀 (확신도 ${Math.round(r.conf*100)}%)\n`+r.pins.map(p=>`${p.num} ${p.name}${p.desc?' — '+p.desc.slice(0,40):''}`).join(' · ')+(r.notes.length?'\n'+r.notes.join('\n'):'');}
+return{parse,tables,candidates,linesOf,row,packages,sectionText,aiPrompt,fromAi,record,text,cleanName};
 })();
 
 
@@ -13470,6 +13553,7 @@ function cliDialog(kind){
    Commands edit BD.schSheets through SCHEDIT (each one is a single schematic undo step); "apply" back-annotates the board. */
 var SCLI={open:false,log:[],hist:[],hi:-1,busy:false,seq:0,stopReq:false,abort:null};
 const SCLI_HELP=[
+  ['datasheet <MPN> [--pkg SOIC] [--pins 14]','데이터시트 PDF(.pdf/.txt)를 올려 핀 표를 라이브러리에 저장 — 이후 add part / replace가 그 핀을 씀'],
   ['help [명령]','명령 목록과 사용법'],
   ['status','페이지·부품·넷·ERC·보드와 다른 점'],
   ['pages · page <n>','페이지 목록 · 페이지로 이동'],
@@ -13501,7 +13585,7 @@ const SCLI_HELP=[
 const SC_CHIPS=[['상태','status','회로도 상태를 요약하고 먼저 손볼 곳을 알려줘'],['ERC','erc','ERC 문제를 찾아 원인을 설명하고, 확실한 것은 고쳐줘'],
   ['가이드라인 점검','guide check','회로 설계 가이드라인을 점검하고 빠진 디커플링·보호 소자·부하 캡을 추가하는 명령을 제안해줘 (내가 승인하기 전엔 수정하지 말 것)'],
   ['보드와 다른 점','diff','회로도와 보드가 어떻게 다른지 설명해줘'],['보드에 반영','apply','ERC를 확인한 뒤 문제가 없으면 회로도를 보드에 반영해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const SCLI_CMDS=new Set(['guide','help','?','status','pages','page','parts','pins','nets','net','find','add','replace','tp','tie','insert','hsis','analyze','analyse','safety','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
+const SCLI_CMDS=new Set(['datasheet','guide','help','?','status','pages','page','parts','pins','nets','net','find','add','replace','tp','tie','insert','hsis','analyze','analyse','safety','connect','disconnect','nc','value','fp','rename','move','rotate','mirror','delete','erc','diff','apply','regen','export','undo','redo','clear','ai','history']);
 
 /* ---- panel ---- */
 function scSay(k,t){const e={k,t,id:++SCLI.seq};SCLI.log.push(e);if(SCLI.log.length>400)SCLI.log.shift();scPaint(e);return e;}
@@ -13768,6 +13852,7 @@ async function scRun(line,by){
     case'net':return scNetPins(a._[0]);
     case'find':return scFind(a._[0]||'');
     case'replace':{if(typeof plReplaceFlow!=='function')throw new Error('부품 라이브러리 모듈이 없습니다.');await plReplaceFlow({ref:String(a._[0]||'').toUpperCase(),q:a._.slice(1).join(' ')},'sch');return'';}
+    case'datasheet':return await dsPdfCmd(a,'sch');
     case'add':if(/^part$/i.test(String(a._[0]||'')))return await scAddAnyPart(a);return scAdd(a);
     case'tp':return scTp(a);
     case'tie':return scTie(a);
@@ -13864,6 +13949,7 @@ const NP_HELP=[
   ['feat <ID> "<기능>" · feat <ID> --clear · rename <ID> "<이름>" · move <ID> <그룹> · del <ID>','블록 기능 줄 · 이름 · 그룹 · 삭제'],
   ['link <A> <B> "<신호/레일>" [--kind power|signal|bus] [--both] · unlink <A> <B>','블록 사이 인터페이스 (화살표와 라벨)'],
   ['impl <ID> <회로블록|none> [--파라미터 값] [--swap <기존블록>] · impl <ID> part <MPN> [--pins SI=SPI_MOSI,…]','HW 블록을 구현할 회로 라이브러리 블록 (2단계 부품 선정용). part <MPN>이면 부품 라이브러리/Claude 추정 핀 배열로 그 부품을 직접 넣음(전원·접지 자동, SPI/I²C/UART/IRQ 핀은 MCU 배정). 블록에 이미 부품·주 구현(bldc, can …)이 있으면 그것을 바꿈(--add 이면 추가). --swap 이면 기존 구현을 바꿈'],
+  ['datasheet <MPN> [--pkg SOIC] [--pins 14]','데이터시트 PDF(.pdf/.txt)를 올려 핀 표를 읽고 라이브러리(출처: 데이터시트)에 저장 — 그 부품을 쓰는 블록은 impl … part로 다시 연결. 표가 여럿이면 패키지를 고르고, AI 모드에서는 규칙이 확실하지 않을 때 Claude가 판독'],
   ['sg [list] · sg defaults · sg add "<목표>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "<안전 상태>" --path mcu,gate · sg del SG2 · sg tag <블록> SG1 [--off] · sg variants · sg apply single|dual|decomp · sg verify','안전 목표(SG) 기반 아키텍처: 목표마다 위반 경로 블록·링크에 SG 태그, 구조 변형 3안(단일 MCU+외부 감시 · 메인+세이프티 MCU · ASIL 분해 2채널)을 DC·FTTI·부품·원가로 비교, 규칙으로 검증(감지·독립 차단 경로·FTTI·독립성·공통 원인)'],
   ['safety level <QM|A|B|C|D> [--goal "…"] · safety block <ID> <등급|auto> · safety apply [all|sw|uv wdt_ext drv_fb sbc cutoff2 …] · safety sw · safety ffi · safety','기능 안전: 시스템/블록 ASIL, 등급별 권장 HW 메커니즘 블록(전원 감시·외부 워치독·fault 리드백·SBC·이중 차단·리던던트 센서·2채널)과 SW 메커니즘(흐름 감시·BIST·범위 검사·메모리·클럭·ADC·E2E·리드백·타당성·HW 주기 테스트·파티셔닝 — MCU 블록에 기록), HW 부품마다 필요한 SW, FFI 경계, 상태'],
   ['parts [블록ID [번호|MPN]]','제품 프로필의 블록별 부품 후보(제조사별 3–5개) 보기 · 고르기. 고른 부품은 블록에 기록되고, 핀을 아는 단일 IC 블록(CAN·게이트 드라이버·HSD·센서 앰프 …)이면 회로 구현(impl … part)으로 바뀜.'],
@@ -13878,7 +13964,7 @@ const NP_HELP=[
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['datasheet','sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -13926,6 +14012,7 @@ async function npRun(line,by){
       if(k==='part'&&!a.add&&!(sw===true||swK)){const L=b.impl||[];const oldP=L.find(i=>i.type==='part');const oldM=oldP?null:L.find(i=>i.type!=='part'&&!/^(ldo|buck|cap|tvs|led)$/.test(i.type));const gone=oldP||oldM;
         if(gone){b.impl=L.filter(i=>i!==gone);repl=` (${gone.type==='part'?gone.params&&gone.params.mpn||'part':gone.type} → ${params.mpn}; 둘 다 두려면 --add)`;}}
       b.impl=(b.impl||[]).concat([{type:k,params}]);}NP.planManual=false;archToPlan(true);npRender();return`${b.id} ⇒ ${npImplText(b)}${repl}`;}
+    case'datasheet':case'ds':return await dsPdfCmd(a,'np');
     case'sg':{const A=archEnsure();if(typeof SGARCH==='undefined')throw new Error('SGARCH 없음');const sub=String(a._[0]||'list').toLowerCase();
       if(sub==='list'||sub==='status'){return SGARCH.goalsText(A);}
       if(sub==='verify'||sub==='check'){npRender();return SGARCH.verifyText(A);}
@@ -14159,7 +14246,9 @@ async function npSetPart(b,p){const prev=JSON.parse(JSON.stringify(b.impl||[]));
   const L=b.impl||[];const single=!L.length||(L.length===1&&NP_SWAP.test(L[0].type))||L.some(i=>i.type==='part');let how='기록 (회로는 라이브러리 블록 구성 유지 · 2단계에서 add part로 교체 가능)';
   if(single){const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;const pins=r=>!!(r&&r.pins&&r.pins.length);
     if(pins(rec)||(AIM.mode==='ai'&&CLI.sample)){try{await npRun(`impl ${b.id} part ${p.mpn}`);const r2=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;if(pins(r2))how=`회로 구현 → part ${p.mpn}${r2.src==='ai'?' (Claude 추정 핀)':''}`;else{b.impl=prev;how='핀 정보를 얻지 못해 기록만 (라이브러리 블록 유지)';}}catch(e){b.impl=prev;how='회로 구현 실패: '+(e.message||e)+' → 기록만';}}
-    else how='핀 정보 없음 → 기록만 (AI 모드에서는 Claude가 핀을 추정해 회로에 넣음)';}
+    else{const c=await copAsk({q:`${p.mpn}: 라이브러리에 핀 정보가 없습니다. 데이터시트 PDF를 올려 핀 표를 읽을까요?`,why:'AI 모드에서는 Claude가 핀을 추정할 수도 있습니다. 지금은 기록만 하고 나중에 datasheet '+p.mpn+' 으로도 할 수 있습니다.',opts:['데이터시트 PDF 올리기','기록만']});
+      if(c==='데이터시트 PDF 올리기'){const r=await dsPdfFlow(p.mpn,'np',{});if(r){try{await npRun(`impl ${b.id} part ${p.mpn}`);how=`회로 구현 → part ${p.mpn} (데이터시트 핀 ${r.pins.length}개)`;}catch(e){b.impl=prev;how='회로 구현 실패: '+(e.message||e)+' → 기록만';}}else how='핀 정보 없음 → 기록만';}
+      else how='핀 정보 없음 → 기록만 (datasheet '+p.mpn+' 으로 PDF 핀 추출 가능)';}}
   NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — ${how}`;}
 async function npPickParts(prof){const A=NP.arch;if(!A||!prof)return;
   const cb=A.blocks.map(b=>({b,c:PRODUCTS.candidates(prof,b.id)||[]})).map(x=>x.c.length?x:{b:x.b,c:PRODUCTS.candidates(prof,x.b.id.replace(/\d+$/,''))}).filter(x=>x.c.length);
@@ -15440,7 +15529,7 @@ function mbMetrics(){if(MB.boards.length<2&&!MB.links.length)return null;const c
    PL.user : approved parts list (CSV/Excel import, IndexedDB 'aod-parts')  PL.ai : records Claude estimated  PL.api : records fetched from a distributor
    lookup order: user → built-in PARTS → ai → api.  `replace <ref> <부품>` and sentences like "U3를 AP2112K로 바꿔줘" run the flow in the copilot. */
 var PL={user:[],ai:[],api:[],db:null,api_cfg:{provider:'',key:'',url:''},open:false,q:'',tab:'all',busy:false,last:null};
-const PL_SRC={user:'승인 목록',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'};
+const PL_SRC={user:'승인 목록',ds:'데이터시트',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'};
 function plGrade(p){const g=p&&p.grade;if(!g)return'';const auto=PARTLIB.gradeAuto(g);return`<span class="pl-src ${auto?'pl-aec':'pl-com'}" title="${esc(PARTLIB.GRADE_LABEL[g]||g)}${p.temp?' · '+p.temp[0]+'~'+p.temp[1]+' °C':''}">${esc(auto?g:PARTLIB.GRADE_LABEL[g]||g)}</span>`;}
 function plAll(){const b=typeof PARTS!=='undefined'?PARTLIB.fromBuiltin(PARTS,plBuiltinPins):[];return PARTLIB.merge([PL.user,b,PL.ai,PL.api]);}
 /* pin names for a built-in part: from the open board when a component uses it */
@@ -15490,10 +15579,11 @@ async function plAddFlow(it,src){src=src||'sch';const say=(k,t)=>{const e={k,t};
   const q=it.q;say('out',`"${q}" 부품 추가 — 라이브러리(승인 목록 → 내장 DB → 이전 추정)에서 찾는 중…`);
   let part=null;const cands=plSearch(q);const exact=cands.find(p=>PARTLIB.norm(p.mpn)===PARTLIB.norm(q)||PARTLIB.norm(p.mpn).startsWith(PARTLIB.norm(q)));
   if(exact&&exact.pins&&exact.pins.length)part=exact;
-  while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];const O1='Claude 추정 (핀 배열·패키지·사양을 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O4='취소';
-    const a=await ask({q:`"${q}"${exact?'의 핀 정보가 없습니다':'은(는) 라이브러리에 없습니다'}. 어떻게 가져올까요?`,why:'추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다.',opts:[O1,O2,O3,O4]});
+  while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];const O1='Claude 추정 (핀 배열·패키지·사양을 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O5='데이터시트 PDF 올리기 (핀 표 추출)',O4='취소';
+    const a=await ask({q:`"${q}"${exact?'의 핀 정보가 없습니다':'은(는) 라이브러리에 없습니다'}. 어떻게 가져올까요?`,why:'추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다. 데이터시트 PDF를 올리면 실제 핀 표를 씁니다.',opts:[O5,O1,O2,O3,O4]});
     if(!a||a===O4){say('out','추가를 취소했습니다.');return;}
-    try{if(a===O1){const e=say('ai','Claude가 부품 사양을 찾는 중…');part=await plAskClaude(q,{hint:BD.name,role:'new part to add to the circuit'});copDrop(e);}
+    try{if(a===O5){const r=await dsPdfFlow(q,src,{});if(r)part=r;else continue;}
+      else if(a===O1){const e=say('ai','Claude가 부품 사양을 찾는 중…');part=await plAskClaude(q,{hint:BD.name,role:'new part to add to the circuit'});copDrop(e);}
       else if(a===O2){if(!hasApi){plOpenSettings(src);const b=await ask({q:'부품 API를 설정한 뒤 "계속"을 누르세요.',opts:['계속','취소']});if(b!=='계속')return;continue;}const e=say('ai','API 조회 중…');const L=await plAskApi(q);copDrop(e);part=L[0];
         if(part&&!(part.pins&&part.pins.length)){const e2=say('ai','Claude가 핀 배열을 찾는 중…');try{const p2=await plAskClaude(part.mpn,{hint:part.title});part.pins=p2.pins;part.pkg=part.pkg||p2.pkg;part.fp=p2.fp||part.fp;plRemember(part);}catch(e3){say('err',e3.message);}copDrop(e2);}}
       else if(a===O3){const files=await plPickFiles();if(!files.length)continue;const r=await plImportFiles(files);say('ok',`가져옴: ${r.msg}`);const f=plFind(q);if(f&&f.pins&&f.pins.length)part=f;else say('out',`가져온 목록에 "${q}"의 핀 정보가 없습니다.`);}
@@ -15534,11 +15624,12 @@ async function plReplaceFlow(it,src){src=src||'sch';const say=(k,t)=>{const e={k
     if(!a)return;const i=opts.indexOf(a);if(i>=0)part=cands[i];else if(!/새로 찾기/.test(a)){part=plFind(a)||null;if(!part){q=a;}}}
   // 2) not in the library: AI estimate (default) → distributor API → import a file
   while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];
-    const O1='Claude 추정 (사양·핀·단가를 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O4='취소';
-    const a=await ask({q:`"${q}"은(는) 라이브러리에 없습니다. 사양을 어떻게 가져올까요?`,why:'우선순위: 승인 부품 목록 → Claude 추정 → 부품 API. 추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다.',opts:[O1,O2,O3,O4]});
+    const O1='Claude 추정 (사양·핀·단가를 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O5='데이터시트 PDF 올리기 (핀 표 추출)',O4='취소';
+    const a=await ask({q:`"${q}"은(는) 라이브러리에 없습니다. 사양을 어떻게 가져올까요?`,why:'우선순위: 승인 부품 목록 → 데이터시트 PDF → Claude 추정 → 부품 API. 추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다.',opts:[O5,O1,O2,O3,O4]});
     if(!a||a===O4){say('out','교체를 취소했습니다.');return;}
     try{
-      if(a===O1){const e=say('ai','Claude가 부품 사양을 찾는 중…');const ctx={oldPart:`${c.val||''} ${c.mpn||''} (${c.fp||''})`,oldPins:c.pads.map(p=>`${p.n}:${p.fn||'?'}=${p.net||'-'}`).join(', '),role:plRoleOf(c),hint:BD.name};
+      if(a===O5){const r=await dsPdfFlow(q,src,{});if(r)part=r;else continue;}
+      else if(a===O1){const e=say('ai','Claude가 부품 사양을 찾는 중…');const ctx={oldPart:`${c.val||''} ${c.mpn||''} (${c.fp||''})`,oldPins:c.pads.map(p=>`${p.n}:${p.fn||'?'}=${p.net||'-'}`).join(', '),role:plRoleOf(c),hint:BD.name};
         const p=await plAskClaude(q,ctx);copDrop(e);if(p.conf<0.5)say('out',`Claude의 확신도가 낮습니다 (${Math.round(p.conf*100)}%). 부품 번호를 확인해 주세요.`);part=p;}
       else if(a===O2){if(!hasApi){plOpenSettings(src);const b=await ask({q:'부품 API를 설정한 뒤 "계속"을 누르세요.',opts:['계속','취소']});if(b!=='계속')return;continue;}
         const e=say('ai',`${PARTLIB.PROVIDERS[PL.api_cfg.provider].name} 조회 중…`);const L=await plAskApi(q);copDrop(e);
@@ -15619,10 +15710,10 @@ function plApplySch(ref,c,part,M,oldPins){const units=scSyms(ref);if(!units.leng
 /* ---- library dialog ---- */
 function plDialogHTML(){const all=plAll();const q=PL.q.toLowerCase();const tab=PL.tab;const list=all.filter(p=>tab==='all'||p.src===tab).filter(p=>!q||[p.mpn,p.mfr,p.title,p.cat,p.pkg].join(' ').toLowerCase().includes(q)).sort((a,b)=>a.mpn.localeCompare(b.mpn));
   const cnt=s=>all.filter(p=>p.src===s).length;const onBoard=new Set(BD?BD.comps.map(c=>(c.mpn||'').trim()):[]);const cfg=PL.api_cfg;const P=PARTLIB.PROVIDERS;
-  return`<div class="sheet pl" role="dialog" aria-modal="true" aria-labelledby="plT"><div class="sheet-h"><h2 id="plT">부품 라이브러리</h2><span class="pl-cnt">승인 ${cnt('user')} · 내장 ${cnt('builtin')} · Claude 추정 ${cnt('ai')} · API ${cnt('api')}</span><button type="button" class="btn sm" data-close aria-label="닫기">닫기</button></div>
+  return`<div class="sheet pl" role="dialog" aria-modal="true" aria-labelledby="plT"><div class="sheet-h"><h2 id="plT">부품 라이브러리</h2><span class="pl-cnt">승인 ${cnt('user')} · 데이터시트 ${cnt('ds')} · 내장 ${cnt('builtin')} · Claude 추정 ${cnt('ai')} · API ${cnt('api')}</span><button type="button" class="btn sm" data-close aria-label="닫기">닫기</button></div>
   <div class="sheet-b pl-b"><div class="pl-bar"><div class="seg sm" role="tablist">${[['all','전체'],['user','승인 목록'],['builtin','내장'],['ai','Claude 추정'],['api','API']].map(t=>`<button type="button" role="tab" data-pltab="${t[0]}" aria-selected="${tab===t[0]}">${t[1]}</button>`).join('')}</div>
       <input type="search" id="plQ" placeholder="MPN · 제조사 · 설명 검색" value="${esc(PL.q)}" aria-label="검색"><span class="cop-sp"></span>
-      <button type="button" class="btn sm" data-plimp>목록 가져오기 (CSV/Excel)</button><button type="button" class="btn sm" data-pltpl>CSV 템플릿</button><button type="button" class="btn sm" data-plexp>내보내기</button><button type="button" class="btn sm" data-plapi aria-expanded="${PL.apiOpen?'true':'false'}">API 설정</button></div>
+      <button type="button" class="btn sm" data-plimp>목록 가져오기 (CSV/Excel)</button><button type="button" class="btn sm" data-plpdf title="데이터시트 PDF에서 핀 표를 읽어 저장">데이터시트 PDF → 핀</button><button type="button" class="btn sm" data-pltpl>CSV 템플릿</button><button type="button" class="btn sm" data-plexp>내보내기</button><button type="button" class="btn sm" data-plapi aria-expanded="${PL.apiOpen?'true':'false'}">API 설정</button></div>
     <div class="pl-api" ${PL.apiOpen?'':'hidden'}><label>공급자 <select id="plProv"><option value="">(없음)</option>${Object.keys(P).map(k=>`<option value="${k}" ${cfg.provider===k?'selected':''}>${esc(P[k].name)}</option>`).join('')}</select></label>
       <label>키 / 토큰 <input type="password" id="plKey" value="${esc(cfg.key||'')}" placeholder="브라우저에만 저장됩니다"></label><label>주소 (사내 서버) <input type="text" id="plUrl" value="${esc(cfg.url||'')}" placeholder="https://parts.example.com/find?q={q}"></label>
       <button type="button" class="btn primary sm" data-plsave>저장</button><button type="button" class="btn sm" data-pltest>조회 테스트</button><div class="pl-m">${cfg.provider&&P[cfg.provider]?esc(P[cfg.provider].keyHelp):'우선순위: 승인 부품 목록 → Claude 추정 → 부품 API. Mouser API는 브라우저에서 직접 호출이 막혀 있어(CORS) 사내 프록시가 필요할 수 있습니다.'}</div></div>
@@ -15635,6 +15726,7 @@ function plBind(m){
   m.addEventListener('click',async e=>{if(e.target===m||e.target.closest('[data-close]')){plClose();return;}const t=e.target.closest('button');if(!t)return;const d=t.dataset;
     try{
       if(d.pltab){PL.tab=d.pltab;plRender();return;}
+      if('plpdf'in d){const mpn=prompt('부품 번호 (MPN)',PL.q||'');if(!mpn)return;plClose();const rec=await dsPdfFlow(mpn.trim(),COP.src||'np');if(rec)toast(`${rec.mpn} ${rec.pins.length}핀 저장`);return;}
       if('plimp'in d){const files=await plPickFiles();if(!files.length)return;const r=await plImportFiles(files);toast(`부품 ${r.n}개 가져옴 — ${r.msg}`);plRender();return;}
       if('pltpl'in d){await expSave('parts_template.csv','﻿'+PARTLIB.toCsv([{mpn:'AP2112K-3.3TRG1',mfr:'Diodes Inc.',title:'LDO 600 mA 3.3 V',cat:'LDO',pkg:'SOT-23-5',fp:'SOT-23-5',val:'3.3V',pins:[{num:'1',name:'VIN'},{num:'2',name:'GND'},{num:'3',name:'EN'},{num:'4',name:'NC'},{num:'5',name:'VOUT'}],specs:[['입력 전압','2.5–6 V'],['출력 전류','600 mA']],price:0.12,pdf:'https://www.diodes.com/assets/Datasheets/AP2112.pdf',page:'',status:'approved',note:'예시 행 — 지우고 쓰세요'}]),'text/csv');return;}
       if('plexp'in d){const L=plAll().filter(p=>p.src!=='builtin');if(!L.length){toast('내보낼 부품이 없습니다.');return;}await expSave('parts_library.csv','﻿'+PARTLIB.toCsv(L),'text/csv');return;}
@@ -15642,7 +15734,7 @@ function plBind(m){
       if('plsave'in d){PL.api_cfg={provider:$('#plProv').value,key:$('#plKey').value.trim(),url:$('#plUrl').value.trim()};plSaveCfg();toast('API 설정을 이 브라우저에 저장했습니다.');plRender();return;}
       if('pltest'in d){PL.api_cfg={provider:$('#plProv').value,key:$('#plKey').value.trim(),url:$('#plUrl').value.trim()};plSaveCfg();const q=prompt('조회할 부품 번호','AMS1117-3.3');if(!q)return;toast('조회 중…');const L=await plAskApi(q);toast(`${L.length}개: ${L.slice(0,3).map(p=>p.mpn).join(', ')}`);plRender();return;}
       if(d.plpromote){const p=plAll().find(x=>x.mpn===d.plpromote);if(!p||p.src==='user')return;const u=Object.assign({},p,{src:'user',status:'approved',conf:1,note:(p.note?p.note+' · ':'')+`${PL_SRC[p.src]}에서 승인`});PL.user.push(u);await plSave();plRender();return;}
-      if(d.pldel){const L=d.src==='user'?PL.user:d.src==='ai'?PL.ai:PL.api;const i=L.findIndex(x=>x.mpn===d.pldel);if(i>=0)L.splice(i,1);await plSave();plRender();return;}
+      if(d.pldel){const L=d.src==='user'||d.src==='ds'?PL.user:d.src==='ai'?PL.ai:PL.api;const i=L.findIndex(x=>x.mpn===d.pldel);if(i>=0)L.splice(i,1);await plSave();plRender();return;}
     }catch(err){console.error(err);toast(err.message||String(err));}});
   m.addEventListener('input',e=>{if(e.target.id==='plQ'){PL.q=e.target.value;plRender();}});
   m.addEventListener('keydown',e=>{if(e.key==='Escape')plClose();});}
@@ -15651,6 +15743,55 @@ function plDsPage(mpn){const p=plFind(mpn);if(!p||p.src==='builtin')return null;
 /* ---- CLI help lines (schematic console) ---- */
 const PL_HELP=[['replace <부품> [<MPN|설명>]','부품 교체 — 승인 목록→내장 DB→Claude 추정→부품 API 순으로 찾고, 핀 대응을 확인한 뒤 회로도·보드·BOM·HSIS에 반영 (대화형)'],['parts lib','부품 라이브러리 창 (승인 목록 가져오기 · API 설정)']];
 document.addEventListener('DOMContentLoaded',()=>{plLoad().then(()=>{if(typeof NEWPROJ!=='undefined')NEWPROJ.partLookup=mpn=>{const r=plFind(mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;};});const b=$('#plBtn');if(b)b.addEventListener('click',openPartLib);});
+
+/* ---------- datasheet PDF → pin table → part library (DSPDF + pdf.js loaded on demand) ----------
+   When the library has no pins for a part number, the user drops the datasheet PDF (or a .txt of its text): the pin table
+   is read by rules (DSPDF.parse), the candidate tables are offered when there are several packages, and in AI mode Claude
+   reads the pin-table pages when the rules are unsure. The record is saved as src 'ds' (datasheet) in the approved list,
+   so `impl <ID> part <MPN>` / `add part <MPN>` / `replace` use the real pins from then on. */
+var DSP={lib:null,last:null,busy:false};
+const PDFJS_SRC='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',PDFJS_WORKER='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+function dsPdfLib(){if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);if(DSP.lib)return DSP.lib;
+  DSP.lib=new Promise((res,rej)=>{const s=document.createElement('script');s.src=PDFJS_SRC;s.onload=()=>{try{window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_WORKER;}catch(e){}res(window.pdfjsLib);};s.onerror=()=>{DSP.lib=null;rej(new Error('pdf.js를 불러오지 못했습니다 (네트워크). PDF 대신 텍스트(.txt)로 올려 주세요.'));};document.head.appendChild(s);});return DSP.lib;}
+/* file → pages: pdf.js text items {str,x,y} per page (≤ 60 pages), or the lines of a text file */
+async function dsPdfPages(file,maxPages){const ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(ext!=='pdf'){const t=await file.text();return t.split(/\f|\n-{3,}\s*page\s*\d+\s*-{3,}\n/i).filter(Boolean);}
+  const lib=await dsPdfLib();const buf=await file.arrayBuffer();const doc=await lib.getDocument({data:buf,disableFontFace:true,isEvalSupported:false}).promise;const n=Math.min(doc.numPages,maxPages||60);const pages=[];
+  for(let p=1;p<=n;p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();pages.push(tc.items.filter(it=>it.str&&it.transform).map(it=>({str:it.str,x:it.transform[4],y:it.transform[5]})));}
+  return pages;}
+function dsPickPdf(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept='.pdf,.txt';i.onchange=()=>res(i.files[0]||null);i.oncancel=()=>res(null);i.click();});}
+/* the conversational flow; returns the saved library record or null */
+async function dsPdfFlow(mpn,src,opt){opt=opt||{};src=src||'np';const say=(k,t)=>{const e={k,t};copPaint(src,e);return e;};const ask=q=>{COP.askSrc=src;return copAsk(q);};
+  if(typeof DSPDF==='undefined')throw new Error('DSPDF 없음');if(DSP.busy)throw new Error('데이터시트를 읽는 중입니다.');DSP.busy=true;
+  try{
+    const file=opt.file||await dsPickPdf();if(!file){say('out','데이터시트 파일을 고르지 않았습니다.');return null;}
+    const e=say('ai',`${file.name} 읽는 중… (${/\.pdf$/i.test(file.name)?'pdf.js 텍스트 추출':'텍스트'})`);
+    let pages;try{pages=await dsPdfPages(file);}finally{copDrop(e);}
+    const chars=pages.reduce((a,p)=>a+(typeof p==='string'?p.length:p.reduce((b,t)=>b+t.str.length,0)),0);
+    if(chars<200)say('out',`텍스트가 거의 없습니다 (${chars}자) — 스캔된 PDF면 핀 표를 읽을 수 없습니다. AI 모드에서는 Claude가 시도합니다.`);
+    let R=DSPDF.parse(pages,{mpn,pkg:opt.pkg,npins:opt.npins});
+    // several candidate tables → let the user pick (by page / package / pin count)
+    if(R.candidates.length>1&&!opt.npins&&!opt.pkg){const C=R.candidates.slice(0,6);const opts=C.map((c,i)=>`${i+1}. ${c.n}핀${c.pkg?' · '+c.pkg:''} · p.${c.page} (${c.score}%) — ${c.pins.slice(0,5).map(p=>p.num+' '+p.name).join(', ')}…`);
+      const a=await ask({q:`${mpn||file.name}: 핀 표 후보가 ${R.candidates.length}개입니다. 어느 것이 이 패키지인가요?`,why:'패키지가 여럿이면 표마다 핀 번호가 다릅니다. 보드에 쓸 패키지의 표를 고르세요.',opts:opts.concat(['Claude에게 판독 맡기기'])});
+      if(a&&!/Claude/.test(a)){const i=opts.indexOf(a);if(i>=0){const c=C[i];R=Object.assign({},R,{pkg:c.pkg||R.pkg,npins:c.n,pins:c.pins,conf:Math.min(0.95,c.score/100),notes:R.notes.filter(n=>!/후보/.test(n))});}}
+      else if(/Claude/.test(a))R.conf=0;}
+    // rules unsure → Claude reads the pin-table pages (AI mode)
+    if((!R.pins.length||R.conf<0.6)&&AIM.mode==='ai'){await cliAiProbe();if(CLI.sample){const e2=say('ai','규칙으로는 확실하지 않아 Claude가 핀 표 페이지를 읽는 중…');
+        try{const j=await CLI.sample.json(DSPDF.aiPrompt(mpn,DSPDF.sectionText(pages),opt.pkg||R.pkg),{cache:false,modelTier:AIM.tier});const ai=DSPDF.fromAi(j,mpn);if(ai&&(ai.pins.length>R.pins.length||ai.conf>R.conf))R=ai;}
+        catch(e3){say('err','Claude 판독 실패: '+(e3.message||e3));}finally{copDrop(e2);}}}
+    if(!R.pins.length){say('err',DSPDF.text(R)+'\n→ 표가 그림이면 핀을 직접 적어 주세요: add part '+(mpn||'<MPN>')+' --pins 1=VIN,2=GND,…');return null;}
+    say('ok',DSPDF.text(R));
+    const b=opt.auto?'저장':await ask({q:`${R.mpn||mpn} ${R.npins}핀 — 이 핀 배열을 라이브러리에 저장할까요?`,why:'저장하면 impl … part / add part / replace가 이 핀을 씁니다 (승인 목록 · 출처 "데이터시트").',opts:['저장','저장하지 않음']});
+    if(b!=='저장')return null;
+    R.mpn=R.mpn||mpn;const rec=DSPDF.record(R,file.name);plRemember(rec);await plSave();DSP.last=rec;if(typeof plRender==='function')plRender();
+    say('ok',`${rec.mpn} 저장 — ${rec.pins.length}핀 (출처: 데이터시트 ${file.name})`);return rec;}
+  finally{DSP.busy=false;}}
+/* `datasheet <MPN> [--pkg SOIC] [--pins 14]` on any console: extract and save, then rebind the blocks / parts that use the MPN */
+async function dsPdfCmd(a,src){const mpn=String(a._[0]||'').trim();if(!mpn)throw new Error('datasheet <MPN> [--pkg SOIC] [--pins 14] — 데이터시트 PDF(.pdf/.txt)를 올려 핀 표를 라이브러리에 저장');
+  const rec=await dsPdfFlow(mpn,src,{pkg:a.pkg&&a.pkg!==true?String(a.pkg):'',npins:a.pins&&a.pins!==true?+a.pins:0});if(!rec)return'저장하지 않았습니다.';
+  const out=[`${rec.mpn}: ${rec.pins.length}핀 저장`];
+  if(typeof NP!=='undefined'&&NP.arch){const bs=NP.arch.blocks.filter(b=>b.part&&PARTLIB.norm(b.part.mpn)===PARTLIB.norm(rec.mpn));for(const b of bs){try{out.push(await npRun(`impl ${b.id} part ${rec.mpn}`));}catch(e){out.push(`${b.id}: ${e.message||e}`);}}}
+  return out.join('\n');}
 
 /* ---------- boot ---------- */
 setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_SPEC)))));
