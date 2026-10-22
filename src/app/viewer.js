@@ -573,9 +573,9 @@ function dsTableHTML(){
 function compCard(c){
   const rows=c.pads.map(p=>`<tr><td>${esc(p.n!=null?p.n:'')}</td><td class="pn">${esc(p.fn||'')}</td><td>${p.net?`<button class="lnk${S.hlNet===p.net?' on':''}" data-net="${esc(p.net)}">${esc(p.net)}</button>`:'<span class="cls">미연결</span>'}</td></tr>`).join('');
   const nc=c.pads.filter(p=>!p.net).length,b=c.body;
-  return`<div class="card"><div class="card-h"><span class="ref">${esc(c.ref)}</span><span class="hgap">${sideBadge(c.side)}<button class="x" data-clear="comp" aria-label="선택 해제">✕</button></span></div>
+  return`<div class="card"><div class="card-h"><span class="ref">${esc(c.ref)}</span><span class="hgap">${BD.pcbPending?"":sideBadge(c.side)}<button class="x" data-clear="comp" aria-label="선택 해제">✕</button></span></div>
   <div class="val">${esc(c.val||'값 정보 없음')}</div>${c.desc?`<p class="desc">${esc(c.desc)}</p>`:'<div style="height:8px"></div>'}
-  <dl class="kv"><dt>풋프린트</dt><dd>${esc(c.fp||'—')}</dd><dt>부품 번호</dt><dd>${esc(c.mpn||'—')}</dd><dt>위치</dt><dd>X ${fmt(c.x)} · Y ${fmt(c.y)} mm</dd><dt>회전</dt><dd>${fmt(c.rot,1)}°</dd>${b.w>0?`<dt>바디</dt><dd>${fmt(b.w,1)} × ${fmt(b.h,1)} × ${fmt(b.ht,1)} mm</dd>`:''}</dl>
+  <dl class="kv"><dt>풋프린트</dt><dd>${esc(c.fp||'—')}</dd><dt>부품 번호</dt><dd>${esc(c.mpn||'—')}</dd>${BD.pcbPending?'':`<dt>위치</dt><dd>X ${fmt(c.x)} · Y ${fmt(c.y)} mm</dd><dt>회전</dt><dd>${fmt(c.rot,1)}°</dd>`}${b.w>0?`<dt>바디</dt><dd>${fmt(b.w,1)} × ${fmt(b.h,1)} × ${fmt(b.ht,1)} mm</dd>`:''}</dl>
   ${c.fw?fwCardHTML(c):''}
   ${dsHTML(c)}
   ${c.pads.length?`<div class="sub">패드 ${c.pads.length}개${nc?` · 넷 없음 ${nc}개`:''}</div><div class="tblwrap"><table class="pins"><tbody>${rows}</tbody></table></div>`:'<div class="sub">패드 정보 없음</div><p class="desc">Pick-and-Place 위치만 있는 부품입니다.</p>'}</div>`;

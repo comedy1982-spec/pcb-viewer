@@ -10136,9 +10136,9 @@ function dsTableHTML(){
 function compCard(c){
   const rows=c.pads.map(p=>`<tr><td>${esc(p.n!=null?p.n:'')}</td><td class="pn">${esc(p.fn||'')}</td><td>${p.net?`<button class="lnk${S.hlNet===p.net?' on':''}" data-net="${esc(p.net)}">${esc(p.net)}</button>`:'<span class="cls">미연결</span>'}</td></tr>`).join('');
   const nc=c.pads.filter(p=>!p.net).length,b=c.body;
-  return`<div class="card"><div class="card-h"><span class="ref">${esc(c.ref)}</span><span class="hgap">${sideBadge(c.side)}<button class="x" data-clear="comp" aria-label="선택 해제">✕</button></span></div>
+  return`<div class="card"><div class="card-h"><span class="ref">${esc(c.ref)}</span><span class="hgap">${BD.pcbPending?"":sideBadge(c.side)}<button class="x" data-clear="comp" aria-label="선택 해제">✕</button></span></div>
   <div class="val">${esc(c.val||'값 정보 없음')}</div>${c.desc?`<p class="desc">${esc(c.desc)}</p>`:'<div style="height:8px"></div>'}
-  <dl class="kv"><dt>풋프린트</dt><dd>${esc(c.fp||'—')}</dd><dt>부품 번호</dt><dd>${esc(c.mpn||'—')}</dd><dt>위치</dt><dd>X ${fmt(c.x)} · Y ${fmt(c.y)} mm</dd><dt>회전</dt><dd>${fmt(c.rot,1)}°</dd>${b.w>0?`<dt>바디</dt><dd>${fmt(b.w,1)} × ${fmt(b.h,1)} × ${fmt(b.ht,1)} mm</dd>`:''}</dl>
+  <dl class="kv"><dt>풋프린트</dt><dd>${esc(c.fp||'—')}</dd><dt>부품 번호</dt><dd>${esc(c.mpn||'—')}</dd>${BD.pcbPending?'':`<dt>위치</dt><dd>X ${fmt(c.x)} · Y ${fmt(c.y)} mm</dd><dt>회전</dt><dd>${fmt(c.rot,1)}°</dd>`}${b.w>0?`<dt>바디</dt><dd>${fmt(b.w,1)} × ${fmt(b.h,1)} × ${fmt(b.ht,1)} mm</dd>`:''}</dl>
   ${c.fw?fwCardHTML(c):''}
   ${dsHTML(c)}
   ${c.pads.length?`<div class="sub">패드 ${c.pads.length}개${nc?` · 넷 없음 ${nc}개`:''}</div><div class="tblwrap"><table class="pins"><tbody>${rows}</tbody></table></div>`:'<div class="sub">패드 정보 없음</div><p class="desc">Pick-and-Place 위치만 있는 부품입니다.</p>'}</div>`;
@@ -11907,6 +11907,8 @@ function schApply(h,V){
   else if(h.type==='pin'){S.selRef=BD.byRef[h.s.ref]?h.s.ref:null;S.hlNet=h.g&&h.g.net||null;}
   else{S.selRef=null;S.hlNet=h.g&&h.g.net||null;}
   S.tab='sel';refresh(true);
+  // 회로 단계처럼 정보 패널이 기본으로 안 보이는 화면에서는 선택한 부품·넷의 정보 탭을 바로 연다
+  if(h&&typeof dockTab==='function'&&typeof COP!=='undefined'&&COP.shown!=='info'&&!(PANELS&&PANELS.insp&&PANELS.insp.out)){try{dockTab('info');}catch(e){}}
 }
 function schFocus(V){V=V||SV;
   const key=(S.selRef||'')+'|'+(S.hlNet||'');if(key===V.lastKey)return;V.lastKey=key;
@@ -14790,7 +14792,7 @@ function dsRender(){
    정보/시뮬레이션), step 2 the circuit-variant choice, schematic and datasheet DB (no 3D/TOP/BOTTOM), step 3+ the full board tools.
    The viewer mode is the full board viewer for files and examples. */
 var APP={mode:'home'};
-function modeTabs(){if(!APP)return['ai'];if(APP.mode==='steps'){const st=stepCur();if(st===1)return['ai'];if(st===2)return['ai','ds'];}return['ai','info','sim','ds'];}
+function modeTabs(){if(!APP)return['ai'];if(APP.mode==='steps'){const st=stepCur();if(st===1)return['ai'];if(st===2)return['ai','info','ds'];}return['ai','info','sim','ds'];}
 function modePaint(){
   if(!APP)return;const m=APP.mode,st=typeof stepCur==='function'?stepCur():0;
   const home=$('#home');if(home)home.hidden=m!=='home';
