@@ -42,7 +42,7 @@ function swMechanisms(A,lv){lv=norm(lv||level(A));const have=new Set(A&&A.safety
 function hwNeeds(A,lv){return mechanisms(A,lv).filter(m=>!m.sw&&m.present&&m.needs).map(m=>({id:m.id,label:m.label,block:m.presentLabel,needs:m.needs}));}
 function level(A){return norm(A&&A.safety&&A.safety.level||'QM');}
 function blockLevel(A,b){return b.asil?norm(b.asil):level(A);}
-function hasMech(A,m){return(A.blocks||[]).find(b=>m.kw.test(b.label+' '+(b.feats||[]).filter(f=>!/^SW:/.test(f)).join(' ')+' '+(b.impl||[]).map(i=>i.type).join(' ')))||null;}
+function hasMech(A,m){return(A.blocks||[]).find(b=>b.safety===m.id||m.kw.test(b.label+' '+(b.feats||[]).filter(f=>!/^SW:/.test(f)).join(' ')+' '+(b.impl||[]).map(i=>i.type).join(' ')))||null;}
 function mechanisms(A,lv){lv=norm(lv||level(A));return MECH.filter(m=>rank(m.min)<=rank(lv)).map(m=>{const p=hasMech(A,m);return Object.assign({},m,{present:p?p.id:null,presentLabel:p?p.label:''});});}
 /* links whose two blocks have different ASIL: freedom-from-interference boundaries */
 function boundaries(A){const B=id=>(A.blocks||[]).find(b=>b.id===id);return(A.links||[]).map(l=>{const a=B(l.a),b=B(l.b);if(!a||!b)return null;const la=blockLevel(A,a),lb=blockLevel(A,b);if(la===lb)return null;
@@ -57,7 +57,8 @@ function apply(A,HW,ids,lv){lv=norm(lv||level(A));const want=mechanisms(A,lv).fi
   // software mechanisms: recorded on the controller block and in A.safety.sw
   if(ctrl){A.safety=A.safety||{level:lv,goals:[]};A.safety.sw=A.safety.sw||[];swMechanisms(A,lv).filter(m=>!m.present&&(ids==='all'||!ids||ids.includes(m.id)||ids.includes('sw'))).forEach(m=>{A.safety.sw.push(m.id);const f='SW: '+m.label;if(!(ctrl.feats||[]).includes(f))ctrl.feats.push(f);added.push({id:m.id,label:m.label,sw:true,impl:[]});});}
   return added;}
-function archText(A){const lv=level(A);const M=mechanisms(A,lv).filter(m=>!m.sw);const SW=swMechanisms(A,lv);const N=hwNeeds(A,lv);const F=boundaries(A);const G=A.safety&&A.safety.goals||[];
+function archText(A){const sg=typeof SGARCH!=='undefined'&&SGARCH.goals(A).length?'\n'+SGARCH.verifyText(A):'';return archText0(A)+sg;}
+function archText0(A){const lv=level(A);const M=mechanisms(A,lv).filter(m=>!m.sw);const SW=swMechanisms(A,lv);const N=hwNeeds(A,lv);const F=boundaries(A);const G=A.safety&&A.safety.goals||[];
   if(lv!=='QM')return`[기능 안전] 시스템 ASIL ${lv}${G.length?` · 안전 목표: ${G.join(' / ')}`:''}\n블록 등급: ${(A.blocks||[]).map(b=>`${b.id} ${blockLevel(A,b)}`).join(', ')||'-'}\nHW 메커니즘 (${M.filter(m=>m.present).length}/${M.length}): `+M.map(m=>`${m.present?'✓':'✕'} ${m.label}${m.present?' ← '+m.presentLabel:''}`).join('; ')+`\nSW 메커니즘 (${SW.filter(m=>m.present).length}/${SW.length}, MCU 블록에 기록): `+SW.map(m=>`${m.present?'✓':'○'} ${m.label}`).join('; ')+(N.length?`\nHW 부품이 등급을 내려면 필요한 SW: `+N.map(n=>`[${n.label}] ${n.needs}`).join(' / '):'')+(F.length?`\nFFI 경계 ${F.length}: `+F.map(f=>f.msg).join('; '):'')+(M.some(m=>!m.present)||SW.some(m=>!m.present)?'\n→ safety apply all (HW 블록 + SW 항목) · safety apply sw (SW만)':'');
   return`[기능 안전] 시스템 ASIL ${lv}${G.length?` · 안전 목표: ${G.join(' / ')}`:''}\n블록 등급: ${(A.blocks||[]).map(b=>`${b.id} ${blockLevel(A,b)}`).join(', ')||'-'}\n안전 메커니즘 (${lv} 기준 ${M.length}개): `+(M.length?M.map(m=>`${m.present?'✓':m.sw?'○':'✕'} ${m.label}${m.present?' ← '+m.presentLabel:m.sw?' (SW)':' — 없음'}`).join('; '):'QM: 없음')+(F.length?`\nFFI 경계 ${F.length}: `+F.map(f=>f.msg).join('; '):'')+(M.some(m=>!m.present&&!m.sw)?'\n→ safety apply 로 빠진 메커니즘 블록을 추가':'');}
 /* ---------- circuit-level checks on the board ---------- */

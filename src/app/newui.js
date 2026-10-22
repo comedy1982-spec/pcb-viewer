@@ -16,6 +16,7 @@ const NP_HELP=[
   ['feat <ID> "<기능>" · feat <ID> --clear · rename <ID> "<이름>" · move <ID> <그룹> · del <ID>','블록 기능 줄 · 이름 · 그룹 · 삭제'],
   ['link <A> <B> "<신호/레일>" [--kind power|signal|bus] [--both] · unlink <A> <B>','블록 사이 인터페이스 (화살표와 라벨)'],
   ['impl <ID> <회로블록|none> [--파라미터 값] [--swap <기존블록>] · impl <ID> part <MPN> [--pins SI=SPI_MOSI,…]','HW 블록을 구현할 회로 라이브러리 블록 (2단계 부품 선정용). part <MPN>이면 부품 라이브러리/Claude 추정 핀 배열로 그 부품을 직접 넣음(전원·접지 자동, SPI/I²C/UART/IRQ 핀은 MCU 배정). 블록에 이미 부품·주 구현(bldc, can …)이 있으면 그것을 바꿈(--add 이면 추가). --swap 이면 기존 구현을 바꿈'],
+  ['sg [list] · sg defaults · sg add "<목표>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "<안전 상태>" --path mcu,gate · sg del SG2 · sg tag <블록> SG1 [--off] · sg variants · sg apply single|dual|decomp · sg verify','안전 목표(SG) 기반 아키텍처: 목표마다 위반 경로 블록·링크에 SG 태그, 구조 변형 3안(단일 MCU+외부 감시 · 메인+세이프티 MCU · ASIL 분해 2채널)을 DC·FTTI·부품·원가로 비교, 규칙으로 검증(감지·독립 차단 경로·FTTI·독립성·공통 원인)'],
   ['safety level <QM|A|B|C|D> [--goal "…"] · safety block <ID> <등급|auto> · safety apply [all|sw|uv wdt_ext drv_fb sbc cutoff2 …] · safety sw · safety ffi · safety','기능 안전: 시스템/블록 ASIL, 등급별 권장 HW 메커니즘 블록(전원 감시·외부 워치독·fault 리드백·SBC·이중 차단·리던던트 센서·2채널)과 SW 메커니즘(흐름 감시·BIST·범위 검사·메모리·클럭·ADC·E2E·리드백·타당성·HW 주기 테스트·파티셔닝 — MCU 블록에 기록), HW 부품마다 필요한 SW, FFI 경계, 상태'],
   ['parts [블록ID [번호|MPN]]','제품 프로필의 블록별 부품 후보(제조사별 3–5개) 보기 · 고르기. 고른 부품은 블록에 기록되고, 핀을 아는 단일 IC 블록(CAN·게이트 드라이버·HSD·센서 앰프 …)이면 회로 구현(impl … part)으로 바뀜.'],
   ['dup <블록ID|회로블록>','블록 복제 — 같은 구현·연결을 가진 두 번째 블록 (예: 모터 드라이버 2개 → dup drv)'],
@@ -29,7 +30,7 @@ const NP_HELP=[
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -77,6 +78,18 @@ async function npRun(line,by){
       if(k==='part'&&!a.add&&!(sw===true||swK)){const L=b.impl||[];const oldP=L.find(i=>i.type==='part');const oldM=oldP?null:L.find(i=>i.type!=='part'&&!/^(ldo|buck|cap|tvs|led)$/.test(i.type));const gone=oldP||oldM;
         if(gone){b.impl=L.filter(i=>i!==gone);repl=` (${gone.type==='part'?gone.params&&gone.params.mpn||'part':gone.type} → ${params.mpn}; 둘 다 두려면 --add)`;}}
       b.impl=(b.impl||[]).concat([{type:k,params}]);}NP.planManual=false;archToPlan(true);npRender();return`${b.id} ⇒ ${npImplText(b)}${repl}`;}
+    case'sg':{const A=archEnsure();if(typeof SGARCH==='undefined')throw new Error('SGARCH 없음');const sub=String(a._[0]||'list').toLowerCase();
+      if(sub==='list'||sub==='status'){return SGARCH.goalsText(A);}
+      if(sub==='verify'||sub==='check'){npRender();return SGARCH.verifyText(A);}
+      if(sub==='variants'||sub==='propose'){return SGARCH.proposeText(A,HWARCH);}
+      if(sub==='defaults'){npPush();const key=String(a._[1]||A.product||'').toLowerCase();const D=SGARCH.defaults(key);if(!D.length)throw new Error('기본 안전 목표가 있는 제품: '+Object.keys(SGARCH.GOALS).join(' · ')+' (sg defaults eps)');SGARCH.setGoals(A,D);NP.planManual=false;archToPlan(true);npRender();return`${key.toUpperCase()} 기본 안전 목표 ${D.length}개\n`+SGARCH.goalsText(A);}
+      if(sub==='add'){npPush();const text=a._.slice(1).join(' ');if(!text)throw new Error('sg add "<목표>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "…" --path mcu,gate');
+        const g={text,asil:String(a.asil||SAFETY.level(A)||'QM').toUpperCase(),ftti:+a.ftti||100,kind:a.kind&&SGARCH.KINDS[a.kind]?a.kind:/토크|구동|출력|actuat|unintend|의도/i.test(text)?'actuation':/상실|loss|끊/i.test(text)?'loss':/과열|과전류|화재|thermal|fire/i.test(text)?'thermal':/절연|고전압|hv|isolat/i.test(text)?'hv':/보고|값|soc|data|메시지/i.test(text)?'data':'actuation',state:a.state&&a.state!==true?String(a.state):'',path:a.path&&a.path!==true?String(a.path).split(/[,\s]+/).filter(Boolean):A.blocks.filter(b=>!b.ext&&(b.group==='ctrl'||b.group==='io')).map(b=>b.id)};
+        SGARCH.addGoal(A,g);NP.planManual=false;archToPlan(true);npRender();return SGARCH.goalsText(A);}
+      if(sub==='del'||sub==='remove'){npPush();SGARCH.removeGoal(A,String(a._[1]||'').toUpperCase());npRender();return SGARCH.goalsText(A);}
+      if(sub==='tag'){npPush();const b=HWARCH.find(A,a._[1]);const ids=a._.slice(2).map(x=>String(x).toUpperCase());if(!ids.length)throw new Error('sg tag <블록> SG1 [SG2…] [--off]');ids.forEach(id=>SGARCH.tagBlock(A,b.id,id,!a.off));npRender();return`${b.id}: SG ${(b.sg||[]).join(', ')||'(없음)'}`;}
+      if(sub==='apply'){npPush();const key=String(a._[1]||'').toLowerCase();if(!SGARCH.VARIANTS.some(v=>v.key===key))throw new Error('sg apply single|dual|decomp');const added=SGARCH.applyVariant(A,HWARCH,key);NP.planManual=false;archToPlan(true);npRender();return`구조 ${SGARCH.VARIANTS.find(v=>v.key===key).label} 적용 — 추가 블록 ${added.length}개: ${added.map(b=>b.label).join(', ')||'없음'}\n`+SGARCH.verifyText(A);}
+      throw new Error('sg [list|defaults [eps|bms|bcm|inv]|add "…" --asil --ftti --kind --state --path|del SGn|tag <블록> SGn [--off]|variants|apply single|dual|decomp|verify]');}
     case'safety':{const A=archEnsure();A.safety=A.safety||{level:'QM',goals:[]};const sub=String(a._[0]||'').toLowerCase();
       if(!sub||sub==='status'||sub==='check'){npRender();return SAFETY.archText(A);}
       if(sub==='level'){npPush();const lv=SAFETY.parseLevel('ASIL '+String(a._[1]||''))||SAFETY.parseLevel(String(a._[1]||''));if(!lv)throw new Error('safety level <QM|A|B|C|D>');A.safety.level=lv;if(a.goal&&a.goal!==true)A.safety.goals=[String(a.goal)];npRender();return`시스템 ASIL ${lv}${A.safety.goals.length?' · 안전 목표: '+A.safety.goals.join(' / '):''}\n`+SAFETY.archText(A);}
@@ -330,6 +343,7 @@ async function npAnalyze(req,inner){
       npSay('ok',`${prof.name} 표준 구성으로 HW 블록 ${NP.arch.blocks.length}개 · 인터페이스 ${NP.arch.links.length}개를 만들었습니다.${prodRes.log.length?'\n반영: '+prodRes.log.join(' · '):''}`);
       NP.prof=prof;await npPickParts(prof);
       const bound=await npBindParts();if(bound.length)npSay('ok','블록에 적힌 부품 번호를 회로 구현으로 연결: '+bound.join(', '));
+      await npSafetyGoals(prof.key);
     }else{
     let qs=null;if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample)qs=await npAskAI(req);}
     if(!qs)qs=REQ_Q.filter(f=>!f.re.test(req)&&!NP.answers[f.key]).map(f=>({key:f.key,label:f.label,q:f.q,why:f.why,opts:f.opts,multi:!!f.multi}));
@@ -342,10 +356,29 @@ async function npAnalyze(req,inner){
     if(AIM.mode==='ai'&&CLI.sample){await npAI(`${name?'프로젝트 이름: '+name+'. ':''}요구사항: ${full}. 이 요구사항으로 HW 블록 다이어그램(부품 미정)을 ${NP.arch.blocks.length?'다시 ':''}만들어줘.`);archToPlan();npRender();const bound=await npBindParts();if(bound.length)npSay('ok','블록에 적힌 부품 번호를 회로 구현으로 연결: '+bound.join(', '));}
     else{const o=await npRun('arch '+full);npSay('ok',o);}
     }
-    try{const lv=typeof SAFETY!=='undefined'?SAFETY.parseLevel(full):null;if(lv&&NP.arch&&NP.arch.blocks.length&&(!NP.arch.safety||NP.arch.safety.level==='QM')){const o=await npRun(`safety level ${lv}`);npSay('ok',o);if(lv!=='QM'){const M=SAFETY.mechanisms(NP.arch,lv).filter(m=>!m.present&&!m.sw);const SW=SAFETY.swMechanisms(NP.arch,lv).filter(m=>!m.present);if(M.length||SW.length){const a=await copAsk({q:`ASIL ${lv} 권장 안전 메커니즘 — HW 블록 ${M.length}개, SW 항목 ${SW.length}개가 아직 없습니다. 추가할까요?`,why:`HW: ${M.map(m=>m.label).join(' · ')||'없음'}\nSW(MCU 블록에 기록): ${SW.map(m=>m.label).join(' · ')||'없음'}`,opts:['HW + SW 모두 추가','HW 블록만','SW 항목만','나중에']});if(a&&/모두/.test(a)){npSay('ok',await npRun('safety apply all'));}else if(a==='HW 블록만'){npSay('ok',await npRun('safety apply '+M.map(m=>m.id).join(' ')));}else if(a==='SW 항목만'){npSay('ok',await npRun('safety apply sw'));}}}}}catch(e){console.warn(e);}
+    try{const lv=typeof SAFETY!=='undefined'?SAFETY.parseLevel(full):null;if(lv&&NP.arch&&NP.arch.blocks.length&&(!NP.arch.safety||NP.arch.safety.level==='QM')){const o=await npRun(`safety level ${lv}`);npSay('ok',o);if(lv!=='QM'){const M=SAFETY.mechanisms(NP.arch,lv).filter(m=>!m.present&&!m.sw);const SW=SAFETY.swMechanisms(NP.arch,lv).filter(m=>!m.present);if((M.length||SW.length)&&typeof SGARCH==='undefined'){const a=await copAsk({q:`ASIL ${lv} 권장 안전 메커니즘 — HW 블록 ${M.length}개, SW 항목 ${SW.length}개가 아직 없습니다. 추가할까요?`,why:`HW: ${M.map(m=>m.label).join(' · ')||'없음'}\nSW(MCU 블록에 기록): ${SW.map(m=>m.label).join(' · ')||'없음'}`,opts:['HW + SW 모두 추가','HW 블록만','SW 항목만','나중에']});if(a&&/모두/.test(a)){npSay('ok',await npRun('safety apply all'));}else if(a==='HW 블록만'){npSay('ok',await npRun('safety apply '+M.map(m=>m.id).join(' ')));}else if(a==='SW 항목만'){npSay('ok',await npRun('safety apply sw'));}}}}}catch(e){console.warn(e);}
+    if(!prof&&NP.arch&&NP.arch.blocks.length&&typeof SAFETY!=='undefined'&&SAFETY.level(NP.arch)!=='QM')await npSafetyGoals(null);
     copSay('out','다이어그램을 확인하고 블록·기능·인터페이스를 고친 뒤 [다음: 회로 생성]을 누르세요. 부품과 PCB는 다음 단계에서 정합니다.');
   }catch(e){console.error(e);npSay('err',e.message||String(e));}
   npBusy(false);}
+/* safety goals → structure variants → deterministic verification (SGARCH). Template products bring default goals; otherwise
+   the goals are derived from the request's ASIL and what the ECU drives. The user trims the goal list and picks a variant. */
+async function npSafetyGoals(key){if(typeof SGARCH==='undefined'||!NP.arch)return;const A=NP.arch;if(SGARCH.goals(A).length)return;
+  let D=key?SGARCH.defaults(key):[];
+  if(!D.length){const lv=SAFETY.level(A);if(lv==='QM')return;const ids=A.blocks.filter(b=>!b.ext&&(b.group==='ctrl'||b.group==='io')).map(b=>b.id);const act=A.blocks.some(b=>/driv|드라이버|bridge|브리지|motor|모터|switch|스위치|relay|릴레이|inverter|인버터/i.test(b.label+' '+b.feats.join(' ')));
+    D=[act?{id:'SG1',text:'의도하지 않은 출력(토크·구동) 방지',asil:lv,ftti:50,kind:'actuation',state:'출력 차단 (세이프 스테이트)',path:ids}:{id:'SG1',text:'잘못된 값·명령 출력 방지',asil:lv,ftti:100,kind:'data',state:'타당성 실패 시 안전값',path:ids},
+       {id:'SG2',text:'기능 상실 시 경고 · 안전 상태 진입',asil:SAFETY.LEVELS[Math.max(0,SAFETY.rank(lv)-1)],ftti:200,kind:'loss',state:'경고 + 저감 모드',path:ids},
+       {id:'SG3',text:'과전류·과열에 의한 화재 방지',asil:'B',ftti:500,kind:'thermal',state:'전류 제한 → 차단',path:ids}];}
+  const a=await copAsk({q:'어떤 안전 목표(Safety Goal)로 설계할까요? 선택한 목표의 위반 경로 블록에 SG 태그가 붙고, 구조 변형을 이 목표로 비교·검증합니다.',why:D.map(g=>`${g.id} [ASIL ${g.asil} · FTTI ${g.ftti} ms] ${g.text} → ${g.state}`).join('\n')+'\n(목표를 더하려면 나중에 sg add "…" --asil D --ftti 50)',opts:D.map(g=>`${g.id} ${g.text}`).concat(['모두','안전 목표 없이 진행']),multi:true});
+  if(NP.stopReq)return;if(a==null||/없이 진행/.test(a))return;
+  const sel=/모두/.test(a)?D:D.filter(g=>a.split(/,\s*/).some(x=>x.startsWith(g.id)));if(!sel.length)return;
+  npPush();SGARCH.setGoals(A,sel);npRender();npSay('ok','안전 목표:\n'+SGARCH.goalsText(A));
+  const P=SGARCH.propose(A,HWARCH);if(!P.length)return;
+  npSay('ok',SGARCH.proposeText(A,HWARCH));
+  const v=await copAsk({q:'어떤 구조로 진행할까요? (★추천 = 검증 통과 · DC · FTTI · 원가 · 복잡도 점수 1위)',why:P.map((p,i)=>`${i+1}. ${p.label}: 블록 +${p.blocks} · ~$${p.cost} · DC ${p.dc}% · 검증 ${p.verify.ok?'✓':'✗ '+p.verify.errs}`).join('\n'),opts:P.map((p,i)=>`${p.label}${i===0?' ★':''}`).concat(['현재 구조 유지 (검증만)'])});
+  if(NP.stopReq)return;
+  if(v&&!/유지/.test(v)){const pk=P.find(p=>v.startsWith(p.label));if(pk){npSay('ok',await npRun('sg apply '+pk.key));return;}}
+  npSay('ok',SGARCH.verifyText(A));}
 /* Claude plans with the same commands */
 const NP_SYS=`You are a hardware system architect working inside a design tool. The user writes in Korean. Step 1 is a HW ARCHITECTURE BLOCK DIAGRAM: functional blocks without part numbers (e.g. "Battery Input (12 V)", "PMIC / LDO / Buck", "CAN-FD Transceiver", "Main MCU", "H-Bridge / Gate Driver IC", "Current Sensing & Temp. Sensor", "Debug / Calib. Interface", "External Connector") grouped in bands power · comm · ctrl · io · ext, with labelled interfaces (rails such as VCC_MCU 3.3 V, buses such as CAN_H / CAN_L, control and feedback signals). Build it with arch / block / feat / link commands through the run_np tool, one command at a time. Use impl only to say which library circuit block will realise a block in step 2; never put part numbers in labels or features unless the user names them.
 When you choose a specific part number for a block (e.g. CC2420 for an RF block, TJA1051 for CAN, BME280 for a sensor), bind it with: impl <ID> part <MPN> [--pins PIN=NET,…] — only then does the part appear in the parts view and in the step-2 circuit; a part number written only in the block label/feats is just text. impl <ID> part <MPN> REPLACES the block's existing part or main library implementation (e.g. drv: bldc/DRV8313 → A4911) — do not remove first; add --add only to keep both. remove <MPN> deletes a part by number. Library blocks (ldo, buck, can, mcu …) stay the first choice when they fit.
@@ -363,7 +396,7 @@ async function npAI(req){
   const cmds=NP_HELP.filter(x=>!/^ai /.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
   const blocks=Object.entries(NEWPROJ.LIB).map(([k,v])=>`- ${k}: ${v.label} — ${v.desc}; params ${Object.entries(v.params).map(([p,d])=>`${p}=${d.def} (${d.desc})`).join(', ')||'none'}`).join('\n');
   const prompt=NP_SYS.replace('${CMDS}',cmds).replace('${BLOCKS}',blocks).replace('${MCUS}',Object.entries(NEWPROJ.MCUS).map(([k,v])=>k+' = '+v.label).join('; '))+
-    `\n\n현재 HW 블록 다이어그램:\n${NP.arch?HWARCH.text(NP.arch):'(비어 있음)'}\n\n현재 회로 계획 (2단계):\n${NP.plan?NEWPROJ.summary(NP.plan).text.split('\n').slice(0,14).join('\n'):'(비어 있음)'}\n\n사용자 요청: ${req}`;
+    (typeof SGARCH!=='undefined'?'\n\n'+SGARCH.aiRules(NP.arch||{}):'')+`\n\n현재 HW 블록 다이어그램:\n${NP.arch?HWARCH.text(NP.arch):'(비어 있음)'}\n\n현재 회로 계획 (2단계):\n${NP.plan?NEWPROJ.summary(NP.plan).text.split('\n').slice(0,14).join('\n'):'(비어 있음)'}\n\n사용자 요청: ${req}`;
   const ok=await aiAgent({prompt,ro:c=>['help','?','status','blocks','mcus','view','diagram'].includes((cliTok(c)[0]||'').toLowerCase()),roList:'status, blocks, mcus, diagram',toolName:'run_np',toolDesc:'Run one new-design console command (add/set/remove/mcu/board/strategy/plan/generate) and return its text output.',example:'"add pwr_in --vin 12" or "plan"',
     run:c=>npRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!NP_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='generate'&&/--pcb/.test(c)&&!/(보드|PCB|기판|배치|배선)[^.]{0,12}(생성|만들|그려|까지|시작|진행)/i.test(req))return'not allowed: generate --pcb (the user did not ask to start the PCB yet; record PCB wishes with board commands)';if(f==='generate'&&!/(회로|보드|PCB|기판)[^.]{0,10}(생성|만들|그려|까지)|generate/i.test(req))return'not allowed: generate (the user did not ask to create the board yet)';return'';},
     say:npSay,set:npSet,drop:e=>{copDrop(e);NP.log=NP.log.filter(x=>x!==e);},setAbort:c=>{NP.abort=c;},stopped:()=>NP.stopReq,max:16});
@@ -420,7 +453,7 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
       ${editable?`<label class="fld"><span>이름</span><input data-ar="label" value="${esc(b.label)}"></label>
       <label class="fld"><span>그룹</span><select data-ar="group">${HWARCH.GROUPS.map(g=>`<option value="${g[0]}"${g[0]===b.group?' selected':''}>${esc(g[1])} · ${esc(g[2])}</option>`).join('')}</select></label>
       <label class="fld"><span>기능 (줄마다 하나)</span><textarea data-ar="feats" rows="3">${esc(b.feats.join('\n'))}</textarea></label>
-      <label class="fld"><span>ASIL (시스템 ${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</span><select data-ar="asil"><option value="auto"${b.asil?'':' selected'}>상속 (${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</option>${['QM','A','B','C','D'].map(l=>`<option value="${l}"${b.asil===l?' selected':''}>ASIL ${l}</option>`).join('')}</select></label>`:`<div class="np-bd">${esc(b.feats.join(' · '))}${b.asil?' · ASIL '+esc(b.asil):''}</div>`}
+      <label class="fld"><span>ASIL (시스템 ${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</span><select data-ar="asil"><option value="auto"${b.asil?'':' selected'}>상속 (${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</option>${['QM','A','B','C','D'].map(l=>`<option value="${l}"${b.asil===l?' selected':''}>ASIL ${l}</option>`).join('')}</select></label>${typeof SGARCH!=='undefined'&&SGARCH.goals(A).length?`<div class="np-sg">${SGARCH.goals(A).map(g=>`<label class="chkl" title="${esc(g.text)}"><input type="checkbox" data-sg="${g.id}"${(b.sg||[]).includes(g.id)?' checked':''}> ${g.id} <span class="ms">ASIL ${g.asil}</span></label>`).join('')}</div>`:''}`:`<div class="np-bd">${esc(b.feats.join(' · '))}${b.asil?' · ASIL '+esc(b.asil):''}${b.sg&&b.sg.length?' · '+esc(b.sg.join(' · ')):''}</div>`}
       <ul class="sys-io">${io.map(l=>{const o=N(l.a===b.id?l.b:l.a);return`<li><span class="k-${l.kind==='bus'?'ext':l.kind}">${l.a===b.id?(l.both?'↔':'→'):(l.both?'↔':'←')}</span> ${esc(o?o.label:'')} <span class="mono">${esc(l.label)}</span></li>`;}).join('')}</ul>
       ${editable&&!b.ext?`<div class="np-bd" style="margin-top:6px">회로 구현 (2단계): <b>${(b.impl||[]).map(i=>esc(NEWPROJ.LIB[i.type]?NEWPROJ.LIB[i.type].label:i.type)).join(' + ')||'없음'}</b></div>
       <div class="np-add"><select data-ar="impl"><option value="">회로 블록 지정…</option>${Object.entries(NEWPROJ.LIB).map(([k,v])=>`<option value="${k}">${esc(v.label)}</option>`).join('')}<option value="none">구현 지우기</option></select></div>`:''}
@@ -428,6 +461,7 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
     box.querySelector('[data-ar="label"]')?.addEventListener('change',e=>npExec(`rename ${b.id} "${e.target.value.replace(/"/g,'')}"`));
     box.querySelector('[data-ar="group"]')?.addEventListener('change',e=>npExec(`move ${b.id} ${e.target.value}`));
     box.querySelector('[data-ar="asil"]')?.addEventListener('change',e=>npExec(`safety block ${b.id} ${e.target.value}`));
+    box.querySelectorAll('[data-sg]').forEach(el=>el.addEventListener('change',()=>npExec(`sg tag ${b.id} ${el.dataset.sg}${el.checked?'':' --off'}`)));
     box.querySelector('[data-ar="feats"]')?.addEventListener('change',e=>{npPush();b.feats=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);npRender();});
     box.querySelector('[data-ar="impl"]')?.addEventListener('change',e=>{if(e.target.value)npExec(`impl ${b.id} ${e.target.value}`);});
     return;}

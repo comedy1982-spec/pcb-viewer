@@ -790,6 +790,7 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .mconc .mcc.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .mconc-d{margin:0 0 6px;line-height:1.35}
 
+.np-sg{display:flex;flex-wrap:wrap;gap:4px 10px;margin:4px 0 2px}.np-sg .chkl{font-size:11.5px}
 </style>
 
 <style>
@@ -7842,7 +7843,7 @@ function svg(A,opts){opts=opts||{};const sel=opts.sel||null;const L=layout(A);co
   A.blocks.forEach(b=>{const on=sel===b.id,dim=sel&&!on&&!A.links.some(l=>(l.a===sel&&l.b===b.id)||(l.b===sel&&l.a===b.id));
     o.push(`<g class="sd-n" data-n="${xe(b.id)}" tabindex="0" role="button" aria-label="${xe(b.label)}" opacity="${dim?0.4:1}" style="cursor:pointer">`);
     const lv=lvOf(b),lc=ASIL_HUE[lv];o.push(`<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${b.ext?16:6}" fill="var(--raised,#fff)" stroke="${on?'#3d7fd9':lc||'currentColor'}" stroke-opacity="${on?1:lc?0.95:0.55}" stroke-width="${on?2.2:lc?2:1.2}"${b.ext?' stroke-dasharray="5 3"':''}/>`);
-    if(lc){o.push(`<rect x="${b.x+b.w-46}" y="${b.y-8}" width="42" height="15" rx="7" fill="${lc}"/><text x="${b.x+b.w-25}" y="${b.y+3.5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">ASIL ${lv}</text>`);}if(b.safety)o.push(`<text x="${b.x+6}" y="${b.y+b.h-5}" font-size="9" fill="${HUE.safe}">안전 메커니즘</text>`);
+    if(lc){o.push(`<rect x="${b.x+b.w-46}" y="${b.y-8}" width="42" height="15" rx="7" fill="${lc}"/><text x="${b.x+b.w-25}" y="${b.y+3.5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">ASIL ${lv}</text>`);}if(b.safety)o.push(`<text x="${b.x+6}" y="${b.y+b.h-5}" font-size="9" fill="${HUE.safe}">안전 메커니즘</text>`);if(b.sg&&b.sg.length)o.push(`<text x="${b.x+b.w-6}" y="${b.y+b.h-5}" text-anchor="end" font-size="9" font-weight="700" fill="${HUE.safe}" opacity="0.85">${xe(b.sg.join(' · '))}</text>`);
     o.push(`<text x="${b.x+b.w/2}" y="${b.y+21}" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">${xe(b.label.length>30?b.label.slice(0,29)+'…':b.label)}</text>`);
     {const sw=b.feats.filter(f=>/^SW:/.test(f)),hw=b.feats.filter(f=>!/^SW:/.test(f));const show=hw.slice(0,sw.length?3:4);show.forEach((f,i)=>o.push(`<text x="${b.x+12}" y="${b.y+40+i*LH}" font-size="10.5" fill="currentColor" opacity="0.72">· ${xe(f.length>34?f.slice(0,33)+'…':f)}</text>`));if(sw.length)o.push(`<text x="${b.x+12}" y="${b.y+40+show.length*LH}" font-size="10.5" fill="${HUE.safe}" opacity="0.9">⚑ SW 안전 메커니즘 ${sw.length}개</text>`);}
     if(!(b.impl||[]).length&&!b.ext)o.push(`<circle cx="${b.x+b.w-9}" cy="${b.y+9}" r="3.2" fill="none" stroke="currentColor" stroke-opacity="0.5"><title>회로 구현 블록 없음</title></circle>`);
@@ -7853,7 +7854,7 @@ function svg(A,opts){opts=opts||{};const sel=opts.sel||null;const L=layout(A);co
     <rect x="${PAD+372}" y="${ly-7}" width="22" height="13" rx="6" fill="none" stroke="currentColor" stroke-dasharray="5 3"/><text x="${PAD+400}" y="${ly+3.5}">보드 밖</text>${sysLv!=='QM'?`<line x1="${PAD+450}" y1="${ly}" x2="${PAD+474}" y2="${ly}" stroke="${HUE.safe}" stroke-width="1.5"/><text x="${PAD+480}" y="${ly+3.5}">세이프 스테이트 · FFI 경계</text><text x="${L.W-PAD}" y="${ly+3.5}" text-anchor="end" font-weight="700">시스템 ASIL ${sysLv}</text>`:''}</g>`);
   o.push('</svg>');return o.join('');}
 function text(A){const B=id=>A.blocks.find(b=>b.id===id);const L=[`HW 아키텍처 · ${A.name} · 블록 ${A.blocks.length} · 인터페이스 ${A.links.length}`];
-  GROUPS.forEach(g=>{const bs=A.blocks.filter(b=>b.group===g[0]);if(!bs.length)return;L.push(`[${g[1]} · ${g[2]}]`);bs.forEach(b=>L.push(`  ${b.id}: ${b.label}${b.asil?' [ASIL '+b.asil+']':''}${b.ext?' (보드 밖)':''}${b.feats.length?' — '+b.feats.join(' · '):''}${(b.impl||[]).length?`  ⇒ 회로: ${b.impl.map(i=>i.type+(i.params&&Object.keys(i.params).length?`(${Object.entries(i.params).map(([k,v])=>k+'='+v).join(',')})`:'')).join(' + ')}`:b.ext?'':'  ⇒ 회로: (없음)'}`));});
+  GROUPS.forEach(g=>{const bs=A.blocks.filter(b=>b.group===g[0]);if(!bs.length)return;L.push(`[${g[1]} · ${g[2]}]`);bs.forEach(b=>L.push(`  ${b.id}: ${b.label}${b.sg&&b.sg.length?' {'+b.sg.join(',')+'}':''}${b.asil?' [ASIL '+b.asil+']':''}${b.ext?' (보드 밖)':''}${b.feats.length?' — '+b.feats.join(' · '):''}${(b.impl||[]).length?`  ⇒ 회로: ${b.impl.map(i=>i.type+(i.params&&Object.keys(i.params).length?`(${Object.entries(i.params).map(([k,v])=>k+'='+v).join(',')})`:'')).join(' + ')}`:b.ext?'':'  ⇒ 회로: (없음)'}`));});
   L.push('인터페이스:');A.links.forEach(l=>{const a=B(l.a),b=B(l.b);L.push(`  ${l.a} ${l.both?'↔':'→'} ${l.b} : ${l.label} [${{power:'전원',signal:'신호',bus:'버스',safe:'세이프 스테이트'}[l.kind]}]${a&&b?'':' (끊김)'}`);});
   if(typeof SAFETY!=='undefined'&&SAFETY.level(A)!=='QM')L.push(SAFETY.archText(A));
   return L.join('\n');}
@@ -8474,7 +8475,7 @@ function swMechanisms(A,lv){lv=norm(lv||level(A));const have=new Set(A&&A.safety
 function hwNeeds(A,lv){return mechanisms(A,lv).filter(m=>!m.sw&&m.present&&m.needs).map(m=>({id:m.id,label:m.label,block:m.presentLabel,needs:m.needs}));}
 function level(A){return norm(A&&A.safety&&A.safety.level||'QM');}
 function blockLevel(A,b){return b.asil?norm(b.asil):level(A);}
-function hasMech(A,m){return(A.blocks||[]).find(b=>m.kw.test(b.label+' '+(b.feats||[]).filter(f=>!/^SW:/.test(f)).join(' ')+' '+(b.impl||[]).map(i=>i.type).join(' ')))||null;}
+function hasMech(A,m){return(A.blocks||[]).find(b=>b.safety===m.id||m.kw.test(b.label+' '+(b.feats||[]).filter(f=>!/^SW:/.test(f)).join(' ')+' '+(b.impl||[]).map(i=>i.type).join(' ')))||null;}
 function mechanisms(A,lv){lv=norm(lv||level(A));return MECH.filter(m=>rank(m.min)<=rank(lv)).map(m=>{const p=hasMech(A,m);return Object.assign({},m,{present:p?p.id:null,presentLabel:p?p.label:''});});}
 /* links whose two blocks have different ASIL: freedom-from-interference boundaries */
 function boundaries(A){const B=id=>(A.blocks||[]).find(b=>b.id===id);return(A.links||[]).map(l=>{const a=B(l.a),b=B(l.b);if(!a||!b)return null;const la=blockLevel(A,a),lb=blockLevel(A,b);if(la===lb)return null;
@@ -8489,7 +8490,8 @@ function apply(A,HW,ids,lv){lv=norm(lv||level(A));const want=mechanisms(A,lv).fi
   // software mechanisms: recorded on the controller block and in A.safety.sw
   if(ctrl){A.safety=A.safety||{level:lv,goals:[]};A.safety.sw=A.safety.sw||[];swMechanisms(A,lv).filter(m=>!m.present&&(ids==='all'||!ids||ids.includes(m.id)||ids.includes('sw'))).forEach(m=>{A.safety.sw.push(m.id);const f='SW: '+m.label;if(!(ctrl.feats||[]).includes(f))ctrl.feats.push(f);added.push({id:m.id,label:m.label,sw:true,impl:[]});});}
   return added;}
-function archText(A){const lv=level(A);const M=mechanisms(A,lv).filter(m=>!m.sw);const SW=swMechanisms(A,lv);const N=hwNeeds(A,lv);const F=boundaries(A);const G=A.safety&&A.safety.goals||[];
+function archText(A){const sg=typeof SGARCH!=='undefined'&&SGARCH.goals(A).length?'\n'+SGARCH.verifyText(A):'';return archText0(A)+sg;}
+function archText0(A){const lv=level(A);const M=mechanisms(A,lv).filter(m=>!m.sw);const SW=swMechanisms(A,lv);const N=hwNeeds(A,lv);const F=boundaries(A);const G=A.safety&&A.safety.goals||[];
   if(lv!=='QM')return`[기능 안전] 시스템 ASIL ${lv}${G.length?` · 안전 목표: ${G.join(' / ')}`:''}\n블록 등급: ${(A.blocks||[]).map(b=>`${b.id} ${blockLevel(A,b)}`).join(', ')||'-'}\nHW 메커니즘 (${M.filter(m=>m.present).length}/${M.length}): `+M.map(m=>`${m.present?'✓':'✕'} ${m.label}${m.present?' ← '+m.presentLabel:''}`).join('; ')+`\nSW 메커니즘 (${SW.filter(m=>m.present).length}/${SW.length}, MCU 블록에 기록): `+SW.map(m=>`${m.present?'✓':'○'} ${m.label}`).join('; ')+(N.length?`\nHW 부품이 등급을 내려면 필요한 SW: `+N.map(n=>`[${n.label}] ${n.needs}`).join(' / '):'')+(F.length?`\nFFI 경계 ${F.length}: `+F.map(f=>f.msg).join('; '):'')+(M.some(m=>!m.present)||SW.some(m=>!m.present)?'\n→ safety apply all (HW 블록 + SW 항목) · safety apply sw (SW만)':'');
   return`[기능 안전] 시스템 ASIL ${lv}${G.length?` · 안전 목표: ${G.join(' / ')}`:''}\n블록 등급: ${(A.blocks||[]).map(b=>`${b.id} ${blockLevel(A,b)}`).join(', ')||'-'}\n안전 메커니즘 (${lv} 기준 ${M.length}개): `+(M.length?M.map(m=>`${m.present?'✓':m.sw?'○':'✕'} ${m.label}${m.present?' ← '+m.presentLabel:m.sw?' (SW)':' — 없음'}`).join('; '):'QM: 없음')+(F.length?`\nFFI 경계 ${F.length}: `+F.map(f=>f.msg).join('; '):'')+(M.some(m=>!m.present&&!m.sw)?'\n→ safety apply 로 빠진 메커니즘 블록을 추가':'');}
 /* ---------- circuit-level checks on the board ---------- */
@@ -8795,6 +8797,132 @@ function fromAi(o){if(!o||typeof o!=='object'||!o.product||!Array.isArray(o.bloc
     p.questions.push({key:S(q.key)||'q'+(p.questions.length+1),block:S(q.block),q:S(q.q),why:S(q.why),multi:!!q.multi,options:opts});}
   return p;}
 return{T,PARTS,detect,apply,summary,aiPrompt,fromAi,candidates,normPart,GROUPS,IMPLS};
+})();
+
+
+</script>
+<script>
+/* ---------- safety-goal driven architecture (ISO 26262-3/-4 on the HW block diagram) ----------
+   A safety goal (SG) says what must not happen, with its ASIL, FTTI and safe state. Blocks and links carry sg tags
+   (the violation path). From the goals SGARCH proposes 2–3 structure variants (single MCU + external monitoring,
+   main + safety MCU with an independent shutdown path, ASIL decomposition into two channels), scores them
+   (diagnostic coverage per goal, FTTI, extra blocks, cost, complexity) and verifies any architecture — AI-drawn or
+   not — with deterministic rules: every SG needs a detection block, an independent reaction path to the safe state,
+   detection + reaction inside the FTTI, no single block playing both roles, and no common-cause supply/clock. */
+const SGARCH=(()=>{
+const SA=()=>typeof SAFETY!=='undefined'?SAFETY:null;
+const rank=l=>['QM','A','B','C','D'].indexOf(String(l||'QM').toUpperCase());
+/* kinds of violation: what a mechanism can detect / what a goal is about */
+const KINDS={actuation:'의도하지 않은 출력(토크·구동·스위칭)',loss:'기능 상실(전원·통신·제어)',thermal:'과전류·과열·화재',hv:'고전압 노출·절연',data:'잘못된 값 보고(센서·SOC·메시지)'};
+/* default safety goals per product template */
+const GOALS={
+  eps:[{id:'SG1',text:'의도하지 않은 조향 토크 / 자가 조향 방지',asil:'D',ftti:50,kind:'actuation',state:'토크 0 · 모터 상 차단 (수동 조향 유지)',path:['mcu','gate','inv','pcut','tsens','asens','isense','sbc']},
+       {id:'SG2',text:'조향 보조 상실 시 경고 · 점진적 저감',asil:'C',ftti:200,kind:'loss',state:'저감 모드 + CAN 경고 · 수동 조향',path:['pin','sbc','mcu','canx','canbus']},
+       {id:'SG3',text:'과전류·과열에 의한 손상 · 화재 방지',asil:'B',ftti:500,kind:'thermal',state:'전류 제한 → 구동 정지',path:['inv','isense','gate','pcut']}],
+  bms:[{id:'SG1',text:'셀 과충전 방지 (열폭주)',asil:'D',ftti:100,kind:'actuation',state:'메인 컨택터 개방 · 충전 정지',path:['afe','mcu','ctr','iso','sbc']},
+       {id:'SG2',text:'과방전 · 과열 셀 운전 방지',asil:'C',ftti:200,kind:'thermal',state:'부하 제한 → 컨택터 개방',path:['afe','mcu','ctr','ntc']},
+       {id:'SG3',text:'절연 고장 시 고전압 노출 방지',asil:'C',ftti:1000,kind:'hv',state:'컨택터 개방 · HV 인터록 경고',path:['iso','mcu','ctr']},
+       {id:'SG4',text:'잘못된 SOC·전류 보고 방지',asil:'B',ftti:500,kind:'data',state:'타당성 플래그 · 보수적 SOC',path:['isense','afe','mcu','canx']}],
+  bcm:[{id:'SG1',text:'외부 조명 의도하지 않은 소등 방지',asil:'B',ftti:200,kind:'loss',state:'램프 ON 유지 (림프홈)',path:['hsd','mcu','pin','sbc']},
+       {id:'SG2',text:'와이퍼 · 윈도우 의도하지 않은 동작 방지',asil:'A',ftti:300,kind:'actuation',state:'출력 OFF',path:['lsd','hsd','mcu']},
+       {id:'SG3',text:'출력 단락·과전류에 의한 화재 방지',asil:'B',ftti:500,kind:'thermal',state:'채널 차단 · 재시도 제한',path:['hsd','lsd','pin']}],
+  inv:[{id:'SG1',text:'의도하지 않은 토크 · 역토크 방지',asil:'D',ftti:20,kind:'actuation',state:'ASC(능동 단락) 또는 게이트 전면 차단',path:['mcu','gdrv','pm','rdc','isense','sbc']},
+       {id:'SG2',text:'HV 활성 상태 노출 방지 (인터록 · 방전)',asil:'C',ftti:1000,kind:'hv',state:'능동 방전 · 컨택터 개방 요청',path:['hvm','mcu','gdrv','pin']},
+       {id:'SG3',text:'과전류·과열에 의한 파워 모듈 손상 방지',asil:'B',ftti:100,kind:'thermal',state:'전류 제한 → 차단',path:['pm','isense','gdrv']}]};
+/* mechanism → kinds it detects, detection latency (ms), reaction latency (ms), which blocks it watches, cost ($, parts) */
+const MECHX={uv:{kinds:['loss','actuation'],det:1,act:1,cost:0.4,n:1,role:'detect'},
+  wdt_ext:{kinds:['actuation','loss'],det:20,act:1,cost:0.6,n:1,role:'detect'},
+  conn_diag:{kinds:['data','loss'],det:5,act:10,cost:0.3,n:1,role:'detect'},
+  drv_fb:{kinds:['actuation','thermal'],det:1,act:1,cost:0.8,n:1,role:'detect'},
+  sbc:{kinds:['actuation','loss'],det:10,act:1,cost:3.5,n:1,role:'both'},
+  monitor:{kinds:['actuation','thermal','hv','data'],det:5,act:1,cost:1.2,n:2,role:'detect'},
+  sensor_red:{kinds:['data','actuation'],det:2,act:10,cost:4,n:2,role:'detect'},
+  cutoff2:{kinds:['actuation','thermal','hv'],det:0,act:1,cost:2,n:3,role:'react'},
+  decomp:{kinds:['actuation','loss','data'],det:2,act:5,cost:25,n:8,role:'both'},
+  lockstep:{kinds:['actuation','loss','data'],det:1,act:5,cost:4.5,n:2,role:'both'}};
+/* structure variants */
+const VARIANTS=[
+  {key:'single',label:'단일 MCU + 외부 감시',short:'단일+감시',cx:1,desc:'락스텝 MCU 하나에 외부 윈도우 워치독·전원 감시·드라이버 fault·이중 차단 경로를 붙입니다. 가장 싸고 단순하며, MCU 자체 고장은 외부 감시 IC가 잡습니다.',
+    mech:{A:['uv','wdt_ext'],B:['uv','wdt_ext','drv_fb','conn_diag'],C:['uv','wdt_ext','drv_fb','conn_diag','sbc','cutoff2'],D:['uv','wdt_ext','drv_fb','conn_diag','sbc','cutoff2','monitor']},use:'단일 채널 ECU · ASIL C 이하 또는 락스텝 MCU로 D'},
+  {key:'dual',label:'메인 + 세이프티 MCU · 독립 차단',short:'듀얼 MCU',cx:2,desc:'작은 세이프티 MCU가 메인 MCU와 결과·생존 신호를 교환하고, 메인과 독립된 경로로 차단(세이프 스테이트)을 구동합니다. 감시 소프트웨어가 독립 전원·클럭에서 돌아 공통 원인 고장을 분리합니다.',
+    mech:{A:['uv','lockstep'],B:['uv','drv_fb','lockstep'],C:['uv','drv_fb','conn_diag','sbc','lockstep','cutoff2'],D:['uv','drv_fb','conn_diag','sbc','lockstep','cutoff2','monitor','sensor_red']},use:'메인 MCU가 락스텝이 아닐 때 · 짧은 FTTI의 D 등급'},
+  {key:'decomp',label:'ASIL 분해 2채널 B(D)+B(D)',short:'2채널 분해',cx:3,desc:'MCU·게이트·인버터·전원을 두 채널로 복제해 각 채널을 ASIL B(D)로 낮춥니다. 한 채널 고장 시 다른 채널이 저감 운전을 이어 가므로 기능 상실 목표(가용성)까지 함께 만족합니다.',
+    mech:{A:['uv'],B:['uv','drv_fb'],C:['uv','drv_fb','sbc','decomp'],D:['uv','drv_fb','sbc','decomp','cutoff2','monitor']},use:'가용성 요구(조향 보조 유지 · 페일 오퍼레이셔널) · 상용차 · 자율주행 L3+'}];
+const DUP_IDS=['mcu','gate','inv','sbc','gdrv','pm','afe','drv','reg'];
+/* ---- goals on the architecture ---- */
+function goals(A){return A&&A.safety&&Array.isArray(A.safety.sgs)?A.safety.sgs:[];}
+function defaults(key){return (GOALS[key]||[]).map(g=>Object.assign({},g,{path:g.path.slice()}));}
+function setGoals(A,list){A.safety=A.safety||{level:'QM',goals:[]};A.safety.sgs=list.map((g,i)=>({id:g.id||'SG'+(i+1),text:String(g.text||''),asil:String(g.asil||'QM').toUpperCase(),ftti:+g.ftti||100,kind:KINDS[g.kind]?g.kind:'actuation',state:g.state||'',path:(g.path||[]).slice()}));
+  A.safety.goals=A.safety.sgs.map(g=>`${g.id} ${g.text} (ASIL ${g.asil}, FTTI ${g.ftti} ms)`);
+  const top=A.safety.sgs.reduce((m,g)=>rank(g.asil)>rank(m)?g.asil:m,'QM');if(rank(top)>rank(A.safety.level))A.safety.level=top;
+  tag(A);return A.safety.sgs;}
+function addGoal(A,g){const L=goals(A).slice();g.id=g.id||'SG'+(L.length+1);L.push(g);return setGoals(A,L);}
+function removeGoal(A,id){return setGoals(A,goals(A).filter(g=>g.id!==id));}
+/* tag blocks and links on each goal's violation path; mechanism blocks get the goals of the kinds they cover */
+function tag(A){const G=goals(A);const B=id=>(A.blocks||[]).find(b=>b.id===id);(A.blocks||[]).forEach(b=>{b.sg=[];});(A.links||[]).forEach(l=>{l.sg=[];});
+  G.forEach(g=>{g.path.forEach(id=>{const b=B(id)||B(id.replace(/\d+$/,''))||(A.blocks||[]).find(x=>x.id.replace(/\d+$/,'')===id);if(b&&!b.sg.includes(g.id))b.sg.push(g.id);(A.blocks||[]).filter(x=>x.id!==id&&x.id.replace(/\d+$/,'')===id).forEach(x=>{if(!x.sg.includes(g.id))x.sg.push(g.id);});});
+    (A.blocks||[]).forEach(b=>{const m=b.safety&&MECHX[b.safety];if(m&&m.kinds.includes(g.kind)&&!b.sg.includes(g.id))b.sg.push(g.id);});
+    (A.links||[]).forEach(l=>{const a=B(l.a),b=B(l.b);if(a&&b&&a.sg.includes(g.id)&&b.sg.includes(g.id))l.sg.push(g.id);});});
+  const lvl=g=>g.asil;G.forEach(g=>{(A.blocks||[]).forEach(b=>{if(b.sg.includes(g.id)&&!b.ext&&(!b.asil||rank(b.asil)<rank(lvl(g))))b.asil=lvl(g);});});
+  return A;}
+function tagBlock(A,id,sgId,on){const b=(A.blocks||[]).find(x=>x.id===id);if(!b)throw new Error('블록 없음: '+id);const g=goals(A).find(x=>x.id===sgId);if(!g)throw new Error('안전 목표 없음: '+sgId);
+  g.path=g.path.filter(x=>x!==id);if(on!==false)g.path.push(id);tag(A);return b;}
+/* ---- verification rules ---- */
+function present(A){const S=SA();if(!S)return[];const lv=S.level(A);return S.mechanisms(A,'D').filter(m=>!m.sw&&m.present).map(m=>Object.assign({},m,MECHX[m.id]||{}));}
+function verify(A){const G=goals(A);const S=SA();const P=present(A);const B=id=>(A.blocks||[]).find(b=>b.id===id);const ctrl=(A.blocks||[]).find(b=>b.group==='ctrl');
+  const out=G.map(g=>{const issues=[];const det=P.filter(m=>(m.kinds||[]).includes(g.kind)&&(m.role==='detect'||m.role==='both'));const react=P.filter(m=>(m.kinds||[]).includes(g.kind)&&(m.role==='react'||m.role==='both'));
+    // 1. detection
+    if(!det.length)issues.push({sev:'err',rule:'detect',msg:`감지 메커니즘 없음 — ${KINDS[g.kind]} 위반을 감지할 블록(감시 IC·fault 리드백·모니터·리던던트 센서)이 없습니다`});
+    // 2. reaction path to the safe state, independent from the main controller
+    const safeLinks=(A.links||[]).filter(l=>l.kind==='safe');const indep=safeLinks.filter(l=>ctrl?l.a!==ctrl.id:true);
+    if(rank(g.asil)>=rank('C')&&!react.length)issues.push({sev:'err',rule:'react',msg:`세이프 스테이트 경로 없음 — ${g.state||'안전 상태'}로 가는 차단 블록(SBC FS0B · 이중 차단 · 세이프티 릴레이)이 없습니다`});
+    else if(rank(g.asil)>=rank('C')&&!indep.length)issues.push({sev:'err',rule:'indep',msg:'차단 경로가 메인 MCU에서만 나옵니다 — MCU 고장 시 세이프 스테이트에 들어갈 수 없으므로 감시 IC/세이프티 MCU에서 나오는 독립 차단 링크(kind safe)가 필요합니다'});
+    else if(rank(g.asil)>=rank('A')&&!safeLinks.length)issues.push({sev:'warn',rule:'react',msg:'세이프 스테이트 링크(kind safe)가 없습니다 — 어떤 경로로 안전 상태에 가는지 표시하세요'});
+    // 3. FTTI: fastest detection + reaction
+    const dl=det.length?Math.min(...det.map(m=>m.det||0)):Infinity;const rl=react.length?Math.min(...react.map(m=>m.act||0)):(det.length?10:Infinity);const lat=isFinite(dl)?dl+rl:Infinity;
+    if(isFinite(lat)&&lat>g.ftti)issues.push({sev:'err',rule:'ftti',msg:`감지 ${dl} ms + 반응 ${rl} ms = ${lat} ms > FTTI ${g.ftti} ms — 더 빠른 HW 감지(fault 리드백·비교기)나 HW 차단이 필요합니다`});
+    // 4. independence: the watching block is not the watched block; 2-channel/lockstep for D unless lockstep core
+    const detB=det.map(m=>B(m.present)).filter(Boolean);if(ctrl&&detB.length&&detB.every(b=>b.id===ctrl.id))issues.push({sev:'err',rule:'indep',msg:'감지가 모두 MCU 안에서만 이루어집니다 — MCU 자체 고장을 잡는 외부 요소가 필요합니다'});
+    if(rank(g.asil)>=rank('D')){const ls=ctrl&&/lockstep|락스텝|TC3|TC2|S32K3|SPC58|RH850|TMS570/i.test(ctrl.label+' '+(ctrl.feats||[]).join(' ')+' '+JSON.stringify(ctrl.impl||[]));const two=P.some(m=>m.id==='decomp'||m.id==='lockstep');if(!ls&&!two)issues.push({sev:'err',rule:'indep',msg:'ASIL D인데 MCU가 락스텝이 아니고 2채널/세이프티 MCU도 없습니다 — 락스텝 MCU · 세이프티 MCU · ASIL 분해 중 하나가 필요합니다'});}
+    // 5. common cause: one supply block feeds the whole path without a supervisor
+    if(rank(g.asil)>=rank('B')){const pw=(A.blocks||[]).filter(b=>b.group==='power'&&!b.ext);const sup=pw.some(b=>/supervis|감시|sbc|uv|watchdog|워치독/i.test(b.label+' '+(b.feats||[]).join(' ')));if(pw.length&&!sup)issues.push({sev:'warn',rule:'ccf',msg:'전원 블록을 감시하는 요소가 없습니다 — 공통 원인 고장(전원 이상)이 감지되지 않습니다'});}
+    // 6. path tagged
+    const tagged=(A.blocks||[]).filter(b=>(b.sg||[]).includes(g.id));if(!tagged.length)issues.push({sev:'warn',rule:'path',msg:'위반 경로 블록이 지정되지 않았습니다 (sg tag <블록> '+g.id+')'});
+    const dc=det.length?Math.min(99,Math.round(100*(1-det.reduce((p,m)=>p*(1-(dcOf(m)/100)),1)))):0;
+    return{id:g.id,text:g.text,asil:g.asil,ftti:g.ftti,kind:g.kind,ok:!issues.some(i=>i.sev==='err'),issues,det:det.map(m=>m.label),react:react.map(m=>m.label),lat:isFinite(lat)?lat:null,dc,blocks:tagged.map(b=>b.id)};});
+  return{goals:out,ok:out.every(g=>g.ok),n:out.length,errs:out.reduce((a,g)=>a+g.issues.filter(i=>i.sev==='err').length,0)};}
+function dcOf(m){const d=m.dc||{};const v=Object.values(d).map(Number).filter(isFinite);return v.length?Math.max(...v):60;}
+/* ---- variants: propose, score, apply ---- */
+function propose(A,HW){const S=SA();if(!S)throw new Error('SAFETY 필요');const G=goals(A);const lv=G.reduce((m,g)=>rank(g.asil)>rank(m)?g.asil:m,S.level(A));if(lv==='QM')return[];
+  const H=HW||(typeof HWARCH!=='undefined'?HWARCH:null);
+  return VARIANTS.map(v=>{const T=JSON.parse(JSON.stringify(A));const ids=v.mech[lv]||v.mech.D;const added=applyVariant(T,H,v.key,ids);tag(T);const V=verify(T);
+    const cost=added.reduce((a,b)=>a+((MECHX[b.safety]||{}).cost||(b.dup?6:1)),0);const n=added.reduce((a,b)=>a+((MECHX[b.safety]||{}).n||(b.dup?4:1)),0);
+    const dc=V.goals.length?Math.round(V.goals.reduce((a,g)=>a+g.dc,0)/V.goals.length):0;const ftti=V.goals.filter(g=>!g.issues.some(i=>i.rule==='ftti')).length;
+    const want=G.some(g=>g.kind==='loss'&&rank(g.asil)>=rank('C'));const score=(V.ok?40:0)+dc*0.3+ftti/Math.max(1,V.goals.length)*20-cost*0.4-v.cx*4+(want&&v.key==='decomp'?15:0)+(v.key==='single'&&lv==='D'&&!V.ok?-10:0);
+    return{key:v.key,label:v.label,short:v.short,desc:v.desc,use:v.use,cx:v.cx,ids,added:added.map(b=>b.label),blocks:added.length,parts:n,cost:+cost.toFixed(1),dc,fttiOk:ftti,verify:V,score:+score.toFixed(1)};}).sort((a,b)=>b.score-a.score);}
+function applyVariant(A,H,key,ids){const S=SA();const v=VARIANTS.find(x=>x.key===key);if(!v)throw new Error('변형: '+VARIANTS.map(x=>x.key).join(' · '));
+  const G=goals(A);const lv=G.reduce((m,g)=>rank(g.asil)>rank(m)?g.asil:m,S.level(A));ids=ids||v.mech[lv]||v.mech.D;A.safety=A.safety||{level:lv,goals:[]};if(rank(lv)>rank(A.safety.level))A.safety.level=lv;
+  const ctrl=(A.blocks||[]).find(b=>b.group==='ctrl');const added=[];
+  // 2-channel decomposition: duplicate the control/actuation chain, then record the decomp mechanism on the copies
+  if(ids.includes('decomp')&&!(A.blocks||[]).some(b=>/#2$/.test(b.label))){DUP_IDS.forEach(id=>{const src=(A.blocks||[]).find(b=>b.id===id);if(!src)return;const nid=id+'2';if(A.blocks.some(b=>b.id===nid))return;
+      const nb=H.addBlock(A,src.group,src.label.replace(/\s*#\d+$/,'')+' #2',{id:nid,feats:src.feats.filter(f=>!/^SW:/.test(f)).slice(),impl:JSON.parse(JSON.stringify(src.impl||[])),ext:src.ext});nb.asil=lv;nb.dup=true;if(!/#1$/.test(src.label))src.label+=' #1';
+      for(const l of A.links.slice()){if(l.a===id)H.link(A,nid,l.b,l.label+' #2',{kind:l.kind});else if(l.b===id)H.link(A,l.a,nid,l.label+' #2',{kind:l.kind});}added.push(nb);});
+    if(ctrl){ctrl.feats.push('ASIL 분해 B(D) · 채널 비교/투표');ctrl.safety='decomp';const c2=A.blocks.find(b=>b.id===ctrl.id+'2');if(c2){c2.safety='decomp';H.link(A,ctrl.id,c2.id,'채널 간 비교 · 생존 신호',{kind:'safe',both:true});}}}
+  // safety MCU (lockstep mechanism as a second controller) with its own shutdown link
+  if(ids.includes('lockstep')&&!(A.blocks||[]).some(b=>b.safety==='lockstep')){const sm=H.addBlock(A,'ctrl','Safety MCU (감시 · 독립 차단)',{id:'smcu',feats:['메인 MCU와 결과·생존 신호 교환 (SPI)','독립 전원·클럭','세이프 스테이트 구동 (SAFE_EN)'],asil:lv});sm.safety='lockstep';sm.impl=[{type:'mcu',params:{}}];
+    if(ctrl)H.link(A,ctrl.id,sm.id,'상호 감시 (SPI · 생존 신호)',{kind:'safe',both:true});
+    const drv=(A.blocks||[]).filter(b=>b.group==='io'&&/driv|드라이버|bridge|브리지|motor|모터|contactor|컨택터|relay|릴레이|switch|스위치|cut|차단/i.test(b.label+' '+b.feats.join(' ')));drv.slice(0,3).forEach(d=>H.link(A,sm.id,d.id,'SAFE_EN 차단',{kind:'safe'}));added.push(sm);}
+  const rest=ids.filter(i=>i!=='decomp'&&i!=='lockstep');const got=S.apply(A,H,rest.concat(['sw']),lv).filter(b=>!b.sw);got.forEach(b=>added.push(b));
+  A.safety.variant=key;tag(A);return added;}
+/* ---- text ---- */
+function goalsText(A){const G=goals(A);if(!G.length)return'안전 목표 없음 — sg add "<목표>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "<안전 상태>" --path mcu,gate';
+  return G.map(g=>`${g.id} [ASIL ${g.asil} · FTTI ${g.ftti} ms · ${KINDS[g.kind]}] ${g.text} → 안전 상태: ${g.state||'-'} · 경로: ${g.path.join(', ')||'-'}`).join('\n');}
+function verifyText(A){const V=verify(A);if(!V.n)return goalsText(A);
+  return`[안전 목표 검증] ${V.ok?'모두 만족':V.errs+'개 위반'}${A.safety&&A.safety.variant?' · 구조: '+(VARIANTS.find(v=>v.key===A.safety.variant)||{}).label:''}\n`+V.goals.map(g=>`${g.ok?'✓':'✗'} ${g.id} ${g.text} (ASIL ${g.asil}) — 감지: ${g.det.join(', ')||'없음'} · 반응: ${g.react.join(', ')||'없음'} · 지연 ${g.lat==null?'?':g.lat+' ms'}/${g.ftti} ms · DC ${g.dc}%`+(g.issues.length?'\n   '+g.issues.map(i=>(i.sev==='err'?'✗ ':'△ ')+i.msg).join('\n   '):'')).join('\n');}
+function proposeText(A,HW){const P=propose(A,HW);if(!P.length)return'ASIL QM — 구조 변형 추천 없음 (sg add 로 안전 목표부터)';
+  return'[구조 변형 추천] 점수순 — sg apply <single|dual|decomp>\n'+P.map((p,i)=>`${i+1}. ${p.label}${i===0?' ★추천':''} · 점수 ${p.score}\n   ${p.desc}\n   추가 블록 ${p.blocks}개(부품 ~${p.parts}) · 추가 원가 ~$${p.cost} · 평균 DC ${p.dc}% · FTTI 만족 ${p.fttiOk}/${p.verify.n} · 검증 ${p.verify.ok?'✓ 통과':'✗ '+p.verify.errs+'건'} · 복잡도 ${'●'.repeat(p.cx)}${'○'.repeat(3-p.cx)}\n   적합: ${p.use}`).join('\n');}
+function aiRules(A){const G=goals(A);return`Safety goals (ISO 26262): each block/link on a goal's violation path is tagged with the goal id; a goal needs (1) a detection block outside the MCU for its violation kind, (2) an independent reaction link (kind safe) from the monitor/SBC/safety MCU to the actuator cut, (3) detection+reaction latency within the FTTI, (4) for ASIL D a lockstep MCU, a safety MCU or a 2-channel decomposition, (5) a supervised supply. Commands: sg list · sg add "<text>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "<safe state>" --path mcu,gate · sg tag <block> SG1 · sg variants (scores single / dual / decomp) · sg apply <single|dual|decomp> · sg verify. After changing safety-related blocks run sg verify and fix every ✗ before you finish.${G.length?'\nCurrent goals:\n'+goalsText(A):''}`;}
+return{KINDS,GOALS,MECHX,VARIANTS,goals,defaults,setGoals,addGoal,removeGoal,tag,tagBlock,verify,propose,applyVariant,goalsText,verifyText,proposeText,aiRules};
 })();
 
 
@@ -13736,6 +13864,7 @@ const NP_HELP=[
   ['feat <ID> "<기능>" · feat <ID> --clear · rename <ID> "<이름>" · move <ID> <그룹> · del <ID>','블록 기능 줄 · 이름 · 그룹 · 삭제'],
   ['link <A> <B> "<신호/레일>" [--kind power|signal|bus] [--both] · unlink <A> <B>','블록 사이 인터페이스 (화살표와 라벨)'],
   ['impl <ID> <회로블록|none> [--파라미터 값] [--swap <기존블록>] · impl <ID> part <MPN> [--pins SI=SPI_MOSI,…]','HW 블록을 구현할 회로 라이브러리 블록 (2단계 부품 선정용). part <MPN>이면 부품 라이브러리/Claude 추정 핀 배열로 그 부품을 직접 넣음(전원·접지 자동, SPI/I²C/UART/IRQ 핀은 MCU 배정). 블록에 이미 부품·주 구현(bldc, can …)이 있으면 그것을 바꿈(--add 이면 추가). --swap 이면 기존 구현을 바꿈'],
+  ['sg [list] · sg defaults · sg add "<목표>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "<안전 상태>" --path mcu,gate · sg del SG2 · sg tag <블록> SG1 [--off] · sg variants · sg apply single|dual|decomp · sg verify','안전 목표(SG) 기반 아키텍처: 목표마다 위반 경로 블록·링크에 SG 태그, 구조 변형 3안(단일 MCU+외부 감시 · 메인+세이프티 MCU · ASIL 분해 2채널)을 DC·FTTI·부품·원가로 비교, 규칙으로 검증(감지·독립 차단 경로·FTTI·독립성·공통 원인)'],
   ['safety level <QM|A|B|C|D> [--goal "…"] · safety block <ID> <등급|auto> · safety apply [all|sw|uv wdt_ext drv_fb sbc cutoff2 …] · safety sw · safety ffi · safety','기능 안전: 시스템/블록 ASIL, 등급별 권장 HW 메커니즘 블록(전원 감시·외부 워치독·fault 리드백·SBC·이중 차단·리던던트 센서·2채널)과 SW 메커니즘(흐름 감시·BIST·범위 검사·메모리·클럭·ADC·E2E·리드백·타당성·HW 주기 테스트·파티셔닝 — MCU 블록에 기록), HW 부품마다 필요한 SW, FFI 경계, 상태'],
   ['parts [블록ID [번호|MPN]]','제품 프로필의 블록별 부품 후보(제조사별 3–5개) 보기 · 고르기. 고른 부품은 블록에 기록되고, 핀을 아는 단일 IC 블록(CAN·게이트 드라이버·HSD·센서 앰프 …)이면 회로 구현(impl … part)으로 바뀜.'],
   ['dup <블록ID|회로블록>','블록 복제 — 같은 구현·연결을 가진 두 번째 블록 (예: 모터 드라이버 2개 → dup drv)'],
@@ -13749,7 +13878,7 @@ const NP_HELP=[
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -13797,6 +13926,18 @@ async function npRun(line,by){
       if(k==='part'&&!a.add&&!(sw===true||swK)){const L=b.impl||[];const oldP=L.find(i=>i.type==='part');const oldM=oldP?null:L.find(i=>i.type!=='part'&&!/^(ldo|buck|cap|tvs|led)$/.test(i.type));const gone=oldP||oldM;
         if(gone){b.impl=L.filter(i=>i!==gone);repl=` (${gone.type==='part'?gone.params&&gone.params.mpn||'part':gone.type} → ${params.mpn}; 둘 다 두려면 --add)`;}}
       b.impl=(b.impl||[]).concat([{type:k,params}]);}NP.planManual=false;archToPlan(true);npRender();return`${b.id} ⇒ ${npImplText(b)}${repl}`;}
+    case'sg':{const A=archEnsure();if(typeof SGARCH==='undefined')throw new Error('SGARCH 없음');const sub=String(a._[0]||'list').toLowerCase();
+      if(sub==='list'||sub==='status'){return SGARCH.goalsText(A);}
+      if(sub==='verify'||sub==='check'){npRender();return SGARCH.verifyText(A);}
+      if(sub==='variants'||sub==='propose'){return SGARCH.proposeText(A,HWARCH);}
+      if(sub==='defaults'){npPush();const key=String(a._[1]||A.product||'').toLowerCase();const D=SGARCH.defaults(key);if(!D.length)throw new Error('기본 안전 목표가 있는 제품: '+Object.keys(SGARCH.GOALS).join(' · ')+' (sg defaults eps)');SGARCH.setGoals(A,D);NP.planManual=false;archToPlan(true);npRender();return`${key.toUpperCase()} 기본 안전 목표 ${D.length}개\n`+SGARCH.goalsText(A);}
+      if(sub==='add'){npPush();const text=a._.slice(1).join(' ');if(!text)throw new Error('sg add "<목표>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "…" --path mcu,gate');
+        const g={text,asil:String(a.asil||SAFETY.level(A)||'QM').toUpperCase(),ftti:+a.ftti||100,kind:a.kind&&SGARCH.KINDS[a.kind]?a.kind:/토크|구동|출력|actuat|unintend|의도/i.test(text)?'actuation':/상실|loss|끊/i.test(text)?'loss':/과열|과전류|화재|thermal|fire/i.test(text)?'thermal':/절연|고전압|hv|isolat/i.test(text)?'hv':/보고|값|soc|data|메시지/i.test(text)?'data':'actuation',state:a.state&&a.state!==true?String(a.state):'',path:a.path&&a.path!==true?String(a.path).split(/[,\s]+/).filter(Boolean):A.blocks.filter(b=>!b.ext&&(b.group==='ctrl'||b.group==='io')).map(b=>b.id)};
+        SGARCH.addGoal(A,g);NP.planManual=false;archToPlan(true);npRender();return SGARCH.goalsText(A);}
+      if(sub==='del'||sub==='remove'){npPush();SGARCH.removeGoal(A,String(a._[1]||'').toUpperCase());npRender();return SGARCH.goalsText(A);}
+      if(sub==='tag'){npPush();const b=HWARCH.find(A,a._[1]);const ids=a._.slice(2).map(x=>String(x).toUpperCase());if(!ids.length)throw new Error('sg tag <블록> SG1 [SG2…] [--off]');ids.forEach(id=>SGARCH.tagBlock(A,b.id,id,!a.off));npRender();return`${b.id}: SG ${(b.sg||[]).join(', ')||'(없음)'}`;}
+      if(sub==='apply'){npPush();const key=String(a._[1]||'').toLowerCase();if(!SGARCH.VARIANTS.some(v=>v.key===key))throw new Error('sg apply single|dual|decomp');const added=SGARCH.applyVariant(A,HWARCH,key);NP.planManual=false;archToPlan(true);npRender();return`구조 ${SGARCH.VARIANTS.find(v=>v.key===key).label} 적용 — 추가 블록 ${added.length}개: ${added.map(b=>b.label).join(', ')||'없음'}\n`+SGARCH.verifyText(A);}
+      throw new Error('sg [list|defaults [eps|bms|bcm|inv]|add "…" --asil --ftti --kind --state --path|del SGn|tag <블록> SGn [--off]|variants|apply single|dual|decomp|verify]');}
     case'safety':{const A=archEnsure();A.safety=A.safety||{level:'QM',goals:[]};const sub=String(a._[0]||'').toLowerCase();
       if(!sub||sub==='status'||sub==='check'){npRender();return SAFETY.archText(A);}
       if(sub==='level'){npPush();const lv=SAFETY.parseLevel('ASIL '+String(a._[1]||''))||SAFETY.parseLevel(String(a._[1]||''));if(!lv)throw new Error('safety level <QM|A|B|C|D>');A.safety.level=lv;if(a.goal&&a.goal!==true)A.safety.goals=[String(a.goal)];npRender();return`시스템 ASIL ${lv}${A.safety.goals.length?' · 안전 목표: '+A.safety.goals.join(' / '):''}\n`+SAFETY.archText(A);}
@@ -14050,6 +14191,7 @@ async function npAnalyze(req,inner){
       npSay('ok',`${prof.name} 표준 구성으로 HW 블록 ${NP.arch.blocks.length}개 · 인터페이스 ${NP.arch.links.length}개를 만들었습니다.${prodRes.log.length?'\n반영: '+prodRes.log.join(' · '):''}`);
       NP.prof=prof;await npPickParts(prof);
       const bound=await npBindParts();if(bound.length)npSay('ok','블록에 적힌 부품 번호를 회로 구현으로 연결: '+bound.join(', '));
+      await npSafetyGoals(prof.key);
     }else{
     let qs=null;if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample)qs=await npAskAI(req);}
     if(!qs)qs=REQ_Q.filter(f=>!f.re.test(req)&&!NP.answers[f.key]).map(f=>({key:f.key,label:f.label,q:f.q,why:f.why,opts:f.opts,multi:!!f.multi}));
@@ -14062,10 +14204,29 @@ async function npAnalyze(req,inner){
     if(AIM.mode==='ai'&&CLI.sample){await npAI(`${name?'프로젝트 이름: '+name+'. ':''}요구사항: ${full}. 이 요구사항으로 HW 블록 다이어그램(부품 미정)을 ${NP.arch.blocks.length?'다시 ':''}만들어줘.`);archToPlan();npRender();const bound=await npBindParts();if(bound.length)npSay('ok','블록에 적힌 부품 번호를 회로 구현으로 연결: '+bound.join(', '));}
     else{const o=await npRun('arch '+full);npSay('ok',o);}
     }
-    try{const lv=typeof SAFETY!=='undefined'?SAFETY.parseLevel(full):null;if(lv&&NP.arch&&NP.arch.blocks.length&&(!NP.arch.safety||NP.arch.safety.level==='QM')){const o=await npRun(`safety level ${lv}`);npSay('ok',o);if(lv!=='QM'){const M=SAFETY.mechanisms(NP.arch,lv).filter(m=>!m.present&&!m.sw);const SW=SAFETY.swMechanisms(NP.arch,lv).filter(m=>!m.present);if(M.length||SW.length){const a=await copAsk({q:`ASIL ${lv} 권장 안전 메커니즘 — HW 블록 ${M.length}개, SW 항목 ${SW.length}개가 아직 없습니다. 추가할까요?`,why:`HW: ${M.map(m=>m.label).join(' · ')||'없음'}\nSW(MCU 블록에 기록): ${SW.map(m=>m.label).join(' · ')||'없음'}`,opts:['HW + SW 모두 추가','HW 블록만','SW 항목만','나중에']});if(a&&/모두/.test(a)){npSay('ok',await npRun('safety apply all'));}else if(a==='HW 블록만'){npSay('ok',await npRun('safety apply '+M.map(m=>m.id).join(' ')));}else if(a==='SW 항목만'){npSay('ok',await npRun('safety apply sw'));}}}}}catch(e){console.warn(e);}
+    try{const lv=typeof SAFETY!=='undefined'?SAFETY.parseLevel(full):null;if(lv&&NP.arch&&NP.arch.blocks.length&&(!NP.arch.safety||NP.arch.safety.level==='QM')){const o=await npRun(`safety level ${lv}`);npSay('ok',o);if(lv!=='QM'){const M=SAFETY.mechanisms(NP.arch,lv).filter(m=>!m.present&&!m.sw);const SW=SAFETY.swMechanisms(NP.arch,lv).filter(m=>!m.present);if((M.length||SW.length)&&typeof SGARCH==='undefined'){const a=await copAsk({q:`ASIL ${lv} 권장 안전 메커니즘 — HW 블록 ${M.length}개, SW 항목 ${SW.length}개가 아직 없습니다. 추가할까요?`,why:`HW: ${M.map(m=>m.label).join(' · ')||'없음'}\nSW(MCU 블록에 기록): ${SW.map(m=>m.label).join(' · ')||'없음'}`,opts:['HW + SW 모두 추가','HW 블록만','SW 항목만','나중에']});if(a&&/모두/.test(a)){npSay('ok',await npRun('safety apply all'));}else if(a==='HW 블록만'){npSay('ok',await npRun('safety apply '+M.map(m=>m.id).join(' ')));}else if(a==='SW 항목만'){npSay('ok',await npRun('safety apply sw'));}}}}}catch(e){console.warn(e);}
+    if(!prof&&NP.arch&&NP.arch.blocks.length&&typeof SAFETY!=='undefined'&&SAFETY.level(NP.arch)!=='QM')await npSafetyGoals(null);
     copSay('out','다이어그램을 확인하고 블록·기능·인터페이스를 고친 뒤 [다음: 회로 생성]을 누르세요. 부품과 PCB는 다음 단계에서 정합니다.');
   }catch(e){console.error(e);npSay('err',e.message||String(e));}
   npBusy(false);}
+/* safety goals → structure variants → deterministic verification (SGARCH). Template products bring default goals; otherwise
+   the goals are derived from the request's ASIL and what the ECU drives. The user trims the goal list and picks a variant. */
+async function npSafetyGoals(key){if(typeof SGARCH==='undefined'||!NP.arch)return;const A=NP.arch;if(SGARCH.goals(A).length)return;
+  let D=key?SGARCH.defaults(key):[];
+  if(!D.length){const lv=SAFETY.level(A);if(lv==='QM')return;const ids=A.blocks.filter(b=>!b.ext&&(b.group==='ctrl'||b.group==='io')).map(b=>b.id);const act=A.blocks.some(b=>/driv|드라이버|bridge|브리지|motor|모터|switch|스위치|relay|릴레이|inverter|인버터/i.test(b.label+' '+b.feats.join(' ')));
+    D=[act?{id:'SG1',text:'의도하지 않은 출력(토크·구동) 방지',asil:lv,ftti:50,kind:'actuation',state:'출력 차단 (세이프 스테이트)',path:ids}:{id:'SG1',text:'잘못된 값·명령 출력 방지',asil:lv,ftti:100,kind:'data',state:'타당성 실패 시 안전값',path:ids},
+       {id:'SG2',text:'기능 상실 시 경고 · 안전 상태 진입',asil:SAFETY.LEVELS[Math.max(0,SAFETY.rank(lv)-1)],ftti:200,kind:'loss',state:'경고 + 저감 모드',path:ids},
+       {id:'SG3',text:'과전류·과열에 의한 화재 방지',asil:'B',ftti:500,kind:'thermal',state:'전류 제한 → 차단',path:ids}];}
+  const a=await copAsk({q:'어떤 안전 목표(Safety Goal)로 설계할까요? 선택한 목표의 위반 경로 블록에 SG 태그가 붙고, 구조 변형을 이 목표로 비교·검증합니다.',why:D.map(g=>`${g.id} [ASIL ${g.asil} · FTTI ${g.ftti} ms] ${g.text} → ${g.state}`).join('\n')+'\n(목표를 더하려면 나중에 sg add "…" --asil D --ftti 50)',opts:D.map(g=>`${g.id} ${g.text}`).concat(['모두','안전 목표 없이 진행']),multi:true});
+  if(NP.stopReq)return;if(a==null||/없이 진행/.test(a))return;
+  const sel=/모두/.test(a)?D:D.filter(g=>a.split(/,\s*/).some(x=>x.startsWith(g.id)));if(!sel.length)return;
+  npPush();SGARCH.setGoals(A,sel);npRender();npSay('ok','안전 목표:\n'+SGARCH.goalsText(A));
+  const P=SGARCH.propose(A,HWARCH);if(!P.length)return;
+  npSay('ok',SGARCH.proposeText(A,HWARCH));
+  const v=await copAsk({q:'어떤 구조로 진행할까요? (★추천 = 검증 통과 · DC · FTTI · 원가 · 복잡도 점수 1위)',why:P.map((p,i)=>`${i+1}. ${p.label}: 블록 +${p.blocks} · ~$${p.cost} · DC ${p.dc}% · 검증 ${p.verify.ok?'✓':'✗ '+p.verify.errs}`).join('\n'),opts:P.map((p,i)=>`${p.label}${i===0?' ★':''}`).concat(['현재 구조 유지 (검증만)'])});
+  if(NP.stopReq)return;
+  if(v&&!/유지/.test(v)){const pk=P.find(p=>v.startsWith(p.label));if(pk){npSay('ok',await npRun('sg apply '+pk.key));return;}}
+  npSay('ok',SGARCH.verifyText(A));}
 /* Claude plans with the same commands */
 const NP_SYS=`You are a hardware system architect working inside a design tool. The user writes in Korean. Step 1 is a HW ARCHITECTURE BLOCK DIAGRAM: functional blocks without part numbers (e.g. "Battery Input (12 V)", "PMIC / LDO / Buck", "CAN-FD Transceiver", "Main MCU", "H-Bridge / Gate Driver IC", "Current Sensing & Temp. Sensor", "Debug / Calib. Interface", "External Connector") grouped in bands power · comm · ctrl · io · ext, with labelled interfaces (rails such as VCC_MCU 3.3 V, buses such as CAN_H / CAN_L, control and feedback signals). Build it with arch / block / feat / link commands through the run_np tool, one command at a time. Use impl only to say which library circuit block will realise a block in step 2; never put part numbers in labels or features unless the user names them.
 When you choose a specific part number for a block (e.g. CC2420 for an RF block, TJA1051 for CAN, BME280 for a sensor), bind it with: impl <ID> part <MPN> [--pins PIN=NET,…] — only then does the part appear in the parts view and in the step-2 circuit; a part number written only in the block label/feats is just text. impl <ID> part <MPN> REPLACES the block's existing part or main library implementation (e.g. drv: bldc/DRV8313 → A4911) — do not remove first; add --add only to keep both. remove <MPN> deletes a part by number. Library blocks (ldo, buck, can, mcu …) stay the first choice when they fit.
@@ -14083,7 +14244,7 @@ async function npAI(req){
   const cmds=NP_HELP.filter(x=>!/^ai /.test(x[0])).map(x=>`- ${x[0]} : ${x[1]}`).join('\n');
   const blocks=Object.entries(NEWPROJ.LIB).map(([k,v])=>`- ${k}: ${v.label} — ${v.desc}; params ${Object.entries(v.params).map(([p,d])=>`${p}=${d.def} (${d.desc})`).join(', ')||'none'}`).join('\n');
   const prompt=NP_SYS.replace('${CMDS}',cmds).replace('${BLOCKS}',blocks).replace('${MCUS}',Object.entries(NEWPROJ.MCUS).map(([k,v])=>k+' = '+v.label).join('; '))+
-    `\n\n현재 HW 블록 다이어그램:\n${NP.arch?HWARCH.text(NP.arch):'(비어 있음)'}\n\n현재 회로 계획 (2단계):\n${NP.plan?NEWPROJ.summary(NP.plan).text.split('\n').slice(0,14).join('\n'):'(비어 있음)'}\n\n사용자 요청: ${req}`;
+    (typeof SGARCH!=='undefined'?'\n\n'+SGARCH.aiRules(NP.arch||{}):'')+`\n\n현재 HW 블록 다이어그램:\n${NP.arch?HWARCH.text(NP.arch):'(비어 있음)'}\n\n현재 회로 계획 (2단계):\n${NP.plan?NEWPROJ.summary(NP.plan).text.split('\n').slice(0,14).join('\n'):'(비어 있음)'}\n\n사용자 요청: ${req}`;
   const ok=await aiAgent({prompt,ro:c=>['help','?','status','blocks','mcus','view','diagram'].includes((cliTok(c)[0]||'').toLowerCase()),roList:'status, blocks, mcus, diagram',toolName:'run_np',toolDesc:'Run one new-design console command (add/set/remove/mcu/board/strategy/plan/generate) and return its text output.',example:'"add pwr_in --vin 12" or "plan"',
     run:c=>npRun(c,'ai'),allowed:c=>{const f=(cliTok(c)[0]||'').toLowerCase();if(!NP_CMDS.has(f)||f==='ai')return'unknown command: '+f;if(f==='generate'&&/--pcb/.test(c)&&!/(보드|PCB|기판|배치|배선)[^.]{0,12}(생성|만들|그려|까지|시작|진행)/i.test(req))return'not allowed: generate --pcb (the user did not ask to start the PCB yet; record PCB wishes with board commands)';if(f==='generate'&&!/(회로|보드|PCB|기판)[^.]{0,10}(생성|만들|그려|까지)|generate/i.test(req))return'not allowed: generate (the user did not ask to create the board yet)';return'';},
     say:npSay,set:npSet,drop:e=>{copDrop(e);NP.log=NP.log.filter(x=>x!==e);},setAbort:c=>{NP.abort=c;},stopped:()=>NP.stopReq,max:16});
@@ -14140,7 +14301,7 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
       ${editable?`<label class="fld"><span>이름</span><input data-ar="label" value="${esc(b.label)}"></label>
       <label class="fld"><span>그룹</span><select data-ar="group">${HWARCH.GROUPS.map(g=>`<option value="${g[0]}"${g[0]===b.group?' selected':''}>${esc(g[1])} · ${esc(g[2])}</option>`).join('')}</select></label>
       <label class="fld"><span>기능 (줄마다 하나)</span><textarea data-ar="feats" rows="3">${esc(b.feats.join('\n'))}</textarea></label>
-      <label class="fld"><span>ASIL (시스템 ${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</span><select data-ar="asil"><option value="auto"${b.asil?'':' selected'}>상속 (${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</option>${['QM','A','B','C','D'].map(l=>`<option value="${l}"${b.asil===l?' selected':''}>ASIL ${l}</option>`).join('')}</select></label>`:`<div class="np-bd">${esc(b.feats.join(' · '))}${b.asil?' · ASIL '+esc(b.asil):''}</div>`}
+      <label class="fld"><span>ASIL (시스템 ${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</span><select data-ar="asil"><option value="auto"${b.asil?'':' selected'}>상속 (${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</option>${['QM','A','B','C','D'].map(l=>`<option value="${l}"${b.asil===l?' selected':''}>ASIL ${l}</option>`).join('')}</select></label>${typeof SGARCH!=='undefined'&&SGARCH.goals(A).length?`<div class="np-sg">${SGARCH.goals(A).map(g=>`<label class="chkl" title="${esc(g.text)}"><input type="checkbox" data-sg="${g.id}"${(b.sg||[]).includes(g.id)?' checked':''}> ${g.id} <span class="ms">ASIL ${g.asil}</span></label>`).join('')}</div>`:''}`:`<div class="np-bd">${esc(b.feats.join(' · '))}${b.asil?' · ASIL '+esc(b.asil):''}${b.sg&&b.sg.length?' · '+esc(b.sg.join(' · ')):''}</div>`}
       <ul class="sys-io">${io.map(l=>{const o=N(l.a===b.id?l.b:l.a);return`<li><span class="k-${l.kind==='bus'?'ext':l.kind}">${l.a===b.id?(l.both?'↔':'→'):(l.both?'↔':'←')}</span> ${esc(o?o.label:'')} <span class="mono">${esc(l.label)}</span></li>`;}).join('')}</ul>
       ${editable&&!b.ext?`<div class="np-bd" style="margin-top:6px">회로 구현 (2단계): <b>${(b.impl||[]).map(i=>esc(NEWPROJ.LIB[i.type]?NEWPROJ.LIB[i.type].label:i.type)).join(' + ')||'없음'}</b></div>
       <div class="np-add"><select data-ar="impl"><option value="">회로 블록 지정…</option>${Object.entries(NEWPROJ.LIB).map(([k,v])=>`<option value="${k}">${esc(v.label)}</option>`).join('')}<option value="none">구현 지우기</option></select></div>`:''}
@@ -14148,6 +14309,7 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
     box.querySelector('[data-ar="label"]')?.addEventListener('change',e=>npExec(`rename ${b.id} "${e.target.value.replace(/"/g,'')}"`));
     box.querySelector('[data-ar="group"]')?.addEventListener('change',e=>npExec(`move ${b.id} ${e.target.value}`));
     box.querySelector('[data-ar="asil"]')?.addEventListener('change',e=>npExec(`safety block ${b.id} ${e.target.value}`));
+    box.querySelectorAll('[data-sg]').forEach(el=>el.addEventListener('change',()=>npExec(`sg tag ${b.id} ${el.dataset.sg}${el.checked?'':' --off'}`)));
     box.querySelector('[data-ar="feats"]')?.addEventListener('change',e=>{npPush();b.feats=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);npRender();});
     box.querySelector('[data-ar="impl"]')?.addEventListener('change',e=>{if(e.target.value)npExec(`impl ${b.id} ${e.target.value}`);});
     return;}

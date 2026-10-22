@@ -640,4 +640,5 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .mconc .mcc.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .mconc-d{margin:0 0 6px;line-height:1.35}
 
+.np-sg{display:flex;flex-wrap:wrap;gap:4px 10px;margin:4px 0 2px}.np-sg .chkl{font-size:11.5px}
 </style>

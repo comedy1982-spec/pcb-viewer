@@ -15,6 +15,14 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 안전 목표(SG) 기반 아키텍처 추천 · 검증 (v1.49.0)
+
+- `src/core/sgarch.js` (`SGARCH`): 안전 목표 = {id, text, asil, ftti(ms), kind(actuation·loss·thermal·hv·data), state(안전 상태), path(위반 경로 블록)}. `GOALS`에 EPS·BMS·BCM·INV 템플릿별 기본 목표(예: EPS SG1 의도하지 않은 조향 토크 방지 ASIL D FTTI 50 ms → 토크 0·상 차단). `setGoals/addGoal/removeGoal/tag/tagBlock`: 경로 블록·링크에 `sg` 태그, 메커니즘 블록은 감지 종류로 자동 태그, 블록 ASIL을 목표 등급으로 올림, 시스템 ASIL은 최고 목표.
+- `verify(A)`: 목표마다 규칙 검사 — ①감지 블록(위반 종류를 잡는 감시 IC·fault 리드백·모니터·리던던트 센서) ②C 이상이면 세이프 스테이트 차단 블록 + 메인 MCU가 아닌 곳에서 나오는 독립 `safe` 링크 ③감지+반응 지연 ≤ FTTI(`MECHX` 표: det/act ms) ④감지가 MCU 안에서만이면 위반, D는 락스텝 MCU·세이프티 MCU·2채널 중 하나 ⑤전원 감시 없는 공통 원인 ⑥경로 미지정. DC는 감지 메커니즘 결합(최대 99 %).
+- `propose(A)`: 구조 변형 3안 — `single` 단일 MCU+외부 감시, `dual` 메인+세이프티 MCU(`smcu`, 상호 감시 safe 링크, SAFE_EN 차단 링크), `decomp` ASIL 분해 2채널(`DUP_IDS` 복제 #2, 채널 비교 링크). 등급별 메커니즘 세트를 임시 사본에 적용해 검증·DC·FTTI 만족 수·추가 블록/부품/원가(`MECHX.cost`)·복잡도로 점수(검증 통과 40 + DC·FTTI − 원가·복잡도, 가용성 목표는 분해 가산). `applyVariant(A,HW,key)`가 실제 적용(`SAFETY.apply` + SW 항목), `A.safety.variant` 기록.
+- 흐름: 제품 템플릿이면 부품 선택 뒤, 아니면 ASIL이 QM이 아닐 때(목표를 요구사항에서 유도: 구동 블록 → actuation, 그 외 data · loss · thermal) **안전 목표 선택(복수) → 변형 추천 카드 → 선택 적용 → 검증 ✓/✗** 순으로 Q&A. 콘솔 `sg list|defaults [eps]|add "…" --asil D --ftti 50 --kind … --state "…" --path a,b|del SGn|tag <블록> SGn [--off]|variants|apply single|dual|decomp|verify`; 블록 편집 패널에 SG 체크박스; HW 다이어그램 블록 오른쪽 아래에 SG 태그; `HWARCH.text`에 `{SG1,SG2}`; `safety status`에 검증 결과 포함. AI 프롬프트에 SG 규칙·현재 목표(`aiRules`)가 들어가고, 안전 블록을 바꾼 뒤 `sg verify`로 ✗를 고치도록 지시.
+- `SAFETY.hasMech`: 블록의 `safety` id로도 메커니즘 존재를 인식(세이프티 MCU = lockstep).
+
 ## 하우징 시안 A·B·C·D 선택 (v1.48.0)
 
 - `HOUSING.CONCEPTS`: **A** 다이캐스팅 알루미늄 ECU(ADC12 베이스+커버 · 커버 방열 핀 · 코너 장착 이어 · 커넥터 플랜지 · O-링) · **B** PC/ABS 사출 스냅핏 박스(핀 없음 · 스냅 훅+보조 나사 2개 · 키홀 장착 · 내부 리브 · LED 라이트 파이프 · 그로밋) · **C** 압출 알루미늄 프로파일+엔드 플레이트(A6063 · 윗면 가로 핀 · 엔드 플레이트 M3×4 · DIN 클립 · 커넥터는 엔드 플레이트) · **D** 하이브리드(ADC12 베이스에 바닥 핀·이어, PC/ABS 커버에 커넥터 헤더 일체 성형·라이트 파이프·황동 인서트).
