@@ -24,7 +24,7 @@ test('products: answers apply effects (feats, add+links, impl, dup, asil, free t
   const r = PRODUCTS.apply(p, { type: '듀얼 피니언 / 랙 타입 · ~120 A', angle: '홀 센서 ×3 (저가)', redund: '2채널 리던던트 EPS (각 ASIL B(D))', comm2: '사설 CAN (센서·리던던트 채널), 기타 LIN 하나' }, 'EPS', HWARCH);
   const B = id => r.arch.blocks.find(b => b.id === id);
   assert.ok(B('inv').feats.some(f => /120 A/.test(f)));
-  assert.equal(B('gate').impl.find(i => i.type === 'bldc').params.hall, 1);
+  { const g = B('gate').impl.find(i => i.type === 'gdrv3'); assert.equal(g.params.hall, 1); assert.equal(g.params.i, 120, 'phase current from the EPS type answer'); }
   assert.ok(B('mcu2') && B('gate2') && B('inv2') && B('sbc2'), 'dup blocks');
   assert.ok(r.arch.links.some(l => l.a === 'mcu2' && l.b === 'gate2'), 'dup links');
   assert.ok(B('canx2') && r.arch.links.some(l => l.a === 'canx2' && l.b === 'mcu'), 'added block + link');

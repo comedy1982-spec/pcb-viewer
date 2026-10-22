@@ -15,6 +15,16 @@
 3. **PCB** — 처음 들어오면 **PCB 설계 시작** 카드가 열립니다: 동박 층(2/4/6/8/10), 보드 크기(최소화 · 자동 · 직접), 배치 전략, 이어서 자동 배선을 고르면 배치·배선 CLI가 `board layers` → `board minimize`/`reset` → `route`를 차례로 실행합니다. 1단계에서 적어 둔 PCB 조건(예: "8층, 크기 최소화")이 미리 채워집니다. 이 단계에서는 배선을 위해 **회로를 함께 고칠 수 있습니다** — `pinswap`으로 MCU 핀 배정을 배선하기 좋게 바꾸면 보드 넷·회로도·HSIS가 함께 바뀌고, 분할 보기에서 회로도를 직접 편집할 수도 있습니다. 시뮬레이션, 3D/TOP/BOTTOM 보기.
 4. **기구 CAD** — 보호 하우징을 Text-to-CAD 콘솔로 설계합니다. PCB가 배치된 뒤에 열립니다.
 
+## 외부 FET 파워 스테이지 — H-브리지 · 3상 게이트 드라이버 블록 (v1.51.0)
+
+- 이전에는 "H-Bridge / Gate Driver IC" 블록이 `dcmotor`(로우사이드 AO3400A 1개)로, BLDC는 FET 내장 DRV8313(2.5 A)로 만들어져 회로도에 게이트 드라이버·외부 FET가 없었고, EPS 템플릿의 "3-Phase MOSFET Inverter"는 회로 구현이 비어 있었습니다.
+- 새 회로 블록 `hbridge` (`--i` 모터 전류 A): 하프브리지 게이트 드라이버 IR2104S ×2(부트스트랩 ES1D + 1 µF, VCC 디커플링, nSD 공용 + 10 kΩ 풀다운) + N-MOSFET ×4 (DPAK `TO-252`, VM에 맞춰 40/60/100 V — IPD90N04S4-04 등 AEC-Q101) + 게이트 10 Ω · G-S 10 kΩ + 로우사이드 공통 션트(전류에 맞춰 10 m~0.25 mΩ, 2512, 손실 표기) + INA181A2-Q1(×50) → RC → ADC + VM 벌크 470 µF(전류 20 A당 1개) · 세라믹 2.2 µF ×2 + 모터 단자 5.08 mm. MCU 신호 HB_INA/HB_INB(PWM) · HB_EN · HB_ISNS(ADC).
+- `gdrv3` (`--i` 상전류, `--hall`): IR2104S ×3 + N-MOSFET ×6 + 레그별 션트·앰프 ×3 + 벌크 + 3상 단자 + 홀 입력(선택). PWM은 3상 그룹(pwm3).
+- 병렬 FET: 전류 ≤ 25 A → 1, ≤ 60 A → 2, ≤ 100 A → 3, 그 이상 → 4(위치마다 게이트 저항 개별). FET 발열 P = (I/병렬)²·Rds·0.6. 같은 블록을 두 번 넣으면 넷 이름에 HB2_ / PH2_ 접두사.
+- 큰 전류(모터 블록 합 > 2 A)이면 `pwr_in`이 SS14 대신 역전압 보호 P-MOSFET(SQD50P04-09L, 병렬) + 게이트 풀다운 + 12 V 제너, 입력 단자 5.08 mm를 씁니다. 빌드가 `curr`(넷 → A)를 내고 `toBoard`가 `B.netCurrent`에 넣어 트레이스 폭 계산(`CURRENT.widths`)이 모터 전류를 씁니다(`HB\d*_A/B`, `PH\d+_U/V/W`도 상 넷으로 인식).
+- 블록 선택: `HWARCH.motorKind(text,bldc)` — DC 모터는 "H-bridge · 정/역 · 4 MOSFET · 게이트 드라이버 · 외부 FET" 또는 3 A 초과면 `hbridge`, BLDC는 2.5 A 초과나 외부 FET/게이트 드라이버/인버터면 `gdrv3`, 아니면 기존 `dcmotor`/`bldc`. `toPlan` 직전 `upgradeMotor`가 AI나 이전 버전이 `dcmotor`/`bldc`로 남긴 블록을 문구·요구사항 전류로 승격하고 로그를 남기며, 옆의 인버터/MOSFET 블록은 `via`(→ 그 회로에 포함)로 표시해 "회로 구현 없음"에서 뺍니다. 고전압(400 V+, SiC, IGBT, 절연 게이트) 문구가 있으면 승격하지 않습니다.
+- 템플릿: EPS `gate`는 `gdrv3`(타입 답변 60/120/200 A → `i`), BCM H-브리지 옵션은 `hbridge`. AI 프롬프트에 모터 파워 스테이지 선택 규칙 추가. 2단계 콘솔 자연어 "H-브리지 추가", "게이트 드라이버 추가"도 새 블록으로.
+
 ## 데이터시트 PDF → 핀 표 → 라이브러리 (v1.50.0)
 
 - `src/core/dspdf.js` (`DSPDF`): 데이터시트 텍스트(페이지별 pdf.js 텍스트 항목 {str,x,y} 또는 일반 텍스트)에서 핀 표를 찾습니다. 같은 y의 항목을 한 줄로 묶고(`linesOf`), "Pin Configuration / Pin Description / Terminal Functions / 핀 설명" 머리 뒤에서 **핀 번호(1, 2 … · BGA A1) + 핀 이름(VIN, nRESET, GPIO_1 …)** 행(번호 먼저 또는 이름 먼저)이 4개 이상 이어지면 표로 보고, "Absolute Maximum / Electrical Characteristics …"에서 끝냅니다. 번호 열이 여럿(SOIC TSSOP …)이면 열마다 후보를 만들고 머리글의 패키지 이름을 열에 붙입니다. 점수 = 번호 연속성·이름 비율·전원 핀 존재. `parse(pages,{mpn,pkg,npins})` → `{mpn,title,pkg,npins,pins:[{num,name,desc}],conf,notes,candidates,packages}`; `/RESET·#RESET·~RESET → nRESET`. `sectionText`(핀 표 페이지만) + `aiPrompt/fromAi`로 Claude 판독, `record(r,file)`는 PARTLIB 레코드(출처 `ds`, 승인 목록에 저장).

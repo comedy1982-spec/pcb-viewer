@@ -35,10 +35,16 @@ const tvsFor=v=>v<=5.5?'SMAJ5.0A':v<=13?'SMAJ15A':v<=26?'SMAJ28A':'SMAJ58A';
 const LIB={
   pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'TVS 넣기 (1/0)'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'}},
     build(ctx,p){const vin=+p.vin;const rail=railOf(vin);ctx.provide(rail,vin,'입력');
-      ctx.part('J',`${vin}V 입력`,'HDR-1x2',{1:'VIN_RAW',2:'GND'},{mpn:'61300211121',desc:`${vin} V 전원 입력`,pinNames:{1:'+',2:'GND'}});
-      ctx.part('D','SS14','SMA',{1:'VIN_RAW',2:rail},{mpn:'SS14',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'A',2:'K'}});
+      const Im=(ctx.plan&&ctx.plan.blocks||[]).filter(b=>b.type==='hbridge'||b.type==='gdrv3').reduce((a,b)=>a+(+b.params.i||0),0);
+      if(Im>2){termFp(2);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
+        ctx.part('J',`${vin}V 입력`,'TERM-2-5.08',{1:'VIN_RAW',2:'GND'},{mpn:'1729128',desc:`${vin} V 전원 입력 (5.08 mm 단자 · ${Im} A)`,pinNames:{1:'+',2:'GND'}});
+        for(let i=0;i<n;i++)ctx.part('Q','SQD50P04-09L','TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:'SQD50P04-09L_GE3',desc:`역전압 보호 P-MOSFET (−40 V · 9 mΩ · AEC-Q101)${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((Im/n)**2)*0.009+0.02).toFixed(2)});
+        ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:'VIN_PG',2:rail},{mpn:'BZT52C12',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'A',2:'K'}});
+        ctx.curr('VIN_RAW',Im);ctx.curr(rail,Im);}
+      else{ctx.part('J',`${vin}V 입력`,'HDR-1x2',{1:'VIN_RAW',2:'GND'},{mpn:'61300211121',desc:`${vin} V 전원 입력`,pinNames:{1:'+',2:'GND'}});
+      ctx.part('D','SS14','SMA',{1:'VIN_RAW',2:rail},{mpn:'SS14',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'A',2:'K'}});}
       if(+p.tvs)ctx.part('D',tvsFor(vin),'SMA',{1:'GND',2:rail},{desc:`입력 서지 TVS (${tvsFor(vin)})`,pinNames:{1:'A',2:'K'}});
-      const bulk=p.bulk==='auto'?(ctx.has('bldc')||ctx.has('dcmotor')?'470µF':vin>6?'22µF':'10µF'):p.bulk;ctx.cap(rail,bulk,'입력 벌크 커패시터');ctx.cap(rail,'100nF','입력 고주파 바이패스');}},
+      const bulk=p.bulk==='auto'?(ctx.has('bldc')||ctx.has('dcmotor')||ctx.has('hbridge')||ctx.has('gdrv3')?'470µF':vin>6?'22µF':'10µF'):p.bulk;ctx.cap(rail,bulk,'입력 벌크 커패시터');ctx.cap(rail,'100nF','입력 고주파 바이패스');}},
   usb_in:{label:'USB-C 전원·데이터',desc:'USB-C 리셉터클 · CC 5.1 kΩ 풀다운 · VBUS 5 V · D+/D− → MCU USB',params:{data:{def:1,desc:'USB 데이터 연결 (1/0)'}},
     build(ctx,p){ctx.provide('VBUS',5,'USB');const d=+p.data;
       ctx.part('J','USB-C','USB-C',{1:'CC1',2:'VBUS',3:'GND',4:d?'USB_DM':null,5:d?'USB_DP':null,6:'GND',S1:'GND',S2:'GND'},{mpn:'USB4105-GF-A',desc:'USB-C 리셉터클',pinNames:{1:'CC1',2:'VBUS',3:'GND',4:'D−',5:'D+',6:'GND',S1:'SHIELD',S2:'SHIELD'}});
@@ -88,6 +94,41 @@ const LIB={
       const h=+p.hall;const J={1:'PH_W',2:'PH_V',3:'PH_U',4:h?'HALL_A':null,5:h?'HALL_B':null,6:h?'HALL_C':null,7:h?'+5V':null,8:'GND'};
       ctx.part('J','모터·홀','HDR-1x8',J,{mpn:'61300811121',desc:'BLDC 상(W V U) + 홀(H1–H3) + 5 V',pinNames:{1:'W',2:'V',3:'U',4:'H1',5:'H2',6:'H3',7:'5V',8:'GND'}});
       if(h){ctx.use('+5V');['A','B','C'].forEach(x=>{ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:'HALL_'+x},{desc:'홀 출력 풀업 (오픈 컬렉터)'});ctx.part('C','1nF','0603',{1:'HALL_'+x,2:'GND'},{desc:'홀 입력 필터'});ctx.sig('HALL_'+x,'irq_in');});}}},
+  hbridge:{label:'H-브리지 (게이트 드라이버 + 외부 N-MOSFET 4개)',desc:'하프브리지 게이트 드라이버 ×2 (IR2104S: 부트스트랩 다이오드·캡, 데드타임 내장) + N-MOSFET ×4 (DPAK, 전류 등급에 맞춰 병렬) + 게이트 저항·G-S 풀다운 + 로우사이드 공통 션트 + 전류 앰프(INA181-Q1 ×50) → ADC + VM 벌크/세라믹 + 모터 단자(5.08 mm) · 정/역회전 PWM',
+    params:{i:{def:10,desc:'모터 정격 전류 A (FET 병렬 수·션트·트레이스 폭)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'},shunt:{def:1,desc:'전류 검출 (1/0)'}},
+    build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||10);const k=ctx.uniq('HB');const N=x=>k==='HB'?'HB_'+x:k+'_'+x;
+      const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V);const sn=+p.shunt;
+      if(V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
+      const ret=sn?N('SNS'):'GND';
+      ['A','B'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO');
+        ctx.part('U','IR2104S','SOIC-8',{1:vm,2:N('IN'+h),3:N('EN'),4:'GND',5:lo,6:ph,7:ho,8:vb},{mpn:'IR2104STRPBF',desc:`하프브리지 게이트 드라이버 (${h} 레그 · 데드타임 520 ns)`,pinNames:{1:'VCC',2:'IN',3:'nSD',4:'COM',5:'LO',6:'VS',7:'HO',8:'VB'},P:0.05});
+        ctx.cap(vm,'1µF',`IR2104 VCC 디커플링 (${h})`);
+        ctx.part('D','ES1D','SMA',{1:vm,2:vb},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'A',2:'K'}});
+        ctx.part('C','1µF','0805',{1:vb,2:ph},{desc:`부트스트랩 캡 VB–VS (${h})`});
+        fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);});
+      bulk(ctx,vm,I,'H-브리지');
+      if(sn)shuntAmp(ctx,ret,N('ISNS'),I,'H-브리지 공통');
+      ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 브리지 OFF)'});
+      ctx.part('J','모터','TERM-2-5.08',{1:N('A'),2:N('B')},{mpn:'1729128',desc:`DC 모터 단자 (5.08 mm · ${I} A)`,pinNames:{1:'M+',2:'M−'}});
+      ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(sn)ctx.curr(ret,I);
+      ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
+  gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
+    params:{i:{def:20,desc:'상전류 A (FET 병렬 수·션트·트레이스 폭)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
+    build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||20);const k=ctx.uniq('PH');const N=x=>k==='PH'?'PH_'+x:k+'_'+x;
+      const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V);
+      if(V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
+      ['U','V','W'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
+        ctx.part('U','IR2104S','SOIC-8',{1:vm,2:N('IN_'+h),3:N('EN'),4:'GND',5:lo,6:ph,7:ho,8:vb},{mpn:'IR2104STRPBF',desc:`하프브리지 게이트 드라이버 (${h}상)`,pinNames:{1:'VCC',2:'IN',3:'nSD',4:'COM',5:'LO',6:'VS',7:'HO',8:'VB'},P:0.05});
+        ctx.cap(vm,'1µF',`IR2104 VCC 디커플링 (${h})`);
+        ctx.part('D','ES1D','SMA',{1:vm,2:vb},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'A',2:'K'}});
+        ctx.part('C','1µF','0805',{1:vb,2:ph},{desc:`부트스트랩 캡 VB–VS (${h})`});
+        fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);shuntAmp(ctx,ret,N('ISNS_'+h),I,h+'상');
+        ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('IN_'+h),'pwm','pwm3');});
+      bulk(ctx,vm,I,'3상 인버터');ctx.curr(vm,I);
+      ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 인버터 OFF)'});ctx.sig(N('EN'),'gpio_out');
+      ctx.part('J','모터 상','TERM-3-5.08',{1:N('U'),2:N('V'),3:N('W')},{mpn:'1729131',desc:`3상 모터 단자 (5.08 mm · ${I} A)`,pinNames:{1:'U',2:'V',3:'W'}});
+      if(+p.hall){ctx.use('+5V');ctx.use('+3V3');ctx.part('J','홀','HDR-1x5',{1:'+5V',2:N('HALL_A'),3:N('HALL_B'),4:N('HALL_C'),5:'GND'},{mpn:'61300511121',desc:'홀 센서 커넥터',pinNames:{1:'5V',2:'H1',3:'H2',4:'H3',5:'GND'}});
+        ['A','B','C'].forEach(x=>{ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:N('HALL_'+x)},{desc:'홀 출력 풀업'});ctx.part('C','1nF','0603',{1:N('HALL_'+x),2:'GND'},{desc:'홀 입력 필터'});ctx.sig(N('HALL_'+x),'irq_in');});}}},
   dcmotor:{label:'DC 모터 (로우사이드 FET)',desc:'AO3400A + 게이트 저항·풀다운 + 플라이백 SS14 + 0.1 Ω 션트 + RC 필터 → ADC',params:{shunt:{def:1,desc:'전류 검출 (1/0)'}},
     build(ctx,p){const vm=ctx.highest(3);ctx.use(vm);const s=+p.shunt;
       ctx.part('J','모터','HDR-1x2',{1:vm,2:'MOT_N'},{mpn:'61300211121',desc:'DC 모터 커넥터',pinNames:{1:'+',2:'−'}});
@@ -160,7 +201,8 @@ function planFrom(text,name){
   else if(vin>5.5){addBlock(plan,'ldo',{vout:3.3});log.push(`${vin} V → 3.3 V LDO`);}else{addBlock(plan,'ldo',{vout:3.3});log.push('5 V → 3.3 V LDO');}
   addBlock(plan,'mcu',{part:tc?'TC364DP-64F300F':'STM32F042K6U6'});log.push(tc?'MCU TC364DP':'MCU STM32F042K6U6');
   if(tc||can||/크리스털|crystal|xtal|정밀/.test(lo)){addBlock(plan,'xtal',{});log.push(tc?'TC364 시스템 클럭용 20 MHz 크리스털':'CAN 비트 타이밍용 크리스털');}
-  if(can)addBlock(plan,'can',{});if(bldc)addBlock(plan,'bldc',{hall:/센서리스|sensorless/.test(lo)?0:1});if(dc)addBlock(plan,'dcmotor',{shunt:/전류|current|보호/.test(lo)||true?1:0});
+  if(can)addBlock(plan,'can',{});const mk=typeof HWARCH!=='undefined'&&HWARCH.motorKind?HWARCH.motorKind(lo,bldc):{type:bldc?'bldc':'dcmotor'};const hl=/센서리스|sensorless/.test(lo)?0:1;
+  if(bldc){if(mk.type==='gdrv3')addBlock(plan,'gdrv3',{i:mk.i,hall:hl});else addBlock(plan,'bldc',{hall:hl});}if(dc){if(mk.type==='hbridge')addBlock(plan,'hbridge',{i:mk.i});else addBlock(plan,'dcmotor',{shunt:1});}
   if(/플래시|flash|메모리|로그|저장/.test(lo))addBlock(plan,'flash',{});
   if(/uart|시리얼|serial|디버그\s*포트|콘솔/.test(lo))addBlock(plan,'uart',{});
   if(/i2c|i²c|센서\s*확장/.test(lo))addBlock(plan,'i2c',{});
@@ -177,18 +219,38 @@ function ldoToBuck(plan,log,keep){log=log||[];const r0=build(plan);r0.parts.filt
     b.type='buck';b.id=b.id.replace(/^ldo/,'buck');b.params={vin:b.params.vin,vout:b.params.vout};log.push(`${b.params.vout} V 1단을 LDO(손실 ${c.P} W) 대신 벅 컨버터로`);});return log;}
 function guessName(s){const lo=s.toLowerCase();const bl=/bldc|3상/.test(lo);const k=[bl?'BLDC':'',/\bcan\b/.test(lo)?'CAN':'',!bl&&/(^|[^l])dc\s*모터|팬|fan/.test(lo)?'DC-MOTOR':'',/usb/.test(lo)?'USB':''].filter(Boolean);return(k.join('-')||'NEW')+' BOARD v0.1';}
 
+/* ---- power stage helpers for hbridge / gdrv3: FET choice and parallel count by current, shunt + amplifier, bulk caps ---- */
+const FETS=[{mpn:'IPD90N04S4-04',v:40,rds:0.0038,label:'40 V 90 A OptiMOS-T2 (AEC-Q101)'},{mpn:'IPD50N06S4L-12',v:60,rds:0.0117,label:'60 V 50 A OptiMOS-T2 (AEC-Q101)'},{mpn:'IPD50N10S3L-16',v:100,rds:0.016,label:'100 V 50 A OptiMOS-T (AEC-Q101)'}];
+function motorPower(ctx,I,V){const f=FETS.find(x=>x.v>=(V||12)*2.5)||FETS[FETS.length-1];const par=I<=25?1:I<=60?2:I<=100?3:4;
+  if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['TO-252','2512','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
+  const Pq=+(((I/par)**2)*f.rds*0.6+0.02).toFixed(2);return{f,par,Pq,I};}
+function termFp(n){if(typeof PCB==='undefined'||!PCB.FP)return;const k=`TERM-${n}-5.08`;if(PCB.FP[k])return;const p=5.08,y0=(n-1)/2*p;
+  const f={kind:'hdr',body:[7.6,n*p+0.5,10],pads:Array.from({length:n},(_,i)=>({n:''+(i+1),x:0,y:+(y0-i*p).toFixed(3),w:3,h:3,round:true,drill:1.4})),gen:true};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP[k]=f;}
+function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
+    ctx.part('R','10Ω','0603',{1:ho,2:hg},{desc:`하이사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:hg,2:ph},{desc:'하이사이드 G-S 풀다운'});
+    ctx.part('Q',pw.f.mpn,'TO-252',{1:hg,2:vm,3:ph},{mpn:pw.f.mpn,desc:`하이사이드 N-MOSFET ${pw.f.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:{1:'G',2:'D',3:'S'},P:pw.Pq});
+    ctx.part('R','10Ω','0603',{1:lo,2:lg},{desc:`로우사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:lg,2:ret},{desc:'로우사이드 G-S 풀다운'});
+    ctx.part('Q',pw.f.mpn,'TO-252',{1:lg,2:ph,3:ret},{mpn:pw.f.mpn,desc:`로우사이드 N-MOSFET ${pw.f.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:{1:'G',2:'D',3:'S'},P:pw.Pq});}}
+const SHUNTS=[0.01,0.005,0.002,0.001,0.0005,0.00025];
+function shuntAmp(ctx,net,out,I,what){const R=SHUNTS.find(r=>r*I<=0.045)||SHUNTS[SHUNTS.length-1];const P=+(I*I*R).toFixed(2);const lab=R>=0.001?(R*1000)+'mΩ':(R*1e6)+'µΩ';
+  ctx.part('R',lab,'2512',{1:net,2:'GND'},{mpn:'',desc:`${what} 전류 션트 ${lab} · ${I} A에서 ${(R*I*1000).toFixed(0)} mV · ${P} W${P>2?' (2 W 초과 — 병렬 또는 3 W 2512)':''}`,P});
+  const vs=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vs);const amp=out+'_AMP';
+  ctx.part('U','INA181A2-Q1','SOT-23-6',{1:amp,2:'GND',3:net,4:'GND',5:'GND',6:vs},{mpn:'INA181A2QDBVRQ1',desc:`${what} 전류 앰프 ×50 (${(R*I*50).toFixed(2)} V @ ${I} A)`,pinNames:{1:'OUT',2:'GND',3:'IN+',4:'IN−',5:'REF',6:'VS'},P:0.002});
+  ctx.cap(vs,'100nF','전류 앰프 디커플링');ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');}
+function bulk(ctx,vm,I,what){const n=Math.max(1,Math.min(4,Math.ceil(I/20)));for(let i=0;i<n;i++)ctx.part('CP','470µF','CP-SMD-10x10',{1:vm,2:'GND'},{mpn:'EEE-FK1V471P',desc:`${what} VM 벌크 (35 V 470 µF · 리플 전류)`});
+  ctx.part('C','2.2µF','1210',{1:vm,2:'GND'},{desc:`${what} VM 세라믹 (50 V)`});ctx.part('C','2.2µF','1210',{1:vm,2:'GND'},{desc:`${what} VM 세라믹 (50 V)`});ctx.cap(vm,'100nF',`${what} VM 고주파 바이패스`);}
 /* ---------- build: plan → parts, nets, MCU pin assignment, board spec ---------- */
 function build(plan){const asil=plan.asil&&String(plan.asil).toUpperCase()!=='QM'?String(plan.asil).toUpperCase():null;
-  const parts=[],warn=[],rails={},used=new Set(),sigs=[],fixedPins={},xt=[];let mcu=null;const cnt={};const uq={};
+  const parts=[],warn=[],rails={},used=new Set(),sigs=[],fixedPins={},xt=[],curr={};let mcu=null;const cnt={};const uq={};
   const has=t=>plan.blocks.some(b=>b.type===t);
-  const ctx={
+  const ctx={plan,
     part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,ldo:o.ldo,mcu:!!o.mcu};parts.push(c);return c;},
     cap(rail,val,desc){if(!rail)return;used.add(rail);return ctx.part('C',val,capFp(val),{1:rail,2:'GND'},{desc,mpn:capMpn[val]});},
     provide(rail,v,by){rails[rail]={v,by,block:ctx._b};},railV(r){return rails[r]?rails[r].v:(typeof SIM!=='undefined'&&SIM.nominalV?SIM.nominalV(r):0);},use(r){if(r)used.add(r);},has,
     railNear(v){const r=Object.entries(rails).filter(([,x])=>x.v>0).sort((a,b)=>Math.abs(a[1].v-v)-Math.abs(b[1].v-v))[0];return r?r[0]:ctx.highest(0);},
     highest(min){const r=Object.entries(rails).filter(([,x])=>x.v>=min).sort((a,b)=>b[1].v-a[1].v)[0];if(!r){warn.push(`${min} V 이상 레일이 없음 — 전원 블록을 먼저 넣으세요`);return'+12V';}return r[0];},
     setMcu(k){mcu=k;},mcu(){return mcu;},warn(t){warn.push(t);},mcuPin(n,net){fixedPins[n]=net;},need(t){if(!has(t))warn.push(`${t} 블록이 필요합니다 (예: add ${t})`);},
-    sig(net,role,group){sigs.push({net,role,group:group||null,block:ctx._b});},xtal(a,b){xt.push(a,b);},
+    sig(net,role,group){sigs.push({net,role,group:group||null,block:ctx._b});},xtal(a,b){xt.push(a,b);},curr(net,I){if(net&&I>0)curr[net]=Math.max(curr[net]||0,+I);},
     uniq(base){uq[base]=(uq[base]||0)+1;return uq[base]===1&&base!=='LED'&&base!=='BTN'?base:base+uq[base];}};
   // power first (rails), then MCU, then the rest
   const order=['pwr_in','usb_in','buck','ldo','mcu','xtal'];const bl=plan.blocks.slice().sort((a,b)=>{const i=order.indexOf(a.type),j=order.indexOf(b.type);return(i<0?9:i)-(j<0?9:j);});
@@ -242,10 +304,11 @@ function build(plan){const asil=plan.asil&&String(plan.asil).toUpperCase()!=='QM
   if(asil&&typeof PARTLIB!=='undefined'){let n=0;parts.forEach(c=>{const alt=PARTLIB.autoAlt(c.mpn||c.val);if(alt&&alt.mpn&&alt.dropIn){const rec=alt.rec;if(/^U|^Q|^D/.test(c.ref)&&rec&&rec.mpn!==c.val)c.val=rec.mpn;c.mpn=alt.mpn;c.desc=(c.desc||'')+` (ASIL ${asil}: ${rec&&rec.grade?rec.grade:'AEC'} 대체)`;n++;}else if(alt&&alt.hint&&/^U/.test(c.ref))warn.push(`${c.ref} ${c.val}: ${alt.hint}`);});if(n)warn.push(`ASIL ${asil} 부품 정책: 상용 부품 ${n}개를 차량용(AEC) 핀 호환 부품으로 바꿨습니다 (safety parts 로 확인)`);}
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
-  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P}))};
+  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P}))};
 }
 // board from a plan: place from scratch with the plan's strategy (routing is left to the caller)
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));
+  if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});
   if(typeof AUTOPLACE!=='undefined'&&opts.place!==false){PCBEDIT.prepare(B);AUTOPLACE.ensurePour(B);const power={};r.power.forEach(x=>{power[x.ref]=x.P;});
     r.place=AUTOPLACE.place(B,{strategy:opts.strategy||plan.strategy||'balanced',scratch:true,seed:opts.seed||1,power});}
   return{B,r};}
@@ -271,7 +334,7 @@ function bom(plan){const r=build(plan);const P=typeof PARTS!=='undefined'?PARTS:
 function spareMcuPins(r){if(!r.mcu)return 0;const db=MCU_PINS.DB[r.mcu];const M=MCUS[r.mcu];const U=r.parts.find(c=>c.mcu);if(!db||!U)return 0;
   const busy=new Set(Object.keys(U.pins).map(String));M.reserved.forEach(n=>busy.add(String(n)));if(M.boot)busy.add(String(M.boot));if(M.reset)busy.add(String(M.reset));
   return Object.keys(db.pins).filter(n=>!db.pins[n].supply&&!busy.has(String(n))&&(MCU_PINS.options(db,n).length||db.pins[n].an!=null)).length;}
-const FEAT_W={pwr_in:1,usb_in:2,ldo:1,buck:2,mcu:0,xtal:1,can:3,bldc:4,dcmotor:3,led:1,button:1,flash:2,uart:1,i2c:2,vmon:1};
+const FEAT_W={pwr_in:1,usb_in:2,ldo:1,buck:2,mcu:0,xtal:1,can:3,bldc:4,hbridge:5,gdrv3:7,dcmotor:3,led:1,button:1,flash:2,uart:1,i2c:2,vmon:1};
 /* unit cost beyond the parts: PCB fabrication (layers × area), assembly (parts, pads, through-hole), part-grade uplift.
    Rough mid-volume (~500 pcs) figures so the three plans can be compared, not a quote. */
 const PCB_COST={2:0.065,4:0.14,6:0.24,8:0.36,10:0.5};  // $/cm² incl. amortised setup
@@ -320,12 +383,12 @@ function variants(plan){
   if(!has(e,'vmon')){addSafe(e,'vmon');de.push('입력 전압 감시 추가');}
   const led=e.blocks.find(b=>b.type==='led');if(led){if(+led.params.n<2){led.params.n=2;de.push('상태 LED 2개');}}else{addSafe(e,'led',{n:2});de.push('상태 LED 2개 추가');}
   if(!has(e,'button')){addSafe(e,'button',{n:1});de.push('사용자 버튼 추가');}
-  const mcuE=e.blocks.find(b=>b.type==='mcu');const needPins=e.blocks.reduce((a,b)=>a+({can:2,bldc:9,dcmotor:2,flash:4,uart:2,i2c:2,vmon:1,led:+b.params.n||1,button:+b.params.n||1,usb_in:2}[b.type]||0),0);
+  const mcuE=e.blocks.find(b=>b.type==='mcu');const needPins=e.blocks.reduce((a,b)=>a+({can:2,bldc:9,hbridge:4,gdrv3:7,dcmotor:2,flash:4,uart:2,i2c:2,vmon:1,led:+b.params.n||1,button:+b.params.n||1,usb_in:2}[b.type]||0),0);
   if(mcuE&&mcuKey(mcuE.params.part)==='STM32F042K6U6'&&(needPins>18||reqHas(e,/차량|automotive|ecu|산업|asil/))){mcuE.params.part='TC364DP-64F300F';if(!has(e,'xtal'))addSafe(e,'xtal');de.push('MCU를 AURIX TC364DP로 (핀 여유 · 안전 기능 · 성능)');}
   out.push({key:'ext',label:'확장형',tag:'기능·확장 우선',desc:'나중에 기능을 더할 수 있게 헤더·메모리·감시를 넣고, 핀이 모자라면 큰 MCU로.',plan:e,diff:de});
   // tiers: PCB layers and part grade differ between the plans, and so does the unit cost (parts + PCB + assembly + grade)
   const auto=reqHas(plan,/차량|automotive|ecu|asil|iso\s*26262|aec/),ind=reqHas(plan,/산업|industrial|-40/),aurix=out[1].m?false:mcuKey((base.blocks.find(b=>b.type==='mcu')||{params:{}}).params.part)==='TC364DP-64F300F';
-  const heavy=has(base,'bldc')||has(base,'dcmotor')||has(base,'can');
+  const heavy=has(base,'bldc')||has(base,'gdrv3')||has(base,'hbridge')||has(base,'dcmotor')||has(base,'can');
   const tier={cost:{layers:heavy&&aurix?4:2,grade:auto?'core':'comm'},std:{layers:heavy?4:2,grade:auto?'auto':ind?'ind':'comm'},ext:{layers:heavy&&aurix?6:4,grade:auto?'full':'ind'}};
   out.forEach(v=>{const t=tier[v.key];v.plan.pcb=Object.assign({},v.plan.pcb||{},{layers:t.layers,grade:t.grade});v.m=planMetrics(v.plan,t);
     const c=v.m.cost;v.diff.push(`PCB ${t.layers}층 (${c.area} cm² · 약 $${c.pcb}) · 조립 약 $${c.asm} (패드 ${c.pads}) · ${c.gradeLabel}${c.grade?` (+$${c.grade})`:''}`);});

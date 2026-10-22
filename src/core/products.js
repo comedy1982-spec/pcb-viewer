@@ -7,7 +7,7 @@
    templates are the deterministic fallback and the worked example in the prompt. */
 const PRODUCTS=(()=>{
 const GROUPS=['power','comm','ctrl','io','ext'];
-const IMPLS=['pwr_in','usb_in','ldo','buck','mcu','xtal','can','bldc','dcmotor','led','button','flash','uart','i2c','supervisor','hs_switch','vmon','part'];
+const IMPLS=['pwr_in','usb_in','ldo','buck','mcu','xtal','can','bldc','gdrv3','hbridge','dcmotor','led','button','flash','uart','i2c','supervisor','hs_switch','vmon','part'];
 const S=v=>v==null?'':String(v).trim();
 /* ---- templates ---- */
 const T={};
@@ -21,7 +21,7 @@ T.eps={key:'eps',name:'EPS (전동 파워 스티어링) ECU',re:/\beps\b|파워\
     {id:'mcu',group:'ctrl',label:'Main MCU (Lockstep)',feats:['Core: AURIX TC3xx (TriCore · 락스텝)','ADC ×2 (상전류 · 토크 · 각도)','GTM PWM ×6 (3상)','SENT / SPI 센서 IF','Watchdog & Safety (ASIL D)'],impl:[{type:'mcu',params:{part:'TC364DP-64F300F'}},{type:'xtal',params:{}}],why:'조향 제어 루프 · 안전 감시'},
     {id:'canbus',group:'comm',label:'CAN-FD Bus (H / L)',ext:true,feats:['차량 네트워크 · UDS 진단'],why:'차량 통신'},
     {id:'canx',group:'comm',label:'CAN-FD Transceiver',feats:['물리 계층 (5 V)','스플릿 종단 · ESD'],impl:[{type:'can',params:{}}],why:'CAN 물리 계층'},
-    {id:'gate',group:'io',label:'3-Phase Gate Driver',feats:['MOSFET 6개 제어 (부트스트랩 · 차지펌프)','게이트 진단 · 단락 보호','PWM ×3 · 상 전류 리드백'],impl:[{type:'bldc',params:{hall:0}}],parts:['TLE9180','L9908'],why:'3상 인버터 구동'},
+    {id:'gate',group:'io',label:'3-Phase Gate Driver',feats:['MOSFET 6개 제어 (부트스트랩 · 차지펌프)','게이트 진단 · 단락 보호','PWM ×3 · 상 전류 리드백'],impl:[{type:'gdrv3',params:{i:60,hall:0}}],parts:['TLE9180','L9908'],why:'3상 인버터 구동'},
     {id:'inv',group:'io',label:'3-Phase MOSFET Inverter',feats:['MOSFET ×6 (40 V · 저 RDS(on))','상 션트 ×3','방열판 밀착'],why:'모터 전력단'},
     {id:'pcut',group:'io',label:'Phase-Cut / Safety Relay',feats:['모터 상 분리 FET ×3','독립 감시 경로로 구동 (세이프 스테이트)'],impl:[{type:'hs_switch',params:{}}],why:'안전 상태 = 토크 0, 수동 조향 유지'},
     {id:'isense',group:'io',label:'Phase Current Sensing',feats:['전류 센싱 (Shunt + Amp)','3상 션트 · 동기 샘플링','HW Diagnostics'],impl:[{type:'vmon',params:{}}],why:'FOC 전류 루프'},
@@ -34,9 +34,9 @@ T.eps={key:'eps',name:'EPS (전동 파워 스티어링) ECU',re:/\beps\b|파워\
     ['isense','mcu','Analog Feedback (ADC)','signal'],['inv','isense','Shunt','signal'],['tsens','mcu','Torque (SENT/ADC)','signal'],['asens','mcu','Angle (SPI/SENT)','signal'],['conn','tsens','Sensor Signals','signal'],['conn','asens','Sensor Signals','signal'],['sbc','tsens','VCC_SENS 5 V','power'],['sbc','asens','VCC_SENS 5 V','power'],['mcu','dbg','Diagnostic / Debug','signal']],
   questions:[
     {key:'type',block:'inv',q:'EPS 타입과 상전류 등급은?',why:'MOSFET 수·션트·방열·커넥터 등급이 달라집니다.',re:/컬럼|column|랙|rack|\d+\s*a\b/i,
-      options:[{label:'컬럼 타입 (C-EPS) · 상전류 ~60 A',effect:{feats:{inv:['상전류 60 A급 · MOSFET ×6'],conn:['커넥터 60 A급']},req:'컬럼 타입 60 A'}},
-               {label:'듀얼 피니언 / 랙 타입 · ~120 A',effect:{feats:{inv:['상전류 120 A급 · MOSFET ×6 병렬 ×2'],conn:['커넥터 120 A급 · 버스바']},req:'랙 타입 120 A'}},
-               {label:'상용차 랙 타입 · ~200 A',effect:{feats:{inv:['상전류 200 A급 · MOSFET 병렬 ×3 · 버스바'],conn:['버스바 단자 200 A']},req:'상용차 200 A'}}]},
+      options:[{label:'컬럼 타입 (C-EPS) · 상전류 ~60 A',effect:{impl:{id:'gate',type:'gdrv3',params:{i:60}},feats:{inv:['상전류 60 A급 · MOSFET ×6'],conn:['커넥터 60 A급']},req:'컬럼 타입 60 A'}},
+               {label:'듀얼 피니언 / 랙 타입 · ~120 A',effect:{impl:{id:'gate',type:'gdrv3',params:{i:120}},feats:{inv:['상전류 120 A급 · MOSFET ×6 병렬 ×2'],conn:['커넥터 120 A급 · 버스바']},req:'랙 타입 120 A'}},
+               {label:'상용차 랙 타입 · ~200 A',effect:{impl:{id:'gate',type:'gdrv3',params:{i:200}},feats:{inv:['상전류 200 A급 · MOSFET 병렬 ×3 · 버스바'],conn:['버스바 단자 200 A']},req:'상용차 200 A'}}]},
     {key:'torque',block:'tsens',q:'토크 센서 인터페이스는?',why:'MCU 핀·센서 전원·진단 방식이 정해집니다.',re:/sent|psi5|아날로그\s*토크|torque/i,
       options:[{label:'SENT 이중 채널',effect:{feats:{tsens:['SENT ×2 (SAE J2716)'],mcu:['SENT IF ×2']},req:'토크센서 SENT'}},
                {label:'아날로그 이중 채널 (비율 출력)',effect:{feats:{tsens:['아날로그 ×2 (0.5–4.5 V) · 상호 비교'],mcu:['ADC ×2 토크']},req:'토크센서 아날로그 이중'}},
@@ -44,7 +44,7 @@ T.eps={key:'eps',name:'EPS (전동 파워 스티어링) ECU',re:/\beps\b|파워\
     {key:'angle',block:'asens',q:'모터 위치 / 조향각 센서는?',why:'센서 IF 블록과 센서 전원 이중화가 달라집니다.',re:/리졸버|resolver|mr\s*센서|홀\s*센서|hall|각도\s*센서/i,
       options:[{label:'MR 각도 센서 ×2 (SPI/SENT)',effect:{feats:{asens:['MR 각도 센서 ×2 · SPI']}}},
                {label:'리졸버 (여자 회로 + RDC)',effect:{feats:{asens:['리졸버 여자 앰프 · RDC (AD2S1210 급)']},req:'리졸버'}},
-               {label:'홀 센서 ×3 (저가)',effect:{feats:{asens:['홀 센서 ×3 · 디지털 입력']},impl:{id:'gate',type:'bldc',params:{hall:1}},req:'홀 센서'}}]},
+               {label:'홀 센서 ×3 (저가)',effect:{feats:{asens:['홀 센서 ×3 · 디지털 입력']},impl:{id:'gate',type:'gdrv3',params:{hall:1}},req:'홀 센서'}}]},
     {key:'redund',block:'mcu',q:'리던던시(이중 채널) 구성인가요?',why:'2채널이면 MCU·게이트·인버터·전원을 복제하고 ASIL 분해(B(D)+B(D))를 적용합니다.',re:/리던던|redund|이중\s*채널|dual\s*channel|2\s*채널/i,
       options:[{label:'단일 채널 (ASIL D 단일 MCU 락스텝)',effect:{}},
                {label:'2채널 리던던트 EPS (각 ASIL B(D))',effect:{dup:[{id:'mcu',n:2},{id:'gate',n:2},{id:'inv',n:2},{id:'sbc',n:2}],feats:{mcu:['채널 간 상호 감시 (SPI/CAN)','ASIL 분해 B(D)']},req:'2채널 리던던트, 이중 급전'}}]},
@@ -103,7 +103,7 @@ T.bcm={key:'bcm',name:'BCM (바디 컨트롤 모듈)',re:/\bbcm\b|바디\s*컨�
     {key:'lin',block:'lin',q:'LIN 채널 수는?',why:'트랜시버 수와 MCU UART 수.',re:/lin\s*\d/i,
       options:[{label:'LIN 없음',effect:{remove:['lin']}},{label:'LIN ×2',effect:{feats:{lin:['LIN ×2']}}},{label:'LIN ×4',effect:{feats:{lin:['LIN ×4']},req:'LIN 4채널'}}]},
     {key:'motor',block:'lsd',q:'모터(와이퍼·윈도·시트) 직접 구동이 있나요?',why:'H-브리지 블록이 추가됩니다.',multi:false,re:/와이퍼|윈도|시트|h-?bridge/i,
-      options:[{label:'없음 (릴레이로 구동)',effect:{}},{label:'H-브리지 DC 모터 ×1–2',effect:{add:[{id:'hb',group:'io',label:'H-Bridge Motor Driver',feats:['DC 모터 ×2 · 전류 센싱'],impl:[{type:'dcmotor',params:{shunt:1}}]}],links:[['mcu','hb','PWM / EN','signal'],['pin','hb','VBAT','power'],['hb','conn','Motor','power']],req:'DC 모터 2개'}}]},
+      options:[{label:'없음 (릴레이로 구동)',effect:{}},{label:'H-브리지 DC 모터 ×1–2',effect:{add:[{id:'hb',group:'io',label:'H-Bridge Motor Driver',feats:['DC 모터 · 게이트 드라이버 + MOSFET ×4 · 전류 센싱'],impl:[{type:'hbridge',params:{i:10}}]}],links:[['mcu','hb','PWM / EN','signal'],['pin','hb','VBAT','power'],['hb','conn','Motor','power']],req:'DC 모터 2개'}}]},
     {key:'asil',block:'mcu',q:'안전 등급은?',why:'워치독·진단 범위.',re:/asil\s*[a-d]|\bqm\b/i,
       options:[{label:'QM',effect:{asil:'QM',req:'QM'}},{label:'ASIL A',effect:{asil:'A',req:'ASIL A'}},{label:'ASIL B',effect:{asil:'B',req:'ASIL B'}}]}]};
 T.inv={key:'inv',name:'트랙션 모터 인버터 (HV)',re:/인버터|inverter|트랙션|traction|모터\s*컨트롤러|motor\s*controller|mcu\s*\(모터\)/i,

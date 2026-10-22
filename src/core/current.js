@@ -23,10 +23,10 @@ const isGnd=n=>/^(GND|AGND|DGND|PGND|VSS|GNDA|GNDD|EARTH|0V)$/i.test(String(n||'
 function railV(n){n=String(n||'').replace(/^\//,'');let m=n.match(/^\+?(\d+)V(\d)?$/i);if(m)return+m[1]+(m[2]?+m[2]/10:0);m=n.match(/^\+?(\d+(?:\.\d+)?)\s*V$/i);if(m)return+m[1];m=n.match(/(?:VCC|VDD|V)_?(\d+)V(\d)/i);if(m)return+m[1]+(+m[2])/10;m=n.match(/(?:VCC|VDD|AVDD|DVDD|VIO|V)[_-]?(\d+(?:\.\d+)?)V?$/i);if(m&&+m[1]<60)return+m[1];
   if(/VIN|VBAT|VBUS_IN|VIN_RAW|KL30|VBB|VSUP/i.test(n))return 12;if(/^VBUS$|^USB_?5V|^VUSB/i.test(n))return 5;if(/VCC_DRV|VM\b|VMOT|VDRV|PVDD/i.test(n))return 12;if(/VCC_MCU|VDDA|3V3|VCC3/i.test(n))return 3.3;if(/VCC_5V|VCC_SENS|VCC5|5V/i.test(n))return 5;if(/VCC|VDD/i.test(n))return 3.3;return null;}
 const isRail=n=>!isGnd(n)&&!/USB_?D|_D[PM]$|D[+-]$|DATA|_TX|_RX|CAN[HL]|SDA|SCL|SW$|_FB|_EN|_SS|_COMP|BOOT|_RC$|_CP[LH]|VCP|VMON|SENSE|_CS/i.test(String(n||''))&&railV(n)!=null;
-const isPhase=n=>/^(PH_?[UVWABC]|PHASE_?[UVWABC]|MOTOR_?[UVWABC1-4]?|OUT_?[UVWABC1-4]|M[1-4][+-]?|OUT[1-4][+-]?|SH[ABC]|HB_?[AB])$/i.test(String(n||'').replace(/^\//,''));
+const isPhase=n=>/^(PH_?[UVWABC]|PHASE_?[UVWABC]|MOTOR_?[UVWABC1-4]?|OUT_?[UVWABC1-4]|M[1-4][+-]?|OUT[1-4][+-]?|SH[ABC]|HB\d*_?[AB]|PH\d+_?[UVW])$/i.test(String(n||'').replace(/^\//,''));
 /* ---- the estimate ---- */
 function motorCurrent(B){const p=B.newPlan;let I=null;const txt=String(p&&p.req||'');const m=txt.match(/(\d+(?:\.\d+)?)\s*A\b/i);if(m&&+m[1]>=1)I=+m[1];
-  if(p)for(const b of p.blocks||[]){if((b.type==='bldc'||b.type==='dcmotor')&&b.params&&+b.params.i>0)I=+b.params.i;}return I;}
+  if(p)for(const b of p.blocks||[]){if(/^(bldc|dcmotor|hbridge|gdrv3)$/.test(b.type)&&b.params&&+b.params.i>0)I=+b.params.i;}return I;}
 function netCurrents(B,opt){opt=opt||{};const out={};const rails={};const Im=motorCurrent(B);
   const nets=Object.keys(B.nets||{});nets.forEach(n=>{out[n]={I:0,cls:isGnd(n)?'gnd':isRail(n)?'rail':isPhase(n)?'phase':'sig',v:railV(n),loads:[]};});
   // parts: what each one draws from which rail, and what its outputs carry

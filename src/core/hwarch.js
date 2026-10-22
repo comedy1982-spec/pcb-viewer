@@ -56,8 +56,11 @@ function archFrom(text,name){
   // actuation / sensing / diagnostics
   const nm=(()=>{const m=lo.match(/(?:bldc|모터|motor|액추에이터)[^.\n]{0,16}?(\d+)\s*(?:개|대|축|ea)/)||lo.match(/(\d+)\s*(?:개|대|축)\s*(?:의\s*)?(?:bldc|모터|motor)/)||lo.match(/(?:듀얼|dual|2축|two)\s*(?:bldc|모터|motor)/);return m?(m[1]?Math.max(1,Math.min(8,+m[1])):2):1;})();
   for(let i=1;i<=(motor?nm:0);i++){const id=i===1?'drv':'drv'+i,sfx=nm>1?` #${i}`:'';
-    if(bldc)addBlock(A,'io','3-Phase Inverter / Gate Driver'+sfx,{id,feats:['MOSFET 6개 제어 (Gate Driver)','PWM ×3 · 상 전류'],impl:[{type:'bldc',params:{hall:hall?1:0}}]});
-    else addBlock(A,'io','H-Bridge / Gate Driver IC'+sfx,{id,feats:['MOSFET Control','과전류 보호'],impl:[{type:'dcmotor',params:{shunt:1}}]});
+    const kind=motorKind(lo,bldc);
+    if(kind.type==='gdrv3')addBlock(A,'io','3-Phase Gate Driver + MOSFET Inverter'+sfx,{id,feats:[`외부 N-MOSFET ×6${kind.par>1?' (병렬 '+kind.par+')':''} · 상전류 ${kind.i} A`,'게이트 드라이버 ×3 · 부트스트랩','레그 션트 ×3 + 전류 앰프'],impl:[{type:'gdrv3',params:{i:kind.i,hall:hall?1:0}}]});
+    else if(kind.type==='bldc')addBlock(A,'io','3-Phase Inverter / Gate Driver'+sfx,{id,feats:['FET 내장 3상 드라이버 (≤ 2.5 A)','PWM ×3 · 상 전류'],impl:[{type:'bldc',params:{hall:hall?1:0}}]});
+    else if(kind.type==='hbridge')addBlock(A,'io','H-Bridge Gate Driver + MOSFET ×4'+sfx,{id,feats:[`외부 N-MOSFET ×4${kind.par>1?' (병렬 '+kind.par+')':''} · ${kind.i} A`,'게이트 드라이버 ×2 · 부트스트랩 · 정/역회전','공통 션트 + 전류 앰프'],impl:[{type:'hbridge',params:{i:kind.i}}]});
+    else addBlock(A,'io','Low-side MOSFET Switch'+sfx,{id,feats:['단방향 · 로우사이드 FET 1개 (≤ 3 A)','과전류 검출 션트'],impl:[{type:'dcmotor',params:{shunt:1}}]});
     link(A,'mcu',id,`Control (PWM / EN)${sfx}`,{kind:'signal'});link(A,'reg',id,`VCC_DRV ${vin} V`,{kind:'power'});}
   if(curr||temp||hall){addBlock(A,'io',`${curr?'Current Sensing':''}${curr&&(temp||hall)?' & ':''}${temp?'Temp. Sensor':''}${!curr&&!temp&&hall?'Position Sensor':''}`,{id:'sense',feats:[curr?'전류 센싱 (Shunt + Amp)':null,temp?'온도 센서 (NTC)':null,hall?'홀 / 위치 센서':null,'HW Diagnostics'].filter(Boolean),impl:[{type:'vmon',params:{}}]});
     link(A,'sense','mcu','Analog Feedback (ADC)',{kind:'signal'});if(A.blocks.some(b=>b.id==='reg'))link(A,'reg','sense','VCC_SENS 5 V',{kind:'power'});}
@@ -90,14 +93,29 @@ function fromDiagram(D){
   const pw=A.blocks.filter(b=>b.group==='power').sort((x,y)=>(y.ext-x.ext)||(v(y)-v(x)));A.blocks=pw.concat(A.blocks.filter(b=>b.group!=='power'));
   A.fromBoard=true;return A;}
 
+/* motor power stage from the words: current class, H-bridge / external FET / gate driver / direction → library block */
+function motorKind(text,bldc){const t=String(text||'').toLowerCase();const ms=[...t.matchAll(/(\d+(?:\.\d+)?)\s*a(?![a-z가-힣])/g)].map(m=>+m[1]).filter(v=>v>=0.1&&v<=400);const i=ms.length?Math.max(...ms):null;
+  const ext=/외부\s*(n-?)?\s*(mos)?fet|게이트\s*드라이버|gate\s*driver|mosfet\s*[x×]?\s*\d|\d\s*(n-?)?\s*mosfet|인버터|inverter|파워\s*스테이지|power\s*stage|프리\s*드라이버|pre-?driver/.test(t);
+  const hb=/h-?\s*bridge|h\s*브리지|풀\s*브리지|full\s*bridge|정\s*[/·,]?\s*역|양방향|bidirection|reverse|4\s*(n-?)?\s*mosfet|mosfet\s*[x×]\s*4/.test(t);
+  if(bldc){const big=(i!=null&&i>2.5)||ext;const I=i!=null?i:20;return big?{type:'gdrv3',i:I,par:I<=25?1:I<=60?2:I<=100?3:4}:{type:'bldc',i:i||2};}
+  const big=(i!=null&&i>3)||ext||hb;const I=i!=null?i:hb||ext?10:2;return big?{type:'hbridge',i:I,par:I<=25?1:I<=60?2:I<=100?3:4}:{type:'dcmotor',i:I};}
+/* blocks whose words ask for an external-FET stage but whose circuit is the small single-FET / integrated driver: upgrade */
+function upgradeMotor(A,log){const hv=/고전압|\bhv\b|[4-9]\d\d\s*v\b|igbt|\bsic\b|절연\s*게이트/i.test((A.req||'')+' '+(A.blocks||[]).map(b=>b.label+' '+(b.feats||[]).join(' ')).join(' '));if(hv){log&&log.push('고전압 인버터 — 저전압 게이트 드라이버/FET 블록으로 바꾸지 않음 (절연 게이트 드라이버는 datasheet로 부품 지정)');return log;}
+  (A.blocks||[]).forEach(b=>{const txt=[b.label].concat(b.feats||[]).join(' ')+' '+(A.req||'');(b.impl||[]).forEach(im=>{
+    if(im.type==='dcmotor'){const k=motorKind([b.label].concat(b.feats||[]).join(' ')+' '+(A.req||''),false);if(k.type==='hbridge'){im.type='hbridge';im.params={i:k.i};log&&log.push(`${b.id}: 단일 로우사이드 FET → H-브리지 (게이트 드라이버 + MOSFET ×4, ${k.i} A)`);}}
+    else if(im.type==='bldc'){const k=motorKind(txt,true);if(k.type==='gdrv3'){im.type='gdrv3';im.params={i:k.i,hall:im.params&&im.params.hall!=null?im.params.hall:1};log&&log.push(`${b.id}: FET 내장 DRV8313 → 3상 게이트 드라이버 + MOSFET ×6 (${k.i} A)`);}}});});
+  // inverter / MOSFET blocks without a circuit next to a gate-driver block: realised by that block
+  const drv=(A.blocks||[]).find(b=>(b.impl||[]).some(i=>i.type==='gdrv3'||i.type==='hbridge'));if(drv)(A.blocks||[]).forEach(b=>{if(b!==drv&&!b.ext&&!(b.impl||[]).length&&/inverter|인버터|mosfet|fet\b|브리지|bridge/i.test(b.label)){b.via=drv.id;}});
+  return log;}
 /* ---- architecture → circuit plan (step 2): the impl of every block, in order ---- */
 function toPlan(A){
   if(typeof NEWPROJ==='undefined')throw new Error('NEWPROJ 필요');const P=NEWPROJ.newPlan(A.name);P.req=A.req;if(A.safety&&A.safety.level&&A.safety.level!=='QM')P.asil=A.safety.level;const log=[];const map=[];
+  upgradeMotor(A,log);
   const order=['power','ctrl','comm','io','ext'];
   order.forEach(g=>A.blocks.filter(b=>b.group===g).forEach(b=>(b.impl||[]).forEach(im=>{try{const x=NEWPROJ.addBlock(P,im.type,im.params||{});map.push({arch:b.id,plan:x.id});}catch(e){log.push(`${b.id}: ${e.message}`);}})));
   NEWPROJ.ldoToBuck(P,log,false);
-  const motor=A.blocks.some(b=>(b.impl||[]).some(i=>i.type==='bldc'));P.strategy=motor?'thermal':A.blocks.some(b=>(b.impl||[]).some(i=>i.type==='can'||i.type==='dcmotor'))?'noise':'balanced';
-  const unmapped=A.blocks.filter(b=>!b.ext&&!(b.impl||[]).length).map(b=>b.label);
+  const motor=A.blocks.some(b=>(b.impl||[]).some(i=>i.type==='bldc'||i.type==='gdrv3'||i.type==='hbridge'));P.strategy=motor?'thermal':A.blocks.some(b=>(b.impl||[]).some(i=>i.type==='can'||i.type==='dcmotor'))?'noise':'balanced';
+  const unmapped=A.blocks.filter(b=>!b.ext&&!b.via&&!(b.impl||[]).length).map(b=>b.label);
   return{plan:P,log,map,unmapped};}
 
 /* ---- layout: bands top to bottom, blocks centred in each band ---- */
@@ -148,7 +166,8 @@ function svg(A,opts){opts=opts||{};const sel=opts.sel||null;const L=layout(A);co
     if(lc){o.push(`<rect x="${b.x+b.w-46}" y="${b.y-8}" width="42" height="15" rx="7" fill="${lc}"/><text x="${b.x+b.w-25}" y="${b.y+3.5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">ASIL ${lv}</text>`);}if(b.safety)o.push(`<text x="${b.x+6}" y="${b.y+b.h-5}" font-size="9" fill="${HUE.safe}">안전 메커니즘</text>`);if(b.sg&&b.sg.length)o.push(`<text x="${b.x+b.w-6}" y="${b.y+b.h-5}" text-anchor="end" font-size="9" font-weight="700" fill="${HUE.safe}" opacity="0.85">${xe(b.sg.join(' · '))}</text>`);
     o.push(`<text x="${b.x+b.w/2}" y="${b.y+21}" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">${xe(b.label.length>30?b.label.slice(0,29)+'…':b.label)}</text>`);
     {const sw=b.feats.filter(f=>/^SW:/.test(f)),hw=b.feats.filter(f=>!/^SW:/.test(f));const show=hw.slice(0,sw.length?3:4);show.forEach((f,i)=>o.push(`<text x="${b.x+12}" y="${b.y+40+i*LH}" font-size="10.5" fill="currentColor" opacity="0.72">· ${xe(f.length>34?f.slice(0,33)+'…':f)}</text>`));if(sw.length)o.push(`<text x="${b.x+12}" y="${b.y+40+show.length*LH}" font-size="10.5" fill="${HUE.safe}" opacity="0.9">⚑ SW 안전 메커니즘 ${sw.length}개</text>`);}
-    if(!(b.impl||[]).length&&!b.ext)o.push(`<circle cx="${b.x+b.w-9}" cy="${b.y+9}" r="3.2" fill="none" stroke="currentColor" stroke-opacity="0.5"><title>회로 구현 블록 없음</title></circle>`);
+    if(b.via)o.push(`<text x="${b.x+b.w-6}" y="${b.y+14}" text-anchor="end" font-size="9" fill="currentColor" opacity="0.6">→ ${xe(b.via)} 회로에 포함</text>`);
+    if(!(b.impl||[]).length&&!b.ext&&!b.via)o.push(`<circle cx="${b.x+b.w-9}" cy="${b.y+9}" r="3.2" fill="none" stroke="currentColor" stroke-opacity="0.5"><title>회로 구현 블록 없음</title></circle>`);
     o.push('</g>');});
   const ly=L.H-12;o.push(`<g font-size="10.5" fill="currentColor" opacity="0.78"><line x1="${PAD}" y1="${ly}" x2="${PAD+24}" y2="${ly}" stroke="${HUE.power}" stroke-width="1.5" stroke-dasharray="6 4"/><text x="${PAD+30}" y="${ly+3.5}">전원 · 고전류</text>
     <line x1="${PAD+120}" y1="${ly}" x2="${PAD+144}" y2="${ly}" stroke="${HUE.signal}" stroke-width="1.5"/><text x="${PAD+150}" y="${ly+3.5}">제어 · 피드백 신호</text>
@@ -160,6 +179,6 @@ function text(A){const B=id=>A.blocks.find(b=>b.id===id);const L=[`HW 아키텍�
   L.push('인터페이스:');A.links.forEach(l=>{const a=B(l.a),b=B(l.b);L.push(`  ${l.a} ${l.both?'↔':'→'} ${l.b} : ${l.label} [${{power:'전원',signal:'신호',bus:'버스',safe:'세이프 스테이트'}[l.kind]}]${a&&b?'':' (끊김)'}`);});
   if(typeof SAFETY!=='undefined'&&SAFETY.level(A)!=='QM')L.push(SAFETY.archText(A));
   return L.join('\n');}
-return{GROUPS,gAlias,blank,addBlock,find,link,unlink,remove,archFrom,fromDiagram,toPlan,layout,svg,text};
+return{GROUPS,gAlias,blank,addBlock,find,link,unlink,remove,motorKind,upgradeMotor,archFrom,fromDiagram,toPlan,layout,svg,text};
 })();
 if(typeof module!=='undefined')module.exports=HWARCH;

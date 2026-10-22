@@ -70,7 +70,7 @@ test('HW architecture block diagram: functional blocks without parts, bands, lab
   assert.throws(() => HWARCH.addBlock(A, 'nowhere', 'X'), /그룹/);
   // step 2: the architecture turns into circuit blocks; blocks without an implementation are reported
   const t = HWARCH.toPlan(A);
-  assert.deepEqual([...new Set(t.plan.blocks.map(b => b.type))].sort(), ['buck', 'can', 'dcmotor', 'ldo', 'mcu', 'pwr_in', 'supervisor', 'uart', 'vmon', 'xtal']);
+  assert.deepEqual([...new Set(t.plan.blocks.map(b => b.type))].sort(), ['buck', 'can', 'hbridge', 'ldo', 'mcu', 'pwr_in', 'supervisor', 'uart', 'vmon', 'xtal']);
   assert.ok(!t.unmapped.includes('Watchdog / Reset') && t.unmapped.includes('Relay Driver'));
   assert.equal(NEWPROJ.build(t.plan).mcu, 'TC364DP-64F300F');
 });
