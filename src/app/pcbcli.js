@@ -18,7 +18,7 @@ const CLI_HELP=[
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
   ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia]','열린 넷을 자동 배선: 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
-  ['width [넷 <mm|auto>] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정 · 전류 지정 · 동박 두께/허용 온도 상승. route --iw 로 적용'],
+  ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
   ['auto [S] [--tries N]','리셋 → 배치 → 배선 → DRC → 리포트를 한 번에. 미배선이 남으면 다른 시드로 다시 시도해 가장 좋은 결과를 남김'],
   ['lock <부품…> · unlock <부품…|all> · locks','자동 배치에서 고정할 부품'],
@@ -304,6 +304,19 @@ async function cliOne(op,a){cliEnsureEdit();const[c]=cliRefs([a._[0]||'']);const
   return head;}
 
 /* natural language → commands, used when Claude is not available */
+/* net name from loose text: exact (any case) → without +/-/_/space ("12V" → "+12V", "vbat" → "VBAT") → unique substring */
+function cliNetFind(tok){const N=Object.keys(BD.nets||{});if(!tok)return null;const t=String(tok).trim();
+  let k=N.find(n=>n.toLowerCase()===t.toLowerCase());if(k)return k;
+  const norm=x=>String(x).toUpperCase().replace(/^[+]/,'').replace(/[\s_\-.]/g,'');const nt=norm(t);if(!nt)return null;
+  const eq=N.filter(n=>norm(n)===nt);if(eq.length)return eq.sort((a,b)=>(a[0]==='+'?0:1)-(b[0]==='+'?0:1))[0];
+  const sub=N.filter(n=>norm(n).includes(nt));return sub.length===1?sub[0]:null;}
+function cliNetHint(tok){const N=Object.keys(BD.nets||{});const nt=String(tok).toUpperCase().replace(/[^A-Z0-9]/g,'');const c=N.filter(n=>n.toUpperCase().replace(/[^A-Z0-9]/g,'').includes(nt)).slice(0,6);return c.length?` — 후보: ${c.join(', ')}`:'';}
+/* "x2", "2x", "×1.5", "2배", "+50%", "-20%" → factor */
+function cliWidthFactor(v){v=String(v).trim();let m=v.match(/^[x×*]\s*(\d+(?:\.\d+)?)$/i)||v.match(/^(\d+(?:\.\d+)?)\s*(?:x|×|배)$/i);if(m)return +m[1]>0?+m[1]:null;
+  m=v.match(/^([+-])\s*(\d+(?:\.\d+)?)\s*%$/);if(m)return 1+(m[1]==='-'?-1:1)*(+m[2])/100;return null;}
+/* the width a net has now: its widest routed track, else the fixed width, else the default/IPC width */
+function cliNetWidthNow(key){let w=0;PCB.cuKeys(BD).forEach(k=>BD.layers[k+'.cu'].forEach(p=>{if(p.net===key&&(p.t==='path'||p.t==='seg'||p.t==='track')&&p.w>w)w=p.w;}));
+  if(w)return +w.toFixed(3);if(BD.netWidth&&BD.netWidth[key]!=null)return +BD.netWidth[key];const W=CURRENT.widths(BD,{oz:BD.oz||1,dT:BD.dT||10})[key];return W?W.w:0.2;}
 function cliNL(t){const s=t.toLowerCase();const out=[];
   const strat=/열|발열|방열|thermal|heat/.test(s)?'thermal':/노이즈|잡음|emc|emi|noise/.test(s)?'noise':/작게|소형|compact|촘촘|조밀/.test(s)?'compact':/균형|balanced/.test(s)?'balanced':null;
   const m=s.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*[x×*]\s*(\d+(?:\.\d+)?)/)||(/보드|board|크기|사이즈/.test(s)&&s.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*(?:,|와|과|및|by|\s)\s*(\d+(?:\.\d+)?)/));
@@ -325,6 +338,17 @@ function cliNL(t){const s=t.toLowerCase();const out=[];
     else if(shp==='round')out.push(`board shape round ${m?m[1]+' '+m[2]:f1(BD.W)+' '+f1(BD.H)}${R?' --corner '+R[1]:''}`);
     else out.push(`board shape ${shp} ${m?m[1]+' '+m[2]:f1(BD.W)+' '+f1(BD.H)}`);
     if(m)out.splice(out.indexOf(`board size ${m[1]} ${m[2]}${/가운데|중앙|center/.test(s)?' --anchor center':''}`),1);}
+  // net width, loose names and relative: "12V라인의 폭을 2배로 확장해", "+5V 폭 1.2mm", "VBAT 배선 50% 넓혀", "GND 폭 두 배"
+  if(/폭|width|굵|두껍|넓혀|넓게|얇게|좁게/.test(s)&&!/(폭|width)\s*(표|보여|알려|확인|어때|얼마)/.test(s)){
+    const KN={'두':2,'세':3,'네':4,'한':1};let f=null,mm=null;
+    const xm=s.match(/(\d+(?:\.\d+)?)\s*배/)||s.match(/[x×]\s*(\d+(?:\.\d+)?)/);if(xm)f=+xm[1];else{const km=s.match(/(두|세|네)\s*배/);if(km)f=KN[km[1]];}
+    const pm=s.match(/(\d+(?:\.\d+)?)\s*%/);if(!f&&pm)f=/줄|좁|얇|감소|reduce/.test(s)?1-(+pm[1])/100:1+(+pm[1])/100;
+    if(!f){const mmm=s.match(/(\d+(?:\.\d+)?)\s*mm/);if(mmm)mm=+mmm[1];}
+    if(!f&&mm==null&&/넓혀|넓게|두껍|굵게/.test(s))f=1.5;if(!f&&mm==null&&/얇게|좁게|가늘/.test(s))f=0.75;
+    const cands=[...t.matchAll(/[+-]?\d+(?:\.\d+)?\s*V\d*(?![a-z])|[+]?[A-Za-z][A-Za-z0-9_+.]{1,15}/g)].map(x=>x[0].replace(/\s+/g,'')).filter(x=>!/^(mm|width|net|line|x\d*)$/i.test(x));
+    let key=null;for(const c of cands){key=cliNetFind(c);if(key)break;}
+    if(key&&(f||mm!=null)){const apply=/확장|넓혀|넓게|키워|늘려|줄여|좁게|얇게|적용|바꿔|변경|다시|배선|route|해\s*줘|해$|해줘/.test(s);
+      out.push(`width ${key} ${f?'x'+(+f.toFixed(3)):mm}${apply&&PCB.cuKeys(BD).some(k=>BD.layers[k+'.cu'].some(p=>p.auto&&p.net===key))?' --apply':''}`);return out;}}
   // track width by current: "전류 기준으로 폭", "VCC_DRV 폭 1.5mm", "모터 전원 10A로"
   const wn=t.match(/(?:^|[\s,])([A-Z+][A-Z0-9_+.]{1,15})\s*(?:넷|net)?\s*(?:폭|width)\s*(\d+(?:\.\d+)?)\s*mm/i)||t.match(/(?:폭|width)\s*(?:을|를)?\s*(\d+(?:\.\d+)?)\s*mm\s*(?:로|으로)?\s*.*?\b([A-Z+][A-Z0-9_+.]{1,15})\b/i);
   if(wn){const net=wn[2]&&/^\d/.test(wn[2])?wn[1]:(/^\d/.test(wn[1])?wn[2]:wn[1]),mm=/^\d/.test(wn[1])?wn[1]:wn[2];if(BD.nets&&BD.nets[net]){out.push(`width ${net} ${mm}`);if(/배선|route/.test(s))out.push('route');return out;}}
@@ -359,10 +383,12 @@ async function cliRun(line,quiet,by){
     case 'route':return await cliRoute(a);
     case 'unroute':return cliUnroute();
     case 'width':{if(typeof CURRENT==='undefined')throw new Error('전류 모듈 없음');if(a.oz){BD.oz=Math.max(0.5,+a.oz);}if(a.dt){BD.dT=Math.max(5,+a.dt);}
-      const net=a._[0];if(net){const key=Object.keys(BD.nets||{}).find(n=>n.toLowerCase()===String(net).toLowerCase());if(!key)throw new Error('넷 '+net+' 없음');
+      const net=a._[0];if(net){const key=cliNetFind(net);if(!key)throw new Error('넷 '+net+' 없음'+cliNetHint(net));
         BD.netWidth=BD.netWidth||{};BD.netCurrent=BD.netCurrent||{};
         if(a.current!=null){BD.netCurrent[key]=+a.current;delete BD.netWidth[key];}
-        else{const v=a._[1];if(v==null)throw new Error('width <넷> <mm|auto> 또는 --current A');if(v==='auto'){delete BD.netWidth[key];delete BD.netCurrent[key];}else{const mm=parseFloat(v);if(!(mm>=0.1&&mm<=10))throw new Error('폭 0.1–10 mm');BD.netWidth[key]=mm;}}
+        else{const v=a._[1];if(v==null)throw new Error('width <넷> <mm|auto> 또는 --current A');if(v==='auto'){delete BD.netWidth[key];delete BD.netCurrent[key];}else{const f=cliWidthFactor(v);let mm;if(f){const b=cliNetWidthNow(key);mm=+(b*f).toFixed(2);cliSay('out',`${key}: 현재 ${b} mm × ${+f.toFixed(3)} → ${mm} mm`);}else mm=parseFloat(v);if(!(mm>=0.1&&mm<=10))throw new Error('폭 0.1–10 mm (계산값 '+mm+' mm)');BD.netWidth[key]=mm;}}
+        if(a.apply){const kill=[];PCB.cuKeys(BD).forEach(k=>BD.layers[k+'.cu'].forEach(p=>{if(p.auto&&p.net===key)kill.push(p);}));BD.vias.forEach(v=>{if(v.auto&&v.net===key)kill.push(v);});
+          if(kill.length){cliEnsureEdit();AUTOROUTE.unroute(BD,kill);PCBEDIT.rebuildNets(BD);}const r=await cliRoute({nets:key,iw:false});const w2=CURRENT.widths(BD,{oz:BD.oz||1,dT:BD.dT||10})[key];return`${key} 폭 ${BD.netWidth[key]!=null?BD.netWidth[key]:w2.w} mm 로 다시 배선 (지운 자동 트랙·비아 ${kill.length}개)\n${r}`;}
         const w=CURRENT.widths(BD,{oz:BD.oz||1,dT:BD.dT||10})[key];return`${key}: ${w.I.toFixed(2)} A → 권장 ${w.ipc} mm${w.manual?' · 지정 '+w.w+' mm':''}${w.pour?' (동박면 권장)':''} — route --iw 또는 route 로 적용`;}
       return CURRENT.text(BD,{oz:BD.oz||1,dT:BD.dT||10});}
     case 'pinswap':return await cliPinswap(a);
@@ -412,7 +438,7 @@ Commands (exactly this syntax):
 ${'$'}{CMDS}
 Strategies: balanced (wirelength/decoupling/heat/noise evenly), thermal (heat sources spread apart, away from electrolytic caps/crystals/analog), noise (decaps at pins, short switching loops, switching parts far from MCU/crystal/analog, ground plane kept whole), compact (short wiring, parts gathered).
 Routing order is fixed by ECU practice: high-current power/drive → clocks/high-speed/differential → sensitive analog → general digital; high-speed nets avoid a 2 mm band at the board edge; a GND return via is dropped next to each layer change of clock/analog nets (route does all of this by default; --order length / --no-edge / --no-retvia switch it off). "guide check" reports these as rules (rt_priority, rt_return_via, rt_edge_keepout, pw_agnd_star, th_via_array).
-Track width: default 0.2 mm signal / 0.3 mm power by net name. "width" lists the estimated current per net and the IPC-2221 width; "width NET 1.2" fixes a net's width, "width NET --current 4" sets its current; "route --iw" routes power/motor nets at their IPC-2221 width (capped by --iwmax, default 2 mm; wider nets should become copper pours). "drc" also reports tracks too thin for their current. Use these when the user talks about current, heating, motor/power trace width.
+Track width: default 0.2 mm signal / 0.3 mm power by net name. "width" lists the estimated current per net and the IPC-2221 width; "width NET 1.2" fixes a net's width, "width NET x2 --apply" doubles its current width and re-routes only that net (net names match loosely: 12V → +12V), "width NET --current 4" sets its current; "route --iw" routes power/motor nets at their IPC-2221 width (capped by --iwmax, default 2 mm; wider nets should become copper pours). "drc" also reports tracks too thin for their current. Use these when the user talks about current, heating, motor/power trace width.
 Sides: parts go on the TOP side only by default (single-sided assembly: one reflow pass, cheapest, connectors/through-hole/electrolytics must be top). "reset --both" / "place --both" also uses the bottom for passives and small ICs (two-sided assembly) — use it when the user asks for 양면/하단 배치 or the board must be smaller than single-sided allows.
 Board too small: "reset" grows the board automatically when parts do not fit, and "board minimize" grows past the original size when needed (--no-grow stops that); after any size change run "route" (or add --route). Never stop at "parts outside the board" — re-place (reset) and route again.
 Moving: "move REF x y [deg]", "rotate REF deg", "flip REF" (to the other side) remove that part's auto-routed tracks and re-route its nets right away (add --no-route to leave the ratsnest open); hand-drawn tracks are kept.
