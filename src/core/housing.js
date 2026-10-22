@@ -24,6 +24,14 @@ const MATS={
   adc12:{epsIn:0.3,label:'알루미늄 다이캐스팅 (ADC12)',short:'ADC12 다이캐스팅',k:96,rho:2700,eps:0.85,t0:2.5,costKg:3.6,proc:1.5,maxIP:69,maxVib:20,metal:true,proc_label:'다이캐스팅'},
   az91d:{epsIn:0.4,label:'마그네슘 다이캐스팅 (AZ91D, 화성 처리)',short:'AZ91D 다이캐스팅',k:73,rho:1810,eps:0.85,t0:2.0,costKg:6.5,proc:1.8,maxIP:69,maxVib:20,metal:true,proc_label:'다이캐스팅 + 방식 처리'}};
 const IPS=['IP20','IP40','IP54','IP65','IP67','IP69K'];
+/* housing concepts (design styles): which material each part uses and which features the style brings.
+   fins: where cooling fins go · ears: mounting · fasten: how the cover is held · conn: connector treatment */
+const CONCEPTS={
+  A:{label:'다이캐스팅 알루미늄 ECU',short:'다이캐스팅',base:'adc12',lid:'adc12',fins:'lid',ears:'ear',fasten:'screw',conn:'flange',lightpipe:false,ribs:false,desc:'ADC12 베이스+커버 · 커버 방열 핀 · 장착 이어+부싱 · 실링 커넥터 플랜지 · O-링 · 커버 나사 · 벤트 · 각인',use:'엔진룸 ECU · 모터 제어기 · IP67/69K'},
+  B:{label:'PC/ABS 사출 스냅핏 박스',short:'플라스틱 스냅핏',base:'pcabs',lid:'pcabs',fins:null,ears:'slot',fasten:'snap',conn:'grommet',lightpipe:true,ribs:true,desc:'벽 2.5 mm · 스냅 훅 + 보조 나사 · 발포 가스켓 · 내부 리브 · 히트스테이크 보스 · 커넥터 창+그로밋 · 벤트 · 키홀 장착 · LED 라이트 파이프',use:'실내 센서 노드 · BCM · IP54'},
+  C:{label:'압출 알루미늄 프로파일 + 엔드 플레이트',short:'압출 프로파일',base:'a6063',lid:'a6063',fins:'top',ears:'din',fasten:'endplate',conn:'endplate',lightpipe:true,ribs:false,desc:'PCB 슬롯 2단 · 외벽 방열 핀 · 길이 재단으로 사이즈 변경 · 엔드 플레이트 M3 ×4 · 커넥터·LED는 엔드 플레이트 · DIN 클립 · 아노다이징',use:'산업용 · 시제품 · 랙/DIN 장착'},
+  D:{label:'하이브리드: 알루미늄 베이스 + 플라스틱 커버',short:'하이브리드',base:'adc12',lid:'pcabs',fins:'floor',ears:'ear',fasten:'insert',conn:'molded',lightpipe:true,ribs:false,desc:'베이스 ADC12(바닥 핀 · 열보스 · 이어 · 접지 스터드 · O-링 홈) + 커버 PC/ABS-GF(커넥터 헤더 일체 성형 · 라이트 파이프 · 벤트 · 각인 · 황동 인서트 M4)',use:'EPS·인버터 ECU — 무게 −35 % · 커넥터 원가 ↓ · 방열은 금속'}};
+function conceptOf(inp,matKey){const k=inp&&inp.concept;if(k&&CONCEPTS[k])return Object.assign({key:k},CONCEPTS[k]);const m=MATS[matKey];if(matKey==='a6063')return Object.assign({key:'C'},CONCEPTS.C);return m&&m.metal?Object.assign({key:'A'},CONCEPTS.A,{base:matKey,lid:matKey}):Object.assign({key:'B'},CONCEPTS.B,{base:matKey,lid:matKey});}
 const IPN={IP20:20,IP40:40,IP54:54,IP65:65,IP67:67,IP69K:69};
 const ipKey=v=>{const s=String(v==null?'':v).toUpperCase().replace(/\s/g,'');if(IPN[s])return s;if(IPN['IP'+s])return'IP'+s;const n=parseInt(s.replace(/^IP/,''),10);if(!isFinite(n))return null;return IPS.slice().reverse().find(k=>IPN[k]<=n)||'IP20';};
 const SEAL={
@@ -159,7 +167,7 @@ function thermal(m,geo,inp,N,fins){
 
 /* ---- one candidate material ---- */
 function design(B,inp,matKey,N){
-  const m=MATS[matKey];const ip=ipKey(inp.ip)||'IP54';const S=SEAL[ip];
+  const C=conceptOf(inp,matKey);if(inp.concept&&CONCEPTS[inp.concept])matKey=C.base;const m=MATS[matKey];const mLid=MATS[C.lid]||m;const ip=ipKey(inp.ip)||'IP54';const S=SEAL[ip];
   const O=(inp.cad&&inp.cad.over)||{},F=(inp.cad&&inp.cad.feats)||[];const num=v=>v!=null&&v!==''&&isFinite(+v);
   const gap=num(O.gap)?Math.max(0.3,+O.gap):1.5;const gp={W:gap,E:gap,S:gap,N:gap};N.cuts.filter(c=>c.sealed).forEach(c=>{const v=Math.max(0.3,c.gap);gp[c.side]=gp[c.side]===gap?v:Math.min(gp[c.side],v);});const tAuto=Math.round((m.t0+0.05*inp.vib+0.002*Math.max(N.W,N.H)+(S.extraWall||0))*10)/10;const t=num(O.wall)?Math.max(0.8,+O.wall):tAuto;
   const stand=num(O.stand)?Math.max(N.htBot+0.5,1.5,+O.stand):Math.max(4,Math.ceil(N.htBot+2));const top=num(O.top)?Math.max(N.htTop+0.5,1,+O.top):Math.max(3,Math.ceil(N.htTop+2.5));
@@ -188,18 +196,24 @@ function design(B,inp,matKey,N){
   // fins when the plain box runs too hot (metal only)
   N.nsup=sup.length;let th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,null);let fins=null;const fu=F.find(f=>f.type==='fins');
   if(fu&&!fu.off){const nF=Math.max(1,Math.round(+fu.n||10)),hf=Math.max(2,+fu.h||12),pitchF=+fu.pitch||Math.max(3,(geo.Lo-10)/nF);fins={n:nF,h:hf,t:+fu.t||2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8),user:true};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
-  else if(!fu&&m.metal&&matKey!=='spcc'&&(th.margin<0.3||th.hotJ.length)&&inp.fins!==false){const pitchF=8,hf=Math.min(25,Math.max(8,inp.P*0.8)),nF=Math.floor((geo.Lo-10)/pitchF);fins={n:nF,h:hf,t:2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8)};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
+  else if(!fu&&C.fins&&m.metal&&matKey!=='spcc'&&(th.margin<0.3||th.hotJ.length)&&inp.fins!==false){const pitchF=8,hf=Math.min(25,Math.max(8,inp.P*0.8)),nF=Math.floor((geo.Lo-10)/pitchF);fins={n:nF,h:hf,t:2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8)};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
   if(fins&&geo.ringO){const inR=(x,y)=>{let c=false;const r=geo.ringI;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))c=!c;}return c;};
     const keep=[];for(let k=0;k<fins.n;k++){const x=geo.x0+5+k*fins.pitch+fins.t/2;if(inR(x,geo.y0+4)&&inR(x,geo.y0+4+fins.len))keep.push(k);}fins.keep=keep;fins.area=keep.length*2*fins.h*fins.len;}
   // user CAD features (text-to-CAD console): wall / cover / floor holes and slots, mounting tabs, floor ribs, an engraved label
   const feats=cadFeatures(F,geo,N,sup);const fv=feats.reduce((a,f)=>a+(f.vol||0),0),fc=feats.reduce((a,f)=>a+(f.cost||0),0);
   // mass and a relative cost
   const vol=fv+(geo.ringO?geo.areaO*geo.Ho-geo.areaI*geo.Hi:geo.Lo*geo.Wo*geo.Ho-geo.Li*geo.Wi*geo.Hi)+sup.length*Math.PI*9*stand+ns*Math.PI*16*geo.Hi*0.5+(fins?fins.n*fins.t*fins.h*fins.len:0)+th.peds.reduce((a,p)=>a+p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0),0);
-  const mass=vol*1e-9*m.rho*1000; // g
-  const cost=mass/1000*m.costKg*m.proc+S.cost+ns*0.05+(S.breather?1.2:0)+(fins?0.6:0)+th.peds.reduce((a,p)=>a+0.15+TIMS[p.tim].costCm2*p.area/100+p.vias*0.002,0)+(added.length*0.1)+N.cuts.filter(c=>c.sealed).length*0.3+fc;
+  const lidFrac=mLid===m?0:Math.max(0.1,Math.min(0.6,(geo.zLid+t-geo.zSplit)/geo.Ho));const rhoMix=m.rho*(1-lidFrac)+mLid.rho*lidFrac;
+  const mass=vol*1e-9*rhoMix*1000; // g
+  const cost=(vol*1e-9*m.rho*1000*(1-lidFrac))/1000*m.costKg*m.proc+(vol*1e-9*mLid.rho*1000*lidFrac)/1000*mLid.costKg*mLid.proc+S.cost+ns*0.05+(S.breather?1.2:0)+(fins?0.6:0)+th.peds.reduce((a,p)=>a+0.15+TIMS[p.tim].costCm2*p.area/100+p.vias*0.002,0)+(added.length*0.1)+N.cuts.filter(c=>c.sealed).length*0.3+fc;
   const why=[];const ok={thermal:th.margin>=0.25&&!th.hotJ.length,ip:IPN[ip]<=m.maxIP,vib:inp.vib<=m.maxVib&&vib.sf>=1.5};
   if(th.margin<0.25)why.push(`열 여유 ${(th.margin*100).toFixed(0)}% < 25%`);if(th.hotJ.length)why.push(`Tj > ${inp.tj} °C (${th.hotJ.join(', ')})`);if(!ok.ip)why.push(`${ip} 대응 어려움 (${m.short} 최대 IP${m.maxIP})`);if(!ok.vib)why.push(inp.vib>m.maxVib?`진동 ${inp.vib} Grms 초과 (보스 강도)`:`PCB 진동 안전율 ${vib.sf.toFixed(2)}`);
-  return{mat:matKey,m,ip,seal:S,geo,sup,added,vib,screwM,screws,ns,pitch,th,fins,mass,cost,ok,feasible:ok.thermal&&ok.ip&&ok.vib,why,feats};
+  if(fins)fins.where=C.fins||'lid';
+  // concept extras: snap-fit covers need no screw bosses (two safety screws), end-plate styles fasten at the ends
+  let nsC=ns,screwsC=screws;if(C.fasten==='snap'){nsC=2;screwsC=screws.filter((s,i)=>i%Math.max(1,Math.round(screws.length/2))===0).slice(0,2);}
+  else if(C.fasten==='endplate'){nsC=8;screwsC=[[-1,-1],[-1,1],[1,-1],[1,1]].flatMap(([sx,sy])=>[{x:geo.x0+(sx<0?4:geo.Lo-4),y:geo.y0+(sy<0?5:geo.Wo-5),end:sx}]);}
+  const massLid=0;const concept=Object.assign({},C,{mLid});
+  return{mat:matKey,m,mLid,concept,ip,seal:S,geo,sup,added,vib,screwM,screws:screwsC,ns:nsC,pitch,th,fins,mass,cost:cost+(C.conn==='molded'?-Math.min(0.3*N.cuts.length,0.25*cost):0)+(C.fasten==='snap'?-ns*0.05:0)+(C.ears==='ear'?0.35:0)+(C.ears==='din'?0.9:0)+(C.fasten==='insert'?0.12*nsC:0)+(C.fasten==='endplate'?0.5:0),ok,feasible:ok.thermal&&ok.ip&&ok.vib,why,feats};
 }
 /* user features → absolute geometry. Side walls: W (x min) · E (x max) · S (y min, front) · N (y max, back); T = cover top, B = floor.
    Wall position u runs along the wall from its start (x0 or y0), height z is in board coordinates (board mid-plane = 0). */
@@ -249,7 +263,7 @@ function analyze(B,input){
   const N=boardNeeds(B,{power:inp.power});if(inp.P==null||inp.P===''||!isFinite(+inp.P))inp.P=Math.round(N.Ptot*100)/100;
   // a heat load given by hand is spread over the heat sources in the same proportions (or put on the biggest IC)
   if(+inp.P>0&&Math.abs(+inp.P-N.Ptot)>1e-6){if(N.Ptot>0){const k=+inp.P/N.Ptot;N.hot.forEach(h=>{h.P*=k;});}else{const c=B.comps.filter(c=>c.pads.length>=8&&!isConn(c)).sort((a,b)=>b.pads.length-a.pads.length)[0];if(c)N.hot=[heatInfo({ref:c.ref,P:+inp.P,c},B.comps)];}N.Ptot=+inp.P;}inp.P=Math.max(0,+inp.P);inp.vib=Math.max(0,+inp.vib||0);inp.ta=+inp.ta;inp.tmax=+inp.tmax;inp.ip=ipKey(inp.ip)||'IP54';
-  const all=Object.keys(MATS).map(k=>design(B,inp,k,N));
+  const all=(inp.concept&&CONCEPTS[inp.concept]?[CONCEPTS[inp.concept].base]:Object.keys(MATS)).map(k=>design(B,inp,k,N));
   const maxC=Math.max(...all.map(d=>d.cost)),maxM=Math.max(...all.map(d=>d.mass));
   all.forEach(d=>{d.costIdx=Math.round(d.cost/maxC*100);d.massIdx=Math.round(d.mass/maxM*100);});
   let pick;if(inp.mat&&inp.mat!=='auto'&&MATS[inp.mat])pick=all.find(d=>d.mat===inp.mat);
@@ -275,7 +289,7 @@ function analyze(B,input){
     idx:{cost:d.costIdx,mass:d.massIdx,thermal:Math.round(clamp(d.th.margin,0,1)*100),vib:Math.round(clamp(d.vib.sf/2.5,0,1)*100)}};
 }
 /* ---- text report ---- */
-function text(R){const d=R.d,i=R.inp,g=d.geo;const L=[];if(g.ringO)L.push(`보드 외곽을 따르는 하우징 (${({circle:'원형',oval:'타원',hex:'육각형',oct:'팔각형',L:'L자형',T:'T자형',poly:'다각형'})[g.shape]||g.shape}) · 바닥 면적 ${g.areaO.toFixed(0)} mm² · 둘레 ${g.perO.toFixed(0)} mm`);
+function text(R){const d=R.d,i=R.inp,g=d.geo;const L=[];if(d.concept)L.push(`시안 ${d.concept.key} · ${d.concept.label} — 베이스 ${d.m.short}${d.mLid&&d.mLid!==d.m?' · 커버 '+d.mLid.short:''} · ${d.concept.desc}`);if(g.ringO)L.push(`보드 외곽을 따르는 하우징 (${({circle:'원형',oval:'타원',hex:'육각형',oct:'팔각형',L:'L자형',T:'T자형',poly:'다각형'})[g.shape]||g.shape}) · 바닥 면적 ${g.areaO.toFixed(0)} mm² · 둘레 ${g.perO.toFixed(0)} mm`);
   L.push(`하우징 설계 · 발열 ${i.P} W · ${d.ip} · 진동 ${i.vib} Grms · 주위 ${i.ta} °C · PCB 한계 ${i.tmax} °C`);
   L.push('설계 조건:');R.conds.forEach(c=>L.push('  • '+c));
   L.push(`재질: ${d.m.label} · 벽두께 ${g.t} mm${g.rim>g.t?` (실링 플랜지 ${g.rim} mm)`:''} · 공정 ${d.m.proc_label}`);
@@ -387,7 +401,7 @@ function partMass(R){const d=R.d,g=d.geo,m=d.m;const Zb=g.zFloor-g.t,Zt=g.zLid+g
   d.th.peds.filter(p=>p.kind==='bottom').forEach(p=>{vb+=p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0);});d.feats.forEach(f=>{if(f.type==='tabs'||f.type==='rib')vb+=f.vol||0;});
   let vl=plate*g.t+per*g.rim*Math.max(0,g.zLid-g.zSplit);d.th.peds.filter(p=>p.kind==='top').forEach(p=>{vl+=p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0);});
   if(d.fins)vl+=d.fins.n*d.fins.t*d.fins.h*d.fins.len;
-  const gk=v=>v*1e-9*m.rho*1000;return{base:gk(vb),lid:gk(vl),hBase:g.zSplit-Zb,hLid:Zt-g.zSplit};}
+  const gk=v=>v*1e-9*m.rho*1000,gl=v=>v*1e-9*(d.mLid||m).rho*1000;return{base:gk(vb),lid:gl(vl),hBase:g.zSplit-Zb,hLid:Zt-g.zSplit};}
 function mechBom(R){const d=R.d,g=d.geo,m=d.m,S=d.seal;const PM=partMass(R);const rows=[];let no=0;
   const add=(o)=>{rows.push(Object.assign({no:++no,qty:1,unit:'EA',src:'구매',cost:null,note:''},o));};
   const surf=m.metal?(d.mat==='a6063'?'아노다이징 (흑색 또는 투명)':d.mat==='az91d'?'화성 처리 + 분체 도장':d.mat==='spcc'?'인산염 처리 + 분체 도장':'쇼트 블라스트 + 투명 크로메이트'):'무도장 (텍스처 MT-11010)';
@@ -564,6 +578,6 @@ function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString(
     `module lid(){intersection(){union(){shell(); pedestals(); fins();} translate([x0-1,y0-1,zSplit]) cube([Lo+2,Wo+2,zLid+wall+40-zSplit]);}}`,
     `base();`,`translate([0,0,15]) lid(); // 열린 상태로 보기 — 조립은 translate 제거`];
   return o.join('\n')+'\n';}
-return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,offsetRing,ringPoints,ringHit,ringCCW,shapedBoard,featLabel,edgeText,edgeLayers,drawingSVG,partSVG,mechBom,mechBomAoa,partMass,boardNeeds,pcbVibration,analyze,text,compareText,scad};
+return{MATS,TIMS,IPS,CONCEPTS,conceptOf,ipKey,SEAL,SIDE_KO,SCREW_D,offsetRing,ringPoints,ringHit,ringCCW,shapedBoard,featLabel,edgeText,edgeLayers,drawingSVG,partSVG,mechBom,mechBomAoa,partMass,boardNeeds,pcbVibration,analyze,text,compareText,scad};
 })();
 if(typeof module!=='undefined')module.exports=HOUSING;

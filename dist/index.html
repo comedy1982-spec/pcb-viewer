@@ -784,7 +784,13 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .aim-q{font:inherit;font-size:12px;padding:2px 4px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--fg)}
 .aim-q[hidden]{display:none}
 </style>
-<style>#peCli{z-index:7}.pcb-gate{place-items:start center;padding-top:28px}</style>
+<style>#peCli{z-index:7}.pcb-gate{place-items:start center;padding-top:28px}.mconc{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:4px;margin:2px 0 4px}
+.mconc .mcc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 7px;border:1px solid var(--line);border-radius:8px;background:var(--panel2,transparent);color:inherit;font:inherit;text-align:left;cursor:pointer;min-width:0}
+.mconc .mcc b{font-size:12px}.mconc .mcc span{font-size:10.5px;color:var(--muted);line-height:1.25;white-space:normal}
+.mconc .mcc.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.mconc-d{margin:0 0 6px;line-height:1.35}
+
+</style>
 
 <style>
 /* ---------- AI 코파일럿 분할: workspace | right dock (설계 도우미 · 정보 · 시뮬레이션) ---------- */
@@ -6796,6 +6802,14 @@ const MATS={
   adc12:{epsIn:0.3,label:'알루미늄 다이캐스팅 (ADC12)',short:'ADC12 다이캐스팅',k:96,rho:2700,eps:0.85,t0:2.5,costKg:3.6,proc:1.5,maxIP:69,maxVib:20,metal:true,proc_label:'다이캐스팅'},
   az91d:{epsIn:0.4,label:'마그네슘 다이캐스팅 (AZ91D, 화성 처리)',short:'AZ91D 다이캐스팅',k:73,rho:1810,eps:0.85,t0:2.0,costKg:6.5,proc:1.8,maxIP:69,maxVib:20,metal:true,proc_label:'다이캐스팅 + 방식 처리'}};
 const IPS=['IP20','IP40','IP54','IP65','IP67','IP69K'];
+/* housing concepts (design styles): which material each part uses and which features the style brings.
+   fins: where cooling fins go · ears: mounting · fasten: how the cover is held · conn: connector treatment */
+const CONCEPTS={
+  A:{label:'다이캐스팅 알루미늄 ECU',short:'다이캐스팅',base:'adc12',lid:'adc12',fins:'lid',ears:'ear',fasten:'screw',conn:'flange',lightpipe:false,ribs:false,desc:'ADC12 베이스+커버 · 커버 방열 핀 · 장착 이어+부싱 · 실링 커넥터 플랜지 · O-링 · 커버 나사 · 벤트 · 각인',use:'엔진룸 ECU · 모터 제어기 · IP67/69K'},
+  B:{label:'PC/ABS 사출 스냅핏 박스',short:'플라스틱 스냅핏',base:'pcabs',lid:'pcabs',fins:null,ears:'slot',fasten:'snap',conn:'grommet',lightpipe:true,ribs:true,desc:'벽 2.5 mm · 스냅 훅 + 보조 나사 · 발포 가스켓 · 내부 리브 · 히트스테이크 보스 · 커넥터 창+그로밋 · 벤트 · 키홀 장착 · LED 라이트 파이프',use:'실내 센서 노드 · BCM · IP54'},
+  C:{label:'압출 알루미늄 프로파일 + 엔드 플레이트',short:'압출 프로파일',base:'a6063',lid:'a6063',fins:'top',ears:'din',fasten:'endplate',conn:'endplate',lightpipe:true,ribs:false,desc:'PCB 슬롯 2단 · 외벽 방열 핀 · 길이 재단으로 사이즈 변경 · 엔드 플레이트 M3 ×4 · 커넥터·LED는 엔드 플레이트 · DIN 클립 · 아노다이징',use:'산업용 · 시제품 · 랙/DIN 장착'},
+  D:{label:'하이브리드: 알루미늄 베이스 + 플라스틱 커버',short:'하이브리드',base:'adc12',lid:'pcabs',fins:'floor',ears:'ear',fasten:'insert',conn:'molded',lightpipe:true,ribs:false,desc:'베이스 ADC12(바닥 핀 · 열보스 · 이어 · 접지 스터드 · O-링 홈) + 커버 PC/ABS-GF(커넥터 헤더 일체 성형 · 라이트 파이프 · 벤트 · 각인 · 황동 인서트 M4)',use:'EPS·인버터 ECU — 무게 −35 % · 커넥터 원가 ↓ · 방열은 금속'}};
+function conceptOf(inp,matKey){const k=inp&&inp.concept;if(k&&CONCEPTS[k])return Object.assign({key:k},CONCEPTS[k]);const m=MATS[matKey];if(matKey==='a6063')return Object.assign({key:'C'},CONCEPTS.C);return m&&m.metal?Object.assign({key:'A'},CONCEPTS.A,{base:matKey,lid:matKey}):Object.assign({key:'B'},CONCEPTS.B,{base:matKey,lid:matKey});}
 const IPN={IP20:20,IP40:40,IP54:54,IP65:65,IP67:67,IP69K:69};
 const ipKey=v=>{const s=String(v==null?'':v).toUpperCase().replace(/\s/g,'');if(IPN[s])return s;if(IPN['IP'+s])return'IP'+s;const n=parseInt(s.replace(/^IP/,''),10);if(!isFinite(n))return null;return IPS.slice().reverse().find(k=>IPN[k]<=n)||'IP20';};
 const SEAL={
@@ -6931,7 +6945,7 @@ function thermal(m,geo,inp,N,fins){
 
 /* ---- one candidate material ---- */
 function design(B,inp,matKey,N){
-  const m=MATS[matKey];const ip=ipKey(inp.ip)||'IP54';const S=SEAL[ip];
+  const C=conceptOf(inp,matKey);if(inp.concept&&CONCEPTS[inp.concept])matKey=C.base;const m=MATS[matKey];const mLid=MATS[C.lid]||m;const ip=ipKey(inp.ip)||'IP54';const S=SEAL[ip];
   const O=(inp.cad&&inp.cad.over)||{},F=(inp.cad&&inp.cad.feats)||[];const num=v=>v!=null&&v!==''&&isFinite(+v);
   const gap=num(O.gap)?Math.max(0.3,+O.gap):1.5;const gp={W:gap,E:gap,S:gap,N:gap};N.cuts.filter(c=>c.sealed).forEach(c=>{const v=Math.max(0.3,c.gap);gp[c.side]=gp[c.side]===gap?v:Math.min(gp[c.side],v);});const tAuto=Math.round((m.t0+0.05*inp.vib+0.002*Math.max(N.W,N.H)+(S.extraWall||0))*10)/10;const t=num(O.wall)?Math.max(0.8,+O.wall):tAuto;
   const stand=num(O.stand)?Math.max(N.htBot+0.5,1.5,+O.stand):Math.max(4,Math.ceil(N.htBot+2));const top=num(O.top)?Math.max(N.htTop+0.5,1,+O.top):Math.max(3,Math.ceil(N.htTop+2.5));
@@ -6960,18 +6974,24 @@ function design(B,inp,matKey,N){
   // fins when the plain box runs too hot (metal only)
   N.nsup=sup.length;let th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,null);let fins=null;const fu=F.find(f=>f.type==='fins');
   if(fu&&!fu.off){const nF=Math.max(1,Math.round(+fu.n||10)),hf=Math.max(2,+fu.h||12),pitchF=+fu.pitch||Math.max(3,(geo.Lo-10)/nF);fins={n:nF,h:hf,t:+fu.t||2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8),user:true};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
-  else if(!fu&&m.metal&&matKey!=='spcc'&&(th.margin<0.3||th.hotJ.length)&&inp.fins!==false){const pitchF=8,hf=Math.min(25,Math.max(8,inp.P*0.8)),nF=Math.floor((geo.Lo-10)/pitchF);fins={n:nF,h:hf,t:2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8)};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
+  else if(!fu&&C.fins&&m.metal&&matKey!=='spcc'&&(th.margin<0.3||th.hotJ.length)&&inp.fins!==false){const pitchF=8,hf=Math.min(25,Math.max(8,inp.P*0.8)),nF=Math.floor((geo.Lo-10)/pitchF);fins={n:nF,h:hf,t:2,pitch:pitchF,len:geo.Wo-8,area:nF*2*hf*(geo.Wo-8)};th=thermal(m,geo,Object.assign({},inp,{slots:S.slots}),N,fins);}
   if(fins&&geo.ringO){const inR=(x,y)=>{let c=false;const r=geo.ringI;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))c=!c;}return c;};
     const keep=[];for(let k=0;k<fins.n;k++){const x=geo.x0+5+k*fins.pitch+fins.t/2;if(inR(x,geo.y0+4)&&inR(x,geo.y0+4+fins.len))keep.push(k);}fins.keep=keep;fins.area=keep.length*2*fins.h*fins.len;}
   // user CAD features (text-to-CAD console): wall / cover / floor holes and slots, mounting tabs, floor ribs, an engraved label
   const feats=cadFeatures(F,geo,N,sup);const fv=feats.reduce((a,f)=>a+(f.vol||0),0),fc=feats.reduce((a,f)=>a+(f.cost||0),0);
   // mass and a relative cost
   const vol=fv+(geo.ringO?geo.areaO*geo.Ho-geo.areaI*geo.Hi:geo.Lo*geo.Wo*geo.Ho-geo.Li*geo.Wi*geo.Hi)+sup.length*Math.PI*9*stand+ns*Math.PI*16*geo.Hi*0.5+(fins?fins.n*fins.t*fins.h*fins.len:0)+th.peds.reduce((a,p)=>a+p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0),0);
-  const mass=vol*1e-9*m.rho*1000; // g
-  const cost=mass/1000*m.costKg*m.proc+S.cost+ns*0.05+(S.breather?1.2:0)+(fins?0.6:0)+th.peds.reduce((a,p)=>a+0.15+TIMS[p.tim].costCm2*p.area/100+p.vias*0.002,0)+(added.length*0.1)+N.cuts.filter(c=>c.sealed).length*0.3+fc;
+  const lidFrac=mLid===m?0:Math.max(0.1,Math.min(0.6,(geo.zLid+t-geo.zSplit)/geo.Ho));const rhoMix=m.rho*(1-lidFrac)+mLid.rho*lidFrac;
+  const mass=vol*1e-9*rhoMix*1000; // g
+  const cost=(vol*1e-9*m.rho*1000*(1-lidFrac))/1000*m.costKg*m.proc+(vol*1e-9*mLid.rho*1000*lidFrac)/1000*mLid.costKg*mLid.proc+S.cost+ns*0.05+(S.breather?1.2:0)+(fins?0.6:0)+th.peds.reduce((a,p)=>a+0.15+TIMS[p.tim].costCm2*p.area/100+p.vias*0.002,0)+(added.length*0.1)+N.cuts.filter(c=>c.sealed).length*0.3+fc;
   const why=[];const ok={thermal:th.margin>=0.25&&!th.hotJ.length,ip:IPN[ip]<=m.maxIP,vib:inp.vib<=m.maxVib&&vib.sf>=1.5};
   if(th.margin<0.25)why.push(`열 여유 ${(th.margin*100).toFixed(0)}% < 25%`);if(th.hotJ.length)why.push(`Tj > ${inp.tj} °C (${th.hotJ.join(', ')})`);if(!ok.ip)why.push(`${ip} 대응 어려움 (${m.short} 최대 IP${m.maxIP})`);if(!ok.vib)why.push(inp.vib>m.maxVib?`진동 ${inp.vib} Grms 초과 (보스 강도)`:`PCB 진동 안전율 ${vib.sf.toFixed(2)}`);
-  return{mat:matKey,m,ip,seal:S,geo,sup,added,vib,screwM,screws,ns,pitch,th,fins,mass,cost,ok,feasible:ok.thermal&&ok.ip&&ok.vib,why,feats};
+  if(fins)fins.where=C.fins||'lid';
+  // concept extras: snap-fit covers need no screw bosses (two safety screws), end-plate styles fasten at the ends
+  let nsC=ns,screwsC=screws;if(C.fasten==='snap'){nsC=2;screwsC=screws.filter((s,i)=>i%Math.max(1,Math.round(screws.length/2))===0).slice(0,2);}
+  else if(C.fasten==='endplate'){nsC=8;screwsC=[[-1,-1],[-1,1],[1,-1],[1,1]].flatMap(([sx,sy])=>[{x:geo.x0+(sx<0?4:geo.Lo-4),y:geo.y0+(sy<0?5:geo.Wo-5),end:sx}]);}
+  const massLid=0;const concept=Object.assign({},C,{mLid});
+  return{mat:matKey,m,mLid,concept,ip,seal:S,geo,sup,added,vib,screwM,screws:screwsC,ns:nsC,pitch,th,fins,mass,cost:cost+(C.conn==='molded'?-Math.min(0.3*N.cuts.length,0.25*cost):0)+(C.fasten==='snap'?-ns*0.05:0)+(C.ears==='ear'?0.35:0)+(C.ears==='din'?0.9:0)+(C.fasten==='insert'?0.12*nsC:0)+(C.fasten==='endplate'?0.5:0),ok,feasible:ok.thermal&&ok.ip&&ok.vib,why,feats};
 }
 /* user features → absolute geometry. Side walls: W (x min) · E (x max) · S (y min, front) · N (y max, back); T = cover top, B = floor.
    Wall position u runs along the wall from its start (x0 or y0), height z is in board coordinates (board mid-plane = 0). */
@@ -7021,7 +7041,7 @@ function analyze(B,input){
   const N=boardNeeds(B,{power:inp.power});if(inp.P==null||inp.P===''||!isFinite(+inp.P))inp.P=Math.round(N.Ptot*100)/100;
   // a heat load given by hand is spread over the heat sources in the same proportions (or put on the biggest IC)
   if(+inp.P>0&&Math.abs(+inp.P-N.Ptot)>1e-6){if(N.Ptot>0){const k=+inp.P/N.Ptot;N.hot.forEach(h=>{h.P*=k;});}else{const c=B.comps.filter(c=>c.pads.length>=8&&!isConn(c)).sort((a,b)=>b.pads.length-a.pads.length)[0];if(c)N.hot=[heatInfo({ref:c.ref,P:+inp.P,c},B.comps)];}N.Ptot=+inp.P;}inp.P=Math.max(0,+inp.P);inp.vib=Math.max(0,+inp.vib||0);inp.ta=+inp.ta;inp.tmax=+inp.tmax;inp.ip=ipKey(inp.ip)||'IP54';
-  const all=Object.keys(MATS).map(k=>design(B,inp,k,N));
+  const all=(inp.concept&&CONCEPTS[inp.concept]?[CONCEPTS[inp.concept].base]:Object.keys(MATS)).map(k=>design(B,inp,k,N));
   const maxC=Math.max(...all.map(d=>d.cost)),maxM=Math.max(...all.map(d=>d.mass));
   all.forEach(d=>{d.costIdx=Math.round(d.cost/maxC*100);d.massIdx=Math.round(d.mass/maxM*100);});
   let pick;if(inp.mat&&inp.mat!=='auto'&&MATS[inp.mat])pick=all.find(d=>d.mat===inp.mat);
@@ -7047,7 +7067,7 @@ function analyze(B,input){
     idx:{cost:d.costIdx,mass:d.massIdx,thermal:Math.round(clamp(d.th.margin,0,1)*100),vib:Math.round(clamp(d.vib.sf/2.5,0,1)*100)}};
 }
 /* ---- text report ---- */
-function text(R){const d=R.d,i=R.inp,g=d.geo;const L=[];if(g.ringO)L.push(`보드 외곽을 따르는 하우징 (${({circle:'원형',oval:'타원',hex:'육각형',oct:'팔각형',L:'L자형',T:'T자형',poly:'다각형'})[g.shape]||g.shape}) · 바닥 면적 ${g.areaO.toFixed(0)} mm² · 둘레 ${g.perO.toFixed(0)} mm`);
+function text(R){const d=R.d,i=R.inp,g=d.geo;const L=[];if(d.concept)L.push(`시안 ${d.concept.key} · ${d.concept.label} — 베이스 ${d.m.short}${d.mLid&&d.mLid!==d.m?' · 커버 '+d.mLid.short:''} · ${d.concept.desc}`);if(g.ringO)L.push(`보드 외곽을 따르는 하우징 (${({circle:'원형',oval:'타원',hex:'육각형',oct:'팔각형',L:'L자형',T:'T자형',poly:'다각형'})[g.shape]||g.shape}) · 바닥 면적 ${g.areaO.toFixed(0)} mm² · 둘레 ${g.perO.toFixed(0)} mm`);
   L.push(`하우징 설계 · 발열 ${i.P} W · ${d.ip} · 진동 ${i.vib} Grms · 주위 ${i.ta} °C · PCB 한계 ${i.tmax} °C`);
   L.push('설계 조건:');R.conds.forEach(c=>L.push('  • '+c));
   L.push(`재질: ${d.m.label} · 벽두께 ${g.t} mm${g.rim>g.t?` (실링 플랜지 ${g.rim} mm)`:''} · 공정 ${d.m.proc_label}`);
@@ -7159,7 +7179,7 @@ function partMass(R){const d=R.d,g=d.geo,m=d.m;const Zb=g.zFloor-g.t,Zt=g.zLid+g
   d.th.peds.filter(p=>p.kind==='bottom').forEach(p=>{vb+=p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0);});d.feats.forEach(f=>{if(f.type==='tabs'||f.type==='rib')vb+=f.vol||0;});
   let vl=plate*g.t+per*g.rim*Math.max(0,g.zLid-g.zSplit);d.th.peds.filter(p=>p.kind==='top').forEach(p=>{vl+=p.ped.w*p.ped.h*Math.max(0,p.ped.z1-p.ped.z0);});
   if(d.fins)vl+=d.fins.n*d.fins.t*d.fins.h*d.fins.len;
-  const gk=v=>v*1e-9*m.rho*1000;return{base:gk(vb),lid:gk(vl),hBase:g.zSplit-Zb,hLid:Zt-g.zSplit};}
+  const gk=v=>v*1e-9*m.rho*1000,gl=v=>v*1e-9*(d.mLid||m).rho*1000;return{base:gk(vb),lid:gl(vl),hBase:g.zSplit-Zb,hLid:Zt-g.zSplit};}
 function mechBom(R){const d=R.d,g=d.geo,m=d.m,S=d.seal;const PM=partMass(R);const rows=[];let no=0;
   const add=(o)=>{rows.push(Object.assign({no:++no,qty:1,unit:'EA',src:'구매',cost:null,note:''},o));};
   const surf=m.metal?(d.mat==='a6063'?'아노다이징 (흑색 또는 투명)':d.mat==='az91d'?'화성 처리 + 분체 도장':d.mat==='spcc'?'인산염 처리 + 분체 도장':'쇼트 블라스트 + 투명 크로메이트'):'무도장 (텍스처 MT-11010)';
@@ -7336,7 +7356,7 @@ function scad(R,name){const d=R.d,g=d.geo,f=v=>(Math.round(v*100)/100).toString(
     `module lid(){intersection(){union(){shell(); pedestals(); fins();} translate([x0-1,y0-1,zSplit]) cube([Lo+2,Wo+2,zLid+wall+40-zSplit]);}}`,
     `base();`,`translate([0,0,15]) lid(); // 열린 상태로 보기 — 조립은 translate 제거`];
   return o.join('\n')+'\n';}
-return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,offsetRing,ringPoints,ringHit,ringCCW,shapedBoard,featLabel,edgeText,edgeLayers,drawingSVG,partSVG,mechBom,mechBomAoa,partMass,boardNeeds,pcbVibration,analyze,text,compareText,scad};
+return{MATS,TIMS,IPS,CONCEPTS,conceptOf,ipKey,SEAL,SIDE_KO,SCREW_D,offsetRing,ringPoints,ringHit,ringCCW,shapedBoard,featLabel,edgeText,edgeLayers,drawingSVG,partSVG,mechBom,mechBomAoa,partMass,boardNeeds,pcbVibration,analyze,text,compareText,scad};
 })();
 
 
@@ -7345,7 +7365,7 @@ return{MATS,TIMS,IPS,ipKey,SEAL,SIDE_KO,SCREW_D,offsetRing,ringPoints,ringHit,ri
 /* Text-to-CAD for the protective housing.
    A small command language edits the housing model (conditions, overrides, features), and a rule-based reader turns
    Korean / English sentences into those commands. The AI mode of the console sends the same commands through Claude.
-   State: {inp:{P,ip,vib,ta,tmax,tj,mat,tim}, cad:{over:{wall,corner,stand,top,gap,split}, feats:[…], seq}} — pure data,
+   State: {inp:{P,ip,vib,ta,tmax,tj,mat,tim,concept}, cad:{over:{wall,corner,stand,top,gap,split}, feats:[…], seq}} — pure data,
    so every command is undoable by snapshot and testable without the page. */
 const TEXT2CAD=(function(){
 "use strict";
@@ -7358,6 +7378,7 @@ const HELP=[
   ['status · check','현재 설계 전체 보고 (재질·방열·실링·체결·진동·형상·경고)'],
   ['compare','재질 6종 비교'],
   ['set power|ip|vib|ta|tmax|tj|mat|tim <값|auto>','설계 조건: 발열 W · IP · 진동 Grms · 주위/PCB/Tj 온도 · 재질 · 방열 패드'],
+  ['set concept A|B|C|D|auto','하우징 시안: A 다이캐스팅 알루미늄 · B PC/ABS 사출 스냅핏 · C 압출 프로파일+엔드 플레이트 · D 하이브리드(알루미늄 베이스+플라스틱 커버) · auto 조건에 맞춰 선택'],
   ['set wall|corner|stand|top|gap|split <mm|auto>','형상 직접 지정: 벽 두께 · 세로 모서리 R · 아래 스탠드오프 · 위 여유 · 보드–벽 간격 · 분할면 z'],
   ['fillet <top|bottom|vertical|all> <R mm|off> · chamfer <top|bottom|vertical|all> <C mm|off>','외곽 모서리 처리: fillet = 둥근모따기(R), chamfer = 각모따기(C). top = 커버 윗면 둘레, bottom = 바닥 둘레, vertical = 세로 모서리 4곳, all = 셋 다'],
   ['hole <면> --d <mm> [--u <mm>] [--z <mm>] [--n 2 --pitch 20] [--label 이름]','원형 구멍. 면: left right front back top bottom (W E S N T B). u = 벽 시작에서의 거리, z = 높이(보드 중간면 0)'],
@@ -7416,7 +7437,8 @@ function exec(st,line,H){norm(st);const t=tok(line);const cmd=(t[0]||'').toLower
       if(/^(tim|pad|방열패드)$/.test(k)){const m=auto?'auto':/^(none|off|없음)$/i.test(v)?'none':H.TIMS[v]?v:null;if(!m)throw new Error('TIM: auto · none · '+Object.keys(H.TIMS).join(' · '));I.tim=m;return ok(`방열 패드 ${m==='auto'?'자동':m==='none'?'사용 안 함':H.TIMS[m].label}`);}
       if(k==='corner'&&!auto&&C.edge.V==='chamfer'&&/^r/i.test(v))delete C.edge.V;
       if(OVER[k]){if(auto)delete C.over[k];else C.over[k]=num(k==='corner'?v.replace(/^[rc]\s*/i,''):v,OVER[k]);return ok(`${OVER[k]} ${auto?'자동':C.over[k]+(k==='split'?'':' mm')}`);}
-      throw new Error(`모르는 키: ${k} — power ip vib ta tmax tj mat tim wall corner stand top gap split`);}
+      if(/^(concept|시안|컨셉)$/.test(k)){const c=auto?'auto':String(v).trim().toUpperCase().replace(/^시안\s*/,'');if(c!=='auto'&&!(H.CONCEPTS&&H.CONCEPTS[c]))throw new Error('시안: auto · '+Object.keys(H.CONCEPTS||{}).map(x=>x+' '+H.CONCEPTS[x].short).join(' · '));I.concept=c;return ok(`시안 ${c==='auto'?'자동 (재질·조건에 맞춰 선택)':c+' · '+H.CONCEPTS[c].label}`);}
+      throw new Error(`모르는 키: ${k} — power ip vib ta tmax tj mat tim concept wall corner stand top gap split`);}
     case'hole':case'gland':case'vent':{const sd=side(a._[0])||(cmd==='vent'?'N':'E');let d,label,kind;
       if(cmd==='gland'){const sz=String(a._.find(x=>/^(m|pg)\d+$/i.test(x))||a.size||'M16').toUpperCase();d=GLAND[sz]||num(sz.replace(/\D/g,''))+0.5;label=`케이블 글랜드 ${sz}`;kind='gland';}
       else if(cmd==='vent'){d=optNum(a.d)||12.5;label='ePTFE 벤트';kind='vent';}
@@ -7483,6 +7505,7 @@ function parse(text){
     if(/(커버|뚜껑|cover|lid).*(열어|열기|열고|open)|^open/.test(L)){out.push('open');continue;}
     if(/(커버|뚜껑|cover|lid).*(닫|close)|^close/.test(L)){out.push('close');continue;}
     // conditions
+    const cc=c.match(/시안\s*([a-dA-D])\b/)||c.match(/\b(?:concept)\s*([a-dA-D])\b/i);if(cc)out.push('set concept '+cc[1].toUpperCase());else if(/하이브리드|hybrid|(알루미늄|금속).*(플라스틱|수지).*(커버|뚜껑)|반.*플라스틱.*반.*알루미늄/i.test(c))out.push('set concept D');else if(/스냅\s*핏|snap|사출\s*(박스|케이스)/i.test(c))out.push('set concept B');else if(/압출\s*(프로파일|케이스|하우징)|엔드\s*플레이트|end\s*plate|extru/i.test(c))out.push('set concept C');else if(/다이\s*캐스(팅)?\s*(하우징|케이스|박스|ecu)|die\s*cast/i.test(c))out.push('set concept A');else if(/시안.*자동|concept.*auto/i.test(c))out.push('set concept auto');
     const mk=matKey(c,{MATS:{}});if(/재질|소재|material|마그네슘|다이캐스|압출|판금|spcc|pa66|나일론|pc\/?abs|플라스틱|수지|알루미늄|aluminum|adc12|az91|6063/i.test(c)&&!/글랜드|구멍/.test(c)){if(/자동|auto/.test(L)&&/재질|material/.test(L))out.push('set mat auto');else if(mk)out.push('set mat '+mk);}
     const ip=c.match(/ip\s*-?\s*(\d{2}k?)/i);if(ip)out.push('set ip IP'+ip[1].toUpperCase());else if(/고압\s*세척/.test(c))out.push('set ip IP69K');else if(/침수|완전\s*방수|방수/.test(c))out.push('set ip IP67');else if(/방진|생활\s*방수|비말/.test(c))out.push('set ip IP54');
     const pw=c.match(/(?:발열|소비\s*전력|열\s*부하|열부하|손실|power)\D{0,8}?(\d+(?:\.\d+)?)\s*w/i)||(/발열|power/i.test(c)?null:c.match(/(\d+(?:\.\d+)?)\s*w(?![a-z\/·])/i));if(pw&&!/w\s*\/\s*m/i.test(c))out.push('set power '+pw[1]);
@@ -10596,11 +10619,11 @@ function renderSim(){
 /* ---------- 기구 CAD workspace: protective housing (HOUSING engine) designed from a Text-to-CAD console (TEXT2CAD) ----------
    Left: design conditions and the engineering read-out. Centre: the 3D view (the board viewport is moved here) and the console.
    Right: feature tree, dimensions, per-part heat paths, material comparison, CAD export. */
-function mechCfg(){if(!BD.housing)BD.housing={inp:{P:'auto',ip:'IP54',vib:2,ta:ENV.Ta||25,tmax:85,tj:125,mat:'auto',tim:'auto'},show:false,open:false,R:null,key:''};
-  const H=BD.housing,I=H.inp;if(I.tj==null)I.tj=125;if(!I.tim)I.tim='auto';if(!H.cad)H.cad=TEXT2CAD.blank();if(!H.undo)H.undo=[];if(!H.redo)H.redo=[];return H;}
+function mechCfg(){if(!BD.housing)BD.housing={inp:{P:'auto',ip:'IP54',vib:2,ta:ENV.Ta||25,tmax:85,tj:125,mat:'auto',tim:'auto',concept:'auto'},show:false,open:false,R:null,key:''};
+  const H=BD.housing,I=H.inp;if(I.tj==null)I.tj=125;if(!I.tim)I.tim='auto';if(!I.concept)I.concept='auto';if(!H.cad)H.cad=TEXT2CAD.blank();if(!H.undo)H.undo=[];if(!H.redo)H.redo=[];return H;}
 function mechPower(){try{const cfg=thConfig();const P={};let any=false;Object.entries(cfg.P||{}).forEach(([k,v])=>{if(+v>0){P[k]=+v;any=true;}});return any?P:null;}catch(e){return null;}}
 function mechRun(force){const H=mechCfg();const i=H.inp;const key=JSON.stringify(i)+JSON.stringify(H.cad)+'|'+BD.comps.length+'|'+BD.W+'x'+BD.H;
-  if(!force&&H.R&&H.key===key)return H.R;H.R=HOUSING.analyze(BD,{P:i.P==='auto'?null:+i.P,ip:i.ip,vib:+i.vib,ta:+i.ta,tmax:+i.tmax,tj:+i.tj,mat:i.mat,tim:i.tim,power:mechPower(),cad:H.cad});H.key=key;return H.R;}
+  if(!force&&H.R&&H.key===key)return H.R;H.R=HOUSING.analyze(BD,{P:i.P==='auto'?null:+i.P,ip:i.ip,vib:+i.vib,ta:+i.ta,tmax:+i.tmax,tj:+i.tj,mat:i.mat,tim:i.tim,concept:i.concept==='auto'?null:i.concept,power:mechPower(),cad:H.cad});H.key=key;return H.R;}
 const MECH_BAR=(lab,val,max,unit,kind)=>{const pct=Math.max(0,Math.min(100,val/max*100));return`<div class="mbar"><div class="mbar-h"><span>${lab}</span><b class="mono">${unit==='%'?Math.round(val)+'%':`${Math.round(val)} / ${max}`}</b></div><div class="mbar-t"><i class="mb-${kind}" style="width:${pct}%"></i></div></div>`;};
 const mechCard=(k,t,sub)=>`<div class="mcard"><span class="mck">${k}</span><b>${t}</b><span class="ms">${sub}</span></div>`;
 /* ---- left: conditions and read-out ---- */
@@ -10617,6 +10640,9 @@ function cadLeftHTML(){
       <input type="range" min="0" max="${HOUSING.IPS.length-1}" step="1" value="${ipIdx}" data-mh="ip" aria-label="IP 등급"></label>
     <label class="mrow"><span>진동 가혹도</span><b class="mono">${R.inp.vib} Grms</b>
       <input type="range" min="0" max="20" step="0.5" value="${R.inp.vib}" data-mh="vib" aria-label="진동 Grms"></label>
+    <p class="h" style="margin-top:8px">하우징 시안</p>
+    <div class="mconc" role="radiogroup" aria-label="하우징 시안">${['auto',...Object.keys(HOUSING.CONCEPTS)].map(k=>{const c=HOUSING.CONCEPTS[k];const on=(i.concept||'auto')===k;const sel=on&&k==='auto'?d.concept:null;return`<button type="button" class="mcc${on?' on':''}" data-mh="concept" data-k="${k}" aria-pressed="${on}" title="${c?esc(c.desc):'조건(재질·발열)에 맞춰 자동 선택'}"><b>${k==='auto'?'자동':'시안 '+k}</b><span>${c?esc(c.short):sel?'→ 시안 '+sel.key+' · '+esc(sel.short):'조건에 맞춰 선택'}</span></button>`;}).join('')}</div>
+    <p class="ms mconc-d">${esc(d.concept.label)} — ${esc(d.concept.desc)}<br>적합: ${esc(d.concept.use)}</p>
     <div class="mgrid"><label class="fld"><span>주위 온도 °C</span><input type="number" step="1" data-mh="ta" value="${i.ta}"></label><label class="fld"><span>PCB 한계 °C</span><input type="number" step="1" data-mh="tmax" value="${i.tmax}"></label><label class="fld"><span>부품 Tj 한계 °C</span><input type="number" step="5" data-mh="tj" value="${i.tj}"></label>
       <label class="fld"><span>재질</span><select data-mh="mat"><option value="auto"${i.mat==='auto'?' selected':''}>자동 (최저 원가)</option>${Object.entries(HOUSING.MATS).map(([k,v])=>`<option value="${k}"${i.mat===k?' selected':''}>${esc(v.short)}</option>`).join('')}</select></label>
       <label class="fld"><span>방열 패드 (TIM)</span><select data-mh="tim"><option value="auto"${i.tim==='auto'?' selected':''}>자동</option>${Object.entries(HOUSING.TIMS).map(([k,v])=>`<option value="${k}"${i.tim===k?' selected':''}>${esc(v.short)}</option>`).join('')}<option value="none"${i.tim==='none'?' selected':''}>사용 안 함</option></select></label></div>
@@ -10663,7 +10689,8 @@ function cadBind(){
   const H=mechCfg(),i=H.inp;let t=0;const L=$('#cadLeft'),Rr=$('#cadRight');
   const apply=()=>{H.R=null;clearTimeout(t);t=setTimeout(()=>cadRefresh(),60);};
   const snap=()=>{H.undo.push(JSON.stringify({inp:H.inp,cad:H.cad}));if(H.undo.length>80)H.undo.shift();H.redo=[];};
-  L.querySelectorAll('[data-mh]').forEach(el=>{const k=el.dataset.mh;const ev=el.type==='range'?'input':'change';let snapped=false;el.addEventListener(ev,()=>{if(!snapped||ev==='change'){snap();snapped=true;}
+  L.querySelectorAll('[data-mh="concept"]').forEach(el=>el.addEventListener('click',()=>{snap();i.concept=el.dataset.k;apply();}));
+  L.querySelectorAll('[data-mh]:not([data-mh="concept"])').forEach(el=>{const k=el.dataset.mh;const ev=el.type==='range'?'input':'change';let snapped=false;el.addEventListener(ev,()=>{if(!snapped||ev==='change'){snap();snapped=true;}
     if(k==='P'){i.P=+el.value;}else if(k==='Pauto'){i.P=el.checked?'auto':mechRun().inp.P;}else if(k==='ip'){i.ip=HOUSING.IPS[+el.value];}else if(k==='vib'){i.vib=+el.value;}
     else if(k==='ta'||k==='tmax'||k==='tj'){const v=parseFloat(el.value);if(isFinite(v))i[k]=v;}else if(k==='mat')i.mat=el.value;else if(k==='tim')i.tim=el.value;apply();});
     el.addEventListener('change',()=>{snapped=false;});});
@@ -10694,8 +10721,11 @@ function cadLeave(){setTimeout(()=>{if(typeof cadSelPaint==='function')cadSelPai
 /* ---- 3D: base + cover around the board (board frame: x,y on the board, z = 0 at the board mid-plane) ---- */
 function mechGroup(R){
   const d=R.d,g=d.geo,T=R.N.t,THR=THREE;const grp=new THR.Group();grp.userData.housing=true;const base=new THR.Group(),lid=new THR.Group();grp.add(base);grp.add(lid);
-  const col=d.m.metal?(d.mat==='spcc'?0x6f7780:0xb9c0c8):0x3b4046;
+  const C=d.concept||{};const mL=d.mLid||d.m;
+  const col=d.m.metal?(d.mat==='spcc'?0x6f7780:0xb9c0c8):0x3b4046;const colL=mL.metal?(mL===d.m&&d.mat==='spcc'?0x6f7780:0xb9c0c8):0x3b4046;
   const mat=new THR.MeshStandardMaterial({color:col,metalness:d.m.metal?0.55:0.05,roughness:d.m.metal?0.45:0.7,transparent:true,opacity:0.32,depthWrite:false,side:THR.DoubleSide});
+  const matL=mL===d.m?mat:new THR.MeshStandardMaterial({color:colL,metalness:mL.metal?0.55:0.05,roughness:mL.metal?0.45:0.7,transparent:true,opacity:0.36,depthWrite:false,side:THR.DoubleSide});
+  const solidL=new THR.MeshStandardMaterial({color:colL,metalness:mL.metal?0.5:0.05,roughness:0.5});
   const solid=new THR.MeshStandardMaterial({color:col,metalness:d.m.metal?0.5:0.05,roughness:0.5});
   const timM=new THR.MeshStandardMaterial({color:0xe48ab0,roughness:0.8});const darkM=new THR.MeshStandardMaterial({color:0x1d2126,roughness:0.6});
   const featM=new THR.MeshStandardMaterial({color:0x3d8bff,roughness:0.5,transparent:true,opacity:0.85});const holeM=new THR.MeshBasicMaterial({color:0x3d8bff,transparent:true,opacity:0.45,side:THR.DoubleSide,depthWrite:false});
@@ -10718,7 +10748,7 @@ function mechGroup(R){
   // outer skin of a filleted/chamfered band: rings of the shrunk outline, joined into quads
   const loft=(layers,par)=>{if(layers.length<2)return;const rings=layers.map(([z,s])=>planPts(s).map(p=>[p[0],p[1],z]));const n=rings[0].length,pos=[];
     for(let k=0;k+1<rings.length;k++)for(let i=0;i<n;i++){const j=(i+1)%n,a=rings[k][i],b=rings[k][j],c=rings[k+1][j],e=rings[k+1][i];pos.push(...a,...b,...c,...a,...c,...e);}
-    const geo=new THR.BufferGeometry();geo.setAttribute('position',new THR.Float32BufferAttribute(pos,3));geo.computeVertexNormals();const me=new THR.Mesh(geo,mat);par.add(me);return me;};
+    const geo=new THR.BufferGeometry();geo.setAttribute('position',new THR.Float32BufferAttribute(pos,3));geo.computeVertexNormals();const me=new THR.Mesh(geo,cur);par.add(me);return me;};
   const bandB=rB>0?HOUSING.edgeLayers(rB,g.eB,null).filter(p=>p[0]<=rB+1e-6).map(([z,s])=>[Zb+z,s]):[];
   const bandT=rT>0?HOUSING.edgeLayers(rT,null,g.eT).filter(p=>p[0]>=-1e-6).map(([z,s])=>[Zt-rT+z,s]):[];
   // corner piece between z0 and z1: outer R/C, inner R/C (or square), meeting the trimmed wall slabs
@@ -10727,8 +10757,9 @@ function mechGroup(R){
     loc.push([0,Rp],[r,Rp]);if(ch){if(q>r)loc.push([r,q],[q,r]);else loc.push([r,r]);}else if(ri>0)for(let i=0;i<=SEG;i++){const a=Math.PI+i/SEG*Math.PI/2;loc.push([rv+ri*Math.cos(a),rv+ri*Math.sin(a)]);}else loc.push([r,r]);
     loc.push([Rp,r]);
     [[X0,Y0,1,1],[X1,Y0,-1,1],[X1,Y1,-1,-1],[X0,Y1,1,-1]].forEach(([cx,cy,sx,sy])=>{const sh=new THR.Shape();loc.forEach(([a,b],i)=>{const x=cx+sx*a,y=cy+sy*b;if(i)sh.lineTo(x,y);else sh.moveTo(x,y);});sh.closePath();
-      const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:8}),mat);me.position.z=z0;me.userData.el='edge:V';par.add(me);});};
+      const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:8}),cur);me.position.z=z0;me.userData.el='edge:V';par.add(me);});};
   // a wall as an extruded outline with connector / vent / user openings, between z0 and z1
+  let cur=mat; // material for the shell piece being built (base: mat · lid: matL)
   const wall=(side,z0,z1,par)=>{const horiz=side==='S'||side==='N';const len=horiz?g.Lo:g.Wo;const o0=horiz?X0:Y0;
     if(z1-z0<0.05)return;const A=Rp,Bn=len-Rp;const sh=new THR.Shape();sh.moveTo(A,z0);sh.lineTo(Bn,z0);sh.lineTo(Bn,z1);sh.lineTo(A,z1);sh.lineTo(A,z0);
     const rectHole=(a,b,lo,hi)=>{lo=Math.max(z0+0.2,lo);hi=Math.min(z1-0.2,hi);a=Math.max(A+0.2,a);b=Math.min(Bn-0.2,b);if(hi-lo<0.3||b-a<0.3)return;const h=new THR.Path();h.moveTo(a,lo);h.lineTo(a,hi);h.lineTo(b,hi);h.lineTo(b,lo);h.lineTo(a,lo);sh.holes.push(h);};
@@ -10739,14 +10770,14 @@ function mechGroup(R){
     const geo=new THR.ExtrudeGeometry(sh,{depth:r,bevelEnabled:false,curveSegments:24});
     // shape (along, z) extruded by the wall thickness → world: S/N walls run along x, W/E walls along y
     geo.applyMatrix4(horiz?new THR.Matrix4().set(1,0,0,0, 0,0,-1,0, 0,1,0,0, 0,0,0,1):new THR.Matrix4().set(0,0,1,0, 1,0,0,0, 0,1,0,0, 0,0,0,1));
-    const me=new THR.Mesh(geo,mat);
+    const me=new THR.Mesh(geo,cur);
     if(side==='S')me.position.set(X0,Y0+r,0);else if(side==='N')me.position.set(X0,Y1,0);else if(side==='W')me.position.set(X0,Y0,0);else me.position.set(X1-r,Y0,0);
     par.add(me);return me;};
   // outline-following housings: one wall ring (outer outline minus inner outline) instead of four slabs; openings are shown
   // as markers projected onto the wall where the connector / hole faces it
   const ringWall=(z0,z1,par)=>{if(z1-z0<0.05)return;const O=planPts(0),I=HOUSING.offsetRing(g.ringO,-r);const sh=new THR.Shape();sh.moveTo(O[0][0],O[0][1]);for(let i=1;i<O.length;i++)sh.lineTo(O[i][0],O[i][1]);sh.closePath();
     const h=new THR.Path();h.moveTo(I[0][0],I[0][1]);for(let i=1;i<I.length;i++)h.lineTo(I[i][0],I[i][1]);h.closePath();sh.holes.push(h);
-    const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:8}),mat);me.position.z=z0;par.add(me);return me;};
+    const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:8}),cur);me.position.z=z0;par.add(me);return me;};
   const DIR={W:[-1,0],E:[1,0],S:[0,-1],N:[0,1]};
   const wallMarker=(side,u,w,zc,hz,m,par,key)=>{const dir=DIR[side];const horiz=side==='S'||side==='N';const p0=horiz?[u,(Y0+Y1)/2]:[(X0+X1)/2,u];
     const hit=HOUSING.ringHit(g.ringO,p0,dir);if(!hit)return null;const me=new THR.Mesh(new THR.PlaneGeometry(w,hz),m);const o=0.06;const px=hit.x+hit.nx*o,py=hit.y+hit.ny*o;
@@ -10756,7 +10787,7 @@ function mechGroup(R){
   const plate=(sd,z0,z1,par,inset)=>{const hs=holesOn(sd);
     const sh=planShape(inset||0);
     hs.forEach(f=>{const h=new THR.Path();if(f.type==='slot'){h.moveTo(f.x-f.w/2,f.y-f.h/2);h.lineTo(f.x-f.w/2,f.y+f.h/2);h.lineTo(f.x+f.w/2,f.y+f.h/2);h.lineTo(f.x+f.w/2,f.y-f.h/2);h.lineTo(f.x-f.w/2,f.y-f.h/2);}else h.absarc(f.x,f.y,f.w/2,0,Math.PI*2,true);sh.holes.push(h);});
-    const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:24}),mat);me.position.z=z0;par.add(me);return me;};
+    const me=new THR.Mesh(new THR.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false,curveSegments:24}),cur);me.position.z=z0;par.add(me);return me;};
   // base: floor, walls up to the split line, PCB supports, lid screw bosses, base pedestals, tabs, ribs
   const zw0=rB>0?Math.min(g.zSplit,Zb+rB):g.zFloor,zw1=rT>0?Math.max(g.zSplit,Zt-rT):g.zLid;
   TG(plate('B',Zb,g.zFloor,base,rB),'floor');if(shaped){TG(ringWall(zw0,g.zSplit,base),'wall:ring');}else{['S','N','W','E'].forEach(s=>TG(wall(s,zw0,g.zSplit,base),'wall:'+s));corner(zw0,g.zSplit,base);}TG(loft(bandB,base),'edge:B');
@@ -10775,16 +10806,29 @@ function mechGroup(R){
   // gasket on the split line
   if(d.seal.gasket!=='없음'&&d.seal.gasket!=='없음 (정밀 맞춤)'){const m2=new THR.LineBasicMaterial({color:0xe2703a});const ins=r/2;const pts=(shaped?planPts(ins).concat([planPts(ins)[0]]):[[X0+ins,Y0+ins],[X1-ins,Y0+ins],[X1-ins,Y1-ins],[X0+ins,Y1-ins],[X0+ins,Y0+ins]]).map(p=>new THR.Vector3(p[0],p[1],g.zSplit+0.05));base.add(new THR.Line(new THR.BufferGeometry().setFromPoints(pts),m2));}
   // cover: walls from the split line, top plate, pedestals + TIM on the hot parts, fins, engraved label
+  cur=matL;
   if(shaped){TG(ringWall(g.zSplit,zw1,lid),'wall:ring');
     // connector windows and user wall openings on the ring wall: markers on the wall face
     const winM=new THR.MeshBasicMaterial({color:0xc0392b,transparent:true,opacity:0.5,side:THR.DoubleSide,depthWrite:false});
     R.N.cuts.forEach(c=>{const zc=(c.z0+c.z1)/2;wallMarker(c.side,(c.a+c.b)/2,c.b-c.a,zc,c.z1-c.z0,winM,zc>g.zSplit?lid:base,'win:'+c.ref);});
     d.feats.filter(f=>(f.type==='hole'||f.type==='slot')&&/^[WESN]$/.test(f.side)).forEach(f=>{wallMarker(f.side,f.a,f.w,f.z,f.type==='hole'?f.w:f.h,holeM,f.z>g.zSplit?lid:base,f.id);});}
   else{['S','N','W','E'].forEach(s=>TG(wall(s,g.zSplit,zw1,lid),'wall:'+s));corner(g.zSplit,zw1,lid);}TG(loft(bandT,lid),'edge:T');TG(plate('T',g.zLid,Zt,lid,rT),'top');
-  d.th.peds.forEach(p=>{const q=p.ped,k='ped:'+p.ref;if(p.kind==='top'){TG(box(q.x,q.y,q.z0,q.x+q.w,q.y+q.h,g.zLid,solid,lid),k);TG(box(q.x,q.y,q.tz,q.x+q.w,q.y+q.h,q.z0,timM,lid),k);}
+  d.th.peds.forEach(p=>{const q=p.ped,k='ped:'+p.ref;if(p.kind==='top'){TG(box(q.x,q.y,q.z0,q.x+q.w,q.y+q.h,g.zLid,solidL,lid),k);TG(box(q.x,q.y,q.tz,q.x+q.w,q.y+q.h,q.z0,timM,lid),k);}
     else{TG(box(q.x,q.y,g.zFloor,q.x+q.w,q.y+q.h,q.z1,solid,base),k);TG(box(q.x,q.y,q.z1,q.x+q.w,q.y+q.h,-T/2,timM,base),k);}});
   const finK=(d.feats.find(f=>f.type==='fins'&&!f.off)||{}).id||'fins';
-  if(d.fins)for(let k=0;k<d.fins.n;k++){if(d.fins.keep&&!d.fins.keep.includes(k))continue;const x=X0+5+k*d.fins.pitch;if(x+d.fins.t>X1-2)break;TG(box(x,Y0+4,Zt,x+d.fins.t,Y0+4+d.fins.len,Zt+d.fins.h,solid,lid),finK);}
+  if(d.fins){const where=d.fins.where||'lid';for(let k=0;k<d.fins.n;k++){if(d.fins.keep&&!d.fins.keep.includes(k))continue;const x=X0+5+k*d.fins.pitch;if(x+d.fins.t>X1-2)break;
+    if(where==='floor')TG(box(x,Y0+4,Zb-d.fins.h*0.6,x+d.fins.t,Y0+4+d.fins.len,Zb,solid,base),finK);
+    else if(where==='top')TG(box(X0+4,Y0+4+(k%Math.max(1,Math.floor((Y1-Y0-8)/d.fins.pitch)))*d.fins.pitch,Zt,X1-4,Y0+4+(k%Math.max(1,Math.floor((Y1-Y0-8)/d.fins.pitch)))*d.fins.pitch+d.fins.t,Zt+Math.min(d.fins.h,5),solidL,lid),finK);
+    else TG(box(x,Y0+4,Zt,x+d.fins.t,Y0+4+d.fins.len,Zt+d.fins.h,solidL,lid),finK);}}
+  // concept features
+  if(C.ears==='ear'){[[X0,Y0,-1,-1],[X1,Y0,1,-1],[X0,Y1,-1,1],[X1,Y1,1,1]].forEach(([x,y,sx,sy],i)=>{const ex=x+sx*8,ey=y-sy*6;TG(box(Math.min(x,ex)-6,Math.min(ey,y)-6,Zb,Math.max(x,ex)+6,Math.max(ey,y)+6,Zb+6,solid,base),'ear:'+i);TG(cyl(ex,ey,Zb-0.5,Zb+6.5,4.2,darkM,base),'ear:'+i);TG(cyl(ex,ey,Zb-0.8,Zb+7,2.2,new THR.MeshStandardMaterial({color:0xd8dde2,metalness:0.8,roughness:0.3}),base),'ear:'+i);});}
+  if(C.ears==='slot'){[[X0+18,Y1],[X1-18,Y1]].forEach(([x,y],i)=>{TG(box(x-5,y,Zb+1,x+5,y+3,Zb+4,solid,base),'slot:'+i);TG(cyl(x,y+2,Zb+0.9,Zb+4.1,2.6,darkM,base),'slot:'+i);});}
+  if(C.ears==='din'){TG(box((X0+X1)/2-20,(Y0+Y1)/2-18,Zb-3,(X0+X1)/2+20,(Y0+Y1)/2+18,Zb,new THR.MeshStandardMaterial({color:0xd8dde2,metalness:0.8,roughness:0.3}),base),'din');[[-1],[1]].forEach(([sy])=>TG(box((X0+X1)/2-20,(Y0+Y1)/2+sy*18-1,Zb-7,(X0+X1)/2+20,(Y0+Y1)/2+sy*18+1,Zb-3,new THR.MeshStandardMaterial({color:0xd8dde2,metalness:0.8,roughness:0.3}),base),'din'));}
+  if(C.fasten==='snap'){const n=Math.max(2,Math.round((X1-X0)/40));for(let i=0;i<n;i++){const x=X0+(i+0.5)*(X1-X0)/n;[Y0,Y1].forEach((y,j)=>TG(box(x-5,y+(j?0:-1.8),g.zSplit-6,x+5,y+(j?1.8:0),g.zSplit,solidL,lid),'snap:'+i+j));}}
+  if(C.fasten==='endplate'){[X0,X1].forEach((x,i)=>{TG(box(x-(i?0:2),Y0,Zb,x+(i?2:0),Y1,Zt,solid,base),'endplate:'+i);[[Y0+5,Zb+5],[Y1-5,Zb+5],[Y0+5,Zt-5],[Y1-5,Zt-5]].forEach(([y,z])=>{const me=new THR.Mesh(new THR.CylinderGeometry(1.6,1.6,2.4,16),new THR.MeshStandardMaterial({color:0xd8dde2,metalness:0.8}));me.rotation.z=Math.PI/2;me.position.set(x+(i?3:-3),y,z);base.add(me);});});}
+  if(C.conn==='molded'){R.N.cuts.forEach(c=>{const hz=c.side==='W'||c.side==='E';const w=c.b-c.a;if(hz)TG(box(c.side==='W'?X0-4:X1,c.a-5,g.zSplit,c.side==='W'?X0:X1+4,c.b+5,Math.min(Zt-1,c.z1+5),solidL,lid),'win:'+c.ref);else TG(box(c.a-5,c.side==='S'?Y0-4:Y1,g.zSplit,c.b+5,c.side==='S'?Y0:Y1+4,Math.min(Zt-1,c.z1+5),solidL,lid),'win:'+c.ref);});}
+  if(C.lightpipe){[0,5,10].forEach((dx,i)=>TG(cyl(X0+12+dx,Y1-10,Zt,Zt+1.2,1.4,new THR.MeshStandardMaterial({color:[0x3ad66a,0xffc531,0x3d8bff][i],emissive:[0x1a6a2a,0x7a5a00,0x1a3a7a][i]}),lid),'led:'+i));}
+  if(C.ribs){for(let i=1;i<4;i++)TG(box(X0+r+1,Y0+i*(Y1-Y0)/4-0.6,g.zFloor,X1-r-1,Y0+i*(Y1-Y0)/4+0.6,g.zFloor+4,mat,base),'rib:c'+i);}
   d.feats.filter(f=>f.type==='label').forEach(f=>{const c=document.createElement('canvas');const s=String(f.text||'');c.width=Math.max(64,s.length*40);c.height=64;const x=c.getContext('2d');
     x.fillStyle='#2a2f35';x.font='600 46px "JetBrains Mono", monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(s,c.width/2,c.height/2);const tx=new THR.CanvasTexture(c);
     const w=f.size*Math.max(1,s.length)*0.68,h=w*c.height/c.width;const me=new THR.Mesh(new THR.PlaneGeometry(w,h),new THR.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false}));me.position.set(f.x,f.y,Zt+(d.fins?d.fins.h+0.06:0.06));me.userData.el=f.id;lid.add(me);});
@@ -10821,7 +10865,8 @@ async function mechExport(kind){
 }
 /* ---- Text-to-CAD console ---- */
 var CADC={log:[],hist:[],hi:-1,busy:false,abort:null,stopReq:false,seq:0};
-const CAD_CHIPS=[['IP67 다이캐스팅','set mat adc12','알루미늄 다이캐스팅, IP67, 진동 6 Grms 조건으로 맞추고 결과를 검토해줘'],
+const CAD_CHIPS=[['시안 D 하이브리드','set concept D','알루미늄 베이스에 플라스틱 커버를 올린 하이브리드 시안으로 바꾸고 무게·원가 변화를 알려줘'],
+  ['IP67 다이캐스팅','set mat adc12','알루미늄 다이캐스팅, IP67, 진동 6 Grms 조건으로 맞추고 결과를 검토해줘'],
   ['케이블 글랜드','gland E M16','오른쪽 벽에 M16 케이블 글랜드를 하나 넣되 커넥터·나사와 겹치지 않게 해줘'],
   ['장착 탭 4개','tabs 4 --screw M5','차량 브래킷에 고정할 M5 장착 탭 4개를 달아줘'],
   ['방열 핀','fins 14 --h 15','커버에 방열 핀을 넣어 최고 Tj를 낮추고 무게 변화를 알려줘'],
@@ -10874,6 +10919,7 @@ async function cadExec(line){
 const CAD_SYS=`You are a mechanical design engineer doing text-to-CAD for the protective housing (enclosure) of a PCB inside a viewer. The user writes in Korean.
 You change the CAD model only by calling the run_cad tool with one command at a time. Commands (exactly this syntax):
 \${CMDS}
+Housing concepts (set concept A|B|C|D|auto): A die-cast aluminium ECU (lid fins, corner ears, flanged connector), B PC/ABS injection snap-fit box (no fins, light pipes, keyhole slots), C extruded aluminium profile with end plates (top fins, DIN clip, connectors on the end plate), D hybrid — die-cast aluminium base with floor fins under the hot parts and a PC/ABS cover with moulded connector headers. Pick the concept the user names or describes ("하이브리드" = D, "스냅핏/사출" = B, "압출" = C, "다이캐스팅" = A); the base/cover materials follow the concept, so set mat afterwards only when the user also names a material.
 Coordinates: walls W (left, x min) E (right) S (front, y min) N (back), T = cover top, B = floor. For wall holes --u is the distance along the wall from its start corner and --z the height in board coordinates (board mid-plane = 0; the split line and connector windows are listed in the state). Keep holes clear of connector windows, the split line (±1.5 mm), wall corners and screw bosses; under IP54+ every opening needs a gland, vent or plug (use gland/vent commands).
 Edge treatment vocabulary: 둥근모따기 · 라운드 · 필렛 · R = fillet; 모따기 · 각모따기 · 챔퍼 · C = chamfer (a plain "모따기" with an R size is a fillet). Edges: top = cover top perimeter, bottom = base bottom perimeter, vertical = the four vertical corners (same value as set corner), all = all three; "모서리" without a place means all. Always use the fillet/chamfer commands for these (set corner only changes the vertical corners). The tool output line "적용된 모서리" is what was really applied (sizes are limited by the height to the split line) — report it.
 To change an existing feature use edit <F id> (do not delete and re-add it). Selected elements come with their key: F ids are features, wall:W/E/S/N walls, top / floor plates, edge:T/B/V edges, boss:/screw:/ped:/win: automatic elements (change them through the conditions that drive them, e.g. set stand, set tim, boss <x> <y>).
@@ -10890,13 +10936,14 @@ async function cadAI(req,selKeys){
   if(!ok){const list=selKeys&&selKeys.length?cadSelRules(req,selKeys):TEXT2CAD.parse(req);if(!list.length)return'Claude를 쓸 수 없고 문장도 해석하지 못했습니다. help를 보세요.';cadSay('out','Claude를 쓸 수 없어 규칙으로 해석: '+list.join(' → '));for(const c of list){cadSay('cmd',c);try{const o=await cadRunCmd(c);if(o)cadSay('ok',o);}catch(e){cadSay('err',e.message);}}}
   return'';}
 /* ---- PCB console: housing [check|compare|show|open|close|export] [--p W --ip 67 --vib 6 --ta 40 --tmax 85 --tj 125 --mat adc12 --tim auto] ---- */
-const MECH_HELP=['housing [--p 18 --ip 67 --vib 6 --ta 40 --tmax 85 --tj 125 --mat auto|pcabs|pa66gf|spcc|a6063|adc12|az91d --tim auto|pad15|pad30|gel40|pad60|none] · housing compare · housing show|open|close · housing export','PCB 보호 하우징 계산. 형상 설계(구멍·글랜드·탭·핀·각인)는 상단 "기구 CAD" 작업 공간의 Text-to-CAD 콘솔에서'];
+const MECH_HELP=['housing [--p 18 --ip 67 --vib 6 --ta 40 --tmax 85 --tj 125 --mat auto|pcabs|pa66gf|spcc|a6063|adc12|az91d --tim auto|pad15|pad30|gel40|pad60|none --concept auto|A|B|C|D] · housing compare · housing show|open|close · housing export','PCB 보호 하우징 계산. 형상 설계(구멍·글랜드·탭·핀·각인)는 상단 "기구 CAD" 작업 공간의 Text-to-CAD 콘솔에서'];
 async function mechCmd(a){
   const H=mechCfg(),i=H.inp;const sub=(a._[0]||'check').toLowerCase();const before=JSON.stringify({inp:H.inp,cad:H.cad});let ch=false;
   if(a.p!=null){i.P=a.p==='auto'?'auto':+a.p;ch=true;}if(a.ip!=null){const k=HOUSING.ipKey(a.ip);if(!k)throw new Error('IP: '+HOUSING.IPS.join(' · '));i.ip=k;ch=true;}
   if(a.vib!=null){i.vib=+a.vib;ch=true;}if(a.ta!=null){i.ta=+a.ta;ch=true;}if(a.tmax!=null){i.tmax=+a.tmax;ch=true;}if(a.tj!=null){i.tj=+a.tj;ch=true;}
   if(a.tim!=null){if(a.tim!=='auto'&&a.tim!=='none'&&!HOUSING.TIMS[a.tim])throw new Error('TIM: auto · none · '+Object.keys(HOUSING.TIMS).join(' · '));i.tim=a.tim;ch=true;}
   if(a.mat!=null){if(a.mat!=='auto'&&!HOUSING.MATS[a.mat])throw new Error('재질: auto · '+Object.keys(HOUSING.MATS).join(' · '));i.mat=a.mat;ch=true;}
+  if(a.concept!=null){const k=String(a.concept).toUpperCase();if(k!=='AUTO'&&!HOUSING.CONCEPTS[k])throw new Error('시안: auto · '+Object.keys(HOUSING.CONCEPTS).map(k=>k+' '+HOUSING.CONCEPTS[k].short).join(' · '));i.concept=k==='AUTO'?'auto':k;ch=true;}
   if(ch){H.undo.push(before);H.redo=[];}
   H.R=null;const R=mechRun(true);if(HS.ws==='cad')cadRefresh();
   if(sub==='show'||sub==='hide'||sub==='open'||sub==='close'){if(sub==='open'||sub==='close')H.open=sub==='open';if(sub!=='hide')setWorkspace('cad');else if(HS.ws==='cad')setWorkspace('board');return sub==='hide'?'보드 뷰어로 돌아왔습니다.':'기구 CAD 작업 공간에서 하우징을 표시합니다.';}

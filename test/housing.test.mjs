@@ -90,3 +90,18 @@ test('auto placement keeps the sealed header reaching over the board edge', () =
   const c = HOUSING.boardNeeds(B).cuts.find(k => k.ref === 'J1');
   assert.ok(c.sealed && c.gap > 0.5 && c.gap < 1.5, JSON.stringify(c)); // flange just beyond the edge (0.25 mm placement grid)
 });
+
+test('housing concepts A/B/C/D: materials, fins placement, fasteners and blended mass/cost follow the chosen concept', () => {
+  const B = board(SAMPLE_TC364);
+  const R = {}; for (const k of ['A', 'B', 'C', 'D']) R[k] = HOUSING.analyze(B, { P: 18, ip: 'IP54', vib: 2, concept: k });
+  assert.deepEqual(Object.keys(HOUSING.CONCEPTS), ['A', 'B', 'C', 'D']);
+  assert.equal(R.A.d.mat, 'adc12'); assert.equal(R.A.d.concept.key, 'A'); assert.ok(!R.A.d.fins || R.A.d.fins.where === 'lid');
+  assert.equal(R.B.d.mat, 'pcabs'); assert.equal(R.B.d.fins, null, 'no fins on the snap-fit box'); assert.equal(R.B.d.ns, 2, 'snap hooks + two helper screws');
+  assert.equal(R.C.d.mat, 'a6063'); assert.equal(R.C.d.ns, 8); assert.ok(R.C.d.screws.every(s => s.end), 'end-plate screws');
+  assert.equal(R.D.d.mat, 'adc12'); assert.equal(R.D.d.concept.lid, 'pcabs'); assert.equal(R.D.d.mLid.short, HOUSING.MATS.pcabs.short); assert.ok(!R.D.d.fins || R.D.d.fins.where === 'floor');
+  assert.ok(R.D.d.mass < R.A.d.mass && R.D.d.mass > R.B.d.mass, 'hybrid mass sits between the all-metal and all-plastic boxes');
+  assert.ok(R.D.d.cost > R.B.d.cost, 'hybrid is not cheaper than the plastic box');
+  for (const k of ['A', 'B', 'C', 'D']) { assert.equal(R[k].all.length, 1, 'concept fixes the base material'); assert.match(HOUSING.text(R[k]), new RegExp('^시안 ' + k)); }
+  const auto = HOUSING.analyze(B, { P: 12, ip: 'IP54', vib: 2, mat: 'a6063' });
+  assert.equal(auto.d.concept.key, 'C', 'extrusion material implies the profile concept');
+});

@@ -1,7 +1,7 @@
 /* Text-to-CAD for the protective housing.
    A small command language edits the housing model (conditions, overrides, features), and a rule-based reader turns
    Korean / English sentences into those commands. The AI mode of the console sends the same commands through Claude.
-   State: {inp:{P,ip,vib,ta,tmax,tj,mat,tim}, cad:{over:{wall,corner,stand,top,gap,split}, feats:[…], seq}} — pure data,
+   State: {inp:{P,ip,vib,ta,tmax,tj,mat,tim,concept}, cad:{over:{wall,corner,stand,top,gap,split}, feats:[…], seq}} — pure data,
    so every command is undoable by snapshot and testable without the page. */
 const TEXT2CAD=(function(){
 "use strict";
@@ -14,6 +14,7 @@ const HELP=[
   ['status · check','현재 설계 전체 보고 (재질·방열·실링·체결·진동·형상·경고)'],
   ['compare','재질 6종 비교'],
   ['set power|ip|vib|ta|tmax|tj|mat|tim <값|auto>','설계 조건: 발열 W · IP · 진동 Grms · 주위/PCB/Tj 온도 · 재질 · 방열 패드'],
+  ['set concept A|B|C|D|auto','하우징 시안: A 다이캐스팅 알루미늄 · B PC/ABS 사출 스냅핏 · C 압출 프로파일+엔드 플레이트 · D 하이브리드(알루미늄 베이스+플라스틱 커버) · auto 조건에 맞춰 선택'],
   ['set wall|corner|stand|top|gap|split <mm|auto>','형상 직접 지정: 벽 두께 · 세로 모서리 R · 아래 스탠드오프 · 위 여유 · 보드–벽 간격 · 분할면 z'],
   ['fillet <top|bottom|vertical|all> <R mm|off> · chamfer <top|bottom|vertical|all> <C mm|off>','외곽 모서리 처리: fillet = 둥근모따기(R), chamfer = 각모따기(C). top = 커버 윗면 둘레, bottom = 바닥 둘레, vertical = 세로 모서리 4곳, all = 셋 다'],
   ['hole <면> --d <mm> [--u <mm>] [--z <mm>] [--n 2 --pitch 20] [--label 이름]','원형 구멍. 면: left right front back top bottom (W E S N T B). u = 벽 시작에서의 거리, z = 높이(보드 중간면 0)'],
@@ -72,7 +73,8 @@ function exec(st,line,H){norm(st);const t=tok(line);const cmd=(t[0]||'').toLower
       if(/^(tim|pad|방열패드)$/.test(k)){const m=auto?'auto':/^(none|off|없음)$/i.test(v)?'none':H.TIMS[v]?v:null;if(!m)throw new Error('TIM: auto · none · '+Object.keys(H.TIMS).join(' · '));I.tim=m;return ok(`방열 패드 ${m==='auto'?'자동':m==='none'?'사용 안 함':H.TIMS[m].label}`);}
       if(k==='corner'&&!auto&&C.edge.V==='chamfer'&&/^r/i.test(v))delete C.edge.V;
       if(OVER[k]){if(auto)delete C.over[k];else C.over[k]=num(k==='corner'?v.replace(/^[rc]\s*/i,''):v,OVER[k]);return ok(`${OVER[k]} ${auto?'자동':C.over[k]+(k==='split'?'':' mm')}`);}
-      throw new Error(`모르는 키: ${k} — power ip vib ta tmax tj mat tim wall corner stand top gap split`);}
+      if(/^(concept|시안|컨셉)$/.test(k)){const c=auto?'auto':String(v).trim().toUpperCase().replace(/^시안\s*/,'');if(c!=='auto'&&!(H.CONCEPTS&&H.CONCEPTS[c]))throw new Error('시안: auto · '+Object.keys(H.CONCEPTS||{}).map(x=>x+' '+H.CONCEPTS[x].short).join(' · '));I.concept=c;return ok(`시안 ${c==='auto'?'자동 (재질·조건에 맞춰 선택)':c+' · '+H.CONCEPTS[c].label}`);}
+      throw new Error(`모르는 키: ${k} — power ip vib ta tmax tj mat tim concept wall corner stand top gap split`);}
     case'hole':case'gland':case'vent':{const sd=side(a._[0])||(cmd==='vent'?'N':'E');let d,label,kind;
       if(cmd==='gland'){const sz=String(a._.find(x=>/^(m|pg)\d+$/i.test(x))||a.size||'M16').toUpperCase();d=GLAND[sz]||num(sz.replace(/\D/g,''))+0.5;label=`케이블 글랜드 ${sz}`;kind='gland';}
       else if(cmd==='vent'){d=optNum(a.d)||12.5;label='ePTFE 벤트';kind='vent';}
@@ -139,6 +141,7 @@ function parse(text){
     if(/(커버|뚜껑|cover|lid).*(열어|열기|열고|open)|^open/.test(L)){out.push('open');continue;}
     if(/(커버|뚜껑|cover|lid).*(닫|close)|^close/.test(L)){out.push('close');continue;}
     // conditions
+    const cc=c.match(/시안\s*([a-dA-D])\b/)||c.match(/\b(?:concept)\s*([a-dA-D])\b/i);if(cc)out.push('set concept '+cc[1].toUpperCase());else if(/하이브리드|hybrid|(알루미늄|금속).*(플라스틱|수지).*(커버|뚜껑)|반.*플라스틱.*반.*알루미늄/i.test(c))out.push('set concept D');else if(/스냅\s*핏|snap|사출\s*(박스|케이스)/i.test(c))out.push('set concept B');else if(/압출\s*(프로파일|케이스|하우징)|엔드\s*플레이트|end\s*plate|extru/i.test(c))out.push('set concept C');else if(/다이\s*캐스(팅)?\s*(하우징|케이스|박스|ecu)|die\s*cast/i.test(c))out.push('set concept A');else if(/시안.*자동|concept.*auto/i.test(c))out.push('set concept auto');
     const mk=matKey(c,{MATS:{}});if(/재질|소재|material|마그네슘|다이캐스|압출|판금|spcc|pa66|나일론|pc\/?abs|플라스틱|수지|알루미늄|aluminum|adc12|az91|6063/i.test(c)&&!/글랜드|구멍/.test(c)){if(/자동|auto/.test(L)&&/재질|material/.test(L))out.push('set mat auto');else if(mk)out.push('set mat '+mk);}
     const ip=c.match(/ip\s*-?\s*(\d{2}k?)/i);if(ip)out.push('set ip IP'+ip[1].toUpperCase());else if(/고압\s*세척/.test(c))out.push('set ip IP69K');else if(/침수|완전\s*방수|방수/.test(c))out.push('set ip IP67');else if(/방진|생활\s*방수|비말/.test(c))out.push('set ip IP54');
     const pw=c.match(/(?:발열|소비\s*전력|열\s*부하|열부하|손실|power)\D{0,8}?(\d+(?:\.\d+)?)\s*w/i)||(/발열|power/i.test(c)?null:c.match(/(\d+(?:\.\d+)?)\s*w(?![a-z\/·])/i));if(pw&&!/w\s*\/\s*m/i.test(c))out.push('set power '+pw[1]);
