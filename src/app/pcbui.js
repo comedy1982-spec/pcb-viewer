@@ -1,6 +1,6 @@
 /* ---------- PCB layout editing (Pcbnew-style) in the TOP / BOTTOM views ---------- */
 var PE={on:false,tool:'sel',grid:0.5,w:0,layer:'T',undo:[],redo:[],drag:null,route:null,cursor:null,rats:[],drc:[],showRats:true,t3d:0,sel:null};
-const PE_TOOLS=[['sel','선택·이동','Esc'],['route','배선','X'],['via','비아','V'],['del','삭제','Del']];
+const PE_TOOLS=[['sel','선택·이동','Esc'],['route','배선','X'],['via','비아','V'],['del','삭제','Del'],['shape','외곽 그리기','O']];
 const PE_ACTS=[['rot','회전','R'],['flip','뒤집기','F'],['undo','실행 취소','Ctrl+Z'],['redo','다시 실행','Ctrl+Y']];
 const PE_GRIDS=[0.05,0.1,0.25,0.5,1,1.27,2.54];
 const PE_WIDTHS=[0,0.15,0.2,0.25,0.3,0.4,0.5,0.8,1.0];
@@ -41,20 +41,22 @@ const peTol=()=>Math.max(0.25,5/V2.s);
 function peTrackWidth(net){if(PE.w)return PE.w;if(!net)return 0.25;return BD.netClass(net)==='신호'?0.25:0.5;}
 /* pointer hooks (called from the 2D view) */
 function peDown(w){
+  if(PE.tool==='shape')return shDown(w);
   if(PE.tool!=='sel')return false;
   const h=hit(w[0],w[1],S.view,3/V2.s);const c=h&&(h.type==='comp'?h.c:h.type==='pad'?h.c:null);
   if(!c)return false;
   S.selRef=c.ref;S.hlNet=null;PE.drag={ref:c.ref,start:w,ox:c.x,oy:c.y,moved:false,nets:peNetsOf(c)};refresh(true);return true;
 }
-function peDrag(w){const D=PE.drag;if(!D)return;const c=peComp(D.ref);if(!c)return;
+function peDrag(w){if(PE.tool==='shape'){shDrag(w);return;}const D=PE.drag;if(!D)return;const c=peComp(D.ref);if(!c)return;
   const tx=PCBEDIT.snapTo(D.ox+(w[0]-D.start[0]),PE.grid),ty=PCBEDIT.snapTo(D.oy+(w[1]-D.start[1]),PE.grid);const dx=tx-c.x,dy=ty-c.y;
   if(Math.abs(dx)<1e-9&&Math.abs(dy)<1e-9)return;PCBEDIT.move(BD,c,dx,dy);D.moved=true;
   if(!D.raf)D.raf=requestAnimationFrame(()=>{D.raf=0;peRecalc(false,D.nets);draw2D();});}
-function peUp(){const D=PE.drag;PE.drag=null;if(!D||!D.moved){draw2D();return;}const c=peComp(D.ref);const dx=c.x-D.ox,dy=c.y-D.oy;pePush(peMoveCmd(D.ref,dx,dy));peChanged(false);}
+function peUp(){if(PE.tool==='shape'){shUp();return;}const D=PE.drag;PE.drag=null;if(!D||!D.moved){draw2D();return;}const c=peComp(D.ref);const dx=c.x-D.ox,dy=c.y-D.oy;pePush(peMoveCmd(D.ref,dx,dy));peChanged(false);}
 function pePoint(w){PE.cursor=w;if(PE.tool!=='sel')draw2D();}
 function peClick(w){
   const L=PE.layer;
   if(PE.tool==='sel'){applyHit(hit(w[0],w[1],S.view,3/V2.s));return;}
+  if(PE.tool==='shape'){shClick(w);return;}
   if(PE.tool==='del'){const h=hit(w[0],w[1],S.view,3/V2.s);let p=null;if(h&&h.type==='track')p=h.t;else if(h&&h.type==='via')p=h.v||BD.vias.find(v=>Math.hypot(v.x-w[0],v.y-w[1])<=v.d/2+peTol());
     if(!p){toast('지울 트랙이나 비아를 누르세요 (부품은 지우지 않습니다).');return;}const at=PCBEDIT.removePrim(BD,p);if(!at)return;
     pePush({copper:true,undo:()=>PCBEDIT.restorePrim(BD,p,at),redo:()=>PCBEDIT.removePrim(BD,p)});peChanged(true);return;}
@@ -69,7 +71,7 @@ function peClick(w){
     if(it&&(it.net===R.net)&&!(Math.abs(end[0]-R.runs[0].pts[0][0])<1e-6&&Math.abs(end[1]-R.runs[0].pts[0][1])<1e-6))peRouteFinish();
     draw2D();return;}
 }
-function peDbl(){if(PE.tool==='route'&&PE.route){peRouteFinish();return true;}return false;}
+function peDbl(){if(PE.tool==='route'&&PE.route){peRouteFinish();return true;}if(PE.tool==='shape')return shDbl();return false;}
 function peRouteVia(){const R=PE.route;if(!R)return;const run=R.runs[R.runs.length-1];const p=run.pts[run.pts.length-1];R.vias.push({x:p[0],y:p[1]});const nl=run.layer==='T'?'B':'T';R.runs.push({layer:nl,pts:[p.slice()]});PE.layer=nl;toast(`비아를 넣고 ${nl==='T'?'상단':'하단'} 층으로 바꿨습니다.`);peBar();draw2D();}
 function peRouteFinish(){
   const R=PE.route;PE.route=null;if(!R)return;const added=[],vias=[];
@@ -94,6 +96,7 @@ function peOverlay(ctx,side){
     const run=R.runs[R.runs.length-1];if(PE.cursor){const last=run.pts[run.pts.length-1];const it=PCBEDIT.itemAt(BD,PE.cursor[0],PE.cursor[1],run.layer,peTol());const end=it&&(it.net===R.net||!R.net)?it.at:peSnap(PE.cursor);
       ctx.globalAlpha=0.6;ctx.strokeStyle=col(run.layer);ctx.beginPath();PCBEDIT.posture(last,end,PE.diag).forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();}
     R.vias.forEach(v=>{ctx.fillStyle='#d8d8d8';ctx.beginPath();ctx.arc(v.x,v.y,0.3,0,TAU);ctx.fill();});ctx.restore();}
+  if(PE.tool==='shape')shOverlay(ctx);
   if(PE.cursor&&PE.tool!=='sel'){const p=peSnap(PE.cursor);ctx.save();ctx.strokeStyle='#ffd23f';ctx.lineWidth=lw;const k=Math.max(0.6,8/V2.s);ctx.beginPath();ctx.moveTo(p[0]-k,p[1]);ctx.lineTo(p[0]+k,p[1]);ctx.moveTo(p[0],p[1]-k);ctx.lineTo(p[0],p[1]+k);ctx.stroke();ctx.restore();}
 }
 /* toolbar */
@@ -115,15 +118,16 @@ function peBar(){
     <div class="setools"><button class="pill vbtn" id="peSize" title="보드 가로·세로·모서리 반지름">보드 ${(Math.round(BD.W*10)/10)} × ${(Math.round(BD.H*10)/10)} mm</button>
     <button class="pill vbtn" id="peReset" title="배선을 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치">회로도로 리셋·자동 배치</button>
     <button class="pill vbtn" id="peCliBtn" title="오른쪽 설계 도우미에서 명령·질문 (\`)">도우미<kbd>\`</kbd></button></div>
-    <span class="pill hint2" id="peStat"></span>`;
+    ${PE.tool==='shape'?shBarHTML():''}<span class="pill hint2" id="peStat"></span>`;
+  if(PE.tool==='shape'){const sb=el.querySelector('.sh-sub');if(sb)shBind(sb);}
   peStat();
 }
 function peStat(){const el=$('#peStat');if(!el)return;const c=S.selRef&&BD.byRef[S.selRef];
   const t={sel:c?`${c.ref} · X ${c.x.toFixed(2)} Y ${c.y.toFixed(2)} mm · ${Math.round(c.rot||0)}° · ${c.side==='T'?'상단':'하단'} — 끌어서 이동 · 방향키 ${PE.grid} mm (Shift ×10) · R 회전 · F 뒤집기`:'부품을 끌어서 옮기거나 클릭해 고른 뒤 방향키로 움직입니다.',
     route:PE.route?`${PE.route.net||'(넷 없음)'} · ${PE.route.w} mm — 클릭으로 꺾기 · 같은 넷 패드에서 끝 · V 비아 · / 45° 방향 · Esc 끝`:'배선을 시작할 패드·트랙을 누르세요.',
-    via:'비아를 놓을 곳을 누르세요 (트랙 위면 그 넷).',del:'지울 트랙·비아를 누르세요.'}[PE.tool]||'';
+    via:'비아를 놓을 곳을 누르세요 (트랙 위면 그 넷).',del:'지울 트랙·비아를 누르세요.',shape:typeof shStat==='function'?shStat():''}[PE.tool]||'';
   el.textContent=t;const rb=$('#peRats b');if(rb)rb.textContent=PE.rats.length;const db=$('#peDrc b');if(db)db.textContent=PE.drc.length;}
-function peSetTool(t){if(PE.route&&t!=='route')peRouteFinish();PE.tool=t;if(t==='route'||t==='via')PE.layer=S.view==='B'?'B':'T';peBar();draw2D();}
+function peSetTool(t){if(PE.route&&t!=='route')peRouteFinish();if(PE.tool==='shape'&&t!=='shape'&&typeof shCancel==='function')shCancel();PE.tool=t;if(t==='route'||t==='via')PE.layer=S.view==='B'?'B':'T';peBar();draw2D();}
 function peAction(a){const c=S.selRef&&BD.byRef[S.selRef];
   if(a==='undo')return peUndo();if(a==='redo')return peRedo();
   if(!c){toast('먼저 부품을 고르세요.');return;}
@@ -146,6 +150,8 @@ document.addEventListener('keydown',e=>{
   if(ctl&&(k==='z'||k==='Z')&&!e.shiftKey)peUndo();else if(ctl&&(k==='y'||k==='Y'||((k==='z'||k==='Z')&&e.shiftKey)))peRedo();
   else if(ctl)done=false;
   else if(k.startsWith('Arrow')){if(!c){done=false;}else{const st=PE.grid*(e.shiftKey?10:1);let dx=k==='ArrowLeft'?-st:k==='ArrowRight'?st:0,dy=k==='ArrowUp'?st:k==='ArrowDown'?-st:0;if(S.view==='B')dx=-dx;peNudge(c,dx,dy);}}
+  else if(PE.tool==='shape'&&(k==='Enter'||k==='Escape')&&shKey(k)){}
+  else if(k==='o'||k==='O'){if(!e.ctrlKey&&!e.metaKey)peSetTool('shape');}
   else if(k==='Escape'){if(PE.route){const R=PE.route;const n=R.runs.reduce((a,r)=>a+r.pts.length-1,0);if(n>0)peRouteFinish();else PE.route=null;}else if(PE.tool!=='sel')PE.tool='sel';else{S.selRef=null;refresh(true);}peBar();draw2D();}
   else if(k==='Delete'||k==='Backspace'){if(PE.cursor){const t=PE.tool;PE.tool='del';peClick(PE.cursor);PE.tool=t;}}
   else if(k==='r'||k==='R'){if(c)peRotate(c,e.shiftKey?-90:90);}

@@ -181,6 +181,16 @@ function setShape(B,kind,p,o){o=o||{};p=p||{};if(!SHAPES[kind])throw new Error('
   const n0=B.drills.length;B.drills=B.drills.filter(d=>d.plated||d.own||d._pad||PCB.inRing(d.x,d.y,ring));const holesDropped=n0-B.drills.length;
   const outside=B.comps.filter(c=>c.kind!=='none'&&c.pads.some(q=>!PCB.inBoard(q.x,q.y,B.outline))).map(c=>c.ref);
   return{kind,label:SHAPES[kind],W,H,W0,H0,outside,holesDropped};}
+/* an outline drawn in board coordinates (any polygon): the board origin moves to the ring's lower-left, parts keep their place
+   relative to the new outline, cut-outs and mounting holes that fall outside are dropped */
+function setOutlineRing(B,ring,meta){meta=meta||{};const r0=closeRing(ring.map(q=>[+q[0],+q[1]]));if(r0.length<3)throw new Error('꼭짓점 3개 이상');
+  const bb=ringBB(r0);const W=bb[2]-bb[0],H=bb[3]-bb[1];if(!(W>=5&&H>=5&&W<=1000&&H<=1000))throw new Error('보드 크기는 5–1000 mm 사이여야 합니다.');
+  const dx=-bb[0],dy=-bb[1];if(dx||dy)translateAll(B,dx,dy);
+  const ring1=r0.map(q=>[q[0]+dx,q[1]+dy]);const holes=(B.outline||[]).slice(1).map(h=>h.map(q=>[q[0]+dx,q[1]+dy])).filter(h=>h.every(q=>PCB.inRing(q[0],q[1],ring1)));
+  B.outline=[ring1].concat(holes);if(B.cutouts)B.cutouts=B.cutouts.slice(0,holes.length);B.W=W;B.H=H;B.shape=Object.assign({kind:meta.kind||'poly'},meta.params||{},{w:W,h:H});
+  const n0=B.drills.length;B.drills=B.drills.filter(d=>d.plated||d.own||d._pad||PCB.inRing(d.x,d.y,ring1));const holesDropped=n0-B.drills.length;
+  const outside=B.comps.filter(c=>c.kind!=='none'&&c.pads.some(q=>!PCB.inBoard(q.x,q.y,B.outline))).map(c=>c.ref);
+  return{W,H,dx,dy,outside,holesDropped};}
 /* a hole in the board: circle (d) or rect (w×h, corner r) at x,y (centre) */
 function addCutout(B,kind,p){p=p||{};const x=+p.x,y=+p.y;if(!isFinite(x)||!isFinite(y))throw new Error('cutout 위치 --at x,y (mm)');
   let ring;if(kind==='circle'){const d=+p.d;if(!(d>=1))throw new Error('cutout circle <지름>');ring=closeRing(PCB.arcPts(x,y,d/2,0,2*Math.PI));}
@@ -294,6 +304,6 @@ function toKicadPcb(B,meta){
   o.push(')');return o.join('\n')+'\n';
 }
 
-return{setLayers,planeNets,stackText,prepare,applyComp,move,rotate,flip,snapDelta,snapTo,bbox,rebuildNets,cornerRadius,rectLike,roundedRect,SHAPES,shapeRing,setShape,addCutout,clearCutouts,shapeText,translateAll,resizeBoard,addTrack,addVia,removePrim,restorePrim,ratsnest,drc,posture,itemAt,toKicadPcb,DRC_DEF};
+return{setLayers,planeNets,stackText,prepare,applyComp,move,rotate,flip,snapDelta,snapTo,bbox,rebuildNets,cornerRadius,rectLike,roundedRect,SHAPES,shapeRing,setShape,setOutlineRing,addCutout,clearCutouts,shapeText,translateAll,resizeBoard,addTrack,addVia,removePrim,restorePrim,ratsnest,drc,posture,itemAt,toKicadPcb,DRC_DEF};
 })();
 if(typeof module!=='undefined')module.exports=PCBEDIT;

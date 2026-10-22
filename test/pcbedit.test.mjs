@@ -101,3 +101,13 @@ test('housing follows a shaped board outline', () => {
   const o = HOUSING.offsetRing([[0, 0], [10, 0], [10, 10], [0, 10]], 1); assert.equal(o.length, 4); assert.ok(o.every(p => p[0] === -1 || p[0] === 11));
   const h = HOUSING.ringHit(g.ringO, [35, 35], [1, 0]); assert.ok(h && Math.abs(h.nx - 1) < 0.05 && Math.abs(h.x - (35 + g.Lo / 2)) < 0.5);
 });
+
+test('setOutlineRing: drawn outline moves the origin and keeps parts in place', () => {
+  const bd = board(SAMPLE); PCBEDIT.resizeBoard(bd, 100, 60, {});
+  const c = bd.comps.find(x => x.kind !== 'none'); const px = c.x, py = c.y;
+  const r = PCBEDIT.setOutlineRing(bd, [[10, 5], [90, 5], [90, 55], [50, 75], [10, 55]], { kind: 'poly' });
+  assert.equal(r.dx, -10); assert.equal(r.dy, -5); assert.ok(Math.abs(bd.W - 80) < 1e-9 && Math.abs(bd.H - 70) < 1e-9);
+  assert.ok(Math.abs(c.x - (px - 10)) < 1e-9 && Math.abs(c.y - (py - 5)) < 1e-9, 'parts shifted with the origin');
+  assert.equal(bd.outline[0].length, 5); assert.equal(bd.shape.kind, 'poly');
+  assert.throws(() => PCBEDIT.setOutlineRing(bd, [[0, 0], [2, 0], [2, 2]], {}), /보드 크기/);
+});
