@@ -109,8 +109,6 @@ function schApply(h,V){
   else if(h.type==='pin'){S.selRef=BD.byRef[h.s.ref]?h.s.ref:null;S.hlNet=h.g&&h.g.net||null;}
   else{S.selRef=null;S.hlNet=h.g&&h.g.net||null;}
   S.tab='sel';refresh(true);
-  // 회로 단계처럼 정보 패널이 기본으로 안 보이는 화면에서는 선택한 부품·넷의 정보 탭을 바로 연다
-  if(h&&typeof dockTab==='function'&&typeof COP!=='undefined'&&COP.shown!=='info'&&!(PANELS&&PANELS.insp&&PANELS.insp.out)){try{dockTab('info');}catch(e){}}
 }
 function schFocus(V){V=V||SV;
   const key=(S.selRef||'')+'|'+(S.hlNet||'');if(key===V.lastKey)return;V.lastKey=key;

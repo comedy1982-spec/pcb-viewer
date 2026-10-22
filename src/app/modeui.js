@@ -3,7 +3,7 @@
    정보/시뮬레이션), step 2 the circuit-variant choice, schematic and datasheet DB (no 3D/TOP/BOTTOM), step 3+ the full board tools.
    The viewer mode is the full board viewer for files and examples. */
 var APP={mode:'home'};
-function modeTabs(){if(!APP)return['ai'];if(APP.mode==='steps'){const st=stepCur();if(st===1)return['ai'];if(st===2)return['ai','info','ds'];}return['ai','info','sim','ds'];}
+function modeTabs(){if(!APP)return['ai'];if(APP.mode==='steps'){const st=stepCur();if(st===1)return['ai'];if(st===2)return['ai','ds'];}return['ai','info','sim','ds'];}
 function modePaint(){
   if(!APP)return;const m=APP.mode,st=typeof stepCur==='function'?stepCur():0;
   const home=$('#home');if(home)home.hidden=m!=='home';
