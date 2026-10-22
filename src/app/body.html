@@ -1,3 +1,9 @@
+<script>
+/* 시작 오류 표시: 앱 스크립트가 실행 중 멈추면 첫 화면 버튼이 반응하지 않으므로, 첫 오류를 화면 아래에 보여 원인을 알 수 있게 한다 */
+(function(){var shown=0;function show(m){try{if(shown>=2)return;shown++;var d=document.getElementById('bootErr');if(!d){d=document.createElement('div');d.id='bootErr';d.setAttribute('role','alert');d.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#b3261e;color:#fff;padding:10px 14px;border-radius:10px;font:13px/1.45 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.3);white-space:pre-wrap;word-break:break-word';d.onclick=function(){d.remove();};document.body.appendChild(d);}d.textContent=(d.textContent?d.textContent+'\n':'오류가 발생했습니다 (눌러서 닫기) — 이 문구를 알려 주세요:\n')+String(m).slice(0,400);}catch(e){}}
+window.__aodErr=show;window.addEventListener('error',function(e){if(e&&e.message)show(e.message+(e.lineno?' (줄 '+e.lineno+')':''));});
+window.addEventListener('unhandledrejection',function(e){var r=e&&e.reason;if(r&&/^(AbortError|NotAllowedError)$/.test(r.name))return;show('비동기: '+(r&&(r.message||r))||'unknown');});})();
+</script>
 <div class="app">
   <header class="top">
     <div class="brand">
