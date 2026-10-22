@@ -322,7 +322,7 @@ function minimize(B,o){o=o||{};const m=o.margin!=null?+o.margin:1;const r5=v=>Ma
   for(const k of ks){let W=r5(Math.sqrt(area*k*asp)),H=r5(area*k/W);W=Math.max(W,r5(bw+2*m+2),r5(2*R+4));H=Math.max(H,r5(bh+2*m+2),r5(2*R+4));
     if(o.max!==false&&W*H>W0*H0+1e-6&&tries.length)break; // never larger than the board we started from
     PCBEDIT.resizeBoard(B,W,H,{anchor:'center'});
-    const r=place(B,{strategy:o.strategy||'compact',scratch:true,seed:o.seed!=null?o.seed:1,power:o.power,fixed:o.fixed,edge:m,effort:o.effort||1});
+    const r=place(B,{strategy:o.strategy||'compact',scratch:true,seed:o.seed!=null?o.seed:1,power:o.power,fixed:o.fixed,edge:m,effort:o.effort||1,both:!!o.both});
     const bad=PCBEDIT.drc(B).filter(d=>d.code==='courtyard'||d.code==='edge').length+r.fails.length;
     tries.push({W,H,k,bad});if(o.onTry)o.onTry(tries[tries.length-1]);
     if(!bad)return{ok:true,W,H,k,place:r,tries,W0,H0};}
