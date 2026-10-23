@@ -124,12 +124,13 @@ function rank(b,ctx){ctx=ctx||{};const N=needs(b,ctx);const pref=ctx.pref||{pric
   const safetyBlock=(b.impl||[]).some(im=>/^(mcu|supervisor|gdrv3|hs_switch)$/.test(im.type))||!!b.safety||(b.sg&&b.sg.length);
   const pa=asilRank[(p.asil||'').toUpperCase()]||0;if(need>=2&&safetyBlock){if(pa>=need){s+=2.5;why.push(`ASIL ${p.asil}`);}else if(pa){s+=1;why.push(`ASIL ${p.asil} (요구 ${'ABCD'[need-1]} 미달)`);}else bad.push('안전 기능 없음');}
     if(auto){if(/Q10/.test(p.grade||'')){s+=1.5;why.push(p.grade);}else{s-=1;bad.push('차량용 등급 아님');}}
-    const rec=look(p.mpn);const pins=!!(rec&&rec.pins&&rec.pins.length);if(pins){s+=1;why.push('핀 데이터 있음');}
+    const rec=look(p.mpn);const pins=!!(rec&&rec.pins&&rec.pins.length);const kic=rec&&(rec.src==='kicad'||rec.pinSrc==='kicad');const fam=rec&&(rec.match==='family'||rec.pinMatch==='family');
+    const pinNote=pins?(kic?'KiCad'+(fam?' 계열':''):rec.src==='ds'?'데이터시트':rec.src==='ai'?'Claude 추정':'라이브러리'):'';if(pins){s+=fam?0.6:1;why.push('핀 데이터 있음');}
     const price=priceOf(p.mpn)!=null?priceOf(p.mpn):p.price;if(price!=null){s+=pref.price*Math.max(-1.5,1-Math.log10(Math.max(0.05,price))*0.9);}
     if(pref.feat>1||pref.ext>1){if(/진단|센스|SPI|FOC|보호|내장/.test(p.note||'')){s+=0.6*Math.max(pref.feat,pref.ext);why.push('기능 풍부');}}
     if(p.src==='profile'){s+=0.8;why.push('제품 표준 후보');}
     if(p.why)why.push(p.why);
-    return Object.assign({},p,{score:+s.toFixed(2),ok:!bad.some(x=>/</.test(x)||/미지원/.test(x)),why,bad,pins,price});});
+    return Object.assign({},p,{pinNote,score:+s.toFixed(2),ok:!bad.some(x=>/</.test(x)||/미지원/.test(x)),why,bad,pins,price});});
   rows.sort((a,b)=>(b.ok-a.ok)||(b.score-a.score));rows.forEach((r,i)=>{r.rank=i+1;});return{needs:N,rows};}
 function text(b,R){const L=[`${b.label} (${b.id}) 주요 소자 후보 ${R.rows.length}개${R.needs.i?` · 요구 전류 ${R.needs.i} A`:''}${R.needs.v?` · 전압 ${R.needs.v} V`:''}`];
   R.rows.forEach(r=>L.push(`  ${r.rank}. ${r.mpn} · ${r.mfr}${r.price!=null?' · $'+r.price:''}${r.grade?' · '+r.grade:''}${r.asil?' · ASIL '+r.asil:''} — ${r.note}${r.bad.length?' ✕ '+r.bad.join(', '):''}${r.why.length?' ✓ '+r.why.slice(0,3).join(' · '):''}`));

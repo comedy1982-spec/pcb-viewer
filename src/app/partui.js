@@ -1,10 +1,10 @@
 /* ---------- part library + conversational part replacement (PARTLIB / FPGEN) ----------
    PL.user : approved parts list (CSV/Excel import, IndexedDB 'aod-parts')  PL.ai : records Claude estimated  PL.api : records fetched from a distributor
    lookup order: user → built-in PARTS → ai → api.  `replace <ref> <부품>` and sentences like "U3를 AP2112K로 바꿔줘" run the flow in the copilot. */
-var PL={user:[],ai:[],api:[],db:null,api_cfg:{provider:'',key:'',url:''},open:false,q:'',tab:'all',busy:false,last:null};
+var PL={user:[],ai:[],api:[],kicad:[],db:null,api_cfg:{provider:'',key:'',url:''},open:false,q:'',tab:'all',busy:false,last:null};
 const PL_SRC={user:'승인 목록',ds:'데이터시트',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'};
 function plGrade(p){const g=p&&p.grade;if(!g)return'';const auto=PARTLIB.gradeAuto(g);return`<span class="pl-src ${auto?'pl-aec':'pl-com'}" title="${esc(PARTLIB.GRADE_LABEL[g]||g)}${p.temp?' · '+p.temp[0]+'~'+p.temp[1]+' °C':''}">${esc(auto?g:PARTLIB.GRADE_LABEL[g]||g)}</span>`;}
-function plAll(){const b=typeof PARTS!=='undefined'?PARTLIB.fromBuiltin(PARTS,plBuiltinPins):[];return PARTLIB.merge([PL.user,b,PL.ai,PL.api]);}
+let PL_KP=null;function plAll(){const b=typeof PARTS!=='undefined'?PARTLIB.fromBuiltin(PARTS,plBuiltinPins):[];if(!PL_KP)PL_KP=typeof KPINS!=='undefined'?PARTLIB.fromKpins(KPINS):[];return PARTLIB.merge([PL.user,b,PL.kicad,PL_KP,PL.ai,PL.api]);}
 /* pin names for a built-in part: from the open board when a component uses it */
 function plBuiltinPins(mpn){if(!BD)return[];const c=BD.comps.find(x=>(x.mpn||'').trim()===mpn&&x.pads.some(p=>p.fn));return c?[...new Map(c.pads.map(p=>[String(p.n),{num:String(p.n),name:p.fn||''}])).values()]:[];}
 /* ---- persistence ---- */
@@ -12,19 +12,25 @@ function plDb(){if(PL.db)return Promise.resolve(PL.db);return new Promise(res=>{
   r.onsuccess=()=>{PL.db=r.result;res(PL.db);};r.onerror=()=>res(null);}catch(e){res(null);}});}
 async function plLoad(){try{PL.api_cfg=Object.assign(PL.api_cfg,JSON.parse(localStorage.getItem('aod.partapi')||'{}'));}catch(e){}
   const d=await plDb();if(!d)return;await new Promise(res=>{const tx=d.transaction('lib','readonly').objectStore('lib');const g=k=>new Promise(r=>{const q=tx.get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null);});
-    Promise.all([g('user'),g('ai'),g('api')]).then(([u,a,p])=>{PL.user=Array.isArray(u)?u:[];PL.ai=Array.isArray(a)?a:[];PL.api=Array.isArray(p)?p:[];res();});});}
-async function plSave(){const d=await plDb();if(!d)return;try{const tx=d.transaction('lib','readwrite').objectStore('lib');tx.put(PL.user,'user');tx.put(PL.ai,'ai');tx.put(PL.api,'api');}catch(e){console.warn(e);}}
+    Promise.all([g('user'),g('ai'),g('api'),g('kicad')]).then(([u,a,p,k])=>{PL.user=Array.isArray(u)?u:[];PL.ai=Array.isArray(a)?a:[];PL.api=Array.isArray(p)?p:[];PL.kicad=Array.isArray(k)?k:[];res();});});}
+async function plSave(){const d=await plDb();if(!d)return;try{const tx=d.transaction('lib','readwrite').objectStore('lib');tx.put(PL.user,'user');tx.put(PL.ai,'ai');tx.put(PL.api,'api');tx.put(PL.kicad,'kicad');}catch(e){console.warn(e);}}
 function plSaveCfg(){try{localStorage.setItem('aod.partapi',JSON.stringify(PL.api_cfg));}catch(e){}}
 function plRemember(p){const L=p.src==='ai'?PL.ai:p.src==='api'?PL.api:PL.user;const k=PARTLIB.norm(p.mpn);const i=L.findIndex(x=>PARTLIB.norm(x.mpn)===k);if(i>=0)L[i]=p;else L.push(p);plSave();}
 /* ---- import (CSV / Excel) ---- */
-async function plImportFiles(files){const msgs=[];let n=0;for(const f of files){const ext=(f.name.split('.').pop()||'').toLowerCase();let aoa=null;
+async function plImportFiles(files){const msgs=[];let n=0;
+  // KiCad symbol libraries (.lib + .dcm of KiCad 5, .kicad_sym of KiCad 6–8): every symbol becomes a part with real pins
+  const kf=files.filter(f=>/\.(lib|dcm|kicad_sym)$/i.test(f.name));files=files.filter(f=>!kf.includes(f));
+  if(kf.length&&typeof KICADLIB!=='undefined'){const r=KICADLIB.parseFiles(await Promise.all(kf.map(async f=>({name:f.name,text:await f.text()}))));
+    const idx=new Map(PL.kicad.map((p,i)=>[PARTLIB.norm(p.mpn),i]));r.parts.forEach(p=>{const k=PARTLIB.norm(p.mpn);if(idx.has(k))PL.kicad[idx.get(k)]=p;else{idx.set(k,PL.kicad.length);PL.kicad.push(p);}n++;});
+    msgs.push('KiCad '+r.msg);}
+  for(const f of files){const ext=(f.name.split('.').pop()||'').toLowerCase();let aoa=null;
     if(ext==='xlsx'||ext==='xls'||ext==='xlsm'){if(!window.XLSX)throw new Error('엑셀 라이브러리를 불러오지 못했습니다. CSV로 저장해서 넣어 주세요.');const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
       for(const sn of wb.SheetNames){const r=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:false,defval:''});const t=PARTLIB.parseTable(r);if(t.parts.length){aoa=r;break;}}if(!aoa)throw new Error(`${f.name}: MPN 열이 있는 시트를 찾지 못했습니다.`);}
     else aoa=PARTLIB.parseCsv(await f.text());
     const t=PARTLIB.parseTable(aoa);if(t.error)throw new Error(`${f.name}: ${t.error}`);
     t.parts.forEach(p=>{p.file=f.name;const k=PARTLIB.norm(p.mpn);const i=PL.user.findIndex(x=>PARTLIB.norm(x.mpn)===k);if(i>=0)PL.user[i]=p;else PL.user.push(p);n++;});msgs.push(`${f.name}: ${t.parts.length}개${t.skipped?` (건너뜀 ${t.skipped})`:''}`);}
   await plSave();return{n,msg:msgs.join(' · ')};}
-function plPickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept='.csv,.tsv,.txt,.xlsx,.xls,.xlsm';i.multiple=true;i.onchange=()=>res([...i.files]);i.oncancel=()=>res([]);i.click();});}
+function plPickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept='.csv,.tsv,.txt,.xlsx,.xls,.xlsm,.lib,.dcm,.kicad_sym';i.multiple=true;i.onchange=()=>res([...i.files]);i.oncancel=()=>res([]);i.click();});}
 /* ---- lookups ---- */
 function plFind(q){const all=plAll();return PARTLIB.find(all,q);}
 function plSearch(q){return PARTLIB.search(plAll(),q);}
@@ -52,7 +58,7 @@ async function plAddFlow(it,src){src=src||'sch';const say=(k,t)=>{const e={k,t};
   const q=it.q;say('out',`"${q}" 부품 추가 — 라이브러리(승인 목록 → 내장 DB → 이전 추정)에서 찾는 중…`);
   let part=null;const cands=plSearch(q);const exact=cands.find(p=>PARTLIB.norm(p.mpn)===PARTLIB.norm(q)||PARTLIB.norm(p.mpn).startsWith(PARTLIB.norm(q)));
   if(exact&&exact.pins&&exact.pins.length)part=exact;
-  while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];const O1='Claude 추정 (핀 배열·패키지·사양을 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O5='데이터시트 PDF 올리기 (핀 표 추출)',O4='취소';
+  while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];const O1='Claude 추정 (핀 배열·패키지·사양을 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='부품 목록·KiCad 심볼 라이브러리 가져오기 (CSV/Excel · .lib/.kicad_sym)',O5='데이터시트 PDF 올리기 (핀 표 추출)',O4='취소';
     const a=await ask({q:`"${q}"${exact?'의 핀 정보가 없습니다':'은(는) 라이브러리에 없습니다'}. 어떻게 가져올까요?`,why:'추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다. 데이터시트 PDF를 올리면 실제 핀 표를 씁니다.',opts:[O5,O1,O2,O3,O4]});
     if(!a||a===O4){say('out','추가를 취소했습니다.');return;}
     try{if(a===O5){const r=await dsPdfFlow(q,src,{});if(r)part=r;else continue;}
@@ -186,7 +192,7 @@ function plDialogHTML(){const all=plAll();const q=PL.q.toLowerCase();const tab=P
   return`<div class="sheet pl" role="dialog" aria-modal="true" aria-labelledby="plT"><div class="sheet-h"><h2 id="plT">부품 라이브러리</h2><span class="pl-cnt">승인 ${cnt('user')} · 데이터시트 ${cnt('ds')} · 내장 ${cnt('builtin')} · Claude 추정 ${cnt('ai')} · API ${cnt('api')}</span><button type="button" class="btn sm" data-close aria-label="닫기">닫기</button></div>
   <div class="sheet-b pl-b"><div class="pl-bar"><div class="seg sm" role="tablist">${[['all','전체'],['user','승인 목록'],['builtin','내장'],['ai','Claude 추정'],['api','API']].map(t=>`<button type="button" role="tab" data-pltab="${t[0]}" aria-selected="${tab===t[0]}">${t[1]}</button>`).join('')}</div>
       <input type="search" id="plQ" placeholder="MPN · 제조사 · 설명 검색" value="${esc(PL.q)}" aria-label="검색"><span class="cop-sp"></span>
-      <button type="button" class="btn sm" data-plimp>목록 가져오기 (CSV/Excel)</button><button type="button" class="btn sm" data-plpdf title="데이터시트 PDF에서 핀 표를 읽어 저장">데이터시트 PDF → 핀</button><button type="button" class="btn sm" data-pltpl>CSV 템플릿</button><button type="button" class="btn sm" data-plexp>내보내기</button><button type="button" class="btn sm" data-plapi aria-expanded="${PL.apiOpen?'true':'false'}">API 설정</button></div>
+      <button type="button" class="btn sm" data-plimp title="승인 부품 목록(CSV/Excel) 또는 KiCad 심볼 라이브러리(.lib + .dcm · .kicad_sym — 회사 라이브러리나 KiCad 공식 라이브러리)를 넣으면 핀 데이터로 저장">가져오기 (CSV/Excel · KiCad 심볼)</button><button type="button" class="btn sm" data-plpdf title="데이터시트 PDF에서 핀 표를 읽어 저장">데이터시트 PDF → 핀</button><button type="button" class="btn sm" data-pltpl>CSV 템플릿</button><button type="button" class="btn sm" data-plexp>내보내기</button><button type="button" class="btn sm" data-plapi aria-expanded="${PL.apiOpen?'true':'false'}">API 설정</button></div>
     <div class="pl-api" ${PL.apiOpen?'':'hidden'}><label>공급자 <select id="plProv"><option value="">(없음)</option>${Object.keys(P).map(k=>`<option value="${k}" ${cfg.provider===k?'selected':''}>${esc(P[k].name)}</option>`).join('')}</select></label>
       <label>키 / 토큰 <input type="password" id="plKey" value="${esc(cfg.key||'')}" placeholder="브라우저에만 저장됩니다"></label><label>주소 (사내 서버) <input type="text" id="plUrl" value="${esc(cfg.url||'')}" placeholder="https://parts.example.com/find?q={q}"></label>
       <button type="button" class="btn primary sm" data-plsave>저장</button><button type="button" class="btn sm" data-pltest>조회 테스트</button><div class="pl-m">${cfg.provider&&P[cfg.provider]?esc(P[cfg.provider].keyHelp):'우선순위: 승인 부품 목록 → Claude 추정 → 부품 API. Mouser API는 브라우저에서 직접 호출이 막혀 있어(CORS) 사내 프록시가 필요할 수 있습니다.'}</div></div>

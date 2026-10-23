@@ -59,8 +59,14 @@ function parseCsv(text){const rows=[];let row=[],cell='',q=false;const t=String(
 function fromBuiltin(PARTS,pinsOf){const P=PARTS&&PARTS.P||{};return Object.keys(P).map(mpn=>{const d=P[mpn];const pkg=(d.specs||[]).map(s=>s[1]).join(' ').match(/(UFQFPN\d+|TQFP-?\d+|SOT-?223|SOT-?23(?:-\d)?|SOIC-?\d+|HTSSOP-?\d+|TSSOP-?\d+|QFN-?\d+|0603|0805|1206|1210|SMA)/i);
   return{mpn,mfr:d.mfr||'',title:d.title||'',cat:d.cat||'',pkg:pkg?pkg[1]:'',fp:'',val:'',pins:(pinsOf&&pinsOf(mpn)||[]).length?pinsOf(mpn):(pinoutFor(mpn,'',null)||[]),specs:(d.specs||[]).map(s=>[s[0],s[1]]),price:PARTS.price?PARTS.price(mpn,d.cat):null,pdf:d.pdf||'',page:d.page||'',desc:d.title||'',src:'builtin',status:'',conf:1,therm:d.therm||null,grade:d.grade||'',temp:d.temp||null,asil:d.asil||'',fitv:d.fit!=null?d.fit:null};}).concat(AUTO_PARTS.map(p=>Object.assign({src:'builtin',status:'',conf:1,specs:[],pins:[],fp:'',val:'',desc:p.title},p)));}
 /* ---------- lookup ---------- */
-const ORDER={user:0,ds:1,builtin:2,ai:3,api:4};
-function merge(lists){const m=new Map();lists.flat().forEach(p=>{if(!p||!p.mpn)return;const k=norm(p.mpn);const cur=m.get(k);if(!cur||ORDER[p.src]<ORDER[cur.src])m.set(k,p);});return[...m.values()];}
+const ORDER={user:0,ds:1,builtin:2,kicad:2.5,ai:3,api:4};
+/* one record per MPN (the most trusted source wins); a winner without pins takes the pins of the next source that has them
+   (e.g. the built-in DB has specs and price, the KiCad symbol has the pinout) and says where they came from */
+function merge(lists){const m=new Map(),pin=new Map();lists.flat().forEach(p=>{if(!p||!p.mpn)return;const k=norm(p.mpn);const cur=m.get(k);if(!cur||ORDER[p.src]<ORDER[cur.src])m.set(k,p);
+    if(p.pins&&p.pins.length){const q=pin.get(k);if(!q||ORDER[p.src]<ORDER[q.src])pin.set(k,p);}});
+  return[...m.entries()].map(([k,p])=>{if(p.pins&&p.pins.length)return p;const q=pin.get(k);return q?Object.assign({},p,{pins:q.pins,pinSrc:q.src,pinFrom:q.kicad||q.mpn,pinMatch:q.match||'',fp:p.fp||q.fp||'',pkg:p.pkg||q.pkg||'',pdf:p.pdf||q.pdf||''}):p;});}
+/* bundled KiCad pin table (src/parts/kicadpins.js) → records */
+function fromKpins(K){return Object.entries(K||{}).map(([mpn,r])=>({mpn,mfr:'',title:r.t||'',cat:'',pkg:r.pkg||'',fp:r.fp||'',val:'',pins:(r.p||[]).map(x=>({num:String(x[0]),name:String(x[1]||''),type:x[2]||''})),specs:[],price:null,pdf:r.pdf||'',page:'',desc:r.t||'',src:'kicad',kicad:r.k,lib:r.l,match:r.m,status:'',conf:r.m==='exact'?0.95:r.m==='prefix'?0.8:0.6}));}
 function find(parts,mpn){const k=norm(mpn);if(!k)return null;return parts.find(p=>norm(p.mpn)===k)||parts.find(p=>norm(p.mpn).startsWith(k)||k.startsWith(norm(p.mpn)))||null;}
 function search(parts,q){const t=S(q);if(!t)return[];const k=norm(t);const words=t.toLowerCase().split(/\s+/).filter(Boolean);
   const score=p=>{const pm=norm(p.mpn);let s=0;if(pm===k)s+=100;else if(pm.startsWith(k)||k.startsWith(pm))s+=60;else if(pm.includes(k))s+=40;
@@ -141,7 +147,7 @@ const PROVIDERS={
     req:(key,q,url)=>({url:String(url||'').replace(/\{q\}/,encodeURIComponent(q))+(/\{q\}/.test(url||'')?'':(url&&url.includes('?')?'&':'?')+'q='+encodeURIComponent(q)),init:{headers:key?{Authorization:'Bearer '+key}:{}}}),
     parse:j=>{const L=Array.isArray(j)?j:j&&(j.parts||j.results||j.items)||[];return L.map(p=>Object.assign(fromAi(p,p.mpn),{src:'api',conf:1,note:S(p.note)||'사내 부품 서버'}));}}};
 /* HTML for a one-page datasheet summary of a record (used by the datasheet tab for AI/API/user parts) */
-function pageHTML(p,esc){esc=esc||(s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])));const srcName={user:'승인 부품 목록',ds:'데이터시트 PDF',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'}[p.src]||p.src;
+function pageHTML(p,esc){esc=esc||(s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])));const srcName=({user:'승인 부품 목록',ds:'데이터시트 PDF',builtin:'내장 DB',kicad:'KiCad 심볼 라이브러리',ai:'Claude 추정',api:'부품 API'}[p.src]||p.src)+(p.src==='kicad'&&p.kicad?` (${p.lib?p.lib+':':''}${p.kicad}${p.match&&p.match!=='exact'?' · '+(p.match==='family'?'계열 일치 — 패키지 확인':'접두 일치'):''})`:'')+(p.pinSrc&&p.pinSrc!==p.src?` · 핀: ${p.pinSrc==='kicad'?'KiCad '+(p.pinFrom||''):p.pinSrc}${p.pinMatch==='family'?' (계열 일치 — 패키지 확인)':''}`:'');
   return`<h1>${esc(p.mpn)}</h1><p class="meta">${esc(p.mfr||'제조사 미상')}${p.cat?' · '+esc(p.cat):''}${p.pkg?' · '+esc(p.pkg):''}${p.title?' · '+esc(p.title):''}${p.price!=null?` · 참고 단가 약 $${(+p.price).toFixed(p.price<1?3:2)}`:''}</p>
 <p class="meta">출처: ${esc(srcName)}${p.conf!=null&&p.src==='ai'?` (확신도 ${Math.round(p.conf*100)}%)`:''}${p.pdf?` · <a href="${esc(p.pdf)}" target="_blank" rel="noopener">데이터시트</a>`:''}${p.page?` · <a href="${esc(p.page)}" target="_blank" rel="noopener">제품 페이지</a>`:''} · <a href="https://octopart.com/search?q=${encodeURIComponent(p.mpn)}" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
 ${p.src==='ai'?'<p class="todo">이 페이지는 Claude가 추정한 사양입니다. 실제 데이터시트와 대조한 뒤 승인 부품 목록에 넣으세요.</p>':''}${p.note?`<p class="meta">${esc(p.note)}</p>`:''}
@@ -171,6 +177,6 @@ function autoAlt(mpn){const k=norm(mpn);const hit=Object.keys(AUTO_ALT).find(x=>
 /* required grade per ASIL: A/B → AEC-Q100 Grade 1 (ICs) / Q101 / Q200, C/D → the same plus a safety-ready MCU/SBC note */
 function requiredGrade(level){const l=String(level||'QM').toUpperCase();if(l==='QM')return null;return{ic:'Q100-1',discrete:'Q101',passive:'Q200',tempMin:-40,tempMax:125,label:l==='A'||l==='B'?'AEC-Q100 Grade 1 / Q101 / Q200':'AEC-Q100 Grade 1 / Q101 / Q200 + ASIL-ready MCU·SBC'};}
 function gradeOk(rec,kind,level){const req=requiredGrade(level);if(!req)return true;const g=rec&&rec.grade||'';if(kind==='passive')return g==='Q200'||/^Q100/.test(g);if(kind==='discrete')return g==='Q101'||/^Q100/.test(g)||g==='Q200';const m=g.match(/^Q100-(\d)/);return!!m&&+m[1]<=1;}
-return{parseTable,parseCsv,parsePins,parseSpecs,toAoa,toCsv,fromBuiltin,merge,find,search,role,mapPins,plan,aiPrompt,fromAi,PROVIDERS,pageHTML,norm,CSV_HEAD,pinoutFor,PINOUTS,gradeOf,tempOf,GRADE_LABEL,gradeAuto,AUTO_PARTS,AUTO_ALT,autoAlt,gradeOk,requiredGrade};
+return{fromKpins,parseTable,parseCsv,parsePins,parseSpecs,toAoa,toCsv,fromBuiltin,merge,find,search,role,mapPins,plan,aiPrompt,fromAi,PROVIDERS,pageHTML,norm,CSV_HEAD,pinoutFor,PINOUTS,gradeOf,tempOf,GRADE_LABEL,gradeAuto,AUTO_PARTS,AUTO_ALT,autoAlt,gradeOk,requiredGrade};
 })();
 if(typeof module!=='undefined')module.exports=PARTLIB;

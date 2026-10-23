@@ -732,3 +732,11 @@ npm run dsdb:init # 페이지가 없는 부품의 데이터시트 초안 만들�
 - `src/core/partrank.js`(PARTRANK): 회로 구현 종류별 대표 부품 후보(pwr_in·ldo·buck·supervisor·can·mcu·gdrv3·hbridge·bldc·dcmotor·hs_switch·vmon·flash·uart·i2c·usb_in, 종류당 3~6개)에 사양(전류·입력 전압·내압·패키지·CAN-FD)·등급(AEC-Q100/Q101)·ASIL·참고 단가·추천 이유. 제품 프로필 후보는 먼저 오고 같은 MPN이면 사양을 합침.
 - `rank(block, ctx)`: 요구 전류·전압·CAN-FD 미달은 ✕ 표시(뒤로), 점수 = 사양 여유 + ASIL(MCU·감시·게이트 드라이버·차단 스위치·안전 태그 블록만) + 차량용 등급(ECU 요구 시) + 핀 데이터 보유 + 단가(가격 우선 가중) + 기능(기능·확장 우선) + 제품 표준 후보.
 - 1단계 블록을 누르면 선택 패널 맨 위에 후보 카드 목록(순위 · MPN · 제조사 · 단가 · 사양 · 등급/ASIL/핀 데이터 배지 · 이유). 카드를 누르면 그 부품으로 지정(핀 없으면 데이터시트 PDF 안내), [해제]로 라이브러리 기본. 순위 기준 선택: 균형·가격·기능·확장성. 콘솔 `cands [블록] [순위|MPN]`.
+
+## v1.62.0 KiCad 심볼 라이브러리 → 핀 데이터
+- `src/core/kicadlib.js`(KICADLIB): KiCad 5 `.lib`(+`.dcm` 설명·데이터시트 링크, ALIAS) · KiCad 6–8 `.kicad_sym`(S-식, 유닛 하위 심볼, extends 상속) → 부품 레코드 {핀 번호·이름·종류(in/out/bidir/power_in…), 풋프린트, 패키지, 설명, 데이터시트}.
+- 부품 라이브러리에 출처 "KiCad" 추가(IndexedDB 저장). [가져오기 (CSV/Excel · KiCad 심볼)]에 파일을 넣으면 심볼 전체가 핀 데이터로 들어감(회사 라이브러리·KiCad 공식 라이브러리). 핀 없는 내장 레코드는 KiCad 핀을 물려받음(출처 표시).
+- `scripts/kicadpins.mjs <dir>`: 앱이 이름을 아는 부품(후보·프로필·내장 DB·DSDB 159종)을 KiCad 라이브러리에서 찾아 `src/parts/kicadpins.js`로 내장(11.0 KB). 이번 빌드는 KiCad 5 공식 라이브러리(16,917 심볼)에서 24종 매칭(정확 10 · 접두 11 · 계열 3).
+- 매칭 안전장치: 부품 번호의 패키지 코드(DCY→SOT-223, DBV/DBZ→SOT-23, D/SN→SOIC, PW→TSSOP, RGE/RNX…→QFN 등)가 KiCad 풋프린트와 어긋나면 버림. 단서가 없으면 계열 전체 핀 배열이 같고 KiCad 이름의 접미사가 부품 번호에 있을 때만 채택(LMR33630AQRNXRQ1 ≠ LMR33630ADDA). 계열 일치는 "패키지 확인" 표시, 후보 점수 가산도 낮게.
+- 후보 카드 배지 "핀 · KiCad"/"핀 · KiCad 계열" — 핀이 있는 후보는 고르면 PDF 없이 바로 회로 구현.
+- KiCad 6–8 라이브러리(신형 차량용 부품 다수)는 GitLab에 있어 이 빌드 환경에서는 받지 못함 → 사용자가 .kicad_sym 파일을 가져오면 됨.

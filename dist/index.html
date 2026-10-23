@@ -7040,7 +7040,7 @@ function variants(plan){
 // weighted pick: w = {price,feat,ext} in 0..1
 function recommend(vs,w){w=Object.assign({price:1,feat:1,ext:1},w||{});let best=null;vs.forEach(v=>{const s=v.score.price*w.price+v.score.feat*w.feat+v.score.ext*w.ext;v.total=Math.round(s/(w.price+w.feat+w.ext));if(!best||v.total>best.total)best=v;});return best;}
 function variantsText(vs){return vs.map(v=>`[${v.key}] ${v.label} (${v.tag}) · 예상 단가 약 $${v.m.price} (부품 $${v.m.partsPrice} + PCB $${v.m.cost.pcb} + 조립 $${v.m.cost.asm}${v.m.cost.grade?' + 등급 $'+v.m.cost.grade:''})${v.m.unknown?' (+미정 '+v.m.unknown+')':''} · 부품 ${v.m.parts}개 · 기능 ${v.m.feat} · 여유 핀 ${v.m.spare} · MCU ${v.m.mcu||'-'} · 손실 ${v.m.loss} W\n  ${v.diff.join(' · ')}`).join('\n');}
-return{LIB,MCUS,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,costModel,PCB_COST,GRADE_K,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
+return{LIB,MCUS,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.merge([PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null),typeof KPINS!=='undefined'?PARTLIB.fromKpins(KPINS):[]]);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,costModel,PCB_COST,GRADE_K,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
 })();
 
 
@@ -8049,18 +8049,110 @@ function rank(b,ctx){ctx=ctx||{};const N=needs(b,ctx);const pref=ctx.pref||{pric
   const safetyBlock=(b.impl||[]).some(im=>/^(mcu|supervisor|gdrv3|hs_switch)$/.test(im.type))||!!b.safety||(b.sg&&b.sg.length);
   const pa=asilRank[(p.asil||'').toUpperCase()]||0;if(need>=2&&safetyBlock){if(pa>=need){s+=2.5;why.push(`ASIL ${p.asil}`);}else if(pa){s+=1;why.push(`ASIL ${p.asil} (요구 ${'ABCD'[need-1]} 미달)`);}else bad.push('안전 기능 없음');}
     if(auto){if(/Q10/.test(p.grade||'')){s+=1.5;why.push(p.grade);}else{s-=1;bad.push('차량용 등급 아님');}}
-    const rec=look(p.mpn);const pins=!!(rec&&rec.pins&&rec.pins.length);if(pins){s+=1;why.push('핀 데이터 있음');}
+    const rec=look(p.mpn);const pins=!!(rec&&rec.pins&&rec.pins.length);const kic=rec&&(rec.src==='kicad'||rec.pinSrc==='kicad');const fam=rec&&(rec.match==='family'||rec.pinMatch==='family');
+    const pinNote=pins?(kic?'KiCad'+(fam?' 계열':''):rec.src==='ds'?'데이터시트':rec.src==='ai'?'Claude 추정':'라이브러리'):'';if(pins){s+=fam?0.6:1;why.push('핀 데이터 있음');}
     const price=priceOf(p.mpn)!=null?priceOf(p.mpn):p.price;if(price!=null){s+=pref.price*Math.max(-1.5,1-Math.log10(Math.max(0.05,price))*0.9);}
     if(pref.feat>1||pref.ext>1){if(/진단|센스|SPI|FOC|보호|내장/.test(p.note||'')){s+=0.6*Math.max(pref.feat,pref.ext);why.push('기능 풍부');}}
     if(p.src==='profile'){s+=0.8;why.push('제품 표준 후보');}
     if(p.why)why.push(p.why);
-    return Object.assign({},p,{score:+s.toFixed(2),ok:!bad.some(x=>/</.test(x)||/미지원/.test(x)),why,bad,pins,price});});
+    return Object.assign({},p,{pinNote,score:+s.toFixed(2),ok:!bad.some(x=>/</.test(x)||/미지원/.test(x)),why,bad,pins,price});});
   rows.sort((a,b)=>(b.ok-a.ok)||(b.score-a.score));rows.forEach((r,i)=>{r.rank=i+1;});return{needs:N,rows};}
 function text(b,R){const L=[`${b.label} (${b.id}) 주요 소자 후보 ${R.rows.length}개${R.needs.i?` · 요구 전류 ${R.needs.i} A`:''}${R.needs.v?` · 전압 ${R.needs.v} V`:''}`];
   R.rows.forEach(r=>L.push(`  ${r.rank}. ${r.mpn} · ${r.mfr}${r.price!=null?' · $'+r.price:''}${r.grade?' · '+r.grade:''}${r.asil?' · ASIL '+r.asil:''} — ${r.note}${r.bad.length?' ✕ '+r.bad.join(', '):''}${r.why.length?' ✓ '+r.why.slice(0,3).join(' · '):''}`));
   return L.join('\n');}
 return{C,candidates,rank,needs,text,norm};
 })();
+
+
+</script>
+<script>
+/* KiCad symbol libraries → part records with real pin data.
+   - KiCad 5 legacy: .lib (DEF … X name num … ENDDEF, ALIAS lines) + optional .dcm ($CMP name / D description / F datasheet)
+   - KiCad 6–8: .kicad_sym (S-expression; (symbol "NAME" (property …) (symbol "NAME_1_1" (pin type style … (name "X") (number "N")))),
+     (extends "BASE") inherits the base symbol's pins)
+   Record: {mpn, title, fp, pkg, pins:[{num,name,type}], pdf, src:'kicad', lib, conf}
+   Pin types are normalised to: in out bidir tri passive power_in power_out oc oe nc unspec. */
+const KICADLIB=(function(){
+"use strict";
+const T5={I:'in',O:'out',B:'bidir',T:'tri',P:'passive',U:'unspec',W:'power_in',w:'power_out',C:'oc',E:'oe',N:'nc'};
+const T8={input:'in',output:'out',bidirectional:'bidir',tri_state:'tri',passive:'passive',unspecified:'unspec',power_in:'power_in',power_out:'power_out',open_collector:'oc',open_emitter:'oe',no_connect:'nc',free:'unspec'};
+const pkgOf=fp=>{const s=String(fp||'').split(':').pop();const m=s.match(/^(SOIC|SOP|SSOP|TSSOP|HTSSOP|MSOP|VSSOP|QFN|VQFN|WQFN|DFN|WSON|SON|HVSON|LQFP|TQFP|QFP|BGA|SOT|TO|DIP|PDIP|SC|SOD|PowerPAK|HSOP|DSO|TSOT)[-_]?(\d+[A-Z]?)?/i);return m?(m[1].toUpperCase()+(m[2]?'-'+m[2]:'')):s.split('_')[0]||'';};
+const dedupe=pins=>{const m=new Map();pins.forEach(p=>{const k=String(p.num);if(!m.has(k))m.set(k,p);});return[...m.values()].sort((a,b)=>{const x=+a.num,y=+b.num;return isNaN(x)||isNaN(y)?String(a.num).localeCompare(String(b.num)):x-y;});};
+/* ---- KiCad 5 ---- */
+function parseDcm(text){const out={};let cur=null;String(text||'').split(/\r?\n/).forEach(l=>{if(l.startsWith('$CMP ')){cur=l.slice(5).trim();out[cur]={};}else if(l.startsWith('$ENDCMP'))cur=null;else if(cur){if(l.startsWith('D '))out[cur].d=l.slice(2).trim();else if(l.startsWith('F '))out[cur].f=l.slice(2).trim();else if(l.startsWith('K '))out[cur].k=l.slice(2).trim();}});return out;}
+function parseLib(text,dcm,libName){const D=typeof dcm==='string'?parseDcm(dcm):(dcm||{});const out=[];let cur=null;
+  String(text||'').split(/\r?\n/).forEach(l=>{
+    if(l.startsWith('DEF ')){const t=l.split(/\s+/);cur={name:t[1].replace(/^~/,''),alias:[],fp:'',pdf:'',pins:[]};return;}
+    if(!cur)return;
+    if(l.startsWith('ALIAS ')){cur.alias.push(...l.slice(6).trim().split(/\s+/));return;}
+    if(/^F2 /.test(l)){const m=l.match(/^F2 "([^"]*)"/);if(m)cur.fp=m[1];return;}
+    if(/^F3 /.test(l)){const m=l.match(/^F3 "([^"]*)"/);if(m&&m[1])cur.pdf=m[1];return;}
+    if(l.startsWith('X ')){const t=l.split(/\s+/);// X name num x y len dir sizenum sizename unit convert type [shape]
+      if(t.length>=12)cur.pins.push({num:t[2],name:t[1]==='~'?'':t[1],type:T5[t[11]]||'unspec'});return;}
+    if(l.startsWith('ENDDEF')){const pins=dedupe(cur.pins);[cur.name].concat(cur.alias).forEach(n=>{const d=D[n]||D[cur.name]||{};
+        if(pins.length)out.push({mpn:n,title:d.d||'',fp:cur.fp,pkg:pkgOf(cur.fp),pins,pdf:d.f||cur.pdf||'',src:'kicad',lib:libName||'',conf:0.95});});cur=null;}});
+  return out;}
+/* ---- KiCad 6–8 (.kicad_sym) ---- */
+function sexpr(text){const s=String(text||'');let i=0;const n=s.length;
+  const read=()=>{while(i<n&&/\s/.test(s[i]))i++;if(i>=n)return null;const c=s[i];
+    if(c==='('){i++;const L=[];for(;;){while(i<n&&/\s/.test(s[i]))i++;if(i>=n)break;if(s[i]===')'){i++;break;}L.push(read());}return L;}
+    if(c==='"'){i++;let o='';while(i<n&&s[i]!=='"'){if(s[i]==='\\'&&i+1<n){o+=s[i+1];i+=2;}else o+=s[i++];}i++;return{str:o};}
+    let j=i;while(j<n&&!/[\s()]/.test(s[j]))j++;const a=s.slice(i,j);i=j;return a;};
+  return read();}
+const val=x=>x&&typeof x==='object'&&!Array.isArray(x)?x.str:x;
+function parseSym(text,libName){const root=sexpr(text);if(!Array.isArray(root)||root[0]!=='kicad_symbol_lib')throw new Error('kicad_sym 형식이 아닙니다');
+  const syms={};
+  root.filter(x=>Array.isArray(x)&&x[0]==='symbol').forEach(sym=>{const name=val(sym[1]);const r={name,props:{},pins:[],ext:null};
+    const walk=node=>{node.forEach(ch=>{if(!Array.isArray(ch))return;
+      if(ch[0]==='property')r.props[val(ch[1])]=val(ch[2]);
+      else if(ch[0]==='extends')r.ext=val(ch[1]);
+      else if(ch[0]==='symbol')walk(ch);
+      else if(ch[0]==='pin'){const nm=ch.find(z=>Array.isArray(z)&&z[0]==='name'),nu=ch.find(z=>Array.isArray(z)&&z[0]==='number');
+        if(nu)r.pins.push({num:String(val(nu[1])),name:nm?String(val(nm[1])).replace(/^~$/,''):'',type:T8[ch[1]]||'unspec'});}});};
+    walk(sym.slice(2));syms[name]=r;});
+  const out=[];Object.values(syms).forEach(r=>{let pins=r.pins,props=Object.assign({},r.props);let base=r.ext&&syms[r.ext];let guard=0;
+    while(!pins.length&&base&&guard++<8){pins=base.pins;props=Object.assign({},base.props,props);base=base.ext&&syms[base.ext];}
+    pins=dedupe(pins);if(!pins.length)return;const fp=props.Footprint||'';
+    out.push({mpn:r.name,title:props.Description||props.ki_description||'',fp,pkg:pkgOf(fp),pins,pdf:props.Datasheet&&props.Datasheet!=='~'?props.Datasheet:'',src:'kicad',lib:libName||'',conf:0.95});});
+  return out;}
+/* one call for a set of files: {name, text}; .dcm files are paired with the .lib of the same base name */
+function parseFiles(files){const dcm={};files.filter(f=>/\.dcm$/i.test(f.name)).forEach(f=>{dcm[f.name.replace(/\.dcm$/i,'').toLowerCase()]=parseDcm(f.text);});
+  const out=[],msgs=[];files.forEach(f=>{const base=f.name.replace(/\.[^.]+$/,'');let r=null;
+    try{if(/\.kicad_sym$/i.test(f.name))r=parseSym(f.text,base);else if(/\.lib$/i.test(f.name))r=parseLib(f.text,dcm[base.toLowerCase()]||{},base);}catch(e){msgs.push(`${f.name}: ${e.message||e}`);return;}
+    if(r){out.push(...r);msgs.push(`${f.name}: 심볼 ${r.length}개`);}});
+  return{parts:out,msg:msgs.join(' · ')};}
+/* records for a list of MPNs out of parsed libraries: exact (normalised) name first, then the longest KiCad name that is a
+   prefix of the MPN (TJA1051T-3 ↔ TJA1051T/3, INA181A1 ↔ INA181A1QDBVRQ1), at least 5 characters */
+const norm=s=>String(s||'').toUpperCase().replace(/[\s_\-\/.,()]/g,'');
+/* family: same leading letters + first digit run (MCP2562 · TLV1117 · INA240 · STM32F042K6), the variant chosen by the
+   package the MPN suffix names (DCY → SOT-223, DBV → SOT-23, D/DR → SOIC, PW → TSSOP, RGE/RGT → QFN, U → QFN …) and a
+   voltage code (33 → 3.3 V); flagged as 'family' (check the package) */
+const PKG_HINT=[[/DCY|DCQ/,/SOT-?223/i],[/DBV|DCK|DBZ|SOT23/,/SOT-?23(?!-?[4-9]\d\d)/i],[/QDRQ1$|DR$|D$|QDR|\/SN$|-?SN$|SO$/,/SOIC|SO-8|SOP-8/i],[/PWR?$|PW/,/TSSOP/i],[/R[GT][EWTY]|RHB|RHA|DRV|DSG|DGN/,/QFN|SON|DFN/i],[/DGK|DGS/,/MSOP|VSSOP/i],[/U6|UX|U$|-?MF$/,/QFN|DFN/i],[/T6|TX|LQFP|-?P$/,/LQFP|DIP|TQFP/i]];
+const stem=k=>{const m=k.match(/^[A-Z]+\d+[A-Z]?\d*/);return m?m[0]:k.slice(0,6);};
+function pick(parts,mpns){const byN=new Map();parts.forEach(p=>{const k=norm(p.mpn);if(!byN.has(k))byN.set(k,p);});const keys=[...byN.keys()].sort((a,b)=>b.length-a.length);const out={};
+  mpns.forEach(m=>{const k=norm(m);let p=byN.get(k);let how='exact';if(!p){const raw0=String(m).toUpperCase();const h0=PKG_HINT.find(([re])=>re.test(raw0));const hit=keys.find(x=>{if(x.length<5||!k.startsWith(x))return false;const q=byN.get(x);const f=q.fp||q.pkg||'';return!(h0&&f&&!h0[1].test(f));});if(hit){p=byN.get(hit);how='prefix';}}
+    if(!p){const raw=String(m).toUpperCase();const hint=PKG_HINT.find(([re])=>re.test(raw));const vm=raw.match(/(\d{2})(?=[A-Z]*Q?\d*$|[A-Z]{2,})/);
+      for(const st of[stem(k),stem(k).replace(/[A-Z]$/,'')]){if(st.length<5||!/\d/.test(st))continue;const fam=keys.filter(x=>x.startsWith(st));if(!fam.length)continue;
+        const sig=x=>byN.get(x).pins.map(q=>q.num+':'+q.name.toUpperCase()).join('|');
+        const sc=x=>{let j=0;while(j<x.length&&j<k.length&&x[j]===k[j])j++;return j+(vm&&x.includes(vm[1])?6:0);};
+        let pool=hint?fam.filter(x=>hint[1].test(byN.get(x).fp||byN.get(x).pkg||'')):[];
+        // no package clue: every variant must share one pinout AND the KiCad name's own suffix (package code, x = any) must
+        // appear in the part number (LMR33630ADDA ≠ LMR33630AQRNXRQ1; MCP2562-E-SN ≈ MCP2562FD-E/SN; MCP2542FDxMF ≈ MCP2542FD)
+        if(!pool.length&&!hint){const s0=sig(fam[0]);if(fam.every(x=>sig(x)===s0)){const suf=x=>{let j=0;while(j<x.length&&j<k.length&&x[j]===k[j])j++;return[x.slice(j),k.slice(j)];};
+          pool=fam.filter(x=>{const[a,b]=suf(x);if(!b)return true;if(!a)return true;try{return new RegExp(a.replace(/X/g,'.')).test(b);}catch(e){return false;}});}}
+        if(pool.length){p=byN.get(pool.sort((a,b)=>sc(b)-sc(a))[0]);how='family';break;}}}
+    if(p)out[m]=Object.assign({},p,{mpn:m,kicad:p.mpn,match:how,conf:how==='exact'?0.95:how==='prefix'?0.8:0.6});});
+  return out;}
+return{parseLib,parseDcm,parseSym,parseFiles,pick,pkgOf,sexpr};
+})();
+
+
+</script>
+<script>
+/* Pin tables of the parts the app names, extracted from the KiCad symbol libraries by scripts/kicadpins.mjs
+   (406 files, 16917 symbols scanned · 24 of 159 part numbers matched).
+   KiCad libraries: CC-BY-SA 4.0 with the KiCad library exception. Record: {k: KiCad symbol, l: library, m: exact|prefix, fp, pkg, pdf, t: description, p: [[num,name,type]]} */
+const KPINS={"LM74700-Q1":{"k":"LM74700","l":"Power_Management","m":"prefix","fp":"Package_TO_SOT_SMD:SOT-23-6","pkg":"SOT-23","pdf":"http://www.ti.com/lit/gpn/LM74700-Q1","t":"Low Iq reverse battery protection ideal diode controller, SOT-23-6","p":[["1","VCAP","passive"],["2","GND","power_in"],["3","EN","in"],["4","CATHODE","in"],["5","GATE","out"],["6","ANODE","power_in"]]},"MIC5219-3.3YM5":{"k":"MIC5219-3.3YM5","l":"Regulator_Linear","m":"exact","fp":"Package_TO_SOT_SMD:SOT-23-5","pkg":"SOT-23","pdf":"http://ww1.microchip.com/downloads/en/DeviceDoc/MIC5219-500mA-Peak-Output-LDO-Regulator-DS20006021A.pdf","t":"500mA low dropout linear regulator, fixed 3.3V output, SOT-23-5","p":[["1","IN","power_in"],["2","GND","power_in"],["3","EN","in"],["4","BP","in"],["5","OUT","power_out"]]},"AMS1117-3.3":{"k":"AMS1117-3.3","l":"Regulator_Linear","m":"exact","fp":"Package_TO_SOT_SMD:SOT-223-3_TabPin2","pkg":"SOT-223","pdf":"http://www.advanced-monolithic.com/pdf/ds1117.pdf","t":"1A Low Dropout regulator, positive, 3.3V fixed output, SOT-223","p":[["1","GND","power_in"],["2","VO","power_out"],["3","VI","power_in"]]},"MAX6369KA+T":{"k":"MAX6369","l":"Power_Supervisor","m":"prefix","fp":"Package_TO_SOT_SMD:SOT-23-8","pkg":"SOT-23","pdf":"https://datasheets.maximintegrated.com/en/ds/MAX6369-MAX6374.pdf","t":"Precision Pin-Selectable Watchdog Timer, 200us to 60s, SOT-23-8","p":[["1","WDI","in"],["2","GND","power_in"],["3","NC","nc"],["4","SET0","in"],["5","SET1","in"],["6","SET2","in"],["7","~WDO","oc"],["8","VCC","power_in"]]},"MCP2562FD-E/SN":{"k":"MCP2562-E-SN","l":"Interface_CAN_LIN","m":"family","fp":"Package_SO:SOIC-8_3.9x4.9mm_P1.27mm","pkg":"SOIC-8","pdf":"http://ww1.microchip.com/downloads/en/DeviceDoc/25167A.pdf","t":"High-Speed CAN Transceiver, 1Mbps, 5V supply, Vio pin, -40C to +125C, SOIC-8","p":[["1","TXD","in"],["2","VSS","power_in"],["3","VDD","power_in"],["4","RXD","out"],["5","Vio","power_in"],["6","CANL","bidir"],["7","CANH","bidir"],["8","STBY","in"]]},"TJA1051T/3":{"k":"TJA1051T-3","l":"Interface_CAN_LIN","m":"exact","fp":"Package_SO:SOIC-8_3.9x4.9mm_P1.27mm","pkg":"SOIC-8","pdf":"http://www.nxp.com/documents/data_sheet/TJA1051.pdf","t":"High-Speed CAN Transceiver, separate VIO, silent mode, SOIC-8","p":[["1","TXD","in"],["2","GND","power_in"],["3","VCC","power_in"],["4","RXD","out"],["5","VIO","power_in"],["6","CANL","bidir"],["7","CANH","bidir"],["8","S","in"]]},"SN65HVD230DR":{"k":"SN65HVD230","l":"Interface_CAN_LIN","m":"prefix","fp":"Package_SO:SOIC-8_3.9x4.9mm_P1.27mm","pkg":"SOIC-8","pdf":"http://www.ti.com/lit/ds/symlink/sn65hvd230.pdf","t":"CAN Bus Transceivers, 3.3V, 1Mbps, Low-Power capabilities, SOIC-8","p":[["1","D","in"],["2","GND","power_in"],["3","VCC","power_in"],["4","R","out"],["5","Vref","out"],["6","CANL","bidir"],["7","CANH","bidir"],["8","Rs","in"]]},"STM32F042K6U6":{"k":"STM32F042K6Ux","l":"MCU_ST_STM32F0","m":"family","fp":"Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.45x3.45mm","pkg":"QFN-32","pdf":"http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00105814.pdf","t":"ARM Cortex-M0 MCU, 32KB flash, 6KB RAM, 48MHz, 2-3.6V, 28 GPIO, UFQFPN-32","p":[["1","VDD","power_in"],["2","PF0","in"],["3","PF1","in"],["4","NRST","in"],["5","VDDA","power_in"],["6","PA0","bidir"],["7","PA1","bidir"],["8","PA2","bidir"],["9","PA3","bidir"],["10","PA4","bidir"],["11","PA5","bidir"],["12","PA6","bidir"],["13","PA7","bidir"],["14","PB0","bidir"],["15","PB1","bidir"],["16","PB2","bidir"],["17","VDDIO2","power_in"],["18","PA8","bidir"],["19","PA9","bidir"],["20","PA10","bidir"],["21","PA11","bidir"],["22","PA12","bidir"],["23","PA13","bidir"],["24","PA14","bidir"],["25","PA15","bidir"],["26","PB3","bidir"],["27","PB4","bidir"],["28","PB5","bidir"],["29","PB6","bidir"],["30","PB7","bidir"],["31","PF11","bidir"],["32","PB8","bidir"],["33","VSS","power_in"]]},"IR2104S":{"k":"IR2104","l":"Driver_FET","m":"prefix","fp":"","pkg":"","pdf":"https://www.infineon.com/dgdl/ir2104.pdf?fileId=5546d462533600a4015355c7c1c31671","t":"Half-Bridge Driver, 600V, 210/360mA, PDIP-8/SOIC-8","p":[["1","VCC","power_in"],["2","IN","in"],["3","~SD","in"],["4","COM","power_in"],["5","LO","out"],["6","VS","passive"],["7","HO","out"],["8","VB","passive"]]},"AO3400A":{"k":"AO3400A","l":"Transistor_FET","m":"exact","fp":"Package_TO_SOT_SMD:SOT-23","pkg":"SOT-23","pdf":"http://www.aosmd.com/pdfs/datasheet/AO3400A.pdf","t":"30V Vds, 5.7A Id, N-Channel MOSFET, SOT-23","p":[["1","G","in"],["2","S","passive"],["3","D","passive"]]},"BTS50010-1TAD":{"k":"BTS50010-1TAD","l":"Power_Management","m":"exact","fp":"Package_TO_SOT_SMD:TO-263-7_TabPin4","pkg":"TO-263","pdf":"https://www.infineon.com/dgdl/Infineon-BTS50010-1TAD-DS-v01_00-EN.pdf?fileId=5546d462576f34750157c38810ca55cd","t":"Smart High-Side Power Switch, PROFET, Single, 1mOhm, 40A, 18V, TO-263-7","p":[["1","GND","power_in"],["2","IN","in"],["3","IS","out"],["4","Vbb","power_in"],["5","OUT","passive"],["6","OUT","passive"],["7","OUT","passive"]]},"INA181A1QDBVRQ1":{"k":"INA181","l":"Amplifier_Current","m":"prefix","fp":"Package_TO_SOT_SMD:SOT-23-6","pkg":"SOT-23","pdf":"http://www.ti.com/lit/ds/symlink/ina181.pdf","t":"Bidirectional, Low- and High-Side Voltage Output, Current-Sense Amplifier, SOT-23-6","p":[["1","","out"],["2","GND","power_in"],["3","+","in"],["4","-","in"],["5","REF","in"],["6","V+","power_in"]]},"INA240A2QPWRQ1":{"k":"INA240A2PW","l":"Amplifier_Current","m":"family","fp":"Package_SO:TSSOP-8_4.4x3mm_P0.65mm","pkg":"TSSOP-8","pdf":"http://www.ti.com/lit/ds/symlink/ina240.pdf","t":"High- and Low-Side, Bidirectional, Zero-Drift, Current-Sense Amplifier With Enhanced PWM Rejection, 50V/V, TSSOP-8","p":[["1","GND","passive"],["2","+","in"],["3","-","in"],["4","GND","power_in"],["5","V+","power_in"],["6","REF2","passive"],["7","REF1","passive"],["8","","out"]]},"MAX3232EIDR":{"k":"MAX3232","l":"Interface_UART","m":"prefix","fp":"","pkg":"","pdf":"https://datasheets.maximintegrated.com/en/ds/MAX3222-MAX3241.pdf","t":"3.0V to 5.5V, Low-Power, up to 1Mbps, True RS-232 Transceivers Using Four 0.1μF External Capacitors","p":[["1","C1+","passive"],["2","VS+","power_out"],["3","C1-","passive"],["4","C2+","passive"],["5","C2-","passive"],["6","VS-","power_out"],["7","T2OUT","out"],["8","R2IN","in"],["9","R2OUT","out"],["10","T2IN","in"],["11","T1IN","in"],["12","R1OUT","out"],["13","R1IN","in"],["14","T1OUT","out"],["15","GND","power_in"],["16","VCC","power_in"]]},"FT232RL":{"k":"FT232RL","l":"Interface_USB","m":"exact","fp":"Package_SO:SSOP-28_5.3x10.2mm_P0.65mm","pkg":"SSOP-28","pdf":"https://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT232R.pdf","t":"USB to Serial Interface, SSOP-28","p":[["1","TXD","out"],["2","DTR","out"],["3","RTS","out"],["4","VCCIO","power_in"],["5","RXD","in"],["6","RI","in"],["7","GND","power_in"],["9","DCR","in"],["10","DCD","in"],["11","CTS","in"],["12","CBUS4","bidir"],["13","CBUS2","bidir"],["14","CBUS3","bidir"],["15","USBD+","bidir"],["16","USBD-","bidir"],["17","3V3OUT","power_out"],["18","GND","power_in"],["19","~RESET~","in"],["20","VCC","power_in"],["21","GND","power_in"],["22","CBUS1","bidir"],["23","CBUS0","bidir"],["25","AGND","power_in"],["26","TEST","in"],["27","OSCI","in"],["28","OSCO","out"]]},"TJA1021T/20":{"k":"TJA1021T","l":"Interface_CAN_LIN","m":"prefix","fp":"Package_SO:SOIC-8_3.9x4.9mm_P1.27mm","pkg":"SOIC-8","pdf":"http://www.nxp.com/documents/data_sheet/TJA1021.pdf","t":"LIN 2.1/SAE J2602 transceiver, SOIC-8","p":[["1","RXD","oc"],["2","~SLP~","in"],["3","~WAKE~","in"],["4","TXD","in"],["5","GND","power_in"],["6","LIN","bidir"],["7","VBAT","power_in"],["8","INH","out"]]},"PCA9306DCUR":{"k":"PCA9306DC","l":"Interface","m":"prefix","fp":"Package_SO:VSSOP-8_2.3x2mm_P0.5mm","pkg":"VSSOP-8","pdf":"https://www.nxp.com/docs/en/data-sheet/PCA9306.pdf","t":"Dual bidirectional I2C Bus and SMBus voltage level translator, VSSOP-8","p":[["1","VREF1","power_in"],["2","SCL1","bidir"],["3","SDA1","bidir"],["4","GND","power_in"],["5","SDA2","bidir"],["6","SCL2","bidir"],["7","VREF2","power_in"],["8","EN","in"]]},"24LC256T-I/SN":{"k":"24LC256","l":"Memory_EEPROM","m":"prefix","fp":"","pkg":"","pdf":"http://ww1.microchip.com/downloads/en/devicedoc/21203m.pdf","t":"I2C Serial EEPROM, 256Kb, DIP-8/SOIC-8/TSSOP-8/DFN-8","p":[["1","A0","in"],["2","A1","in"],["3","A2","in"],["4","GND","power_in"],["5","SDA","bidir"],["6","SCL","in"],["7","WP","in"],["8","VCC","power_in"]]},"USBLC6-2SC6":{"k":"USBLC6-2SC6","l":"Power_Protection","m":"exact","fp":"Package_TO_SOT_SMD:SOT-23-6","pkg":"SOT-23","pdf":"https://www.st.com/resource/en/datasheet/usblc6-2.pdf","t":"Very low capacitance ESD protection diode, 2 data-line, SOT-23-6","p":[["1","I/O1","passive"],["2","GND","passive"],["3","I/O2","passive"],["4","I/O2","passive"],["5","VBUS","passive"],["6","I/O1","passive"]]},"AD8418A":{"k":"AD8418","l":"Amplifier_Current","m":"prefix","fp":"","pkg":"","pdf":"https://www.analog.com/media/en/technical-documentation/data-sheets/AD8418.pdf","t":"70V Bidirectional, Zero Drift, Current Sense Amplifier, 20V/V gain, bandwidth 250kHz, VS=2.7V~5.5V, SOIC-8/MSOP-8","p":[["1","IN-","in"],["2","GND","power_in"],["3","REF2","in"],["4","NC","nc"],["5","OUT","out"],["6","VS","power_in"],["7","REF1","in"],["8","IN+","in"]]},"ACPL-C87B":{"k":"ACPL-C87B","l":"Isolator_Analog","m":"exact","fp":"Package_SO:SSO-8_6.8x5.9mm_P1.27mm_Clearance8mm","pkg":"SSO-8","pdf":"www.avagotech.com/docs/AV02-3563EN","t":"Precision Optycally Isolated Voltage Sensor, ±0.5% Gain Tolerance, Bandwidth 100kHz, SSO-8","p":[["1","VDD1","power_in"],["2","IN","in"],["3","IN-","in"],["4","GND1","power_in"],["5","GND2","power_in"],["6","OUT-","out"],["7","OUT+","out"],["8","VDD2","power_in"]]},"TJA1021T":{"k":"TJA1021T","l":"Interface_CAN_LIN","m":"exact","fp":"Package_SO:SOIC-8_3.9x4.9mm_P1.27mm","pkg":"SOIC-8","pdf":"http://www.nxp.com/documents/data_sheet/TJA1021.pdf","t":"LIN 2.1/SAE J2602 transceiver, SOIC-8","p":[["1","RXD","oc"],["2","~SLP~","in"],["3","~WAKE~","in"],["4","TXD","in"],["5","GND","power_in"],["6","LIN","bidir"],["7","VBAT","power_in"],["8","INH","out"]]},"W25Q32JVSSIQ":{"k":"W25Q32JVSS","l":"Memory_Flash","m":"prefix","fp":"Package_SO:SOIC-8_5.23x5.23mm_P1.27mm","pkg":"SOIC-8","pdf":"http://www.winbond.com/resource-files/w25q32jv%20revg%2003272018%20plus.pdf","t":"32Mb Serial Flash Memory, Standard/Dual/Quad SPI, SOIC-8","p":[["1","~CS","in"],["2","DO(IO1)","bidir"],["3","IO2","bidir"],["4","GND","power_in"],["5","DI(IO0)","bidir"],["6","CLK","in"],["7","IO3","bidir"],["8","VCC","power_in"]]},"AMS1117-5.0":{"k":"AMS1117-5.0","l":"Regulator_Linear","m":"exact","fp":"Package_TO_SOT_SMD:SOT-223-3_TabPin2","pkg":"SOT-223","pdf":"http://www.advanced-monolithic.com/pdf/ds1117.pdf","t":"1A Low Dropout regulator, positive, 5.0V fixed output, SOT-223","p":[["1","GND","power_in"],["2","VO","power_out"],["3","VI","power_in"]]}};
 
 
 </script>
@@ -8691,8 +8783,14 @@ function parseCsv(text){const rows=[];let row=[],cell='',q=false;const t=String(
 function fromBuiltin(PARTS,pinsOf){const P=PARTS&&PARTS.P||{};return Object.keys(P).map(mpn=>{const d=P[mpn];const pkg=(d.specs||[]).map(s=>s[1]).join(' ').match(/(UFQFPN\d+|TQFP-?\d+|SOT-?223|SOT-?23(?:-\d)?|SOIC-?\d+|HTSSOP-?\d+|TSSOP-?\d+|QFN-?\d+|0603|0805|1206|1210|SMA)/i);
   return{mpn,mfr:d.mfr||'',title:d.title||'',cat:d.cat||'',pkg:pkg?pkg[1]:'',fp:'',val:'',pins:(pinsOf&&pinsOf(mpn)||[]).length?pinsOf(mpn):(pinoutFor(mpn,'',null)||[]),specs:(d.specs||[]).map(s=>[s[0],s[1]]),price:PARTS.price?PARTS.price(mpn,d.cat):null,pdf:d.pdf||'',page:d.page||'',desc:d.title||'',src:'builtin',status:'',conf:1,therm:d.therm||null,grade:d.grade||'',temp:d.temp||null,asil:d.asil||'',fitv:d.fit!=null?d.fit:null};}).concat(AUTO_PARTS.map(p=>Object.assign({src:'builtin',status:'',conf:1,specs:[],pins:[],fp:'',val:'',desc:p.title},p)));}
 /* ---------- lookup ---------- */
-const ORDER={user:0,ds:1,builtin:2,ai:3,api:4};
-function merge(lists){const m=new Map();lists.flat().forEach(p=>{if(!p||!p.mpn)return;const k=norm(p.mpn);const cur=m.get(k);if(!cur||ORDER[p.src]<ORDER[cur.src])m.set(k,p);});return[...m.values()];}
+const ORDER={user:0,ds:1,builtin:2,kicad:2.5,ai:3,api:4};
+/* one record per MPN (the most trusted source wins); a winner without pins takes the pins of the next source that has them
+   (e.g. the built-in DB has specs and price, the KiCad symbol has the pinout) and says where they came from */
+function merge(lists){const m=new Map(),pin=new Map();lists.flat().forEach(p=>{if(!p||!p.mpn)return;const k=norm(p.mpn);const cur=m.get(k);if(!cur||ORDER[p.src]<ORDER[cur.src])m.set(k,p);
+    if(p.pins&&p.pins.length){const q=pin.get(k);if(!q||ORDER[p.src]<ORDER[q.src])pin.set(k,p);}});
+  return[...m.entries()].map(([k,p])=>{if(p.pins&&p.pins.length)return p;const q=pin.get(k);return q?Object.assign({},p,{pins:q.pins,pinSrc:q.src,pinFrom:q.kicad||q.mpn,pinMatch:q.match||'',fp:p.fp||q.fp||'',pkg:p.pkg||q.pkg||'',pdf:p.pdf||q.pdf||''}):p;});}
+/* bundled KiCad pin table (src/parts/kicadpins.js) → records */
+function fromKpins(K){return Object.entries(K||{}).map(([mpn,r])=>({mpn,mfr:'',title:r.t||'',cat:'',pkg:r.pkg||'',fp:r.fp||'',val:'',pins:(r.p||[]).map(x=>({num:String(x[0]),name:String(x[1]||''),type:x[2]||''})),specs:[],price:null,pdf:r.pdf||'',page:'',desc:r.t||'',src:'kicad',kicad:r.k,lib:r.l,match:r.m,status:'',conf:r.m==='exact'?0.95:r.m==='prefix'?0.8:0.6}));}
 function find(parts,mpn){const k=norm(mpn);if(!k)return null;return parts.find(p=>norm(p.mpn)===k)||parts.find(p=>norm(p.mpn).startsWith(k)||k.startsWith(norm(p.mpn)))||null;}
 function search(parts,q){const t=S(q);if(!t)return[];const k=norm(t);const words=t.toLowerCase().split(/\s+/).filter(Boolean);
   const score=p=>{const pm=norm(p.mpn);let s=0;if(pm===k)s+=100;else if(pm.startsWith(k)||k.startsWith(pm))s+=60;else if(pm.includes(k))s+=40;
@@ -8773,7 +8871,7 @@ const PROVIDERS={
     req:(key,q,url)=>({url:String(url||'').replace(/\{q\}/,encodeURIComponent(q))+(/\{q\}/.test(url||'')?'':(url&&url.includes('?')?'&':'?')+'q='+encodeURIComponent(q)),init:{headers:key?{Authorization:'Bearer '+key}:{}}}),
     parse:j=>{const L=Array.isArray(j)?j:j&&(j.parts||j.results||j.items)||[];return L.map(p=>Object.assign(fromAi(p,p.mpn),{src:'api',conf:1,note:S(p.note)||'사내 부품 서버'}));}}};
 /* HTML for a one-page datasheet summary of a record (used by the datasheet tab for AI/API/user parts) */
-function pageHTML(p,esc){esc=esc||(s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])));const srcName={user:'승인 부품 목록',ds:'데이터시트 PDF',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'}[p.src]||p.src;
+function pageHTML(p,esc){esc=esc||(s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])));const srcName=({user:'승인 부품 목록',ds:'데이터시트 PDF',builtin:'내장 DB',kicad:'KiCad 심볼 라이브러리',ai:'Claude 추정',api:'부품 API'}[p.src]||p.src)+(p.src==='kicad'&&p.kicad?` (${p.lib?p.lib+':':''}${p.kicad}${p.match&&p.match!=='exact'?' · '+(p.match==='family'?'계열 일치 — 패키지 확인':'접두 일치'):''})`:'')+(p.pinSrc&&p.pinSrc!==p.src?` · 핀: ${p.pinSrc==='kicad'?'KiCad '+(p.pinFrom||''):p.pinSrc}${p.pinMatch==='family'?' (계열 일치 — 패키지 확인)':''}`:'');
   return`<h1>${esc(p.mpn)}</h1><p class="meta">${esc(p.mfr||'제조사 미상')}${p.cat?' · '+esc(p.cat):''}${p.pkg?' · '+esc(p.pkg):''}${p.title?' · '+esc(p.title):''}${p.price!=null?` · 참고 단가 약 $${(+p.price).toFixed(p.price<1?3:2)}`:''}</p>
 <p class="meta">출처: ${esc(srcName)}${p.conf!=null&&p.src==='ai'?` (확신도 ${Math.round(p.conf*100)}%)`:''}${p.pdf?` · <a href="${esc(p.pdf)}" target="_blank" rel="noopener">데이터시트</a>`:''}${p.page?` · <a href="${esc(p.page)}" target="_blank" rel="noopener">제품 페이지</a>`:''} · <a href="https://octopart.com/search?q=${encodeURIComponent(p.mpn)}" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
 ${p.src==='ai'?'<p class="todo">이 페이지는 Claude가 추정한 사양입니다. 실제 데이터시트와 대조한 뒤 승인 부품 목록에 넣으세요.</p>':''}${p.note?`<p class="meta">${esc(p.note)}</p>`:''}
@@ -8803,7 +8901,7 @@ function autoAlt(mpn){const k=norm(mpn);const hit=Object.keys(AUTO_ALT).find(x=>
 /* required grade per ASIL: A/B → AEC-Q100 Grade 1 (ICs) / Q101 / Q200, C/D → the same plus a safety-ready MCU/SBC note */
 function requiredGrade(level){const l=String(level||'QM').toUpperCase();if(l==='QM')return null;return{ic:'Q100-1',discrete:'Q101',passive:'Q200',tempMin:-40,tempMax:125,label:l==='A'||l==='B'?'AEC-Q100 Grade 1 / Q101 / Q200':'AEC-Q100 Grade 1 / Q101 / Q200 + ASIL-ready MCU·SBC'};}
 function gradeOk(rec,kind,level){const req=requiredGrade(level);if(!req)return true;const g=rec&&rec.grade||'';if(kind==='passive')return g==='Q200'||/^Q100/.test(g);if(kind==='discrete')return g==='Q101'||/^Q100/.test(g)||g==='Q200';const m=g.match(/^Q100-(\d)/);return!!m&&+m[1]<=1;}
-return{parseTable,parseCsv,parsePins,parseSpecs,toAoa,toCsv,fromBuiltin,merge,find,search,role,mapPins,plan,aiPrompt,fromAi,PROVIDERS,pageHTML,norm,CSV_HEAD,pinoutFor,PINOUTS,gradeOf,tempOf,GRADE_LABEL,gradeAuto,AUTO_PARTS,AUTO_ALT,autoAlt,gradeOk,requiredGrade};
+return{fromKpins,parseTable,parseCsv,parsePins,parseSpecs,toAoa,toCsv,fromBuiltin,merge,find,search,role,mapPins,plan,aiPrompt,fromAi,PROVIDERS,pageHTML,norm,CSV_HEAD,pinoutFor,PINOUTS,gradeOf,tempOf,GRADE_LABEL,gradeAuto,AUTO_PARTS,AUTO_ALT,autoAlt,gradeOk,requiredGrade};
 })();
 
 
@@ -15178,7 +15276,7 @@ function npCandHTML(b){const R=npCandRank(b);if(!R)return'';SYS.cands=SYS.cands|
   const rows=R.rows.slice(0,6).map((r,i)=>`<div class="cd-row${r.ok?'':' bad'}${cur&&cur.toUpperCase()===r.mpn.toUpperCase()?' on':''}" data-cand="${i}" role="button" tabindex="0" title="${esc((r.why.concat(r.bad)).join(' · '))}">
       <div class="cd-h"><span class="cd-rk">${r.rank}</span><b>${esc(r.mpn)}</b><span class="cls">${esc(r.mfr)}</span><span class="cd-p">${r.price!=null?'$'+r.price:''}</span></div>
       <div class="cd-n">${esc(r.note)}</div>
-      <div class="cd-b">${r.src==='profile'?'<span class="src ds">제품 표준</span>':''}${r.grade?`<span class="src ds">${esc(r.grade)}</span>`:''}${r.asil?`<span class="src">ASIL ${esc(r.asil)}</span>`:''}${r.pins?'<span class="src ds" title="라이브러리에 핀 데이터가 있어 바로 회로 생성">핀 데이터</span>':'<span class="src" title="핀 데이터 없음 — 고르면 데이터시트 PDF로 핀 추출">핀 없음</span>'}${r.why.filter(w=>!/^Q10|^ASIL|핀 데이터|제품 표준/.test(w)).slice(0,2).map(w=>`<span class="src">${esc(w)}</span>`).join('')}${r.bad.length?`<span class="cd-bad">✕ ${esc(r.bad.join(' · '))}</span>`:''}</div></div>`).join('');
+      <div class="cd-b">${r.src==='profile'?'<span class="src ds">제품 표준</span>':''}${r.grade?`<span class="src ds">${esc(r.grade)}</span>`:''}${r.asil?`<span class="src">ASIL ${esc(r.asil)}</span>`:''}${r.pins?`<span class="src ds" title="핀 데이터가 있어 바로 회로 생성 (출처: ${esc(r.pinNote)}${/계열/.test(r.pinNote)?' — 같은 계열 심볼, 패키지 확인':''})">핀 · ${esc(r.pinNote)}</span>`:'<span class="src" title="핀 데이터 없음 — 고르면 데이터시트 PDF로 핀 추출">핀 없음</span>'}${r.why.filter(w=>!/^Q10|^ASIL|핀 데이터|제품 표준/.test(w)).slice(0,2).map(w=>`<span class="src">${esc(w)}</span>`).join('')}${r.bad.length?`<span class="cd-bad">✕ ${esc(r.bad.join(' · '))}</span>`:''}</div></div>`).join('');
   return`<div class="np-cand"><div class="np-bh" style="margin-top:6px"><b>주요 소자 후보</b><span class="cls">${R.rows.length}개${R.needs.i?` · 요구 ${R.needs.i} A`:''}${R.needs.v?` · ${R.needs.v} V`:''}</span><select data-cand-pref class="cd-sel" title="순위 기준"><option value="bal"${pv==='bal'?' selected':''}>균형</option><option value="price"${pv==='price'?' selected':''}>가격 우선</option><option value="feat"${pv==='feat'?' selected':''}>기능 우선</option><option value="ext"${pv==='ext'?' selected':''}>확장성 우선</option></select></div>
     <div class="cd-list">${rows}</div>
     <div class="cls" style="margin-top:4px">행을 누르면 그 부품으로 지정합니다${cur?` · 지금: <b>${esc(cur)}</b> <button type="button" class="linkbtn" data-cand-clear>해제</button>`:''} · 참고 순위(사양·등급·단가·핀 데이터 기준) — 재고·수명은 부품 API에서 확인</div></div>`;}
@@ -16343,10 +16441,10 @@ function mbMetrics(){if(MB.boards.length<2&&!MB.links.length)return null;const c
 /* ---------- part library + conversational part replacement (PARTLIB / FPGEN) ----------
    PL.user : approved parts list (CSV/Excel import, IndexedDB 'aod-parts')  PL.ai : records Claude estimated  PL.api : records fetched from a distributor
    lookup order: user → built-in PARTS → ai → api.  `replace <ref> <부품>` and sentences like "U3를 AP2112K로 바꿔줘" run the flow in the copilot. */
-var PL={user:[],ai:[],api:[],db:null,api_cfg:{provider:'',key:'',url:''},open:false,q:'',tab:'all',busy:false,last:null};
+var PL={user:[],ai:[],api:[],kicad:[],db:null,api_cfg:{provider:'',key:'',url:''},open:false,q:'',tab:'all',busy:false,last:null};
 const PL_SRC={user:'승인 목록',ds:'데이터시트',builtin:'내장 DB',ai:'Claude 추정',api:'부품 API'};
 function plGrade(p){const g=p&&p.grade;if(!g)return'';const auto=PARTLIB.gradeAuto(g);return`<span class="pl-src ${auto?'pl-aec':'pl-com'}" title="${esc(PARTLIB.GRADE_LABEL[g]||g)}${p.temp?' · '+p.temp[0]+'~'+p.temp[1]+' °C':''}">${esc(auto?g:PARTLIB.GRADE_LABEL[g]||g)}</span>`;}
-function plAll(){const b=typeof PARTS!=='undefined'?PARTLIB.fromBuiltin(PARTS,plBuiltinPins):[];return PARTLIB.merge([PL.user,b,PL.ai,PL.api]);}
+let PL_KP=null;function plAll(){const b=typeof PARTS!=='undefined'?PARTLIB.fromBuiltin(PARTS,plBuiltinPins):[];if(!PL_KP)PL_KP=typeof KPINS!=='undefined'?PARTLIB.fromKpins(KPINS):[];return PARTLIB.merge([PL.user,b,PL.kicad,PL_KP,PL.ai,PL.api]);}
 /* pin names for a built-in part: from the open board when a component uses it */
 function plBuiltinPins(mpn){if(!BD)return[];const c=BD.comps.find(x=>(x.mpn||'').trim()===mpn&&x.pads.some(p=>p.fn));return c?[...new Map(c.pads.map(p=>[String(p.n),{num:String(p.n),name:p.fn||''}])).values()]:[];}
 /* ---- persistence ---- */
@@ -16354,19 +16452,25 @@ function plDb(){if(PL.db)return Promise.resolve(PL.db);return new Promise(res=>{
   r.onsuccess=()=>{PL.db=r.result;res(PL.db);};r.onerror=()=>res(null);}catch(e){res(null);}});}
 async function plLoad(){try{PL.api_cfg=Object.assign(PL.api_cfg,JSON.parse(localStorage.getItem('aod.partapi')||'{}'));}catch(e){}
   const d=await plDb();if(!d)return;await new Promise(res=>{const tx=d.transaction('lib','readonly').objectStore('lib');const g=k=>new Promise(r=>{const q=tx.get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null);});
-    Promise.all([g('user'),g('ai'),g('api')]).then(([u,a,p])=>{PL.user=Array.isArray(u)?u:[];PL.ai=Array.isArray(a)?a:[];PL.api=Array.isArray(p)?p:[];res();});});}
-async function plSave(){const d=await plDb();if(!d)return;try{const tx=d.transaction('lib','readwrite').objectStore('lib');tx.put(PL.user,'user');tx.put(PL.ai,'ai');tx.put(PL.api,'api');}catch(e){console.warn(e);}}
+    Promise.all([g('user'),g('ai'),g('api'),g('kicad')]).then(([u,a,p,k])=>{PL.user=Array.isArray(u)?u:[];PL.ai=Array.isArray(a)?a:[];PL.api=Array.isArray(p)?p:[];PL.kicad=Array.isArray(k)?k:[];res();});});}
+async function plSave(){const d=await plDb();if(!d)return;try{const tx=d.transaction('lib','readwrite').objectStore('lib');tx.put(PL.user,'user');tx.put(PL.ai,'ai');tx.put(PL.api,'api');tx.put(PL.kicad,'kicad');}catch(e){console.warn(e);}}
 function plSaveCfg(){try{localStorage.setItem('aod.partapi',JSON.stringify(PL.api_cfg));}catch(e){}}
 function plRemember(p){const L=p.src==='ai'?PL.ai:p.src==='api'?PL.api:PL.user;const k=PARTLIB.norm(p.mpn);const i=L.findIndex(x=>PARTLIB.norm(x.mpn)===k);if(i>=0)L[i]=p;else L.push(p);plSave();}
 /* ---- import (CSV / Excel) ---- */
-async function plImportFiles(files){const msgs=[];let n=0;for(const f of files){const ext=(f.name.split('.').pop()||'').toLowerCase();let aoa=null;
+async function plImportFiles(files){const msgs=[];let n=0;
+  // KiCad symbol libraries (.lib + .dcm of KiCad 5, .kicad_sym of KiCad 6–8): every symbol becomes a part with real pins
+  const kf=files.filter(f=>/\.(lib|dcm|kicad_sym)$/i.test(f.name));files=files.filter(f=>!kf.includes(f));
+  if(kf.length&&typeof KICADLIB!=='undefined'){const r=KICADLIB.parseFiles(await Promise.all(kf.map(async f=>({name:f.name,text:await f.text()}))));
+    const idx=new Map(PL.kicad.map((p,i)=>[PARTLIB.norm(p.mpn),i]));r.parts.forEach(p=>{const k=PARTLIB.norm(p.mpn);if(idx.has(k))PL.kicad[idx.get(k)]=p;else{idx.set(k,PL.kicad.length);PL.kicad.push(p);}n++;});
+    msgs.push('KiCad '+r.msg);}
+  for(const f of files){const ext=(f.name.split('.').pop()||'').toLowerCase();let aoa=null;
     if(ext==='xlsx'||ext==='xls'||ext==='xlsm'){if(!window.XLSX)throw new Error('엑셀 라이브러리를 불러오지 못했습니다. CSV로 저장해서 넣어 주세요.');const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
       for(const sn of wb.SheetNames){const r=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:false,defval:''});const t=PARTLIB.parseTable(r);if(t.parts.length){aoa=r;break;}}if(!aoa)throw new Error(`${f.name}: MPN 열이 있는 시트를 찾지 못했습니다.`);}
     else aoa=PARTLIB.parseCsv(await f.text());
     const t=PARTLIB.parseTable(aoa);if(t.error)throw new Error(`${f.name}: ${t.error}`);
     t.parts.forEach(p=>{p.file=f.name;const k=PARTLIB.norm(p.mpn);const i=PL.user.findIndex(x=>PARTLIB.norm(x.mpn)===k);if(i>=0)PL.user[i]=p;else PL.user.push(p);n++;});msgs.push(`${f.name}: ${t.parts.length}개${t.skipped?` (건너뜀 ${t.skipped})`:''}`);}
   await plSave();return{n,msg:msgs.join(' · ')};}
-function plPickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept='.csv,.tsv,.txt,.xlsx,.xls,.xlsm';i.multiple=true;i.onchange=()=>res([...i.files]);i.oncancel=()=>res([]);i.click();});}
+function plPickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept='.csv,.tsv,.txt,.xlsx,.xls,.xlsm,.lib,.dcm,.kicad_sym';i.multiple=true;i.onchange=()=>res([...i.files]);i.oncancel=()=>res([]);i.click();});}
 /* ---- lookups ---- */
 function plFind(q){const all=plAll();return PARTLIB.find(all,q);}
 function plSearch(q){return PARTLIB.search(plAll(),q);}
@@ -16394,7 +16498,7 @@ async function plAddFlow(it,src){src=src||'sch';const say=(k,t)=>{const e={k,t};
   const q=it.q;say('out',`"${q}" 부품 추가 — 라이브러리(승인 목록 → 내장 DB → 이전 추정)에서 찾는 중…`);
   let part=null;const cands=plSearch(q);const exact=cands.find(p=>PARTLIB.norm(p.mpn)===PARTLIB.norm(q)||PARTLIB.norm(p.mpn).startsWith(PARTLIB.norm(q)));
   if(exact&&exact.pins&&exact.pins.length)part=exact;
-  while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];const O1='Claude 추정 (핀 배열·패키지·사양을 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='승인 부품 목록 파일 가져오기 (CSV/Excel)',O5='데이터시트 PDF 올리기 (핀 표 추출)',O4='취소';
+  while(!part){const hasApi=!!PARTLIB.PROVIDERS[PL.api_cfg.provider];const O1='Claude 추정 (핀 배열·패키지·사양을 AI가 채움)',O2=hasApi?`부품 API 조회 (${PARTLIB.PROVIDERS[PL.api_cfg.provider].name})`:'부품 API 설정…',O3='부품 목록·KiCad 심볼 라이브러리 가져오기 (CSV/Excel · .lib/.kicad_sym)',O5='데이터시트 PDF 올리기 (핀 표 추출)',O4='취소';
     const a=await ask({q:`"${q}"${exact?'의 핀 정보가 없습니다':'은(는) 라이브러리에 없습니다'}. 어떻게 가져올까요?`,why:'추정값은 카드에 "Claude 추정"으로 표시되고 데이터시트로 확인해야 합니다. 데이터시트 PDF를 올리면 실제 핀 표를 씁니다.',opts:[O5,O1,O2,O3,O4]});
     if(!a||a===O4){say('out','추가를 취소했습니다.');return;}
     try{if(a===O5){const r=await dsPdfFlow(q,src,{});if(r)part=r;else continue;}
@@ -16528,7 +16632,7 @@ function plDialogHTML(){const all=plAll();const q=PL.q.toLowerCase();const tab=P
   return`<div class="sheet pl" role="dialog" aria-modal="true" aria-labelledby="plT"><div class="sheet-h"><h2 id="plT">부품 라이브러리</h2><span class="pl-cnt">승인 ${cnt('user')} · 데이터시트 ${cnt('ds')} · 내장 ${cnt('builtin')} · Claude 추정 ${cnt('ai')} · API ${cnt('api')}</span><button type="button" class="btn sm" data-close aria-label="닫기">닫기</button></div>
   <div class="sheet-b pl-b"><div class="pl-bar"><div class="seg sm" role="tablist">${[['all','전체'],['user','승인 목록'],['builtin','내장'],['ai','Claude 추정'],['api','API']].map(t=>`<button type="button" role="tab" data-pltab="${t[0]}" aria-selected="${tab===t[0]}">${t[1]}</button>`).join('')}</div>
       <input type="search" id="plQ" placeholder="MPN · 제조사 · 설명 검색" value="${esc(PL.q)}" aria-label="검색"><span class="cop-sp"></span>
-      <button type="button" class="btn sm" data-plimp>목록 가져오기 (CSV/Excel)</button><button type="button" class="btn sm" data-plpdf title="데이터시트 PDF에서 핀 표를 읽어 저장">데이터시트 PDF → 핀</button><button type="button" class="btn sm" data-pltpl>CSV 템플릿</button><button type="button" class="btn sm" data-plexp>내보내기</button><button type="button" class="btn sm" data-plapi aria-expanded="${PL.apiOpen?'true':'false'}">API 설정</button></div>
+      <button type="button" class="btn sm" data-plimp title="승인 부품 목록(CSV/Excel) 또는 KiCad 심볼 라이브러리(.lib + .dcm · .kicad_sym — 회사 라이브러리나 KiCad 공식 라이브러리)를 넣으면 핀 데이터로 저장">가져오기 (CSV/Excel · KiCad 심볼)</button><button type="button" class="btn sm" data-plpdf title="데이터시트 PDF에서 핀 표를 읽어 저장">데이터시트 PDF → 핀</button><button type="button" class="btn sm" data-pltpl>CSV 템플릿</button><button type="button" class="btn sm" data-plexp>내보내기</button><button type="button" class="btn sm" data-plapi aria-expanded="${PL.apiOpen?'true':'false'}">API 설정</button></div>
     <div class="pl-api" ${PL.apiOpen?'':'hidden'}><label>공급자 <select id="plProv"><option value="">(없음)</option>${Object.keys(P).map(k=>`<option value="${k}" ${cfg.provider===k?'selected':''}>${esc(P[k].name)}</option>`).join('')}</select></label>
       <label>키 / 토큰 <input type="password" id="plKey" value="${esc(cfg.key||'')}" placeholder="브라우저에만 저장됩니다"></label><label>주소 (사내 서버) <input type="text" id="plUrl" value="${esc(cfg.url||'')}" placeholder="https://parts.example.com/find?q={q}"></label>
       <button type="button" class="btn primary sm" data-plsave>저장</button><button type="button" class="btn sm" data-pltest>조회 테스트</button><div class="pl-m">${cfg.provider&&P[cfg.provider]?esc(P[cfg.provider].keyHelp):'우선순위: 승인 부품 목록 → Claude 추정 → 부품 API. Mouser API는 브라우저에서 직접 호출이 막혀 있어(CORS) 사내 프록시가 필요할 수 있습니다.'}</div></div>

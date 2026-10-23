@@ -53,6 +53,8 @@ ${script(stripExport(read('src/core/housing.js')))}
 ${script(stripExport(read('src/core/text2cad.js')))}
 ${script(stripExport(read('src/core/stepw.js')))}
 ${script(stripExport(read('src/core/partrank.js')))}
+${script(stripExport(read('src/core/kicadlib.js')))}
+${script(stripExport(read('src/parts/kicadpins.js')))}
 ${script(stripExport(read('src/core/sysdiag.js')))}
 ${script(stripExport(read('src/core/hwarch.js')))}
 ${script(stripExport(read('src/core/revlog.js')))}
