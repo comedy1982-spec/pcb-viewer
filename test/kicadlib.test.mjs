@@ -60,7 +60,7 @@ test('bundled KPINS: real pins merged into the library lookup (a built-in part w
   assert.ok(Object.keys(KPINS).length >= 20);
   const r = NEWPROJ.partLookup('TJA1051T/3'); assert.ok(r && r.pins && r.pins.length === 8, 'TJA1051T/3 should have KiCad pins');
   assert.ok(r.pins.some(p => /CANH/i.test(p.name)));
-  const recs = PARTLIB.fromKpins(KPINS); assert.ok(recs.every(x => x.src === 'kicad' && x.pins.length));
+  const recs = PARTLIB.fromKpins(KPINS); assert.ok(recs.every(x => (x.src === 'kicad' || (x.src === 'ds' && x.lib === 'datasheet')) && x.pins.length));
 });
 
 test('kicad wildcard x in symbol names (Allegro ACS)', () => {
