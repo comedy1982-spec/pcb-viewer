@@ -21,10 +21,10 @@ async function progRun(label,fn,o){const id='run'+(++PROG.seq);progStart(id,labe
 function progFrame(){return new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r())));}
 
 /* consoles → tasks */
-const PROG_SRC={pcb:[()=>CLI,'PCB 배치·배선'],sch:[()=>SCLI,'회로도'],np:[()=>NP,'회로 설계'],cad:[()=>CADC,'기구 설계']};
+const PROG_SRC={pcb:[()=>CLI,'PCB 배치·배선'],sch:[()=>SCLI,'회로도'],np:[()=>NP,()=>{const st=typeof stepCur==='function'?stepCur():0;return st===1?'시스템 다이어그램 작성':'회로 설계';}],cad:[()=>CADC,'기구 설계']};
 function progSync(){if(!PROG)return;for(const[k,[get,label]]of Object.entries(PROG_SRC)){let S=null;try{S=get();}catch(e){}
   if(!S)continue;const id='c:'+k;
-  if(S.busy)progStart(id,PROG.tasks.has(id)?null:label+' 진행 중…',{stop:()=>{S.stopReq=true;if(S.abort)try{S.abort.abort();}catch(e){}}});
+  if(S.busy)progStart(id,PROG.tasks.has(id)?null:(typeof label==='function'?label():label)+' 진행 중…',{stop:()=>{S.stopReq=true;if(S.abort)try{S.abort.abort();}catch(e){}}});
   else if(PROG.tasks.has(id))progEnd(id,350);}}
 /* in-progress log lines → notes on the card */
 const PROG_RE=/중…|중\.\.\.|…\s*(\([^)]*\))?\s*$|다시 배선 \d+\/\d+|준비 중/;
@@ -38,7 +38,7 @@ function progEls(){let top=document.getElementById('progTop');if(top)return{top,
   top=document.createElement('div');top.id='progTop';top.setAttribute('aria-hidden','true');top.innerHTML='<i></i>';document.body.appendChild(top);
   const card=document.createElement('div');card.id='progCard';card.setAttribute('role','status');card.setAttribute('aria-live','polite');
   card.innerHTML='<span class="pg-spin" aria-hidden="true"></span><div class="pg-b"><b class="pg-l"></b><div class="pg-s"><span class="pg-n"></span><span class="pg-t"></span></div><div class="pg-bar"><i></i></div></div><button type="button" class="btn sm pg-stop">중지</button>';
-  card.querySelector('.pg-stop').addEventListener('click',()=>{PROG.tasks.forEach(t=>{if(t.stop)try{t.stop();}catch(e){}});card.classList.add('stopping');card.querySelector('.pg-l').textContent='중지하는 중…';});
+  card.querySelector('.pg-stop').addEventListener('click',()=>{PROG.tasks.forEach(t=>{if(t.stop)try{t.stop();}catch(e){}});if(typeof copStopAll==='function')copStopAll();card.classList.add('stopping');card.querySelector('.pg-l').textContent='중지하는 중…';});
   document.body.appendChild(card);return{top,card};}
 const progClock=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
 function progPaint(){if(PROG.raf)return;PROG.raf=requestAnimationFrame(()=>{PROG.raf=0;progDraw();});}
@@ -46,7 +46,7 @@ function progDraw(){const{top,card}=progEls();const now=performance.now();
   // a note lives while its own console task runs; one without such a task (e.g. a narrative line on the shared log) only
   // while some task runs and for at most 30 s since its last update — so a line that is never closed cannot pin the card
   for(const[k,n]of PROG.notes){if(PROG.tasks.has(n.src))continue;if(!PROG.tasks.size||now-n.last>30000)PROG.notes.delete(k);}
-  const tasks=[...PROG.tasks.values()],notes=[...PROG.notes.values()];const on=tasks.length>0;
+  const tasks=[...PROG.tasks.values()],notes=[...PROG.notes.values()];const waiting=typeof COP!=='undefined'&&COP.ask&&COP.ask.state==='open';const on=tasks.length>0&&!waiting;
   document.documentElement.classList.toggle('prog-on',on);top.classList.toggle('on',on);card.classList.toggle('on',on);
   if(!on){card.classList.remove('stopping');clearInterval(PROG.tick);PROG.tick=0;return;}
   if(!PROG.tick)PROG.tick=setInterval(()=>progDraw(),500);

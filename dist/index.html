@@ -10457,10 +10457,10 @@ async function progRun(label,fn,o){const id='run'+(++PROG.seq);progStart(id,labe
 function progFrame(){return new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r())));}
 
 /* consoles → tasks */
-const PROG_SRC={pcb:[()=>CLI,'PCB 배치·배선'],sch:[()=>SCLI,'회로도'],np:[()=>NP,'회로 설계'],cad:[()=>CADC,'기구 설계']};
+const PROG_SRC={pcb:[()=>CLI,'PCB 배치·배선'],sch:[()=>SCLI,'회로도'],np:[()=>NP,()=>{const st=typeof stepCur==='function'?stepCur():0;return st===1?'시스템 다이어그램 작성':'회로 설계';}],cad:[()=>CADC,'기구 설계']};
 function progSync(){if(!PROG)return;for(const[k,[get,label]]of Object.entries(PROG_SRC)){let S=null;try{S=get();}catch(e){}
   if(!S)continue;const id='c:'+k;
-  if(S.busy)progStart(id,PROG.tasks.has(id)?null:label+' 진행 중…',{stop:()=>{S.stopReq=true;if(S.abort)try{S.abort.abort();}catch(e){}}});
+  if(S.busy)progStart(id,PROG.tasks.has(id)?null:(typeof label==='function'?label():label)+' 진행 중…',{stop:()=>{S.stopReq=true;if(S.abort)try{S.abort.abort();}catch(e){}}});
   else if(PROG.tasks.has(id))progEnd(id,350);}}
 /* in-progress log lines → notes on the card */
 const PROG_RE=/중…|중\.\.\.|…\s*(\([^)]*\))?\s*$|다시 배선 \d+\/\d+|준비 중/;
@@ -10474,7 +10474,7 @@ function progEls(){let top=document.getElementById('progTop');if(top)return{top,
   top=document.createElement('div');top.id='progTop';top.setAttribute('aria-hidden','true');top.innerHTML='<i></i>';document.body.appendChild(top);
   const card=document.createElement('div');card.id='progCard';card.setAttribute('role','status');card.setAttribute('aria-live','polite');
   card.innerHTML='<span class="pg-spin" aria-hidden="true"></span><div class="pg-b"><b class="pg-l"></b><div class="pg-s"><span class="pg-n"></span><span class="pg-t"></span></div><div class="pg-bar"><i></i></div></div><button type="button" class="btn sm pg-stop">중지</button>';
-  card.querySelector('.pg-stop').addEventListener('click',()=>{PROG.tasks.forEach(t=>{if(t.stop)try{t.stop();}catch(e){}});card.classList.add('stopping');card.querySelector('.pg-l').textContent='중지하는 중…';});
+  card.querySelector('.pg-stop').addEventListener('click',()=>{PROG.tasks.forEach(t=>{if(t.stop)try{t.stop();}catch(e){}});if(typeof copStopAll==='function')copStopAll();card.classList.add('stopping');card.querySelector('.pg-l').textContent='중지하는 중…';});
   document.body.appendChild(card);return{top,card};}
 const progClock=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
 function progPaint(){if(PROG.raf)return;PROG.raf=requestAnimationFrame(()=>{PROG.raf=0;progDraw();});}
@@ -10482,7 +10482,7 @@ function progDraw(){const{top,card}=progEls();const now=performance.now();
   // a note lives while its own console task runs; one without such a task (e.g. a narrative line on the shared log) only
   // while some task runs and for at most 30 s since its last update — so a line that is never closed cannot pin the card
   for(const[k,n]of PROG.notes){if(PROG.tasks.has(n.src))continue;if(!PROG.tasks.size||now-n.last>30000)PROG.notes.delete(k);}
-  const tasks=[...PROG.tasks.values()],notes=[...PROG.notes.values()];const on=tasks.length>0;
+  const tasks=[...PROG.tasks.values()],notes=[...PROG.notes.values()];const waiting=typeof COP!=='undefined'&&COP.ask&&COP.ask.state==='open';const on=tasks.length>0&&!waiting;
   document.documentElement.classList.toggle('prog-on',on);top.classList.toggle('on',on);card.classList.toggle('on',on);
   if(!on){card.classList.remove('stopping');clearInterval(PROG.tick);PROG.tick=0;return;}
   if(!PROG.tick)PROG.tick=setInterval(()=>progDraw(),500);
@@ -13657,7 +13657,7 @@ async function cliRoute(a){
     for(;;){const q=it2.next();if(q.done)break;}PCBEDIT.rebuildNets(BD);const still=new Set(AUTOROUTE.openNets(BD).map(o=>o.net));const narrowed=wideOpen.filter(n=>!still.has(n));
     if(narrowed.length)lines.push(`넓은 폭으로 자리가 없어 기본 폭으로 배선: ${narrowed.map(n=>`${n} (${netWidth[n]} → ${pwr} mm)`).join(', ')} → 동박면(pour)으로 보강하거나 보드를 키우세요`);
     open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));}
-  cliSet(prog,`배선 ${nets.length-open.length}/${nets.length} 넷 · ${(ms/1000).toFixed(1)} s${res?` · 트랙 ${f1(res.len)} mm · 비아 ${res.vias}개${res.rounds?` · 다시 배선 ${res.rounds}회`:''}`:''}`);
+  const stopped=!!CLI.stopReq;cliSet(prog,`${stopped?'중지함 — ':''}배선 ${nets.length-open.length}/${nets.length} 넷 · ${(ms/1000).toFixed(1)} s${res?` · 트랙 ${f1(res.len)} mm · 비아 ${res.vias}개${res.rounds?` · 다시 배선 ${res.rounds}회`:''}`:''}`);
   if(open.length)lines.push(`미배선 ${open.length}개: ${open.slice(0,10).map(o=>o.net).join(', ')}${open.length>10?' …':''} → place로 간격을 바꾸거나 board size로 보드를 키우고 다시 route`);
   // return vias next to the layer changes of clock / analog nets
   if(!a['no-retvia']&&a.retvia!==false){const rv=AUTOROUTE.returnVias(BD,{dist:a.retvia&&isFinite(+a.retvia)?+a.retvia:0.8,clear:clr,via,W:WW});if(rv.added||rv.skipped)lines.push(`리턴(GND) 비아 ${rv.added}개 추가 — 고속·아날로그 넷 층 전환 옆${rv.skipped?` · 자리 없음 ${rv.skipped}개`:''}`);PCBEDIT.rebuildNets(BD);}
@@ -14599,7 +14599,7 @@ async function npPickParts(prof){const A=NP.arch;if(!A||!prof)return;
   if(!cb.length)return;
   copSay('out',`블록별 부품 후보 — ${cb.length}개 블록. 고르거나 건너뛰면 1순위 추천을 쓰고, "나머지 모두 1순위"로 한 번에 정합니다. 나중에 parts <블록> <번호|MPN> 으로 바꿀 수 있습니다.`);
   let rest=false;const picked=[];
-  for(const{b,c}of cb){let a=null;
+  for(const{b,c}of cb){let a=null;if(NP.stopReq)break;
     if(!rest){a=await copAsk({q:`[${b.label}] 부품을 고르세요`,why:c.map((p,i)=>`${i+1}. ${p.mpn} · ${p.mfr}${p.note?' — '+p.note:''}`).join('\n'),opts:c.map(p=>`${p.mpn} · ${p.mfr}`).concat(['라이브러리 기본 유지','나머지 모두 1순위'])});if(NP.stopReq)break;}
     if(a==='나머지 모두 1순위'){rest=true;a=null;}if(a==='라이브러리 기본 유지')continue;
     const p=a?(c.find(x=>a.startsWith(x.mpn))||{mpn:a.split(' · ')[0].trim(),mfr:'',note:''}):c[0];
@@ -14616,21 +14616,22 @@ async function npAnalyze(req,inner){
     if(prof){npSay('ok',PRODUCTS.summary(prof));
       const pq=(prof.questions||[]).filter(q=>!(q.re&&new RegExp(q.re.source||q.re,q.re.flags||'i').test(base))&&!NP.answers['p_'+q.key]);
       if(pq.length)copSay('out',`표준 구성을 기준으로 블록별 ${pq.length}가지만 확인합니다 (건너뛰면 표준값).`);
-      for(const q of pq){const bl=(prof.blocks||[]).find(b=>b.id===q.block);const a=await copAsk({q:`[${bl?bl.label:q.block}] ${q.q}`,why:q.why,opts:q.options.map(o=>o.label),multi:!!q.multi});if(a==null)continue;NP.answers['p_'+q.key]={label:bl?bl.label:q.block,v:a};if(NP.stopReq)break;}
-      const ans={};for(const q of prof.questions||[]){const x=NP.answers['p_'+q.key];if(x)ans[q.key]=x.v;}
+      for(const q of pq){if(NP.stopReq)break;const bl=(prof.blocks||[]).find(b=>b.id===q.block);const a=await copAsk({q:`[${bl?bl.label:q.block}] ${q.q}`,why:q.why,opts:q.options.map(o=>o.label),multi:!!q.multi});if(a==null)continue;NP.answers['p_'+q.key]={label:bl?bl.label:q.block,v:a};if(NP.stopReq)break;}
+      npStopCheck();const ans={};for(const q of prof.questions||[]){const x=NP.answers['p_'+q.key];if(x)ans[q.key]=x.v;}
       prodRes=PRODUCTS.apply(prof,ans,name||prof.name);
       full=base+'\n보강: 제품 '+prof.name+(prodRes.req?' · '+prodRes.req:'');$('#npReq').value=full;if(NP.plan)NP.plan.req=full;
       npPush();NP.arch=prodRes.arch;NP.arch.req=full;NP.arch.product=prof.key||'ai';if(name)NP.arch.name=name;SYS.view='hw';NP.planManual=false;archToPlan(true);npRender();
       npSay('ok',`${prof.name} 표준 구성으로 HW 블록 ${NP.arch.blocks.length}개 · 인터페이스 ${NP.arch.links.length}개를 만들었습니다.${prodRes.log.length?'\n반영: '+prodRes.log.join(' · '):''}`);
-      NP.prof=prof;await npPickParts(prof);
+      NP.prof=prof;await npPickParts(prof);npStopCheck();
       const bound=await npBindParts();if(bound.length)npSay('ok','블록에 적힌 부품 번호를 회로 구현으로 연결: '+bound.join(', '));
-      await npSafetyGoals(prof.key);
+      npStopCheck();await npSafetyGoals(prof.key);npStopCheck();
     }else{
     let qs=null;if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample)qs=await npAskAI(req);}
     if(!qs)qs=REQ_Q.filter(f=>!f.re.test(req)&&!NP.answers[f.key]).map(f=>({key:f.key,label:f.label,q:f.q,why:f.why,opts:f.opts,multi:!!f.multi}));
     qs=qs.filter(q=>!NP.answers[q.key]);
     if(qs.length){copSay('out',`블록 다이어그램을 그리기 전에 ${qs.length}가지를 확인합니다. 답을 고르거나 적어 주세요 (건너뛰면 기본값).`);
-      for(const q of qs){const a=await copAsk(q);if(a==null)continue;NP.answers[q.key]={label:q.label||q.key,v:a};if(NP.stopReq)break;}}
+      for(const q of qs){if(NP.stopReq)break;const a=await copAsk(q);if(a==null)continue;NP.answers[q.key]={label:q.label||q.key,v:a};if(NP.stopReq)break;}}
+    npStopCheck();
     const add=Object.values(NP.answers).map(x=>`${x.label}: ${x.v}`).join(' · ');
     full=add?base+'\n보강: '+add:base;$('#npReq').value=full;if(NP.plan)NP.plan.req=full;
     npPush();if(!NP.arch)NP.arch=HWARCH.blank(name||null);NP.arch.req=full;if(name)NP.arch.name=name;SYS.view='hw';
@@ -14638,10 +14639,11 @@ async function npAnalyze(req,inner){
     else{const o=await npRun('arch '+full);npSay('ok',o);}
     }
     try{const lv=typeof SAFETY!=='undefined'?SAFETY.parseLevel(full):null;if(lv&&NP.arch&&NP.arch.blocks.length&&(!NP.arch.safety||NP.arch.safety.level==='QM')){const o=await npRun(`safety level ${lv}`);npSay('ok',o);if(lv!=='QM'){const M=SAFETY.mechanisms(NP.arch,lv).filter(m=>!m.present&&!m.sw);const SW=SAFETY.swMechanisms(NP.arch,lv).filter(m=>!m.present);if((M.length||SW.length)&&typeof SGARCH==='undefined'){const a=await copAsk({q:`ASIL ${lv} 권장 안전 메커니즘 — HW 블록 ${M.length}개, SW 항목 ${SW.length}개가 아직 없습니다. 추가할까요?`,why:`HW: ${M.map(m=>m.label).join(' · ')||'없음'}\nSW(MCU 블록에 기록): ${SW.map(m=>m.label).join(' · ')||'없음'}`,opts:['HW + SW 모두 추가','HW 블록만','SW 항목만','나중에']});if(a&&/모두/.test(a)){npSay('ok',await npRun('safety apply all'));}else if(a==='HW 블록만'){npSay('ok',await npRun('safety apply '+M.map(m=>m.id).join(' ')));}else if(a==='SW 항목만'){npSay('ok',await npRun('safety apply sw'));}}}}}catch(e){console.warn(e);}
-    if(!prof&&NP.arch&&NP.arch.blocks.length&&typeof SAFETY!=='undefined'&&SAFETY.level(NP.arch)!=='QM')await npSafetyGoals(null);
+    npStopCheck();if(!prof&&NP.arch&&NP.arch.blocks.length&&typeof SAFETY!=='undefined'&&SAFETY.level(NP.arch)!=='QM')await npSafetyGoals(null);npStopCheck();
     copSay('out','다이어그램을 확인하고 블록·기능·인터페이스를 고친 뒤 [다음: 회로 생성]을 누르세요. 부품과 PCB는 다음 단계에서 정합니다.');
-  }catch(e){console.error(e);npSay('err',e.message||String(e));}
+  }catch(e){if(e&&e.npStop)npSay('out',NP.arch&&NP.arch.blocks.length?'중지했습니다. 지금까지 만든 다이어그램은 남아 있습니다. 요구사항을 고쳐 다시 시작할 수 있습니다.':'중지했습니다. 다이어그램은 만들지 않았습니다. [블록 다이어그램 만들기]로 다시 시작할 수 있습니다.');else{console.error(e);npSay('err',e.message||String(e));}}
   npBusy(false);}
+function npStopCheck(){if(NP.stopReq){const e=new Error('중지');e.npStop=true;throw e;}}
 /* safety goals → structure variants → deterministic verification (SGARCH). Template products bring default goals; otherwise
    the goals are derived from the request's ASIL and what the ECU drives. The user trims the goal list and picks a variant. */
 async function npSafetyGoals(key){if(typeof SGARCH==='undefined'||!NP.arch)return;const A=NP.arch;if(SGARCH.goals(A).length)return;
@@ -14837,9 +14839,12 @@ function copFill(d,e){
   if(k==='html'){d.className='cp cp-html'+(e.cls?' '+e.cls:'');d.innerHTML=tag+t;return;}
   d.className='cp cp-out';d.innerHTML=tag+esc(t);}
 /* a question to the user (step 1 requirement analysis): resolves with the answer text, or null when skipped */
-function copAsk(q){return new Promise(res=>{const e={k:'ask',t:q.q,q:q.q,why:q.why,opts:q.opts||[],multi:!!q.multi,state:'open',sel:[],res};COP.ask=e;copPaint(COP.askSrc||'np',e);copBusyPaint();copFocus();
+function copStopAll(){let any=false;[typeof CLI!=='undefined'?CLI:null,typeof SCLI!=='undefined'?SCLI:null,typeof NP!=='undefined'?NP:null,typeof CADC!=='undefined'?CADC:null].forEach(s=>{if(s&&s.busy){any=true;s.stopReq=true;if(s.abort)try{s.abort.abort();}catch(e){}}});
+  if(COP.ask&&COP.ask.state==='open'){const e=COP.ask;copAnswer(e,null);e.stopped=true;}return any;}
+const copStopping=()=>[typeof CLI!=='undefined'?CLI:null,typeof SCLI!=='undefined'?SCLI:null,typeof NP!=='undefined'?NP:null,typeof CADC!=='undefined'?CADC:null].some(s=>s&&s.busy&&s.stopReq);
+function copAsk(q){if(copStopping())return Promise.resolve(null);return new Promise(res=>{const e={k:'ask',t:q.q,q:q.q,why:q.why,opts:q.opts||[],multi:!!q.multi,state:'open',sel:[],res};COP.ask=e;copPaint(COP.askSrc||'np',e);copBusyPaint();if(typeof progPaint==='function')progPaint();copFocus();
   setTimeout(()=>{const L=$('#copLog');const d=L&&L.querySelector(`[data-cid="${e.cid}"] input`);if(d)d.focus();},30);});}
-function copAnswer(e,val){if(!e||e.state!=='open')return;e.state='done';e.answer=val;COP.ask=null;copPaint(e.src,e,true);copBusyPaint();const r=e.res;e.res=null;if(r)r(val);}
+function copAnswer(e,val){if(!e||e.state!=='open')return;e.state='done';e.answer=val;COP.ask=null;copPaint(e.src,e,true);copBusyPaint();if(typeof progPaint==='function')progPaint();const r=e.res;e.res=null;if(r)r(val);}
 function copAskClick(d,e,b){const i=+b.dataset.opt;const inp=d.querySelector('input');
   if(b.dataset.opt!=null){if(e.multi){const k=e.sel.indexOf(i);if(k>=0)e.sel.splice(k,1);else e.sel.push(i);copPaint(e.src,e,true);}else copAnswer(e,e.opts[i]);return;}
   if(b.hasAttribute('data-skip')){copAnswer(e,null);return;}
@@ -14915,7 +14920,7 @@ function copEnsure(){
     if(e.key==='ArrowUp'&&inp.selectionStart===0&&inp.selectionEnd===0&&COP.hi>0){COP.hi--;inp.value=COP.hist[COP.hi]||'';e.preventDefault();}
     else if(e.key==='ArrowDown'&&inp.selectionStart===inp.value.length&&COP.hi<COP.hist.length){COP.hi++;inp.value=COP.hist[COP.hi]||'';e.preventDefault();}
     else if(e.key==='Escape')inp.blur();});
-  el.querySelector('#copStop').addEventListener('click',()=>[CLI,SCLI,NP,CADC].forEach(s=>{if(s&&s.busy){s.stopReq=true;if(s.abort)s.abort.abort();}}));
+  el.querySelector('#copStop').addEventListener('click',()=>{copStopAll();copSay('out','중지 요청 — 진행 중인 단계를 마치는 대로 멈춥니다.');});
   el.querySelector('#copSrc').addEventListener('change',e=>{COP.src=e.target.value;copCtx();});
   el.querySelector('#copClr').addEventListener('click',()=>{COP.log=[];copRebuild();});
   el.querySelector('#copChips').addEventListener('click',e=>{const b=e.target.closest('[data-cchip]');if(!b||copBusyAny())return;const[,c,g]=copChips(copActive())[+b.dataset.cchip]||[];if(c)copSubmit(AIM.mode==='ai'?g:c);});

@@ -52,9 +52,12 @@ function copFill(d,e){
   if(k==='html'){d.className='cp cp-html'+(e.cls?' '+e.cls:'');d.innerHTML=tag+t;return;}
   d.className='cp cp-out';d.innerHTML=tag+esc(t);}
 /* a question to the user (step 1 requirement analysis): resolves with the answer text, or null when skipped */
-function copAsk(q){return new Promise(res=>{const e={k:'ask',t:q.q,q:q.q,why:q.why,opts:q.opts||[],multi:!!q.multi,state:'open',sel:[],res};COP.ask=e;copPaint(COP.askSrc||'np',e);copBusyPaint();copFocus();
+function copStopAll(){let any=false;[typeof CLI!=='undefined'?CLI:null,typeof SCLI!=='undefined'?SCLI:null,typeof NP!=='undefined'?NP:null,typeof CADC!=='undefined'?CADC:null].forEach(s=>{if(s&&s.busy){any=true;s.stopReq=true;if(s.abort)try{s.abort.abort();}catch(e){}}});
+  if(COP.ask&&COP.ask.state==='open'){const e=COP.ask;copAnswer(e,null);e.stopped=true;}return any;}
+const copStopping=()=>[typeof CLI!=='undefined'?CLI:null,typeof SCLI!=='undefined'?SCLI:null,typeof NP!=='undefined'?NP:null,typeof CADC!=='undefined'?CADC:null].some(s=>s&&s.busy&&s.stopReq);
+function copAsk(q){if(copStopping())return Promise.resolve(null);return new Promise(res=>{const e={k:'ask',t:q.q,q:q.q,why:q.why,opts:q.opts||[],multi:!!q.multi,state:'open',sel:[],res};COP.ask=e;copPaint(COP.askSrc||'np',e);copBusyPaint();if(typeof progPaint==='function')progPaint();copFocus();
   setTimeout(()=>{const L=$('#copLog');const d=L&&L.querySelector(`[data-cid="${e.cid}"] input`);if(d)d.focus();},30);});}
-function copAnswer(e,val){if(!e||e.state!=='open')return;e.state='done';e.answer=val;COP.ask=null;copPaint(e.src,e,true);copBusyPaint();const r=e.res;e.res=null;if(r)r(val);}
+function copAnswer(e,val){if(!e||e.state!=='open')return;e.state='done';e.answer=val;COP.ask=null;copPaint(e.src,e,true);copBusyPaint();if(typeof progPaint==='function')progPaint();const r=e.res;e.res=null;if(r)r(val);}
 function copAskClick(d,e,b){const i=+b.dataset.opt;const inp=d.querySelector('input');
   if(b.dataset.opt!=null){if(e.multi){const k=e.sel.indexOf(i);if(k>=0)e.sel.splice(k,1);else e.sel.push(i);copPaint(e.src,e,true);}else copAnswer(e,e.opts[i]);return;}
   if(b.hasAttribute('data-skip')){copAnswer(e,null);return;}
@@ -130,7 +133,7 @@ function copEnsure(){
     if(e.key==='ArrowUp'&&inp.selectionStart===0&&inp.selectionEnd===0&&COP.hi>0){COP.hi--;inp.value=COP.hist[COP.hi]||'';e.preventDefault();}
     else if(e.key==='ArrowDown'&&inp.selectionStart===inp.value.length&&COP.hi<COP.hist.length){COP.hi++;inp.value=COP.hist[COP.hi]||'';e.preventDefault();}
     else if(e.key==='Escape')inp.blur();});
-  el.querySelector('#copStop').addEventListener('click',()=>[CLI,SCLI,NP,CADC].forEach(s=>{if(s&&s.busy){s.stopReq=true;if(s.abort)s.abort.abort();}}));
+  el.querySelector('#copStop').addEventListener('click',()=>{copStopAll();copSay('out','중지 요청 — 진행 중인 단계를 마치는 대로 멈춥니다.');});
   el.querySelector('#copSrc').addEventListener('change',e=>{COP.src=e.target.value;copCtx();});
   el.querySelector('#copClr').addEventListener('click',()=>{COP.log=[];copRebuild();});
   el.querySelector('#copChips').addEventListener('click',e=>{const b=e.target.closest('[data-cchip]');if(!b||copBusyAny())return;const[,c,g]=copChips(copActive())[+b.dataset.cchip]||[];if(c)copSubmit(AIM.mode==='ai'?g:c);});

@@ -324,7 +324,7 @@ async function npPickParts(prof){const A=NP.arch;if(!A||!prof)return;
   if(!cb.length)return;
   copSay('out',`블록별 부품 후보 — ${cb.length}개 블록. 고르거나 건너뛰면 1순위 추천을 쓰고, "나머지 모두 1순위"로 한 번에 정합니다. 나중에 parts <블록> <번호|MPN> 으로 바꿀 수 있습니다.`);
   let rest=false;const picked=[];
-  for(const{b,c}of cb){let a=null;
+  for(const{b,c}of cb){let a=null;if(NP.stopReq)break;
     if(!rest){a=await copAsk({q:`[${b.label}] 부품을 고르세요`,why:c.map((p,i)=>`${i+1}. ${p.mpn} · ${p.mfr}${p.note?' — '+p.note:''}`).join('\n'),opts:c.map(p=>`${p.mpn} · ${p.mfr}`).concat(['라이브러리 기본 유지','나머지 모두 1순위'])});if(NP.stopReq)break;}
     if(a==='나머지 모두 1순위'){rest=true;a=null;}if(a==='라이브러리 기본 유지')continue;
     const p=a?(c.find(x=>a.startsWith(x.mpn))||{mpn:a.split(' · ')[0].trim(),mfr:'',note:''}):c[0];
@@ -341,21 +341,22 @@ async function npAnalyze(req,inner){
     if(prof){npSay('ok',PRODUCTS.summary(prof));
       const pq=(prof.questions||[]).filter(q=>!(q.re&&new RegExp(q.re.source||q.re,q.re.flags||'i').test(base))&&!NP.answers['p_'+q.key]);
       if(pq.length)copSay('out',`표준 구성을 기준으로 블록별 ${pq.length}가지만 확인합니다 (건너뛰면 표준값).`);
-      for(const q of pq){const bl=(prof.blocks||[]).find(b=>b.id===q.block);const a=await copAsk({q:`[${bl?bl.label:q.block}] ${q.q}`,why:q.why,opts:q.options.map(o=>o.label),multi:!!q.multi});if(a==null)continue;NP.answers['p_'+q.key]={label:bl?bl.label:q.block,v:a};if(NP.stopReq)break;}
-      const ans={};for(const q of prof.questions||[]){const x=NP.answers['p_'+q.key];if(x)ans[q.key]=x.v;}
+      for(const q of pq){if(NP.stopReq)break;const bl=(prof.blocks||[]).find(b=>b.id===q.block);const a=await copAsk({q:`[${bl?bl.label:q.block}] ${q.q}`,why:q.why,opts:q.options.map(o=>o.label),multi:!!q.multi});if(a==null)continue;NP.answers['p_'+q.key]={label:bl?bl.label:q.block,v:a};if(NP.stopReq)break;}
+      npStopCheck();const ans={};for(const q of prof.questions||[]){const x=NP.answers['p_'+q.key];if(x)ans[q.key]=x.v;}
       prodRes=PRODUCTS.apply(prof,ans,name||prof.name);
       full=base+'\n보강: 제품 '+prof.name+(prodRes.req?' · '+prodRes.req:'');$('#npReq').value=full;if(NP.plan)NP.plan.req=full;
       npPush();NP.arch=prodRes.arch;NP.arch.req=full;NP.arch.product=prof.key||'ai';if(name)NP.arch.name=name;SYS.view='hw';NP.planManual=false;archToPlan(true);npRender();
       npSay('ok',`${prof.name} 표준 구성으로 HW 블록 ${NP.arch.blocks.length}개 · 인터페이스 ${NP.arch.links.length}개를 만들었습니다.${prodRes.log.length?'\n반영: '+prodRes.log.join(' · '):''}`);
-      NP.prof=prof;await npPickParts(prof);
+      NP.prof=prof;await npPickParts(prof);npStopCheck();
       const bound=await npBindParts();if(bound.length)npSay('ok','블록에 적힌 부품 번호를 회로 구현으로 연결: '+bound.join(', '));
-      await npSafetyGoals(prof.key);
+      npStopCheck();await npSafetyGoals(prof.key);npStopCheck();
     }else{
     let qs=null;if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample)qs=await npAskAI(req);}
     if(!qs)qs=REQ_Q.filter(f=>!f.re.test(req)&&!NP.answers[f.key]).map(f=>({key:f.key,label:f.label,q:f.q,why:f.why,opts:f.opts,multi:!!f.multi}));
     qs=qs.filter(q=>!NP.answers[q.key]);
     if(qs.length){copSay('out',`블록 다이어그램을 그리기 전에 ${qs.length}가지를 확인합니다. 답을 고르거나 적어 주세요 (건너뛰면 기본값).`);
-      for(const q of qs){const a=await copAsk(q);if(a==null)continue;NP.answers[q.key]={label:q.label||q.key,v:a};if(NP.stopReq)break;}}
+      for(const q of qs){if(NP.stopReq)break;const a=await copAsk(q);if(a==null)continue;NP.answers[q.key]={label:q.label||q.key,v:a};if(NP.stopReq)break;}}
+    npStopCheck();
     const add=Object.values(NP.answers).map(x=>`${x.label}: ${x.v}`).join(' · ');
     full=add?base+'\n보강: '+add:base;$('#npReq').value=full;if(NP.plan)NP.plan.req=full;
     npPush();if(!NP.arch)NP.arch=HWARCH.blank(name||null);NP.arch.req=full;if(name)NP.arch.name=name;SYS.view='hw';
@@ -363,10 +364,11 @@ async function npAnalyze(req,inner){
     else{const o=await npRun('arch '+full);npSay('ok',o);}
     }
     try{const lv=typeof SAFETY!=='undefined'?SAFETY.parseLevel(full):null;if(lv&&NP.arch&&NP.arch.blocks.length&&(!NP.arch.safety||NP.arch.safety.level==='QM')){const o=await npRun(`safety level ${lv}`);npSay('ok',o);if(lv!=='QM'){const M=SAFETY.mechanisms(NP.arch,lv).filter(m=>!m.present&&!m.sw);const SW=SAFETY.swMechanisms(NP.arch,lv).filter(m=>!m.present);if((M.length||SW.length)&&typeof SGARCH==='undefined'){const a=await copAsk({q:`ASIL ${lv} 권장 안전 메커니즘 — HW 블록 ${M.length}개, SW 항목 ${SW.length}개가 아직 없습니다. 추가할까요?`,why:`HW: ${M.map(m=>m.label).join(' · ')||'없음'}\nSW(MCU 블록에 기록): ${SW.map(m=>m.label).join(' · ')||'없음'}`,opts:['HW + SW 모두 추가','HW 블록만','SW 항목만','나중에']});if(a&&/모두/.test(a)){npSay('ok',await npRun('safety apply all'));}else if(a==='HW 블록만'){npSay('ok',await npRun('safety apply '+M.map(m=>m.id).join(' ')));}else if(a==='SW 항목만'){npSay('ok',await npRun('safety apply sw'));}}}}}catch(e){console.warn(e);}
-    if(!prof&&NP.arch&&NP.arch.blocks.length&&typeof SAFETY!=='undefined'&&SAFETY.level(NP.arch)!=='QM')await npSafetyGoals(null);
+    npStopCheck();if(!prof&&NP.arch&&NP.arch.blocks.length&&typeof SAFETY!=='undefined'&&SAFETY.level(NP.arch)!=='QM')await npSafetyGoals(null);npStopCheck();
     copSay('out','다이어그램을 확인하고 블록·기능·인터페이스를 고친 뒤 [다음: 회로 생성]을 누르세요. 부품과 PCB는 다음 단계에서 정합니다.');
-  }catch(e){console.error(e);npSay('err',e.message||String(e));}
+  }catch(e){if(e&&e.npStop)npSay('out',NP.arch&&NP.arch.blocks.length?'중지했습니다. 지금까지 만든 다이어그램은 남아 있습니다. 요구사항을 고쳐 다시 시작할 수 있습니다.':'중지했습니다. 다이어그램은 만들지 않았습니다. [블록 다이어그램 만들기]로 다시 시작할 수 있습니다.');else{console.error(e);npSay('err',e.message||String(e));}}
   npBusy(false);}
+function npStopCheck(){if(NP.stopReq){const e=new Error('중지');e.npStop=true;throw e;}}
 /* safety goals → structure variants → deterministic verification (SGARCH). Template products bring default goals; otherwise
    the goals are derived from the request's ASIL and what the ECU drives. The user trims the goal list and picks a variant. */
 async function npSafetyGoals(key){if(typeof SGARCH==='undefined'||!NP.arch)return;const A=NP.arch;if(SGARCH.goals(A).length)return;
