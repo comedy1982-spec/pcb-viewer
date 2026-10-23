@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import { load } from './load.mjs';
-const { PCB, AUTOPLACE, AUTOROUTE, PCBEDIT, SAMPLE_MCU, SAMPLE_BLDC } = load();
+const { PCB, AUTOPLACE, AUTOROUTE, PCBEDIT, SAMPLE_MCU, SAMPLE_BLDC, SAMPLE_TC364 } = load();
 const O = { width: { signal: 0.2, power: 0.3 }, clear: 0.2, reserve: 0.6, neck: 0.25, maxExp: 300000, rounds: 4 };
 function prep(spec, shrink) {
   const B = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec))));
@@ -33,4 +33,13 @@ test('groups(): islands that touch a pour of the net count as connected', () => 
   const S = AUTOROUTE.shapesOfBoard(B); const gnd = Object.keys(B.nets).find(n => /^GND$/i.test(n));
   assert.ok(gnd); const g = AUTOROUTE.groups(B, S, gnd); const c = AUTOROUTE.components(S, gnd);
   assert.ok(g.length <= c.length);
+});
+test('gloss: fewer (never more) vias, no new DRC errors, nothing left open', () => {
+  const B = prep(SAMPLE_TC364 || SAMPLE_BLDC, false); const nets = seq(B);
+  const vias0 = B.vias.filter(v => v.auto && !v.fan).length, d0 = PCBEDIT.drc(B).length, r0 = PCBEDIT.ratsnest(B).length;
+  const it = AUTOROUTE.gloss(B, nets, Object.assign({}, O, { glossPasses: 2 })); let q; do { q = it.next(); } while (!q.done); PCBEDIT.rebuildNets(B);
+  const vias1 = B.vias.filter(v => v.auto && !v.fan).length;
+  assert.ok(vias1 <= vias0, `vias ${vias0} → ${vias1}`); assert.equal(q.value.vias[1], vias1);
+  assert.ok(PCBEDIT.drc(B).length <= d0); assert.equal(PCBEDIT.ratsnest(B).length, r0);
+  assert.ok(q.value.changed >= 1, 'at least one net should lose a via on the TC364 sample');
 });

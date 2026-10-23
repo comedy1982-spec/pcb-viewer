@@ -379,6 +379,29 @@ function routeNetPF(P,B,net,pf){
     cur=cur.concat(rest[gi]);rest.splice(gi,1);}
   return{ok:true,tracks,vias,len};
 }
+
+/* ---------- post-route optimisation (gloss): fewer vias, shorter and straighter tracks ----------
+   Every net is re-routed once on its own while all other copper stays fixed: its auto tracks and vias come off, the
+   router runs with a via price several times higher (so a same-layer detour beats a layer change) and the result is
+   kept only when it has fewer vias, or the same vias and less copper, and does not add DRC errors or open connections. */
+function* gloss(B,nets,opts){
+  const o=Object.assign({},DEF,opts||{});const passes=o.glossPasses||1,viaMul=o.glossVia||3,maxLen=o.glossMaxLen||1.6;const t0=Date.now(),tLimit=o.glossTimeMs||60000;
+  const stat=net=>{let l=0,v=0;PC.cuKeys(B).forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(!p.auto||p.fan||p.net!==net||!(p.t==='path'||p.t==='seg'))return;const q=p.pts||[p.a,p.b];for(let i=1;i<q.length;i++)l+=Math.hypot(q[i][0]-q[i-1][0],q[i][1]-q[i-1][1]);}));B.vias.forEach(x=>{if(x.auto&&!x.fan&&x.net===net)v++;});return{l,v};};
+  const tot=()=>{let l=0,v=0;nets.forEach(n=>{const s=stat(n);l+=s.l;v+=s.v;});return{l,v};};const before=tot();
+  const drc0=drc(B,o).length;let changed=0,tried=0;
+  for(let pass=0;pass<passes;pass++){
+    const order=nets.map(n=>({n,s:stat(n)})).filter(x=>x.s.v>0||(o.glossAll&&x.s.l>0)).sort((a,b)=>b.s.v-a.s.v||b.s.l-a.s.l).map(x=>x.n);let any=false;
+    for(let i=0;i<order.length;i++){const net=order[i];if(Date.now()-t0>tLimit)break;tried++;
+      yield{phase:'gloss',pass:pass+1,passes,i,total:order.length,net,changed};
+      const s0=stat(net);
+      const snap=copperSnap(B);const kill=[];PC.cuKeys(B).forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(p.auto&&!p.fan&&p.net===net)kill.push(p);}));B.vias.forEach(v=>{if(v.auto&&!v.fan&&v.net===net)kill.push(v);});
+      unroute(B,kill);const P=prepare(B,Object.assign({},o,{viaCost:(o.viaCost||2)*viaMul,pf:null}));const r=routeNet(P,B,net);
+      const s1=stat(net);const ok=r.ok&&groups(B,shapesOfBoard(B),net).length<=1&&(s1.v<s0.v||(s1.v===s0.v&&s1.l<s0.l-0.2))&&s1.l<=s0.l*maxLen+3;
+      if(ok&&drc(B,o).length>drc0){copperRestore(B,snap);continue;}
+      if(ok){changed++;any=true;}else copperRestore(B,snap);}
+    if(!any)break;}
+  const after=tot();return{changed,tried,vias:[before.v,after.v],len:[before.l,after.l],ms:Date.now()-t0};
+}
 function unroute(B,list){ // remove auto tracks/vias (all, or only those in list)
   const kill=list?new Set(list):null;const keep=p=>!(p.auto&&(!kill||kill.has(p)));
   const keys=PC.cuKeys(B);keys.forEach(s=>{B.layers[s+'.cu']=B.layers[s+'.cu'].filter(keep);});B.vias=B.vias.filter(keep);
@@ -391,6 +414,6 @@ function drc(B,opts){
     const gap=shapeGap(a,b);if(gap<o.clear-0.03)out.push({net:a.net,other:b.net||(b.hole?'구멍':'(넷 없음)'),gap,at:a.k==='cap'?a.a:[a.x,a.y]});});});
   return out;
 }
-return{jobPF,routeNetPF,groups,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+return{gloss,jobPF,routeNetPF,groups,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

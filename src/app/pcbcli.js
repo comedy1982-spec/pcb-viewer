@@ -21,6 +21,7 @@ const CLI_HELP=[
   ['unroute','자동 배선한 트랙·비아 지우기'],
   ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
+  ['gloss [--passes 1] [--via 3] [--all]','사후 최적화: 넷을 하나씩 다른 넷은 고정한 채 비아 비용 3배로 다시 깔아 비아가 줄거나(같으면 길이가 줄면) 채택 · DRC·연결 악화 시 되돌림. route 뒤 자동 실행(--no-gloss 로 끔)'],
   ['fix [--maxgrow 1.5] [--maxlayers 6] [--no-grow] [--no-layers] [--pinswap]','미배선 자동 개선: 비용이 적은 순서로 시도하고 다 배선되면 멈춤 — ① 전부 다시 배선(짧은 넷 먼저) ② 다른 시드로 재배치 ③ 다른 전략 ④ 보드 10·20·35·50% 키움 ⑤ 층 늘림(2→4→6) ⑥ (--pinswap) MCU 핀 재배정. 가장 좋은 결과를 남기고 한 번에 되돌리기. autofix on|off: 배선 뒤 미배선이 남으면 자동 실행(기본 켬)'],
   ['auto [S] [--tries N]','리셋 → 배치 → 배선 → DRC → 리포트를 한 번에. 미배선이 남으면 다른 시드로 다시 시도해 가장 좋은 결과를 남김'],
   ['lock <부품…> · unlock <부품…|all> · locks','자동 배치에서 고정할 부품'],
@@ -60,7 +61,7 @@ const CLI_CHIPS=[['열 분산 자동 배치·배선','auto thermal','열 분산 
   ['가이드라인 점검','guide check','PCB 설계 가이드라인을 점검하고 가장 중요한 개선 3가지를 알려줘'],
   ['하우징 설계','housing','현재 보드에 맞는 보호 하우징을 설계하고 재질·IP·진동 조건별 트레이드오프를 비교해 추천해줘'],
   ['리포트','report all','배치·열·EMC 리포트를 보고 문제를 우선순위대로 요약해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const CLI_CMDS=new Set(['fix','autofix','width','analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
+const CLI_CMDS=new Set(['gloss','fix','autofix','width','analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
 
 /* ---- snapshots for undo (same objects: tracks, pads and silk keep their identity) ---- */
 function cliSnap(){return{poses:BD.comps.map(c=>({c,x:c.x,y:c.y,rot:c.rot||0,side:c.side})),layers:Object.fromEntries(Object.keys(BD.layers).map(k=>[k,BD.layers[k].slice()])),vias:BD.vias.slice(),
@@ -268,6 +269,7 @@ async function cliRoute(a){CLI.routed=true;
   // return vias next to the layer changes of clock / analog nets
   if(!a['no-retvia']&&a.retvia!==false){const rv=AUTOROUTE.returnVias(BD,{dist:a.retvia&&isFinite(+a.retvia)?+a.retvia:0.8,clear:clr,via,W:WW});if(rv.added||rv.skipped)lines.push(`리턴(GND) 비아 ${rv.added}개 추가 — 고속·아날로그 넷 층 전환 옆${rv.skipped?` · 자리 없음 ${rv.skipped}개`:''}`);PCBEDIT.rebuildNets(BD);}
   cliCommit(before,'route');cliAfter(false);
+  if(!a['no-gloss']&&!CLI.inFix&&!CLI.stopReq&&nets.length){try{const g=await cliGloss({},true);if(g)lines.push(g);}catch(e){lines.push('사후 최적화 건너뜀: '+(e.message||e));}}
   const d=PCBEDIT.drc(BD).length,rats=PCBEDIT.ratsnest(BD).length;lines.push(`DRC ${d}건 · 래츠네스트 ${rats}개`);
   return lines.join('\n');
 }
@@ -278,6 +280,20 @@ function cliUnroute(){cliEnsureEdit();const before=cliSnap();const n=PCB.cuKeys(
    connection, and growing the board or adding layers has to remove at least one problem to be chosen. */
 /* unconnected pad pairs left on the board, including GND / poured nets (a pad that could not reach its plane) */
 function cliOpenCount(){try{return PCBEDIT.ratsnest(BD).length;}catch(e){return AUTOROUTE.openNets(BD).length;}}
+/* post-route optimisation on the nets that have auto copper (see AUTOROUTE.gloss) */
+async function cliGloss(a,quiet){a=a||{};if(BD.pcbPending)throw new Error('배치·배선 뒤에 실행하세요.');cliEnsureEdit();const before=cliSnap();
+  const ml=(BD.copperLayers||2)>2;const via=ml?{d:0.45,drill:0.2}:{d:0.6,drill:0.3};const clr=a.clear?+a.clear:ml?0.15:0.2;const sig=a.signal?+a.signal:0.2,pwr=a.power?+a.power:0.3;
+  const WW=typeof CURRENT!=='undefined'?CURRENT.widths(BD,{oz:BD.oz||1,dT:BD.dT||10,cap:a.iwmax?+a.iwmax:2}):{};const netWidth={};Object.keys(WW).forEach(n=>{if(WW[n].manual)netWidth[n]=WW[n].w;});
+  const nets=[...new Set(PCB.cuKeys(BD).flatMap(L=>BD.layers[L+'.cu'].filter(p=>p.auto&&!p.fan&&p.net).map(p=>p.net)).concat(BD.vias.filter(v=>v.auto&&!v.fan&&v.net).map(v=>v.net)))];
+  if(!nets.length)return'자동 배선한 넷이 없습니다.';
+  const prog=cliSay('out',`사후 최적화 준비… (${nets.length}개 넷)`);await cliTick();const pid=typeof progStart==='function'?progStart('gloss','사후 최적화 (비아 감축)',{total:nets.length,stop:()=>{CLI.stopReq=true;}}):null;
+  const it=AUTOROUTE.gloss(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),viaCost:ml?1.2:2,glossPasses:a.passes?+a.passes:1,glossVia:a.via!=null&&a.via!==true?+a.via:3,glossAll:!!a.all,glossTimeMs:a.time?+a.time*1000:60000});
+  let r,last=performance.now();try{for(;;){r=it.next();if(r.done)break;const p=r.value;if(performance.now()-last>80){cliSet(prog,`사후 최적화 ${p.pass}/${p.passes} · ${p.i+1}/${p.total} ${p.net} (개선 ${p.changed})`);if(pid)progSet('gloss',{i:p.i,label:`사후 최적화 · ${p.net} (개선 ${p.changed})`});await cliTick();last=performance.now();}if(CLI.stopReq)break;}}
+  finally{if(pid)progEnd('gloss');}
+  PCBEDIT.rebuildNets(BD);const v=r&&r.done?r.value:null;if(!v){cliRestore(before);return'중지했습니다.';}
+  cliSet(prog,`사후 최적화: 비아 ${v.vias[0]} → ${v.vias[1]} · 트랙 ${f1(v.len[0])} → ${f1(v.len[1])} mm · 넷 ${v.changed}/${v.tried} 개선 · ${(v.ms/1000).toFixed(1)} s`);
+  if(v.changed){cliCommit(before,'gloss');cliAfter(false);}
+  const line=`사후 최적화: 비아 ${v.vias[0]} → ${v.vias[1]} (${v.vias[0]?Math.round((1-v.vias[1]/Math.max(1,v.vias[0]))*100):0}% 감소) · 트랙 ${f1(v.len[0])} → ${f1(v.len[1])} mm · 넷 ${v.changed}개 개선`;return quiet?line:line+` · DRC ${PCBEDIT.drc(BD).length}건`;}
 async function cliFix(a){a=a||{};if(BD.pcbPending)throw new Error('부품이 아직 배치되지 않았습니다. 먼저 reset 또는 auto를 실행하세요.');
   cliEnsureEdit();const st0=cliStrat(a);const start=cliSnap();const u0=PE.undo.length;const W0=BD.W,H0=BD.H,L0=BD.copperLayers||2;
   const open0=cliOpenCount();if(!open0&&!a.force)return'미배선(래츠네스트)이 없습니다.';
@@ -314,7 +330,7 @@ async function cliFix(a){a=a||{};if(BD.pcbPending)throw new Error('부품이 아
       try{await cliRoute({strategy:st0,exp:(BD.copperLayers||2)>2?2400000:1200000});const r=score();cliSet(line,`마무리: 남은 넷 깊게 탐색 → 미연결 ${r.o} · DRC ${r.d}${r.s<best.s?' (개선)':''}`);if(r.s<best.s)best={...r,snap:cliSnap(),label:best.label+' + 마무리 재배선'};}
       catch(e){cliSet(line,'마무리 건너뜀: '+(e.message||e));}}}
   finally{CLI.inFix=false;CLI.routed=false;if(pid)progEnd('fix');}
-  cliRestore(best.snap);PE.undo.splice(u0);const after=cliSnap();pePush({copper:true,label:'fix',undo:()=>{cliRestore(start);cliAfter(true);},redo:()=>{cliRestore(after);cliAfter(true);}});cliAfter(true);
+  cliRestore(best.snap);if(!CLI.stopReq&&best.snap!==start){try{const g=await cliGloss({},true);if(g)cliSay('ok',g);}catch(e){}}PE.undo.splice(u0);const after=cliSnap();pePush({copper:true,label:'fix',undo:()=>{cliRestore(start);cliAfter(true);},redo:()=>{cliRestore(after);cliAfter(true);}});cliAfter(true);
   const L=[`미연결(래츠네스트) ${s0.o} → ${best.o}개${best.label!=='처음 상태'?` · 채택: ${best.label}`:' · 개선안 없음 (처음 상태 유지)'}${CLI.stopReq?' · 중지함':''}`,
     `보드 ${f1(W0)} × ${f1(H0)} → ${f1(BD.W)} × ${f1(BD.H)} mm · ${L0} → ${BD.copperLayers||2}층 · DRC ${best.d}건`];
   if(best.o){const nets=[...new Set(PCBEDIT.ratsnest(BD).map(r=>r.net))].slice(0,8);L.push(`남은 미배선: ${nets.join(', ')}${best.o>8?' …':''}`);
@@ -457,6 +473,7 @@ async function cliRun(line,quiet,by){
     case 'pinswap':return await cliPinswap(a);
     case 'auto':return await cliAuto(a);
     case 'fix':return await cliFix(a);
+    case 'gloss':return await cliGloss(a);
     case 'autofix':{const v=String(a._[0]||'').toLowerCase();if(v==='on'||v==='off'){CLI.autoFix=v==='on';try{localStorage.setItem('aod.autofix',v);}catch(e){}}return`배선 뒤 미배선 자동 개선: ${CLI.autoFix?'켬':'끔'} (autofix on|off)`;}
     case 'lock':cliRefs(a._).forEach(c=>CLI.lock.add(c.ref));return`고정: ${[...CLI.lock].join(', ')||'없음'}`;
     case 'unlock':if(a._[0]==='all'||!a._.length)CLI.lock.clear();else cliRefs(a._).forEach(c=>CLI.lock.delete(c.ref));return`고정: ${[...CLI.lock].join(', ')||'없음'}`;
