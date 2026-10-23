@@ -35,6 +35,10 @@ const C={
     {mpn:'TJA1463ATK/0Z',mfr:'NXP',note:'CAN-FD 8 Mbit/s · 신호 개선(SIC) · 슬립·웨이크',spec:{pkg:'HVSON-14',fd:1},grade:'Q100',price:1.6,why:'CAN SIC, 링 버스 품질'},
     {mpn:'TCAN1044AVDRQ1',mfr:'TI',note:'CAN-FD 5 Mbit/s · 대기 모드 · 3.3/5 V I/O',spec:{pkg:'SOIC-8',fd:1},grade:'Q100',price:0.9,why:'저가 CAN-FD, 3.3 V MCU 직결'},
     {mpn:'MCP2562FD-E/SN',mfr:'Microchip',note:'CAN-FD 8 Mbit/s · 1.8–5.5 V I/O',spec:{pkg:'SOIC-8',fd:1},grade:'Q100',price:1.0,why:'범용 CAN-FD'},
+    {mpn:'TJA1042T/3',mfr:'NXP',note:'CAN-FD 5 Mbit/s · VIO 분리 · 대기 모드',spec:{pkg:'SOIC-8',fd:1},grade:'Q100',price:0.75,why:'가장 많이 쓰는 차량용 CAN-FD'},
+    {mpn:'TJA1049T/3',mfr:'NXP',note:'CAN-FD 5 Mbit/s · VIO 분리 · 대기 모드 · 저 Iq',spec:{pkg:'SOIC-8',fd:1},grade:'Q100',price:0.8,why:'TJA1042 개량(대기 전류↓)'},
+    {mpn:'TCAN1043HDRQ1',mfr:'TI',note:'CAN-FD 5 Mbit/s · 슬립 · INH 전원 제어 · WAKE · nFAULT',spec:{pkg:'SOIC-14',fd:1},grade:'Q100',price:1.4,why:'KL30 상시 전원 ECU의 슬립·웨이크(INH로 레귤레이터 제어)'},
+    {mpn:'TJA1145T/FD',mfr:'NXP',note:'CAN 부분 네트워킹 · SPI · INH · WAKE · FD 수동',spec:{pkg:'SOIC-14',fd:1},grade:'Q100',price:1.9,why:'부분 네트워킹(선택 웨이크)'},
     {mpn:'TJA1051T/3',mfr:'NXP',note:'고속 CAN 1 Mbit/s(클래식) · 3.3 V I/O',spec:{pkg:'SOIC-8',fd:0},grade:'Q100',price:0.8,why:'클래식 CAN 저가'},
     {mpn:'SN65HVD230DR',mfr:'TI',note:'3.3 V CAN 트랜시버(산업용)',spec:{pkg:'SOIC-8',fd:0},grade:'',price:1.3,why:'3.3 V 단일 전원 상용'}],
   mcu:[

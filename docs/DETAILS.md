@@ -740,3 +740,8 @@ npm run dsdb:init # 페이지가 없는 부품의 데이터시트 초안 만들�
 - 매칭 안전장치: 부품 번호의 패키지 코드(DCY→SOT-223, DBV/DBZ→SOT-23, D/SN→SOIC, PW→TSSOP, RGE/RNX…→QFN 등)가 KiCad 풋프린트와 어긋나면 버림. 단서가 없으면 계열 전체 핀 배열이 같고 KiCad 이름의 접미사가 부품 번호에 있을 때만 채택(LMR33630AQRNXRQ1 ≠ LMR33630ADDA). 계열 일치는 "패키지 확인" 표시, 후보 점수 가산도 낮게.
 - 후보 카드 배지 "핀 · KiCad"/"핀 · KiCad 계열" — 핀이 있는 후보는 고르면 PDF 없이 바로 회로 구현.
 - KiCad 6–8 라이브러리(신형 차량용 부품 다수)는 GitLab에 있어 이 빌드 환경에서는 받지 못함 → 사용자가 .kicad_sym 파일을 가져오면 됨.
+
+## v1.62.1 KiCad 10 Interface_CAN_LIN 반영
+- 사용자 KiCad 10.0 `Interface_CAN_LIN.kicad_sym`(형식 버전 20251024, 심볼 98개)을 그대로 읽음 — 형식 변경 없음.
+- `scripts/kicadpins.mjs`가 여러 폴더를 받음(앞 폴더 우선 → KiCad 10을 KiCad 5보다 먼저).
+- CAN 후보에 차량용 CAN-FD 4종 추가(KiCad 10 핀 포함): TJA1042T/3 · TJA1049T/3 · TCAN1043-Q1(슬립·INH·WAKE, SOIC-14) · TJA1145T/FD(부분 네트워킹·SPI). CAN-FD 요구 시 1~5위가 모두 핀 데이터를 가진 차량용 부품. 내장 표 28종(정확 13).
