@@ -477,12 +477,17 @@ function npCandCtx(){const A=NP.arch||{};const req=(A.req||$('#npReq').value||''
     lookup:mpn=>NEWPROJ.partLookup?NEWPROJ.partLookup(mpn):null,priceOf:mpn=>{try{const p=PARTS.price(mpn);return p!=null&&p>0.05?p:null;}catch(e){return null;}}};}
 function npCandRank(b){if(typeof PARTRANK==='undefined')return null;const R=PARTRANK.rank(b,npCandCtx());return R.rows.length?R:null;}
 function npCandHTML(b){const R=npCandRank(b);if(!R)return'';SYS.cands=SYS.cands||{};SYS.cands[b.id]=R.rows;const cur=b.part&&b.part.mpn;const pv=NP.candPref||'bal';
-  const rows=R.rows.slice(0,6).map((r,i)=>`<div class="cd-row${r.ok?'':' bad'}${cur&&cur.toUpperCase()===r.mpn.toUpperCase()?' on':''}" data-cand="${i}" role="button" tabindex="0" title="${esc((r.why.concat(r.bad)).join(' · '))}">
+  // many candidates (MCU: Infineon · NXP · TI · ST): filter by maker, top 6 unless 전체 보기
+  const mfrs=[...new Set(R.rows.map(r=>r.mfr).filter(Boolean))];NP.candMfr=NP.candMfr||{};NP.candAll=NP.candAll||{};const fm=mfrs.includes(NP.candMfr[b.id])?NP.candMfr[b.id]:'';
+  const pool=R.rows.map((r,i)=>[r,i]).filter(([r])=>!fm||r.mfr===fm);const shown=NP.candAll[b.id]?pool:pool.slice(0,6);
+  const rows=shown.map(([r,i])=>`<div class="cd-row${r.ok?'':' bad'}${cur&&cur.toUpperCase()===r.mpn.toUpperCase()?' on':''}" data-cand="${i}" role="button" tabindex="0" title="${esc((r.why.concat(r.bad)).join(' · '))}">
       <div class="cd-h"><span class="cd-rk">${r.rank}</span><b>${esc(r.mpn)}</b><span class="cls">${esc(r.mfr)}</span><span class="cd-p">${r.price!=null?'$'+r.price:''}</span></div>
       <div class="cd-n">${esc(r.note)}</div>
       <div class="cd-b">${r.src==='profile'?'<span class="src ds">제품 표준</span>':''}${r.grade?`<span class="src ds">${esc(r.grade)}</span>`:''}${r.asil?`<span class="src">ASIL ${esc(r.asil)}</span>`:''}${r.pins?`<span class="src ds" title="핀 데이터가 있어 바로 회로 생성 (출처: ${esc(r.pinNote)}${/계열/.test(r.pinNote)?' — 같은 계열 심볼, 패키지 확인':''})">핀 · ${esc(r.pinNote)}</span>`:'<span class="src" title="핀 데이터 없음 — 고르면 데이터시트 PDF로 핀 추출">핀 없음</span>'}${r.why.filter(w=>!/^Q10|^ASIL|핀 데이터|제품 표준/.test(w)).slice(0,2).map(w=>`<span class="src">${esc(w)}</span>`).join('')}${r.bad.length?`<span class="cd-bad">✕ ${esc(r.bad.join(' · '))}</span>`:''}</div></div>`).join('');
   return`<div class="np-cand"><div class="np-bh" style="margin-top:6px"><b>주요 소자 후보</b><span class="cls">${R.rows.length}개${R.needs.i?` · 요구 ${R.needs.i} A`:''}${R.needs.v?` · ${R.needs.v} V`:''}</span><select data-cand-pref class="cd-sel" title="순위 기준"><option value="bal"${pv==='bal'?' selected':''}>균형</option><option value="price"${pv==='price'?' selected':''}>가격 우선</option><option value="feat"${pv==='feat'?' selected':''}>기능 우선</option><option value="ext"${pv==='ext'?' selected':''}>확장성 우선</option></select></div>
+    ${mfrs.length>2?`<div class="cd-mf" role="group" aria-label="제조사">${['',...mfrs].map(m=>`<button type="button" class="chip${m===fm?' on':''}" data-cand-mfr="${esc(m)}">${m?esc(m)+' '+R.rows.filter(r=>r.mfr===m).length:'전체'}</button>`).join('')}</div>`:''}
     <div class="cd-list">${rows}</div>
+    ${pool.length>6?`<button type="button" class="linkbtn" data-cand-all>${NP.candAll[b.id]?'상위 6개만':`전체 ${pool.length}개 보기`}</button>`:''}
     <div class="cls" style="margin-top:4px">행을 누르면 그 부품으로 지정합니다${cur?` · 지금: <b>${esc(cur)}</b> <button type="button" class="linkbtn" data-cand-clear>해제</button>`:''} · 참고 순위(사양·등급·단가·핀 데이터 기준) — 재고·수명은 부품 API에서 확인</div></div>`;}
 async function npPickCand(id,i){const b=NP.arch&&NP.arch.blocks.find(x=>x.id===id);const r=SYS.cands&&SYS.cands[id]&&SYS.cands[id][i];if(!b||!r)return;
   if(!r.ok){const a=await copAsk({q:`${r.mpn}는 요구 조건에 맞지 않습니다 (${r.bad.join(', ')}). 그래도 지정할까요?`,opts:['지정','취소']});if(a!=='지정')return;}
@@ -509,6 +514,8 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
     box.querySelector('[data-ar="impl"]')?.addEventListener('change',e=>{if(e.target.value)npExec(`impl ${b.id} ${e.target.value}`);});
     box.querySelectorAll('[data-cand]').forEach(tr=>{tr.addEventListener('click',()=>npPickCand(b.id,+tr.dataset.cand));tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();npPickCand(b.id,+tr.dataset.cand);}});});
     box.querySelector('[data-cand-clear]')?.addEventListener('click',()=>{npPush();b.part=null;b.feats=(b.feats||[]).filter(f=>!/^부품: /.test(f));NP.planManual=false;archToPlan(true);npRender();npSay('ok',`${b.id}: 부품 지정 해제 — 라이브러리 기본 부품`);});
+    box.querySelectorAll('[data-cand-mfr]').forEach(el=>el.addEventListener('click',()=>{NP.candMfr=NP.candMfr||{};NP.candMfr[b.id]=el.dataset.candMfr;sysSelPaint();}));
+    box.querySelector('[data-cand-all]')?.addEventListener('click',()=>{NP.candAll=NP.candAll||{};NP.candAll[b.id]=!NP.candAll[b.id];sysSelPaint();});
     box.querySelector('[data-cand-pref]')?.addEventListener('change',e=>{const v=e.target.value;NP.vw=v==='price'?{price:2,feat:1,ext:1}:v==='feat'?{price:1,feat:2,ext:1}:v==='ext'?{price:1,feat:1,ext:2}:{price:1,feat:1,ext:1};NP.candPref=v;sysSelPaint();});
     return;}
   const D=SYS.D;const n=D&&SYS.sel&&D.nodes.find(x=>x.id===SYS.sel);

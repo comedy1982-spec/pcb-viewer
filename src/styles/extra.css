@@ -691,6 +691,7 @@ html.prog-on #copilot.busy .cp-ai:last-child .cp-b::after{content:"";display:inl
 /* key-part candidates (step 1 selection panel): one card per part, works in a 300 px panel */
 .np-cand .cd-sel{margin-left:auto;font:inherit;font-size:11.5px;padding:2px 4px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--fg)}
 .cd-list{display:flex;flex-direction:column;gap:4px;margin:4px 0 2px}
+.cd-mf{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 0}.cd-mf button{font:inherit;font-size:11px;padding:1px 8px;border:1px solid var(--line);border-radius:999px;background:var(--raised);color:var(--fg);cursor:pointer}.cd-mf button:hover{border-color:var(--accent)}.cd-mf button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .cd-row{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--raised);cursor:pointer;font-size:12px}
 .cd-row:hover{border-color:var(--accent)}.cd-row.on{border-color:var(--accent);background:var(--accent-soft)}.cd-row.bad{opacity:.6}
 .cd-row:focus-visible{outline:2px solid var(--accent);outline-offset:1px}

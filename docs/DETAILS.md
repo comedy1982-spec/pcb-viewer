@@ -761,3 +761,10 @@ npm run dsdb:init # 페이지가 없는 부품의 데이터시트 초안 만들�
 ## v1.64.1 Allegro A4911 · A4918
 - 3상 게이트 드라이버 후보 추가: A4911KJPTR-T-1 · A4918KJPTR-1A-3-T(3.3 V 로직, 5 V는 -1A-5-T). 둘 다 AEC-Q100 · ASIL D(SEooC) · SPI 진단 · 전류 센스 앰프 ×3 · LQFP-48(QFN-48 EV도 있음). A4918은 4.5 V까지 동작(크랭킹)과 100% PWM 차지펌프가 추가된 후속품.
 - KiCad 공식 라이브러리에 둘 다 없음 → `datasheets/pins.json`(데이터시트에서 옮긴 핀 표)을 새로 두고 `scripts/kicadpins.mjs`가 KPINS에 `l:'datasheet'`로 합침(후보 카드에 "데이터시트"로 표시). A4911은 Allegro 데이터시트 LQFP-48 핀 배치로 입력. A4918은 공개 데이터시트가 요약본이라 핀 배치가 없어 핀 데이터 없음 — 전체 데이터시트를 받으면 같은 파일에 추가.
+
+## v1.65.0 MCU 후보 확대 (Infineon AURIX · NXP · TI)
+- MCU 후보 6 → 28종. Infineon AURIX(TriCore) 8: TC233LP · TC334LP · TC364DP · TC275TP · TC375TP · TC377TX · TC387QP · TC397XX / NXP 10: S32K311 · S32K312 · S32K342 · S32K344 · S32K358 · S32K142 · S32K144 · S32K146 · S32K148 · MPC5744P / TI 8: TMS570LS0432 · TMS570LS1224 · TMS570LS3137 · TMS570LC4357 · AM2634-Q1 · TMS320F280039C-Q1 · TMS320F280049C-Q1 · MSPM0G3507-Q1 / ST 2.
+- S32K344 설명 수정(4 MB · 160 MHz · HLQFP-172).
+- 기능 태그(`spec.feat`: fd · eth · flexray · sent · motor)와 요구 문장 대조: 이더넷·FlexRay·SENT·CAN-FD를 요구하는데 없는 MCU는 ✕("이더넷 미지원"), 모터·인버터·DC-DC 요구에는 모터 제어 타이머(GTM · CLA · HRPWM) 가점.
+- 후보 카드: 제조사 칩 필터(제조사가 3곳 이상일 때) · "전체 N개 보기"(기본 상위 6개).
+- 핀 데이터는 여전히 TC364DP · STM32F042만 있음(KiCad 공식 라이브러리에 차량용 MCU 없음).

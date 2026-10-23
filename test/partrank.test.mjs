@@ -38,3 +38,12 @@ test('PARTRANK: Allegro A4911 carries datasheet pins and ranks with ASIL D gate 
   assert.ok(x && x.pinNote === '데이터시트' && /ASIL D/.test(x.why.join()));
   console.log(R.rows.slice(0, 6).map(y => y.rank + '.' + y.mpn + '(' + y.score + (y.pinNote ? ',' + y.pinNote : '') + ')').join(' '));
 });
+test('PARTRANK: MCU candidates span Infineon AURIX, NXP and TI; Ethernet requirement rules out MCUs without it', () => {
+  const ms = new Set(PARTRANK.C.mcu.map(p => p.mfr));
+  for (const m of ['Infineon', 'NXP', 'TI', 'ST']) assert.ok(ms.has(m), m);
+  assert.ok(PARTRANK.C.mcu.filter(p => /^TC\d/.test(p.mpn)).length >= 6, 'TriCore family');
+  const r = HWARCH.archFrom('12 V, 이더넷 게이트웨이, CAN-FD, ASIL B');
+  const R = PARTRANK.rank(r.arch.blocks.find(b => b.id === 'mcu'), { req: r.arch.req, vin: 12, asil: 'B', auto: true, pref: { price: 1, feat: 1, ext: 1 }, lookup: () => null, priceOf: () => null });
+  const k144 = R.rows.find(x => x.mpn === 'S32K144'); assert.ok(k144 && !k144.ok && /이더넷/.test(k144.bad.join()));
+  assert.ok(R.rows[0].spec.feat.includes('eth'));
+});

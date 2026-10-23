@@ -51,11 +51,38 @@ const C={
     {mpn:'TJA1051T/3',mfr:'NXP',note:'고속 CAN 1 Mbit/s(클래식) · 3.3 V I/O',spec:{pkg:'SOIC-8',fd:0},grade:'Q100',price:0.8,why:'클래식 CAN 저가'},
     {mpn:'SN65HVD230DR',mfr:'TI',note:'3.3 V CAN 트랜시버(산업용)',spec:{pkg:'SOIC-8',fd:0},grade:'',price:1.3,why:'3.3 V 단일 전원 상용'}],
   mcu:[
-    {mpn:'TC364DP-64F300F',mfr:'Infineon',note:'AURIX TC36x · 락스텝 · GTM · SENT · ASIL D',spec:{pkg:'LQFP-144'},grade:'Q100',asil:'D',price:18,why:'ASIL D 구동·모터 제어 표준'},
-    {mpn:'S32K344',mfr:'NXP',note:'Cortex-M7 락스텝 · 1 MB · CAN-FD ×6 · ASIL D',spec:{pkg:'MAPBGA-172'},grade:'Q100',asil:'D',price:14,why:'ASIL D, 소프트웨어 생태계'},
-    {mpn:'TMS570LC4357',mfr:'TI',note:'Cortex-R5F 락스텝 · ASIL D',spec:{pkg:'nFBGA-337'},grade:'Q100',asil:'D',price:22,why:'Hercules 안전 MCU'},
-    {mpn:'S32K144',mfr:'NXP',note:'Cortex-M4F 112 MHz · 512 KB · CAN-FD · ASIL B',spec:{pkg:'LQFP-100'},grade:'Q100',asil:'B',price:6,why:'ASIL B 바디·센서 노드 표준'},
-    {mpn:'STM32G474RET6',mfr:'ST',note:'Cortex-M4 170 MHz · 고분해능 PWM · 상용',spec:{pkg:'LQFP-64'},grade:'',asil:'',price:5.5,why:'모터 제어 상용(HRTIM)'},
+    // spec.feat: fd (CAN-FD) · eth (Ethernet) · motor (모터 제어 타이머: GTM · CLA · HRPWM · eTimer) · flexray · sent
+    // ── Infineon AURIX (TriCore) ──
+    {mpn:'TC364DP-64F300F',mfr:'Infineon',note:'AURIX TC36x · TriCore 2코어 300 MHz · 4 MB · GTM · SENT · ASIL D',spec:{pkg:'LQFP-144',feat:['fd','motor','sent','eth']},grade:'Q100',asil:'D',price:18,why:'ASIL D 구동·모터 제어 표준'},
+    {mpn:'TC233LP-32F200F',mfr:'Infineon',note:'AURIX TC23x · TriCore 200 MHz 락스텝 · 2 MB · GTM · ASIL D',spec:{pkg:'TQFP-100',feat:['fd','motor','sent']},grade:'Q100',asil:'D',price:7,why:'가장 작은 ASIL D AURIX(1세대)'},
+    {mpn:'TC334LP-32F300F',mfr:'Infineon',note:'AURIX TC33x · TriCore 300 MHz 락스텝 · 2 MB · GTM · ASIL D',spec:{pkg:'TQFP-100',feat:['fd','motor','sent']},grade:'Q100',asil:'D',price:8,why:'TC3xx 저가 단일 코어 — EPS·펌프·센서'},
+    {mpn:'TC275TP-64F200W',mfr:'Infineon',note:'AURIX TC27x · TriCore 3코어 200 MHz · 4 MB · 이더넷 · ASIL D',spec:{pkg:'LQFP-176',feat:['fd','motor','sent','eth','flexray']},grade:'Q100',asil:'D',price:14,why:'1세대 3코어 — 파워트레인·섀시 레퍼런스 많음'},
+    {mpn:'TC375TP-96F300W',mfr:'Infineon',note:'AURIX TC37x · TriCore 3코어 300 MHz · 6 MB · 이더넷 · ASIL D',spec:{pkg:'LQFP-176',feat:['fd','motor','sent','eth','flexray']},grade:'Q100',asil:'D',price:16,why:'3코어 + 이더넷, 인버터·게이트웨이'},
+    {mpn:'TC377TX-96F300S',mfr:'Infineon',note:'AURIX TC37x · TriCore 3코어 300 MHz · 6 MB · 이더넷 ×2 · ASIL D',spec:{pkg:'LFBGA-292',feat:['fd','motor','sent','eth','flexray']},grade:'Q100',asil:'D',price:19,why:'BGA 고집적 도메인 제어'},
+    {mpn:'TC387QP-160F300S',mfr:'Infineon',note:'AURIX TC38x · TriCore 4코어 300 MHz · 10 MB · 이더넷 · ASIL D',spec:{pkg:'LFBGA-292',feat:['fd','motor','sent','eth','flexray']},grade:'Q100',asil:'D',price:26,why:'도메인·존 컨트롤러'},
+    {mpn:'TC397XX-256F300S',mfr:'Infineon',note:'AURIX TC39x · TriCore 6코어 300 MHz · 16 MB · 이더넷 ×2 · ASIL D',spec:{pkg:'LFBGA-292',feat:['fd','motor','sent','eth','flexray']},grade:'Q100',asil:'D',price:36,why:'최상위 AURIX(ADAS·중앙 게이트웨이)'},
+    // ── NXP ──
+    {mpn:'S32K344',mfr:'NXP',note:'S32K3 · Cortex-M7 락스텝 160 MHz · 4 MB · CAN-FD ×6 · ASIL D',spec:{pkg:'HLQFP-172',feat:['fd','motor','eth']},grade:'Q100',asil:'D',price:14,why:'ASIL D, 소프트웨어 생태계(RTD·MCAL)'},
+    {mpn:'S32K342',mfr:'NXP',note:'S32K3 · Cortex-M7 락스텝 160 MHz · 2 MB · CAN-FD · ASIL D',spec:{pkg:'HLQFP-100',feat:['fd','motor']},grade:'Q100',asil:'D',price:9,why:'가장 작은 ASIL D S32K3'},
+    {mpn:'S32K358',mfr:'NXP',note:'S32K3 · M7 락스텝 + M7 240 MHz · 8 MB · 이더넷 · CAN-FD ×8 · ASIL D',spec:{pkg:'MAPBGA-289',feat:['fd','motor','eth']},grade:'Q100',asil:'D',price:20,why:'고성능 S32K3(존·BMS 마스터)'},
+    {mpn:'S32K312',mfr:'NXP',note:'S32K3 · Cortex-M7 120 MHz · 2 MB · CAN-FD · ASIL B',spec:{pkg:'HLQFP-100',feat:['fd','motor']},grade:'Q100',asil:'B',price:5.5,why:'ASIL B 바디·센서, S32K1 후속'},
+    {mpn:'S32K311',mfr:'NXP',note:'S32K3 · Cortex-M7 120 MHz · 1 MB · CAN-FD · ASIL B',spec:{pkg:'HLQFP-48',feat:['fd']},grade:'Q100',asil:'B',price:4,why:'소형 ASIL B 노드'},
+    {mpn:'S32K144',mfr:'NXP',note:'S32K1 · Cortex-M4F 112 MHz · 512 KB · CAN-FD · ASIL B',spec:{pkg:'LQFP-100',feat:['fd','motor']},grade:'Q100',asil:'B',price:6,why:'ASIL B 바디·센서 노드 표준'},
+    {mpn:'S32K142',mfr:'NXP',note:'S32K1 · Cortex-M4F 80 MHz · 256 KB · CAN-FD · ASIL B',spec:{pkg:'LQFP-64',feat:['fd','motor']},grade:'Q100',asil:'B',price:3.5,why:'저가 ASIL B'},
+    {mpn:'S32K146',mfr:'NXP',note:'S32K1 · Cortex-M4F 112 MHz · 1 MB · CAN-FD ×3 · ASIL B',spec:{pkg:'LQFP-144',feat:['fd','motor']},grade:'Q100',asil:'B',price:7.5,why:'S32K1 대용량'},
+    {mpn:'S32K148',mfr:'NXP',note:'S32K1 · Cortex-M4F 112 MHz · 2 MB · 이더넷 · CAN-FD ×3 · ASIL B',spec:{pkg:'LQFP-176',feat:['fd','motor','eth']},grade:'Q100',asil:'B',price:9,why:'S32K1 중 유일한 이더넷'},
+    {mpn:'MPC5744P',mfr:'NXP',note:'MPC57xx · Power Architecture e200z4 락스텝 200 MHz · 2.5 MB · FlexRay · 이더넷 · ASIL D',spec:{pkg:'LQFP-144',feat:['motor','eth','flexray']},grade:'Q100',asil:'D',price:15,why:'섀시·EPS·브레이크 검증 이력(클래식 CAN)'},
+    // ── TI ──
+    {mpn:'TMS570LC4357',mfr:'TI',note:'Hercules · Cortex-R5F 락스텝 300 MHz · 4 MB · 이더넷 · ASIL D',spec:{pkg:'nFBGA-337',feat:['motor','eth','flexray']},grade:'Q100',asil:'D',price:22,why:'Hercules 최상위 안전 MCU'},
+    {mpn:'TMS570LS1224',mfr:'TI',note:'Hercules · Cortex-R4F 락스텝 160 MHz · 1.25 MB · CAN ×3 · ASIL D',spec:{pkg:'LQFP-144',feat:['motor']},grade:'Q100',asil:'D',price:10,why:'EPS·브레이크 안전 MCU(클래식 CAN)'},
+    {mpn:'TMS570LS0432',mfr:'TI',note:'Hercules · Cortex-R4 락스텝 80 MHz · 384 KB · ASIL D',spec:{pkg:'LQFP-100',feat:['motor']},grade:'Q100',asil:'D',price:5,why:'가장 저렴한 락스텝 ASIL D'},
+    {mpn:'TMS570LS3137',mfr:'TI',note:'Hercules · Cortex-R4F 락스텝 180 MHz · 3 MB · 이더넷 · FlexRay · ASIL D',spec:{pkg:'LQFP-144',feat:['motor','eth','flexray']},grade:'Q100',asil:'D',price:18,why:'이더넷·FlexRay 안전 MCU'},
+    {mpn:'AM2634-Q1',mfr:'TI',note:'Sitara AM263x · Cortex-R5F ×4 400 MHz · CAN-FD · 실시간 제어 · ASIL D',spec:{pkg:'nFBGA-324',feat:['fd','motor','eth']},grade:'Q100',asil:'D',price:14,why:'고성능 모터·인버터 제어(R5F 4코어)'},
+    {mpn:'TMS320F280039C-Q1',mfr:'TI',note:'C2000 · C28x 120 MHz + CLA · 384 KB · CAN-FD · 고분해능 PWM · ASIL B',spec:{pkg:'LQFP-100',feat:['fd','motor']},grade:'Q100',asil:'B',price:6,why:'모터·DC-DC 실시간 제어 표준'},
+    {mpn:'TMS320F280049C-Q1',mfr:'TI',note:'C2000 · C28x 100 MHz + CLA · 256 KB · 고분해능 PWM · ASIL B',spec:{pkg:'LQFP-100',feat:['motor']},grade:'Q100',asil:'B',price:7,why:'OBC·DC-DC 전원 제어(클래식 CAN)'},
+    {mpn:'MSPM0G3507-Q1',mfr:'TI',note:'MSPM0 · Cortex-M0+ 80 MHz · 128 KB · CAN-FD · 저가 차량용',spec:{pkg:'LQFP-64',feat:['fd','motor']},grade:'Q100',asil:'',price:1.5,why:'가장 싼 차량용 CAN-FD MCU'},
+    // ── ST ──
+    {mpn:'STM32G474RET6',mfr:'ST',note:'Cortex-M4 170 MHz · 고분해능 PWM · 상용',spec:{pkg:'LQFP-64',feat:['fd','motor']},grade:'',asil:'',price:5.5,why:'모터 제어 상용(HRTIM)'},
     {mpn:'STM32F042K6U6',mfr:'ST',note:'Cortex-M0 48 MHz · CAN · USB · 저가',spec:{pkg:'QFN-32'},grade:'',asil:'',price:2.2,why:'가장 싼 CAN MCU'}],
   gdrv3:[
     {mpn:'TLE9180D-31QK',mfr:'Infineon',note:'3상 게이트 드라이버 · 진단 · 세이프티 FET 출력 · ASIL D',spec:{v:60,pkg:'TQFP-64'},grade:'Q100',asil:'D',price:9,why:'EPS·브레이크급 안전 드라이버'},
@@ -126,7 +153,9 @@ const asilRank={'':0,QM:0,A:1,B:2,C:3,D:4};
 /* needs of a block from its implementation parameters and the request */
 function needs(b,ctx){const n={i:null,v:null,fd:false,vouts:[]};(b.impl||[]).forEach(im=>{const p=im.params||{};if(/^(ldo|buck)$/.test(im.type)&&p.vout!=null&&!isNaN(+p.vout))n.vouts.push(+p.vout);if(p.i)n.i=Math.max(n.i||0,+p.i);if(p.vin&&!isNaN(+p.vin))n.v=Math.max(n.v||0,+p.vin);});
   if(ctx&&ctx.vin&&(b.group==='power'||(b.impl||[]).some(im=>/pwr_in|buck|ldo|hs_switch|hbridge|gdrv3|dcmotor|bldc/.test(im.type))))n.v=Math.max(n.v||0,ctx.vin);
-  if(/can-?fd/i.test((ctx&&ctx.req)||'')||/CAN-FD/i.test(b.label))n.fd=true;return n;}
+  if(/can-?fd/i.test((ctx&&ctx.req)||'')||/CAN-FD/i.test(b.label))n.fd=true;
+  const rq=((ctx&&ctx.req)||'')+' '+(b.label||'');n.feat=[];if(/이더넷|ethernet|100base|1000base|\bT1\b|DoIP/i.test(rq))n.feat.push('eth');if(/flexray/i.test(rq))n.feat.push('flexray');if(/\bSENT\b/i.test(rq))n.feat.push('sent');
+  if(/모터|BLDC|인버터|inverter|EPS|조향|펌프|팬|PWM|DC-?DC|OBC/i.test(rq))n.feat.push('motor');return n;}
 /* candidates of a block: profile list first, then by implementation type (deduplicated by MPN) */
 const IDX=(()=>{const m={};Object.values(C).forEach(L=>L.forEach(p=>{m[p.mpn.toUpperCase()]=p;}));return m;})();
 const enrich=p=>{const k=p.mpn.toUpperCase();const base=IDX[k]||Object.values(IDX).find(x=>k.startsWith(x.mpn.toUpperCase().replace(/[-\/].*$/,''))&&x.mpn.length>=6)||null;const o=Object.assign({},base||{});Object.keys(p).forEach(k=>{if(p[k]!=null&&p[k]!=='')o[k]=p[k];});
@@ -143,6 +172,9 @@ function rank(b,ctx){ctx=ctx||{};const N=needs(b,ctx);const pref=ctx.pref||{pric
     if(N.v&&sp.vin){if(sp.vin[1]<N.v)bad.push(`입력 ${sp.vin[1]} V < ${N.v} V`);else if(sp.vin[1]>=N.v*1.6){s+=0.6;why.push('과도 전압 여유');}}
     if(N.v&&sp.v!=null){if(sp.v<N.v*1.5)bad.push(`내압 ${sp.v} V 부족(권장 ≥ ${Math.round(N.v*1.5)} V)`);else s+=0.4;}
     if(N.fd&&sp.fd===0)bad.push('클래식 CAN(FD 미지원)');
+    if(sp.feat&&N.feat){const FN={eth:'이더넷',flexray:'FlexRay',sent:'SENT',motor:'모터 제어 타이머'};
+      if(N.fd&&!sp.feat.includes('fd'))bad.push('CAN-FD 미지원');
+      N.feat.forEach(f=>{if(sp.feat.includes(f)){s+=f==='motor'?0.6:0.8;why.push(FN[f]);}else if(f!=='motor')bad.push(FN[f]+' 미지원');});}
     if(N.vouts.length&&sp.vout!=null&&!N.vouts.some(v=>Math.abs(v-sp.vout)<0.05))bad.push(`출력 ${sp.vout} V ≠ 요구 ${[...new Set(N.vouts)].join('/')} V`);
     if(N.vouts.length&&sp.vout!=null&&sp.vin&&N.v&&sp.vin[1]<N.v&&N.vouts.some(v=>v>=sp.vout+1.5))bad.splice(bad.findIndex(x=>/^입력/.test(x)),1);  // a 2nd-stage LDO is fed from the 5 V rail, not the battery
     // ASIL matters for the parts that carry a safety mechanism: MCU, supervisor / PMIC, gate driver, cut-off switch, or a block tagged safety
