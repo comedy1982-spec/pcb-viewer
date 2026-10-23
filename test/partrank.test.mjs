@@ -25,3 +25,16 @@ test('PARTRANK: price priority moves the cheap commercial part up; profile candi
   const sbc = PARTRANK.rank(A.blocks.find(b => b.id === 'sbc'), { req: A.req, vin: 12, asil: 'D', auto: true, pref: { price: 1, feat: 1, ext: 1 }, prof, lookup: () => null, priceOf: () => null });
   assert.equal(sbc.rows[0].src, 'profile'); assert.ok(/TLF35584|TPS65381|FS2600|L9396/.test(sbc.rows[0].mpn));
 });
+test('PARTRANK: Allegro A4911 carries datasheet pins and ranks with ASIL D gate drivers', () => {
+  const { PARTLIB, KPINS } = load();
+  const lib = PARTLIB.fromKpins(KPINS);
+  const a = lib.find(p => p.mpn === 'A4911KJPTR-T-1');
+  assert.ok(a && a.src === 'ds' && a.pins.length === 49 && a.pins[47].name === 'GHA');
+  const r = HWARCH.archFrom('12 V 차량 배터리, AURIX TC364, BLDC 모터 3상 40 A, ASIL D');
+  const b = r.arch.blocks.find(x => (x.impl || []).some(im => im.type === 'gdrv3'));
+  if (!b) return;
+  const R = PARTRANK.rank(b, { req: r.arch.req, vin: 12, asil: 'D', auto: true, pref: { price: 1, feat: 1, ext: 1 }, lookup: m => lib.find(p => p.mpn === m) || null, priceOf: () => null });
+  const x = R.rows.find(y => y.mpn === 'A4911KJPTR-T-1');
+  assert.ok(x && x.pinNote === '데이터시트' && /ASIL D/.test(x.why.join()));
+  console.log(R.rows.slice(0, 6).map(y => y.rank + '.' + y.mpn + '(' + y.score + (y.pinNote ? ',' + y.pinNote : '') + ')').join(' '));
+});

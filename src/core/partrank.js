@@ -62,6 +62,8 @@ const C={
     {mpn:'L9908',mfr:'ST',note:'3상 게이트 드라이버 · 안전 기능 · 전류 센스 앰프 ×3',spec:{v:75,pkg:'TQFP-64'},grade:'Q100',asil:'D',price:8,why:'48 V 시스템까지'},
     {mpn:'DRV8353RS-Q1',mfr:'TI',note:'3상 게이트 드라이버 · 벅 · 전류 센스 앰프 ×3 · SPI',spec:{v:100,pkg:'VQFN-56'},grade:'Q100',asil:'',price:6.5,why:'센스 앰프·벅 내장으로 부품 절감'},
     {mpn:'GD3000',mfr:'NXP',note:'3상 프리드라이버 · 진단 · SPI',spec:{v:40,pkg:'LQFP-32'},grade:'Q100',asil:'',price:4.5,why:'저가 차량용 프리드라이버'},
+    {mpn:'A4911KJPTR-T-1',mfr:'Allegro',note:'3상 게이트 드라이버 · SPI 진단 · 전류 센스 앰프 ×3 · 부트스트랩+차지펌프 · 5.5~50 V · ASIL D · LQFP-48',spec:{v:50,pkg:'LQFP-48'},grade:'Q100',asil:'D',price:6,why:'ASIL D 안전 드라이버(센스 앰프 내장)'},
+    {mpn:'A4918KJPTR-1A-3-T',mfr:'Allegro',note:'3상 게이트 드라이버 · SPI 진단 · 전류 센스 앰프 ×3 · 4.5~50 V · 100% PWM · 3.3 V 로직(-5-T는 5 V) · ASIL D · LQFP-48',spec:{v:50,pkg:'LQFP-48'},grade:'Q100',asil:'D',price:6,why:'A4911 후속 · 저전압(4.5 V) 크랭킹 대응'},
     {mpn:'A4919',mfr:'Allegro',note:'3상 게이트 드라이버 · 진단',spec:{v:50,pkg:'QFN-28'},grade:'Q100',asil:'',price:5,why:'소형'},
     {mpn:'AMT49413',mfr:'Allegro',note:'3상 BLDC 컨트롤러 + MOSFET 게이트 드라이버 · 센서리스 · QFN-48',spec:{v:50,pkg:'QFN-48'},grade:'',asil:'',price:4.8,why:'컨트롤러 내장(펌프·팬 단독 구동)'},
     {mpn:'DRV8302DCAR',mfr:'TI',note:'3상 게이트 드라이버 · 벅 · 센스 앰프 ×2 (상용)',spec:{v:60,pkg:'HTSSOP-56'},grade:'',asil:'',price:5.8,why:'상용 저가'}],

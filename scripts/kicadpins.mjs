@@ -23,6 +23,8 @@ const files = dirs.flatMap(d => readdirSync(d).filter(f => /\.(lib|dcm|kicad_sym
 const P = KL.parseFiles(files);
 const hit = KL.pick(P.parts, [...mpns]);
 const keep = {}; Object.entries(hit).forEach(([m, r]) => { keep[m] = { k: r.kicad, l: r.lib, m: r.match, fp: r.fp, pkg: r.pkg, pdf: r.pdf, t: r.title, p: r.pins.map(x => [x.num, x.name, x.type]) }; });
+// hand-entered pin tables from datasheets for parts the KiCad libraries lack (KiCad matches win)
+try { const X = JSON.parse(readFileSync(join(root, 'datasheets/pins.json'), 'utf8')); Object.entries(X).forEach(([m, r]) => { if (m[0] === '_' || keep[m]) return; keep[m] = { k: m, l: 'datasheet', m: 'exact', fp: r.fp || '', pkg: r.pkg || '', pdf: r.pdf || '', t: r.t || '', p: r.p }; }); } catch (e) { console.error('pins.json:', e.message); }
 const out = `/* Pin tables of the parts the app names, extracted from the KiCad symbol libraries by scripts/kicadpins.mjs
    (${files.length} files, ${P.parts.length} symbols scanned · ${Object.keys(keep).length} of ${mpns.size} part numbers matched).
    KiCad libraries: CC-BY-SA 4.0 with the KiCad library exception. Record: {k: KiCad symbol, l: library, m: exact|prefix, fp, pkg, pdf, t: description, p: [[num,name,type]]} */

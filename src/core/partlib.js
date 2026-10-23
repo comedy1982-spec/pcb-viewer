@@ -66,7 +66,7 @@ function merge(lists){const m=new Map(),pin=new Map();lists.flat().forEach(p=>{i
     if(p.pins&&p.pins.length){const q=pin.get(k);if(!q||ORDER[p.src]<ORDER[q.src])pin.set(k,p);}});
   return[...m.entries()].map(([k,p])=>{if(p.pins&&p.pins.length)return p;const q=pin.get(k);return q?Object.assign({},p,{pins:q.pins,pinSrc:q.src,pinFrom:q.kicad||q.mpn,pinMatch:q.match||'',fp:p.fp||q.fp||'',pkg:p.pkg||q.pkg||'',pdf:p.pdf||q.pdf||''}):p;});}
 /* bundled KiCad pin table (src/parts/kicadpins.js) → records */
-function fromKpins(K){return Object.entries(K||{}).map(([mpn,r])=>({mpn,mfr:'',title:r.t||'',cat:'',pkg:r.pkg||'',fp:r.fp||'',val:'',pins:(r.p||[]).map(x=>({num:String(x[0]),name:String(x[1]||''),type:x[2]||''})),specs:[],price:null,pdf:r.pdf||'',page:'',desc:r.t||'',src:'kicad',kicad:r.k,lib:r.l,match:r.m,status:'',conf:r.m==='exact'?0.95:r.m==='prefix'?0.8:0.6}));}
+function fromKpins(K){return Object.entries(K||{}).map(([mpn,r])=>({mpn,mfr:'',title:r.t||'',cat:'',pkg:r.pkg||'',fp:r.fp||'',val:'',pins:(r.p||[]).map(x=>({num:String(x[0]),name:String(x[1]||''),type:x[2]||''})),specs:[],price:null,pdf:r.pdf||'',page:'',desc:r.t||'',src:r.l==='datasheet'?'ds':'kicad',kicad:r.l==='datasheet'?'':r.k,lib:r.l,match:r.m,status:'',conf:r.l==='datasheet'?0.9:r.m==='exact'?0.95:r.m==='prefix'?0.8:0.6}));}
 function find(parts,mpn){const k=norm(mpn);if(!k)return null;return parts.find(p=>norm(p.mpn)===k)||parts.find(p=>norm(p.mpn).startsWith(k)||k.startsWith(norm(p.mpn)))||null;}
 function search(parts,q){const t=S(q);if(!t)return[];const k=norm(t);const words=t.toLowerCase().split(/\s+/).filter(Boolean);
   const score=p=>{const pm=norm(p.mpn);let s=0;if(pm===k)s+=100;else if(pm.startsWith(k)||k.startsWith(pm))s+=60;else if(pm.includes(k))s+=40;
