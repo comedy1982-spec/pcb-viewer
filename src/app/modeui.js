@@ -33,7 +33,7 @@ function openViewer(ex){
 function homeGo(fn,mode){try{fn();}catch(e){console.error(e);if(window.__aodErr)window.__aodErr((e&&e.message)||e);else toast('오류: '+((e&&e.message)||e));if(APP.mode==='home'){try{setMode(mode);}catch(e2){}}}}
 $('#homeNew').addEventListener('click',()=>homeGo(newProject,'steps'));
 $('#homeOpen').addEventListener('click',()=>homeGo(()=>openViewer(null),'viewer'));
-$('#home').addEventListener('click',e=>{const b=e.target.closest('[data-hex]');if(b)homeGo(()=>openViewer(b.dataset.hex),'viewer');});
+$('#home').addEventListener('click',e=>{const b=e.target.closest('[data-hex]');if(b)homeGo(()=>openViewer(b.dataset.hex),'viewer');});window.__aodHome=true;
 $('#homeBtn').addEventListener('click',()=>{if(APP.mode==='home'){if(BD&&!BD.blank)setMode(NP.plan&&NP.plan.blocks.length?'steps':'viewer');return;}setMode('home');});
 // a file loaded from the import dialog while on the home screen opens the viewer
 const _impGo=$('#impGo');if(_impGo)_impGo.addEventListener('click',()=>{if(APP.mode==='home')setTimeout(()=>{if(BD&&!BD.blank)setMode('viewer');},80);});

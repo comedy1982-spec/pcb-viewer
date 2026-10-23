@@ -166,6 +166,7 @@ const PANELS={
   layers:{sel:'.main>.layers',title:'레이어 · 보드 요약',w:300,h:760},
   sysL:{sel:'#sysLeft',title:'프로젝트 · HW 블록 · PCB 조건',w:380,h:820},
   sysR:{sel:'#sysRight',title:'선택 블록 · 회로 구현',w:400,h:820},
+  sysM:{sel:'#sysDia',title:'시스템 다이어그램',w:1040,h:720},
   cadL:{sel:'#cadLeft',title:'하우징 조건 · 결과',w:420,h:840},
   cadR:{sel:'#cadRight',title:'형상 트리 · 내보내기',w:400,h:820},
   hsL:{sel:'#hsLeft',title:'HSIS 문서 · 필터',w:340,h:800},
@@ -214,14 +215,14 @@ function panelAfter(key){
     if(key==='insp'){if(S.panel==='sim')renderSim();else renderPane();}
     if(key==='hsD'&&HS.H&&BD)renderDetail();
     if((key==='cadL'||key==='cadR')&&HS.ws==='cad')cadRender();
-    if((key==='sysL'||key==='sysR')&&HS.ws==='sys')sysRender();
+    if((key==='sysL'||key==='sysR'||key==='sysM')&&HS.ws==='sys')sysRender();
   }catch(e){console.error(e);}},30);}
 // a small "새 창" button on each side panel (kept when the panel re-renders its content)
 function panelDecorate(key){
   const P=PANELS[key];const el=P.el;if(!el||key==='ai'||key==='insp')return;
   const mk=()=>{if(el.querySelector(':scope>.pop-btn'))return;const b=el.ownerDocument.createElement('button');b.type='button';b.className='pop-btn';
     b.title=`${P.title} — 새 창으로 (메인 창과 연동)`;b.setAttribute('aria-label',`${P.title} 새 창으로`);b.innerHTML=SVG_POP;
-    b.addEventListener('click',()=>panelPop(key));el.prepend(b);};
+    b.addEventListener('click',()=>panelPop(key));const bar=el.querySelector(':scope>.sys-bar');if(bar){b.classList.add('inbar');bar.insertBefore(b,bar.firstChild);}else el.prepend(b);};
   mk();new MutationObserver(mk).observe(el,{childList:true});}
 window.addEventListener('beforeunload',()=>Object.values(PANELS).forEach(P=>{if(P.win)try{P.win.close();}catch(e){}}));
 

@@ -824,6 +824,20 @@ html.prog-on .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 html.prog-on #copilot.busy .cp-ai:last-child .cp-b::after{content:"";display:inline-block;width:10px;height:10px;margin-left:6px;vertical-align:-1px;border-radius:50%;border:2px solid color-mix(in srgb,var(--accent) 25%,transparent);border-top-color:var(--accent);animation:pgSpin .8s linear infinite}
 @media (max-width:640px){#progCard{left:12px;right:12px;translate:none;max-width:none;min-width:0;bottom:calc(12px + env(safe-area-inset-bottom,0px))}}
 @media (prefers-reduced-motion:reduce){#progTop:not(.det) i,#progCard .pg-bar:not(.det) i{animation:none;width:100%;opacity:.55}#progCard .pg-spin{animation-duration:2.4s}}
+/* system diagram workspace: resizable side panels, and the diagram itself can leave for its own window */
+.sys-ws{position:relative}
+#hSysL{left:var(--sys-l,290px)}#hSysR{right:var(--sys-r,310px)}
+.sys-ws:not(:has(>#sysLeft)) #hSysL,.sys-ws:not(:has(>#sysRight)) #hSysR{display:none}
+.app.dk #hSysR{display:none}
+@media (max-width:1180px){#hSysR{display:none}}
+@media (max-width:820px){#hSysL,#hSysR{display:none}}
+.sys-bar>.pop-btn.inbar{position:static;float:none;margin:0 2px 0 0}
+.sys-ws:not(:has(#sysDia))>.sys-mid{display:none}
+.app:not(.dk) .sys-ws:not(:has(#sysDia)){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.app.dk .sys-ws:not(:has(#sysDia)){grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.app.dk .sys-ws:not(:has(#sysDia))>#sysLeft{grid-column:1;grid-row:1}.app.dk .sys-ws:not(:has(#sysDia))>#sysRight{grid-column:2;grid-row:1}
+.pp-host>.sys-dia{display:flex;flex-direction:column}.pp-host>.sys-dia>.sys-svg{flex:1;min-height:0}
+.cad-ws{position:relative}#hCadL{left:var(--cad-l,340px)}.cad-ws:not(:has(>#cadLeft)) #hCadL{display:none}@media (max-width:820px){#hCadL{display:none}}
 </style>
 
 
@@ -1275,7 +1289,7 @@ button[aria-selected="true"]>svg.ic,.steps button.on>svg.ic{color:var(--accent);
 window.__aodErr=show;window.addEventListener('error',function(e){if(e&&e.message)show(e.message+(e.lineno?' (줄 '+e.lineno+')':''));});
 window.addEventListener('unhandledrejection',function(e){var r=e&&e.reason;if(r&&/^(AbortError|NotAllowedError)$/.test(r.name))return;show('비동기: '+(r&&(r.message||r.code||r)||'unknown'));});
 document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('#homeNew,#homeOpen,#home [data-hex]');if(!b)return;
-  var ready=typeof newProject==='function'&&typeof openViewer==='function';if(ready)return; // the real handlers (modeui.js) take it
+  if(window.__aodHome===true)return; // the real handlers (modeui.js) are bound
   e.preventDefault();show('앱 스크립트가 끝까지 실행되지 않아 첫 화면 버튼이 동작하지 않습니다 — 페이지를 새로고침해 보고, 계속되면 위 오류 문구를 알려 주세요.');},true);})();
 </script>
 <div class="app">
@@ -1399,6 +1413,7 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
 
   </div>
 <div class="sys-ws" id="sysWs" hidden>
+  <div class="rh" id="hSysL"></div><div class="rh" id="hSysR"></div>
   <aside class="panel" id="sysLeft" aria-label="프로젝트와 블록">
     <section><h3>프로젝트 · 요구사항</h3>
           <label class="fld"><span>이름</span><input id="npName" placeholder="예: BLDC 팬 컨트롤러 v0.1"></label>
@@ -1429,6 +1444,7 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
 <section class="ov-ws" id="ovWs" hidden aria-label="전체 보기"></section>
 <section class="mb-ws" id="mbWs" hidden aria-label="시스템 연결"></section>
 <div class="cad-ws" id="cadWs" hidden>
+  <div class="rh" id="hCadL"></div>
   <aside class="panel" id="cadLeft" aria-label="하우징 설계 조건과 결과"></aside>
   <div class="cad-mid"><div class="cad-sel" id="cadSel" hidden role="region" aria-label="선택한 기구 요소"><div class="cad-sel-top"><b>선택</b><span id="cadSelChips" class="sel-chips"></span><button type="button" class="btn sm" id="cadSelClr">선택 해제</button></div><div class="cad-sel-in"><input id="cadSelIn" type="text" autocomplete="off" aria-label="선택한 요소에 대한 요청"><button type="button" class="btn primary sm" id="cadSelMode">적용</button></div></div><div class="cad-vp" id="cadVpSlot"></div></div>
   <aside class="panel" id="cadRight" aria-label="형상 트리와 내보내기"></aside>
@@ -12905,7 +12921,7 @@ const LAYOUT_KEY='pcbv.layout';
 const LAY=(function(){try{return JSON.parse(localStorage.getItem(LAYOUT_KEY)||'{}')||{};}catch(e){return{};}})();
 function saveLayout(){try{localStorage.setItem(LAYOUT_KEY,JSON.stringify(LAY));}catch(e){}}
 function applyLayout(){const m=$('.main'),h=$('#hsisWs');
-  [['lw',m,'--lw'],['dock',$('.work'),'--dock'],['hl',h,'--hsw-l'],['hr',h,'--hsw-r']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
+  [['lw',m,'--lw'],['dock',$('.work'),'--dock'],['hl',h,'--hsw-l'],['hr',h,'--hsw-r'],['sl',$('#sysWs'),'--sys-l'],['sr',$('#sysWs'),'--sys-r'],['cl',$('#cadWs'),'--cad-l']].forEach(([k,el,v])=>{if(LAY[k])el.style.setProperty(v,LAY[k]+'px');else el.style.removeProperty(v);});
   if(LAY.split)vp.style.setProperty('--split',LAY.split+'%');else vp.style.removeProperty('--split');}
 function makeHandle(el,opts){
   // opts: {get():px, set(px), min, max, reset()}
@@ -12924,6 +12940,9 @@ function makeHandle(el,opts){
   makeHandle($('#hLeft'),{label:'왼쪽 패널 너비',get:()=>w($('.layers')),set:v=>{LAY.lw=Math.round(v);applyLayout();},min:170,max:()=>Math.min(420,w(m)*0.35),reset:()=>{delete LAY.lw;applyLayout();}});
   makeHandle($('#hDock'),{label:'오른쪽 패널(설계 도우미) 너비',dir:-1,get:()=>w($('#dock')),set:v=>{LAY.dock=Math.round(v);applyLayout();relayoutViews();},min:300,max:()=>Math.min(760,window.innerWidth*0.5),reset:()=>{delete LAY.dock;applyLayout();relayoutViews();}});
   makeHandle($('#hHsL'),{label:'HSIS 왼쪽 패널 너비',get:()=>w($('#hsLeft')),set:v=>{LAY.hl=Math.round(v);applyLayout();},min:190,max:()=>Math.min(440,w(h)*0.35),reset:()=>{delete LAY.hl;applyLayout();}});
+  const sw=$('#sysWs');if($('#hSysL'))makeHandle($('#hSysL'),{label:'시스템 다이어그램 왼쪽 패널 너비',get:()=>w($('#sysLeft')),set:v=>{LAY.sl=Math.round(v);applyLayout();},min:220,max:()=>Math.min(560,w(sw)*0.5),reset:()=>{delete LAY.sl;applyLayout();}});
+  if($('#hSysR'))makeHandle($('#hSysR'),{label:'시스템 다이어그램 오른쪽 패널 너비',dir:-1,get:()=>w($('#sysRight')),set:v=>{LAY.sr=Math.round(v);applyLayout();},min:220,max:()=>Math.min(560,w(sw)*0.5),reset:()=>{delete LAY.sr;applyLayout();}});
+  const cw=$('#cadWs');if($('#hCadL'))makeHandle($('#hCadL'),{label:'기구 설계 왼쪽 패널 너비',get:()=>w($('#cadLeft')),set:v=>{LAY.cl=Math.round(v);applyLayout();},min:240,max:()=>Math.min(600,w(cw)*0.5),reset:()=>{delete LAY.cl;applyLayout();}});
   makeHandle($('#hHsR'),{label:'HSIS 상세 패널 너비',dir:-1,get:()=>w($('#hsDetail')),set:v=>{LAY.hr=Math.round(v);applyLayout();drawMini();},min:280,max:()=>Math.min(760,w(h)*0.55),reset:()=>{delete LAY.hr;applyLayout();drawMini();}});
   const sp=$('#splitter');const narrow=()=>matchMedia('(max-width:760px)').matches;
   makeHandle(sp,{label:'회로도와 보드 나누기',vertical:narrow,get:()=>{const r=vp.getBoundingClientRect();const f=LAY.split||50;return(narrow()?r.height:r.width)*f/100;},
@@ -15214,6 +15233,7 @@ const PANELS={
   layers:{sel:'.main>.layers',title:'레이어 · 보드 요약',w:300,h:760},
   sysL:{sel:'#sysLeft',title:'프로젝트 · HW 블록 · PCB 조건',w:380,h:820},
   sysR:{sel:'#sysRight',title:'선택 블록 · 회로 구현',w:400,h:820},
+  sysM:{sel:'#sysDia',title:'시스템 다이어그램',w:1040,h:720},
   cadL:{sel:'#cadLeft',title:'하우징 조건 · 결과',w:420,h:840},
   cadR:{sel:'#cadRight',title:'형상 트리 · 내보내기',w:400,h:820},
   hsL:{sel:'#hsLeft',title:'HSIS 문서 · 필터',w:340,h:800},
@@ -15262,14 +15282,14 @@ function panelAfter(key){
     if(key==='insp'){if(S.panel==='sim')renderSim();else renderPane();}
     if(key==='hsD'&&HS.H&&BD)renderDetail();
     if((key==='cadL'||key==='cadR')&&HS.ws==='cad')cadRender();
-    if((key==='sysL'||key==='sysR')&&HS.ws==='sys')sysRender();
+    if((key==='sysL'||key==='sysR'||key==='sysM')&&HS.ws==='sys')sysRender();
   }catch(e){console.error(e);}},30);}
 // a small "새 창" button on each side panel (kept when the panel re-renders its content)
 function panelDecorate(key){
   const P=PANELS[key];const el=P.el;if(!el||key==='ai'||key==='insp')return;
   const mk=()=>{if(el.querySelector(':scope>.pop-btn'))return;const b=el.ownerDocument.createElement('button');b.type='button';b.className='pop-btn';
     b.title=`${P.title} — 새 창으로 (메인 창과 연동)`;b.setAttribute('aria-label',`${P.title} 새 창으로`);b.innerHTML=SVG_POP;
-    b.addEventListener('click',()=>panelPop(key));el.prepend(b);};
+    b.addEventListener('click',()=>panelPop(key));const bar=el.querySelector(':scope>.sys-bar');if(bar){b.classList.add('inbar');bar.insertBefore(b,bar.firstChild);}else el.prepend(b);};
   mk();new MutationObserver(mk).observe(el,{childList:true});}
 window.addEventListener('beforeunload',()=>Object.values(PANELS).forEach(P=>{if(P.win)try{P.win.close();}catch(e){}}));
 
@@ -15349,7 +15369,7 @@ function openViewer(ex){
 function homeGo(fn,mode){try{fn();}catch(e){console.error(e);if(window.__aodErr)window.__aodErr((e&&e.message)||e);else toast('오류: '+((e&&e.message)||e));if(APP.mode==='home'){try{setMode(mode);}catch(e2){}}}}
 $('#homeNew').addEventListener('click',()=>homeGo(newProject,'steps'));
 $('#homeOpen').addEventListener('click',()=>homeGo(()=>openViewer(null),'viewer'));
-$('#home').addEventListener('click',e=>{const b=e.target.closest('[data-hex]');if(b)homeGo(()=>openViewer(b.dataset.hex),'viewer');});
+$('#home').addEventListener('click',e=>{const b=e.target.closest('[data-hex]');if(b)homeGo(()=>openViewer(b.dataset.hex),'viewer');});window.__aodHome=true;
 $('#homeBtn').addEventListener('click',()=>{if(APP.mode==='home'){if(BD&&!BD.blank)setMode(NP.plan&&NP.plan.blocks.length?'steps':'viewer');return;}setMode('home');});
 // a file loaded from the import dialog while on the home screen opens the viewer
 const _impGo=$('#impGo');if(_impGo)_impGo.addEventListener('click',()=>{if(APP.mode==='home')setTimeout(()=>{if(BD&&!BD.blank)setMode('viewer');},80);});
