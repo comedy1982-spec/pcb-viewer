@@ -1,8 +1,16 @@
 <script>
-/* 시작 오류 표시: 앱 스크립트가 실행 중 멈추면 첫 화면 버튼이 반응하지 않으므로, 첫 오류를 화면 아래에 보여 원인을 알 수 있게 한다 */
-(function(){var shown=0;function show(m){try{if(shown>=2)return;shown++;var d=document.getElementById('bootErr');if(!d){d=document.createElement('div');d.id='bootErr';d.setAttribute('role','alert');d.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#b3261e;color:#fff;padding:10px 14px;border-radius:10px;font:13px/1.45 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.3);white-space:pre-wrap;word-break:break-word';d.onclick=function(){d.remove();};document.body.appendChild(d);}d.textContent=(d.textContent?d.textContent+'\n':'오류가 발생했습니다 (눌러서 닫기) — 이 문구를 알려 주세요:\n')+String(m).slice(0,400);}catch(e){}}
+/* 시작 오류 표시: 앱 스크립트가 실행 중 멈추면 버튼이 반응하지 않으므로, 첫 오류를 화면 위에 한 줄 띠로 보여 원인을 알 수 있게 한다
+   (작게 · 닫기/복사 버튼 · 버튼을 가리지 않음). 첫 화면 버튼은 핸들러가 붙기 전에도 눌리도록 여기서 위임한다. */
+(function(){var msgs=[];function show(m){try{m=String(m).slice(0,300);if(msgs.indexOf(m)>=0||msgs.length>=3)return;msgs.push(m);var d=document.getElementById('bootErr');
+  if(!d){d=document.createElement('div');d.id='bootErr';d.setAttribute('role','alert');d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99;background:#b3261e;color:#fff;padding:6px 10px;font:12px/1.4 system-ui,sans-serif;display:flex;gap:8px;align-items:flex-start;box-shadow:0 4px 14px rgba(0,0,0,.25)';
+    d.innerHTML='<span style="flex:1;min-width:0;max-height:3.6em;overflow:auto;word-break:break-word;white-space:pre-wrap"></span><button type="button" data-copy style="flex:none;border:1px solid #fff;background:transparent;color:#fff;border-radius:6px;padding:2px 8px;font:inherit">복사</button><button type="button" data-x style="flex:none;border:1px solid #fff;background:transparent;color:#fff;border-radius:6px;padding:2px 8px;font:inherit">닫기</button>';
+    d.querySelector('[data-x]').onclick=function(){d.remove();};d.querySelector('[data-copy]').onclick=function(){try{navigator.clipboard.writeText(msgs.join('\n'));}catch(e){}};document.body.appendChild(d);}
+  d.firstChild.textContent='오류 '+msgs.length+'건 — 이 문구를 알려 주세요: '+msgs.join(' ‖ ');}catch(e){}}
 window.__aodErr=show;window.addEventListener('error',function(e){if(e&&e.message)show(e.message+(e.lineno?' (줄 '+e.lineno+')':''));});
-window.addEventListener('unhandledrejection',function(e){var r=e&&e.reason;if(r&&/^(AbortError|NotAllowedError)$/.test(r.name))return;show('비동기: '+(r&&(r.message||r))||'unknown');});})();
+window.addEventListener('unhandledrejection',function(e){var r=e&&e.reason;if(r&&/^(AbortError|NotAllowedError)$/.test(r.name))return;show('비동기: '+(r&&(r.message||r.code||r)||'unknown'));});
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('#homeNew,#homeOpen,#home [data-hex]');if(!b)return;
+  var ready=typeof newProject==='function'&&typeof openViewer==='function';if(ready)return; // the real handlers (modeui.js) take it
+  e.preventDefault();show('앱 스크립트가 끝까지 실행되지 않아 첫 화면 버튼이 동작하지 않습니다 — 페이지를 새로고침해 보고, 계속되면 위 오류 문구를 알려 주세요.');},true);})();
 </script>
 <div class="app">
   <header class="top">
