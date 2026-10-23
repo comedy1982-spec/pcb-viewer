@@ -28,10 +28,11 @@ const NP_HELP=[
   ['set <블록ID> <파라미터> <값> · remove <블록ID>','블록 수정·삭제 (ID는 plan에 표시)'],['mcu <stm32|tc364>','MCU 바꾸기'],
   ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
   ['diagram','시스템 다이어그램을 글로 (블록 · 전원 레일 · MCU 신호 · 외부 연결)'],
+  ['check [--fix]','회로 생성 전 점검: 구현(impl) 없는 블록 · 전원 레일 미연결 · MCU 미연결 · 고립 블록을 고치는 명령과 함께 (--fix: 이름으로 추측한 구현을 자동 지정). [다음: 회로 생성] 때 자동 실행'],
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['datasheet','sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['check','datasheet','sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -66,6 +67,9 @@ async function npRun(line,by){
   switch(cmd){
     case'help':case'?':return NP_HELP.map(x=>`${x[0]}\n  ${x[1]}`).join('\n')+'\n\n라이브러리에 없는 부품은 생성 후 회로도 CLI의 add로 더하세요.';
     case'plan':case'status':return NEWPROJ.summary(npEnsure()).text;
+    case'check':{const A=NP.arch;if(!A||!A.blocks.length)throw new Error('다이어그램이 없습니다.');const I=HWARCH.check(A);
+      if(a.fix){let n=0;for(const x of I){if(x.code==='noImpl'&&x.guess){try{await npRun(`impl ${x.id} ${x.guess}`);n++;}catch(e){}}}npRender();return (n?`추천 구현 ${n}개 지정\n`:'')+HWARCH.checkText(HWARCH.check(A));}
+      return HWARCH.checkText(I);}
     case'arch':{const req=a._.join(' ')||$('#npReq').value.trim();if(!req)throw new Error('요구사항이 비어 있습니다 (arch <문장> 또는 왼쪽 칸)');npPush();const r=HWARCH.archFrom(req,$('#npName').value.trim()||null);NP.arch=r.arch;SYS.view='hw';archToPlan(true);npRender();return'규칙 해석: '+r.log.join(' · ')+'\n'+HWARCH.text(NP.arch);}
     case'block':{npPush();const A=archEnsure();const feats=a.feat&&a.feat!==true?String(a.feat).split(/\s*;\s*/):[];const b=HWARCH.addBlock(A,a._[0],a._.slice(1).join(' '),{feats,id:a.id&&a.id!==true?String(a.id):null,ext:!!a.ext});archToPlan();npRender();return`${b.id}: ${HWARCH.GROUPS.find(g=>g[0]===b.group)[1]} 그룹에 "${b.label}" 추가`;}
     case'feat':{npPush();const b=HWARCH.find(archEnsure(),a._[0]);if(a.clear)b.feats=[];else{const t=a._.slice(1).join(' ');if(!t)throw new Error('feat <ID> "<기능>"');b.feats.push(t);}npRender();return`${b.id}: ${b.feats.join(' · ')||'(기능 없음)'}`;}
@@ -196,6 +200,14 @@ function npNL(t){const s=t.toLowerCase();const out=[];const c2=NP.arch&&NP.arch.
 // build the board from the plan and load it into the viewer
 async function npGenerate(o){if(!o||!o.variant||typeof progRun!=='function')return npGenerate0(o);return progRun('회로 생성 중… (부품 배선 · 회로도 · 가이드라인 점검)',()=>npGenerate0(o));}
 async function npGenerate0(o){
+  // readiness gate: blocks that would drop out or come out unconnected are shown first, with one-click fixes
+  if(!o.variant&&!o.force&&NP.arch&&NP.arch.blocks.length&&!NP.planManual){const I=HWARCH.check(NP.arch);
+    if(I.length){const errs=I.filter(x=>x.sev==='err'),guess=I.filter(x=>x.code==='noImpl'&&x.guess);npSay('out',HWARCH.checkText(I));
+      const opts=[].concat(guess.length?[`추천 구현 자동 지정 (${guess.length}개) 후 진행`]:[],['그대로 진행 (구현 없는 블록은 회로에서 제외)','1단계에서 직접 고치기']);
+      COP.askSrc='np';const a=await copAsk({q:`회로 생성 전 점검 — 오류 ${errs.length} · 경고 ${I.length-errs.length}. 어떻게 할까요?`,why:'오류(✕)인 블록은 회로에 들어가지 않습니다. 경고(△)는 전원·제어 연결이 빠진 블록으로, 회로도에서 그 핀이 미연결로 남습니다.',opts});
+      if(a==null||/직접 고치기/.test(a)){setStep(1);return '1단계에서 고친 뒤 다시 [다음: 회로 생성]을 누르세요. 명령 예:\n'+I.map(x=>'  '+x.fix).join('\n');}
+      if(/자동 지정/.test(a)){for(const x of guess){try{npSay('ok',await npRun(`impl ${x.id} ${x.guess}`));}catch(e){npSay('err',e.message||String(e));}}npRender();
+        const rest=HWARCH.check(NP.arch).filter(x=>x.sev==='err');if(rest.length)npSay('out','아직 구현이 없는 블록: '+rest.map(x=>x.label||x.msg).join(', ')+' — 회로에서 제외됩니다.');}}}
   if(NP.arch&&!NP.planManual)archToPlan(true);const P0=npEnsure();if(!P0.blocks.length)throw new Error('회로로 구현할 블록이 없습니다 (HW 블록에 impl을 지정하세요)');
   if(!o.variant){const vs=npVariants(true);NP.chooser=true;setStep(2);const rec=NEWPROJ.recommend(vs,NP.vw);return '회로 안을 고르세요 (참고 단가는 데이터시트 DB 추정값):\n'+NEWPROJ.variantsText(vs)+`\n추천: ${rec.label} (${rec.tag}) — 카드의 [이 안으로 회로 생성] 또는 variants pick ${rec.key}`;}
   const V=npVariants().find(v=>v.key===o.variant);if(!V)throw new Error('회로 안: cost · std · ext');const P=V.plan;P.name=P0.name;P.req=P0.req;NP.picked=V.key;NP.chooser=false;

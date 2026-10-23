@@ -65,7 +65,7 @@ function archFrom(text,name){
   if(curr||temp||hall){addBlock(A,'io',`${curr?'Current Sensing':''}${curr&&(temp||hall)?' & ':''}${temp?'Temp. Sensor':''}${!curr&&!temp&&hall?'Position Sensor':''}`,{id:'sense',feats:[curr?'전류 센싱 (Shunt + Amp)':null,temp?'온도 센서 (NTC)':null,hall?'홀 / 위치 센서':null,'HW Diagnostics'].filter(Boolean),impl:[{type:'vmon',params:{}}]});
     link(A,'sense','mcu','Analog Feedback (ADC)',{kind:'signal'});if(A.blocks.some(b=>b.id==='reg'))link(A,'reg','sense','VCC_SENS 5 V',{kind:'power'});}
   if(flash){addBlock(A,'io','External Flash',{id:'mem',feats:['데이터 로그 · 설정 저장'],impl:[{type:'flash',params:{}}]});link(A,'mcu','mem','SPI',{both:true});}
-  if(dbg){addBlock(A,'io','Debug / Calib. Interface',{id:'dbg',feats:[tc?'JTAG / DAP':'SWD / JTAG','UART',xcp?'XCP over CAN':null].filter(Boolean),impl:/uart|시리얼|디버그\s*포트|콘솔/.test(lo)||ecu?[{type:'uart',params:{}}]:[]});link(A,'mcu','dbg','Diagnostic / Debug',{both:true});}
+  if(dbg){addBlock(A,'io','Debug / Calib. Interface',{id:'dbg',feats:[tc?'JTAG / DAP':'SWD / JTAG','UART',xcp?'XCP over CAN':null].filter(Boolean),impl:/uart|시리얼|디버그\s*포트|콘솔/.test(lo)||ecu?[{type:'uart',params:{}}]:[]});link(A,'mcu','dbg','Diagnostic / Debug',{both:true});link(A,'reg','dbg','VCC_MCU 3.3 V',{kind:'power'});}
   if(nled||nbt){addBlock(A,'io','HMI (LED / Button)',{id:'hmi',feats:[nled?`LED ×${nled}`:null,nbt?`Button ×${nbt}`:null].filter(Boolean),impl:[...(nled?[{type:'led',params:{n:nled}}]:[]),...(nbt?[{type:'button',params:{n:nbt}}]:[])]});link(A,'mcu','hmi','GPIO',{});}
   // external connector
   if(motor||curr||hall){addBlock(A,'ext','External Connector',{id:'conn',ext:true,feats:[`To Electric ${bldc?'BLDC ':dc?'DC ':''}Motor & Sensors`]});
@@ -118,6 +118,32 @@ function toPlan(A){
   const unmapped=A.blocks.filter(b=>!b.ext&&!b.via&&!(b.impl||[]).length).map(b=>b.label);
   return{plan:P,log,map,unmapped};}
 
+
+/* ---- readiness check before step 2: what would silently drop out of the circuit, or come out unconnected ----
+   err  noImpl   block without a circuit implementation (it is not in the circuit at all)
+   warn noPower  block with an implementation but no power-rail link (its supply pin ends up unconnected)
+   warn noCtrl   actuation / sensing / comm block with no link to a controller block (no control / feedback signal)
+   warn isolated block with no link at all
+   Every issue carries the console command that fixes it; implGuess() proposes a type from the block's wording. */
+const IMPL_GUESS=[[/buck|강압|dc-?dc|smps|스위칭/i,'buck'],[/ldo|레귤|regulator|pmic|sbc|전압\s*변환/i,'ldo'],[/watchdog|워치독|supervisor|reset|감시/i,'supervisor'],
+  [/can/i,'can'],[/flash|플래시|메모리|eeprom|memory/i,'flash'],[/led|표시등|램프/i,'led'],[/button|버튼|스위치\s*입력|key/i,'button'],[/uart|debug|디버그|jtag|swd|console|콘솔|xcp|calib/i,'uart'],[/i2c|i²c|iic|센서\s*확장|expander/i,'i2c'],
+  [/3[-\s]?phase|3상|bldc|pmsm|inverter|인버터|gate\s*driver|게이트/i,'gdrv3'],[/h-?bridge|h\s*브리지|dc\s*모터|dc\s*motor|정\/역|양방향|스텝|stepper|step\s*motor/i,'hbridge'],[/low-?side|로우사이드|솔레노이드|solenoid|밸브|valve|fan|팬|히터|heater|릴레이|relay/i,'dcmotor'],
+  [/high-?side|하이사이드|부하\s*스위치|load\s*switch|phase-?cut|차단|relay/i,'hs_switch'],[/sens|센싱|센서|current|전류|temp|온도|monitor|모니터|adc|feedback|피드백|torque|토크|angle|각도|position|위치/i,'vmon'],
+  [/mcu|micro|controller|컨트롤러|cortex|aurix|stm32|tc3/i,'mcu'],[/usb/i,'usb_in'],[/battery|배터리|입력|input|vin|kl30/i,'pwr_in']];
+function implGuess(b){const t=(b.label||'')+' '+(b.feats||[]).join(' ');for(const[re,ty]of IMPL_GUESS)if(re.test(t))return ty;return null;}
+function check(A){const out=[];if(!A)return out;const B=id=>A.blocks.find(b=>b.id===id);const has=b=>(b.impl||[]).length||b.part;
+  const ctrl=new Set(A.blocks.filter(b=>b.group==='ctrl').map(b=>b.id));
+  A.blocks.forEach(b=>{if(b.ext||b.via)return;const links=A.links.filter(l=>l.a===b.id||l.b===b.id);
+    if(!has(b)){const g=implGuess(b);out.push({sev:'err',code:'noImpl',id:b.id,label:b.label,msg:`"${b.label}" 블록에 회로 구현(impl)이 없어 회로에서 빠집니다`,fix:g?`impl ${b.id} ${g}`:`impl ${b.id} part <부품번호>  (라이브러리 종류는 help)`,guess:g});}
+    if(!links.length){out.push({sev:'warn',code:'isolated',id:b.id,label:b.label,msg:`"${b.label}" 블록이 아무 블록과도 연결되지 않았습니다`,fix:`link <상대> ${b.id} <신호>`});return;}
+    if(has(b)&&b.group!=='power'&&!links.some(l=>l.kind==='power')){const reg=A.blocks.find(x=>x.group==='power'&&(x.rails||[]).length)||A.blocks.find(x=>x.group==='power'&&x.id!=='pin');
+      out.push({sev:'warn',code:'noPower',id:b.id,label:b.label,msg:`"${b.label}" 블록에 전원 레일 연결이 없습니다 (전원 핀 미연결)`,fix:reg?`link ${reg.id} ${b.id} ${(reg.rails||[])[0]?reg.rails[0].name+' '+reg.rails[0].v+' V':'VCC'} --kind power`:`link <전원블록> ${b.id} VCC --kind power`});}
+    if(has(b)&&(b.group==='io'||b.group==='comm')&&ctrl.size&&!links.some(l=>ctrl.has(l.a)||ctrl.has(l.b))){const m=[...ctrl][0];out.push({sev:'warn',code:'noCtrl',id:b.id,label:b.label,msg:`"${b.label}" 블록이 MCU와 연결되지 않았습니다 (제어·피드백 신호 없음)`,fix:`link ${m} ${b.id} <신호> --both`});}});
+  if(!A.blocks.some(b=>b.group==='ctrl'&&has(b)))out.push({sev:'err',code:'noMcu',id:null,label:'',msg:'제어 블록(MCU)이 없거나 구현이 없습니다',fix:'block ctrl "Main MCU" 뒤 impl mcu part=<MPN>'});
+  if(!A.blocks.some(b=>b.group==='power'&&has(b)))out.push({sev:'err',code:'noPower',id:null,label:'',msg:'전원 블록(입력·레귤레이터)이 없거나 구현이 없습니다',fix:'block power "Regulator" 뒤 impl reg ldo vout=3.3'});
+  return out;}
+function checkText(I){if(!I.length)return'점검: 문제 없음 — 모든 블록에 회로 구현과 전원·제어 연결이 있습니다.';const e=I.filter(x=>x.sev==='err'),w=I.filter(x=>x.sev==='warn');
+  return[`점검: 오류 ${e.length} · 경고 ${w.length}`].concat(I.map(x=>`  ${x.sev==='err'?'✕':'△'} ${x.msg}\n      → ${x.fix}`)).join('\n');}
 /* ---- layout: bands top to bottom, blocks centred in each band ---- */
 const LW=150,BW=196,GX=84,BAND=30,PAD=22,LH=15;
 function bh(b){const sw=b.feats.filter(f=>/^SW:/.test(f)).length;const n=Math.min(4,b.feats.length-sw+(sw?1:0));return 34+n*LH+(b.feats.length?6:0);}
@@ -179,6 +205,6 @@ function text(A){const B=id=>A.blocks.find(b=>b.id===id);const L=[`HW 아키텍�
   L.push('인터페이스:');A.links.forEach(l=>{const a=B(l.a),b=B(l.b);L.push(`  ${l.a} ${l.both?'↔':'→'} ${l.b} : ${l.label} [${{power:'전원',signal:'신호',bus:'버스',safe:'세이프 스테이트'}[l.kind]}]${a&&b?'':' (끊김)'}`);});
   if(typeof SAFETY!=='undefined'&&SAFETY.level(A)!=='QM')L.push(SAFETY.archText(A));
   return L.join('\n');}
-return{GROUPS,gAlias,blank,addBlock,find,link,unlink,remove,motorKind,upgradeMotor,archFrom,fromDiagram,toPlan,layout,svg,text};
+return{check,checkText,implGuess,GROUPS,gAlias,blank,addBlock,find,link,unlink,remove,motorKind,upgradeMotor,archFrom,fromDiagram,toPlan,layout,svg,text};
 })();
 if(typeof module!=='undefined')module.exports=HWARCH;

@@ -83,3 +83,14 @@ test('a finished board gives an architecture with the part numbers taken out', (
   assert.equal(A.blocks.filter(b => b.group === 'power')[0].ext, true, 'power input first');
   assert.ok(!/TLE9251|TC364|AMS1117|DRV8313|W25Q/.test(JSON.stringify(A.blocks.map(b => b.label))));
 });
+
+test('HWARCH.check: finds blocks without impl / power / control links and proposes fixes', () => {
+  const r = HWARCH.archFrom('12 V 차량 배터리, AURIX TC364, CAN-FD, DC 모터 10 A, 전류 온도 센싱, ASIL B');
+  assert.equal(HWARCH.check(r.arch).length, 0, '규칙으로 만든 다이어그램은 점검을 통과해야 함');
+  const A = r.arch; HWARCH.addBlock(A, 'io', '스텝 모터 드라이버', { feats: ['2상 2 A'] }); HWARCH.addBlock(A, 'comm', 'RS-485 Transceiver', {});
+  const I = HWARCH.check(A); const codes = I.map(x => x.code);
+  assert.ok(codes.filter(c => c === 'noImpl').length === 2); assert.ok(codes.includes('isolated'));
+  const st = I.find(x => x.code === 'noImpl' && /스텝/.test(x.label)); assert.equal(st.guess, 'hbridge'); assert.ok(/^impl \S+ hbridge$/.test(st.fix));
+  const rs = I.find(x => x.code === 'noImpl' && /RS-485/.test(x.label)); assert.equal(rs.guess, null); assert.ok(/part <부품번호>/.test(rs.fix));
+  assert.ok(/오류 2/.test(HWARCH.checkText(I)));
+});
