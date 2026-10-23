@@ -5355,6 +5355,11 @@ function components(S,net){
   return Object.values(g).filter(c=>c.some(s=>s.pad||s.prim||s.via));
 }
 
+/* copper groups of a net with its pours taken into account: every island that touches a pour of the net (a via, a through
+   pad, a pad or track on the poured layer) is already joined, so those islands form one group that comes first */
+function groups(B,S,net){const c=components(S,net);if(c.length<2)return c;const L=new Set();PC.cuKeys(B).forEach((k,li)=>B.layers[k+'.cu'].forEach(p=>{if(p.t==='pour'&&p.net===net)L.add(li);}));
+  if(!L.size)return c;const on=g=>g.some(s=>s.via||(s.pad&&(s.pad.drill||s.L.some(l=>L.has(l))))||(s.prim&&s.L.some(l=>L.has(l))));
+  const a=c.filter(on),b=c.filter(g=>!on(g));return a.length?[[].concat(...a)].concat(b):b;}
 /* ---------- grid ---------- */
 function makeGrid(B,o){
   const g=o.grid;
@@ -5402,17 +5407,19 @@ function astar(G,k,src,tgt,anchors,o){
   const pop=()=>{const r=hid[0];hn--;if(hn>0){const id=hid[hn],f=hf[hn];let i=0;for(;;){let c=2*i+1;if(c>=hn)break;if(c+1<hn&&hf[c+1]<hf[c])c++;if(hf[c]>=f)break;hid[i]=hid[c];hf[i]=hf[c];i=c;}hid[i]=id;hf[i]=f;}return r;};
   src.forEach(id=>{gs[id]=0;stamp[id]=gen;par[id]=-1;dir[id]=-1;const i=id%N;push(id,h(i%nx,(i/nx)|0));});
   let exp=0;const viaC=o.viaCost/G.g,bot=o.bottomCost||1,esc=o.escCost?G.esc:null,escC=o.escCost||0,edgeC=o.edgeCost||0;
+  // PathFinder: cost × (1 + history) × (1 + pres × other nets on the cell) — overuse is allowed and priced, not forbidden
+  const pf=o.pf||null,pres=pf?pf.pres:0;
   while(hn){const id=pop();if(cl[id]===gen)continue;cl[id]=gen;if(tgt.has(id)){const path=[];let c=id;while(c>=0){path.push(c);c=par[c];}return{path:path.reverse(),exp};}
     if(++exp>o.maxExp)return{fail:'탐색 한도 초과',exp};
     const l=(id/N)|0,i=id-l*N,x=i%nx,y=(i/nx)|0,g0=gs[id],d0=dir[id];const lc=l===NL-1?bot:l?(o.innerCost||1):1;
     for(let d=0;d<8;d++){const xx=x+DX[d],yy=y+DY[d];if(xx<0||yy<0||xx>=nx||yy>=ny)continue;const j=yy*nx+xx;if(!free(l,j))continue;
       if(d>=4&&(!free(l,y*nx+xx)||!free(l,yy*nx+x)))continue;
-      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;const ng=g0+DC[d]*lc+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0)+(edgeC&&G.edgeBand&&G.edgeBand[j]?edgeC:0);
+      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;let step=DC[d]*lc;if(pf){const oc=pf.occ[l][j];step*=(1+pf.hist[l][j])*(oc>0?1+pres*oc:1);}const ng=g0+step+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0)+(edgeC&&G.edgeBand&&G.edgeBand[j]?edgeC:0);
       if(stamp[nid]!==gen||ng<gs[nid]){stamp[nid]=gen;gs[nid]=ng;par[nid]=id;dir[nid]=d;push(nid,ng+h(xx,yy));}}
     // via
     let fv=-1;for(const l2 of rl){if(l2===l)continue;const nid=l2*N+i;if(cl[nid]===gen||!free(l2,i))continue;
       const thr=(src.has(id)&&src.has(nid))||(tgt.has(id)&&tgt.has(nid));if(!thr){if(fv<0)fv=freeV(i)?1:0;if(!fv)continue;}
-      const ng=g0+viaC;if(stamp[nid]!==gen||ng<gs[nid]){stamp[nid]=gen;gs[nid]=ng;par[nid]=id;dir[nid]=8;push(nid,ng+h(x,y));}}
+      let vc=viaC;if(pf){const ov=pf.occV[i],ot=pf.occ[l2][i];vc*=(1+pf.histV[i]+pf.hist[l2][i])*(ov>0||ot>0?1+pres*(ov+ot):1);}const ng=g0+vc;if(stamp[nid]!==gen||ng<gs[nid]){stamp[nid]=gen;gs[nid]=ng;par[nid]=id;dir[nid]=8;push(nid,ng+h(x,y));}}
   }
   return{fail:'경로 없음 (막힘)',exp};
 }
@@ -5492,20 +5499,22 @@ function prepare(B,opts){
 // nets that still have more than one copper group
 function openNets(B,filter){
   const S=shapesOfBoard(B);const pour=new Set();PC.cuKeys(B).forEach(s=>B.layers[s+'.cu'].forEach(p=>{if(p.t==='pour'&&p.net)pour.add(p.net);}));
-  const out=[];Object.keys(B.nets).forEach(n=>{if(isGnd(n)||pour.has(n))return;if(filter&&!filter(n))return;const c=components(S,n);if(c.length>1)out.push({net:n,groups:c.length});});return out;
+  const out=[];Object.keys(B.nets).forEach(n=>{if(filter&&!filter(n))return;const c=groups(B,S,n);if(c.length>1)out.push({net:n,groups:c.length});});return out;
 }
+/* grid cells of a net's copper shapes that a track of width w may start from / arrive at (deep inside pads) */
+function padCells(G,w,shapes,set,owner){shapes.forEach(s=>{const bb=bboxOf(s,0);const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
+  const deep=s.k==='rect'?-Math.min(w/2,Math.min(s.hw,s.hh)-0.01):s.r>w/2?-(Math.min(w/2,s.r-0.01)):0.001;
+  const SL=s.L.filter(l=>!G.route||G.route.includes(l));if(!SL.length)return;
+  let any=false;for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(s,G.ox+x*G.g,G.oy+y*G.g);if(d<=deep){SL.forEach(l=>{const id=l*G.N+y*G.nx+x;set.add(id);owner.set(id,s);});any=true;}}
+  if(!any){const x=Math.round(((s.k==='cap'?s.a[0]:s.x)-G.ox)/G.g),y=Math.round(((s.k==='cap'?s.a[1]:s.y)-G.oy)/G.g);SL.forEach(l=>{const id=l*G.N+y*G.nx+x;set.add(id);owner.set(id,s);});}});}
 function routeNet(P,B,net){
   const{o,G}=P;const k=P.idOf(net);const w=widthFor(B,net,o);let added={tracks:[],vias:[],len:0,nvia:0};let guard=0;
   for(;;){
-    const comps=components(P.S,net);if(comps.length<=1)return Object.assign(added,{ok:true});
-    if(++guard>24)return Object.assign(added,{ok:false,why:'반복 한도'});
+    const comps=groups(B,P.S,net);if(comps.length<=1)return Object.assign(added,{ok:true});
+    if(++guard>Math.max(24,comps.length+8))return Object.assign(added,{ok:false,why:'반복 한도'});
     // join the smallest group to the rest
     comps.sort((a,b)=>a.length-b.length);const srcC=comps[0],rest=comps.slice(1).flat();
-    const cellsOf=(shapes,set,owner)=>{shapes.forEach(s=>{const bb=bboxOf(s,0);const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
-      const deep=s.k==='rect'?-Math.min(w/2,Math.min(s.hw,s.hh)-0.01):s.r>w/2?-(Math.min(w/2,s.r-0.01)):0.001;
-      const SL=s.L.filter(l=>!G.route||G.route.includes(l));if(!SL.length)return;
-      let any=false;for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(s,G.ox+x*G.g,G.oy+y*G.g);if(d<=deep){SL.forEach(l=>{const id=l*G.N+y*G.nx+x;set.add(id);owner.set(id,s);});any=true;}}
-      if(!any){const x=Math.round(((s.k==='cap'?s.a[0]:s.x)-G.ox)/G.g),y=Math.round(((s.k==='cap'?s.a[1]:s.y)-G.oy)/G.g);SL.forEach(l=>{const id=l*G.N+y*G.nx+x;set.add(id);owner.set(id,s);});}});};
+    const cellsOf=(shapes,set,owner)=>padCells(G,w,shapes,set,owner);
     const src=new Set(),tgt=new Set(),own=new Map();cellsOf(srcC,src,own);cellsOf(rest,tgt,own);
     let anchors=[];rest.forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
     // big nets: keep the heuristic cheap — only the anchors nearest to the group being joined
@@ -5524,7 +5533,7 @@ function routeNet(P,B,net){
   }
 }
 // estimated length of an open net: closest pair between its first two groups
-function estimate(B,net){const S=shapesOfBoard(B);const c=components(S,net);if(c.length<2)return 0;const pts=g=>g.flatMap(s=>s.k==='cap'?[s.a,s.b]:[[s.x,s.y]]);
+function estimate(B,net){const S=shapesOfBoard(B);const c=groups(B,S,net);if(c.length<2)return 0;const pts=g=>g.flatMap(s=>s.k==='cap'?[s.a,s.b]:[[s.x,s.y]]);
   const a=pts(c[0]);let m=1e9;c.slice(1).forEach(g=>pts(g).forEach(q=>a.forEach(p=>{m=Math.min(m,Math.hypot(p[0]-q[0],p[1]-q[1]));})));return m*(c.length-1);}
 /* the whole job as a generator: yields progress, returns the best of up to `attempts` orderings
    (nets that failed are moved to the front of the next attempt) */
@@ -5563,9 +5572,9 @@ function* jobRR(B,nets,opts){
   let order=o.keepOrder?nets.slice():nets.map(n=>({n,e:estimate(B,n)})).sort((a,b)=>a.e-b.e).map(x=>x.n);
   let P=prepare(B,o);const res={};
   for(let i=0;i<order.length;i++){yield{phase:'route',i,total:order.length,net:order[i]};res[order[i]]=routeNet(P,B,order[i]);}
-  const okCount=()=>{const S=shapesOfBoard(B);return nets.filter(n=>components(S,n).length<=1).length;};
+  const okCount=()=>{const S=shapesOfBoard(B);return nets.filter(n=>groups(B,S,n).length<=1).length;};
   let best={ok:okCount(),...autoLen(B)};const tries={};let rounds=0;
-  const failedNow=()=>{const S=shapesOfBoard(B);return nets.filter(n=>components(S,n).length>1);};
+  const failedNow=()=>{const S=shapesOfBoard(B);return nets.filter(n=>groups(B,S,n).length>1);};
   let queue=failedNow();
   while(queue.length&&rounds<maxRounds){
     const X=queue.shift();tries[X]=(tries[X]||0)+1;if(tries[X]>3)continue;rounds++;
@@ -5590,6 +5599,85 @@ function* jobRR(B,nets,opts){
   const fail=failedNow();const al=autoLen(B);
   return{ok:nets.length-fail.length,total:nets.length,fail:fail.map(n=>({net:n,why:(res[n]&&res[n].why)||'막힘'})),len:al.l,vias:al.v,rounds,results:nets.map(n=>({net:n,ok:!fail.includes(n)}))};
 }
+
+/* ---------- PathFinder: negotiated congestion routing (McMurchie & Ebeling 1995) as a repair stage ----------
+   The routes already on the board (auto copper of the given nets) are the starting point; the unrouted nets are routed
+   through whatever is in the way (overuse is priced, not forbidden). Each round every net that shares a cell with
+   another net is ripped up and re-routed with cost × (1 + history) × (1 + pres × occupancy); pres grows each round
+   and the history of overused cells accumulates, so nets settle where they fit. At the end only conflict-free routes
+   are committed; what is still in conflict is dropped and tried once more sequentially. */
+function* jobPF(B,nets,opts){
+  const o=Object.assign({},DEF,opts||{});const rounds=o.pfRounds||14,tLimit=o.pfTimeMs||90000;let pres=o.pfPres||0.6;const presMul=o.pfPresMul||1.6,hFac=o.pfHist||0.35;
+  const t0=Date.now();const wMax=o.width.signal/2-0.001;
+  // existing auto copper of these nets → PF routes; take it off the board so the grid holds the fixed copper only
+  const own=new Set(nets);const R={};const kill=[];
+  PC.cuKeys(B).forEach((L,li)=>B.layers[L+'.cu'].forEach(p=>{if(!p.auto||p.fan||!own.has(p.net)||!(p.t==='path'||p.t==='seg'))return;const r=R[p.net]||(R[p.net]={tracks:[],vias:[],len:0});const t=p.t==='seg'?{t:'path',pts:[p.a,p.b],w:p.w,net:p.net,auto:true}:p;t._l=li;t._side=L;r.tracks.push(t);kill.push(p);}));
+  B.vias.forEach(v=>{if(!v.auto||v.fan||!own.has(v.net))return;(R[v.net]||(R[v.net]={tracks:[],vias:[],len:0})).vias.push(v);kill.push(v);});
+  unroute(B,kill);const P=prepare(B,o);const G=P.G,N=G.N,NL=G.NL;
+  const occ=Array.from({length:NL},()=>new Int16Array(N)),hist=Array.from({length:NL},()=>new Float32Array(N)),occV=new Int16Array(N),histV=new Float32Array(N);
+  const stT=Array.from({length:NL},()=>new Int32Array(N)),stV=new Int32Array(N);let gen=0;
+  const pf={occ,hist,occV,histV,pres};
+  // cells a route occupies for other nets: track halo (w/2 + clearance + wMax) and via halo, plus the via-vs-via disk
+  const cellsOfRoute=r=>{gen++;const T=[],V=[];const disk=(sh,mT,mV)=>{const m=Math.max(mT,mV);const bb=bboxOf(sh,m);
+      const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
+      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(sh,G.ox+x*G.g,G.oy+y*G.g);if(d>m)continue;const i=y*G.nx+x;
+        if(d<=mT)sh.L.forEach(l=>{if(stT[l][i]!==gen){stT[l][i]=gen;T.push(l*N+i);}});if(d<=mV&&stV[i]!==gen){stV[i]=gen;V.push(i);}}};
+    r.tracks.forEach(t=>{for(let i=1;i<t.pts.length;i++)disk({k:'cap',a:t.pts[i-1],b:t.pts[i],r:t.w/2,L:[t._l]},wMax+o.clear,o.via.d/2+o.clear);});
+    r.vias.forEach(v=>disk({k:'cap',a:[v.x,v.y],b:[v.x,v.y],r:v.d/2,L:ALL(NL)},wMax+o.clear,o.via.d/2+o.clear));
+    // the resources the route itself uses: its centre-line cells and via cells (a conflict = another net's halo on these)
+    gen++;const LT=[],LV=[];r.tracks.forEach(t=>{for(let i=1;i<t.pts.length;i++){const sh={k:'cap',a:t.pts[i-1],b:t.pts[i],r:0,L:[t._l]};const bb=bboxOf(sh,G.g);
+      const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
+      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){if(dist(sh,G.ox+x*G.g,G.oy+y*G.g)>G.g*0.51)continue;const i=y*G.nx+x;if(stT[t._l][i]!==gen){stT[t._l][i]=gen;LT.push(t._l*N+i);}}}});
+    r.vias.forEach(v=>{const x=Math.round((v.x-G.ox)/G.g),y=Math.round((v.y-G.oy)/G.g);if(x<0||y<0||x>=G.nx||y>=G.ny)return;const i=y*G.nx+x;if(stV[i]!==gen){stV[i]=gen;LV.push(i);}});
+    return{T:Int32Array.from(T),V:Int32Array.from(V),LT:Int32Array.from(LT),LV:Int32Array.from(LV)};};
+  const add=(net,d)=>{const r=R[net];r.cells=cellsOfRoute(r);r.cells.T.forEach(id=>{occ[(id/N)|0][id%N]+=d;});r.cells.V.forEach(i=>{occV[i]+=d;});};
+  const sub=net=>{const r=R[net];if(!r||!r.cells)return;r.cells.T.forEach(id=>{occ[(id/N)|0][id%N]-=1;});r.cells.V.forEach(i=>{occV[i]-=1;});r.cells=null;};
+  Object.keys(R).forEach(n=>add(n,1));
+  const conflicted=net=>{const r=R[net];if(!r||!r.cells)return false;const c=r.cells;for(const id of c.LT)if(occ[(id/N)|0][id%N]>1)return true;
+    for(const i of c.LV){if(occV[i]>1)return true;for(let l=0;l<NL;l++)if(occ[l][i]>1)return true;}return false;};
+  const S0=shapesOfBoard(B);const openNow=nets.filter(n=>!R[n]&&groups(B,S0,n).length>1);
+  let todo=openNow.slice(),round=0,last={conflicts:openNow.length,open:openNow.length};
+  for(round=1;round<=rounds;round++){pf.pres=pres;
+    for(let i=0;i<todo.length;i++){const net=todo[i];yield{phase:'pf',round,max:rounds,i,total:todo.length,net,conflicts:last.conflicts,open:last.open};
+      sub(net);const r=routeNetPF(P,B,net,pf);if(r.ok){R[net]=r;add(net,1);}else{delete R[net];}
+      if(Date.now()-t0>tLimit)break;}
+    // history grows where cells are overused; the next round re-routes every net that stands on such a cell
+    let over=0;for(let l=0;l<NL;l++){const a=occ[l],h=hist[l];for(let i=0;i<N;i++)if(a[i]>1){h[i]+=hFac*(a[i]-1);over++;}}for(let i=0;i<N;i++)if(occV[i]>1){histV[i]+=hFac*(occV[i]-1);over++;}
+    const bad=nets.filter(n=>R[n]&&conflicted(n));const open=nets.filter(n=>!R[n]&&groups(B,S0,n).length>1);
+    last={conflicts:bad.length,open:open.length,over};
+    if((!bad.length&&!open.length)||Date.now()-t0>tLimit)break;
+    todo=bad.concat(open.filter(n=>!bad.includes(n)));pres*=presMul;}
+  // commit: conflict-free routes first, then any route whose cells are still free of committed copper
+  const cm=Array.from({length:NL},()=>new Uint8Array(N)),cv=new Uint8Array(N);const done=new Set(),dropped=[];
+  const clean=n=>{const c=R[n].cells;for(const id of c.LT)if(cm[(id/N)|0][id%N])return false;for(const i of c.LV){if(cv[i])return false;for(let l=0;l<NL;l++)if(cm[l][i])return false;}return true;};
+  const order=nets.filter(n=>R[n]).sort((a,b)=>(conflicted(a)?1:0)-(conflicted(b)?1:0)||netPrio(B,a,o.W)-netPrio(B,b,o.W));
+  for(const n of order){const r=R[n];if(!clean(n)){dropped.push(n);continue;}r.cells.T.forEach(id=>{cm[(id/N)|0][id%N]=1;});r.cells.V.forEach(i=>{cv[i]=1;});
+    r.tracks.forEach(t=>{t._side=G.keys[t._l];B.layers[t._side+'.cu'].push(t);delete t._l;});r.vias.forEach(v=>{B.vias.push(v);});done.add(n);}
+  // exact geometry check of what was committed: a PF route that still violates clearance is taken off and re-tried
+  {const viol=drc(B,o);const badNets=new Set(viol.filter(v=>v.net&&done.has(v.net)).map(v=>v.net));
+    if(badNets.size){const kill2=[];PC.cuKeys(B).forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(p.auto&&!p.fan&&badNets.has(p.net))kill2.push(p);}));B.vias.forEach(v=>{if(v.auto&&!v.fan&&badNets.has(v.net))kill2.push(v);});
+      unroute(B,kill2);badNets.forEach(n=>{done.delete(n);dropped.push(n);});}}
+  // the dropped ones get one sequential try against the committed copper
+  const P2=prepare(B,o);const seq={};for(const n of dropped){seq[n]=routeNet(P2,B,n);if(seq[n].ok)done.add(n);}
+  const S1=shapesOfBoard(B);const fail=nets.filter(n=>groups(B,S1,n).length>1);
+  return{ok:nets.length-fail.length,total:nets.length,fail:fail.map(n=>({net:n,why:'협상 배선 후에도 막힘'})),rounds:round,dropped:dropped.length,ms:Date.now()-t0,start:openNow.length};
+}
+/* one net under PathFinder costs: joins its groups one after another without touching the board or the grid */
+function routeNetPF(P,B,net,pf){
+  const{o,G}=P;const k=P.idOf(net);const w=widthFor(B,net,o);let comps=groups(B,P.S,net);if(comps.length<=1)return{ok:true,tracks:[],vias:[],len:0};
+  comps.sort((a,b)=>a.length-b.length);let cur=comps[0],rest=comps.slice(1);const tracks=[],vias=[];let len=0;const ext=new Set();let guard=0;
+  const wBase=Math.max(o.width.signal,o.width.power);const dil=w>wBase+1e-6?Math.ceil((w-wBase)/2/G.g):0;const edgeCost=o.edgeBand>0&&netPrio(B,net,o.W)===1?(o.edgeCost||1.5):0;
+  while(rest.length){if(++guard>Math.max(24,comps.length+8))return{ok:false,why:'반복 한도'};
+    const src=new Set(ext),tgt=new Set(),own=new Map();padCells(G,w,cur,src,own);padCells(G,w,rest.flat(),tgt,own);
+    let anchors=[];rest.flat().forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
+    if(anchors.length>24){let sx=0,sy=0,sn=0;cur.forEach(s=>{const p=s.k==='cap'?s.a:[s.x,s.y];sx+=(p[0]-G.ox)/G.g;sy+=(p[1]-G.oy)/G.g;sn++;});sx/=sn;sy/=sn;anchors=anchors.map(a=>[a,Math.abs(a[0]-sx)+Math.abs(a[1]-sy)]).sort((a,b)=>a[1]-b[1]).slice(0,24).map(a=>a[0]);}
+    const r=astar(G,k,src,tgt,anchors,Object.assign({},o,{dil,edgeCost,pf}));if(!r.path)return{ok:false,why:r.fail};
+    const endS=own.get(r.path[r.path.length-1]);let gi=rest.findIndex(g=>g.includes(endS));if(gi<0)gi=0;
+    const cu=toCopper(G,r.path,w,o.via,net,own.get(r.path[0]),endS);
+    cu.tracks.forEach(t=>{tracks.push(t);});cu.vias.forEach(v=>vias.push(v));len+=cu.len;r.path.forEach(id=>ext.add(id));
+    cur=cur.concat(rest[gi]);rest.splice(gi,1);}
+  return{ok:true,tracks,vias,len};
+}
 function unroute(B,list){ // remove auto tracks/vias (all, or only those in list)
   const kill=list?new Set(list):null;const keep=p=>!(p.auto&&(!kill||kill.has(p)));
   const keys=PC.cuKeys(B);keys.forEach(s=>{B.layers[s+'.cu']=B.layers[s+'.cu'].filter(keep);});B.vias=B.vias.filter(keep);
@@ -5602,7 +5690,7 @@ function drc(B,opts){
     const gap=shapeGap(a,b);if(gap<o.clear-0.03)out.push({net:a.net,other:b.net||(b.hole?'구멍':'(넷 없음)'),gap,at:a.k==='cap'?a.a:[a.x,a.y]});});});
   return out;
 }
-return{DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+return{jobPF,routeNetPF,groups,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 
 
@@ -13423,7 +13511,7 @@ const CLI_HELP=[
   ['strategies','배치 전략 설명 (balanced · thermal · noise · compact)'],
   ['reset [--strategy S] [--seed N] [--both] [--route] [--no-grow]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 자리가 모자라면 보드를 10 %씩 키워(최대 3배 면적) 다시 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립). --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
-  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia]','열린 넷을 자동 배선: 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
+  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
   ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
@@ -13649,6 +13737,16 @@ async function cliRoute(a){CLI.routed=true;
   for(;;){r=it.next();if(r.done)break;const p=r.value;
     if(performance.now()-last>80){cliSet(prog,p.phase==='route'?`배선 중… ${p.i+1}/${p.total} · ${p.net}`:`막힌 넷 다시 배선 ${p.round}/${p.max} · ${p.net} (완료 ${p.ok}/${p.total})`);await cliTick();last=performance.now();}
     if(CLI.stopReq){cliSet(prog,'중지했습니다. 지금까지의 배선을 남깁니다.');break;}}
+  // stage 2 — PathFinder (negotiated congestion): the nets still open are routed through the congestion and every net
+  // that then shares a cell is re-routed with rising congestion prices until the conflicts are gone
+  let pfNote='';if(!a['no-pf']&&a.pf!==false&&!CLI.stopReq){PCBEDIT.rebuildNets(BD);const open1=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net)).length;
+    if(open1){cliSet(prog,`협상 배선(PathFinder) 준비… 미배선 ${open1}개`);await cliTick();
+      const it3=AUTOROUTE.jobPF(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,pfRounds:a['pf-rounds']?+a['pf-rounds']:14,pfTimeMs:a['pf-time']?+a['pf-time']*1000:90000});
+      let r3,last3=performance.now();for(;;){r3=it3.next();if(r3.done)break;const p=r3.value;
+        if(performance.now()-last3>80){cliSet(prog,`협상 배선 라운드 ${p.round}/${p.max} · ${p.i+1}/${p.total} ${p.net} (충돌 ${p.conflicts} · 미배선 ${p.open})`);await cliTick();last3=performance.now();}
+        if(CLI.stopReq)break;}
+      PCBEDIT.rebuildNets(BD);const v=r3&&r3.done?r3.value:null;const open2=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net)).length;
+      pfNote=`협상 배선(PathFinder): 미배선 ${open1} → ${open2}${v?` · 라운드 ${v.rounds} · ${(v.ms/1000).toFixed(1)} s${v.dropped?` · 충돌 잔류 ${v.dropped}`:''}`:''}`;lines.push(pfNote);}}
   const fan2=AUTOPLACE.fanout(BD,{thermal:st==='thermal',clear:clr,width:Math.min(0.4,pwr),via});fan.vias+=fan2.vias;fan.fail=fan2.fail;lines[0]=`${PCB.stackOf(BD).some(x=>x.role==='pwr')?'GND·전원 플레인':'GND'} 팬아웃 비아 ${fan.vias}개${fan.fail.length?` (자리 없음: ${fan.fail.slice(0,6).join(', ')})`:''}${ml?` · 비아 ${via.d}/${via.drill} mm · 간격 ${clr} mm`:''}`;
   PCBEDIT.rebuildNets(BD);const res=r&&r.done?r.value:null;const ms=performance.now()-t0;
   let open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));

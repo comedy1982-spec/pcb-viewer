@@ -17,7 +17,7 @@ const CLI_HELP=[
   ['strategies','배치 전략 설명 (balanced · thermal · noise · compact)'],
   ['reset [--strategy S] [--seed N] [--both] [--route] [--no-grow]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 자리가 모자라면 보드를 10 %씩 키워(최대 3배 면적) 다시 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립). --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
-  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia]','열린 넷을 자동 배선: 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
+  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
   ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
@@ -243,6 +243,16 @@ async function cliRoute(a){CLI.routed=true;
   for(;;){r=it.next();if(r.done)break;const p=r.value;
     if(performance.now()-last>80){cliSet(prog,p.phase==='route'?`배선 중… ${p.i+1}/${p.total} · ${p.net}`:`막힌 넷 다시 배선 ${p.round}/${p.max} · ${p.net} (완료 ${p.ok}/${p.total})`);await cliTick();last=performance.now();}
     if(CLI.stopReq){cliSet(prog,'중지했습니다. 지금까지의 배선을 남깁니다.');break;}}
+  // stage 2 — PathFinder (negotiated congestion): the nets still open are routed through the congestion and every net
+  // that then shares a cell is re-routed with rising congestion prices until the conflicts are gone
+  let pfNote='';if(!a['no-pf']&&a.pf!==false&&!CLI.stopReq){PCBEDIT.rebuildNets(BD);const open1=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net)).length;
+    if(open1){cliSet(prog,`협상 배선(PathFinder) 준비… 미배선 ${open1}개`);await cliTick();
+      const it3=AUTOROUTE.jobPF(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,pfRounds:a['pf-rounds']?+a['pf-rounds']:14,pfTimeMs:a['pf-time']?+a['pf-time']*1000:90000});
+      let r3,last3=performance.now();for(;;){r3=it3.next();if(r3.done)break;const p=r3.value;
+        if(performance.now()-last3>80){cliSet(prog,`협상 배선 라운드 ${p.round}/${p.max} · ${p.i+1}/${p.total} ${p.net} (충돌 ${p.conflicts} · 미배선 ${p.open})`);await cliTick();last3=performance.now();}
+        if(CLI.stopReq)break;}
+      PCBEDIT.rebuildNets(BD);const v=r3&&r3.done?r3.value:null;const open2=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net)).length;
+      pfNote=`협상 배선(PathFinder): 미배선 ${open1} → ${open2}${v?` · 라운드 ${v.rounds} · ${(v.ms/1000).toFixed(1)} s${v.dropped?` · 충돌 잔류 ${v.dropped}`:''}`:''}`;lines.push(pfNote);}}
   const fan2=AUTOPLACE.fanout(BD,{thermal:st==='thermal',clear:clr,width:Math.min(0.4,pwr),via});fan.vias+=fan2.vias;fan.fail=fan2.fail;lines[0]=`${PCB.stackOf(BD).some(x=>x.role==='pwr')?'GND·전원 플레인':'GND'} 팬아웃 비아 ${fan.vias}개${fan.fail.length?` (자리 없음: ${fan.fail.slice(0,6).join(', ')})`:''}${ml?` · 비아 ${via.d}/${via.drill} mm · 간격 ${clr} mm`:''}`;
   PCBEDIT.rebuildNets(BD);const res=r&&r.done?r.value:null;const ms=performance.now()-t0;
   let open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));
