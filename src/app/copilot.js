@@ -235,5 +235,5 @@ $('#dockTg').addEventListener('click',()=>dockToggle());
 $('#dockPop').addEventListener('click',()=>{if(COP.shown==='ds'){toast('데이터시트 탭은 새 창으로 띄울 수 없습니다. 페이지의 [원본 파일] 링크를 쓰세요.');return;}panelPop(COP.shown==='ai'?'ai':'insp');});
 // ` anywhere (outside a text field) jumps to the 도우미 input
 document.addEventListener('keydown',e=>{if(e.key!=='`'||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target.matches('input,select,textarea'))return;e.preventDefault();e.stopImmediatePropagation();copFocus();},true);
-dockPaint();if(COP.tab!=='ai')setPanel(COP.tab);
+dockPaint();if(COP.tab!=='ai'){try{setPanel(COP.tab);}catch(e){console.error(e);COP.tab='ai';dockPaint();}}
 copSay('out','설계 도우미입니다. 요구사항·질문·명령을 적으면 지금 단계(1 시스템 · 2 회로 · 3 PCB · 4 기구)의 콘솔이 처리합니다. AI 모드에서는 Claude가 같은 명령을 골라 실행하고, 설계를 바꾼 실행은 [유지] / [되돌리기]로 정할 수 있습니다. 패널은 오른쪽 위 버튼으로 새 창에 띄울 수 있습니다.');

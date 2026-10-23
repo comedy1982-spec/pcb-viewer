@@ -552,8 +552,8 @@ function selectComp(ref,focus){
   if(focus&&S.view!=='3d'){const cx=(c.bb[0]+c.bb[2])/2,cy=(c.bb[1]+c.bb[3])/2;const sx=S.view==='B'?BD.W-cx:cx;V2.ox=vw/2-sx*V2.s;V2.oy=vh/2-(BD.H-cy)*V2.s;}
   refresh(true);
 }
-const filtComps=()=>BD.comps.filter(c=>!S.q||[c.ref,c.val,c.fp,c.mpn,c.desc].concat(c.pads.map(p=>p.net||'')).join(' ').toLowerCase().includes(S.q));
-const filtNets=()=>BD.netOrder.filter(n=>!S.q||n.toLowerCase().includes(S.q));
+const filtComps=()=>!BD?[]:BD.comps.filter(c=>!S.q||[c.ref,c.val,c.fp,c.mpn,c.desc].concat(c.pads.map(p=>p.net||'')).join(' ').toLowerCase().includes(S.q));
+const filtNets=()=>!BD?[]:BD.netOrder.filter(n=>!S.q||n.toLowerCase().includes(S.q));
 const sideBadge=s=>`<span class="badge ${s}">${s==='T'?'TOP':'BOT'}</span>`;
 const fmt=(v,d)=>(+v).toFixed(d==null?2:d);
 // datasheet block: key specs from the part database, manufacturer links, and a local copy when the viewer runs from the repo
@@ -588,7 +588,7 @@ function netCard(n){
   <dl class="kv"><dt>상단 트랙</dt><dd>${fmt(N.len.T,1)} mm</dd><dt>하단 트랙</dt><dd>${fmt(N.len.B,1)} mm</dd>${Object.keys(N.len).filter(k=>k!=='T'&&k!=='B'&&N.len[k]>0).map(k=>`<dt>${k} 트랙</dt><dd>${fmt(N.len[k],1)} mm</dd>`).join('')}<dt>비아</dt><dd>${N.vias.length}개</dd>${N.zones?`<dt>동박면</dt><dd>${N.zones}개</dd>`:''}</dl>
   ${pads?`<div class="sub">연결된 핀</div><div style="line-height:1.9">${pads}${N.pads.length>300?' …':''}</div>`:''}</div>`;
 }
-function renderPane(){
+function renderPane(){if(!BD){const p=$('#pane');if(p)p.innerHTML='<div class="empty"><p style="margin:0">보드가 없습니다. 첫 화면에서 신규 설계나 기존 프로젝트를 여세요.</p></div>';return;}
   $$('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab?'true':'false'));
   const fc=filtComps(),fn=filtNets();$('#n-bom').textContent=fc.length;$('#n-net').textContent=fn.length;
   const pane=$('#pane');
