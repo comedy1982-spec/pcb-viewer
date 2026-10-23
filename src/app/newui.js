@@ -28,11 +28,12 @@ const NP_HELP=[
   ['set <블록ID> <파라미터> <값> · remove <블록ID>','블록 수정·삭제 (ID는 plan에 표시)'],['mcu <stm32|tc364>','MCU 바꾸기'],
   ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
   ['diagram','시스템 다이어그램을 글로 (블록 · 전원 레일 · MCU 신호 · 외부 연결)'],
+  ['cands [블록] [순위|MPN]','블록의 주요 소자 후보를 요구사항 기준 순위로 (사양·ASIL·차량용 등급·단가·핀 데이터) · 순위나 MPN을 주면 지정. 오른쪽 선택 패널의 표와 같음'],
   ['check [--fix]','회로 생성 전 점검: 구현(impl) 없는 블록 · 전원 레일 미연결 · MCU 미연결 · 고립 블록을 고치는 명령과 함께 (--fix: 이름으로 추측한 구현을 자동 지정). [다음: 회로 생성] 때 자동 실행'],
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['check','datasheet','sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['cands','candidates','check','datasheet','sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -67,6 +68,10 @@ async function npRun(line,by){
   switch(cmd){
     case'help':case'?':return NP_HELP.map(x=>`${x[0]}\n  ${x[1]}`).join('\n')+'\n\n라이브러리에 없는 부품은 생성 후 회로도 CLI의 add로 더하세요.';
     case'plan':case'status':return NEWPROJ.summary(npEnsure()).text;
+    case'cands':case'candidates':{const A=NP.arch;if(!A)throw new Error('다이어그램이 없습니다.');const id=a._[0];const bs=id?[HWARCH.find(A,id)]:A.blocks.filter(b=>!b.ext);
+      const out=[];for(const b of bs){const R=npCandRank(b);if(R)out.push(PARTRANK.text(b,R));}
+      if(a._[1]){const b=bs[0];const R=npCandRank(b);const r=R&&R.rows.find(x=>x.mpn.toUpperCase()===String(a._[1]).toUpperCase()||String(x.rank)===String(a._[1]));if(!r)throw new Error('후보에 없음: '+a._[1]);return await npSetPart(b,{mpn:r.mpn,mfr:r.mfr,note:r.note});}
+      return out.join('\n\n')||'후보가 있는 블록이 없습니다.';}
     case'check':{const A=NP.arch;if(!A||!A.blocks.length)throw new Error('다이어그램이 없습니다.');const I=HWARCH.check(A);
       if(a.fix){let n=0;for(const x of I){if(x.code==='noImpl'&&x.guess){try{await npRun(`impl ${x.id} ${x.guess}`);n++;}catch(e){}}}npRender();return (n?`추천 구현 ${n}개 지정\n`:'')+HWARCH.checkText(HWARCH.check(A));}
       return HWARCH.checkText(I);}
@@ -466,11 +471,28 @@ function archListPaint(){const host=$('#arBlocks');if(!host)return;const A=NP.ar
   if(!A){host.innerHTML=`<p class="lead" style="margin:0">${BD&&SYS.A?'지금 다이어그램은 보드에서 추출한 것입니다. [보드에서 추출]을 누르면 편집할 수 있는 블록으로 가져옵니다.':'아직 블록이 없습니다.'}</p>`;return;}
   host.innerHTML=HWARCH.GROUPS.map(g=>{const bs=A.blocks.filter(b=>b.group===g[0]);if(!bs.length)return'';return`<div class="ar-g"><span>${esc(g[1])}</span>${bs.map(b=>`<div class="ar-b${SYS.sel===b.id?' on':''}" data-asel="${esc(b.id)}"><b>${esc(b.label)}</b><span class="mono">${esc(b.id)}</span><button type="button" class="linkbtn" data-adel="${esc(b.id)}" aria-label="${esc(b.label)} 삭제">삭제</button></div>`).join('')}</div>`;}).join('');
   host.querySelectorAll('[data-asel]').forEach(d=>d.addEventListener('click',e=>{if(e.target.closest('[data-adel]'))return;SYS.sel=d.dataset.asel;SYS.view='hw';sysRender();}));}
+/* ---- key-part candidates of a block, ranked for the requirement (PARTRANK) ---- */
+function npCandCtx(){const A=NP.arch||{};const req=(A.req||$('#npReq').value||'');const m=req.match(/(\d+(?:\.\d+)?)\s*V(?![a-z])/i);
+  return{req,vin:m?+m[1]:null,asil:typeof SAFETY!=='undefined'&&NP.arch?SAFETY.level(NP.arch):'QM',auto:/ecu|차량|automotive|자동차|asil|iso\s*26262|aec|aurix|tc3/i.test(req),pref:NP.vw||{price:1,feat:1,ext:1},prof:NP.prof||null,
+    lookup:mpn=>NEWPROJ.partLookup?NEWPROJ.partLookup(mpn):null,priceOf:mpn=>{try{const p=PARTS.price(mpn);return p!=null&&p>0.05?p:null;}catch(e){return null;}}};}
+function npCandRank(b){if(typeof PARTRANK==='undefined')return null;const R=PARTRANK.rank(b,npCandCtx());return R.rows.length?R:null;}
+function npCandHTML(b){const R=npCandRank(b);if(!R)return'';SYS.cands=SYS.cands||{};SYS.cands[b.id]=R.rows;const cur=b.part&&b.part.mpn;const pv=NP.candPref||'bal';
+  const rows=R.rows.slice(0,6).map((r,i)=>`<div class="cd-row${r.ok?'':' bad'}${cur&&cur.toUpperCase()===r.mpn.toUpperCase()?' on':''}" data-cand="${i}" role="button" tabindex="0" title="${esc((r.why.concat(r.bad)).join(' · '))}">
+      <div class="cd-h"><span class="cd-rk">${r.rank}</span><b>${esc(r.mpn)}</b><span class="cls">${esc(r.mfr)}</span><span class="cd-p">${r.price!=null?'$'+r.price:''}</span></div>
+      <div class="cd-n">${esc(r.note)}</div>
+      <div class="cd-b">${r.src==='profile'?'<span class="src ds">제품 표준</span>':''}${r.grade?`<span class="src ds">${esc(r.grade)}</span>`:''}${r.asil?`<span class="src">ASIL ${esc(r.asil)}</span>`:''}${r.pins?'<span class="src ds" title="라이브러리에 핀 데이터가 있어 바로 회로 생성">핀 데이터</span>':'<span class="src" title="핀 데이터 없음 — 고르면 데이터시트 PDF로 핀 추출">핀 없음</span>'}${r.why.filter(w=>!/^Q10|^ASIL|핀 데이터|제품 표준/.test(w)).slice(0,2).map(w=>`<span class="src">${esc(w)}</span>`).join('')}${r.bad.length?`<span class="cd-bad">✕ ${esc(r.bad.join(' · '))}</span>`:''}</div></div>`).join('');
+  return`<div class="np-cand"><div class="np-bh" style="margin-top:6px"><b>주요 소자 후보</b><span class="cls">${R.rows.length}개${R.needs.i?` · 요구 ${R.needs.i} A`:''}${R.needs.v?` · ${R.needs.v} V`:''}</span><select data-cand-pref class="cd-sel" title="순위 기준"><option value="bal"${pv==='bal'?' selected':''}>균형</option><option value="price"${pv==='price'?' selected':''}>가격 우선</option><option value="feat"${pv==='feat'?' selected':''}>기능 우선</option><option value="ext"${pv==='ext'?' selected':''}>확장성 우선</option></select></div>
+    <div class="cd-list">${rows}</div>
+    <div class="cls" style="margin-top:4px">행을 누르면 그 부품으로 지정합니다${cur?` · 지금: <b>${esc(cur)}</b> <button type="button" class="linkbtn" data-cand-clear>해제</button>`:''} · 참고 순위(사양·등급·단가·핀 데이터 기준) — 재고·수명은 부품 API에서 확인</div></div>`;}
+async function npPickCand(id,i){const b=NP.arch&&NP.arch.blocks.find(x=>x.id===id);const r=SYS.cands&&SYS.cands[id]&&SYS.cands[id][i];if(!b||!r)return;
+  if(!r.ok){const a=await copAsk({q:`${r.mpn}는 요구 조건에 맞지 않습니다 (${r.bad.join(', ')}). 그래도 지정할까요?`,opts:['지정','취소']});if(a!=='지정')return;}
+  npBusy(true);try{npSay('cmd',`parts ${id} ${r.mpn}`);npSay('ok',await npSetPart(b,{mpn:r.mpn,mfr:r.mfr,note:r.note}));}catch(e){npSay('err',e.message||String(e));}npBusy(false);}
 function sysSelPaint(){const box=$('#sysSel');if(!box)return;
   if(SYS.view==='hw'){const A=SYS.A;const b=A&&SYS.sel&&A.blocks.find(x=>x.id===SYS.sel);
     if(!b){box.innerHTML='<p class="lead" style="margin:0">블록을 누르면 기능·인터페이스·회로 구현을 여기서 고칩니다.</p>';return;}
     const editable=!!(NP.arch&&NP.arch.blocks.includes(b));const io=A.links.filter(l=>l.a===b.id||l.b===b.id);const N=id=>A.blocks.find(x=>x.id===id);
     box.innerHTML=`<div class="np-blk"><div class="np-bh"><b>${esc(b.label)}</b><span class="mono">${esc(b.id)}</span></div>
+      ${editable&&!b.ext?npCandHTML(b):''}
       ${editable?`<label class="fld"><span>이름</span><input data-ar="label" value="${esc(b.label)}"></label>
       <label class="fld"><span>그룹</span><select data-ar="group">${HWARCH.GROUPS.map(g=>`<option value="${g[0]}"${g[0]===b.group?' selected':''}>${esc(g[1])} · ${esc(g[2])}</option>`).join('')}</select></label>
       <label class="fld"><span>기능 (줄마다 하나)</span><textarea data-ar="feats" rows="3">${esc(b.feats.join('\n'))}</textarea></label>
@@ -485,6 +507,9 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
     box.querySelectorAll('[data-sg]').forEach(el=>el.addEventListener('change',()=>npExec(`sg tag ${b.id} ${el.dataset.sg}${el.checked?'':' --off'}`)));
     box.querySelector('[data-ar="feats"]')?.addEventListener('change',e=>{npPush();b.feats=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);npRender();});
     box.querySelector('[data-ar="impl"]')?.addEventListener('change',e=>{if(e.target.value)npExec(`impl ${b.id} ${e.target.value}`);});
+    box.querySelectorAll('[data-cand]').forEach(tr=>{tr.addEventListener('click',()=>npPickCand(b.id,+tr.dataset.cand));tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();npPickCand(b.id,+tr.dataset.cand);}});});
+    box.querySelector('[data-cand-clear]')?.addEventListener('click',()=>{npPush();b.part=null;b.feats=(b.feats||[]).filter(f=>!/^부품: /.test(f));NP.planManual=false;archToPlan(true);npRender();npSay('ok',`${b.id}: 부품 지정 해제 — 라이브러리 기본 부품`);});
+    box.querySelector('[data-cand-pref]')?.addEventListener('change',e=>{const v=e.target.value;NP.vw=v==='price'?{price:2,feat:1,ext:1}:v==='feat'?{price:1,feat:2,ext:1}:v==='ext'?{price:1,feat:1,ext:2}:{price:1,feat:1,ext:1};NP.candPref=v;sysSelPaint();});
     return;}
   const D=SYS.D;const n=D&&SYS.sel&&D.nodes.find(x=>x.id===SYS.sel);
   if(!n){box.innerHTML='<p class="lead" style="margin:0">부품 구성도의 블록을 누르면 부품·전원·신호와 파라미터가 여기 나옵니다.</p>';return;}
