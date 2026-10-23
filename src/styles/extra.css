@@ -650,5 +650,29 @@ details.thsec>*:not(summary){margin:0 10px 10px}
 .sov-card table{width:100%;border-collapse:collapse;font-size:12px}.sov-card td{padding:3px 4px;border-top:1px solid var(--line,#e5e7eb)}.sov-card td:first-child{color:var(--muted);width:2.5em}.sov-card td.n{color:var(--accent);font-family:var(--mono,monospace)}
 .sov-card tr.on td{background:var(--accent-soft,#fff3e0);font-weight:600}.sov-card .si-l{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 @media (max-width:640px){.sov-card{top:auto;bottom:52px;max-height:45%}}
+/* progress / loading: top bar + status card (transform-only animations keep running during blocking steps) */
+#progTop{position:fixed;left:0;right:0;top:0;height:3px;z-index:90;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .2s}
+#progTop.on{opacity:1}
+#progTop i,#progCard .pg-bar i{position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--accent);transform-origin:0 50%;will-change:transform}
+#progTop:not(.det) i,#progCard .pg-bar:not(.det) i{width:38%;animation:pgSlide 1.25s cubic-bezier(.45,0,.4,1) infinite}
+#progTop.det i,#progCard .pg-bar.det i{transition:transform .25s ease-out}
+@keyframes pgSlide{0%{transform:translateX(-100%)}100%{transform:translateX(265%)}}
+#progCard{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:85;display:flex;align-items:center;gap:10px;min-width:240px;max-width:min(440px,calc(100vw - 32px));
+  padding:9px 10px 9px 12px;background:var(--raised);color:var(--fg);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);
+  opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .18s,transform .18s}
+#progCard.on{opacity:1;transform:none;pointer-events:auto}
+#progCard .pg-spin{flex:none;width:18px;height:18px;border-radius:50%;border:2.5px solid color-mix(in srgb,var(--accent) 22%,transparent);border-top-color:var(--accent);animation:pgSpin .8s linear infinite;will-change:transform}
+@keyframes pgSpin{to{transform:rotate(360deg)}}
+#progCard .pg-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+#progCard .pg-l{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#progCard .pg-s{display:flex;gap:10px;font-size:11px;color:var(--muted);font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+#progCard .pg-s .pg-t{margin-left:auto}
+#progCard .pg-bar{position:relative;height:3px;border-radius:2px;background:color-mix(in srgb,var(--accent) 15%,transparent);overflow:hidden}
+#progCard .pg-stop{flex:none}
+#progCard.stopping .pg-spin{border-top-color:var(--muted)}
+html.prog-on .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+html.prog-on #copilot.busy .cp-ai:last-child .cp-b::after{content:"";display:inline-block;width:10px;height:10px;margin-left:6px;vertical-align:-1px;border-radius:50%;border:2px solid color-mix(in srgb,var(--accent) 25%,transparent);border-top-color:var(--accent);animation:pgSpin .8s linear infinite}
+@media (max-width:640px){#progCard{left:12px;right:12px;translate:none;max-width:none;min-width:0;bottom:calc(12px + env(safe-area-inset-bottom,0px))}}
+@media (prefers-reduced-motion:reduce){#progTop:not(.det) i,#progCard .pg-bar:not(.det) i{animation:none;width:100%;opacity:.55}#progCard .pg-spin{animation-duration:2.4s}}
 </style>
 

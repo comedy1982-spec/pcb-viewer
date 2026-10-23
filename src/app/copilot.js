@@ -61,7 +61,8 @@ function copAskClick(d,e,b){const i=+b.dataset.opt;const inp=d.querySelector('in
   if(b.hasAttribute('data-ok')){const txt=(inp&&inp.value.trim())||'';const parts=e.sel.map(k=>e.opts[k]).concat(txt?[txt]:[]);if(!parts.length){toast('답을 고르거나 적어 주세요.');return;}copAnswer(e,parts.join(', '));}}
 function copNode(e,doc){const d=doc.createElement('div');d.dataset.cid=e.cid;copFill(d,e);return d;}
 // called by every console's say/set: new entries join the log, updates repaint in place
-function copPaint(src,e,upd){
+function copPaint(src,e,upd){try{copPaint0(src,e,upd);}finally{if(typeof progNote==='function')progNote(e,upd);}}
+function copPaint0(src,e,upd){
   if(!e.cid){e.cid=++COP.seq;e.src=src;
     if(e.k==='cmd'&&COP.pending!=null&&String(e.t).replace(/\s+\(AI 모드\)\s*$/,'').trim()===COP.pending){e.user=true;COP.pending=null;}
     const prev=COP.log[COP.log.length-1];e.newSrc=!prev||prev.src!==src;COP.log.push(e);if(COP.log.length>600)COP.log.shift();}
@@ -70,11 +71,11 @@ function copPaint(src,e,upd){
   let d=L.querySelector(`[data-cid="${e.cid}"]`);
   if(d)copFill(d,e);else{d=copNode(e,L.ownerDocument);L.appendChild(d);while(L.children.length>600)L.firstChild.remove();}
   if(near||e.user||!upd)L.scrollTop=L.scrollHeight;}
-function copDrop(e){COP.log=COP.log.filter(x=>x!==e);const L=$('#copLog');const d=L&&L.querySelector(`[data-cid="${e.cid}"]`);if(d)d.remove();}
+function copDrop(e){if(typeof progDropNote==='function')progDropNote(e);COP.log=COP.log.filter(x=>x!==e);const L=$('#copLog');const d=L&&L.querySelector(`[data-cid="${e.cid}"]`);if(d)d.remove();}
 function copClear(src){COP.log=src?COP.log.filter(x=>x.src!==src):[];copRebuild();}
 function copRebuild(){const L=$('#copLog');if(!L)return;L.innerHTML='';let prev=null;COP.log.forEach(e=>{e.newSrc=!prev||prev.src!==e.src;prev=e;L.appendChild(copNode(e,L.ownerDocument));});L.scrollTop=L.scrollHeight;}
 function copSay(k,t){copPaint('sys',{k,t});}
-function copBusyPaint(){const b=copBusyAny();const ask=!!(COP.ask&&COP.ask.state==='open');const s=$('#copStop'),r=$('#copSend'),el=$('#copilot');if(s)s.hidden=!b;if(r)r.disabled=b&&!ask;if(el)el.classList.toggle('busy',b);}
+function copBusyPaint(){if(typeof progSync==='function')progSync();const b=copBusyAny();const ask=!!(COP.ask&&COP.ask.state==='open');const s=$('#copStop'),r=$('#copSend'),el=$('#copilot');if(s)s.hidden=!b;if(r)r.disabled=b&&!ask;if(el)el.classList.toggle('busy',b);}
 async function copChg(cid,act){const e=COP.log.find(x=>x.cid===+cid);if(!e||e.state!=='open')return;
   if(act==='keep'){e.state='kept';copPaint(e.src,e,true);return;}
   if(copBusyAny()){toast('실행 중에는 되돌릴 수 없습니다.');return;}

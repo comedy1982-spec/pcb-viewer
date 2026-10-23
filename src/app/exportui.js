@@ -226,7 +226,8 @@ function openExport(){if(!BD){toast('먼저 보드를 열거나 신규 설계를
       b.disabled=true;try{await runExport(b.dataset.x,sel);}catch(err){console.error(err);toast('내보내기 실패: '+(err&&err.message||err));}b.disabled=false;});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.hidden)m.hidden=true;});}
   m.innerHTML=expDialogHTML();m.hidden=false;setTimeout(()=>{const f=m.querySelector('[data-x]');if(f)f.focus();},30);}
-async function runExport(x,sel){const[a,b,c]=x.split(':');
+async function runExport(x,sel){if(typeof progRun==='function')return progRun(x.startsWith('report')?'설계 보고서 만드는 중…':x.startsWith('xlsx')?'엑셀 파일 만드는 중…':'내보낼 파일 만드는 중…',()=>runExport0(x,sel));return runExport0(x,sel);}
+async function runExport0(x,sel){const[a,b,c]=x.split(':');
   switch(a){case'view':return exportCurrentView(b);case'layer':return exportLayer(c,b==='B'?'B':'T',b==='T'||b==='B'?null:b);case'layers':return exportAllLayers();case'sch':return exportSch(c,+b);case'sys':return exportSys(c,b);
     case'3d':{const u=board3DPNG({iso:S.view!=='3d',size:1600,housing:false});return u?expSave(expName()+'_3D.png',dataUrlBytes(u),'image/png'):toast('3D를 그리지 못했습니다.');}
     case'housing':return exportHousing(b);

@@ -194,7 +194,8 @@ function npNL(t){const s=t.toLowerCase();const out=[];const c2=NP.arch&&NP.arch.
   const m=s.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*[x×*]\s*(\d+(?:\.\d+)?)/);if(m&&/보드|기판|board|크기|사이즈/.test(s))out.push(`board ${m[1]} ${m[2]}`);
   return out.length?out:null;}
 // build the board from the plan and load it into the viewer
-async function npGenerate(o){
+async function npGenerate(o){if(!o||!o.variant||typeof progRun!=='function')return npGenerate0(o);return progRun('회로 생성 중… (부품 배선 · 회로도 · 가이드라인 점검)',()=>npGenerate0(o));}
+async function npGenerate0(o){
   if(NP.arch&&!NP.planManual)archToPlan(true);const P0=npEnsure();if(!P0.blocks.length)throw new Error('회로로 구현할 블록이 없습니다 (HW 블록에 impl을 지정하세요)');
   if(!o.variant){const vs=npVariants(true);NP.chooser=true;setStep(2);const rec=NEWPROJ.recommend(vs,NP.vw);return '회로 안을 고르세요 (참고 단가는 데이터시트 DB 추정값):\n'+NEWPROJ.variantsText(vs)+`\n추천: ${rec.label} (${rec.tag}) — 카드의 [이 안으로 회로 생성] 또는 variants pick ${rec.key}`;}
   const V=npVariants().find(v=>v.key===o.variant);if(!V)throw new Error('회로 안: cost · std · ext');const P=V.plan;P.name=P0.name;P.req=P0.req;NP.picked=V.key;NP.chooser=false;
@@ -247,7 +248,8 @@ async function pcbStart(p){
       cmds.push(p.shape==='round'?`board shape round ${w} ${h}${isFinite(num)?' --corner '+num:''}`:p.shape==='circle'?`board shape circle ${isFinite(num)?num:Math.min(w,h)}`:p.shape==='hex'||p.shape==='oct'?`board shape ${p.shape} ${isFinite(num)?num:w}`:p.shape==='L'||p.shape==='T'?`board shape ${p.shape} ${w} ${h}${cut?' --cut '+cut.replace(/\s/g,''):''}${at?' --at '+at:''}`:`board shape ${p.shape} ${w} ${h}`);}}
   if(p.min)cmds.push(`board minimize --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
   else cmds.push(`reset --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
-  cliSay('out','PCB 설계 시작: '+cmds.join(' → '));for(const c of cmds){await cliExec(c);if(CLI.stopReq)break;}
+  cliSay('out','PCB 설계 시작: '+cmds.join(' → '));progStart('pcbstart','PCB 설계 시작',{total:cmds.length,stop:()=>{CLI.stopReq=true;}});
+  try{for(let k=0;k<cmds.length;k++){const c=cmds[k];progSet('pcbstart',{i:k,label:`PCB 설계 ${k+1}/${cmds.length} 단계 · ${c.split(' --')[0]}`});await cliExec(c);if(CLI.stopReq)break;}}finally{progEnd('pcbstart');}
   stepPaint();}
 /* ---------- step 2 entry: three circuit variants to pick from (price · features · extensibility) ---------- */
 function npVariants(fresh){if(NP.arch&&!NP.planManual)archToPlan(true);const P=npEnsure();const key=JSON.stringify(P.blocks)+'|'+P.req;

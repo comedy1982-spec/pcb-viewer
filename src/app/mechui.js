@@ -245,7 +245,8 @@ function mechTris(obj){const out=[];obj.updateMatrixWorld(true);const inv=new TH
     out.push({name:(me.userData.el||me.name||me.geometry.type||'body').toString(),tris});});
   return out;}
 function mechSTEP(obj,name){if(typeof STEPW==='undefined')throw new Error('STEP 모듈 없음');return STEPW.write(mechTris(obj),{name});}
-async function mechExport(kind){
+async function mechExport(kind){if(typeof progRun==='function')return progRun(kind==='step'?'STEP 솔리드 만드는 중…':kind==='scad'?'OpenSCAD 모델 만드는 중…':'하우징 CAD 파일 만드는 중…',()=>mechExport0(kind));return mechExport0(kind);}
+async function mechExport0(kind){
   kind=kind||'zip';const R=mechRun();const H=mechCfg();const base=(BD.name||'board').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'')||'board';
   if(kind==='scad'){const fn=await offerFile(base+'_housing.scad',new TextEncoder().encode(HOUSING.scad(R,BD.name)),'text/plain');if(fn)toast('OpenSCAD 모델을 내려받았습니다.');return fn;}
   const z=new JSZip();if(kind==='zip')z.file(base+'_housing.scad',HOUSING.scad(R,BD.name));let stepNote='';
