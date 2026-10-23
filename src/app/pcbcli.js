@@ -1,6 +1,7 @@
 /* ---------- layout console (CLI): board size, reset from the schematic, strategy placement, auto-routing, reports.
    Plain commands run here; anything else goes to Claude (when the viewer allows it), which drives the same commands as a tool. */
-var CLI={open:false,log:[],hist:[],hi:-1,busy:false,lock:new Set(),strategy:'balanced',sample:undefined,abort:null,seq:0,stopReq:false};
+var CLI={open:false,log:[],hist:[],hi:-1,busy:false,lock:new Set(),strategy:'balanced',sample:undefined,abort:null,seq:0,stopReq:false,autoFix:true};
+try{if(localStorage.getItem('aod.autofix')==='off')CLI.autoFix=false;}catch(e){}
 const CLI_HELP=[
   ['help [명령]','명령 목록과 사용법'],
   ['status','보드 크기·부품·넷·배선 상태'],
@@ -20,6 +21,7 @@ const CLI_HELP=[
   ['unroute','자동 배선한 트랙·비아 지우기'],
   ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
+  ['fix [--maxgrow 1.5] [--maxlayers 6] [--no-grow] [--no-layers] [--pinswap]','미배선 자동 개선: 비용이 적은 순서로 시도하고 다 배선되면 멈춤 — ① 전부 다시 배선(짧은 넷 먼저) ② 다른 시드로 재배치 ③ 다른 전략 ④ 보드 10·20·35·50% 키움 ⑤ 층 늘림(2→4→6) ⑥ (--pinswap) MCU 핀 재배정. 가장 좋은 결과를 남기고 한 번에 되돌리기. autofix on|off: 배선 뒤 미배선이 남으면 자동 실행(기본 켬)'],
   ['auto [S] [--tries N]','리셋 → 배치 → 배선 → DRC → 리포트를 한 번에. 미배선이 남으면 다른 시드로 다시 시도해 가장 좋은 결과를 남김'],
   ['lock <부품…> · unlock <부품…|all> · locks','자동 배치에서 고정할 부품'],
   ['move <부품> <x> <y> [각도] · rotate <부품> <각도> · flip <부품> [--no-route]','부품 하나 옮기기 · 돌리기 · 반대면으로. 그 부품 넷의 자동 배선은 지우고 바로 다시 배선 (--no-route 면 래츠네스트만 남김)'],
@@ -58,7 +60,7 @@ const CLI_CHIPS=[['열 분산 자동 배치·배선','auto thermal','열 분산 
   ['가이드라인 점검','guide check','PCB 설계 가이드라인을 점검하고 가장 중요한 개선 3가지를 알려줘'],
   ['하우징 설계','housing','현재 보드에 맞는 보호 하우징을 설계하고 재질·IP·진동 조건별 트레이드오프를 비교해 추천해줘'],
   ['리포트','report all','배치·열·EMC 리포트를 보고 문제를 우선순위대로 요약해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const CLI_CMDS=new Set(['width','analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
+const CLI_CMDS=new Set(['fix','autofix','width','analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
 
 /* ---- snapshots for undo (same objects: tracks, pads and silk keep their identity) ---- */
 function cliSnap(){return{poses:BD.comps.map(c=>({c,x:c.x,y:c.y,rot:c.rot||0,side:c.side})),layers:Object.fromEntries(Object.keys(BD.layers).map(k=>[k,BD.layers[k].slice()])),vias:BD.vias.slice(),
@@ -209,7 +211,7 @@ function cliPlace(a,scratch){
   cliCommit(before,scratch?'reset':'place');cliAfter(false);
   return grown+(cleared.tracks||cleared.vias?`트랙·동박 ${cleared.tracks}개와 비아 ${cleared.vias}개를 지웠습니다.\n`:'')+(pour?`${pour.net} 동박면을 ${pour.layer==='B'?'하단':'상단'}에 깔았습니다.\n`:'')+cliPlaceText(r,m,scratch)+(fixed.length?`\n고정 부품: ${fixed.join(', ')}`:'');
 }
-async function cliRoute(a){
+async function cliRoute(a){CLI.routed=true;
   if(BD.pcbPending)throw new Error('부품이 아직 배치되지 않았습니다. 먼저 reset(배치) 또는 auto를 실행하세요.');
   cliEnsureEdit();const st=cliStrat(a);const before=cliSnap();
   // multilayer boards use the smaller via of a fine-line process (0.45/0.2 mm, 0.15 mm clearance); 2-layer keeps 0.6/0.3 · 0.2
@@ -260,6 +262,47 @@ async function cliRoute(a){
   return lines.join('\n');
 }
 function cliUnroute(){cliEnsureEdit();const before=cliSnap();const n=PCB.cuKeys(BD).reduce((a,s)=>a+BD.layers[s+'.cu'].filter(p=>p.auto).length,0)+BD.vias.filter(v=>v.auto).length;AUTOROUTE.unroute(BD);PCBEDIT.rebuildNets(BD);cliCommit(before,'unroute');cliAfter(false);return`자동 배선 ${n}개(트랙·비아)를 지웠습니다.`;}
+/* ---- unrouted nets → find a fix by itself (cheapest first, stop at the first fully routed result, keep the best) ----
+   Every attempt starts from the same snapshot, so steps do not compound; the board only grows / gains layers in the steps
+   that say so. Score: unrouted ×1000 + DRC ×50 + area / original area ×10 + copper layers ×4 → the cheapest board that routes. */
+async function cliFix(a){a=a||{};if(BD.pcbPending)throw new Error('부품이 아직 배치되지 않았습니다. 먼저 reset 또는 auto를 실행하세요.');
+  cliEnsureEdit();const st0=cliStrat(a);const start=cliSnap();const u0=PE.undo.length;const W0=BD.W,H0=BD.H,L0=BD.copperLayers||2;
+  const open0=AUTOROUTE.openNets(BD).length;if(!open0&&!a.force)return'미배선이 없습니다.';
+  const shaped=BD.shape&&BD.shape.kind&&BD.shape.kind!=='rect';const maxG=a.maxgrow?Math.max(1,+a.maxgrow):1.5;const maxL=a.maxlayers?+a.maxlayers:6;
+  const stacks=Object.keys(PCB.STACKS).map(Number).filter(n=>n>L0&&n<=maxL).sort((x,y)=>x-y).slice(0,2);
+  const alt=st0==='balanced'?'thermal':'balanced';
+  const place=(st,seed)=>cliPlace({strategy:st,seed,both:a.both},true);
+  const route=async st=>{await cliRoute({strategy:st});};
+  const size=async f=>{await cliRun(`board size ${f1(W0*f)} ${f1(H0*f)} --anchor center`,true);};
+  const layers=async n=>{await cliRun(`board layers ${n}`,true);};
+  const steps=[];
+  steps.push({k:'reroute',label:'전부 지우고 다시 배선 (짧은 넷 먼저)',run:async()=>{AUTOROUTE.unroute(BD);PCBEDIT.rebuildNets(BD);await cliRoute({strategy:st0,order:'length'});}});
+  [7919*3+1,7919*5+1].forEach((sd,i)=>steps.push({k:'seed'+i,label:`다른 시드로 재배치 ${i+1}/2 → 배선`,run:async()=>{place(st0,sd);await route(st0);}}));
+  steps.push({k:'strat',label:`${alt} 전략으로 재배치 → 배선`,run:async()=>{place(alt,1);await route(alt);}});
+  if(a.pinswap)steps.push({k:'pinswap',label:'MCU 핀 재배정 → 재배치 → 배선 (회로 변경)',run:async()=>{await cliPinswap({});place(st0,1);await route(st0);}});
+  if(!shaped&&a.grow!==false&&!a['no-grow'])[1.1,1.2,1.35,1.5].filter(f=>f<=maxG+1e-9).forEach(f=>steps.push({k:'grow'+f,label:`보드 ${Math.round((f-1)*100)}% 키움 (${f1(W0*f)} × ${f1(H0*f)} mm) → 재배치 → 배선`,area:f*f,run:async()=>{await size(f);place(st0,1);await route(st0);}}));
+  if(a.layers!==false&&!a['no-layers'])stacks.forEach(n=>{steps.push({k:'L'+n,label:`${n}층으로 → 재배치 → 배선 (크기 유지)`,L:n,run:async()=>{await layers(n);place(st0,1);await route(st0);}});
+    if(!shaped&&a.grow!==false&&!a['no-grow']&&maxG>=1.2)steps.push({k:'L'+n+'g',label:`${n}층 + 보드 20% 키움 → 재배치 → 배선`,L:n,area:1.44,run:async()=>{await layers(n);await size(1.2);place(st0,1);await route(st0);}});});
+  const score=()=>{const o=AUTOROUTE.openNets(BD).length,d=PCBEDIT.drc(BD).length;return{o,d,s:o*1000+d*50+(BD.W*BD.H)/(W0*H0)*10+(BD.copperLayers||2)*4};};
+  const s0=score();let best={...s0,snap:start,label:'처음 상태'};const tried=[];
+  cliSay('out',`미배선 ${open0}개 — 개선안을 차례로 시도합니다 (${steps.length}단계, 다 배선되면 멈춤).`);
+  const pid=typeof progStart==='function'?progStart('fix','미배선 개선',{total:steps.length,stop:()=>{CLI.stopReq=true;}}):null;
+  CLI.inFix=true;
+  try{for(let i=0;i<steps.length;i++){const S=steps[i];if(CLI.stopReq)break;
+      if(pid)progSet('fix',{i,label:`미배선 개선 ${i+1}/${steps.length} · ${S.label}`});
+      cliRestore(start);const line=cliSay('out',`${i+1}/${steps.length} ${S.label}…`);await cliTick();
+      try{await S.run();}catch(e){cliSet(line,`${i+1}/${steps.length} ${S.label} — 건너뜀: ${e.message||e}`);continue;}
+      const r=score();tried.push({label:S.label,o:r.o,d:r.d});
+      cliSet(line,`${i+1}/${steps.length} ${S.label} → 미배선 ${r.o} · DRC ${r.d}${r.s<best.s?' (지금까지 최선)':''}`);
+      if(r.s<best.s)best={...r,snap:cliSnap(),label:S.label};
+      if(!r.o&&!r.d)break;}}
+  finally{CLI.inFix=false;CLI.routed=false;if(pid)progEnd('fix');}
+  cliRestore(best.snap);PE.undo.splice(u0);const after=cliSnap();pePush({copper:true,label:'fix',undo:()=>{cliRestore(start);cliAfter(true);},redo:()=>{cliRestore(after);cliAfter(true);}});cliAfter(true);
+  const L=[`미배선 개선: ${s0.o} → ${best.o}개${best.label!=='처음 상태'?` · 채택: ${best.label}`:' · 개선안 없음 (처음 상태 유지)'}${CLI.stopReq?' · 중지함':''}`,
+    `보드 ${f1(W0)} × ${f1(H0)} → ${f1(BD.W)} × ${f1(BD.H)} mm · ${L0} → ${BD.copperLayers||2}층 · DRC ${best.d}건`];
+  if(best.o){const nets=AUTOROUTE.openNets(BD).slice(0,8).map(o=>o.net);L.push(`남은 미배선: ${nets.join(', ')}${best.o>8?' …':''}`);
+    L.push('다음 방법: fix --maxgrow 2 (더 크게) · fix --maxlayers 8 · fix --pinswap (MCU 핀 재배정, 회로 변경) · 남은 넷을 수동 배선 · 대전류 넷은 동박면(pour)');}
+  L.push('되돌리기 한 번(Ctrl+Z)으로 개선 전 상태로 돌아갑니다.');return L.join('\n');}
 async function cliAuto(a){
   const st=cliStrat(a,a._[0]);const tries=Math.max(1,Math.min(5,a.tries?+a.tries:3));let best=null;cliEnsureEdit();const start=cliSnap();const u0=PE.undo.length;
   let lastK=0;for(let k=0;k<tries;k++){lastK=k;
@@ -318,6 +361,8 @@ function cliWidthFactor(v){v=String(v).trim();let m=v.match(/^[x×*]\s*(\d+(?:\.
 function cliNetWidthNow(key){let w=0;PCB.cuKeys(BD).forEach(k=>BD.layers[k+'.cu'].forEach(p=>{if(p.net===key&&(p.t==='path'||p.t==='seg'||p.t==='track')&&p.w>w)w=p.w;}));
   if(w)return +w.toFixed(3);if(BD.netWidth&&BD.netWidth[key]!=null)return +BD.netWidth[key];const W=CURRENT.widths(BD,{oz:BD.oz||1,dT:BD.dT||10})[key];return W?W.w:0.2;}
 function cliNL(t){const s=t.toLowerCase();const out=[];
+  // unrouted → automatic improvement: "미배선 해결해줘", "미배선 없애", "배선 안 된 거 고쳐", "알아서 개선"
+  if(/(미배선|배선\s*안\s*된|안\s*된\s*배선|unrouted|open\s*net)/.test(s)&&/(해결|없애|고쳐|개선|처리|줄여|fix|알아서|자동)/.test(s)||/^(fix|개선)$/.test(s.trim())){const g=s.match(/(\d+(?:\.\d+)?)\s*배/);out.push(`fix${/층/.test(s)&&!/층\s*(유지|그대로)|층은\s*안/.test(s)?'':''}${g?' --maxgrow '+g[1]:''}${/핀\s*(재배정|스왑|바꿔)|pinswap/.test(s)?' --pinswap':''}${/키우지\s*(말|마)|크기\s*(유지|그대로)/.test(s)?' --no-grow':''}${/층\s*(유지|그대로|늘리지)/.test(s)?' --no-layers':''}`);return out;}
   const strat=/열|발열|방열|thermal|heat/.test(s)?'thermal':/노이즈|잡음|emc|emi|noise/.test(s)?'noise':/작게|소형|compact|촘촘|조밀/.test(s)?'compact':/균형|balanced/.test(s)?'balanced':null;
   const m=s.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*[x×*]\s*(\d+(?:\.\d+)?)/)||(/보드|board|크기|사이즈/.test(s)&&s.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*(?:,|와|과|및|by|\s)\s*(\d+(?:\.\d+)?)/));
   if(m&&/보드|board|크기|사이즈|size|mm|x|×/.test(s))out.push(`board size ${m[1]} ${m[2]}${/가운데|중앙|center/.test(s)?' --anchor center':''}`);
@@ -393,6 +438,8 @@ async function cliRun(line,quiet,by){
       return CURRENT.text(BD,{oz:BD.oz||1,dT:BD.dT||10});}
     case 'pinswap':return await cliPinswap(a);
     case 'auto':return await cliAuto(a);
+    case 'fix':return await cliFix(a);
+    case 'autofix':{const v=String(a._[0]||'').toLowerCase();if(v==='on'||v==='off'){CLI.autoFix=v==='on';try{localStorage.setItem('aod.autofix',v);}catch(e){}}return`배선 뒤 미배선 자동 개선: ${CLI.autoFix?'켬':'끔'} (autofix on|off)`;}
     case 'lock':cliRefs(a._).forEach(c=>CLI.lock.add(c.ref));return`고정: ${[...CLI.lock].join(', ')||'없음'}`;
     case 'unlock':if(a._[0]==='all'||!a._.length)CLI.lock.clear();else cliRefs(a._).forEach(c=>CLI.lock.delete(c.ref));return`고정: ${[...CLI.lock].join(', ')||'없음'}`;
     case 'locks':return`고정: ${[...CLI.lock].join(', ')||'없음'}`;
@@ -414,8 +461,12 @@ async function cliRun(line,quiet,by){
     default:throw new Error(`알 수 없는 명령: ${cmd}`);
   }
 }
+/* after a command that routed: unrouted nets left → run fix by itself (autofix off to disable) */
+async function cliAutoFix(){if(!CLI.autoFix||!CLI.routed||CLI.inFix||CLI.stopReq||!BD||BD.pcbPending)return;CLI.routed=false;
+  const n=AUTOROUTE.openNets(BD).length;if(!n)return;cliSay('out',`미배선 ${n}개가 남아 자동 개선(fix)을 시작합니다 — 끄려면 autofix off`);
+  cliSay('cmd','fix');const o=await cliFix({});if(o)cliSay('ok',o);}
 async function cliExec(line){
-  if(!BD)return;cliPanel();cliSay('cmd',line);cliBusy(true);
+  if(!BD)return;cliPanel();cliSay('cmd',line);cliBusy(true);CLI.routed=false;
   try{
     const first=(cliTok(line)[0]||'').toLowerCase();
     if(CLI_CMDS.has(first)){const out=await cliRun(line);if(out)cliSay('ok',out);}
@@ -424,6 +475,7 @@ async function cliExec(line){
     else{if(AIM.mode==='ai'){await cliAiProbe();if(CLI.sample){await cliAI(line);cliBusy(false);return;}cliSay('out','Claude를 쓸 수 없어 규칙으로 해석합니다.');}
       if(await aimDetQuestion(line,cliSay,()=>cliRun('status'))){cliBusy(false);return;}
       {const cmds=cliNL(line);if(!cmds.length)cliSay('err','명령을 알아듣지 못했습니다. help로 목록을 보세요.');else{cliSay('out','해석: '+cmds.join(' → '));for(const c of cmds){cliSay('cmd',c);const o=await cliRun(c);if(o)cliSay('ok',o);if(CLI.stopReq)break;}}}}
+    await cliAutoFix();
   }catch(e){console.error(e);cliSay('err',e&&e.message?e.message:String(e));}
   cliBusy(false);
 }
@@ -440,7 +492,7 @@ Strategies: balanced (wirelength/decoupling/heat/noise evenly), thermal (heat so
 Routing order is fixed by ECU practice: high-current power/drive → clocks/high-speed/differential → sensitive analog → general digital; high-speed nets avoid a 2 mm band at the board edge; a GND return via is dropped next to each layer change of clock/analog nets (route does all of this by default; --order length / --no-edge / --no-retvia switch it off). "guide check" reports these as rules (rt_priority, rt_return_via, rt_edge_keepout, pw_agnd_star, th_via_array).
 Track width: default 0.2 mm signal / 0.3 mm power by net name. "width" lists the estimated current per net and the IPC-2221 width; "width NET 1.2" fixes a net's width, "width NET x2 --apply" doubles its current width and re-routes only that net (net names match loosely: 12V → +12V), "width NET --current 4" sets its current; "route --iw" routes power/motor nets at their IPC-2221 width (capped by --iwmax, default 2 mm; wider nets should become copper pours). "drc" also reports tracks too thin for their current. Use these when the user talks about current, heating, motor/power trace width.
 Sides: parts go on the TOP side only by default (single-sided assembly: one reflow pass, cheapest, connectors/through-hole/electrolytics must be top). "reset --both" / "place --both" also uses the bottom for passives and small ICs (two-sided assembly) — use it when the user asks for 양면/하단 배치 or the board must be smaller than single-sided allows.
-Board too small: "reset" grows the board automatically when parts do not fit, and "board minimize" grows past the original size when needed (--no-grow stops that); after any size change run "route" (or add --route). Never stop at "parts outside the board" — re-place (reset) and route again.
+Unrouted nets left after a route: run "fix" (it tries, cheapest first, a full re-route, other placement seeds, another strategy, a 10–50 % larger board, more copper layers, and keeps the best) instead of only advising; add --maxgrow 2 / --maxlayers 8 / --pinswap if it is still not enough. Board too small: "reset" grows the board automatically when parts do not fit, and "board minimize" grows past the original size when needed (--no-grow stops that); after any size change run "route" (or add --route). Never stop at "parts outside the board" — re-place (reset) and route again.
 Moving: "move REF x y [deg]", "rotate REF deg", "flip REF" (to the other side) remove that part's auto-routed tracks and re-route its nets right away (add --no-route to leave the ratsnest open); hand-drawn tracks are kept.
 Board shape: "board shape circle 60" / "board shape oval 80 40" / "board shape L 100 60 --cut 40x25 --at tr" / "board shape hex 60" / "board shape round 100 60 --corner 3" / "board shape poly --pts \"0,0 80,0 80,40 40,60 0,40\""; cutouts: "board cutout circle 8 --at 20,20", "board cutout rect 20x10 --at 50,30". After a shape change that leaves parts outside, run "place" or "reset".
 Copper layers: "board layers N" (2/4/6/8/10) builds a standard stack-up (e.g. 8 = S/GND/S/GND/PWR/S/GND/S) with inner GND/PWR planes and inner signal layers, and drops plane vias — always run it when the user asks for a layer count (e.g. "8층"). Size: "board minimize --route" finds the smallest board that still places and routes (slow); "board minimize" only re-places; "board size W H" sets an exact size. MCU pins: "pinswap" shows a routing-friendly re-assignment, "pinswap --apply --route" changes the circuit (board nets, schematic, HSIS) and routes — allowed in the PCB step.
