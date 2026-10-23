@@ -179,7 +179,7 @@ function prepare(B,opts){
   // preferred routing direction per signal layer (odd signal layer horizontal, even vertical — adjacent layers cross,
   // so one layer's tracks do not wall off the other); a wrong-way move costs o.dirCost ×, a diagonal √(dirCost) ×
   G.pref=new Array(G.NL).fill(0);if(o.dirCost&&o.dirCost!==1&&G.route.length>=2)G.route.forEach((l,i)=>{G.pref[l]=i%2===0?1:2;});
-  S.forEach(s=>paint(G,s,s.hole?-1:idOf(s.net),wMax,o.via.d/2,o.clear));
+  S.forEach(s=>paint(G,s,s.hole?-1:idOf(s.net),wMax,o.via.d/2,s.hole?Math.max(o.clear,o.holeClear||0.25):o.clear));
   // pin escapes: a short virtual stub of each IC pad's own net, straight out along the pad, so other nets cannot seal the pin
   if(o.reserve){B.comps.forEach(c=>{if(c.pads.length<6)return;const cx=(c.bb[0]+c.bb[2])/2,cy=(c.bb[1]+c.bb[3])/2;
     c.pads.forEach(p=>{if(!p.net||isGnd(p.net)||p.drill)return;const a=(p.ang||0)*D2R;let ux=Math.cos(a),uy=Math.sin(a),half=p.w/2;if(p.h>p.w){ux=-Math.sin(a);uy=Math.cos(a);half=p.h/2;}
@@ -208,13 +208,24 @@ function padCells(G,w,shapes,set,owner){shapes.forEach(s=>{const bb=bboxOf(s,0);
   const SL=s.L.filter(l=>!G.route||G.route.includes(l));if(!SL.length)return;
   let any=false;for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(s,G.ox+x*G.g,G.oy+y*G.g);if(d<=deep){SL.forEach(l=>{const id=l*G.N+y*G.nx+x;set.add(id);owner.set(id,s);});any=true;}}
   if(!any){const x=Math.round(((s.k==='cap'?s.a[0]:s.x)-G.ox)/G.g),y=Math.round(((s.k==='cap'?s.a[1]:s.y)-G.oy)/G.g);SL.forEach(l=>{const id=l*G.N+y*G.nx+x;set.add(id);owner.set(id,s);});}});}
+/* MST over the copper groups of a net (closest points between groups): the 2-pin sub-connections in the order a
+   rectilinear Steiner tree would make them — shortest first; joining into the middle of already routed copper is
+   allowed, so the routed tree ends close to a Steiner tree instead of a chain of "smallest group → everything else" */
+function mstEdges(comps){const pts=comps.map(g=>g.flatMap(s=>s.k==='cap'?[s.a,s.b]:[[s.x,s.y]]));const n=comps.length;const d=(i,j)=>{let m=1e18;for(const p of pts[i])for(const q of pts[j]){const v=Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1]);if(v<m)m=v;}return m;};
+  const inT=new Uint8Array(n);inT[0]=1;const best=new Float64Array(n).fill(1e18),from=new Int32Array(n).fill(0);for(let j=1;j<n;j++)best[j]=d(0,j);const E=[];
+  for(let k=1;k<n;k++){let j=-1,m=1e18;for(let i=0;i<n;i++)if(!inT[i]&&best[i]<m){m=best[i];j=i;}if(j<0)break;inT[j]=1;E.push([from[j],j,m]);for(let i=0;i<n;i++)if(!inT[i]){const v=d(j,i);if(v<best[i]){best[i]=v;from[i]=j;}}}
+  return E.sort((a,b)=>a[2]-b[2]);}
 function routeNet(P,B,net){
   const{o,G}=P;const k=P.idOf(net);const w=widthFor(B,net,o);let added={tracks:[],vias:[],len:0,nvia:0};let guard=0;
+  // MST order: representative shape of each initial group; each edge joins the two current groups that hold them
+  let plan=null;if(o.mst!==false){const c0=groups(B,P.S,net);if(c0.length>2){const reps=c0.map(g=>g.find(s=>s.pad)||g[0]);plan=mstEdges(c0).map(([a,b])=>[reps[a],reps[b]]);}}
   for(;;){
     const comps=groups(B,P.S,net);if(comps.length<=1)return Object.assign(added,{ok:true});
     if(++guard>Math.max(24,comps.length+8))return Object.assign(added,{ok:false,why:'반복 한도'});
-    // join the smallest group to the rest
-    comps.sort((a,b)=>a.length-b.length);const srcC=comps[0],rest=comps.slice(1).flat();
+    let srcC,rest;
+    if(plan){let e=null;while(plan.length){const[ra,rb]=plan[0];const ia=comps.findIndex(g=>g.includes(ra)),ib=comps.findIndex(g=>g.includes(rb));if(ia<0||ib<0||ia===ib){plan.shift();continue;}e=[ia,ib];break;}
+      if(e){const A=comps[e[0]],Bc=comps[e[1]];if(A.length<=Bc.length){srcC=A;rest=Bc;}else{srcC=Bc;rest=A;}plan.shift();}else plan=null;}
+    if(!plan){comps.sort((a,b)=>a.length-b.length);srcC=comps[0];rest=comps.slice(1).flat();}
     const cellsOf=(shapes,set,owner)=>padCells(G,w,shapes,set,owner);
     const src=new Set(),tgt=new Set(),own=new Map();cellsOf(srcC,src,own);cellsOf(rest,tgt,own);
     let anchors=[];rest.forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
@@ -414,6 +425,6 @@ function drc(B,opts){
     const gap=shapeGap(a,b);if(gap<o.clear-0.03)out.push({net:a.net,other:b.net||(b.hole?'구멍':'(넷 없음)'),gap,at:a.k==='cap'?a.a:[a.x,a.y]});});});
   return out;
 }
-return{gloss,jobPF,routeNetPF,groups,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+return{gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

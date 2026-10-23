@@ -43,3 +43,14 @@ test('gloss: fewer (never more) vias, no new DRC errors, nothing left open', () 
   assert.ok(PCBEDIT.drc(B).length <= d0); assert.equal(PCBEDIT.ratsnest(B).length, r0);
   assert.ok(q.value.changed >= 1, 'at least one net should lose a via on the TC364 sample');
 });
+test('mstEdges: n-1 edges, shortest first, every group reached', () => {
+  const g = (x, y) => [{ k: 'cap', a: [x, y], b: [x, y], r: 0.5, L: [0], net: 'N' }];
+  const E = AUTOROUTE.mstEdges([g(0, 0), g(10, 0), g(10, 1), g(0, 20), g(30, 0)]);
+  assert.equal(E.length, 4); for (let i = 1; i < E.length; i++) assert.ok(E[i][2] >= E[i - 1][2]);
+  const seen = new Set(E.flatMap(e => [e[0], e[1]])); assert.equal(seen.size, 5);
+  assert.deepEqual(E[0].slice(0, 2).sort(), [1, 2], 'the 1 mm pair comes first');
+});
+test('router keeps 0.25 mm from non-plated holes (DRC hole rule)', () => {
+  const B = prep(SAMPLE_MCU, true); seq(B);
+  assert.ok(!PCBEDIT.drc(B).some(d => d.code === 'hole'), PCBEDIT.drc(B).map(d => d.msg).join(', '));
+});
