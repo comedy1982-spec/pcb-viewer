@@ -218,7 +218,7 @@ function mstEdges(comps){const pts=comps.map(g=>g.flatMap(s=>s.k==='cap'?[s.a,s.
 function routeNet(P,B,net){
   const{o,G}=P;const k=P.idOf(net);const w=widthFor(B,net,o);let added={tracks:[],vias:[],len:0,nvia:0};let guard=0;
   // MST order: representative shape of each initial group; each edge joins the two current groups that hold them
-  let plan=null;if(o.mst!==false){const c0=groups(B,P.S,net);if(c0.length>2){const reps=c0.map(g=>g.find(s=>s.pad)||g[0]);plan=mstEdges(c0).map(([a,b])=>[reps[a],reps[b]]);}}
+  let plan=null;if(o.mst===true){const c0=groups(B,P.S,net);if(c0.length>2){const reps=c0.map(g=>g.find(s=>s.pad)||g[0]);plan=mstEdges(c0).map(([a,b])=>[reps[a],reps[b]]);}}
   for(;;){
     const comps=groups(B,P.S,net);if(comps.length<=1)return Object.assign(added,{ok:true});
     if(++guard>Math.max(24,comps.length+8))return Object.assign(added,{ok:false,why:'반복 한도'});
