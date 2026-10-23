@@ -60,7 +60,7 @@
 ### 7. 내보내기
 - 그림: 2D 보드(층별)·회로도는 화면과 동일한 **SVG**, PNG, 시스템 다이어그램, 3D·기구 3D PNG, 기구 조립도·부품도, 모든 층 zip.
 - 표: HSIS(시트별), BOM, 부품 배치, 넷리스트, 층 구성, 기구 BOM, 리비전 기록, 비교 결과 → **Excel**.
-- **설계 보고서**: 항목을 골라 그림·표를 모두 담은 HTML 한 파일(브라우저 인쇄로 PDF). KiCad PCB/회로도 저장, OpenSCAD·STL·HSIS CSV·MCAL 파일.
+- **설계 보고서**: 항목을 골라 그림·표를 모두 담은 HTML 한 파일(브라우저 인쇄로 PDF). KiCad PCB/회로도 저장, OpenSCAD·STEP(AP214 솔리드 — SolidCraft·Fusion·SolidWorks·FreeCAD)·STL·HSIS CSV·MCAL 파일.
 
 ### 8. 실제 부품 데이터
 - 부품 DB(제조사·사양·데이터시트 링크·참고 단가)와 MCU 핀 기능 DB(TC364DP, STM32F042), 부품당 한 페이지인 **데이터시트 HTML DB**(`datasheets/db/`, `npm run dsdb`).
