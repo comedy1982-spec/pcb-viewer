@@ -745,3 +745,10 @@ npm run dsdb:init # 페이지가 없는 부품의 데이터시트 초안 만들�
 - 사용자 KiCad 10.0 `Interface_CAN_LIN.kicad_sym`(형식 버전 20251024, 심볼 98개)을 그대로 읽음 — 형식 변경 없음.
 - `scripts/kicadpins.mjs`가 여러 폴더를 받음(앞 폴더 우선 → KiCad 10을 KiCad 5보다 먼저).
 - CAN 후보에 차량용 CAN-FD 4종 추가(KiCad 10 핀 포함): TJA1042T/3 · TJA1049T/3 · TCAN1043-Q1(슬립·INH·WAKE, SOIC-14) · TJA1145T/FD(부분 네트워킹·SPI). CAN-FD 요구 시 1~5위가 모두 핀 데이터를 가진 차량용 부품. 내장 표 28종(정확 13).
+
+## v1.63.0 KiCad 10 전원·구동 라이브러리 반영
+- 사용자 KiCad 10.0 라이브러리 9개(Regulator_Linear/Switching/Controller/Current/SwitchedCapacitor, Power_Supervisor, Power_Management, Driver_FET, Driver_Motor — 심볼 3,600여 개) 반영. 내장 핀 표 28 → 40종(정확 16).
+- 매칭 보완: 풋프린트가 빈 심볼은 허용 풋프린트 필터(ki_fp_filters · $FPLIST)로 패키지 확인 · 계열 이름은 원래 부품 번호에서 구분자까지(TPS3823-33 → TPS3823) · 전압 코드는 계열 이름 바로 뒤(TLV1117LV33 → TLV1117-33, ADJ는 감점) · QFN/SON 코드(DRV 등)를 SOIC 단서보다 먼저.
+- 후보 추가(핀 포함): LDO — UA78M33/05-Q1 · TLV76733/50-Q1 · MCP1799 3.3/5 V · TPS7B8133-Q1(WSON, KiCad에 있는 패키지로 변경) / 역접속 — LM74701-Q1 / CAN — TCAN4551-Q1(SPI CAN-FD 컨트롤러+트랜시버).
+- LDO·벅 후보에 출력 전압(vout) — 블록이 요구하는 레일 전압과 다르면 ✕("출력 5 V ≠ 요구 3.3 V"). 5 V에서 공급받는 2단 3.3 V LDO는 배터리 입력 전압 검사 제외.
+- KiCad 공식 라이브러리에 없는 것: 차량용 게이트 드라이버(DRV83xx · TLE9180 · L9908 · GD3000), 스마트 스위치(BTS7008 · VN7050 · TPS1H100), 안전 PMIC(TLF35584 · TPS65381), TPS54331, NCV8664 → 데이터시트 PDF 또는 제조사 KiCad 심볼 필요.

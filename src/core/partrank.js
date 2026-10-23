@@ -10,15 +10,22 @@ const PARTRANK=(function(){
 const C={
   pwr_in:[
     {mpn:'LM74700-Q1',mfr:'TI',note:'이상 다이오드 컨트롤러 + 외부 N-FET · 역접속 · 3–65 V',spec:{vin:[3,65],i:20,pkg:'SOT-23-6'},grade:'Q100',price:1.1,why:'손실 적은 역접속 보호, 차량용'},
+    {mpn:'LM74701QDDFRQ1',mfr:'TI',note:'이상 다이오드 컨트롤러 · TVS 없이 역접속 보호 · 3.2–65 V',spec:{vin:[3.2,65],i:20,pkg:'SOT-23-8'},grade:'Q100',price:1.2,why:'입력 TVS 생략 가능(부품 절감)'},
     {mpn:'LTC4359',mfr:'ADI',note:'이상 다이오드 컨트롤러 · 4–80 V · 로드덤프 내성',spec:{vin:[4,80],i:20,pkg:'MSOP-8'},grade:'Q100',price:2.4,why:'80 V 입력, 로드덤프 100 V 과도 내성'},
     {mpn:'IPD90P04P4L-04',mfr:'Infineon',note:'P-FET 역접속 보호 · 40 V · 90 A',spec:{vin:[0,40],i:90,pkg:'TO-252'},grade:'Q101',price:1.6,why:'부품 하나로 끝나는 고전류 역접속 보호'},
     {mpn:'SM8S33A',mfr:'Littelfuse',note:'로드덤프 TVS 6.6 kW · 33 V',spec:{vin:[0,33],pkg:'DO-218AB'},grade:'Q101',price:0.9,why:'ISO 7637 로드덤프 흡수(보호 소자)'}],
   ldo:[
-    {mpn:'TLV1117LV33QDCYRQ1',mfr:'TI',note:'1 A LDO 3.3 V · SOT-223 · AMS1117 핀 호환',spec:{i:1,vin:[2.5,5.5],pkg:'SOT-223'},grade:'Q100',price:0.62,why:'저가·핀 호환, 5 V → 3.3 V'},
-    {mpn:'TPS7B8133QDCYRQ1',mfr:'TI',note:'300 mA LDO 3.3 V · 40 V 입력 · 저 Iq 2.4 µA',spec:{i:0.3,vin:[4,40],pkg:'SOT-223'},grade:'Q100',price:0.95,why:'배터리 직결 · 상시 전원(저 대기 전류)'},
-    {mpn:'NCV8664CST33T3G',mfr:'onsemi',note:'150 mA LDO 3.3 V · 45 V · 저 Iq',spec:{i:0.15,vin:[4,45],pkg:'SOT-223'},grade:'Q100',price:0.7,why:'KL30 상시 전원용'},
-    {mpn:'MIC5219-3.3YM5',mfr:'Microchip',note:'500 mA LDO 3.3 V · SOT-23-5',spec:{i:0.5,vin:[2.5,12],pkg:'SOT-23-5'},grade:'',price:0.5,why:'상용 소형·저가'},
-    {mpn:'AMS1117-3.3',mfr:'AMS',note:'1 A LDO 3.3 V · SOT-223 (상용)',spec:{i:1,vin:[4.5,15],pkg:'SOT-223'},grade:'',price:0.12,why:'가장 싼 범용 LDO'}],
+    {mpn:'TLV1117LV33QDCYRQ1',mfr:'TI',note:'1 A LDO 3.3 V · SOT-223 · AMS1117 핀 호환',spec:{i:1,vin:[2.5,5.5],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.62,why:'저가·핀 호환, 5 V → 3.3 V'},
+    {mpn:'TPS7B8133QDRVRQ1',mfr:'TI',note:'300 mA LDO 3.3 V · 40 V 입력 · 저 Iq 2.4 µA · WSON-6',spec:{i:0.3,vin:[4,40],vout:3.3,pkg:'WSON-6'},grade:'Q100',price:0.95,why:'배터리 직결 · 상시 전원(저 대기 전류)'},
+    {mpn:'UA78M33QDCYRQ1',mfr:'TI',note:'500 mA LDO 3.3 V · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[5.3,25],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'가장 싼 차량용 3.3 V'},
+    {mpn:'UA78M05QDCYRQ1',mfr:'TI',note:'500 mA LDO 5 V · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[7,25],vout:5,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'12 V → 5 V 저가 차량용'},
+    {mpn:'TLV76733QWDRBRQ1',mfr:'TI',note:'1 A LDO 3.3 V · 16 V 입력 · EN · VSON-8',spec:{i:1,vin:[2.5,16],vout:3.3,pkg:'VSON-8'},grade:'Q100',price:0.55,why:'1 A 차량용 · 5 V → 3.3 V'},
+    {mpn:'TLV76750QWDRBRQ1',mfr:'TI',note:'1 A LDO 5 V · 16 V 입력 · EN · VSON-8',spec:{i:1,vin:[6,16],vout:5,pkg:'VSON-8'},grade:'Q100',price:0.55,why:'1 A 차량용 5 V'},
+    {mpn:'MCP1799T-3302H/TT',mfr:'Microchip',note:'80 mA LDO 3.3 V · 45 V 입력 · SOT-23',spec:{i:0.08,vin:[4.5,45],vout:3.3,pkg:'SOT-23'},grade:'Q100',price:0.4,why:'배터리 직결 소전류(상시 전원)'},
+    {mpn:'MCP1799T-5002H/TT',mfr:'Microchip',note:'80 mA LDO 5 V · 45 V 입력 · SOT-23',spec:{i:0.08,vin:[6,45],vout:5,pkg:'SOT-23'},grade:'Q100',price:0.4,why:'배터리 직결 소전류 5 V'},
+    {mpn:'NCV8664CST33T3G',mfr:'onsemi',note:'150 mA LDO 3.3 V · 45 V · 저 Iq',spec:{i:0.15,vin:[4,45],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.7,why:'KL30 상시 전원용'},
+    {mpn:'MIC5219-3.3YM5',mfr:'Microchip',note:'500 mA LDO 3.3 V · SOT-23-5',spec:{i:0.5,vin:[2.5,12],vout:3.3,pkg:'SOT-23-5'},grade:'',price:0.5,why:'상용 소형·저가'},
+    {mpn:'AMS1117-3.3',mfr:'AMS',note:'1 A LDO 3.3 V · SOT-223 (상용)',spec:{i:1,vin:[4.5,15],vout:3.3,pkg:'SOT-223'},grade:'',price:0.12,why:'가장 싼 범용 LDO'}],
   buck:[
     {mpn:'TPS54331QDRQ1',mfr:'TI',note:'3 A 동기 벅 · 3.5–28 V · 570 kHz',spec:{i:3,vin:[3.5,28],pkg:'SOIC-8'},grade:'Q100',price:1.4,why:'12 V → 5/3.3 V 범용 차량용 벅'},
     {mpn:'LMR33630AQRNXRQ1',mfr:'TI',note:'3 A 동기 벅 · 3.8–36 V · 400 kHz · 소형',spec:{i:3,vin:[3.8,36],pkg:'VQFN-12'},grade:'Q100',price:1.9,why:'36 V 입력(로드덤프 여유)·고효율'},
@@ -39,6 +46,7 @@ const C={
     {mpn:'TJA1049T/3',mfr:'NXP',note:'CAN-FD 5 Mbit/s · VIO 분리 · 대기 모드 · 저 Iq',spec:{pkg:'SOIC-8',fd:1},grade:'Q100',price:0.8,why:'TJA1042 개량(대기 전류↓)'},
     {mpn:'TCAN1043HDRQ1',mfr:'TI',note:'CAN-FD 5 Mbit/s · 슬립 · INH 전원 제어 · WAKE · nFAULT',spec:{pkg:'SOIC-14',fd:1},grade:'Q100',price:1.4,why:'KL30 상시 전원 ECU의 슬립·웨이크(INH로 레귤레이터 제어)'},
     {mpn:'TJA1145T/FD',mfr:'NXP',note:'CAN 부분 네트워킹 · SPI · INH · WAKE · FD 수동',spec:{pkg:'SOIC-14',fd:1},grade:'Q100',price:1.9,why:'부분 네트워킹(선택 웨이크)'},
+    {mpn:'TCAN4551RGYRQ1',mfr:'TI',note:'SPI CAN-FD 컨트롤러 + 트랜시버 · 5 Mbit/s · VQFN-20',spec:{pkg:'VQFN-20',fd:1},grade:'Q100',price:3.2,why:'MCU에 CAN-FD가 없을 때 SPI로 추가'},
     {mpn:'TJA1051T/3',mfr:'NXP',note:'고속 CAN 1 Mbit/s(클래식) · 3.3 V I/O',spec:{pkg:'SOIC-8',fd:0},grade:'Q100',price:0.8,why:'클래식 CAN 저가'},
     {mpn:'SN65HVD230DR',mfr:'TI',note:'3.3 V CAN 트랜시버(산업용)',spec:{pkg:'SOIC-8',fd:0},grade:'',price:1.3,why:'3.3 V 단일 전원 상용'}],
   mcu:[
@@ -105,7 +113,7 @@ const S=v=>v==null?'':String(v).trim();
 const norm=x=>{if(!x)return null;if(typeof x==='string')return{mpn:x,mfr:'',note:''};if(Array.isArray(x))return{mpn:S(x[0]),mfr:S(x[1]),note:S(x[2])};return Object.assign({},x,{mpn:S(x.mpn||x.part),mfr:S(x.mfr||x.maker),note:S(x.note||x.desc)});};
 const asilRank={'':0,QM:0,A:1,B:2,C:3,D:4};
 /* needs of a block from its implementation parameters and the request */
-function needs(b,ctx){const n={i:null,v:null,fd:false};(b.impl||[]).forEach(im=>{const p=im.params||{};if(p.i)n.i=Math.max(n.i||0,+p.i);if(p.vin&&!isNaN(+p.vin))n.v=Math.max(n.v||0,+p.vin);});
+function needs(b,ctx){const n={i:null,v:null,fd:false,vouts:[]};(b.impl||[]).forEach(im=>{const p=im.params||{};if(/^(ldo|buck)$/.test(im.type)&&p.vout!=null&&!isNaN(+p.vout))n.vouts.push(+p.vout);if(p.i)n.i=Math.max(n.i||0,+p.i);if(p.vin&&!isNaN(+p.vin))n.v=Math.max(n.v||0,+p.vin);});
   if(ctx&&ctx.vin&&(b.group==='power'||(b.impl||[]).some(im=>/pwr_in|buck|ldo|hs_switch|hbridge|gdrv3|dcmotor|bldc/.test(im.type))))n.v=Math.max(n.v||0,ctx.vin);
   if(/can-?fd/i.test((ctx&&ctx.req)||'')||/CAN-FD/i.test(b.label))n.fd=true;return n;}
 /* candidates of a block: profile list first, then by implementation type (deduplicated by MPN) */
@@ -124,6 +132,8 @@ function rank(b,ctx){ctx=ctx||{};const N=needs(b,ctx);const pref=ctx.pref||{pric
     if(N.v&&sp.vin){if(sp.vin[1]<N.v)bad.push(`입력 ${sp.vin[1]} V < ${N.v} V`);else if(sp.vin[1]>=N.v*1.6){s+=0.6;why.push('과도 전압 여유');}}
     if(N.v&&sp.v!=null){if(sp.v<N.v*1.5)bad.push(`내압 ${sp.v} V 부족(권장 ≥ ${Math.round(N.v*1.5)} V)`);else s+=0.4;}
     if(N.fd&&sp.fd===0)bad.push('클래식 CAN(FD 미지원)');
+    if(N.vouts.length&&sp.vout!=null&&!N.vouts.some(v=>Math.abs(v-sp.vout)<0.05))bad.push(`출력 ${sp.vout} V ≠ 요구 ${[...new Set(N.vouts)].join('/')} V`);
+    if(N.vouts.length&&sp.vout!=null&&sp.vin&&N.v&&sp.vin[1]<N.v&&N.vouts.some(v=>v>=sp.vout+1.5))bad.splice(bad.findIndex(x=>/^입력/.test(x)),1);  // a 2nd-stage LDO is fed from the 5 V rail, not the battery
     // ASIL matters for the parts that carry a safety mechanism: MCU, supervisor / PMIC, gate driver, cut-off switch, or a block tagged safety
   const safetyBlock=(b.impl||[]).some(im=>/^(mcu|supervisor|gdrv3|hs_switch)$/.test(im.type))||!!b.safety||(b.sg&&b.sg.length);
   const pa=asilRank[(p.asil||'').toUpperCase()]||0;if(need>=2&&safetyBlock){if(pa>=need){s+=2.5;why.push(`ASIL ${p.asil}`);}else if(pa){s+=1;why.push(`ASIL ${p.asil} (요구 ${'ABCD'[need-1]} 미달)`);}else bad.push('안전 기능 없음');}
@@ -134,7 +144,7 @@ function rank(b,ctx){ctx=ctx||{};const N=needs(b,ctx);const pref=ctx.pref||{pric
     if(pref.feat>1||pref.ext>1){if(/진단|센스|SPI|FOC|보호|내장/.test(p.note||'')){s+=0.6*Math.max(pref.feat,pref.ext);why.push('기능 풍부');}}
     if(p.src==='profile'){s+=0.8;why.push('제품 표준 후보');}
     if(p.why)why.push(p.why);
-    return Object.assign({},p,{pinNote,score:+s.toFixed(2),ok:!bad.some(x=>/</.test(x)||/미지원/.test(x)),why,bad,pins,price});});
+    return Object.assign({},p,{pinNote,score:+s.toFixed(2),ok:!bad.some(x=>/</.test(x)||/미지원|≠/.test(x)),why,bad,pins,price});});
   rows.sort((a,b)=>(b.ok-a.ok)||(b.score-a.score));rows.forEach((r,i)=>{r.rank=i+1;});return{needs:N,rows};}
 function text(b,R){const L=[`${b.label} (${b.id}) 주요 소자 후보 ${R.rows.length}개${R.needs.i?` · 요구 전류 ${R.needs.i} A`:''}${R.needs.v?` · 전압 ${R.needs.v} V`:''}`];
   R.rows.forEach(r=>L.push(`  ${r.rank}. ${r.mpn} · ${r.mfr}${r.price!=null?' · $'+r.price:''}${r.grade?' · '+r.grade:''}${r.asil?' · ASIL '+r.asil:''} — ${r.note}${r.bad.length?' ✕ '+r.bad.join(', '):''}${r.why.length?' ✓ '+r.why.slice(0,3).join(' · '):''}`));

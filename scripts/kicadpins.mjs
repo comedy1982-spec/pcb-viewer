@@ -9,7 +9,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dirs = process.argv.slice(2), dir = dirs[0]; if (!dir) { console.error('usage: node scripts/kicadpins.mjs <kicad-symbols dir>'); process.exit(1); }
 const ctx = vm.createContext({ console });
-for (const f of ['src/core/pcb-core.js','src/parts/parts.js','src/core/newproj.js','src/core/hwarch.js','src/core/products.js','src/core/partrank.js','src/core/kicadlib.js'])
+for (const f of ['src/core/pcb-core.js','src/parts/parts.js','src/core/newproj.js','src/core/hwarch.js','src/core/products.js','src/core/partrank.js','src/core/kicadlib.js','src/core/partlib.js'])
   vm.runInContext(readFileSync(join(root, f), 'utf8').replace(/if\(typeof module[^;]+;/, ''), ctx, { filename: f });
 const g = n => vm.runInContext(n, ctx);
 const KL = g('KICADLIB'), PR = g('PARTRANK'), PARTS = g('PARTS'), PRODUCTS = g('PRODUCTS');
@@ -17,6 +17,7 @@ const mpns = new Set();
 Object.values(PR.C).forEach(L => L.forEach(p => mpns.add(p.mpn)));
 for (const k of ['eps', 'bms', 'bcm', 'inv']) { try { const p = PRODUCTS.detect({ eps: 'EPS', bms: 'BMS 배터리 관리', bcm: 'BCM 바디', inv: '인버터 트랙션' }[k]); if (p) p.blocks.forEach(b => (b.parts || []).forEach(x => mpns.add(x.mpn))); } catch (e) {} }
 Object.keys(PARTS.P || {}).forEach(m => mpns.add(m));
+try { g('PARTLIB').AUTO_PARTS.forEach(p => mpns.add(p.mpn)); } catch (e) {}
 try { const s = readFileSync(join(root, 'src/parts/dsdb.js'), 'utf8'); const d = JSON.parse(s.match(/const DSDB=(\{.*\});/s)[1]); Object.keys(d.items).forEach(m => mpns.add(m.replace(/\s*\(.*\)$/, ''))); } catch (e) {}
 const files = dirs.flatMap(d => readdirSync(d).filter(f => /\.(lib|dcm|kicad_sym)$/i.test(f)).map(f => ({ name: f, text: readFileSync(join(d, f), 'utf8') })));
 const P = KL.parseFiles(files);
