@@ -51,7 +51,7 @@ function cadRightHTML(){
       return`<li class="fe${fu?' fu':''}${sel.has(e.key)?' sel':''}" data-el="${esc(e.key)}" tabindex="0" role="option" aria-selected="${sel.has(e.key)}"><span class="fk mono">${fu?esc(e.key):''}</span><span class="fl">${esc(e.label)}<small>${esc(e.desc)}</small></span>${fu?`<button class="pill vbtn" data-fdel="${esc(e.key)}" title="${esc(e.key)} 삭제" aria-label="${esc(e.key)} 삭제">×</button>`:'<span></span>'}</li>`;}).join('');}).join('')}
     ${ov.map(([k,v])=>`<li class="fo"><span class="fk">지정</span><span>${esc(TEXT2CAD.OVER[k]||k)} ${v}</span><button class="pill vbtn" data-oclr="${esc(k)}" title="자동으로" aria-label="${esc(TEXT2CAD.OVER[k]||k)} 자동으로">×</button></li>`).join('')}</ul>
   ${C.feats.length||ov.length?'':'<p class="lead" style="margin:4px 0 0">아래 Text-to-CAD 콘솔에 문장이나 명령으로 형상을 더하세요. 예: 오른쪽 벽에 M16 케이블 글랜드 2개, 장착 탭 4개 M5</p>'}
-  <div class="acts" style="flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="cadOpen">${H.open?'커버 닫기':'커버 열기'}</button><label class="cad-exp" title="커버를 들어 올려 분해 상태로 봅니다"><span>분해</span><input type="range" id="cadExplode" min="0" max="100" value="${H.open?100:(H.explode||0)}" aria-label="분해 간격"></label><button class="btn primary sm" id="cadExp">CAD 내보내기</button><button class="btn sm" id="cadDwg" title="조립도·부품도(HSG-01 베이스, HSG-02 커버)·기구 BOM·SCAD를 zip으로">도면·BOM</button><button class="btn sm" id="cadBom" title="기구 BOM을 엑셀로">BOM Excel</button><button class="btn sm" id="cadUndo"${H.undo.length?'':' disabled'}>실행 취소</button></div>
+  <div class="acts" style="flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="cadOpen">${H.open?'커버 닫기':'커버 열기'}</button><label class="cad-exp" title="커버를 들어 올려 분해 상태로 봅니다"><span>분해</span><input type="range" id="cadExplode" min="0" max="100" value="${H.open?100:(H.explode||0)}" aria-label="분해 간격"></label><button class="btn primary sm" id="cadExp">CAD 내보내기</button><button class="btn sm" id="cadStep" title="베이스·커버 STEP(AP214) 솔리드 — Fusion · SolidWorks · FreeCAD · SolidCraft 에서 바디로 열림">STEP</button><button class="btn sm" id="cadDwg" title="조립도·부품도(HSG-01 베이스, HSG-02 커버)·기구 BOM·SCAD를 zip으로">도면·BOM</button><button class="btn sm" id="cadBom" title="기구 BOM을 엑셀로">BOM Excel</button><button class="btn sm" id="cadUndo"${H.undo.length?'':' disabled'}>실행 취소</button></div>
   <p class="h" style="margin-top:12px">부품 (BOM 순)</p>${typeof nxPartStrip==='function'?nxPartStrip(R):''}
   <details class="thsec" open><summary><b>치수 · 해석</b><span>${d.mass.toFixed(0)} g</span></summary>
     <table class="stbl"><tbody>
@@ -80,7 +80,7 @@ function cadBind(){
   Rr.querySelectorAll('[data-el]').forEach(li=>{const go=e=>{if(e.target.closest('button'))return;cadSelect(li.dataset.el,e.shiftKey||e.ctrlKey||e.metaKey);};li.addEventListener('click',go);li.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go(e);}});});
   Rr.querySelectorAll('[data-oclr]').forEach(b=>b.addEventListener('click',()=>cadExec(`set ${b.dataset.oclr} auto`)));
   Rr.querySelector('#cadOpen')?.addEventListener('click',()=>cadExec(H.open?'close':'open'));
-  Rr.querySelector('#cadExp')?.addEventListener('click',()=>cadExec('export zip'));
+  Rr.querySelector('#cadExp')?.addEventListener('click',()=>cadExec('export zip'));Rr.querySelector('#cadStep')?.addEventListener('click',()=>cadExec('export step'));
   const ex=Rr.querySelector('#cadExplode');if(ex)ex.addEventListener('input',()=>{H.explode=+ex.value;H.open=false;const ob=Rr.querySelector('#cadOpen');if(ob)ob.textContent='커버 열기';mech3D();});
   Rr.querySelectorAll('[data-pkeys]').forEach(b=>b.addEventListener('click',e=>{const keys=(b.dataset.pkeys||'').split(',').filter(Boolean);if(!keys.length)return;const add=e.shiftKey||e.ctrlKey||e.metaKey;if(add)keys.forEach(k=>{if(!CADSEL.keys.includes(k))CADSEL.keys.push(k);});else CADSEL.keys=keys;cadSelChanged();}));
   Rr.querySelector('#cadDwg')?.addEventListener('click',()=>exportMechParts('zip'));Rr.querySelector('#cadBom')?.addEventListener('click',()=>exportMechParts('bom'));
@@ -144,11 +144,15 @@ function mechGroup(R){
   let cur=mat; // material for the shell piece being built (base: mat · lid: matL)
   const wall=(side,z0,z1,par)=>{const horiz=side==='S'||side==='N';const len=horiz?g.Lo:g.Wo;const o0=horiz?X0:Y0;
     if(z1-z0<0.05)return;const A=Rp,Bn=len-Rp;const sh=new THR.Shape();sh.moveTo(A,z0);sh.lineTo(Bn,z0);sh.lineTo(Bn,z1);sh.lineTo(A,z1);sh.lineTo(A,z0);
-    const rectHole=(a,b,lo,hi)=>{lo=Math.max(z0+0.2,lo);hi=Math.min(z1-0.2,hi);a=Math.max(A+0.2,a);b=Math.min(Bn-0.2,b);if(hi-lo<0.3||b-a<0.3)return;const h=new THR.Path();h.moveTo(a,lo);h.lineTo(a,hi);h.lineTo(b,hi);h.lineTo(b,lo);h.lineTo(a,lo);sh.holes.push(h);};
+    // rectangular openings: overlapping ones (adjacent connector windows) are merged first — overlapping holes break the cap triangulation
+    const rects=[];const rectHole=(a,b,lo,hi)=>{lo=Math.max(z0+0.2,lo);hi=Math.min(z1-0.2,hi);a=Math.max(A+0.2,a);b=Math.min(Bn-0.2,b);if(hi-lo<0.3||b-a<0.3)return;rects.push([a,b,lo,hi]);};
+    const flushRects=()=>{let ch=true;while(ch){ch=false;for(let i=0;i<rects.length&&!ch;i++)for(let j=i+1;j<rects.length;j++){const p=rects[i],q=rects[j];if(p[0]<q[1]+0.3&&q[0]<p[1]+0.3&&p[2]<q[3]+0.3&&q[2]<p[3]+0.3){rects[i]=[Math.min(p[0],q[0]),Math.max(p[1],q[1]),Math.min(p[2],q[2]),Math.max(p[3],q[3])];rects.splice(j,1);ch=true;break;}}}
+      rects.forEach(([a,b,lo,hi])=>{const h=new THR.Path();h.moveTo(a,lo);h.lineTo(a,hi);h.lineTo(b,hi);h.lineTo(b,lo);h.lineTo(a,lo);sh.holes.push(h);});};
     R.N.cuts.filter(c=>c.side===side).forEach(c=>rectHole(c.a-o0,c.b-o0,c.z0,c.z1));
     if(side==='N'&&d.seal.breather){const zc=g.zSplit-4;if(zc-6>z0&&zc+6<z1&&len/2-6>A){const h=new THR.Path();h.absarc(len/2,zc,6,0,Math.PI*2,true);sh.holes.push(h);}}
     holesOn(side).forEach(f=>{const u=f.a-o0;if(f.type==='slot'){if(f.z-f.h/2>z0+0.2&&f.z+f.h/2<z1-0.2)rectHole(u-f.w/2,u+f.w/2,f.z-f.h/2,f.z+f.h/2);return;}
       if(f.z-f.w/2>z0+0.2&&f.z+f.w/2<z1-0.2&&u-f.w/2>A+0.2&&u+f.w/2<Bn-0.2){const h=new THR.Path();h.absarc(u,f.z,f.w/2,0,Math.PI*2,true);sh.holes.push(h);}});
+    flushRects();
     const geo=new THR.ExtrudeGeometry(sh,{depth:r,bevelEnabled:false,curveSegments:24});
     // shape (along, z) extruded by the wall thickness → world: S/N walls run along x, W/E walls along y
     geo.applyMatrix4(horiz?new THR.Matrix4().set(1,0,0,0, 0,0,-1,0, 0,1,0,0, 0,0,0,1):new THR.Matrix4().set(0,0,1,0, 1,0,0,0, 0,1,0,0, 0,0,0,1));
@@ -234,16 +238,28 @@ function mechSTL(obj,name){const out=[`solid ${name}`];obj.updateMatrixWorld(tru
     for(let i=0;i+2<p.count;i+=3){for(let k=0;k<3;k++)v[k].fromBufferAttribute(p,i+k).applyMatrix4(m);e1.subVectors(v[1],v[0]);e2.subVectors(v[2],v[0]);n.crossVectors(e1,e2).normalize();
       out.push(` facet normal ${n.x.toFixed(5)} ${n.y.toFixed(5)} ${n.z.toFixed(5)}\n  outer loop\n${v.map(q=>`   vertex ${q.x.toFixed(4)} ${q.y.toFixed(4)} ${q.z.toFixed(4)}`).join('\n')}\n  endloop\n endfacet`);}});
   out.push(`endsolid ${name}`);return out.join('\n')+'\n';}
+/* triangles of a group in its own frame (same walk as mechSTL); open display-only surfaces (hole markers) are dropped per mesh by STEPW */
+function mechTris(obj){const out=[];obj.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(obj.matrixWorld).invert();const v=new THREE.Vector3();
+  obj.traverse(me=>{if(!me.isMesh||me.material&&me.material.isMeshBasicMaterial)return;const m=new THREE.Matrix4().multiplyMatrices(inv,me.matrixWorld);const geo=me.geometry.index?me.geometry.toNonIndexed():me.geometry;const p=geo.attributes.position;const tris=[];
+    for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(m);tris.push(v.x,v.y,v.z);}
+    out.push({name:(me.userData.el||me.name||me.geometry.type||'body').toString(),tris});});
+  return out;}
+function mechSTEP(obj,name){if(typeof STEPW==='undefined')throw new Error('STEP 모듈 없음');return STEPW.write(mechTris(obj),{name});}
 async function mechExport(kind){
   kind=kind||'zip';const R=mechRun();const H=mechCfg();const base=(BD.name||'board').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'')||'board';
   if(kind==='scad'){const fn=await offerFile(base+'_housing.scad',new TextEncoder().encode(HOUSING.scad(R,BD.name)),'text/plain');if(fn)toast('OpenSCAD 모델을 내려받았습니다.');return fn;}
-  const z=new JSZip();if(kind==='zip')z.file(base+'_housing.scad',HOUSING.scad(R,BD.name));
-  try{const grp=mechGroup(R);grp.userData.lid.position.z=0;z.file(base+'_housing_base.stl',mechSTL(grp.userData.base,base+'_base'));z.file(base+'_housing_lid.stl',mechSTL(grp.userData.lid,base+'_lid'));disposeTree(grp);}catch(e){console.error(e);}
+  const z=new JSZip();if(kind==='zip')z.file(base+'_housing.scad',HOUSING.scad(R,BD.name));let stepNote='';
+  try{const grp=mechGroup(R);grp.userData.lid.position.z=0;
+    if(kind!=='step'){z.file(base+'_housing_base.stl',mechSTL(grp.userData.base,base+'_base'));z.file(base+'_housing_lid.stl',mechSTL(grp.userData.lid,base+'_lid'));}
+    if(kind!=='stl'){const sb=mechSTEP(grp.userData.base,base+'_base'),sl=mechSTEP(grp.userData.lid,base+'_lid');z.file(base+'_housing_base.step',sb.text);z.file(base+'_housing_lid.step',sl.text);
+      stepNote=`STEP: 베이스 ${sb.stats.solids}개 · 커버 ${sl.stats.solids}개 솔리드 (면 ${sb.stats.faces+sl.stats.faces})`;}
+    disposeTree(grp);}catch(e){console.error(e);toast('CAD 형상 내보내기 중 오류: '+(e.message||e));}
   if(kind==='zip'){
-    z.file(base+'_housing_report.md',`# ${BD.name||base} 하우징 설계\n\n\`\`\`\n${HOUSING.text(R)}\n\n${HOUSING.compareText(R)}\n\`\`\`\n\n## Text-to-CAD 기록\n\n\`\`\`\n${CADC.log.filter(e=>e.k==='cmd').map(e=>e.t).join('\n')||'(없음)'}\n\`\`\`\n\n- 좌표: 보드 왼쪽 아래 = (0,0), 보드 두께 중간면 z = 0, 단위 mm\n- SCAD는 실제 CSG(차집합)로 만든 파라메트릭 모델입니다. STL은 화면용 형상을 삼각형으로 옮긴 참고용(부품이 겹친 솔리드)이라 3D 프린팅·금형에는 SCAD에서 다시 내보내세요.\n`);
+    z.file(base+'_housing_report.md',`# ${BD.name||base} 하우징 설계\n\n\`\`\`\n${HOUSING.text(R)}\n\n${HOUSING.compareText(R)}\n\`\`\`\n\n## Text-to-CAD 기록\n\n\`\`\`\n${CADC.log.filter(e=>e.k==='cmd').map(e=>e.t).join('\n')||'(없음)'}\n\`\`\`\n\n- 좌표: 보드 왼쪽 아래 = (0,0), 보드 두께 중간면 z = 0, 단위 mm\n- SCAD는 실제 CSG(차집합)로 만든 파라메트릭 모델입니다. STEP(AP214)은 화면 형상을 평면 면 B-rep 솔리드로 옮긴 것으로 Fusion·SolidWorks·FreeCAD·SolidCraft에서 솔리드 바디로 열립니다(원통은 다각 면, 보스·받침은 겹친 별도 바디 → CAD에서 결합, 사용자 개구부는 미절단 → json의 features 좌표로 컷). STL은 화면용 형상을 삼각형으로 옮긴 참고용(부품이 겹친 솔리드)이라 3D 프린팅·금형에는 SCAD에서 다시 내보내세요.\n`);
     z.file(base+'_housing.json',JSON.stringify({input:R.inp,cad:H.cad,material:R.d.mat,geometry:R.d.geo,supports:R.d.sup,screws:R.d.screws,screw:R.d.screwM,seal:R.d.seal,fins:R.d.fins,features:R.d.feats,
       thermal_paths:R.d.th.peds.map(p=>({ref:p.ref,P:p.P,path:p.kind,tim:p.tim,tim_label:HOUSING.TIMS[p.tim].label,blt_mm:p.blt,pad_thickness_mm:p.padT,area_mm2:Math.round(p.area),thermal_vias:p.vias,R_KW:+p.R.toFixed(2),Tj:+p.Tj.toFixed(1),pedestal:p.ped})),junctions:R.d.th.parts,cutouts:R.N.cuts,thermal:{Ts:R.d.th.Ts,Tboard:R.d.th.Tboard},vibration:R.d.vib,mass_g:R.d.mass,indices:R.idx},null,2));}
-  const data=await z.generateAsync({type:'uint8array'});const fn=await offerFile(base+(kind==='stl'?'_housing_stl.zip':'_housing.zip'),data,'application/zip');if(fn)toast(kind==='stl'?'베이스·커버 STL을 내려받았습니다.':'하우징 CAD(SCAD·STL)와 보고서를 zip으로 내려받았습니다.');return fn;
+  const data=await z.generateAsync({type:'uint8array'});const fn=await offerFile(base+(kind==='stl'?'_housing_stl.zip':kind==='step'?'_housing_step.zip':'_housing.zip'),data,'application/zip');
+  if(fn)toast(kind==='stl'?'베이스·커버 STL을 내려받았습니다.':kind==='step'?'베이스·커버 STEP을 내려받았습니다. '+stepNote:'하우징 CAD(SCAD·STEP·STL)와 보고서를 zip으로 내려받았습니다. '+stepNote);return fn;
 }
 /* ---- Text-to-CAD console ---- */
 var CADC={log:[],hist:[],hi:-1,busy:false,abort:null,stopReq:false,seq:0};

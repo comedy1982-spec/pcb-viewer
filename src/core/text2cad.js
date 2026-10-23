@@ -30,7 +30,7 @@ const HELP=[
   ['list · del <F번호|all> · reset','형상 목록 · 삭제 · 전부 초기화'],
   ['undo · redo','실행 취소 · 다시 실행'],
   ['show · open · close','3D에서 하우징 보기 · 커버 열기 · 닫기'],
-  ['export [zip|scad|stl]','CAD 내보내기'],
+  ['export [zip|scad|stl|step]','CAD 내보내기 (zip: SCAD+STEP+STL+보고서 · step: 베이스·커버 STEP 솔리드)'],
   ['ai <문장>','Claude가 위 명령으로 설계 (AI 모드). 결정론 모드에서는 문장을 규칙으로 명령으로 바꿉니다']];
 const CMDS=new Set(['edit','fillet','chamfer','round','help','status','check','compare','set','hole','gland','vent','slot','tabs','boss','rib','fins','label','list','feats','del','delete','reset','undo','redo','show','hide','open','close','export','ai','clear']);
 function tok(s){const out=[];const re=/"([^"]*)"|“([^”]*)”|'([^']*)'|(\S+)/g;let m;while((m=re.exec(s)))out.push(m[1]!=null?m[1]:m[2]!=null?m[2]:m[3]!=null?m[3]:m[4]);return out;}
@@ -58,7 +58,7 @@ function exec(st,line,H){norm(st);const t=tok(line);const cmd=(t[0]||'').toLower
     case'compare':return{out:'',action:'compare'};
     case'list':case'feats':return{out:C.feats.length?C.feats.map(f=>'  '+(H&&H.featLabel?H.featLabel(f):f.id+' '+f.type)).join('\n')+`\n  모서리: ${edgeText(C)}`+(Object.keys(C.over).length?`\n  지정값: ${Object.entries(C.over).map(([k,v])=>`${OVER[k]||k} ${v}`).join(' · ')}`:''):'추가한 형상이 없습니다. (자동 설계만 적용)'};
     case'show':case'hide':case'open':case'close':return{out:'',action:cmd};
-    case'export':{const k=String(a._[0]||'zip').toLowerCase();if(!/^(zip|scad|stl)$/.test(k))throw new Error('export zip|scad|stl');return{out:'',action:'export',kind:k};}
+    case'export':{const k=String(a._[0]||'zip').toLowerCase();if(!/^(zip|scad|stl|step)$/.test(k))throw new Error('export zip|scad|stl|step');return{out:'',action:'export',kind:k};}
     case'undo':case'redo':case'clear':return{out:'',action:cmd};
     case'reset':st.cad=blank();return ok('형상 지정값과 추가 형상을 모두 지웠습니다 (설계 조건은 유지).');
     case'del':case'delete':{const id=String(a._[0]||'').toUpperCase();if(id==='ALL'){const n=C.feats.length;C.feats=[];return ok(`형상 ${n}개를 지웠습니다.`);}
@@ -136,7 +136,7 @@ function parse(text){
   for(const raw of parts){const c=raw.trim(),L=c.toLowerCase();const sd=(()=>{for(const[re,s]of SIDE_RE)if(re.test(c))return s;return null;})();if(sd)lastSide=sd;
     const cnt=(c.match(/(\d+)\s*(?:개|곳|ea|x\b)/i)||[])[1];const q=(c.match(/["“'‘]([^"”'’]+)["”'’]/)||[])[1];
     const pushed=out.length;
-    if(/내보내|export|다운로드|저장/.test(L)){out.push('export '+(/scad/.test(L)?'scad':/stl/.test(L)?'stl':'zip'));continue;}
+    if(/내보내|export|다운로드|저장/.test(L)){out.push('export '+(/scad/.test(L)?'scad':/stl/.test(L)?'stl':/step|스텝|solidcraft|fusion|solidworks|freecad/.test(L)?'step':'zip'));continue;}
     if(/초기화|리셋|reset|처음부터/.test(L)){out.push('reset');continue;}
     if(/(커버|뚜껑|cover|lid).*(열어|열기|열고|open)|^open/.test(L)){out.push('open');continue;}
     if(/(커버|뚜껑|cover|lid).*(닫|close)|^close/.test(L)){out.push('close');continue;}

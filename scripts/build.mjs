@@ -51,6 +51,7 @@ ${script(stripExport(read('src/core/guide.js')))}
 ${script(stripExport(read('src/core/newproj.js')))}
 ${script(stripExport(read('src/core/housing.js')))}
 ${script(stripExport(read('src/core/text2cad.js')))}
+${script(stripExport(read('src/core/stepw.js')))}
 ${script(stripExport(read('src/core/sysdiag.js')))}
 ${script(stripExport(read('src/core/hwarch.js')))}
 ${script(stripExport(read('src/core/revlog.js')))}
