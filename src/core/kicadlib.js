@@ -66,7 +66,11 @@ const stem=k=>{const m=k.match(/^[A-Z]+\d+[A-Z]?\d*/);return m?m[0]:k.slice(0,6)
 const stemRaw=m=>{const r=String(m).toUpperCase().replace(/^[^A-Z0-9]+/,'');const x=r.match(/^[A-Z]+\d+[A-Z]?\d*/);return x?norm(x[0]):stem(norm(r));};
 const pkgText=q=>(q.fp||q.pkg||'')+' '+String(q.fpf||'').replace(/[?*]/g,'-');
 function pick(parts,mpns){const byN=new Map();parts.forEach(p=>{const k=norm(p.mpn);if(!byN.has(k))byN.set(k,p);});const keys=[...byN.keys()].sort((a,b)=>b.length-a.length);const out={};
+  const wild=parts.filter(q=>/[0-9A-Z]x[0-9A-Z]/.test(q.mpn)).map(q=>{const n=String(q.mpn).split(/x/).map(norm).join('.');return[new RegExp('^'+n),q,n.length];}).filter(x=>x[2]>=8).sort((a,b)=>b[2]-a[2]);
   mpns.forEach(m=>{const k=norm(m);let p=byN.get(k);let how='exact';if(!p){const raw0=String(m).toUpperCase();const h0=PKG_HINT.find(([re])=>re.test(raw0));const hit=keys.find(x=>{if(x.length<5||!k.startsWith(x))return false;const q=byN.get(x);const f=pkgText(q).trim();return!(h0&&f&&!h0[1].test(f));});if(hit){p=byN.get(hit);how='prefix';}}
+    // KiCad names that spell a free option letter as a lowercase x (ACS724xLCTR-20AB · MCP2542FDxMF): x matches any one
+    // character, the rest must be the part number's own prefix (ACS724LLCTR-20AB-T)
+    if(!p){const w=wild.find(([re])=>re.test(k));if(w){p=w[1];how='prefix';}}
     if(!p){const raw=String(m).toUpperCase();const hint=PKG_HINT.find(([re])=>re.test(raw));const vm=raw.match(/(\d{2})(?=[A-Z]*Q?\d*$|[A-Z]{2,})/);
       for(const st of[...new Set([stemRaw(m),stem(k),stemRaw(m).replace(/[A-Z]$/,''),stem(k).replace(/[A-Z]$/,'')])]){if(st.length<5||!/\d/.test(st))continue;const fam=keys.filter(x=>x.startsWith(st));if(!fam.length)continue;
         const sig=x=>byN.get(x).pins.map(q=>q.num+':'+q.name.toUpperCase()).join('|');

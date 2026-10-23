@@ -62,3 +62,20 @@ test('bundled KPINS: real pins merged into the library lookup (a built-in part w
   assert.ok(r.pins.some(p => /CANH/i.test(p.name)));
   const recs = PARTLIB.fromKpins(KPINS); assert.ok(recs.every(x => x.src === 'kicad' && x.pins.length));
 });
+
+test('kicad wildcard x in symbol names (Allegro ACS)', () => {
+  const lib = `EESchema-LIBRARY Version 2.4
+DEF ACS724xLCTR-20AB U 0 20 Y Y 1 F N
+ALIAS ACS725xLCTR-20AB
+F2 "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm" 0 0 50 H I C CNN
+DRAW
+X IP+ 1 0 0 100 R 50 50 1 1 P
+X VCC 8 0 0 100 R 50 50 1 1 W
+ENDDRAW
+ENDDEF
+#End Library`;
+  const parts = KICADLIB.parseLib(lib, '', 'Sensor_Current');
+  const r = KICADLIB.pick(parts, ['ACS724LLCTR-20AB-T', 'ACS725LLCTR-20AB-T', 'ACS724LLCTR-30AB-T']);
+  assert.equal(r['ACS724LLCTR-20AB-T'].kicad, 'ACS724xLCTR-20AB');
+  assert.equal(r['ACS725LLCTR-20AB-T'].kicad, 'ACS725xLCTR-20AB');
+});

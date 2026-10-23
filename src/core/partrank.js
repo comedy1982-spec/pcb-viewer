@@ -30,6 +30,7 @@ const C={
     {mpn:'TPS54331QDRQ1',mfr:'TI',note:'3 A 동기 벅 · 3.5–28 V · 570 kHz',spec:{i:3,vin:[3.5,28],pkg:'SOIC-8'},grade:'Q100',price:1.4,why:'12 V → 5/3.3 V 범용 차량용 벅'},
     {mpn:'LMR33630AQRNXRQ1',mfr:'TI',note:'3 A 동기 벅 · 3.8–36 V · 400 kHz · 소형',spec:{i:3,vin:[3.8,36],pkg:'VQFN-12'},grade:'Q100',price:1.9,why:'36 V 입력(로드덤프 여유)·고효율'},
     {mpn:'TLF4277-2LD',mfr:'Infineon',note:'400 mA LDO+벅 복합 · 전류 센스',spec:{i:0.4,vin:[3,40],pkg:'VQFN-24'},grade:'Q100',price:2.2,why:'전류 센스 내장 진단'},
+    {mpn:'A4403GEUTR-T',mfr:'Allegro',note:'3 A 벅 · 46 V 입력 · 최대 2 MHz · QFN-16',spec:{i:3,vin:[4.5,46],pkg:'QFN-16'},grade:'',price:1.7,why:'46 V 입력(로드덤프 여유)'},
     {mpn:'MP2451DJ-LF-Z',mfr:'MPS',note:'600 mA 벅 · 4.5–36 V',spec:{i:0.6,vin:[4.5,36],pkg:'TSOT-23-6'},grade:'',price:0.6,why:'상용 소형 저가'},
     {mpn:'MP1584EN',mfr:'MPS',note:'3 A 벅 · 4.5–28 V (상용)',spec:{i:3,vin:[4.5,28],pkg:'SOIC-8'},grade:'',price:0.5,why:'가장 싼 3 A 벅'}],
   supervisor:[
@@ -62,12 +63,16 @@ const C={
     {mpn:'DRV8353RS-Q1',mfr:'TI',note:'3상 게이트 드라이버 · 벅 · 전류 센스 앰프 ×3 · SPI',spec:{v:100,pkg:'VQFN-56'},grade:'Q100',asil:'',price:6.5,why:'센스 앰프·벅 내장으로 부품 절감'},
     {mpn:'GD3000',mfr:'NXP',note:'3상 프리드라이버 · 진단 · SPI',spec:{v:40,pkg:'LQFP-32'},grade:'Q100',asil:'',price:4.5,why:'저가 차량용 프리드라이버'},
     {mpn:'A4919',mfr:'Allegro',note:'3상 게이트 드라이버 · 진단',spec:{v:50,pkg:'QFN-28'},grade:'Q100',asil:'',price:5,why:'소형'},
+    {mpn:'AMT49413',mfr:'Allegro',note:'3상 BLDC 컨트롤러 + MOSFET 게이트 드라이버 · 센서리스 · QFN-48',spec:{v:50,pkg:'QFN-48'},grade:'',asil:'',price:4.8,why:'컨트롤러 내장(펌프·팬 단독 구동)'},
     {mpn:'DRV8302DCAR',mfr:'TI',note:'3상 게이트 드라이버 · 벅 · 센스 앰프 ×2 (상용)',spec:{v:60,pkg:'HTSSOP-56'},grade:'',asil:'',price:5.8,why:'상용 저가'}],
   hbridge:[
     {mpn:'IR2104S',mfr:'Infineon',note:'하프브리지 드라이버 ×2 · 600 V · 부트스트랩',spec:{v:600,pkg:'SOIC-8'},grade:'',price:1.2,why:'외부 FET H-브리지 기본 드라이버(저가)'},
     {mpn:'DRV8701ERGER',mfr:'TI',note:'H-브리지 게이트 드라이버 · 전류 레귤레이션 · 진단',spec:{v:45,pkg:'VQFN-24'},grade:'',price:2.6,why:'전류 제한·보호 내장'},
     {mpn:'DRV8706S-Q1',mfr:'TI',note:'H-브리지 게이트 드라이버 · 40 V · SPI 진단 · 전류 센스 앰프',spec:{v:40,pkg:'VQFN-32'},grade:'Q100',price:3.4,why:'차량용 DC 모터·솔레노이드'},
     {mpn:'TLE9201SG',mfr:'Infineon',note:'H-브리지 내장 6 A · 진단',spec:{v:40,i:6,pkg:'DSO-12'},grade:'Q100',price:2.9,why:'6 A까지 FET 내장(부품 수 최소)'},
+    {mpn:'A4950KLJTR-T',mfr:'Allegro',note:'풀브리지 DMOS 내장 3.5 A · 40 V · PWM 입력 · -40~125 °C · SOIC-8 EP',spec:{v:40,i:3.5,pkg:'SOIC-8'},grade:'',price:1.3,why:'3.5 A까지 부품 1개 H-브리지(저가)'},
+    {mpn:'A4953ELJTR-T',mfr:'Allegro',note:'풀브리지 DMOS 내장 2 A · 40 V · 전류 제한 · SOIC-8 EP',spec:{v:40,i:2,pkg:'SOIC-8'},grade:'',price:1.0,why:'소형 브러시 DC 모터·솔레노이드'},
+    {mpn:'A4954ELPTR-T',mfr:'Allegro',note:'풀브리지 2 A · 40 V · 과전류·단락 보호 · 전류 제한 · TSSOP-16',spec:{v:40,i:2,pkg:'TSSOP-16'},grade:'',price:1.4,why:'보호 기능 내장 2 A'},
     {mpn:'BTN9970LV',mfr:'Infineon',note:'하프브리지 내장 40 A ×2 사용 · 전류 센스',spec:{v:40,i:40,pkg:'TSDSO-14'},grade:'Q100',price:4.2,why:'고전류 집적 하프브리지'}],
   bldc:[
     {mpn:'DRV8313PWPR',mfr:'TI',note:'3상 드라이버 FET 내장 2.5 A · 60 V',spec:{v:60,i:2.5,pkg:'HTSSOP-28'},grade:'',price:2.6,why:'소형 BLDC 팬·펌프'},
@@ -88,6 +93,10 @@ const C={
     {mpn:'INA181A1QDBVRQ1',mfr:'TI',note:'전류 센스 앰프 ×20 · 26 V · 양방향',spec:{pkg:'SOT-23-6'},grade:'Q100',price:0.75,why:'션트 전류 센싱 기본'},
     {mpn:'INA240A2QPWRQ1',mfr:'TI',note:'전류 센스 앰프 ×50 · PWM 동상 제거 · 80 V',spec:{pkg:'TSSOP-8'},grade:'Q100',price:1.9,why:'인버터 상 션트(PWM 노이즈 제거)'},
     {mpn:'TLE4972',mfr:'Infineon',note:'코어리스 홀 전류 센서 · 절연',spec:{pkg:'TISON-8'},grade:'Q100',price:2.8,why:'션트 없는 절연 전류 센싱'},
+    {mpn:'ACS724LLCTR-20AB-T',mfr:'Allegro',note:'홀 전류 센서 ±20 A · 절연 · 5 V · 100 mV/A · SOIC-8',spec:{i:20,pkg:'SOIC-8'},grade:'Q100',price:2.6,why:'션트 없는 절연 전류 센싱(차량용)'},
+    {mpn:'ACS725LLCTR-20AB-T',mfr:'Allegro',note:'홀 전류 센서 ±20 A · 절연 · 3.3 V · 66 mV/A · SOIC-8',spec:{i:20,pkg:'SOIC-8'},grade:'Q100',price:2.6,why:'3.3 V MCU ADC 직결'},
+    {mpn:'ACS711KLCTR-25AB-T',mfr:'Allegro',note:'홀 전류 센서 ±25 A · 3.3 V · 과전류 FAULT 출력 · SOIC-8',spec:{i:25,pkg:'SOIC-8'},grade:'',price:1.6,why:'과전류 고장 핀 내장'},
+    {mpn:'ACS712ELCTR-20A-T',mfr:'Allegro',note:'홀 전류 센서 ±20 A · 5 V · 100 mV/A (상용)',spec:{i:20,pkg:'SOIC-8'},grade:'',price:1.5,why:'가장 흔한 범용 홀 전류 센서'},
     {mpn:'MAX40056FAUA+',mfr:'ADI',note:'양방향 전류 센스 앰프 · 65 V · PWM 제거',spec:{pkg:'µMAX-8'},grade:'',price:2.3,why:'상용 고전압 센싱'}],
   flash:[
     {mpn:'W25Q64JVSSIQ',mfr:'Winbond',note:'64 Mbit SPI NOR · 133 MHz',spec:{pkg:'SOIC-8'},grade:'',price:0.9,why:'범용 로그·설정 저장'},
