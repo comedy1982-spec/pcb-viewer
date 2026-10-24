@@ -96,8 +96,8 @@ function drc(B,opts){
   const box=s=>s.k==='cap'?[Math.min(s.a[0],s.b[0])-s.r,Math.min(s.a[1],s.b[1])-s.r,Math.max(s.a[0],s.b[0])+s.r,Math.max(s.a[1],s.b[1])+s.r]:(e=>[s.x-e,s.y-e,s.x+e,s.y+e])(Math.hypot(s.hw,s.hh));
   const cell=4,grid=new Map();S.forEach((s,i)=>{s._b=box(s);for(let x=Math.floor(s._b[0]/cell);x<=Math.floor(s._b[2]/cell);x++)for(let y=Math.floor(s._b[1]/cell);y<=Math.floor(s._b[3]/cell);y++){const k=x+','+y;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);}});
   const seen=new Set();const owner=s=>s.pad&&s.pad.ref;
-  grid.forEach(list=>{for(let a=0;a<list.length;a++)for(let b=a+1;b<list.length;b++){const i=list[a],j=list[b];const k=i<j?i+'|'+j:j+'|'+i;if(seen.has(k))continue;seen.add(k);
-    const A=S[i],Bs=S[j];if(!A.L.some(l=>Bs.L.includes(l)))continue;
+  grid.forEach(list=>{for(let a=0;a<list.length;a++)for(let b=a+1;b<list.length;b++){const i=list[a],j=list[b];if(S[i].net&&S[i].net===S[j].net&&!S[i].hole&&!S[j].hole)continue;const k=i<j?i*1048576+j:j*1048576+i;if(seen.has(k))continue;seen.add(k);
+    const A=S[i],Bs=S[j];if(A.net&&A.net===Bs.net&&!A.hole&&!Bs.hole)continue;if(!A.L.some(l=>Bs.L.includes(l)))continue;
     if(A.hole||Bs.hole){if(A.hole&&Bs.hole)continue;const g=AUTOROUTE_gap(A,Bs);if(g<o.hole-0.02)out.push({code:'hole',msg:`구멍과 동박 간격 ${Math.max(0,g).toFixed(2)} mm`,at:A.hole?(A.a):(Bs.a),refs:[owner(A),owner(Bs)].filter(Boolean)});continue;}
     if(A.net&&A.net===Bs.net)continue;
     if(owner(A)&&owner(A)===owner(Bs))continue;

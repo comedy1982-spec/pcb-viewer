@@ -52,8 +52,12 @@ function shapeGap(a,b){ // ≤ 0 when touching (sampled; fine for pads/tracks)
 // groups of a net that are not yet joined by copper
 function components(S,net){
   const it=S.filter(s=>s.net===net);const par=it.map((_,i)=>i);const f=i=>par[i]===i?i:(par[i]=f(par[i]));
-  for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++){if(f(i)===f(j))continue;if(!it[i].L.some(l=>it[j].L.includes(l)))continue;
-    const bi=bboxOf(it[i],0.01),bj=bboxOf(it[j],0.01);if(bi[2]<bj[0]||bj[2]<bi[0]||bi[3]<bj[1]||bj[3]<bi[1])continue;if(shapeGap(it[i],it[j])<=0.005)par[f(i)]=f(j);}
+  const bb=it.map(s=>bboxOf(s,0.01));const join=(i,j)=>{if(f(i)===f(j))return;if(!it[i].L.some(l=>it[j].L.includes(l)))return;
+    const bi=bb[i],bj=bb[j];if(bi[2]<bj[0]||bj[2]<bi[0]||bi[3]<bj[1]||bj[3]<bi[1])return;if(shapeGap(it[i],it[j])<=0.005)par[f(i)]=f(j);};
+  if(it.length<64){for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++)join(i,j);}
+  else{ // many shapes (copper fill): only pairs that share a 2 mm grid cell
+    const C=2,grid=new Map();bb.forEach((b,i)=>{for(let x=Math.floor(b[0]/C);x<=Math.floor(b[2]/C);x++)for(let y=Math.floor(b[1]/C);y<=Math.floor(b[3]/C);y++){const k=x*100003+y;let a=grid.get(k);if(!a)grid.set(k,a=[]);a.push(i);}});
+    grid.forEach(a=>{for(let p=0;p<a.length;p++)for(let q=p+1;q<a.length;q++)join(a[p],a[q]);});}
   const g={};it.forEach((s,i)=>{(g[f(i)]=g[f(i)]||[]).push(s);});
   return Object.values(g).filter(c=>c.some(s=>s.pad||s.prim||s.via));
 }

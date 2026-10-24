@@ -716,7 +716,16 @@ $('#flist').addEventListener('change',e=>{const s=e.target.closest('[data-role]'
 $('#flist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(!d)return;IMP.entries=IMP.entries.filter(x=>x.id!==+d.dataset.del);renderImport();});
 $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImport();});
 const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC],tc364:['AURIX TC364 핀 추천',()=>SAMPLE_TC364]};
-function loadExample(which){const spec=(EXAMPLES[which]||EXAMPLES.sense)[1]();setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
+/* a placed + routed example kept as a snapshot: the board is generated from its product profile, then the layout restored */
+function boardFromSnap(S){const m=S.meta;const prof=PRODUCTS.detect(m.profile);const ans={cur:m.cur};const fq=prof.questions.find(q=>q.key==='fet');if(fq)ans.fet=fq.options[m.fet||0].label;
+  const R=PRODUCTS.apply(prof,ans,m.profile);const plan=HWARCH.toPlan(R.arch).plan;plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
+  const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+m.profile.toLowerCase()+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch:R.arch};}
+const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8]};
+function loadSnapExample(which){const r=boardFromSnap(SNAP_EXAMPLES[which][1]());
+  Object.assign(NP,{plan:r.plan,arch:r.arch,answers:{},vkey:null,picked:null,chooser:false,variants:null,hist:[],planManual:false});const n=$('#npName');if(n)n.value=r.B.name;
+  setBoard(r.B);closeImport();if(typeof setMode==='function'){APP.mode='steps';setMode('steps');if(typeof setStep==='function')setStep(3);}
+  toast(`${r.B.name} 예제: 100 × 65 mm · 8층, 배치·배선·전력 동박까지 끝난 보드입니다(미연결 0 · DRC 0). 1·2단계에서 블록 다이어그램과 회로를 보고, PCB 콘솔의 drc · report로 확인하거나 [내보내기]로 KiCad 파일을 받을 수 있습니다.`);}
+function loadExample(which){if(SNAP_EXAMPLES[which])return loadSnapExample(which);const spec=(EXAMPLES[which]||EXAMPLES.sense)[1]();setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
   if(which==='mcu'){selectComp('U1',false);toast('MCU DC 모터 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다. HSIS 탭에서 펌웨어·회로 대조 결과를 볼 수 있습니다.');}
   else if(which==='bldc'){selectComp('U1',false);toast('MCU BLDC 3상 예제입니다. STM32F042 펌웨어가 홀 센서로 DRV8313을 6스텝 정류합니다. "빌드 & 시뮬레이션"으로 3상 모터를 돌려 보세요.');}
   else if(which==='tc364'){HS.tab='rec';setWorkspace('hsis');toast('AURIX TC364 예제입니다. 부품은 배치됐지만 MCU 신호 핀 대부분이 미배정입니다. 핀 추천 탭에서 추천을 확인하고 적용한 뒤 MCAL 설정을 내보내 보세요.');}
@@ -725,6 +734,7 @@ $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));
 $('#impSample3').addEventListener('click',()=>loadExample('bldc'));
 $('#impSample4').addEventListener('click',()=>loadExample('tc364'));
+{const b5=$('#impSample5');if(b5)b5.addEventListener('click',()=>loadExample('dadu8'));}
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{
