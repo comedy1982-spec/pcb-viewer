@@ -3,6 +3,7 @@
 var CLI={open:false,log:[],hist:[],hi:-1,busy:false,lock:new Set(),strategy:'balanced',sample:undefined,abort:null,seq:0,stopReq:false,autoFix:true};
 try{if(localStorage.getItem('aod.autofix')==='off')CLI.autoFix=false;}catch(e){}
 const CLI_HELP=[
+  ['zone [on|off|auto [motor|general]|hard|soft]','기능 영역(전원부 · MCU부 · 파워스테이지 · 입력 · 통신 · 센싱): 없이 = 영역별 부품 수 · 사용률 · 영역 밖 부품. auto = 다시 나누기, hard = 영역 밖 금지에 가깝게. 바꾼 뒤 reset으로 다시 배치'],
   ['help [명령]','명령 목록과 사용법'],
   ['status','보드 크기·부품·넷·배선 상태'],
   ['safety [check|parts [--apply]|fmeda] [--asil B]','기능 안전 점검 · 등급 부품 점검/교체 · FMEDA 추정'],
@@ -61,7 +62,7 @@ const CLI_CHIPS=[['열 분산 자동 배치·배선','auto thermal','열 분산 
   ['가이드라인 점검','guide check','PCB 설계 가이드라인을 점검하고 가장 중요한 개선 3가지를 알려줘'],
   ['하우징 설계','housing','현재 보드에 맞는 보호 하우징을 설계하고 재질·IP·진동 조건별 트레이드오프를 비교해 추천해줘'],
   ['리포트','report all','배치·열·EMC 리포트를 보고 문제를 우선순위대로 요약해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const CLI_CMDS=new Set(['gloss','fix','autofix','width','analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
+const CLI_CMDS=new Set(['zone','gloss','fix','autofix','width','analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
 
 /* ---- snapshots for undo (same objects: tracks, pads and silk keep their identity) ---- */
 function cliSnap(){return{poses:BD.comps.map(c=>({c,x:c.x,y:c.y,rot:c.rot||0,side:c.side})),layers:Object.fromEntries(Object.keys(BD.layers).map(k=>[k,BD.layers[k].slice()])),vias:BD.vias.slice(),
@@ -450,6 +451,18 @@ function cliNL(t){const s=t.toLowerCase();const out=[];
 async function cliRun(line,quiet,by){
   const t=cliTok(line);if(!t.length)return'';let cmd=t[0].toLowerCase();const a=cliArgs(t.slice(1));
   switch(cmd){
+    case'zone':{const sub=String(a._[0]||'').toLowerCase();
+      if(sub==='auto'||!BD.zones&&sub&&sub!=='off'){let groups=BD.zones&&BD.zones.groupOf;if(!groups&&BD.newPlan&&typeof NEWPROJ!=='undefined'){const r=NEWPROJ.build(BD.newPlan);groups=NEWPROJ.partGroups(BD.newPlan,r.parts);}
+        if(!groups)throw new Error('부품의 기능 그룹을 알 수 없습니다 (신규 설계로 만든 보드에서 사용)');const Z=AUTOPLACE.floorplan(BD,groups,{template:a._[1]==='motor'||a._[1]==='general'?a._[1]:undefined});if(!Z)throw new Error('영역을 나눌 부품이 없습니다');
+        const hard=BD.zones&&BD.zones.hard;BD.zones=Z;if(hard)Z.hard=true;}
+      else if(sub==='off'){if(BD.zones)BD.zones.on=false;refresh(false);return'기능 영역 끔 — 배치에 영향 없음 (zone on으로 다시)';}
+      else if(sub==='on'){if(!BD.zones)throw new Error('영역이 없습니다 — zone auto');BD.zones.on=true;}
+      else if(sub==='hard'||sub==='soft'){if(!BD.zones)throw new Error('영역이 없습니다 — zone auto');BD.zones.hard=sub==='hard';}
+      if(!BD.zones)return'기능 영역이 없습니다 — zone auto 로 만드세요 (신규 설계 보드는 자동)';
+      refresh(false);const R=AUTOPLACE.zoneReport(BD);
+      return[`기능 영역 ${BD.zones.on===false?'(꺼짐) ':''}· ${BD.zones.template==='motor'?'모터 구동형':'일반형'} · ${BD.zones.hard?'강제':'권장(벌점)'}`]
+        .concat(R.map(x=>`  ${x.label.padEnd(8)} ${f1(x.rect[2]-x.rect[0])} × ${f1(x.rect[3]-x.rect[1])} mm · 부품 ${x.parts}개 · 사용률 ${x.util}%${x.out.length?' · 영역 밖 '+x.out.join(' '):''}`))
+        .concat(sub?['→ 배치에 반영하려면 reset (처음부터 다시 배치)']:[]).join('\n');}
     case 'help':case '?':{if(a._[0]){const h=CLI_HELP.filter(x=>x[0].split(/[\s·]/).some(w=>w===a._[0]));return h.length?h.map(x=>`${x[0]}\n  ${x[1]}`).join('\n'):`${a._[0]}: 없는 명령입니다.`;}
       return CLI_HELP.map(x=>`${x[0]}\n  ${x[1]}`).join('\n')+'\n\n키: ` 로 열고 닫기 · ↑↓ 이전 명령 · Tab 자동 완성. 모든 변경은 Ctrl+Z로 되돌릴 수 있습니다.';}
     case 'status':return cliStatus();
@@ -503,6 +516,9 @@ async function cliAutoFix(){if(!CLI.autoFix||!CLI.routed||CLI.inFix||CLI.stopReq
 async function cliExec(line){
   if(!BD)return;cliPanel();if(CLI.busy){cliSay('err',`다른 PCB 작업이 실행 중이라 "${line}"을(를) 실행하지 않았습니다 — 끝난 뒤 다시 실행하거나 [중지]를 누르세요.`);return;}cliSay('cmd',line);cliBusy(true);CLI.routed=false;
   try{
+    // "전원부·MCU부 영역 나눠줘", "영역 보여줘", "영역 끄기", "영역 강제" → zone
+    if(/영역|구역|플로어\s*플랜|floor\s*plan/i.test(line)&&!CLI_CMDS.has((cliTok(line)[0]||'').toLowerCase())){
+      const sub=/끄|해제|없애/.test(line)?'off':/강제|반드시|hard/.test(line)?'hard':/권장|soft|느슨/.test(line)?'soft':/나눠|만들|할당|다시|자동|새로/.test(line)?'auto':/켜/.test(line)?'on':'';line=('zone '+sub).trim();cliSay('out','→ '+line);}
     const first=(cliTok(line)[0]||'').toLowerCase();
     if(CLI_CMDS.has(first)){const out=await cliRun(line);if(out)cliSay('ok',out);}
     else if(typeof plIntent==='function'&&plIntent(line)){await plReplaceFlow(plIntent(line),'pcb');}

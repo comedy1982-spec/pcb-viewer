@@ -400,7 +400,13 @@ function shrinkText(r){const s=r&&r.shrink;if(!s)return'패키지 축소: 꺼짐
   const kg={};s.kept.forEach(x=>{(kg[x.why]=kg[x.why]||[]).push(x);});Object.entries(kg).forEach(([w,v])=>L.push(`  · 유지 ${v.map(x=>x.ref+(x.what?' '+x.what:'')).slice(0,4).join(', ')}${v.length>4?' 외 '+(v.length-4)+'개':''} — ${w}`));
   return L.join('\n');}
 // board from a plan: place from scratch with the plan's strategy (routing is left to the caller)
+/* functional group of a generated part (for PCB zones): from its circuit block, refined by what the part does */
+const GROUP_OF={pwr_in:'input',usb_in:'input',ldo:'power',buck:'power',supervisor:'power',mcu:'mcu',xtal:'mcu',flash:'mcu',uart:'mcu',led:'mcu',button:'mcu',i2c:'mcu',can:'comm',
+  gdrv3:'stage',hbridge:'stage',bldc:'stage',dcmotor:'stage',hs_switch:'stage',vmon:'sense',ntc:'sense'};
+function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks.find(x=>x.id===c.block);let k=b?GROUP_OF[b.type]:null;
+    if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';g[c.ref]=k||null;});return g;}
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));
+  r.groups=partGroups(plan,r.parts);if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
   if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});
   if(typeof AUTOPLACE!=='undefined'&&opts.place!==false){PCBEDIT.prepare(B);AUTOPLACE.ensurePour(B);const power={};r.power.forEach(x=>{power[x.ref]=x.P;});
     r.place=AUTOPLACE.place(B,{strategy:opts.strategy||plan.strategy||'balanced',scratch:true,seed:opts.seed||1,power});}
@@ -494,6 +500,6 @@ function variants(plan){
 // weighted pick: w = {price,feat,ext} in 0..1
 function recommend(vs,w){w=Object.assign({price:1,feat:1,ext:1},w||{});let best=null;vs.forEach(v=>{const s=v.score.price*w.price+v.score.feat*w.feat+v.score.ext*w.ext;v.total=Math.round(s/(w.price+w.feat+w.ext));if(!best||v.total>best.total)best=v;});return best;}
 function variantsText(vs){return vs.map(v=>`[${v.key}] ${v.label} (${v.tag}) · 예상 단가 약 $${v.m.price} (부품 $${v.m.partsPrice} + PCB $${v.m.cost.pcb} + 조립 $${v.m.cost.asm}${v.m.cost.grade?' + 등급 $'+v.m.cost.grade:''})${v.m.unknown?' (+미정 '+v.m.unknown+')':''} · 부품 ${v.m.parts}개 · 기능 ${v.m.feat} · 여유 핀 ${v.m.spare} · MCU ${v.m.mcu||'-'} · 손실 ${v.m.loss} W\n  ${v.diff.join(' · ')}`).join('\n');}
-return{LIB,MCUS,shrink,shrinkText,LDO_S,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.merge([PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null),typeof KPINS!=='undefined'?PARTLIB.fromKpins(KPINS):[]]);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,costModel,PCB_COST,GRADE_K,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
+return{LIB,MCUS,partGroups,GROUP_OF,shrink,shrinkText,LDO_S,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.merge([PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null),typeof KPINS!=='undefined'?PARTLIB.fromKpins(KPINS):[]]);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,costModel,PCB_COST,GRADE_K,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
 })();
 if(typeof module!=='undefined')module.exports=NEWPROJ;

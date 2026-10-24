@@ -27,6 +27,37 @@ const ALIAS={balanced:'balanced',balance:'balanced',default:'balanced','균형':
   compact:'compact',small:'compact',dense:'compact','소형':'compact','소형화':'compact','작게':'compact'};
 function strategy(s){const k=ALIAS[String(s||'balanced').toLowerCase().replace(/[\s_-]/g,'')];return k||null;}
 
+
+/* ---------- functional zones (floorplan) ----------
+   groups: input (connector · reverse FET · TVS) · power (regulators) · mcu (MCU · crystal · debug · LED/button) · comm (CAN)
+           · stage (gate driver · bridge FETs · shunts · bulk · phase terminal) · sense (current amps · NTC · hall inputs)
+   floorplan(): vertical strips sized by the parts' area, every zone touching a board edge so its connectors reach one —
+     motor:   [comm / input] [power] [mcu / sense] [stage]   (stage along the right edge = housing / heat-sink side)
+     general: [comm / input] [power] [mcu / sense]
+   place() adds a cost for every part outside its zone (soft; opts.zoneHard → much stronger) and seeds scratch placement
+   inside the zone. B.zones = {on, template, rects:{g:[x0,y0,x1,y1]}, groupOf:{ref:g}} is reused by later re-placements. */
+const ZONES={input:{label:'입력 · 보호',col:'#e0a040'},power:{label:'전원부',col:'#e05a5a'},mcu:{label:'MCU부',col:'#4f8fe0'},comm:{label:'통신',col:'#9a6be0'},stage:{label:'파워스테이지',col:'#e07a2a'},sense:{label:'센싱',col:'#3fb08a'}};
+function floorplan(B,groupOf,o){o=o||{};const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];
+  const x0=Math.min(...ring.map(p=>p[0])),y0=Math.min(...ring.map(p=>p[1])),x1=Math.max(...ring.map(p=>p[0])),y1=Math.max(...ring.map(p=>p[1]));const W=x1-x0,H=y1-y0;
+  const area={};B.comps.forEach(c=>{const g=groupOf[c.ref];if(!g||!c.bb)return;area[g]=(area[g]||0)+(c.bb[2]-c.bb[0]+1)*(c.bb[3]-c.bb[1]+1);});
+  const has=g=>(area[g]||0)>0;const motor=o.template?o.template==='motor':has('stage');
+  const cols=(motor?[['comm','input'],['power'],['mcu','sense'],['stage']]:[['comm','input'],['power'],['mcu','sense','stage']]).map(c=>c.filter(has)).filter(c=>c.length);
+  if(!cols.length)return null;
+  const ca=cols.map(c=>c.reduce((s,g)=>s+area[g],0)),tot=ca.reduce((a,b)=>a+b,0);
+  let w=ca.map(a=>Math.max(0.12,a/tot));const ws=w.reduce((a,b)=>a+b,0);w=w.map(v=>v/ws*W);
+  const rects={};let x=x0;cols.forEach((c,i)=>{const xe=i===cols.length-1?x1:x+w[i];const ct=c.reduce((s,g)=>s+area[g],0);let y=y1;
+    c.forEach((g,j)=>{const h=j===c.length-1?y-y0:Math.max(0.2*H,area[g]/ct*H);rects[g]=[+x.toFixed(2),+(y-h).toFixed(2),+xe.toFixed(2),+y.toFixed(2)];y-=h;});x=xe;});
+  return{on:true,template:motor?'motor':'general',rects,groupOf:Object.assign({},groupOf),box:[x0,y0,x1,y1]};}
+// zones follow a resized board (rects kept as fractions of the outline box)
+function zonesFit(B){const Z=B.zones;if(!Z||!Z.rects||!Z.box)return Z;const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];
+  const b=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];const o=Z.box;
+  if(b.every((v,i)=>Math.abs(v-o[i])<1e-6))return Z;const sx=(b[2]-b[0])/(o[2]-o[0]),sy=(b[3]-b[1])/(o[3]-o[1]);
+  Object.keys(Z.rects).forEach(g=>{const r=Z.rects[g];Z.rects[g]=[b[0]+(r[0]-o[0])*sx,b[1]+(r[1]-o[1])*sy,b[0]+(r[2]-o[0])*sx,b[1]+(r[3]-o[1])*sy].map(v=>+v.toFixed(2));});Z.box=b;return Z;}
+function zoneReport(B){const Z=B.zones;if(!Z||!Z.rects)return null;const out=[];
+  Object.entries(Z.rects).forEach(([g,r])=>{const cs=B.comps.filter(c=>Z.groupOf[c.ref]===g&&c.bb);let used=0,outN=[];
+    cs.forEach(c=>{const b=c.bb;used+=(b[2]-b[0])*(b[3]-b[1]);const cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2;if(cx<r[0]||cx>r[2]||cy<r[1]||cy>r[3])outN.push(c.ref);});
+    out.push({g,label:(ZONES[g]||{}).label||g,rect:r,parts:cs.length,util:Math.round(used/((r[2]-r[0])*(r[3]-r[1]))*100),out:outN});});
+  return out;}
 /* ---------- roles ---------- */
 // smallest centre distance between neighbouring pads (fine-pitch parts need room to fan out)
 function pitchOf(c){let m=1e9;const P=c.pads;if(P.length<6)return m;for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d>0.05&&d<m)m=d;}return m;}
@@ -79,6 +110,8 @@ function place(B,opts){
   const BW=ob[2]-ob[0],BH=ob[3]-ob[1],diag=Math.hypot(BW,BH),edgeM=opts.edge!=null?+opts.edge:1.0;
   const holesBB=B.outline.slice(1).map(r=>[Math.min(...r.map(p=>p[0]))-0.3,Math.min(...r.map(p=>p[1]))-0.3,Math.max(...r.map(p=>p[0]))+0.3,Math.max(...r.map(p=>p[1]))+0.3]);const holeHit=A=>holesBB.some(h=>A[0]<h[2]&&h[0]<A[2]&&A[1]<h[3]&&h[1]<A[3]);
   const n=movable.length;if(!n)return{moved:0,log:['움직일 부품이 없습니다.'],strategy:sk};
+  const ZN=opts.zones!==undefined?opts.zones:(B.zones&&B.zones.on!==false?zonesFit(B):null);const zw=opts.zoneHard||(ZN&&ZN.hard)?60:(opts.zoneW!=null?+opts.zoneW:8);
+  const ZR=movable.map(o=>ZN&&ZN.rects&&ZN.groupOf?ZN.rects[ZN.groupOf[o.ref]]||null:null);
   // previous pose, then canonical (top, 0°) to read the local geometry
   const prev=movable.map(o=>({x:o.c.x,y:o.c.y,v:((Math.round((o.c.rot||0)/90)%4)+4)%4+(o.c.side==='B'?4:0)}));
   // board-level labels next to a part (connector pin names, "CAN", "12V"…) travel with that part
@@ -132,7 +165,9 @@ function place(B,opts){
   const inner=[ob[0]+edgeM,ob[1]+edgeM,ob[2]-edgeM,ob[3]-edgeM];
   if(scratch){movable.forEach((o,i)=>{const b=G[i].bb[0];
       if(o.conn){const e=Math.floor(R()*4),t=R();X[i]=e===0?inner[0]-b[0]:e===1?inner[2]-b[2]:inner[0]+t*(BW-2*edgeM);Y[i]=e===2?inner[1]-b[1]:e===3?inner[3]-b[3]:inner[1]+t*(BH-2*edgeM);}
-      else{X[i]=ob[0]+BW*(0.2+0.6*R());Y[i]=ob[1]+BH*(0.2+0.6*R());}V[i]=o.conn&&R()<0.5?1:0;});}
+      else{X[i]=ob[0]+BW*(0.2+0.6*R());Y[i]=ob[1]+BH*(0.2+0.6*R());}
+      const z=ZR[i];if(z&&!o.conn){X[i]=z[0]+(z[2]-z[0])*(0.25+0.5*R())-(b[0]+b[2])/2;Y[i]=z[1]+(z[3]-z[1])*(0.25+0.5*R())-(b[1]+b[3])/2;}
+      V[i]=o.conn&&R()<0.5?1:0;});}
   else prev.forEach((p,i)=>{X[i]=p.x;Y[i]=p.y;V[i]=canB[i]||p.v<4?p.v:p.v&3;});
   const sideOf=i=>ROLE[i].tht?'both':V[i]>=4?'B':'T';
   const bbI=(i,out)=>{const b=G[i].bb[V[i]];out[0]=X[i]+b[0];out[1]=Y[i]+b[1];out[2]=X[i]+b[2];out[3]=Y[i]+b[3];return out;};
@@ -159,6 +194,7 @@ function place(B,opts){
       else d=Math.min(A[0]-ob[0],ob[2]-A[2],A[1]-ob[1],ob[3]-A[3]);c+=st.edge*Math.max(0,d-0.3)*(1+o.c.pads.length*0.05);}
     else{const cx=(A[0]+A[2])/2-(ob[0]+ob[2])/2,cy=(A[1]+A[3])/2-(ob[1]+ob[3])/2;c+=st.cen*Math.hypot(cx,cy)*Math.sqrt(G[i].area+1);}
     obst.forEach(q=>{c+=pairCost(i,q.bb,q.side,q.halo,q.o||null);});
+    const z=ZR[i];if(z){const zx=Math.max(0,z[0]-A[0])+Math.max(0,A[2]-z[2])+Math.max(0,z[1]-A[1])+Math.max(0,A[3]-z[3]);if(zx>0)c+=zw*(zx+0.3*zx*zx)*(1+Math.sqrt(G[i].area)/4);}
     return c;}
   const px=(i,k)=>X[i]+G[i].pads[V[i]][k][0],py=(i,k)=>Y[i]+G[i].pads[V[i]][k][1];
   function netCost(e){const N=NET[e];let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
@@ -327,6 +363,6 @@ function minimize(B,o){o=o||{};const m=o.margin!=null?+o.margin:1;const r5=v=>Ma
     tries.push({W,H,k,bad});if(o.onTry)o.onTry(tries[tries.length-1]);
     if(!bad)return{ok:true,W,H,k,place:r,tries,W0,H0};}
   return{ok:false,tries,W0,H0};}
-return{STRATS,ALIAS,strategy,classify,place,metrics,clearCopper,ensurePour,fanout,gndNet,minimize,MIN_KS};
+return{ZONES,floorplan,zoneReport,zonesFit,STRATS,ALIAS,strategy,classify,place,metrics,clearCopper,ensurePour,fanout,gndNet,minimize,MIN_KS};
 })();
 if(typeof module!=='undefined')module.exports=AUTOPLACE;

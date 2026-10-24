@@ -1378,6 +1378,7 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
         <label class="ly"><input type="checkbox" id="ly-mask" checked><i class="sw" id="sw-mask" style="background:#1e6a3e"></i><span class="lbl">솔더마스크</span><span class="code">Mask</span></label>
         <label class="ly"><input type="checkbox" id="ly-drill" checked><i class="sw" style="background:#0c0e0f"></i><span class="lbl">드릴·비아</span><span class="code">Drill</span></label>
         <label class="ly"><input type="checkbox" id="ly-body"><i class="sw" style="background:#555b61"></i><span class="lbl" id="lbl-body">부품 외형</span><span class="code">Body</span></label>
+        <label class="ly"><input type="checkbox" id="ly-zones" checked><i class="sw" style="background:linear-gradient(90deg,#e05a5a,#4f8fe0,#e07a2a)"></i><span class="lbl">기능 영역</span><span class="code">Zones</span></label>
         <label class="ly"><input type="checkbox" id="ly-ghost"><i class="sw" style="background:rgba(255,255,255,.45)"></i><span class="lbl">반대면 비침</span><span class="code">Ghost</span></label>
       </div>
       <div class="grp">
@@ -6115,6 +6116,37 @@ const ALIAS={balanced:'balanced',balance:'balanced',default:'balanced','균형':
   compact:'compact',small:'compact',dense:'compact','소형':'compact','소형화':'compact','작게':'compact'};
 function strategy(s){const k=ALIAS[String(s||'balanced').toLowerCase().replace(/[\s_-]/g,'')];return k||null;}
 
+
+/* ---------- functional zones (floorplan) ----------
+   groups: input (connector · reverse FET · TVS) · power (regulators) · mcu (MCU · crystal · debug · LED/button) · comm (CAN)
+           · stage (gate driver · bridge FETs · shunts · bulk · phase terminal) · sense (current amps · NTC · hall inputs)
+   floorplan(): vertical strips sized by the parts' area, every zone touching a board edge so its connectors reach one —
+     motor:   [comm / input] [power] [mcu / sense] [stage]   (stage along the right edge = housing / heat-sink side)
+     general: [comm / input] [power] [mcu / sense]
+   place() adds a cost for every part outside its zone (soft; opts.zoneHard → much stronger) and seeds scratch placement
+   inside the zone. B.zones = {on, template, rects:{g:[x0,y0,x1,y1]}, groupOf:{ref:g}} is reused by later re-placements. */
+const ZONES={input:{label:'입력 · 보호',col:'#e0a040'},power:{label:'전원부',col:'#e05a5a'},mcu:{label:'MCU부',col:'#4f8fe0'},comm:{label:'통신',col:'#9a6be0'},stage:{label:'파워스테이지',col:'#e07a2a'},sense:{label:'센싱',col:'#3fb08a'}};
+function floorplan(B,groupOf,o){o=o||{};const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];
+  const x0=Math.min(...ring.map(p=>p[0])),y0=Math.min(...ring.map(p=>p[1])),x1=Math.max(...ring.map(p=>p[0])),y1=Math.max(...ring.map(p=>p[1]));const W=x1-x0,H=y1-y0;
+  const area={};B.comps.forEach(c=>{const g=groupOf[c.ref];if(!g||!c.bb)return;area[g]=(area[g]||0)+(c.bb[2]-c.bb[0]+1)*(c.bb[3]-c.bb[1]+1);});
+  const has=g=>(area[g]||0)>0;const motor=o.template?o.template==='motor':has('stage');
+  const cols=(motor?[['comm','input'],['power'],['mcu','sense'],['stage']]:[['comm','input'],['power'],['mcu','sense','stage']]).map(c=>c.filter(has)).filter(c=>c.length);
+  if(!cols.length)return null;
+  const ca=cols.map(c=>c.reduce((s,g)=>s+area[g],0)),tot=ca.reduce((a,b)=>a+b,0);
+  let w=ca.map(a=>Math.max(0.12,a/tot));const ws=w.reduce((a,b)=>a+b,0);w=w.map(v=>v/ws*W);
+  const rects={};let x=x0;cols.forEach((c,i)=>{const xe=i===cols.length-1?x1:x+w[i];const ct=c.reduce((s,g)=>s+area[g],0);let y=y1;
+    c.forEach((g,j)=>{const h=j===c.length-1?y-y0:Math.max(0.2*H,area[g]/ct*H);rects[g]=[+x.toFixed(2),+(y-h).toFixed(2),+xe.toFixed(2),+y.toFixed(2)];y-=h;});x=xe;});
+  return{on:true,template:motor?'motor':'general',rects,groupOf:Object.assign({},groupOf),box:[x0,y0,x1,y1]};}
+// zones follow a resized board (rects kept as fractions of the outline box)
+function zonesFit(B){const Z=B.zones;if(!Z||!Z.rects||!Z.box)return Z;const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];
+  const b=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];const o=Z.box;
+  if(b.every((v,i)=>Math.abs(v-o[i])<1e-6))return Z;const sx=(b[2]-b[0])/(o[2]-o[0]),sy=(b[3]-b[1])/(o[3]-o[1]);
+  Object.keys(Z.rects).forEach(g=>{const r=Z.rects[g];Z.rects[g]=[b[0]+(r[0]-o[0])*sx,b[1]+(r[1]-o[1])*sy,b[0]+(r[2]-o[0])*sx,b[1]+(r[3]-o[1])*sy].map(v=>+v.toFixed(2));});Z.box=b;return Z;}
+function zoneReport(B){const Z=B.zones;if(!Z||!Z.rects)return null;const out=[];
+  Object.entries(Z.rects).forEach(([g,r])=>{const cs=B.comps.filter(c=>Z.groupOf[c.ref]===g&&c.bb);let used=0,outN=[];
+    cs.forEach(c=>{const b=c.bb;used+=(b[2]-b[0])*(b[3]-b[1]);const cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2;if(cx<r[0]||cx>r[2]||cy<r[1]||cy>r[3])outN.push(c.ref);});
+    out.push({g,label:(ZONES[g]||{}).label||g,rect:r,parts:cs.length,util:Math.round(used/((r[2]-r[0])*(r[3]-r[1]))*100),out:outN});});
+  return out;}
 /* ---------- roles ---------- */
 // smallest centre distance between neighbouring pads (fine-pitch parts need room to fan out)
 function pitchOf(c){let m=1e9;const P=c.pads;if(P.length<6)return m;for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d>0.05&&d<m)m=d;}return m;}
@@ -6167,6 +6199,8 @@ function place(B,opts){
   const BW=ob[2]-ob[0],BH=ob[3]-ob[1],diag=Math.hypot(BW,BH),edgeM=opts.edge!=null?+opts.edge:1.0;
   const holesBB=B.outline.slice(1).map(r=>[Math.min(...r.map(p=>p[0]))-0.3,Math.min(...r.map(p=>p[1]))-0.3,Math.max(...r.map(p=>p[0]))+0.3,Math.max(...r.map(p=>p[1]))+0.3]);const holeHit=A=>holesBB.some(h=>A[0]<h[2]&&h[0]<A[2]&&A[1]<h[3]&&h[1]<A[3]);
   const n=movable.length;if(!n)return{moved:0,log:['움직일 부품이 없습니다.'],strategy:sk};
+  const ZN=opts.zones!==undefined?opts.zones:(B.zones&&B.zones.on!==false?zonesFit(B):null);const zw=opts.zoneHard||(ZN&&ZN.hard)?60:(opts.zoneW!=null?+opts.zoneW:8);
+  const ZR=movable.map(o=>ZN&&ZN.rects&&ZN.groupOf?ZN.rects[ZN.groupOf[o.ref]]||null:null);
   // previous pose, then canonical (top, 0°) to read the local geometry
   const prev=movable.map(o=>({x:o.c.x,y:o.c.y,v:((Math.round((o.c.rot||0)/90)%4)+4)%4+(o.c.side==='B'?4:0)}));
   // board-level labels next to a part (connector pin names, "CAN", "12V"…) travel with that part
@@ -6220,7 +6254,9 @@ function place(B,opts){
   const inner=[ob[0]+edgeM,ob[1]+edgeM,ob[2]-edgeM,ob[3]-edgeM];
   if(scratch){movable.forEach((o,i)=>{const b=G[i].bb[0];
       if(o.conn){const e=Math.floor(R()*4),t=R();X[i]=e===0?inner[0]-b[0]:e===1?inner[2]-b[2]:inner[0]+t*(BW-2*edgeM);Y[i]=e===2?inner[1]-b[1]:e===3?inner[3]-b[3]:inner[1]+t*(BH-2*edgeM);}
-      else{X[i]=ob[0]+BW*(0.2+0.6*R());Y[i]=ob[1]+BH*(0.2+0.6*R());}V[i]=o.conn&&R()<0.5?1:0;});}
+      else{X[i]=ob[0]+BW*(0.2+0.6*R());Y[i]=ob[1]+BH*(0.2+0.6*R());}
+      const z=ZR[i];if(z&&!o.conn){X[i]=z[0]+(z[2]-z[0])*(0.25+0.5*R())-(b[0]+b[2])/2;Y[i]=z[1]+(z[3]-z[1])*(0.25+0.5*R())-(b[1]+b[3])/2;}
+      V[i]=o.conn&&R()<0.5?1:0;});}
   else prev.forEach((p,i)=>{X[i]=p.x;Y[i]=p.y;V[i]=canB[i]||p.v<4?p.v:p.v&3;});
   const sideOf=i=>ROLE[i].tht?'both':V[i]>=4?'B':'T';
   const bbI=(i,out)=>{const b=G[i].bb[V[i]];out[0]=X[i]+b[0];out[1]=Y[i]+b[1];out[2]=X[i]+b[2];out[3]=Y[i]+b[3];return out;};
@@ -6247,6 +6283,7 @@ function place(B,opts){
       else d=Math.min(A[0]-ob[0],ob[2]-A[2],A[1]-ob[1],ob[3]-A[3]);c+=st.edge*Math.max(0,d-0.3)*(1+o.c.pads.length*0.05);}
     else{const cx=(A[0]+A[2])/2-(ob[0]+ob[2])/2,cy=(A[1]+A[3])/2-(ob[1]+ob[3])/2;c+=st.cen*Math.hypot(cx,cy)*Math.sqrt(G[i].area+1);}
     obst.forEach(q=>{c+=pairCost(i,q.bb,q.side,q.halo,q.o||null);});
+    const z=ZR[i];if(z){const zx=Math.max(0,z[0]-A[0])+Math.max(0,A[2]-z[2])+Math.max(0,z[1]-A[1])+Math.max(0,A[3]-z[3]);if(zx>0)c+=zw*(zx+0.3*zx*zx)*(1+Math.sqrt(G[i].area)/4);}
     return c;}
   const px=(i,k)=>X[i]+G[i].pads[V[i]][k][0],py=(i,k)=>Y[i]+G[i].pads[V[i]][k][1];
   function netCost(e){const N=NET[e];let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
@@ -6415,7 +6452,7 @@ function minimize(B,o){o=o||{};const m=o.margin!=null?+o.margin:1;const r5=v=>Ma
     tries.push({W,H,k,bad});if(o.onTry)o.onTry(tries[tries.length-1]);
     if(!bad)return{ok:true,W,H,k,place:r,tries,W0,H0};}
   return{ok:false,tries,W0,H0};}
-return{STRATS,ALIAS,strategy,classify,place,metrics,clearCopper,ensurePour,fanout,gndNet,minimize,MIN_KS};
+return{ZONES,floorplan,zoneReport,zonesFit,STRATS,ALIAS,strategy,classify,place,metrics,clearCopper,ensurePour,fanout,gndNet,minimize,MIN_KS};
 })();
 
 
@@ -7041,7 +7078,13 @@ function shrinkText(r){const s=r&&r.shrink;if(!s)return'패키지 축소: 꺼짐
   const kg={};s.kept.forEach(x=>{(kg[x.why]=kg[x.why]||[]).push(x);});Object.entries(kg).forEach(([w,v])=>L.push(`  · 유지 ${v.map(x=>x.ref+(x.what?' '+x.what:'')).slice(0,4).join(', ')}${v.length>4?' 외 '+(v.length-4)+'개':''} — ${w}`));
   return L.join('\n');}
 // board from a plan: place from scratch with the plan's strategy (routing is left to the caller)
+/* functional group of a generated part (for PCB zones): from its circuit block, refined by what the part does */
+const GROUP_OF={pwr_in:'input',usb_in:'input',ldo:'power',buck:'power',supervisor:'power',mcu:'mcu',xtal:'mcu',flash:'mcu',uart:'mcu',led:'mcu',button:'mcu',i2c:'mcu',can:'comm',
+  gdrv3:'stage',hbridge:'stage',bldc:'stage',dcmotor:'stage',hs_switch:'stage',vmon:'sense',ntc:'sense'};
+function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks.find(x=>x.id===c.block);let k=b?GROUP_OF[b.type]:null;
+    if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';g[c.ref]=k||null;});return g;}
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));
+  r.groups=partGroups(plan,r.parts);if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
   if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});
   if(typeof AUTOPLACE!=='undefined'&&opts.place!==false){PCBEDIT.prepare(B);AUTOPLACE.ensurePour(B);const power={};r.power.forEach(x=>{power[x.ref]=x.P;});
     r.place=AUTOPLACE.place(B,{strategy:opts.strategy||plan.strategy||'balanced',scratch:true,seed:opts.seed||1,power});}
@@ -7135,7 +7178,7 @@ function variants(plan){
 // weighted pick: w = {price,feat,ext} in 0..1
 function recommend(vs,w){w=Object.assign({price:1,feat:1,ext:1},w||{});let best=null;vs.forEach(v=>{const s=v.score.price*w.price+v.score.feat*w.feat+v.score.ext*w.ext;v.total=Math.round(s/(w.price+w.feat+w.ext));if(!best||v.total>best.total)best=v;});return best;}
 function variantsText(vs){return vs.map(v=>`[${v.key}] ${v.label} (${v.tag}) · 예상 단가 약 $${v.m.price} (부품 $${v.m.partsPrice} + PCB $${v.m.cost.pcb} + 조립 $${v.m.cost.asm}${v.m.cost.grade?' + 등급 $'+v.m.cost.grade:''})${v.m.unknown?' (+미정 '+v.m.unknown+')':''} · 부품 ${v.m.parts}개 · 기능 ${v.m.feat} · 여유 핀 ${v.m.spare} · MCU ${v.m.mcu||'-'} · 손실 ${v.m.loss} W\n  ${v.diff.join(' · ')}`).join('\n');}
-return{LIB,MCUS,shrink,shrinkText,LDO_S,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.merge([PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null),typeof KPINS!=='undefined'?PARTLIB.fromKpins(KPINS):[]]);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,costModel,PCB_COST,GRADE_K,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
+return{LIB,MCUS,partGroups,GROUP_OF,shrink,shrinkText,LDO_S,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.merge([PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null),typeof KPINS!=='undefined'?PARTLIB.fromKpins(KPINS):[]]);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,costModel,PCB_COST,GRADE_K,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
 })();
 
 
@@ -10375,7 +10418,7 @@ function dim(hex,k){const n=parseInt(hex.slice(1),16);const r=(n>>16&255)*k|0,g=
 
 /* ---------- state ---------- */
 let BD=null;
-const S={cu:null,view:'3d',mask:'green',layers:{cuT:true,cuB:true,silk:true,mask:true,drill:true,body2d:false,body3d:true,ghost:false,inner:true},selRef:null,hlNet:null,explode:0,tab:'sel',q:''};
+const S={cu:null,view:'3d',mask:'green',layers:{cuT:true,cuB:true,silk:true,mask:true,drill:true,body2d:false,body3d:true,ghost:false,inner:true,zones:true},selRef:null,hlNet:null,explode:0,tab:'sel',q:''};
 
 /* ---------- 2D primitives ---------- */
 function rr(ctx,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
@@ -10442,6 +10485,10 @@ const padOn=(p,side)=>p.side==='both'||p.side===side||!p.side;
 // the inner copper layer shown in the 2D view (null = the outer layer of `side`)
 const innerKey=(side,o)=>{const k=o&&o.cu!==undefined?o.cu:S.cu;return side==='T'&&k&&!(o&&o.texture)&&BD&&BD.layers[k+'.cu']?k:null;};
 const CORE='#4a4230',CU_IN='#d4844a';
+function drawZones(ctx){const Z=typeof AUTOPLACE!=='undefined'&&AUTOPLACE.zonesFit?AUTOPLACE.zonesFit(BD):BD.zones;const lw=Math.max(0.12,BD.W/500);
+  Object.entries(Z.rects).forEach(([g,r])=>{const col=(AUTOPLACE.ZONES[g]||{}).col||'#888';ctx.save();ctx.globalAlpha=0.10;ctx.fillStyle=col;ctx.fillRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
+    ctx.globalAlpha=0.85;ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash([lw*6,lw*4]);ctx.strokeRect(r[0]+lw/2,r[1]+lw/2,r[2]-r[0]-lw,r[3]-r[1]-lw);ctx.setLineDash([]);
+    ctx.fillStyle=col;ctx.globalAlpha=0.95;const sz=Math.max(1.2,Math.min(3,(r[2]-r[0])/9));drawText(ctx,{x:r[0]+1,y:r[3]-sz*0.9,s:(AUTOPLACE.ZONES[g]||{}).label||g,size:sz,align:'left',bold:true});ctx.restore();});}
 function drawSide(ctx,side,o){
   const L=S.layers,M=MASKS[S.mask];const ik=innerKey(side,o);
   const base=ik?CORE:L.mask?M.mask:FR4,cu=ik?CU_IN:L.mask?M.under:CU,fin=ik?CU_IN:L.mask?FIN:CU_PAD;
@@ -10464,6 +10511,7 @@ function drawSide(ctx,side,o){
     ctx.save();ctx.globalAlpha=0.7;PCB.stackOf(BD).forEach(x=>{if(x.k==='T'||x.k==='B'||x.role!=='sig')return;const col=IC[j++%IC.length];drawPrims(ctx,BD.layers[x.k+'.cu'],p=>(p.t==='seg'||p.t==='path')&&!p.clear?col:null);});ctx.restore();}
   if(L.silk&&!ik)drawPrims(ctx,BD.layers[side+'.silk'],p=>p.clear?base:M.silk);
   drawOverlay(ctx,side);
+  if(L.zones!==false&&BD.zones&&BD.zones.on!==false&&BD.zones.rects&&!ik&&!o.texture)drawZones(ctx);
   if(S.hlNet){
     outlinePath(ctx);ctx.fillStyle='rgba(0,0,0,.52)';ctx.fill('evenodd');
     const n=S.hlNet;
@@ -10893,7 +10941,7 @@ function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Ma
 $$('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 $('#ctl').addEventListener('click',e=>{const ex=e.target.closest('[data-exp]');if(ex){exportCurrentView(ex.dataset.exp);return;}if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
-['cuT','cuB','silk','mask','drill','ghost','inner'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
+['cuT','cuB','silk','mask','drill','ghost','inner','zones'].forEach(k=>$('#ly-'+k)&&$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
 $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.target.checked;else S.layers.body2d=e.target.checked;refresh(false);});
 $('#explode').addEventListener('input',e=>setExplode(e.target.value/100));
 (function(){const box=$('#masks');Object.entries(MASKS).forEach(([k,m])=>{const b=document.createElement('button');b.className='mk';b.style.background=m.mask;b.title=m.name;b.setAttribute('aria-label','솔더마스크 '+m.name);b.setAttribute('aria-pressed',k===S.mask?'true':'false');
@@ -14064,6 +14112,7 @@ const GUIDE_AI=`You are reviewing a PCB / schematic design-guideline check insid
 var CLI={open:false,log:[],hist:[],hi:-1,busy:false,lock:new Set(),strategy:'balanced',sample:undefined,abort:null,seq:0,stopReq:false,autoFix:true};
 try{if(localStorage.getItem('aod.autofix')==='off')CLI.autoFix=false;}catch(e){}
 const CLI_HELP=[
+  ['zone [on|off|auto [motor|general]|hard|soft]','기능 영역(전원부 · MCU부 · 파워스테이지 · 입력 · 통신 · 센싱): 없이 = 영역별 부품 수 · 사용률 · 영역 밖 부품. auto = 다시 나누기, hard = 영역 밖 금지에 가깝게. 바꾼 뒤 reset으로 다시 배치'],
   ['help [명령]','명령 목록과 사용법'],
   ['status','보드 크기·부품·넷·배선 상태'],
   ['safety [check|parts [--apply]|fmeda] [--asil B]','기능 안전 점검 · 등급 부품 점검/교체 · FMEDA 추정'],
@@ -14122,7 +14171,7 @@ const CLI_CHIPS=[['열 분산 자동 배치·배선','auto thermal','열 분산 
   ['가이드라인 점검','guide check','PCB 설계 가이드라인을 점검하고 가장 중요한 개선 3가지를 알려줘'],
   ['하우징 설계','housing','현재 보드에 맞는 보호 하우징을 설계하고 재질·IP·진동 조건별 트레이드오프를 비교해 추천해줘'],
   ['리포트','report all','배치·열·EMC 리포트를 보고 문제를 우선순위대로 요약해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
-const CLI_CMDS=new Set(['gloss','fix','autofix','width','analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
+const CLI_CMDS=new Set(['zone','gloss','fix','autofix','width','analyze','analyse','safety','pinswap','housing','guide','help','?','status','board','strategies','strategy','reset','place','route','unroute','auto','lock','unlock','locks','move','rotate','flip','drc','rats','report','undo','redo','clear','ai','history']);
 
 /* ---- snapshots for undo (same objects: tracks, pads and silk keep their identity) ---- */
 function cliSnap(){return{poses:BD.comps.map(c=>({c,x:c.x,y:c.y,rot:c.rot||0,side:c.side})),layers:Object.fromEntries(Object.keys(BD.layers).map(k=>[k,BD.layers[k].slice()])),vias:BD.vias.slice(),
@@ -14511,6 +14560,18 @@ function cliNL(t){const s=t.toLowerCase();const out=[];
 async function cliRun(line,quiet,by){
   const t=cliTok(line);if(!t.length)return'';let cmd=t[0].toLowerCase();const a=cliArgs(t.slice(1));
   switch(cmd){
+    case'zone':{const sub=String(a._[0]||'').toLowerCase();
+      if(sub==='auto'||!BD.zones&&sub&&sub!=='off'){let groups=BD.zones&&BD.zones.groupOf;if(!groups&&BD.newPlan&&typeof NEWPROJ!=='undefined'){const r=NEWPROJ.build(BD.newPlan);groups=NEWPROJ.partGroups(BD.newPlan,r.parts);}
+        if(!groups)throw new Error('부품의 기능 그룹을 알 수 없습니다 (신규 설계로 만든 보드에서 사용)');const Z=AUTOPLACE.floorplan(BD,groups,{template:a._[1]==='motor'||a._[1]==='general'?a._[1]:undefined});if(!Z)throw new Error('영역을 나눌 부품이 없습니다');
+        const hard=BD.zones&&BD.zones.hard;BD.zones=Z;if(hard)Z.hard=true;}
+      else if(sub==='off'){if(BD.zones)BD.zones.on=false;refresh(false);return'기능 영역 끔 — 배치에 영향 없음 (zone on으로 다시)';}
+      else if(sub==='on'){if(!BD.zones)throw new Error('영역이 없습니다 — zone auto');BD.zones.on=true;}
+      else if(sub==='hard'||sub==='soft'){if(!BD.zones)throw new Error('영역이 없습니다 — zone auto');BD.zones.hard=sub==='hard';}
+      if(!BD.zones)return'기능 영역이 없습니다 — zone auto 로 만드세요 (신규 설계 보드는 자동)';
+      refresh(false);const R=AUTOPLACE.zoneReport(BD);
+      return[`기능 영역 ${BD.zones.on===false?'(꺼짐) ':''}· ${BD.zones.template==='motor'?'모터 구동형':'일반형'} · ${BD.zones.hard?'강제':'권장(벌점)'}`]
+        .concat(R.map(x=>`  ${x.label.padEnd(8)} ${f1(x.rect[2]-x.rect[0])} × ${f1(x.rect[3]-x.rect[1])} mm · 부품 ${x.parts}개 · 사용률 ${x.util}%${x.out.length?' · 영역 밖 '+x.out.join(' '):''}`))
+        .concat(sub?['→ 배치에 반영하려면 reset (처음부터 다시 배치)']:[]).join('\n');}
     case 'help':case '?':{if(a._[0]){const h=CLI_HELP.filter(x=>x[0].split(/[\s·]/).some(w=>w===a._[0]));return h.length?h.map(x=>`${x[0]}\n  ${x[1]}`).join('\n'):`${a._[0]}: 없는 명령입니다.`;}
       return CLI_HELP.map(x=>`${x[0]}\n  ${x[1]}`).join('\n')+'\n\n키: ` 로 열고 닫기 · ↑↓ 이전 명령 · Tab 자동 완성. 모든 변경은 Ctrl+Z로 되돌릴 수 있습니다.';}
     case 'status':return cliStatus();
@@ -14564,6 +14625,9 @@ async function cliAutoFix(){if(!CLI.autoFix||!CLI.routed||CLI.inFix||CLI.stopReq
 async function cliExec(line){
   if(!BD)return;cliPanel();if(CLI.busy){cliSay('err',`다른 PCB 작업이 실행 중이라 "${line}"을(를) 실행하지 않았습니다 — 끝난 뒤 다시 실행하거나 [중지]를 누르세요.`);return;}cliSay('cmd',line);cliBusy(true);CLI.routed=false;
   try{
+    // "전원부·MCU부 영역 나눠줘", "영역 보여줘", "영역 끄기", "영역 강제" → zone
+    if(/영역|구역|플로어\s*플랜|floor\s*plan/i.test(line)&&!CLI_CMDS.has((cliTok(line)[0]||'').toLowerCase())){
+      const sub=/끄|해제|없애/.test(line)?'off':/강제|반드시|hard/.test(line)?'hard':/권장|soft|느슨/.test(line)?'soft':/나눠|만들|할당|다시|자동|새로/.test(line)?'auto':/켜/.test(line)?'on':'';line=('zone '+sub).trim();cliSay('out','→ '+line);}
     const first=(cliTok(line)[0]||'').toLowerCase();
     if(CLI_CMDS.has(first)){const out=await cliRun(line);if(out)cliSay('ok',out);}
     else if(typeof plIntent==='function'&&plIntent(line)){await plReplaceFlow(plIntent(line),'pcb');}

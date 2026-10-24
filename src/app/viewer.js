@@ -19,7 +19,7 @@ function dim(hex,k){const n=parseInt(hex.slice(1),16);const r=(n>>16&255)*k|0,g=
 
 /* ---------- state ---------- */
 let BD=null;
-const S={cu:null,view:'3d',mask:'green',layers:{cuT:true,cuB:true,silk:true,mask:true,drill:true,body2d:false,body3d:true,ghost:false,inner:true},selRef:null,hlNet:null,explode:0,tab:'sel',q:''};
+const S={cu:null,view:'3d',mask:'green',layers:{cuT:true,cuB:true,silk:true,mask:true,drill:true,body2d:false,body3d:true,ghost:false,inner:true,zones:true},selRef:null,hlNet:null,explode:0,tab:'sel',q:''};
 
 /* ---------- 2D primitives ---------- */
 function rr(ctx,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
@@ -86,6 +86,10 @@ const padOn=(p,side)=>p.side==='both'||p.side===side||!p.side;
 // the inner copper layer shown in the 2D view (null = the outer layer of `side`)
 const innerKey=(side,o)=>{const k=o&&o.cu!==undefined?o.cu:S.cu;return side==='T'&&k&&!(o&&o.texture)&&BD&&BD.layers[k+'.cu']?k:null;};
 const CORE='#4a4230',CU_IN='#d4844a';
+function drawZones(ctx){const Z=typeof AUTOPLACE!=='undefined'&&AUTOPLACE.zonesFit?AUTOPLACE.zonesFit(BD):BD.zones;const lw=Math.max(0.12,BD.W/500);
+  Object.entries(Z.rects).forEach(([g,r])=>{const col=(AUTOPLACE.ZONES[g]||{}).col||'#888';ctx.save();ctx.globalAlpha=0.10;ctx.fillStyle=col;ctx.fillRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
+    ctx.globalAlpha=0.85;ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash([lw*6,lw*4]);ctx.strokeRect(r[0]+lw/2,r[1]+lw/2,r[2]-r[0]-lw,r[3]-r[1]-lw);ctx.setLineDash([]);
+    ctx.fillStyle=col;ctx.globalAlpha=0.95;const sz=Math.max(1.2,Math.min(3,(r[2]-r[0])/9));drawText(ctx,{x:r[0]+1,y:r[3]-sz*0.9,s:(AUTOPLACE.ZONES[g]||{}).label||g,size:sz,align:'left',bold:true});ctx.restore();});}
 function drawSide(ctx,side,o){
   const L=S.layers,M=MASKS[S.mask];const ik=innerKey(side,o);
   const base=ik?CORE:L.mask?M.mask:FR4,cu=ik?CU_IN:L.mask?M.under:CU,fin=ik?CU_IN:L.mask?FIN:CU_PAD;
@@ -108,6 +112,7 @@ function drawSide(ctx,side,o){
     ctx.save();ctx.globalAlpha=0.7;PCB.stackOf(BD).forEach(x=>{if(x.k==='T'||x.k==='B'||x.role!=='sig')return;const col=IC[j++%IC.length];drawPrims(ctx,BD.layers[x.k+'.cu'],p=>(p.t==='seg'||p.t==='path')&&!p.clear?col:null);});ctx.restore();}
   if(L.silk&&!ik)drawPrims(ctx,BD.layers[side+'.silk'],p=>p.clear?base:M.silk);
   drawOverlay(ctx,side);
+  if(L.zones!==false&&BD.zones&&BD.zones.on!==false&&BD.zones.rects&&!ik&&!o.texture)drawZones(ctx);
   if(S.hlNet){
     outlinePath(ctx);ctx.fillStyle='rgba(0,0,0,.52)';ctx.fill('evenodd');
     const n=S.hlNet;
@@ -537,7 +542,7 @@ function measure(){const r=cv2.getBoundingClientRect();if(!r.width)return;dpr=Ma
 $$('button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 $('#ctl').addEventListener('click',e=>{const ex=e.target.closest('[data-exp]');if(ex){exportCurrentView(ex.dataset.exp);return;}if(e.target.closest('[data-pe]')){if(PE.on)peEnd();else peBegin();return;}if(e.target.closest('[data-pop]')){openPop(S.view);return;}const b=e.target.closest('[data-cam]');if(!b)return;const k=b.dataset.cam;
   if(k==='fit'){fit2();draw2D();return;}const r=fitR();if(k==='iso')homeCam(true);if(k==='top')camTo(-Math.PI/2,0.02,r,true);if(k==='bot')camTo(Math.PI/2,Math.PI-0.02,r,true);});
-['cuT','cuB','silk','mask','drill','ghost','inner'].forEach(k=>$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
+['cuT','cuB','silk','mask','drill','ghost','inner','zones'].forEach(k=>$('#ly-'+k)&&$('#ly-'+k).addEventListener('change',e=>{S.layers[k]=e.target.checked;refresh(false);}));
 $('#ly-body').addEventListener('change',e=>{if(S.view==='3d')S.layers.body3d=e.target.checked;else S.layers.body2d=e.target.checked;refresh(false);});
 $('#explode').addEventListener('input',e=>setExplode(e.target.value/100));
 (function(){const box=$('#masks');Object.entries(MASKS).forEach(([k,m])=>{const b=document.createElement('button');b.className='mk';b.style.background=m.mask;b.title=m.name;b.setAttribute('aria-label','솔더마스크 '+m.name);b.setAttribute('aria-pressed',k===S.mask?'true':'false');
