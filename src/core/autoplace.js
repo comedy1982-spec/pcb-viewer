@@ -103,12 +103,23 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
       const left=o.planes&&o.planes.has(bat);let bs=null;[0,180].forEach(rot=>{canonical(B,r.sh);if(rot)PCBEDIT.rotate(B,r.sh,rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);const v=(a.x-r.sh.x)*(left?-1:1);if(a&&(!bs||v<bs.ax))bs={rot,ax:v};});
       canonical(B,r.sh);if(bs.rot)PCBEDIT.rotate(B,r.sh,bs.rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);
       PCBEDIT.move(B,r.sh,sx-a.x,r.c.bb[3]+0.9-r.sh.bb[1]);PCBEDIT.prepare(B);fixed.push(r.sh.ref);}});
+  // single-chip 3-phase gate driver (A4911 class): the IC whose pins reach the most gate-drive nets (driver side of the
+  // gate resistors) sits beside the FET column, centred on it, gate pins toward the FETs — its 12 gate / bootstrap lines
+  // stay short and do not have to cross the board. Per-phase drivers (IR2104: two drive nets each) keep the annealer.
+  let drv=null;{const gateNets=new Set();R.forEach(r=>r.c.pads.forEach(p=>{if(p.net&&p.net!==r.bat&&p.net!==r.ph&&p.net!==r.sns&&!/GND/i.test(p.net))gateNets.add(p.net);}));
+    const drvNets=new Set();B.comps.filter(c=>/^R/.test(c.ref)&&c.pads.length===2).forEach(c=>{const a=c.pads[0].net,b=c.pads[1].net;if(gateNets.has(a)&&b&&!gateNets.has(b)&&b!==bat)drvNets.add(b);else if(gateNets.has(b)&&a&&!gateNets.has(a)&&a!==bat)drvNets.add(a);});
+    const cand=B.comps.filter(c=>/^U/.test(c.ref)&&!fixed.includes(c.ref)).map(c=>({c,n:new Set(c.pads.filter(p=>drvNets.has(p.net)).map(p=>p.net)).size})).sort((a,b)=>b.n-a.n);
+    if(cand.length&&cand[0].n>=4&&(cand.length<2||cand[1].n<cand[0].n)){drv=cand[0].c;
+      const dRot=bestRot(drv,c=>{const g=cen(c,p=>drvNets.has(p.net));return g?g[0]:0;});const dw=drv.bb[2]-drv.bb[0];
+      const leftEdge=planeBus0()?Math.min(...R.map(r=>r.c.bb[0])):busX0;let x=leftEdge-(o.drvGap||6)-dw/2;if(x-dw/2<rect[0]+edge)x=rect[0]+edge+dw/2;
+      const ys=R.map(r=>(r.c.bb[1]+r.c.bb[3])/2);pose(drv,x,(Math.min(...ys)+Math.max(...ys))/2,dRot);fixed.push(drv.ref);}}
+  function planeBus0(){return!!(o.planes&&o.planes.has(bat));}
   const fitOk=P*R.length<=H+0.01;
   // the supply bus (battery side of the bridge) stays free of other parts
   const planeBus=o.planes&&o.planes.has(bat);if(!planeBus)keepout.push([busX0,yIn-1,busX1,top]);
   // the phase copper between the bridge column and the motor terminal stays free of other parts too
   const colB=Math.min(...R.map(r=>r.c.bb[1])),fR=Math.max(...R.map(r=>r.c.bb[2]));keepout.push([fR+0.2,colB-0.5,term.bb[0]-0.2,top]);
-  return{fixed,keepout,bus:planeBus?null:[busX0,rect[1],busX1,top],net:bat,fit:fitOk,planeBus};}
+  return{fixed,keepout,bus:planeBus?null:[busX0,rect[1],busX1,top],net:bat,fit:fitOk,planeBus,driver:drv?drv.ref:null};}
 /* ---------- roles ---------- */
 // smallest centre distance between neighbouring pads (fine-pitch parts need room to fan out)
 function pitchOf(c){let m=1e9;const P=c.pads;if(P.length<6)return m;for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d>0.05&&d<m)m=d;}return m;}
