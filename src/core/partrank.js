@@ -15,6 +15,9 @@ const C={
     {mpn:'IPD90P04P4L-04',mfr:'Infineon',note:'P-FET 역접속 보호 · 40 V · 90 A',spec:{vin:[0,40],i:90,pkg:'TO-252'},grade:'Q101',price:1.6,why:'부품 하나로 끝나는 고전류 역접속 보호'},
     {mpn:'SM8S33A',mfr:'Littelfuse',note:'로드덤프 TVS 6.6 kW · 33 V',spec:{vin:[0,33],pkg:'DO-218AB'},grade:'Q101',price:0.9,why:'ISO 7637 로드덤프 흡수(보호 소자)'}],
   ldo:[
+    // adjustable (no spec.vout): any rail, e.g. a 9 V hall-sensor supply — the divider sets the voltage
+    {mpn:'TPS7B86-Q1',mfr:'TI',note:'가변 LDO 1.2–18 V · 500 mA · 40 V 입력 · 드롭아웃 0.5 V · HSOIC-8/TO-252',spec:{i:0.5,vin:[3,40],adj:1,pkg:'HSOIC-8'},grade:'Q100',price:0.9,why:'배터리 직결 가변 레일 (9 V 센서 전원)'},
+    {mpn:'LM317DCYR',mfr:'TI',note:'가변 LDO 1.25–37 V · 1.5 A · 40 V 입력 · SOT-223 (드롭아웃 ~2 V)',spec:{i:1.5,vin:[3,40],adj:1,pkg:'SOT-223'},grade:'',price:0.3,why:'가장 흔한 가변 레귤레이터 (회로 생성 기본)'},
     {mpn:'TLV1117LV33QDCYRQ1',mfr:'TI',note:'1 A LDO 3.3 V · SOT-223 · AMS1117 핀 호환',spec:{i:1,vin:[2.5,5.5],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.62,why:'저가·핀 호환, 5 V → 3.3 V'},
     {mpn:'TPS7B8133QDRVRQ1',mfr:'TI',note:'300 mA LDO 3.3 V · 40 V 입력 · 저 Iq 2.4 µA · WSON-6',spec:{i:0.3,vin:[4,40],vout:3.3,pkg:'WSON-6'},grade:'Q100',price:0.95,why:'배터리 직결 · 상시 전원(저 대기 전류)'},
     {mpn:'UA78M33QDCYRQ1',mfr:'TI',note:'500 mA LDO 3.3 V · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[5.3,25],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'가장 싼 차량용 3.3 V'},
@@ -118,6 +121,11 @@ const C={
     {mpn:'VN7050AJ',mfr:'ST',note:'VIPower 하이사이드 · 전류 센스',spec:{v:41,i:7,pkg:'PowerSSO-16'},grade:'Q100',price:1.9,why:'전류 센스 진단'},
     {mpn:'TPS1H100-Q1',mfr:'TI',note:'스마트 하이사이드 · 전류 센스 · 40 V',spec:{v:40,i:2,pkg:'HTSSOP-14'},grade:'Q100',price:1.7,why:'소형 부하'},
     {mpn:'BTS50010-1TAD',mfr:'Infineon',note:'PROFET 10 mΩ 하이사이드 · 고전류',spec:{v:28,i:40,pkg:'TO-263-7'},grade:'Q100',price:3.5,why:'40 A급 상 차단·메인 스위치'}],
+  ntc:[
+    {mpn:'NCU18XH103F60RB',mfr:'Murata',note:'NTC 10 kΩ ±1 % · B 3380 K · 0603 · 차량용',spec:{pkg:'0603'},grade:'Q200',price:0.06,why:'차량용 보드 온도 표준'},
+    {mpn:'NCP18XH103F03RB',mfr:'Murata',note:'NTC 10 kΩ ±1 % · B 3380 K · 0603',spec:{pkg:'0603'},grade:'',price:0.04,why:'범용 저가'},
+    {mpn:'TMP235-Q1',mfr:'TI',note:'아날로그 온도 IC · 10 mV/°C · ±2.5 °C · SOT-23',spec:{pkg:'SOT-23'},grade:'Q100',price:0.35,why:'선형 출력 (테이블 불필요)'},
+    {mpn:'B57861S0103F040',mfr:'TDK',note:'NTC 10 kΩ ±1 % · 에폭시 리드형',spec:{pkg:'THT'},grade:'',price:0.3,why:'방열판 · 하우징 부착용'}],
   vmon:[
     {mpn:'INA181A1QDBVRQ1',mfr:'TI',note:'전류 센스 앰프 ×20 · 26 V · 양방향',spec:{pkg:'SOT-23-6'},grade:'Q100',price:0.75,why:'션트 전류 센싱 기본'},
     {mpn:'INA240A2QPWRQ1',mfr:'TI',note:'전류 센스 앰프 ×50 · PWM 동상 제거 · 80 V',spec:{pkg:'TSSOP-8'},grade:'Q100',price:1.9,why:'인버터 상 션트(PWM 노이즈 제거)'},
@@ -175,12 +183,13 @@ function rank(b,ctx){ctx=ctx||{};const N=needs(b,ctx);const pref=ctx.pref||{pric
     if(sp.feat&&N.feat){const FN={eth:'이더넷',flexray:'FlexRay',sent:'SENT',motor:'모터 제어 타이머'};
       if(N.fd&&!sp.feat.includes('fd'))bad.push('CAN-FD 미지원');
       N.feat.forEach(f=>{if(sp.feat.includes(f)){s+=f==='motor'?0.6:0.8;why.push(FN[f]);}else if(f!=='motor')bad.push(FN[f]+' 미지원');});}
+    if(sp.adj&&N.vouts.length){if(N.vouts.every(v=>Math.abs(v-3.3)<0.05||Math.abs(v-5)<0.05))s-=1;else{s+=1;why.push(`가변 출력 → ${N.vouts.join('/')} V`);}}
     if(N.vouts.length&&sp.vout!=null&&!N.vouts.some(v=>Math.abs(v-sp.vout)<0.05))bad.push(`출력 ${sp.vout} V ≠ 요구 ${[...new Set(N.vouts)].join('/')} V`);
     if(N.vouts.length&&sp.vout!=null&&sp.vin&&N.v&&sp.vin[1]<N.v&&N.vouts.some(v=>v>=sp.vout+1.5))bad.splice(bad.findIndex(x=>/^입력/.test(x)),1);  // a 2nd-stage LDO is fed from the 5 V rail, not the battery
     // ASIL matters for the parts that carry a safety mechanism: MCU, supervisor / PMIC, gate driver, cut-off switch, or a block tagged safety
   const safetyBlock=(b.impl||[]).some(im=>/^(mcu|supervisor|gdrv3|hs_switch)$/.test(im.type))||!!b.safety||(b.sg&&b.sg.length);
   const pa=asilRank[(p.asil||'').toUpperCase()]||0;if(need>=2&&safetyBlock){if(pa>=need){s+=2.5;why.push(`ASIL ${p.asil}`);}else if(pa){s+=1;why.push(`ASIL ${p.asil} (요구 ${'ABCD'[need-1]} 미달)`);}else bad.push('안전 기능 없음');}
-    if(auto){if(/Q10/.test(p.grade||'')){s+=1.5;why.push(p.grade);}else{s-=1;bad.push('차량용 등급 아님');}}
+    if(auto){if(/Q10|Q200/.test(p.grade||'')){s+=1.5;why.push(p.grade);}else{s-=1;bad.push('차량용 등급 아님');}}
     const rec=look(p.mpn);const pins=!!(rec&&rec.pins&&rec.pins.length);const kic=rec&&(rec.src==='kicad'||rec.pinSrc==='kicad');const fam=rec&&(rec.match==='family'||rec.pinMatch==='family');
     const pinNote=pins?(kic?'KiCad'+(fam?' 계열':''):rec.src==='ds'?'데이터시트':rec.src==='ai'?'Claude 추정':'라이브러리'):'';if(pins){s+=fam?0.6:1;why.push('핀 데이터 있음');}
     const price=priceOf(p.mpn)!=null?priceOf(p.mpn):p.price;if(price!=null){s+=pref.price*Math.max(-1.5,1-Math.log10(Math.max(0.05,price))*0.9);}

@@ -7,7 +7,7 @@
    templates are the deterministic fallback and the worked example in the prompt. */
 const PRODUCTS=(()=>{
 const GROUPS=['power','comm','ctrl','io','ext'];
-const IMPLS=['pwr_in','usb_in','ldo','buck','mcu','xtal','can','bldc','gdrv3','hbridge','dcmotor','led','button','flash','uart','i2c','supervisor','hs_switch','vmon','part'];
+const IMPLS=['pwr_in','usb_in','ldo','buck','mcu','xtal','can','bldc','gdrv3','hbridge','dcmotor','led','button','flash','uart','i2c','supervisor','hs_switch','vmon','ntc','part'];
 const S=v=>v==null?'':String(v).trim();
 /* ---- templates ---- */
 const T={};
@@ -133,13 +133,53 @@ T.inv={key:'inv',name:'트랙션 모터 인버터 (HV)',re:/인버터|inverter|�
     {key:'asil',block:'mcu',q:'안전 등급은?',why:'토크 감시·차단 경로.',re:/asil\s*[a-d]/i,
       options:[{label:'ASIL C',effect:{asil:'C',req:'ASIL C'}},{label:'ASIL D (액티브 쇼트 서킷 세이프 스테이트)',effect:{asil:'D',req:'ASIL D',feats:{gate:['ASC (Active Short Circuit) 세이프 스테이트']}}}]}]};
 
+T.dadu={key:'dadu',name:'Dadu ECU (12 V BLDC 구동)',re:/dadu|다두/i,
+  defaults:['12 V 차량 배터리 (KL30 · 6–16 V · 로드덤프)','PMIC (5 V · 3.3 V · 워치독)','AURIX TC364 (TriCore 락스텝)','CAN-FD (중재 500 kbps · 데이터 2 Mbps)','12 V BLDC 3상 · 게이트 드라이버 + MOSFET 6개 브리지','홀 센서 ×3 · 센서 공급 9 V','PCB 온도 센서'],
+  req:'12 V 차량 배터리, AURIX TC364, CAN-FD, BLDC 모터 구동(홀 센서 9 V), 게이트 드라이버, MOSFET 6개, PMIC, PCB 온도 센싱',
+  blocks:[
+    {id:'pin',group:'power',label:'Battery Input KL30 (12 V)',feats:['역전압 보호 (Reverse Polarity FET)','로드덤프 · 서지 보호 (TVS)','입력 π 필터'],impl:[{type:'pwr_in',params:{vin:12}}],why:'차량 배터리 직결'},
+    {id:'sbc',group:'power',label:'PMIC (5 V · 3.3 V · WDT)',feats:['VCC_5V 5 V (CAN · 센서)','VCC_MCU 3.3 V','전원 감시 (UV/OV) · 워치독 · 리셋'],impl:[{type:'ldo',params:{vout:5}},{type:'ldo',params:{vout:3.3,vin:'+5V'}},{type:'supervisor',params:{}}],why:'MCU·CAN 전원과 감시'},
+    {id:'hallps',group:'power',label:'Hall Sensor Supply 9 V',feats:['9 V 레귤레이터 (배터리 → 9 V)','센서 단락 보호 · 전류 제한','배터리 < 약 11 V(LDO)에서 9 V 유지 안 됨'],impl:[{type:'ldo',params:{vout:9}}],why:'홀 센서 공급 전압 9 V'},
+    {id:'mcu',group:'ctrl',label:'Main MCU AURIX TC364',feats:['Core: AURIX TC36x (TriCore · 락스텝)','GTM PWM ×6 (3상)','홀 입력 ×3 (캡처 · 인터럽트)','ADC (상전류 · VBAT · 온도)'],impl:[{type:'mcu',params:{part:'TC364DP-64F300F'}},{type:'xtal',params:{}}],why:'모터 제어 · 통신'},
+    {id:'canbus',group:'comm',label:'CAN-FD Bus (H / L)',ext:true,feats:['차량 네트워크 · UDS 진단'],why:'차량 통신'},
+    {id:'canx',group:'comm',label:'CAN-FD Transceiver',feats:['중재 500 kbps · 데이터 2 Mbps','물리 계층 (5 V) · ESD · 종단'],impl:[{type:'can',params:{}}],why:'CAN 물리 계층'},
+    {id:'gate',group:'io',label:'3-Phase Gate Driver',feats:['하이/로우 사이드 ×3 (부트스트랩)','게이트 진단 · 단락 · 저전압 보호','PWM ×6 · EN · nFAULT'],impl:[{type:'gdrv3',params:{i:20,hall:1,hallv:9}}],why:'3상 MOSFET 구동'},
+    {id:'inv',group:'io',label:'MOSFET 6-Bridge (3-Phase)',feats:['N-MOSFET ×6 (40 V · 저 RDS(on))','상 션트 ×3','방열 (써멀 비아 · 하우징 접촉)'],why:'모터 전력단'},
+    {id:'hall',group:'io',label:'Hall Sensor Interface ×3',feats:['홀 A/B/C 입력 (오픈 컬렉터)','풀업 3.3 V · RC 필터 · 클램프','센서 공급 9 V'],why:'회전자 위치 (6스텝 · 속도)'},
+    {id:'isense',group:'io',label:'Phase Current / VBAT Monitor',feats:['상 션트 앰프 → ADC','VBAT 분압 감시','과전류 HW 감지'],impl:[{type:'vmon',params:{}}],why:'전류 제한 · 진단'},
+    {id:'ptemp',group:'io',label:'PCB Temperature Sensor',feats:['NTC (MOSFET 브리지 근처)','ADC 입력 · 과열 디레이팅'],impl:[{type:'ntc',params:{n:1}}],why:'보드 과열 보호'},
+    {id:'dbg',group:'io',label:'Debug / Calib. Interface',feats:['JTAG / DAP','UART','XCP over CAN'],impl:[{type:'uart',params:{}}],why:'개발 · 캘리브레이션'},
+    {id:'conn',group:'ext',label:'Motor & Hall Connector',ext:true,feats:['3상 모터 U/V/W (고전류)','홀 센서 5핀 (9 V · A · B · C · GND)'],why:'외부 연결'}],
+  links:[['pin','sbc','VBAT 12 V','power'],['pin','hallps','VBAT 12 V','power'],['hallps','hall','9 V Hall Supply','power'],['sbc','mcu','VCC_MCU 3.3 V · nRESET · WDI','power'],['sbc','canx','VCC_5V','power'],
+    ['canbus','canx','CAN_H / CAN_L','bus'],['canx','mcu','TXD / RXD','signal'],['pin','gate','VBAT (게이트 전원)','power'],['mcu','gate','PWM ×6 · EN','signal'],['gate','mcu','nFAULT','safe'],['gate','inv','Gate ×6','signal'],['pin','inv','VBAT (Motor)','power'],
+    ['inv','conn','Phase U/V/W','power'],['conn','hall','Hall A/B/C','signal'],['hall','mcu','Hall A/B/C (캡처)','signal'],['inv','isense','Shunt','signal'],['sbc','isense','VCC_MCU 3.3 V','power'],['isense','mcu','Analog Feedback (ADC)','signal'],
+    ['sbc','ptemp','VCC_MCU 3.3 V','power'],['ptemp','mcu','NTC (ADC)','signal'],['sbc','dbg','VCC_MCU 3.3 V','power'],['dbg','mcu','JTAG / UART','signal']],
+  questions:[
+    {key:'cur',block:'gate',q:'모터 상전류 등급은?',why:'MOSFET 크기·병렬 수·션트·커넥터·방열이 정해집니다.',re:/\d+\s*a\b/i,
+      options:[{label:'~20 A (팬 · 소형 펌프)',effect:{impl:{id:'gate',type:'gdrv3',params:{i:20}},feats:{inv:['상전류 20 A급']},req:'상전류 20 A'}},
+               {label:'~40 A (펌프 · 블로어)',effect:{impl:{id:'gate',type:'gdrv3',params:{i:40}},feats:{inv:['상전류 40 A급 · MOSFET 병렬 ×2'],conn:['커넥터 40 A급']},req:'상전류 40 A'}},
+               {label:'~80 A (액추에이터 · 대형 펌프)',effect:{impl:{id:'gate',type:'gdrv3',params:{i:80}},feats:{inv:['상전류 80 A급 · MOSFET 병렬 ×3 · 버스바'],conn:['커넥터 80 A급']},req:'상전류 80 A'}}]},
+    {key:'hallps',block:'hallps',q:'홀 센서 9 V 전원은 크랭킹(배터리 6 V)에서도 유지해야 하나요?',why:'LDO는 배터리가 약 11 V 아래로 내려가면 9 V가 무너집니다. 유지하려면 벅부스트가 필요합니다.',re:/벅\s*부스트|buck-?boost|크랭킹/i,
+      options:[{label:'아니오 — LDO 9 V (저가)',effect:{feats:{hallps:['LDO 9 V (TPS7B86-Q1 급, 드롭아웃 0.5 V)']}}},
+               {label:'예 — 벅부스트 9 V (6–16 V 입력에서 유지)',effect:{feats:{hallps:['벅부스트 9 V (LM5176-Q1 · TPS55165-Q1 급) — 회로 생성 후 부품 지정']},req:'홀 전원 벅부스트'}}]},
+    {key:'canfd',block:'canx',q:'CAN-FD 데이터 속도는?',why:'트랜시버 등급(SIC 여부)과 종단·배선이 달라집니다.',re:/\d\s*mbps/i,
+      options:[{label:'중재 500 kbps · 데이터 2 Mbps',effect:{feats:{canx:['데이터 2 Mbps']}}},
+               {label:'중재 500 kbps · 데이터 5 Mbps',effect:{feats:{canx:['데이터 5 Mbps — 신호 개선(SIC) 트랜시버 권장']},req:'CAN-FD 5 Mbps'}}]},
+    {key:'asil',block:'mcu',q:'안전 등급은?',why:'PMIC(질의응답 워치독 · 세이프 스테이트)와 게이트 드라이버 진단 범위가 달라집니다.',re:/asil\s*[a-d]|\bqm\b/i,
+      options:[{label:'QM',effect:{asil:'QM',req:'QM'}},{label:'ASIL B',effect:{asil:'B',req:'ASIL B'}},
+               {label:'ASIL D',effect:{asil:'D',req:'ASIL D',feats:{sbc:['안전 PMIC · 질의응답 워치독 · FS0B'],gate:['게이트 드라이버 ASIL D (SPI 진단)']}}}]},
+    {key:'temp',block:'ptemp',q:'PCB 온도 센서 위치·개수는?',why:'NTC 수와 MCU ADC 채널이 정해집니다.',re:/ntc\s*\d|온도\s*센서\s*\d/i,
+      options:[{label:'1개 — MOSFET 브리지 근처',effect:{}},
+               {label:'2개 — MOSFET 브리지 + MCU/PMIC 근처',effect:{impl:{id:'ptemp',type:'ntc',params:{n:2}},feats:{ptemp:['NTC ×2 (브리지 · 제어부)']}}}]}]};
 /* ---- part candidates per block (several makers each): [mpn, maker, note] ---- */
 const SBC=[['TLF35584QVVS2','Infineon','안전 PMIC · Q&A 워치독 · FS0B · ASIL D'],['TPS65381A-Q1','TI','안전 PMIC · 워치독 · 진단 · ASIL D'],['FS2600','NXP','FS26 안전 SBC · 다중 레일 · ASIL D'],['L9396','ST','차량용 안전 PMIC · 워치독']];
 const MCU_D=[['TC364DP-64F300F','Infineon','AURIX TC36x 락스텝 · GTM · SENT · ASIL D'],['S32K344','NXP','Cortex-M7 락스텝 · ASIL D'],['SPC58EC80E5','ST','Power Architecture 락스텝 · ASIL D'],['RH850/U2A8','Renesas','락스텝 · ASIL D'],['TMS570LC4357','TI','Cortex-R5F 락스텝 · ASIL D']];
 const MCU_B=[['S32K144','NXP','Cortex-M4F · ASIL B'],['SPC560P50','ST','Power Architecture · ASIL B'],['TC334LP','Infineon','AURIX 저가 · ASIL B'],['RH850/F1KM-S1','Renesas','ASIL B'],['STM32F042K6U6','ST','범용 (시제품)']];
 const CANX=[['TJA1443AT','NXP','CAN-FD 5 Mbps · 슬립/웨이크'],['TLE9251VSJ','Infineon','CAN-FD 5 Mbps'],['TCAN1043-Q1','TI','CAN-FD · 웨이크 · 인히빗'],['MCP2542FD','Microchip','CAN-FD 8 Mbps'],['ATA6563','Microchip','CAN-FD 5 Mbps']];
-const GATE3=[['TLE9180D-31QK','Infineon','3상 게이트 드라이버 · 진단 · 세이프티 FET 출력 · ASIL D'],['L9908','ST','3상 게이트 드라이버 · 안전 기능'],['DRV8353RS-Q1','TI','3상 게이트 드라이버 · 전류 센스 앰프 내장'],['GD3000','NXP','3상 프리드라이버 · 진단'],['A4919','Allegro','3상 게이트 드라이버 · 진단']];
+const GATE3=[['TLE9180D-31QK','Infineon','3상 게이트 드라이버 · 진단 · 세이프티 FET 출력 · ASIL D'],['L9908','ST','3상 게이트 드라이버 · 안전 기능'],['DRV8353RS-Q1','TI','3상 게이트 드라이버 · 전류 센스 앰프 내장'],['GD3000','NXP','3상 프리드라이버 · 진단'],['A4919','Allegro','3상 게이트 드라이버 · 진단'],['A4911KJPTR-T-1','Allegro','3상 게이트 드라이버 · SPI 진단 · 센스 앰프 ×3 · ASIL D'],['A4918KJPTR-1A-3-T','Allegro','3상 게이트 드라이버 · 4.5 V 동작 · ASIL D']];
 const FET40=[['IAUC100N04S6N008','Infineon','40 V 0.8 mΩ OptiMOS'],['STL325N4LF8AG','ST','40 V 0.9 mΩ STripFET'],['BUK7S0R5-40H','Nexperia','40 V 0.5 mΩ LFPAK'],['NVMFS5C404N','onsemi','40 V 0.7 mΩ']];
+const HALL9=[['TPS7B86-Q1','TI','가변 LDO 1.2–18 V · 500 mA · 40 V 입력 · 드롭아웃 0.5 V'],['LM317DCYR','TI','가변 LDO · 1.5 A · 40 V (상용 · 드롭아웃 ~2 V)'],['LM5176-Q1','TI','벅부스트 컨트롤러 (크랭킹 유지)']];
+const NTC=[['NCU18XH103F60RB','Murata','NTC 10 kΩ 0603 · 차량용'],['NCP18XH103F03RB','Murata','NTC 10 kΩ 0603'],['TMP235-Q1','TI','아날로그 온도 IC · 10 mV/°C · SOT-23'],['B57861S0103F040','TDK','NTC 10 kΩ (리드)']];
 const ISENSE=[['INA240A2-Q1','TI','션트 앰프 · PWM 제거 · 50 V/V'],['AD8418A','ADI','션트 앰프 · 양방향'],['TLE4972-AE35D5','Infineon','코어리스 전류 센서 · 과전류 핀'],['NCS21671','onsemi','션트 앰프 · 저오프셋']];
 const PIN12=[['LM74700-Q1','TI','이상 다이오드 컨트롤러 (역접속)'],['LTC4359','ADI','이상 다이오드 컨트롤러'],['IPD90P04P4L-04','Infineon','P-FET 역접속 보호'],['SM8S33A','Littelfuse','로드덤프 TVS 6.6 kW']];
 const HSD=[['BTS7008-2EPA','Infineon','PROFET+2 2ch 8 mΩ · 전류 센스'],['VND7050AJ','ST','VIPower 2ch 50 mΩ · 진단'],['TPS1HB16-Q1','TI','1ch 16 mΩ · 진단'],['MC12XS6','NXP','6ch HSD · SPI']];
@@ -158,7 +198,8 @@ const PARTS={
   eps:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,gate:GATE3,inv:FET40,pcut:FET40,isense:ISENSE,tsens:TORQ,asens:ANG},
   bms:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,iso:ISO_AFE,cur:ISOADC,hvm:HVM,ctr:HSD},
   bcm:{pin:PIN12,sbc:SBC_B,mcu:MCU_B,canx:CANX,lin:LINX,hsd:HSD,lsd:LSD},
-  inv:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,gate:GATEISO,pm:PM,isense:ISOADC,rdc:RDC,hvm:HVM}};
+  inv:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,gate:GATEISO,pm:PM,isense:ISOADC,rdc:RDC,hvm:HVM},
+  dadu:{pin:PIN12,sbc:SBC.concat(SBC_B),hallps:HALL9,mcu:MCU_D,canx:CANX,gate:GATE3,inv:FET40,isense:ISENSE,ptemp:NTC}};
 const normPart=x=>{if(!x)return null;if(typeof x==='string')return{mpn:x,mfr:'',note:''};if(Array.isArray(x))return{mpn:S(x[0]),mfr:S(x[1]),note:S(x[2])};return{mpn:S(x.mpn||x.part),mfr:S(x.mfr||x.maker),note:S(x.note||x.desc),grade:S(x.grade)};};
 function candidates(prof,id){const b=(prof.blocks||[]).find(x=>x.id===id);if(!b)return[];return(b.parts||[]).map(normPart).filter(p=>p&&p.mpn);}
 /* ---- detection ---- */

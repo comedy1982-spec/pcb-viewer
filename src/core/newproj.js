@@ -51,7 +51,15 @@ const LIB={
       ctx.part('R','5.1kΩ','0603',{1:'CC1',2:'GND'},{desc:'CC 풀다운 (싱크 5 V)'});ctx.cap('VBUS','10µF','VBUS 벌크');
       if(d){ctx.sig('USB_DM','usb_dm','usb');ctx.sig('USB_DP','usb_dp','usb');}}},
   ldo:{label:'LDO 레귤레이터',desc:'AMS1117 (SOT-223) · 입력/출력 10 µF',params:{vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},vout:{def:3.3,desc:'출력 전압 (3.3 · 5)'},iout:{def:'auto',desc:'예상 부하 전류 [A] (auto = 블록 합)'}},
-    build(ctx,p){const vout=+p.vout;const out=railOf(vout);const mpn=vout===5?'AMS1117-5.0':'AMS1117-3.3';
+    build(ctx,p){const vout=+p.vout;const out=railOf(vout);
+      // other rails (9 V hall supply, 8 V, 12 V …): adjustable LM317 (40 V input) + 240 Ω / R2 divider, Vout = 1.25·(1 + R2/240)
+      if(vout!==5&&vout!==3.3){const src=p.vin==='auto'?ctx.highest(vout+2):p.vin;ctx.provide(out,vout,'LDO');ctx.use(src);const adj=ctx.uniq('LDO_ADJ');
+        const E24=[1,1.1,1.2,1.3,1.5,1.6,1.8,2,2.2,2.4,2.7,3,3.3,3.6,3.9,4.3,4.7,5.1,5.6,6.2,6.8,7.5,8.2,9.1];const r2x=240*(vout/1.25-1);const dec=Math.pow(10,Math.floor(Math.log10(r2x)));const r2=E24.map(e=>e*dec).concat([10*dec]).reduce((a,b)=>Math.abs(b-r2x)<Math.abs(a-r2x)?b:a);
+        const fmt=r=>r>=1000?(+(r/1000).toFixed(2))+'kΩ':Math.round(r)+'Ω';const vr=1.25*(1+r2/240);
+        ctx.part('U','LM317','SOT-223',{1:adj,2:out,3:src,4:out},{mpn:'LM317DCYR',desc:`${vout} V 가변 LDO (입력 ${src}, 드롭아웃 ~2 V)`,pinNames:{1:'ADJ',2:'VOUT',3:'VIN',4:'VOUT'},ldo:{src,out,vout}});
+        ctx.part('R','240Ω','0603',{1:out,2:adj},{desc:`LM317 분압 상단 (Vout = ${vr.toFixed(2)} V)`});ctx.part('R',fmt(r2),'0603',{1:adj,2:'GND'},{desc:'LM317 분압 하단'});
+        ctx.cap(src,'1µF','LDO 입력 커패시터');ctx.cap(out,'10µF','LDO 출력 커패시터');const vs=ctx.railV?ctx.railV(src):null;if(vs&&vs<vout+2.5)ctx.warn(`${out}: 입력 ${vs} V − ${vout} V 출력 — 드롭아웃 여유 부족 (배터리 저하 시 유지 안 됨)`);return;}
+      const mpn=vout===5?'AMS1117-5.0':'AMS1117-3.3';
       const src=p.vin==='auto'?ctx.highest(vout+1.1):p.vin;ctx.provide(out,vout,'LDO');ctx.use(src);
       ctx.part('U',mpn,'SOT-223',{1:'GND',2:out,3:src,4:out},{mpn,desc:`${vout} V LDO (입력 ${src})`,pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'VOUT'},ldo:{src,out,vout}});
       ctx.cap(src,'10µF','LDO 입력 커패시터');ctx.cap(out,'10µF','LDO 출력 커패시터');}},
@@ -113,7 +121,7 @@ const LIB={
       ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(sn)ctx.curr(ret,I);
       ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
   gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
-    params:{i:{def:20,desc:'상전류 A (FET 병렬 수·션트·트레이스 폭)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
+    params:{i:{def:20,desc:'상전류 A (FET 병렬 수·션트·트레이스 폭)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
     build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||20);const k=ctx.uniq('PH');const N=x=>k==='PH'?'PH_'+x:k+'_'+x;
       const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V);
       if(V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
@@ -127,8 +135,11 @@ const LIB={
       bulk(ctx,vm,I,'3상 인버터');ctx.curr(vm,I);
       ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 인버터 OFF)'});ctx.sig(N('EN'),'gpio_out');
       ctx.part('J','모터 상','TERM-3-5.08',{1:N('U'),2:N('V'),3:N('W')},{mpn:'1729131',desc:`3상 모터 단자 (5.08 mm · ${I} A)`,pinNames:{1:'U',2:'V',3:'W'}});
-      if(+p.hall){ctx.use('+5V');ctx.use('+3V3');ctx.part('J','홀','HDR-1x5',{1:'+5V',2:N('HALL_A'),3:N('HALL_B'),4:N('HALL_C'),5:'GND'},{mpn:'61300511121',desc:'홀 센서 커넥터',pinNames:{1:'5V',2:'H1',3:'H2',4:'H3',5:'GND'}});
-        ['A','B','C'].forEach(x=>{ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:N('HALL_'+x)},{desc:'홀 출력 풀업'});ctx.part('C','1nF','0603',{1:N('HALL_'+x),2:'GND'},{desc:'홀 입력 필터'});ctx.sig(N('HALL_'+x),'irq_in');});}}},
+      if(+p.hall){const hv=+p.hallv||5;const hr=railOf(hv);ctx.use(hr);ctx.use('+3V3');const hin=x=>N('HALL_'+x+(hv>5?'_IN':''));ctx.part('J','홀','HDR-1x5',{1:hr,2:hin('A'),3:hin('B'),4:hin('C'),5:'GND'},{mpn:'61300511121',desc:`홀 센서 커넥터 (공급 ${hv} V)`,pinNames:{1:hv+'V',2:'H1',3:'H2',4:'H3',5:'GND'}});
+        // open-collector hall outputs pulled up to the MCU rail; with a supply above 5 V a series resistor + clamp keeps a shorted / push-pull sensor off the MCU pin
+        ['A','B','C'].forEach(x=>{const raw=N('HALL_'+x+(hv>5?'_IN':''));if(hv>5){ctx.part('R','1kΩ','0603',{1:raw,2:N('HALL_'+x)},{desc:'홀 입력 직렬 저항 (과전압 전류 제한)'});ctx.part('D','BAT54S','SOT-23',{1:'GND',2:'+3V3',3:N('HALL_'+x)},{mpn:'BAT54S',desc:'홀 입력 클램프 (GND·3.3 V)',pinNames:{1:'A1',2:'K2',3:'K1/A2'}});
+            ctx.part('C','1nF','0603',{1:raw,2:'GND'},{desc:'홀 커넥터 측 필터'});}
+          ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:N('HALL_'+x)},{desc:'홀 출력 풀업'});ctx.part('C','1nF','0603',{1:N('HALL_'+x),2:'GND'},{desc:'홀 입력 필터'});ctx.sig(N('HALL_'+x),'irq_in');});}}},
   dcmotor:{label:'DC 모터 (로우사이드 FET)',desc:'AO3400A + 게이트 저항·풀다운 + 플라이백 SS14 + 0.1 Ω 션트 + RC 필터 → ADC',params:{shunt:{def:1,desc:'전류 검출 (1/0)'}},
     build(ctx,p){const vm=ctx.highest(3);ctx.use(vm);const s=+p.shunt;
       ctx.part('J','모터','HDR-1x2',{1:vm,2:'MOT_N'},{mpn:'61300211121',desc:'DC 모터 커넥터',pinNames:{1:'+',2:'−'}});
@@ -174,10 +185,14 @@ const LIB={
       const prefix=/connector|커넥터/i.test(rec.cat||'')?'J':/mosfet|fet|transistor/i.test(rec.cat||'')?'Q':/diode|tvs/i.test(rec.cat||'')?'D':'U';
       ctx.part(prefix,rec.mpn,fp,pins,{mpn:rec.mpn,desc:(rec.title||rec.desc||'지정 부품')+(rec.src==='ai'?' (Claude 추정 핀 배열)':''),pinNames:names,P:0.05});
       ctx.cap(vcc,'100nF',`${rec.mpn} 디커플링`);sig.forEach(([n,r])=>ctx.sig(n,r));}},
+  ntc:{label:'온도 센서 (NTC)',desc:'NTC 10 kΩ B3435 + 10 kΩ 풀업 (3.3 V) + 100 nF → ADC — 보드 온도 (FET·레귤레이터 근처)',params:{n:{def:1,desc:'센서 수'}},
+    build(ctx,p){const n=Math.max(1,Math.min(4,+p.n||1));ctx.use('+3V3');for(let i=0;i<n;i++){const t=ctx.uniq('TEMP');
+      ctx.part('R','10kΩ','0603',{1:'+3V3',2:t},{desc:'NTC 풀업 (1 %)'});ctx.part('RT','NTC 10k','0603',{1:t,2:'GND'},{mpn:'NCP18XH103F03RB',desc:'NTC 서미스터 10 kΩ B=3380 (보드 온도)',pinNames:{1:'1',2:'2'}});
+      ctx.part('C','100nF','0603',{1:t,2:'GND'},{desc:'ADC 필터'});ctx.sig(t,'adc');}}},
   vmon:{label:'전압 감시',desc:'100 kΩ/22 kΩ 분압 + 100 nF → ADC (입력 레일 감시)',params:{rail:{def:'auto',desc:'감시할 레일 (auto = 입력)'}},
     build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);ctx.part('R','100kΩ','0603',{1:r,2:'VMON'},{desc:'분압 상단'});ctx.part('R','22kΩ','0603',{1:'VMON',2:'GND'},{desc:'분압 하단'});ctx.part('C','100nF','0603',{1:'VMON',2:'GND'},{desc:'ADC 필터'});ctx.sig('VMON','adc');}}};
 const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'pwr_in',dc:'pwr_in',input:'pwr_in',usb:'usb_in',usbc:'usb_in',regulator:'ldo',reg:'ldo',crystal:'xtal',osc:'xtal',motor:'dcmotor',dc_motor:'dcmotor',
-  bldc3:'bldc',led:'led',leds:'led',btn:'button',sw:'button',spi:'flash',memory:'flash',serial:'uart',debug:'uart',monitor:'vmon',adc:'vmon',wdt:'supervisor',watchdog:'supervisor',reset:'supervisor',sbc:'supervisor',cutoff:'hs_switch',hsswitch:'hs_switch',hs:'hs_switch'};
+  bldc3:'bldc',led:'led',leds:'led',btn:'button',sw:'button',spi:'flash',memory:'flash',serial:'uart',debug:'uart',monitor:'vmon',adc:'vmon',temp:'ntc',thermistor:'ntc',temperature:'ntc',wdt:'supervisor',watchdog:'supervisor',reset:'supervisor',sbc:'supervisor',cutoff:'hs_switch',hsswitch:'hs_switch',hs:'hs_switch'};
 const blockKey=s=>{const k=String(s||'').toLowerCase();return LIB[k]?k:BLOCK_ALIAS[k]||null;};
 
 /* ---------- plan ---------- */

@@ -4,6 +4,7 @@ const NP_TPL=[
   ['EPS ECU','EPS ECU','EPS 전동 파워 스티어링 ECU 설계'],
   ['BMS 마스터','BMS','BMS 배터리 관리 시스템 마스터 설계'],
   ['eLSD ECU','eLSD ECU','eLSD ECU: 12V 배터리 입력(역전압·서지 보호), AURIX MCU, CAN-FD 통신, DC 모터 H-bridge 게이트 드라이버, 전류·온도 센싱, UART/JTAG 디버그와 XCP 캘리브레이션, 워치독, ASIL B'],
+  ['Dadu ECU','Dadu ECU v0.1','Dadu ECU: 12V BLDC 모터 구동, 홀 센서(공급 9V), PMIC, 3상 게이트 드라이버 + MOSFET 6개 브리지, CAN-FD, AURIX TC364, PCB 온도 센서'],
   ['BLDC 팬 컨트롤러','BLDC 팬 컨트롤러 v0.1','12V 입력 BLDC 모터 컨트롤러, STM32, 홀 센서, CAN 통신, 상태 LED 2개, 버튼 1개, 전압 감시'],
   ['CAN 센서 노드','CAN 센서 노드 v0.1','12V 입력 CAN 센서 노드, STM32, I2C 센서 확장, UART 디버그, LED 1개'],
   ['USB DC 모터 보드','USB DC 모터 보드 v0.1','USB 전원 DC 모터 구동, 전류 감시, LED 2개, 버튼 1개'],

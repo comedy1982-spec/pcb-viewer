@@ -105,8 +105,13 @@ function upgradeMotor(A,log){const hv=/고전압|\bhv\b|[4-9]\d\d\s*v\b|igbt|\bs
     if(im.type==='dcmotor'){const k=motorKind([b.label].concat(b.feats||[]).join(' ')+' '+(A.req||''),false);if(k.type==='hbridge'){im.type='hbridge';im.params={i:k.i};log&&log.push(`${b.id}: 단일 로우사이드 FET → H-브리지 (게이트 드라이버 + MOSFET ×4, ${k.i} A)`);}}
     else if(im.type==='bldc'){const k=motorKind(txt,true);if(k.type==='gdrv3'){im.type='gdrv3';im.params={i:k.i,hall:im.params&&im.params.hall!=null?im.params.hall:1};log&&log.push(`${b.id}: FET 내장 DRV8313 → 3상 게이트 드라이버 + MOSFET ×6 (${k.i} A)`);}}});});
   // inverter / MOSFET blocks without a circuit next to a gate-driver block: realised by that block
-  const drv=(A.blocks||[]).find(b=>(b.impl||[]).some(i=>i.type==='gdrv3'||i.type==='hbridge'));if(drv)(A.blocks||[]).forEach(b=>{if(b!==drv&&!b.ext&&!(b.impl||[]).length&&/inverter|인버터|mosfet|fet\b|브리지|bridge/i.test(b.label)){b.via=drv.id;}});
+  markVia(A);
   return log;}
+function markVia(A){
+  const drv=(A.blocks||[]).find(b=>(b.impl||[]).some(i=>i.type==='gdrv3'||i.type==='hbridge'));if(drv)(A.blocks||[]).forEach(b=>{if(b!==drv&&!b.ext&&!(b.impl||[]).length&&/inverter|인버터|mosfet|fet\b|브리지|bridge/i.test(b.label)){b.via=drv.id;}
+    // hall-sensor interface block: the hall connector / pull-ups / filters are part of the 3-phase stage when it has hall:1
+    else if(b!==drv&&!b.ext&&!(b.impl||[]).length&&/홀|hall/i.test(b.label)&&(drv.impl||[]).some(i=>i.type==='gdrv3'&&+((i.params||{}).hall))){b.via=drv.id;}});
+}
 /* ---- architecture → circuit plan (step 2): the impl of every block, in order ---- */
 function toPlan(A){
   if(typeof NEWPROJ==='undefined')throw new Error('NEWPROJ 필요');const P=NEWPROJ.newPlan(A.name);P.req=A.req;if(A.safety&&A.safety.level&&A.safety.level!=='QM')P.asil=A.safety.level;const log=[];const map=[];
@@ -125,13 +130,13 @@ function toPlan(A){
    warn noCtrl   actuation / sensing / comm block with no link to a controller block (no control / feedback signal)
    warn isolated block with no link at all
    Every issue carries the console command that fixes it; implGuess() proposes a type from the block's wording. */
-const IMPL_GUESS=[[/buck|강압|dc-?dc|smps|스위칭/i,'buck'],[/ldo|레귤|regulator|pmic|sbc|전압\s*변환/i,'ldo'],[/watchdog|워치독|supervisor|reset|감시/i,'supervisor'],
+const IMPL_GUESS=[[/ntc|서미스터|thermistor|(pcb|보드|board)\s*온도|온도\s*센서|temp(erature)?\s*sens/i,'ntc'],[/buck|강압|dc-?dc|smps|스위칭/i,'buck'],[/ldo|레귤|regulator|pmic|sbc|전압\s*변환/i,'ldo'],[/watchdog|워치독|supervisor|reset|감시/i,'supervisor'],
   [/can/i,'can'],[/flash|플래시|메모리|eeprom|memory/i,'flash'],[/led|표시등|램프/i,'led'],[/button|버튼|스위치\s*입력|key/i,'button'],[/uart|debug|디버그|jtag|swd|console|콘솔|xcp|calib/i,'uart'],[/i2c|i²c|iic|센서\s*확장|expander/i,'i2c'],
   [/3[-\s]?phase|3상|bldc|pmsm|inverter|인버터|gate\s*driver|게이트/i,'gdrv3'],[/h-?bridge|h\s*브리지|dc\s*모터|dc\s*motor|정\/역|양방향|스텝|stepper|step\s*motor/i,'hbridge'],[/low-?side|로우사이드|솔레노이드|solenoid|밸브|valve|fan|팬|히터|heater|릴레이|relay/i,'dcmotor'],
   [/high-?side|하이사이드|부하\s*스위치|load\s*switch|phase-?cut|차단|relay/i,'hs_switch'],[/sens|센싱|센서|current|전류|temp|온도|monitor|모니터|adc|feedback|피드백|torque|토크|angle|각도|position|위치/i,'vmon'],
   [/mcu|micro|controller|컨트롤러|cortex|aurix|stm32|tc3/i,'mcu'],[/usb/i,'usb_in'],[/battery|배터리|입력|input|vin|kl30/i,'pwr_in']];
 function implGuess(b){const t=(b.label||'')+' '+(b.feats||[]).join(' ');for(const[re,ty]of IMPL_GUESS)if(re.test(t))return ty;return null;}
-function check(A){const out=[];if(!A)return out;const B=id=>A.blocks.find(b=>b.id===id);const has=b=>(b.impl||[]).length||b.part;
+function check(A){const out=[];if(!A)return out;try{markVia(A);}catch(e){}const B=id=>A.blocks.find(b=>b.id===id);const has=b=>(b.impl||[]).length||b.part;
   const ctrl=new Set(A.blocks.filter(b=>b.group==='ctrl').map(b=>b.id));
   A.blocks.forEach(b=>{if(b.ext||b.via)return;const links=A.links.filter(l=>l.a===b.id||l.b===b.id);
     if(!has(b)){const g=implGuess(b);out.push({sev:'err',code:'noImpl',id:b.id,label:b.label,msg:`"${b.label}" 블록에 회로 구현(impl)이 없어 회로에서 빠집니다`,fix:g?`impl ${b.id} ${g}`:`impl ${b.id} part <부품번호>  (라이브러리 종류는 help)`,guess:g});}
