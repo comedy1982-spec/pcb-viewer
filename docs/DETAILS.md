@@ -867,3 +867,5 @@ npm run dsdb:init # 페이지가 없는 부품의 데이터시트 초안 만들�
 - 부트스트랩: "Bootstrap Capacitor Selection" CBOOT = 20 × QGATE / VBOOT — FET 최대 Qg(IAUC60N04S6N050H 17 nC · IPG20N04S4L-07 50 nC, 미상 60 nC) × 병렬 수, VBOOT = VREG 기본 8 V, ×1.5 여유 → 다음 표준값(Dadu 68 nF), 25 V.
 - VREG: CREG ≥ 40 × CBOOT(정현파 구동) 그리고 데이터시트 특성 조건 22 µF 이상, 세라믹 25 V.
 - 센스 앰프: CSxO는 OOS 기준 → OOS도 MCU ADC에 연결. 3.3 V ADC면 초기화에서 SAO = 11(VOOS 1.5 V) · 이득 20으로 0.7~2.3 V(±20 A, 2 mΩ) — 경고에 계산값 표시.
+- A4911 센스 입력 켈빈 연결(데이터시트 레이아웃 권장 — CSxP/CSxM 독립 · 길이 맞춤): CSxM을 상별 넷 `PH_x_SNSM`으로 분리하고 0 Ω 넷 타이를 션트 GND 패드 바깥 옆에 고정(파워스테이지 매크로). 이전엔 CSxM을 GND에 붙여 0.5 mm 피치 핀에 비아 자리가 없어 미연결.
+- A4911 · 8층 양면 결과: 85 × 55 미연결 2 · PH_W 5.49 mm, 90 × 60 미연결 3 · 전류 폭 모두 ✓ · DRC 0.

@@ -304,7 +304,9 @@ function allegro3(ctx,drv,vm,I,pwr,N){const mpn=ALLEGRO[drv];const rec=NEWPROJ.p
   Object.entries(PH).forEach(([x,h],i)=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS'),out=N('ISNS_'+h);
     set('GH'+x,ho);set('GL'+x,lo);set('S'+x,ph);set('C'+x,vb);set('LSS'+x,ret);set('H'+x,N('INH_'+h));set('L'+x,N('INL_'+h));
     // sense amplifier i+1 across the leg shunt (Kelvin to the shunt ends)
-    const c=String(i+1);if(num['CS'+c+'P']){set('CS'+c+'P',ret);set('CS'+c+'M','GND');set('CS'+c+'O',N('ISNS_'+h+'_AMP'));amp.push(h);}});
+    // datasheet layout rules: CSxP / CSxM as independent, matched traces to the two shunt ends (Kelvin) — CSxM gets its own net,
+    // tied to ground by a 0 Ω net tie placed on the shunt's ground pad
+    const c=String(i+1);if(num['CS'+c+'P']){set('CS'+c+'P',ret);set('CS'+c+'M',N(h+'_SNSM'));set('CS'+c+'O',N('ISNS_'+h+'_AMP'));amp.push(h);}});
   const fpName=String(rec.fp||'').replace(/^[^:]*:/,'');
   ctx.part('U',drv,rec.fp&&typeof PCB!=='undefined'&&PCB.FP[rec.fp]?rec.fp:(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'?FPGEN.ensure(PCB,fpName||rec.pkg,rec.pins.length)||FPGEN.ensure(PCB,rec.pkg,rec.pins.length):'')||rec.pkg||'LQFP-48',pins,
     {mpn,desc:`3상 MOSFET 게이트 드라이버 (Allegro ${drv} · SPI 진단 · 센스 앰프 ×3)`,pinNames:names,P:0.3});
@@ -315,7 +317,7 @@ function allegro3(ctx,drv,vm,I,pwr,N){const mpn=ALLEGRO[drv];const rec=NEWPROJ.p
     ctx.part('C',cbLab,'0603',{1:vb,2:ph},{desc:`부트스트랩 C${x}–S${x} (${h}상 · ${cbLab} 25 V — 20 × Qg ${qg} nC / 8 V × 1.5${qgKnown?'':' · Qg 미상 60 nC 가정'})`});
     fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);
     // the amplifier is in the driver (gain 20 V/V, 2.5 V offset by default; input range −1.8…2 V): shunt sized for ≤ 60 mV at the phase current (±1.2 V at the output, ~1 W)
-    Rs=shunt(ctx,ret,I,h+'상',0.06);const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
+    Rs=shunt(ctx,ret,I,h+'상',0.06);ctx.part('R','0Ω','0402',{1:N(h+'_SNSM'),2:'GND'},{desc:`센스 켈빈 넷 타이 CS${{U:1,V:2,W:3}[h]}M (${h}상 — 션트 GND 패드에 붙여 배치)`});const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
     ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');
     ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
   ctx.part('R','10kΩ','0603',{1:N('DIAG'),2:vio},{desc:`${drv} DIAG 오픈 드레인 풀업 (10~20 kΩ)`});

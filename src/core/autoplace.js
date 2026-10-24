@@ -102,7 +102,13 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
       // shunt horizontal right above the FET, its shunt-node pad over the FET's source pins, the GND end toward the terminal side
       const left=o.planes&&o.planes.has(bat);let bs=null;[0,180].forEach(rot=>{canonical(B,r.sh);if(rot)PCBEDIT.rotate(B,r.sh,rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);const v=(a.x-r.sh.x)*(left?-1:1);if(a&&(!bs||v<bs.ax))bs={rot,ax:v};});
       canonical(B,r.sh);if(bs.rot)PCBEDIT.rotate(B,r.sh,bs.rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);
-      PCBEDIT.move(B,r.sh,sx-a.x,r.c.bb[3]+0.9-r.sh.bb[1]);PCBEDIT.prepare(B);fixed.push(r.sh.ref);}});
+      PCBEDIT.move(B,r.sh,sx-a.x,r.c.bb[3]+0.9-r.sh.bb[1]);PCBEDIT.prepare(B);fixed.push(r.sh.ref);
+      // Kelvin net tie of the sense amplifier's minus input (SNS → SNSM): on the shunt's ground pad, just above it
+      const tie=B.comps.find(c=>/^R/.test(c.ref)&&c.pads.length===2&&c.pads.some(p=>p.net===r.sns+'M')&&c.pads.some(p=>/GND/i.test(p.net||'')));
+      if(tie){const g=r.sh.pads.find(p=>p.net&&p.net!==r.sns);if(g){canonical(B,tie);PCBEDIT.prepare(B);const right=g.x>(r.sh.bb[0]+r.sh.bb[2])/2;
+        // in line with the shunt, beyond its ground end, ground pad toward the shunt
+        const tg0=tie.pads.find(p=>/GND/i.test(p.net||''));if((tg0.x>tie.x)===right){PCBEDIT.rotate(B,tie,180);PCBEDIT.prepare(B);}const tg=tie.pads.find(p=>/GND/i.test(p.net||''));
+        const x=right?r.sh.bb[2]+0.3-tie.bb[0]:r.sh.bb[0]-0.3-tie.bb[2];PCBEDIT.move(B,tie,x,g.y-tg.y);PCBEDIT.prepare(B);fixed.push(tie.ref);}}}});
   // single-chip 3-phase gate driver (A4911 class): the IC whose pins reach the most gate-drive nets (driver side of the
   // gate resistors) sits beside the FET column, centred on it, gate pins toward the FETs — its 12 gate / bootstrap lines
   // stay short and do not have to cross the board. Per-phase drivers (IR2104: two drive nets each) keep the annealer.
