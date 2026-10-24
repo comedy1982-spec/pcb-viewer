@@ -57,5 +57,7 @@ test('Dadu with an Allegro A4911 driver: one LQFP-48-EP chip drives the 6 FETs �
   assert.match(a.fp, /^QFP-48-EP/);
   for (const n of ['PH_INH_U', 'PH_INL_W', 'PH_SCK', 'PH_SDI', 'PH_SDO', 'PH_ISNS_V', 'PH_DIAG']) assert.ok(r.pinmap[n], n + ' on an MCU pin');
   assert.ok(r.parts.some(p => p.val === '470nF' && /차지펌프/.test(p.desc)));assert.ok(r.parts.some(p => p.val === '22µF' && /VREG/.test(p.desc)));
+  // datasheet: CBOOT = 20 × QGATE / VBOOT — IAUC60N04S6N050H Qg 17 nC, VREG 8 V, ×1.5 → 68 nF; OOS read by the ADC
+  assert.equal(r.parts.filter(p => /^부트스트랩 C[ABC]–S/.test(p.desc) && p.val === '68nF').length, 3);assert.ok(r.pinmap['PH_ISNS_OOS']);
   const r2 = mk('A4918');assert.equal(r2.parts.filter(p => p.val === 'IR2104S').length, 3);assert.ok((r2.warn || []).some(w => /A4918: 핀 표가 없어 IR2104/.test(w)));
 });

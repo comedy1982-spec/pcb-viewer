@@ -7200,8 +7200,8 @@ function termFp(n,pitch){if(typeof PCB==='undefined'||!PCB.FP)return;pitch=pitch
    IAUC60N04S6N050H half-bridge — 1 G(HS) · 2,3 Phase · 4 G(LS) · 5,6 ground (LS source) · 7,8 battery (HS drain); pads 9 = battery, 10 = phase
    IPG20N04S4L-07 dual (independent) — 1 S1 · 2 G1 · 3 S2 · 4 G2 · 5,6 D2 · 7,8 D1; pads 9 = D1, 10 = D2 → FET1 high side, FET2 low side */
 const FET2={
-  'IAUC60N04S6N050H':{kind:'hb',v:40,rds:0.005,i:60,label:'하프브리지 40 V 60 A 5.0 mΩ OptiMOS 6 (AEC-Q101)',pin:(hg,lg,vm,ph,ret)=>({1:hg,2:ph,3:ph,4:lg,5:ret,6:ret,7:vm,8:vm,9:vm,10:ph}),names:{1:'G_HS',2:'PH',3:'PH',4:'G_LS',5:'GND',6:'GND',7:'BAT',8:'BAT',9:'BAT',10:'PH'}},
-  'IPG20N04S4L-07':{kind:'dual',v:40,rds:0.0072,i:20,label:'듀얼 40 V 20 A 7.2 mΩ OptiMOS-T2 로직 레벨 (AEC-Q101)',pin:(hg,lg,vm,ph,ret)=>({1:ph,2:hg,3:ret,4:lg,5:ph,6:ph,7:vm,8:vm,9:vm,10:ph}),names:{1:'S1',2:'G1',3:'S2',4:'G2',5:'D2',6:'D2',7:'D1',8:'D1',9:'D1',10:'D2'}}};
+  'IAUC60N04S6N050H':{kind:'hb',v:40,rds:0.005,i:60,qg:17,label:'하프브리지 40 V 60 A 5.0 mΩ OptiMOS 6 (AEC-Q101)',pin:(hg,lg,vm,ph,ret)=>({1:hg,2:ph,3:ph,4:lg,5:ret,6:ret,7:vm,8:vm,9:vm,10:ph}),names:{1:'G_HS',2:'PH',3:'PH',4:'G_LS',5:'GND',6:'GND',7:'BAT',8:'BAT',9:'BAT',10:'PH'}},
+  'IPG20N04S4L-07':{kind:'dual',v:40,rds:0.0072,i:20,qg:50,label:'듀얼 40 V 20 A 7.2 mΩ OptiMOS-T2 로직 레벨 (AEC-Q101)',pin:(hg,lg,vm,ph,ret)=>({1:ph,2:hg,3:ret,4:lg,5:ph,6:ph,7:vm,8:vm,9:vm,10:ph}),names:{1:'S1',2:'G1',3:'S2',4:'G2',5:'D2',6:'D2',7:'D1',8:'D1',9:'D1',10:'D2'}}};
 function fetPkg(){if(typeof PCB==='undefined'||!PCB.FP||PCB.FP['TDSON-8-2FET'])return;
   // pins 1–4 left column (top → bottom), 5–8 right column (bottom → top); exposed pad 9 on the 1/2 · 7/8 half, 10 on the 3/4 · 5/6 half
   const p=[];for(let i=0;i<4;i++)p.push({n:''+(1+i),x:-2.95,y:+(1.905-1.27*i).toFixed(3),w:1.1,h:0.6});for(let i=0;i<4;i++)p.push({n:''+(5+i),x:2.95,y:+(-1.905+1.27*i).toFixed(3),w:1.1,h:0.6});
@@ -7234,9 +7234,15 @@ function allegro3(ctx,drv,vm,I,pwr,N){const mpn=ALLEGRO[drv];const rec=NEWPROJ.p
   const miss=['VBB','VBRG','VREG','CP1','CP2','GND','ENABLE','RESETN','STRN','SCK','SDI','SDO','DIAG'].filter(x=>!num[x]);
   if(miss.length){ctx.warn(`${drv}: 핀 표에 ${miss.join(', ')} 핀이 없어 회로를 만들지 못했습니다`);return false;}
   const vio=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vio);const vreg=N('VREG');
+  // bootstrap (datasheet "Bootstrap Capacitor Selection"): CBOOT = 20 × QGATE / VBOOT, VBOOT = VREG (8 V default, 11 V with VRG = 1);
+  // QGATE = the high-side FETs of one phase (max Qg), ×1.5 for tolerance and DC bias, next standard value. CREG ≥ 40 × CBOOT
+  // for sinusoidal drive (≥ 20 × for block commutation) and not below the 22 µF the datasheet characterises; ceramic, ≥ 2 × VREG rated.
+  const qg=((pwr.f2&&pwr.f2.qg)||(pwr.f&&pwr.f.qg)||60)*(pwr.par||1),qgKnown=!!((pwr.f2&&pwr.f2.qg)||(pwr.f&&pwr.f.qg));
+  const cbMin=20*qg/8*1.5;const CB=[47,68,100,150,220,330,470,680,1000].find(v=>v>=cbMin)||1000;const cbLab=CB>=1000?(CB/1000)+'µF':CB+'nF';
+  const crMin=Math.max(22,40*CB/1000);const CR=[22,47,100].find(v=>v>=crMin)||100;
   set('VBB',vm);set('VBRG',vm);set('GND','GND');set('PAD','GND');set('EP','GND');set('VREG',vreg);set('CP1',N('CP1'));set('CP2',N('CP2'));
-  set('ENABLE',N('EN'));set('RESETN',N('RESETN'));set('STRN',N('STRN'));set('SCK',N('SCK'));set('SDI',N('SDI'));set('SDO',N('SDO'));set('DIAG',N('DIAG'));
-  const PH={A:'U',B:'V',C:'W'};const amp=[];
+  set('OOS',N('ISNS_OOS'));set('ENABLE',N('EN'));set('RESETN',N('RESETN'));set('STRN',N('STRN'));set('SCK',N('SCK'));set('SDI',N('SDI'));set('SDO',N('SDO'));set('DIAG',N('DIAG'));
+  const PH={A:'U',B:'V',C:'W'};const amp=[];let Rs=0.002;
   Object.entries(PH).forEach(([x,h],i)=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS'),out=N('ISNS_'+h);
     set('GH'+x,ho);set('GL'+x,lo);set('S'+x,ph);set('C'+x,vb);set('LSS'+x,ret);set('H'+x,N('INH_'+h));set('L'+x,N('INL_'+h));
     // sense amplifier i+1 across the leg shunt (Kelvin to the shunt ends)
@@ -7245,20 +7251,24 @@ function allegro3(ctx,drv,vm,I,pwr,N){const mpn=ALLEGRO[drv];const rec=NEWPROJ.p
   ctx.part('U',drv,rec.fp&&typeof PCB!=='undefined'&&PCB.FP[rec.fp]?rec.fp:(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'?FPGEN.ensure(PCB,fpName||rec.pkg,rec.pins.length)||FPGEN.ensure(PCB,rec.pkg,rec.pins.length):'')||rec.pkg||'LQFP-48',pins,
     {mpn,desc:`3상 MOSFET 게이트 드라이버 (Allegro ${drv} · SPI 진단 · 센스 앰프 ×3)`,pinNames:names,P:0.3});
   ctx.cap(vm,'100nF',`${drv} VBB 디커플링 (단자 가까이)`);ctx.cap(vm,'100nF',`${drv} VBRG 디커플링`);
-  ctx.part('C','22µF','1206',{1:vreg,2:'GND'},{desc:`${drv} VREG 저장 커패시터 (데이터시트 CREG 22 µF)`});
+  ctx.part('C',CR+'µF','1206',{1:vreg,2:'GND'},{desc:`${drv} VREG 저장 커패시터 ${CR} µF 세라믹 25 V (≥ 40 × CBOOT · 데이터시트 CREG 22 µF)`});
   ctx.part('C','470nF','0805',{1:N('CP1'),2:N('CP2')},{desc:`${drv} 차지펌프 커패시터 CP1–CP2 (≥ 470 nF, 데이터시트)`});
   Object.entries(PH).forEach(([x,h])=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
-    ctx.part('C','470nF','0805',{1:vb,2:ph},{desc:`부트스트랩 C${x}–S${x} (${h}상 · 470 nF — CBOOT ≥ 20·QG/ΔV로 FET 게이트 전하 확인)`});
+    ctx.part('C',cbLab,'0603',{1:vb,2:ph},{desc:`부트스트랩 C${x}–S${x} (${h}상 · ${cbLab} 25 V — 20 × Qg ${qg} nC / 8 V × 1.5${qgKnown?'':' · Qg 미상 60 nC 가정'})`});
     fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);
     // the amplifier is in the driver (gain 20 V/V, 2.5 V offset by default; input range −1.8…2 V): shunt sized for ≤ 60 mV at the phase current (±1.2 V at the output, ~1 W)
-    shunt(ctx,ret,I,h+'상',0.06);const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
+    Rs=shunt(ctx,ret,I,h+'상',0.06);const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
     ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');
     ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
   ctx.part('R','10kΩ','0603',{1:N('DIAG'),2:vio},{desc:`${drv} DIAG 오픈 드레인 풀업 (10~20 kΩ)`});
   ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'ENABLE 풀다운 (MCU 리셋 중 게이트 OFF)'});
-  ctx.sig(N('EN'),'gpio_out');ctx.sig(N('RESETN'),'gpio_out');ctx.sig(N('DIAG'),'irq_in');
+  ctx.sig(N('EN'),'gpio_out');ctx.sig(N('RESETN'),'gpio_out');ctx.sig(N('DIAG'),'irq_in');ctx.sig(N('ISNS_OOS'),'adc'); // CSxO is referenced to OOS: read both, subtract
   ctx.sig(N('SCK'),'spi_sck','spi2');ctx.sig(N('SDI'),'spi_mosi','spi2');ctx.sig(N('SDO'),'spi_miso','spi2');ctx.sig(N('STRN'),'gpio_out');
-  if(ctx.railV&&ctx.railV(vio)<4.9)ctx.warn(`${drv}: 센스 앰프 출력은 0.3~4.8 V (기본 오프셋 2.5 V · 이득 20) — MCU ADC 기준이 ${ctx.railV(vio)} V면 SPI로 오프셋·이득(SAO·SAG)을 낮추거나 분압하세요`);
+  // sense amplifier range (datasheet "Current Sense Amplifier Configuration"): VCSO = VID × AV + VOOS within 0.3…4.8 V and the ADC range
+  const vadc=ctx.railV?ctx.railV(vio):3.3,dv=Rs*I*20;const lo=(o)=>+(o-dv).toFixed(2),hi=(o)=>+(o+dv).toFixed(2);
+  if(vadc<4.9){const ok=lo(1.5)>=0.3&&hi(1.5)<=Math.min(4.8,vadc-0.2);
+    ctx.warn(`${drv}: MCU ADC ${vadc} V — 센스 앰프 기본 오프셋 2.5 V면 ±${I} A에서 ${lo(2.5)}~${hi(2.5)} V로 넘칠 수 있음 → 초기화에서 SPI로 SAO = 11 (VOOS 1.5 V) · 이득 20 설정 시 ${lo(1.5)}~${hi(1.5)} V${ok?' (범위 안)':' — 그래도 넘침, 이득을 낮추세요'} · OOS도 ADC로 읽어 빼기`);}
+  ctx.warn(`${drv}: VREG 기본 8 V(VRG = 0) — 부트스트랩 ${cbLab}는 8 V 기준 계산, 11 V(VRG = 1)로 바꾸면 여유가 더 커짐`);
   return true;}
 function shuntAmp(ctx,net,out,I,what){const R=shunt(ctx,net,I,what);
   const vs=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vs);const amp=out+'_AMP';

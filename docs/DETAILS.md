@@ -860,3 +860,9 @@ npm run dsdb:init # 페이지가 없는 부품의 데이터시트 초안 만들�
 - 풋프린트 생성기: QFP 노출 패드(LQFP-48-1EP → 리드 48 + 패드 49), 패키지 이름의 피치(P0.5mm) · 본체 · EP 크기 사용 — 이전엔 49핀을 52로 올려 번호가 어긋남.
 - `scripts/pcbrun.cjs --param gdrv3.driver=A4911`.
 - 알려진 문제: Dadu 4층 양면 85 × 55에서 A4911 배선이 아직 미연결 9~20개(게이트 배선 집중 · +5V/+3V3가 고전류 넷으로 잡힘) — 다음 작업.
+
+## v1.73.1 A4911 전체 데이터시트 반영 (A4911-1 Rev. 11)
+- 핀 표: 단자 표와 48핀 + PAD 모두 일치 확인(pins.json에 출처 기록).
+- 부트스트랩: "Bootstrap Capacitor Selection" CBOOT = 20 × QGATE / VBOOT — FET 최대 Qg(IAUC60N04S6N050H 17 nC · IPG20N04S4L-07 50 nC, 미상 60 nC) × 병렬 수, VBOOT = VREG 기본 8 V, ×1.5 여유 → 다음 표준값(Dadu 68 nF), 25 V.
+- VREG: CREG ≥ 40 × CBOOT(정현파 구동) 그리고 데이터시트 특성 조건 22 µF 이상, 세라믹 25 V.
+- 센스 앰프: CSxO는 OOS 기준 → OOS도 MCU ADC에 연결. 3.3 V ADC면 초기화에서 SAO = 11(VOOS 1.5 V) · 이득 20으로 0.7~2.3 V(±20 A, 2 mΩ) — 경고에 계산값 표시.

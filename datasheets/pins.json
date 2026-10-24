@@ -251,7 +251,8 @@
     "PAD",
     "power_in"
    ]
-  ]
+  ],
+  "src": "A4911-1 데이터시트 Rev. 11 (2025-06-13) 단자 표 — 48핀 + PAD 대조 완료"
  },
  "IAUC60N04S6N050H": {
   "t": "OptiMOS 6 half-bridge N-MOSFET 40 V 60 A 5.0 mOhm, AEC-Q101 (datasheet Rev 1.1 p.1 pin diagram)",
