@@ -11,7 +11,8 @@ function family(pkg){const s=String(pkg||'').toUpperCase().replace(/\s+/g,'_');l
   if(/SOT-?223/.test(s))return{fam:'SOT-223',n:4};
   if((m=s.match(/^(SOIC|SO|SOP|SSOP|TSSOP|MSOP|HTSSOP|VSSOP|QSOP)-?(\d+)/)))return{fam:/^(TSSOP|HTSSOP|MSOP|VSSOP|SSOP|QSOP)$/.test(m[1])?'TSSOP':'SOIC',n:+m[2],ep:/^H/.test(m[1])};
   if((m=s.match(/^(QFN|DFN|VQFN|WQFN|UQFN|TQFN|MLF|SON|WSON|VSON|DFN)-?(\d+)/)))return{fam:/^(DFN|SON|WSON|VSON)$/.test(m[1])?'DFN':'QFN',n:+m[2],ep:true,size:(s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/)||[]).slice(1,3).map(Number)};
-  if((m=s.match(/^(TQFP|LQFP|QFP|MQFP)-?(\d+)/)))return{fam:'QFP',n:+m[2],size:(s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/)||[]).slice(1,3).map(Number)};
+  if((m=s.match(/^(TQFP|LQFP|QFP|MQFP|HTQFP|HLQFP)-?(\d+)/))){const pm=s.match(/_P(\d+(?:\.\d+)?)MM/),em=s.match(/_EP(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/);
+    return{fam:'QFP',n:+m[2],ep:/-\d*EP|_EP\d|^H/.test(s.slice(0,40))||!!em,epSize:em?[+em[1],+em[2]]:null,pitch:pm?+pm[1]:null,size:(s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)MM/)||s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/)||[]).slice(1,3).map(Number)};}
   if((m=s.match(/^(DIP|PDIP|DIL)-?(\d+)/)))return{fam:'DIP',n:+m[2]};
   if((m=s.match(/^(TO-?252|DPAK|TO-?263|D2PAK|TO-?220)/)))return{fam:/263|D2/.test(s)?'TO-263':/220/.test(s)?'TO-220':'TO-252',n:3};
   if((m=s.match(/^(HDR|HEADER|PIN|JST|CONN?)[-_]?(\d+)X(\d+)/)))return{fam:'HDR',rows:+m[2],n:+m[2]*+m[3],pitch:/JST|PH/.test(s)?2.0:2.54};
@@ -25,10 +26,10 @@ function dual(n,pitch,rowGap,padL,padW,body,kind,ep){const half=n/2,pads=[];cons
   if(ep)pads.push({n:''+(n+1),x:0,y:0,w:r3(Math.max(1,body[0]*0.5)),h:r3(Math.max(1,body[1]*0.6))});
   return{kind,stand:0.05,body,pads,dot:[r3(-body[0]/2+0.5),r3(y0)],gen:true};}
 /* quad (QFN / QFP), pin 1 at the top of the left row, counter-clockwise like the built-in QFN-32/TQFP-144 */
-function quad(n,pitch,span,padL,padW,body,ep){const q=n/4,pads=[];const s0=(q-1)/2*pitch;
+function quad(n,pitch,span,padL,padW,body,ep,epSize){const q=n/4,pads=[];const s0=(q-1)/2*pitch;
   for(let i=0;i<q;i++){pads.push({n:''+(1+i),x:r3(-span/2),y:r3(s0-i*pitch),w:padL,h:padW});pads.push({n:''+(q+1+i),x:r3(-s0+i*pitch),y:r3(-span/2),w:padW,h:padL});
     pads.push({n:''+(2*q+1+i),x:r3(span/2),y:r3(-s0+i*pitch),w:padL,h:padW});pads.push({n:''+(3*q+1+i),x:r3(s0-i*pitch),y:r3(span/2),w:padW,h:padL});}
-  if(ep)pads.push({n:''+(n+1),x:0,y:0,w:r3(body[0]*0.55),h:r3(body[1]*0.55)});
+  if(ep)pads.push({n:''+(n+1),x:0,y:0,w:r3(epSize?epSize[0]:body[0]*0.55),h:r3(epSize?epSize[1]:body[1]*0.55)});
   pads.sort((a,b)=>a.n-b.n);return{kind:'ic',stand:0.02,body,pads,dot:[r3(-body[0]/2+0.6),r3(body[1]/2-0.6)],gen:true};}
 function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nPins>=2?nPins:f.n;
   switch(f.fam){
@@ -49,7 +50,9 @@ function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nP
     case'TSSOP':{const k=n%2?n+1:n;const half=k/2;const pitch=k>=38?0.5:0.65;const L=r3(half*pitch+0.6);return dual(k,pitch,5.8,1.45,pitch<0.6?0.3:0.4,[4.4,L,1.1],'ic',f.ep);}
     case'DFN':{const k=n%2?n+1:n;const half=k/2;const pitch=k<=8?0.65:0.5;const w=f.size&&f.size[0]||(k<=6?2:3),h=f.size&&f.size[1]||(k<=6?2:3);return dual(k,pitch,r3(w-0.3),0.7,pitch<0.6?0.25:0.3,[w,h,0.8],'ic',true);}
     case'QFN':{let k=n%4?n+(4-n%4):n;const q=k/4;const size=f.size&&f.size[0]||(k<=16?3:k<=24?4:k<=32?5:k<=48?7:k<=64?9:10);const pitch=r3(Math.min(0.65,Math.max(0.4,(size-1.0)/q)));return quad(k,pitch,r3(size-0.1),0.8,r3(Math.min(0.3,pitch*0.55)),[size,size,0.9],true);}
-    case'QFP':{let k=n%4?n+(4-n%4):n;const q=k/4;const size=f.size&&f.size[0]||(k<=32?7:k<=48?7:k<=64?10:k<=100?14:k<=144?20:28);const pitch=r3(Math.min(0.8,Math.max(0.4,(size-1.5)/q)));return quad(k,pitch,r3(size+1.5),1.5,r3(Math.min(0.3,pitch*0.55)),[size,size,1.2],false);}
+    case'QFP':{// an exposed pad counts as one extra pin (LQFP-48-1EP → 49 pins: 48 leads + pad 49)
+      const ep=!!f.ep||n%4===1;let k=ep&&n%4===1?n-1:n;k=k%4?k+(4-k%4):k;const q=k/4;const size=f.size&&f.size[0]||(k<=32?7:k<=48?7:k<=64?10:k<=100?14:k<=144?20:28);
+      const pitch=f.pitch||r3(Math.min(0.8,Math.max(0.4,(size-1.5)/q)));return quad(k,pitch,r3(size+1.5),1.5,r3(Math.min(0.3,pitch*0.55)),[size,size,1.2],ep,f.epSize);}
     case'DIP':{const k=n%2?n+1:n;const half=k/2;const y0=(half-1)/2*2.54;const pads=[];for(let i=0;i<half;i++)pads.push({n:''+(1+i),x:-3.81,y:r3(y0-i*2.54),w:1.6,h:1.6,round:true,drill:0.8});for(let i=0;i<half;i++)pads.push({n:''+(half+1+i),x:3.81,y:r3(-y0+i*2.54),w:1.6,h:1.6,round:true,drill:0.8});
       return{kind:'ic',stand:0.5,body:[6.4,r3(half*2.54+0.5),3.3],pads,dot:[-2.5,r3(y0)],gen:true};}
     case'HDR':{const rows=f.rows||1,per=Math.ceil(n/rows),p=f.pitch||2.54;const y0=(per-1)/2*p;const pads=[];let k=1;for(let i=0;i<per;i++)for(let r=0;r<rows;r++)pads.push({n:''+(k++),x:r3((r-(rows-1)/2)*p),y:r3(y0-i*p),w:1.7,h:1.7,round:true,drill:1.0});
@@ -59,7 +62,9 @@ function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nP
 /* a canonical footprint name for the library key */
 function name(pkg,n){const f=family(pkg);if(!f)return null;const k=n&&n>=2?n:f.n;
   switch(f.fam){case'CHIP':return f.code;case'SMA':return'SMA';case'SOT-23':return k===3?'SOT-23':'SOT-23-'+k;case'SOT-89':case'SOT-223':case'TO-252':case'TO-263':case'TO-220':return f.fam;
-    case'HDR':return`HDR-${f.rows||1}x${Math.ceil(k/(f.rows||1))}`;default:return f.fam+'-'+k;}}
+    case'HDR':return`HDR-${f.rows||1}x${Math.ceil(k/(f.rows||1))}`;
+    case'QFP':{const ep=!!f.ep||k%4===1;const kk=ep&&k%4===1?k-1:k;return'QFP-'+kk+(ep?'-EP':'')+(f.size&&f.size[0]?'-'+f.size[0]+'x'+f.size[1]:'')+(f.pitch?'-P'+f.pitch:'');}
+    default:return f.fam+'-'+k;}}
 /* make sure PCB.FP has a footprint for this package; returns its name (or null when the package is unknown) */
 function ensure(PCB,pkg,n){if(!PCB||!PCB.FP)return null;if(pkg&&PCB.FP[pkg])return pkg;const nm=name(pkg,n);if(!nm)return null;if(!PCB.FP[nm]){const fp=make(pkg,n);if(!fp)return null;lbb(fp);PCB.FP[nm]=fp;}return nm;}
 function lbb(f){const[bw,bh]=f.body;let a=-bw/2,b=-bh/2,c=bw/2,d=bh/2;f.pads.forEach(p=>{a=Math.min(a,p.x-p.w/2);b=Math.min(b,p.y-p.h/2);c=Math.max(c,p.x+p.w/2);d=Math.max(d,p.y+p.h/2);});f.lbb=[a,b,c,d];return f;}

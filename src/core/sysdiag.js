@@ -8,7 +8,7 @@ const SYSDIAG=(function(){
 "use strict";
 const COLS=['외부 입력','전원','제어','기능','외부 연결'];
 const ROLE_KO={pwm:'PWM',adc:'ADC',cap:'캡처',irq_in:'인터럽트',gpio_in:'GPIO 입력',gpio_out:'GPIO 출력',can_tx:'CAN TX',can_rx:'CAN RX',spi_sck:'SCK',spi_mosi:'MOSI',spi_miso:'MISO',spi_cs:'CS',uart_tx:'TX',uart_rx:'RX',i2c_scl:'SCL',i2c_sda:'SDA',usb_dm:'D−',usb_dp:'D+'};
-const GROUP_KO={can:'CAN',spi:'SPI',uart:'UART',i2c:'I²C',pwm3:'PWM ×3',usb:'USB'};
+const GROUP_KO={can:'CAN',spi:'SPI',uart:'UART',i2c:'I²C',pwm3:'PWM ×3',pwm6:'PWM ×6',spi2:'SPI (드라이버)',usb:'USB'};
 const isPass=ref=>/^(R|C|L|FB|D|TP)\d/i.test(ref);
 const isConnRef=ref=>/^(J|P|CN|X|CON|USB)\d/i.test(ref);
 const isGnd=n=>/^(GND|AGND|PGND|DGND|VSS|0V)$/i.test(String(n||''));

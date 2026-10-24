@@ -5,7 +5,7 @@
    node scripts/pcbrun.cjs --profile Dadu --cur "~20 A (팬 · 소형 펌프)" --tag t1 --out /tmp/runs \
      --cmds "board layers 8; board size 85 55 --anchor center; reset --strategy compact --both --seed 1; route"
 
-   Options: --fet N (index of the FET question option, default 0) · --shrink 2 · --w 100 --h 65 (generated size)
+   Options: --param gdrv3.driver=A4911[,blk.key=val] (block parameters by type or id) · --fet N (index of the FET question option, default 0) · --shrink 2 · --w 100 --h 65 (generated size)
             --snap (also write <tag>.snap.json, a BOARDSNAP) · --kicad (write <tag>.kicad_pcb) · --shots (top/bottom PNG)
    Prints one JSON line: {tag, W, H, layers, bottom, rats, drc, power:[{net,width,need,ok}], ok, steps:[{cmd,s}], ratNets}
    ok = no unconnected pads, DRC 0 and every power net at its IPC width. Exit code 0 when ok, 1 otherwise. */
@@ -26,9 +26,10 @@ if (!fs.existsSync(html) || fs.statSync(html).mtimeMs < fs.statSync(path.join(ro
   await p.goto('file://' + html);await p.waitForTimeout(1000);await p.click('#homeOpen').catch(() => {});await p.waitForTimeout(600);
   await p.evaluate(o => {
     const prof = PRODUCTS.detect(o.profile);const ans = { cur: o.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[o.fet].label;
-    const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, o.profile).arch).plan;plan.shrink = o.shrink;plan.strategy = 'compact';plan.board = { w: o.w, h: o.h };plan.name = o.profile;
+    const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, o.profile).arch).plan;plan.shrink = o.shrink;
+    (o.params || []).forEach(t => { const m = t.match(/^([\w]+)\.([\w]+)=(.*)$/);if (!m) return;plan.blocks.filter(b => b.type === m[1] || b.id === m[1]).forEach(b => { b.params = Object.assign({}, b.params, { [m[2]]: m[3] }); }); });plan.strategy = 'compact';plan.board = { w: o.w, h: o.h };plan.name = o.profile;
     const { B } = NEWPROJ.toBoard(plan, { place: false });B.source = '신규 설계';B.name = o.profile;B.pcbPending = true;window.__setBoard(B);window.__CLI().autoFix = false;
-  }, { profile: arg('profile', 'Dadu'), cur: arg('cur', '~20 A (팬 · 소형 펌프)'), fet: +arg('fet', 0), shrink: +arg('shrink', 2), w: +arg('w', 100), h: +arg('h', 65) });
+  }, { profile: arg('profile', 'Dadu'), cur: arg('cur', '~20 A (팬 · 소형 펌프)'), fet: +arg('fet', 0), shrink: +arg('shrink', 2), w: +arg('w', 100), h: +arg('h', 65), params: String(arg('param', '') || '').split(',').filter(Boolean) });
   const steps = [];for (const c of cmds) { const t = Date.now();await p.evaluate(c => window.__cli(c), c);steps.push({ cmd: c, s: +((Date.now() - t) / 1000).toFixed(1) }); }
   const r = await p.evaluate(() => {
     const B = window.__BD();const R = PCBEDIT.ratsnest(B);const pr = B.powerReport;const by = {};R.forEach(x => { by[x.net] = (by[x.net] || 0) + 1; });

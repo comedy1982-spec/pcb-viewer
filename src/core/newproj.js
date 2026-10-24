@@ -121,11 +121,12 @@ const LIB={
       ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(sn)ctx.curr(ret,I);
       ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
   gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
-    params:{i:{def:20,desc:'상전류 A (FET 병렬 수·션트·트레이스 폭)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
+    params:{i:{def:20,desc:'상전류 A (FET 병렬 수·션트·트레이스 폭)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×3) · A4911 · A4918 (Allegro 3상 · SPI 진단 · 센스 앰프 ×3 내장)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
     build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||20);const k=ctx.uniq('PH');const N=x=>k==='PH'?'PH_'+x:k+'_'+x;
       const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,fetChoice(ctx,p,I,V,k));
-      if(V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
-      ['U','V','W'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
+      let drv=allegroDrv(p.driver);if(drv&&!allegro3(ctx,drv,vm,I,pwr,N))drv=null; // no pin table → IR2104 stage instead (warned)
+      if(!drv&&V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
+      if(!drv)['U','V','W'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
         ctx.part('U','IR2104S','SOIC-8',{1:vm,2:N('IN_'+h),3:N('EN'),4:'GND',5:lo,6:ph,7:ho,8:vb},{mpn:'IR2104STRPBF',desc:`하프브리지 게이트 드라이버 (${h}상)`,pinNames:{1:'VCC',2:'IN',3:'nSD',4:'COM',5:'LO',6:'VS',7:'HO',8:'VB'},P:0.05});
         ctx.cap(vm,'1µF',`IR2104 VCC 디커플링 (${h})`);
         ctx.part('D','ES1D','SMA',{1:vm,2:vb},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'A',2:'K'}});
@@ -133,7 +134,7 @@ const LIB={
         fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);shuntAmp(ctx,ret,N('ISNS_'+h),I,h+'상');
         ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('IN_'+h),'pwm','pwm3');});
       bulk(ctx,vm,I,'3상 인버터');ctx.curr(vm,I);
-      ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 인버터 OFF)'});ctx.sig(N('EN'),'gpio_out');
+      if(!drv){ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 인버터 OFF)'});ctx.sig(N('EN'),'gpio_out');}
       termFp(3,I>15?7.62:5.08);ctx.part('J','모터 상',termName(3,I),{1:N('U'),2:N('V'),3:N('W')},{mpn:I>15?'':'1729131',desc:`3상 모터 단자 (${I>15?'7.62 mm — 20 A 이상 정격 품번 지정 필요':'5.08 mm'} · ${I} A)`,pinNames:{1:'U',2:'V',3:'W'}});
       if(+p.hall){const hv=+p.hallv||5;const hr=railOf(hv);ctx.use(hr);ctx.use('+3V3');const hin=x=>N('HALL_'+x+(hv>5?'_IN':''));ctx.part('J','홀','HDR-1x5',{1:hr,2:hin('A'),3:hin('B'),4:hin('C'),5:'GND'},{mpn:'61300511121',desc:`홀 센서 커넥터 (공급 ${hv} V)`,pinNames:{1:hv+'V',2:'H1',3:'H2',4:'H3',5:'GND'}});
         // open-collector hall outputs pulled up to the MCU rail; with a supply above 5 V a series resistor + clamp keeps a shorted / push-pull sensor off the MCU pin
@@ -276,8 +277,48 @@ function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){if(pw.f2){fetPkg();const F=pw.f2;
     ctx.part('R','10Ω','0603',{1:lo,2:lg},{desc:`로우사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:lg,2:ret},{desc:'로우사이드 G-S 풀다운'});
     ctx.part('Q',pw.f.mpn,'TO-252',{1:lg,2:ph,3:ret},{mpn:pw.f.mpn,desc:`로우사이드 N-MOSFET ${pw.f.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:{1:'G',2:'D',3:'S'},P:pw.Pq});}}
 const SHUNTS=[0.01,0.005,0.002,0.001,0.0005,0.00025];
-function shuntAmp(ctx,net,out,I,what){const R=SHUNTS.find(r=>r*I<=0.045)||SHUNTS[SHUNTS.length-1];const P=+(I*I*R).toFixed(2);const lab=R>=0.001?(R*1000)+'mΩ':(R*1e6)+'µΩ';
-  ctx.part('R',lab,'2512',{1:net,2:'GND'},{mpn:'',desc:`${what} 전류 션트 ${lab} · ${I} A에서 ${(R*I*1000).toFixed(0)} mV · ${P} W${P>2?' (2 W 초과 — 병렬 또는 3 W 2512)':''}`,P});
+function shunt(ctx,net,I,what,vmax){vmax=vmax||0.045;const R=SHUNTS.find(r=>r*I<=vmax)||SHUNTS[SHUNTS.length-1];const P=+(I*I*R).toFixed(2);const lab=R>=0.001?(R*1000)+'mΩ':(R*1e6)+'µΩ';
+  ctx.part('R',lab,'2512',{1:net,2:'GND'},{mpn:'',desc:`${what} 전류 션트 ${lab} · ${I} A에서 ${(R*I*1000).toFixed(0)} mV · ${P} W${P>2?' (2 W 초과 — 병렬 또는 3 W 2512)':''}`,P});return R;}
+/* Allegro 3-phase gate drivers (A4911 · A4918): one chip drives all six FETs, has its own gate-drive regulator (VREG),
+   charge pump, bootstrap per phase, three current-sense amplifiers and SPI diagnostics. Pins are wired by name from the
+   registered pin table (datasheets/pins.json → KPINS), so a part whose table is missing is reported instead of guessed. */
+const ALLEGRO={A4911:'A4911KJPTR-T-1',A4918:'A4918KJPTR-1A-3-T'};
+function allegroDrv(d){const m=String(d||'').toUpperCase().match(/A491[18]/);return m?m[0]:null;}
+function allegro3(ctx,drv,vm,I,pwr,N){const mpn=ALLEGRO[drv];const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(mpn):null;
+  if(!rec||!(rec.pins&&rec.pins.length)){ctx.warn(`${drv}: 핀 표가 없어 IR2104 ×3 스테이지로 대신 만들었습니다 — ${drv} 전체 데이터시트의 핀 배치를 datasheets/pins.json에 추가하면 ${drv} 회로가 생성됩니다`);return false;}
+  const num={};rec.pins.forEach(q=>{const nm=String(q.name||'').toUpperCase();(num[nm]=num[nm]||[]).push(String(q.num));});
+  const pins={},names={};rec.pins.forEach(q=>{names[String(q.num)]=String(q.name||'');});
+  const set=(nm,net)=>{(num[nm.toUpperCase()]||[]).forEach(n=>{pins[n]=net;});};
+  const miss=['VBB','VBRG','VREG','CP1','CP2','GND','ENABLE','RESETN','STRN','SCK','SDI','SDO','DIAG'].filter(x=>!num[x]);
+  if(miss.length){ctx.warn(`${drv}: 핀 표에 ${miss.join(', ')} 핀이 없어 회로를 만들지 못했습니다`);return false;}
+  const vio=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vio);const vreg=N('VREG');
+  set('VBB',vm);set('VBRG',vm);set('GND','GND');set('PAD','GND');set('EP','GND');set('VREG',vreg);set('CP1',N('CP1'));set('CP2',N('CP2'));
+  set('ENABLE',N('EN'));set('RESETN',N('RESETN'));set('STRN',N('STRN'));set('SCK',N('SCK'));set('SDI',N('SDI'));set('SDO',N('SDO'));set('DIAG',N('DIAG'));
+  const PH={A:'U',B:'V',C:'W'};const amp=[];
+  Object.entries(PH).forEach(([x,h],i)=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS'),out=N('ISNS_'+h);
+    set('GH'+x,ho);set('GL'+x,lo);set('S'+x,ph);set('C'+x,vb);set('LSS'+x,ret);set('H'+x,N('INH_'+h));set('L'+x,N('INL_'+h));
+    // sense amplifier i+1 across the leg shunt (Kelvin to the shunt ends)
+    const c=String(i+1);if(num['CS'+c+'P']){set('CS'+c+'P',ret);set('CS'+c+'M','GND');set('CS'+c+'O',N('ISNS_'+h+'_AMP'));amp.push(h);}});
+  const fpName=String(rec.fp||'').replace(/^[^:]*:/,'');
+  ctx.part('U',drv,rec.fp&&typeof PCB!=='undefined'&&PCB.FP[rec.fp]?rec.fp:(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'?FPGEN.ensure(PCB,fpName||rec.pkg,rec.pins.length)||FPGEN.ensure(PCB,rec.pkg,rec.pins.length):'')||rec.pkg||'LQFP-48',pins,
+    {mpn,desc:`3상 MOSFET 게이트 드라이버 (Allegro ${drv} · SPI 진단 · 센스 앰프 ×3)`,pinNames:names,P:0.3});
+  ctx.cap(vm,'100nF',`${drv} VBB 디커플링 (단자 가까이)`);ctx.cap(vm,'100nF',`${drv} VBRG 디커플링`);
+  ctx.part('C','22µF','1206',{1:vreg,2:'GND'},{desc:`${drv} VREG 저장 커패시터 (데이터시트 CREG 22 µF)`});
+  ctx.part('C','470nF','0805',{1:N('CP1'),2:N('CP2')},{desc:`${drv} 차지펌프 커패시터 CP1–CP2 (≥ 470 nF, 데이터시트)`});
+  Object.entries(PH).forEach(([x,h])=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
+    ctx.part('C','470nF','0805',{1:vb,2:ph},{desc:`부트스트랩 C${x}–S${x} (${h}상 · 470 nF — CBOOT ≥ 20·QG/ΔV로 FET 게이트 전하 확인)`});
+    fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);
+    // the amplifier is in the driver (gain 20 V/V, 2.5 V offset by default; input range −1.8…2 V): shunt sized for ≤ 60 mV at the phase current (±1.2 V at the output, ~1 W)
+    shunt(ctx,ret,I,h+'상',0.06);const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
+    ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');
+    ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
+  ctx.part('R','10kΩ','0603',{1:N('DIAG'),2:vio},{desc:`${drv} DIAG 오픈 드레인 풀업 (10~20 kΩ)`});
+  ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'ENABLE 풀다운 (MCU 리셋 중 게이트 OFF)'});
+  ctx.sig(N('EN'),'gpio_out');ctx.sig(N('RESETN'),'gpio_out');ctx.sig(N('DIAG'),'irq_in');
+  ctx.sig(N('SCK'),'spi_sck','spi2');ctx.sig(N('SDI'),'spi_mosi','spi2');ctx.sig(N('SDO'),'spi_miso','spi2');ctx.sig(N('STRN'),'gpio_out');
+  if(ctx.railV&&ctx.railV(vio)<4.9)ctx.warn(`${drv}: 센스 앰프 출력은 0.3~4.8 V (기본 오프셋 2.5 V · 이득 20) — MCU ADC 기준이 ${ctx.railV(vio)} V면 SPI로 오프셋·이득(SAO·SAG)을 낮추거나 분압하세요`);
+  return true;}
+function shuntAmp(ctx,net,out,I,what){const R=shunt(ctx,net,I,what);
   const vs=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vs);const amp=out+'_AMP';
   ctx.part('U','INA181A2-Q1','SOT-23-6',{1:amp,2:'GND',3:net,4:'GND',5:'GND',6:vs},{mpn:'INA181A2QDBVRQ1',desc:`${what} 전류 앰프 ×50 (${(R*I*50).toFixed(2)} V @ ${I} A)`,pinNames:{1:'OUT',2:'GND',3:'IN+',4:'IN−',5:'REF',6:'VS'},P:0.002});
   ctx.cap(vs,'100nF','전류 앰프 디커플링');ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');}
@@ -330,7 +371,7 @@ function build(plan){const asil=plan.asil&&String(plan.asil).toUpperCase()!=='QM
     // USB pins are fixed on the STM32F042
     sigs.filter(s=>s.role==='usb_dm'||s.role==='usb_dp').forEach(s=>{const n=s.role==='usb_dm'?M.usb[0]:M.usb[1];if(n){put(s,n);}else warn.push(`${mcu}에는 USB가 없습니다`);});
     const groups={};sigs.forEach(s=>{if(s.group&&s.group!=='usb'){(groups[s.group]=groups[s.group]||[]).push(s);}});
-    const prio=['can','spi','uart','i2c','pwm3'];
+    const prio=['can','spi','spi2','uart','i2c','pwm6','pwm3'];
     Object.keys(groups).sort((a,b)=>prio.indexOf(a)-prio.indexOf(b)).forEach(g=>{const list=groups[g];
       const insts=new Set();list.forEach(s=>cands(s.role).forEach(c=>c.o.forEach(o=>{if(o.role===s.role)insts.add(o.inst);})));
       let ok=false;for(const inst of insts){const pick=[];const tmp=new Set();let fail=false;

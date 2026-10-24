@@ -7063,11 +7063,12 @@ const LIB={
       ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(sn)ctx.curr(ret,I);
       ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
   gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
-    params:{i:{def:20,desc:'상전류 A (FET 병렬 수·션트·트레이스 폭)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
+    params:{i:{def:20,desc:'상전류 A (FET 병렬 수·션트·트레이스 폭)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×3) · A4911 · A4918 (Allegro 3상 · SPI 진단 · 센스 앰프 ×3 내장)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
     build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||20);const k=ctx.uniq('PH');const N=x=>k==='PH'?'PH_'+x:k+'_'+x;
       const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,fetChoice(ctx,p,I,V,k));
-      if(V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
-      ['U','V','W'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
+      let drv=allegroDrv(p.driver);if(drv&&!allegro3(ctx,drv,vm,I,pwr,N))drv=null; // no pin table → IR2104 stage instead (warned)
+      if(!drv&&V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
+      if(!drv)['U','V','W'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
         ctx.part('U','IR2104S','SOIC-8',{1:vm,2:N('IN_'+h),3:N('EN'),4:'GND',5:lo,6:ph,7:ho,8:vb},{mpn:'IR2104STRPBF',desc:`하프브리지 게이트 드라이버 (${h}상)`,pinNames:{1:'VCC',2:'IN',3:'nSD',4:'COM',5:'LO',6:'VS',7:'HO',8:'VB'},P:0.05});
         ctx.cap(vm,'1µF',`IR2104 VCC 디커플링 (${h})`);
         ctx.part('D','ES1D','SMA',{1:vm,2:vb},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'A',2:'K'}});
@@ -7075,7 +7076,7 @@ const LIB={
         fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);shuntAmp(ctx,ret,N('ISNS_'+h),I,h+'상');
         ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('IN_'+h),'pwm','pwm3');});
       bulk(ctx,vm,I,'3상 인버터');ctx.curr(vm,I);
-      ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 인버터 OFF)'});ctx.sig(N('EN'),'gpio_out');
+      if(!drv){ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 인버터 OFF)'});ctx.sig(N('EN'),'gpio_out');}
       termFp(3,I>15?7.62:5.08);ctx.part('J','모터 상',termName(3,I),{1:N('U'),2:N('V'),3:N('W')},{mpn:I>15?'':'1729131',desc:`3상 모터 단자 (${I>15?'7.62 mm — 20 A 이상 정격 품번 지정 필요':'5.08 mm'} · ${I} A)`,pinNames:{1:'U',2:'V',3:'W'}});
       if(+p.hall){const hv=+p.hallv||5;const hr=railOf(hv);ctx.use(hr);ctx.use('+3V3');const hin=x=>N('HALL_'+x+(hv>5?'_IN':''));ctx.part('J','홀','HDR-1x5',{1:hr,2:hin('A'),3:hin('B'),4:hin('C'),5:'GND'},{mpn:'61300511121',desc:`홀 센서 커넥터 (공급 ${hv} V)`,pinNames:{1:hv+'V',2:'H1',3:'H2',4:'H3',5:'GND'}});
         // open-collector hall outputs pulled up to the MCU rail; with a supply above 5 V a series resistor + clamp keeps a shorted / push-pull sensor off the MCU pin
@@ -7218,8 +7219,48 @@ function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){if(pw.f2){fetPkg();const F=pw.f2;
     ctx.part('R','10Ω','0603',{1:lo,2:lg},{desc:`로우사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:lg,2:ret},{desc:'로우사이드 G-S 풀다운'});
     ctx.part('Q',pw.f.mpn,'TO-252',{1:lg,2:ph,3:ret},{mpn:pw.f.mpn,desc:`로우사이드 N-MOSFET ${pw.f.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:{1:'G',2:'D',3:'S'},P:pw.Pq});}}
 const SHUNTS=[0.01,0.005,0.002,0.001,0.0005,0.00025];
-function shuntAmp(ctx,net,out,I,what){const R=SHUNTS.find(r=>r*I<=0.045)||SHUNTS[SHUNTS.length-1];const P=+(I*I*R).toFixed(2);const lab=R>=0.001?(R*1000)+'mΩ':(R*1e6)+'µΩ';
-  ctx.part('R',lab,'2512',{1:net,2:'GND'},{mpn:'',desc:`${what} 전류 션트 ${lab} · ${I} A에서 ${(R*I*1000).toFixed(0)} mV · ${P} W${P>2?' (2 W 초과 — 병렬 또는 3 W 2512)':''}`,P});
+function shunt(ctx,net,I,what,vmax){vmax=vmax||0.045;const R=SHUNTS.find(r=>r*I<=vmax)||SHUNTS[SHUNTS.length-1];const P=+(I*I*R).toFixed(2);const lab=R>=0.001?(R*1000)+'mΩ':(R*1e6)+'µΩ';
+  ctx.part('R',lab,'2512',{1:net,2:'GND'},{mpn:'',desc:`${what} 전류 션트 ${lab} · ${I} A에서 ${(R*I*1000).toFixed(0)} mV · ${P} W${P>2?' (2 W 초과 — 병렬 또는 3 W 2512)':''}`,P});return R;}
+/* Allegro 3-phase gate drivers (A4911 · A4918): one chip drives all six FETs, has its own gate-drive regulator (VREG),
+   charge pump, bootstrap per phase, three current-sense amplifiers and SPI diagnostics. Pins are wired by name from the
+   registered pin table (datasheets/pins.json → KPINS), so a part whose table is missing is reported instead of guessed. */
+const ALLEGRO={A4911:'A4911KJPTR-T-1',A4918:'A4918KJPTR-1A-3-T'};
+function allegroDrv(d){const m=String(d||'').toUpperCase().match(/A491[18]/);return m?m[0]:null;}
+function allegro3(ctx,drv,vm,I,pwr,N){const mpn=ALLEGRO[drv];const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(mpn):null;
+  if(!rec||!(rec.pins&&rec.pins.length)){ctx.warn(`${drv}: 핀 표가 없어 IR2104 ×3 스테이지로 대신 만들었습니다 — ${drv} 전체 데이터시트의 핀 배치를 datasheets/pins.json에 추가하면 ${drv} 회로가 생성됩니다`);return false;}
+  const num={};rec.pins.forEach(q=>{const nm=String(q.name||'').toUpperCase();(num[nm]=num[nm]||[]).push(String(q.num));});
+  const pins={},names={};rec.pins.forEach(q=>{names[String(q.num)]=String(q.name||'');});
+  const set=(nm,net)=>{(num[nm.toUpperCase()]||[]).forEach(n=>{pins[n]=net;});};
+  const miss=['VBB','VBRG','VREG','CP1','CP2','GND','ENABLE','RESETN','STRN','SCK','SDI','SDO','DIAG'].filter(x=>!num[x]);
+  if(miss.length){ctx.warn(`${drv}: 핀 표에 ${miss.join(', ')} 핀이 없어 회로를 만들지 못했습니다`);return false;}
+  const vio=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vio);const vreg=N('VREG');
+  set('VBB',vm);set('VBRG',vm);set('GND','GND');set('PAD','GND');set('EP','GND');set('VREG',vreg);set('CP1',N('CP1'));set('CP2',N('CP2'));
+  set('ENABLE',N('EN'));set('RESETN',N('RESETN'));set('STRN',N('STRN'));set('SCK',N('SCK'));set('SDI',N('SDI'));set('SDO',N('SDO'));set('DIAG',N('DIAG'));
+  const PH={A:'U',B:'V',C:'W'};const amp=[];
+  Object.entries(PH).forEach(([x,h],i)=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS'),out=N('ISNS_'+h);
+    set('GH'+x,ho);set('GL'+x,lo);set('S'+x,ph);set('C'+x,vb);set('LSS'+x,ret);set('H'+x,N('INH_'+h));set('L'+x,N('INL_'+h));
+    // sense amplifier i+1 across the leg shunt (Kelvin to the shunt ends)
+    const c=String(i+1);if(num['CS'+c+'P']){set('CS'+c+'P',ret);set('CS'+c+'M','GND');set('CS'+c+'O',N('ISNS_'+h+'_AMP'));amp.push(h);}});
+  const fpName=String(rec.fp||'').replace(/^[^:]*:/,'');
+  ctx.part('U',drv,rec.fp&&typeof PCB!=='undefined'&&PCB.FP[rec.fp]?rec.fp:(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'?FPGEN.ensure(PCB,fpName||rec.pkg,rec.pins.length)||FPGEN.ensure(PCB,rec.pkg,rec.pins.length):'')||rec.pkg||'LQFP-48',pins,
+    {mpn,desc:`3상 MOSFET 게이트 드라이버 (Allegro ${drv} · SPI 진단 · 센스 앰프 ×3)`,pinNames:names,P:0.3});
+  ctx.cap(vm,'100nF',`${drv} VBB 디커플링 (단자 가까이)`);ctx.cap(vm,'100nF',`${drv} VBRG 디커플링`);
+  ctx.part('C','22µF','1206',{1:vreg,2:'GND'},{desc:`${drv} VREG 저장 커패시터 (데이터시트 CREG 22 µF)`});
+  ctx.part('C','470nF','0805',{1:N('CP1'),2:N('CP2')},{desc:`${drv} 차지펌프 커패시터 CP1–CP2 (≥ 470 nF, 데이터시트)`});
+  Object.entries(PH).forEach(([x,h])=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
+    ctx.part('C','470nF','0805',{1:vb,2:ph},{desc:`부트스트랩 C${x}–S${x} (${h}상 · 470 nF — CBOOT ≥ 20·QG/ΔV로 FET 게이트 전하 확인)`});
+    fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);
+    // the amplifier is in the driver (gain 20 V/V, 2.5 V offset by default; input range −1.8…2 V): shunt sized for ≤ 60 mV at the phase current (±1.2 V at the output, ~1 W)
+    shunt(ctx,ret,I,h+'상',0.06);const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
+    ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');
+    ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
+  ctx.part('R','10kΩ','0603',{1:N('DIAG'),2:vio},{desc:`${drv} DIAG 오픈 드레인 풀업 (10~20 kΩ)`});
+  ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'ENABLE 풀다운 (MCU 리셋 중 게이트 OFF)'});
+  ctx.sig(N('EN'),'gpio_out');ctx.sig(N('RESETN'),'gpio_out');ctx.sig(N('DIAG'),'irq_in');
+  ctx.sig(N('SCK'),'spi_sck','spi2');ctx.sig(N('SDI'),'spi_mosi','spi2');ctx.sig(N('SDO'),'spi_miso','spi2');ctx.sig(N('STRN'),'gpio_out');
+  if(ctx.railV&&ctx.railV(vio)<4.9)ctx.warn(`${drv}: 센스 앰프 출력은 0.3~4.8 V (기본 오프셋 2.5 V · 이득 20) — MCU ADC 기준이 ${ctx.railV(vio)} V면 SPI로 오프셋·이득(SAO·SAG)을 낮추거나 분압하세요`);
+  return true;}
+function shuntAmp(ctx,net,out,I,what){const R=shunt(ctx,net,I,what);
   const vs=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vs);const amp=out+'_AMP';
   ctx.part('U','INA181A2-Q1','SOT-23-6',{1:amp,2:'GND',3:net,4:'GND',5:'GND',6:vs},{mpn:'INA181A2QDBVRQ1',desc:`${what} 전류 앰프 ×50 (${(R*I*50).toFixed(2)} V @ ${I} A)`,pinNames:{1:'OUT',2:'GND',3:'IN+',4:'IN−',5:'REF',6:'VS'},P:0.002});
   ctx.cap(vs,'100nF','전류 앰프 디커플링');ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');}
@@ -7272,7 +7313,7 @@ function build(plan){const asil=plan.asil&&String(plan.asil).toUpperCase()!=='QM
     // USB pins are fixed on the STM32F042
     sigs.filter(s=>s.role==='usb_dm'||s.role==='usb_dp').forEach(s=>{const n=s.role==='usb_dm'?M.usb[0]:M.usb[1];if(n){put(s,n);}else warn.push(`${mcu}에는 USB가 없습니다`);});
     const groups={};sigs.forEach(s=>{if(s.group&&s.group!=='usb'){(groups[s.group]=groups[s.group]||[]).push(s);}});
-    const prio=['can','spi','uart','i2c','pwm3'];
+    const prio=['can','spi','spi2','uart','i2c','pwm6','pwm3'];
     Object.keys(groups).sort((a,b)=>prio.indexOf(a)-prio.indexOf(b)).forEach(g=>{const list=groups[g];
       const insts=new Set();list.forEach(s=>cands(s.role).forEach(c=>c.o.forEach(o=>{if(o.role===s.role)insts.add(o.inst);})));
       let ok=false;for(const inst of insts){const pick=[];const tmp=new Set();let fail=false;
@@ -8706,7 +8747,7 @@ const SYSDIAG=(function(){
 "use strict";
 const COLS=['외부 입력','전원','제어','기능','외부 연결'];
 const ROLE_KO={pwm:'PWM',adc:'ADC',cap:'캡처',irq_in:'인터럽트',gpio_in:'GPIO 입력',gpio_out:'GPIO 출력',can_tx:'CAN TX',can_rx:'CAN RX',spi_sck:'SCK',spi_mosi:'MOSI',spi_miso:'MISO',spi_cs:'CS',uart_tx:'TX',uart_rx:'RX',i2c_scl:'SCL',i2c_sda:'SDA',usb_dm:'D−',usb_dp:'D+'};
-const GROUP_KO={can:'CAN',spi:'SPI',uart:'UART',i2c:'I²C',pwm3:'PWM ×3',usb:'USB'};
+const GROUP_KO={can:'CAN',spi:'SPI',uart:'UART',i2c:'I²C',pwm3:'PWM ×3',pwm6:'PWM ×6',spi2:'SPI (드라이버)',usb:'USB'};
 const isPass=ref=>/^(R|C|L|FB|D|TP)\d/i.test(ref);
 const isConnRef=ref=>/^(J|P|CN|X|CON|USB)\d/i.test(ref);
 const isGnd=n=>/^(GND|AGND|PGND|DGND|VSS|0V)$/i.test(String(n||''));
@@ -9464,7 +9505,8 @@ function family(pkg){const s=String(pkg||'').toUpperCase().replace(/\s+/g,'_');l
   if(/SOT-?223/.test(s))return{fam:'SOT-223',n:4};
   if((m=s.match(/^(SOIC|SO|SOP|SSOP|TSSOP|MSOP|HTSSOP|VSSOP|QSOP)-?(\d+)/)))return{fam:/^(TSSOP|HTSSOP|MSOP|VSSOP|SSOP|QSOP)$/.test(m[1])?'TSSOP':'SOIC',n:+m[2],ep:/^H/.test(m[1])};
   if((m=s.match(/^(QFN|DFN|VQFN|WQFN|UQFN|TQFN|MLF|SON|WSON|VSON|DFN)-?(\d+)/)))return{fam:/^(DFN|SON|WSON|VSON)$/.test(m[1])?'DFN':'QFN',n:+m[2],ep:true,size:(s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/)||[]).slice(1,3).map(Number)};
-  if((m=s.match(/^(TQFP|LQFP|QFP|MQFP)-?(\d+)/)))return{fam:'QFP',n:+m[2],size:(s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/)||[]).slice(1,3).map(Number)};
+  if((m=s.match(/^(TQFP|LQFP|QFP|MQFP|HTQFP|HLQFP)-?(\d+)/))){const pm=s.match(/_P(\d+(?:\.\d+)?)MM/),em=s.match(/_EP(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/);
+    return{fam:'QFP',n:+m[2],ep:/-\d*EP|_EP\d|^H/.test(s.slice(0,40))||!!em,epSize:em?[+em[1],+em[2]]:null,pitch:pm?+pm[1]:null,size:(s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)MM/)||s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/)||[]).slice(1,3).map(Number)};}
   if((m=s.match(/^(DIP|PDIP|DIL)-?(\d+)/)))return{fam:'DIP',n:+m[2]};
   if((m=s.match(/^(TO-?252|DPAK|TO-?263|D2PAK|TO-?220)/)))return{fam:/263|D2/.test(s)?'TO-263':/220/.test(s)?'TO-220':'TO-252',n:3};
   if((m=s.match(/^(HDR|HEADER|PIN|JST|CONN?)[-_]?(\d+)X(\d+)/)))return{fam:'HDR',rows:+m[2],n:+m[2]*+m[3],pitch:/JST|PH/.test(s)?2.0:2.54};
@@ -9478,10 +9520,10 @@ function dual(n,pitch,rowGap,padL,padW,body,kind,ep){const half=n/2,pads=[];cons
   if(ep)pads.push({n:''+(n+1),x:0,y:0,w:r3(Math.max(1,body[0]*0.5)),h:r3(Math.max(1,body[1]*0.6))});
   return{kind,stand:0.05,body,pads,dot:[r3(-body[0]/2+0.5),r3(y0)],gen:true};}
 /* quad (QFN / QFP), pin 1 at the top of the left row, counter-clockwise like the built-in QFN-32/TQFP-144 */
-function quad(n,pitch,span,padL,padW,body,ep){const q=n/4,pads=[];const s0=(q-1)/2*pitch;
+function quad(n,pitch,span,padL,padW,body,ep,epSize){const q=n/4,pads=[];const s0=(q-1)/2*pitch;
   for(let i=0;i<q;i++){pads.push({n:''+(1+i),x:r3(-span/2),y:r3(s0-i*pitch),w:padL,h:padW});pads.push({n:''+(q+1+i),x:r3(-s0+i*pitch),y:r3(-span/2),w:padW,h:padL});
     pads.push({n:''+(2*q+1+i),x:r3(span/2),y:r3(-s0+i*pitch),w:padL,h:padW});pads.push({n:''+(3*q+1+i),x:r3(s0-i*pitch),y:r3(span/2),w:padW,h:padL});}
-  if(ep)pads.push({n:''+(n+1),x:0,y:0,w:r3(body[0]*0.55),h:r3(body[1]*0.55)});
+  if(ep)pads.push({n:''+(n+1),x:0,y:0,w:r3(epSize?epSize[0]:body[0]*0.55),h:r3(epSize?epSize[1]:body[1]*0.55)});
   pads.sort((a,b)=>a.n-b.n);return{kind:'ic',stand:0.02,body,pads,dot:[r3(-body[0]/2+0.6),r3(body[1]/2-0.6)],gen:true};}
 function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nPins>=2?nPins:f.n;
   switch(f.fam){
@@ -9502,7 +9544,9 @@ function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nP
     case'TSSOP':{const k=n%2?n+1:n;const half=k/2;const pitch=k>=38?0.5:0.65;const L=r3(half*pitch+0.6);return dual(k,pitch,5.8,1.45,pitch<0.6?0.3:0.4,[4.4,L,1.1],'ic',f.ep);}
     case'DFN':{const k=n%2?n+1:n;const half=k/2;const pitch=k<=8?0.65:0.5;const w=f.size&&f.size[0]||(k<=6?2:3),h=f.size&&f.size[1]||(k<=6?2:3);return dual(k,pitch,r3(w-0.3),0.7,pitch<0.6?0.25:0.3,[w,h,0.8],'ic',true);}
     case'QFN':{let k=n%4?n+(4-n%4):n;const q=k/4;const size=f.size&&f.size[0]||(k<=16?3:k<=24?4:k<=32?5:k<=48?7:k<=64?9:10);const pitch=r3(Math.min(0.65,Math.max(0.4,(size-1.0)/q)));return quad(k,pitch,r3(size-0.1),0.8,r3(Math.min(0.3,pitch*0.55)),[size,size,0.9],true);}
-    case'QFP':{let k=n%4?n+(4-n%4):n;const q=k/4;const size=f.size&&f.size[0]||(k<=32?7:k<=48?7:k<=64?10:k<=100?14:k<=144?20:28);const pitch=r3(Math.min(0.8,Math.max(0.4,(size-1.5)/q)));return quad(k,pitch,r3(size+1.5),1.5,r3(Math.min(0.3,pitch*0.55)),[size,size,1.2],false);}
+    case'QFP':{// an exposed pad counts as one extra pin (LQFP-48-1EP → 49 pins: 48 leads + pad 49)
+      const ep=!!f.ep||n%4===1;let k=ep&&n%4===1?n-1:n;k=k%4?k+(4-k%4):k;const q=k/4;const size=f.size&&f.size[0]||(k<=32?7:k<=48?7:k<=64?10:k<=100?14:k<=144?20:28);
+      const pitch=f.pitch||r3(Math.min(0.8,Math.max(0.4,(size-1.5)/q)));return quad(k,pitch,r3(size+1.5),1.5,r3(Math.min(0.3,pitch*0.55)),[size,size,1.2],ep,f.epSize);}
     case'DIP':{const k=n%2?n+1:n;const half=k/2;const y0=(half-1)/2*2.54;const pads=[];for(let i=0;i<half;i++)pads.push({n:''+(1+i),x:-3.81,y:r3(y0-i*2.54),w:1.6,h:1.6,round:true,drill:0.8});for(let i=0;i<half;i++)pads.push({n:''+(half+1+i),x:3.81,y:r3(-y0+i*2.54),w:1.6,h:1.6,round:true,drill:0.8});
       return{kind:'ic',stand:0.5,body:[6.4,r3(half*2.54+0.5),3.3],pads,dot:[-2.5,r3(y0)],gen:true};}
     case'HDR':{const rows=f.rows||1,per=Math.ceil(n/rows),p=f.pitch||2.54;const y0=(per-1)/2*p;const pads=[];let k=1;for(let i=0;i<per;i++)for(let r=0;r<rows;r++)pads.push({n:''+(k++),x:r3((r-(rows-1)/2)*p),y:r3(y0-i*p),w:1.7,h:1.7,round:true,drill:1.0});
@@ -9512,7 +9556,9 @@ function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nP
 /* a canonical footprint name for the library key */
 function name(pkg,n){const f=family(pkg);if(!f)return null;const k=n&&n>=2?n:f.n;
   switch(f.fam){case'CHIP':return f.code;case'SMA':return'SMA';case'SOT-23':return k===3?'SOT-23':'SOT-23-'+k;case'SOT-89':case'SOT-223':case'TO-252':case'TO-263':case'TO-220':return f.fam;
-    case'HDR':return`HDR-${f.rows||1}x${Math.ceil(k/(f.rows||1))}`;default:return f.fam+'-'+k;}}
+    case'HDR':return`HDR-${f.rows||1}x${Math.ceil(k/(f.rows||1))}`;
+    case'QFP':{const ep=!!f.ep||k%4===1;const kk=ep&&k%4===1?k-1:k;return'QFP-'+kk+(ep?'-EP':'')+(f.size&&f.size[0]?'-'+f.size[0]+'x'+f.size[1]:'')+(f.pitch?'-P'+f.pitch:'');}
+    default:return f.fam+'-'+k;}}
 /* make sure PCB.FP has a footprint for this package; returns its name (or null when the package is unknown) */
 function ensure(PCB,pkg,n){if(!PCB||!PCB.FP)return null;if(pkg&&PCB.FP[pkg])return pkg;const nm=name(pkg,n);if(!nm)return null;if(!PCB.FP[nm]){const fp=make(pkg,n);if(!fp)return null;lbb(fp);PCB.FP[nm]=fp;}return nm;}
 function lbb(f){const[bw,bh]=f.body;let a=-bw/2,b=-bh/2,c=bw/2,d=bh/2;f.pads.forEach(p=>{a=Math.min(a,p.x-p.w/2);b=Math.min(b,p.y-p.h/2);c=Math.max(c,p.x+p.w/2);d=Math.max(d,p.y+p.h/2);});f.lbb=[a,b,c,d];return f;}
@@ -15853,6 +15899,10 @@ async function npProduct(req){if(typeof PRODUCTS==='undefined')return null;if(/�
 const NP_SWAP=/^(can|bldc|dcmotor|hs_switch|vmon|uart|i2c|flash|led|button)$/;
 async function npSetPart(b,p){const prev=JSON.parse(JSON.stringify(b.impl||[]));b.part={mpn:p.mpn,mfr:p.mfr||'',note:p.note||''};
   b.feats=(b.feats||[]).filter(f=>!/^부품: /.test(f));b.feats.push(`부품: ${p.mpn}${p.mfr?' ('+p.mfr+')':''}`);
+  // Allegro 3-phase drivers drive the whole inverter block: keep gdrv3 (FETs · shunts · bootstrap) and switch its driver
+  {const L0=b.impl||[];const g=L0.find(i=>i.type==='gdrv3');const m=String(p.mpn||'').toUpperCase().match(/A491[18]/);
+    if(g&&m){g.params=Object.assign({},g.params,{driver:m[0]});const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;
+      NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — 3상 인버터(gdrv3) 구동 IC를 ${m[0]}로 (FET·션트·부트스트랩·센스 앰프·SPI 자동 연결)${rec&&rec.pins&&rec.pins.length?'':' · 핀 표가 없어 지금은 IR2104로 생성 — datasheet '+p.mpn+' 로 핀 표를 넣으면 반영'}`;}}
   const L=b.impl||[];const single=!L.length||(L.length===1&&NP_SWAP.test(L[0].type))||L.some(i=>i.type==='part');let how='기록 (회로는 라이브러리 블록 구성 유지 · 2단계에서 add part로 교체 가능)';
   if(single){const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;const pins=r=>!!(r&&r.pins&&r.pins.length);
     if(pins(rec)||(AIM.mode==='ai'&&CLI.sample)){try{await npRun(`impl ${b.id} part ${p.mpn}`);const r2=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;if(pins(r2))how=`회로 구현 → part ${p.mpn}${r2.src==='ai'?' (Claude 추정 핀)':''}`;else{b.impl=prev;how='핀 정보를 얻지 못해 기록만 (라이브러리 블록 유지)';}}catch(e){b.impl=prev;how='회로 구현 실패: '+(e.message||e)+' → 기록만';}}
@@ -15930,7 +15980,7 @@ async function npSafetyGoals(key){if(typeof SGARCH==='undefined'||!NP.arch)retur
   npSay('ok',SGARCH.verifyText(A));}
 /* Claude plans with the same commands */
 const NP_SYS=`You are a hardware system architect working inside a design tool. The user writes in Korean. Step 1 is a HW ARCHITECTURE BLOCK DIAGRAM: functional blocks without part numbers (e.g. "Battery Input (12 V)", "PMIC / LDO / Buck", "CAN-FD Transceiver", "Main MCU", "H-Bridge / Gate Driver IC", "Current Sensing & Temp. Sensor", "Debug / Calib. Interface", "External Connector") grouped in bands power · comm · ctrl · io · ext, with labelled interfaces (rails such as VCC_MCU 3.3 V, buses such as CAN_H / CAN_L, control and feedback signals). Build it with arch / block / feat / link commands through the run_np tool, one command at a time. Use impl only to say which library circuit block will realise a block in step 2; never put part numbers in labels or features unless the user names them.
-When you choose a specific part number for a block (e.g. CC2420 for an RF block, TJA1051 for CAN, BME280 for a sensor), bind it with: impl <ID> part <MPN> [--pins PIN=NET,…] — only then does the part appear in the parts view and in the step-2 circuit; a part number written only in the block label/feats is just text. impl <ID> part <MPN> REPLACES the block's existing part or main library implementation (e.g. drv: bldc/DRV8313 → A4911) — do not remove first; add --add only to keep both. remove <MPN> deletes a part by number. Library blocks (ldo, buck, can, mcu …) stay the first choice when they fit.
+For a 3-phase inverter block (gdrv3) the gate driver IC is a parameter, not a separate part: impl <ID> gdrv3 --driver A4911 (or A4918 · IR2104) keeps the FETs, shunts and bootstrap and wires the Allegro driver from its registered pin table (A4911's 48-pin table is already in the library — do not ask for its datasheet; A4918 has no pin table yet). When you choose a specific part number for a block (e.g. CC2420 for an RF block, TJA1051 for CAN, BME280 for a sensor), bind it with: impl <ID> part <MPN> [--pins PIN=NET,…] — only then does the part appear in the parts view and in the step-2 circuit; a part number written only in the block label/feats is just text. impl <ID> part <MPN> REPLACES the block's existing part or main library implementation (e.g. drv: bldc/DRV8313 → A4911) — do not remove first; add --add only to keep both. remove <MPN> deletes a part by number. Library blocks (ldo, buck, can, mcu …) stay the first choice when they fit.
 Motor power stages (pick by current and topology, set --i to the motor/phase current in A): hbridge = gate drivers + 4 external N-MOSFETs + shunt/amp (any DC motor that needs both directions, an H-bridge, or more than 3 A); gdrv3 = gate drivers + 6 external N-MOSFETs + 3 leg shunts/amps (BLDC/PMSM above 2.5 A, EPS, pumps, fans with external FETs); bldc = DRV8313 with integrated FETs (≤ 2.5 A only); dcmotor = one low-side FET (one direction, ≤ 3 A only). A block labelled "H-Bridge", "Gate Driver" or "MOSFET Inverter" must use hbridge or gdrv3, never dcmotor/bldc; a separate inverter/MOSFET block next to it needs no impl.
 Quantities: "BLDC 모터 2개" means two driver blocks (and two connector feeds): use dup drv (copies implementation and links) rather than one block with a note.
 Part-composition changes ("LDO를 벅으로", "LED 3개", "CAN 빼줘", "MCU를 TC364로"): change the HW block's implementation with impl <ID> <circuit block> [--param], or add/remove/set/mcu — these now keep the HW diagram and the circuit plan in sync; never re-create the whole architecture for a small change.
