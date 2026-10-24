@@ -780,3 +780,7 @@ npm run dsdb:init # 페이지가 없는 부품의 데이터시트 초안 만들�
 ## v1.66.1 Infineon 듀얼 / 하프브리지 MOSFET
 - 40 V MOSFET 후보(EPS · Dadu 인버터 블록) 맨 앞에 추가: IAUC60N04S6N050H(하프브리지 — 상·하 FET 2개 내장, 40 V · 60 A · SSO8 5×6, AEC-Q101), IPG20N04S4L-07(듀얼 독립 N-MOSFET, 40 V · 20 A · 7.2 mΩ · TDSON-8). 6-브리지를 패키지 3개로 구성.
 - 회로 생성은 아직 단일 FET(DPAK) ×6으로 그림 — 듀얼/하프브리지 핀 배치를 데이터시트로 확인한 뒤 회로 블록에 반영 예정.
+
+## v1.66.2 듀얼/하프브리지 MOSFET 데이터시트 사양
+- Infineon 공식 데이터시트로 확인한 값 반영: IAUC60N04S6N050H — RDS(on) 5.0 mΩ max(10 V, 30 A) · 60 A · Qg 13 nC typ · VGS(th) 2.2/2.6/3.0 V · PG-TDSON-8-57 · 마킹 6N04N050. IPG20N04S4L-07 — 7.2 mΩ(10 V) / 9.2 mΩ(4.5 V) max · 20 A · Qg 39 nC typ · VGS(th) 1.2/1.7/2.2 V(로직 레벨) · PG-TDSON-8 · 마킹 4N04L07.
+- 핀 배치는 데이터시트 안에서 그림으로만 있어 텍스트로 확인 불가 → 회로 생성(단일 FET ×6)은 그대로. PDF를 첨부받으면 그림을 직접 보고 반영.
