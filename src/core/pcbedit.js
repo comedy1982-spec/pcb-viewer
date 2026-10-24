@@ -249,7 +249,7 @@ function setLayers(B,n,o){o=o||{};n=+n;if(!PCB.STACKS[n])throw new Error('ì¸µ ìˆ
   old.slice(1,-1).forEach(k=>{dropped+=B.layers[k+'.cu'].filter(p=>p.t==='seg'||p.t==='path').length;delete B.layers[k+'.cu'];});
   const roles=PCB.STACKS[n];const pn=planeNets(B,o);const R=cornerRadius(B);
   // 6+ layers with the motor supply on the power plane: the last inner GND plane carries the logic rail (it has the most pins)
-  let pn2=null;if(n>=8&&pn.pwr&&B.netCurrent&&+B.netCurrent[pn.pwr]>=3){const q=planeNets(Object.assign({},B,{netCurrent:null}),{});if(q.pwr&&q.pwr!==pn.pwr)pn2=q.pwr;}
+  let pn2=null;if(n>=6&&pn.pwr&&B.netCurrent&&+B.netCurrent[pn.pwr]>=3){const q=planeNets(Object.assign({},B,{netCurrent:null}),{});if(q.pwr&&q.pwr!==pn.pwr)pn2=q.pwr;}
   const lastG=pn2?roles.lastIndexOf('gnd'):-1;
   B.copperLayers=n;const stack=[];
   roles.forEach((role,i)=>{const k=i===0?'T':i===n-1?'B':'In'+i;if(k!=='T'&&k!=='B')B.layers[k+'.cu']=[];if(i===lastG)role='pwr';
