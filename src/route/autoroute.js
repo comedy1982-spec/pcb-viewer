@@ -526,6 +526,19 @@ function stitchLayers(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},step:1.2
       const r=Math.ceil((o.via.d+0.3)/g);for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const j=(y+dy)*G.nx+x+dx;if(j>=0&&j<G.N)G.occV.forEach(a=>{a[j]=-1;});}}});
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}
 
-return{stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+
+/* via-in-pad on the big power pads (exposed pads of the bridge FETs, DPAK tabs, terminal-side pads): the current reaches the
+   inner planes / the other outer layer right at the part instead of through one fan-out via */
+function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,minArea:2.5,grid:0.05},o||{});const keys=PC.cuKeys(B),NL=keys.length;
+  const P=prepare(B,{grid:o.grid,clear:0.15,width:{signal:0.1,power:0.1},via:o.via});const G=P.G;let n=0;const want=new Set(nets);
+  B.comps.forEach(c=>c.pads.forEach(p=>{if(!want.has(p.net)||p.drill||p.w*p.h<o.minArea)return;const k=P.idOf(p.net);const sh=padShape(p,NL);const a=(p.ang||0)*D2R,ca=Math.cos(a),sa=Math.sin(a);
+    const hx=p.w/2-o.via.d/2-0.1,hy=p.h/2-o.via.d/2-0.1;if(hx<0||hy<0)return;const nx=Math.max(1,Math.floor(2*hx/o.pitch)+1),ny=Math.max(1,Math.floor(2*hy/o.pitch)+1);
+    for(let i=0;i<nx;i++)for(let j=0;j<ny;j++){const u=nx>1?-hx+2*hx*i/(nx-1):0,v=ny>1?-hy+2*hy*j/(ny-1):0;const x=p.x+u*ca-v*sa,y=p.y+u*sa+v*ca;
+      const ci=Math.round((x-G.ox)/G.g),cj=Math.round((y-G.oy)/G.g);if(ci<0||cj<0||ci>=G.nx||cj>=G.ny)continue;const idx=cj*G.nx+ci;
+      if(G.occV.some((arr,l)=>arr[idx]!==0&&arr[idx]!==k))continue;if(B.vias.some(q=>Math.hypot(q.x-x,q.y-y)<o.via.d+0.15))continue;
+      B.vias.push({x:+x.toFixed(3),y:+y.toFixed(3),d:o.via.d,drill:o.via.drill,net:p.net,stitch:true,inpad:true});n++;}}));
+  if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}
+
+return{padVias,stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;
