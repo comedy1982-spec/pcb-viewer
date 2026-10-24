@@ -6475,12 +6475,16 @@ function place(B,opts){
   // nets → pins
   const cls=nm=>B.netClass?B.netClass(nm):isGnd(nm)?'접지':'신호';const swSet=new Set(info.switchNets);
   const NET=[];const netsOf=movable.map(()=>[]);
-  Object.keys(B.nets).forEach(nm=>{if(isGnd(nm))return;const pins=[];let fx=[];
-    info.list.forEach(o=>o.c.pads.forEach((p,k)=>{if(p.net!==nm)return;const i=idx.get(o.ref);if(i!=null)pins.push([i,k]);else fx.push([p.x,p.y]);}));
+  const drvRef=macro&&macro.driver;
+  Object.keys(B.nets).forEach(nm=>{if(isGnd(nm))return;const pins=[];let fx=[];let onDrv=false;
+    info.list.forEach(o=>o.c.pads.forEach((p,k)=>{if(p.net!==nm)return;if(o.ref===drvRef)onDrv=true;const i=idx.get(o.ref);if(i!=null)pins.push([i,k]);else fx.push([p.x,p.y]);}));
     if(pins.length+fx.length<2||!pins.length)return;
     let w=cls(nm)==='전원'?st.pwr*(pins.length+fx.length>10?0.5:1):1;
     // high-current nets (motor supply, phases, shunt nodes): keep the power loop short — pulls FETs, shunts, bulk caps and terminals together
     const Ihi=B.netCurrent&&+B.netCurrent[nm]||0;if(Ihi>=2)w=Math.max(w,1.5+Math.min(Ihi,60)/20);if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
+    // a fixed single-chip gate driver's private pin nets (bootstrap cap, RC filter, VREG / pump cap, pull-ups): the one passive on
+    // the net sits right at the pin — otherwise its other, high-current end (phase) drags it to the FETs, 25 mm from the driver
+    if(onDrv&&pins.length===1&&fx.length===1&&!/0\s*Ω|^0R$/i.test(String(movable[pins[0][0]].c.val||'')))w=Math.max(w,8);
     const id=NET.length;NET.push({nm,pins,fx,w:w*st.wl});pins.forEach(([i])=>{if(!netsOf[i].includes(id))netsOf[i].push(id);});});
   // decoupling: each cap belongs to the IC with the most pins on its rail (spread over ICs by pin share)
   const DEC=[];const decOf=movable.map(()=>[]);{const load={};
