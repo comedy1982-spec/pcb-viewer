@@ -431,7 +431,7 @@ function fanout(B,opts){
     if(B.vias.some(v=>v.net===p.net&&Math.abs(v.x-p.x)<=p.w/2+v.d/2&&Math.abs(v.y-p.y)<=p.h/2+v.d/2&&Math.hypot(v.x-p.x,v.y-p.y)<Math.max(p.w,p.h)/2+v.d))return;
     const k=P.idOf(p.net);const pw=p.shape==='parts'&&p.lbb?p.lbb[2]-p.lbb[0]:p.w,ph=p.shape==='parts'&&p.lbb?p.lbb[3]-p.lbb[1]:p.h;
     // fine-pitch pins can wait until the signals have escaped (opts.skipFine), then take whatever room is left
-    if(opts.skipFine&&Math.min(pw,ph)<0.36){fail.push(p.ref+'.'+p.n);return;}
+    if(opts.skipFine&&Math.min(pw,ph)<0.36&&!c.pads.some(q=>q!==p&&q.net===p.net&&!q.drill&&Math.min(q.w,q.h)>=1.2)){fail.push(p.ref+'.'+p.n);return;}
     const put0=(x,y,stub)=>exactOk(x,y,stub,p,li)&&(put(x,y,stub),true);
     const put=(x,y,stub)=>{const v={x,y,d:via.d,drill:via.drill,net:p.net,auto:true,fan:true};B.vias.push(v);add.push(v);
       AUTOROUTE.paint(G,{k:'cap',a:[x,y],b:[x,y],r:via.d/2,L:ALL,net:p.net},k,wMax,via.d/2,clr);
@@ -441,6 +441,15 @@ function fanout(B,opts){
       const a=(p.ang||0)*D2R;for(let i=0;i<nx;i++)for(let j=0;j<ny;j++){const lx=(i-(nx-1)/2)*Math.min(1.2,(pw-0.8)/Math.max(1,nx-1||1)),ly=(j-(ny-1)/2)*Math.min(1.2,(ph-0.8)/Math.max(1,ny-1||1));
         const x=p.x+lx*Math.cos(a)-ly*Math.sin(a),y=p.y+lx*Math.sin(a)+ly*Math.cos(a);if(okV(x,y,k)&&put0(x,y,false))any=true;}
       if(any)return;}
+    // a fine-pitch ground pin of a part with an exposed pad of the same net (A4911: "GND terminals connected together and to
+    // the exposed pad close to the device"): short track straight in under the body, then to the pad — the pad has the vias
+    if(Math.min(pw,ph)<0.36){const ep=c.pads.find(q=>q!==p&&q.net===p.net&&!q.drill&&Math.min(q.w,q.h)>=1.2);
+      if(ep){const a0=(p.ang||0)*D2R;let ux=Math.cos(a0),uy=Math.sin(a0),half=p.w/2;if(p.h>p.w){ux=-Math.sin(a0);uy=Math.cos(a0);half=p.h/2;}
+        if((p.x-ep.x)*ux+(p.y-ep.y)*uy>0){ux=-ux;uy=-uy;}const tw=Math.min(w,0.25);
+        for(const k2 of[half+0.5,half+0.8,half+1.1]){const m=[p.x+ux*k2,p.y+uy*k2];const pts=[[p.x,p.y],m,[ep.x,ep.y]];let ok=true;
+          for(let i=1;i<pts.length;i++)if(!okT(pts[i-1],pts[i],li,k)){ok=false;break;}if(!ok)continue;
+          const t={t:'path',pts,w:tw,net:p.net,auto:true,fan:true,_side:keys[li]};B.layers[keys[li]+'.cu'].push(t);add.push(t);
+          for(let i=1;i<pts.length;i++)AUTOROUTE.paint(G,{k:'cap',a:pts[i-1],b:pts[i],r:tw/2,L:[li],net:p.net},k,wMax,via.d/2,clr);return;}}}
     // a fine-pitch supply pin next to its decoupling cap: tie the pin to the cap pad on the surface and let the cap pad carry the via
     if(Math.min(pw,ph)<0.36){const near=B.nets[p.net].pads.filter(q=>q!==p&&q.side===p.side&&!q.drill&&Math.min(q.w,q.h)>=0.36&&Math.hypot(q.x-p.x,q.y-p.y)<4.5).sort((q,r)=>Math.hypot(q.x-p.x,q.y-p.y)-Math.hypot(r.x-p.x,r.y-p.y));
       const a0=(p.ang||0)*D2R;let ux=Math.cos(a0),uy=Math.sin(a0),half=p.w/2;if(p.h>p.w){ux=-Math.sin(a0);uy=Math.cos(a0);half=p.h/2;}

@@ -53,7 +53,7 @@ test('Dadu with an Allegro A4911 driver: one LQFP-48-EP chip drives the 6 FETs �
   assert.equal(U.length, 1);assert.equal(r.parts.filter(p => p.val === 'IR2104S').length, 0);assert.equal(r.parts.filter(p => /INA181/.test(p.val)).length, 0);
   const a = U[0];const by = n => Object.entries(a.pins).filter(([k]) => a.pinNames[k] === n).map(([, v]) => v);
   assert.deepEqual(by('GHA'), ['PH_U_HO']);assert.deepEqual(by('GLB'), ['PH_V_LO']);assert.deepEqual(by('SC'), ['PH_W']);assert.deepEqual(by('CA'), ['PH_U_VB']);
-  assert.deepEqual(by('LSSA'), ['PH_U_SNS']);assert.deepEqual(by('CS1P'), ['PH_U_SNS']);assert.deepEqual(by('VBB'), ['+12V']);assert.deepEqual(by('PAD'), ['GND']);
+  assert.deepEqual(by('LSSA'), ['PH_U_LSS']);assert.deepEqual(by('CS1P'), ['PH_U_SNSP']);assert.deepEqual(by('CS1M'), ['PH_U_SNSM']);assert.deepEqual(by('VBB'), ['+12V']);assert.deepEqual(by('PAD'), ['GND']);
   assert.match(a.fp, /^QFP-48-EP/);
   for (const n of ['PH_INH_U', 'PH_INL_W', 'PH_SCK', 'PH_SDI', 'PH_SDO', 'PH_ISNS_V', 'PH_DIAG']) assert.ok(r.pinmap[n], n + ' on an MCU pin');
   assert.ok(r.parts.some(p => p.val === '470nF' && /차지펌프/.test(p.desc)));assert.ok(r.parts.some(p => p.val === '22µF' && /VREG/.test(p.desc)));
