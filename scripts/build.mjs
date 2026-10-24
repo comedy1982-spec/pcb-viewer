@@ -51,6 +51,7 @@ ${script(stripExport(read('src/core/guide.js')))}
 ${script(stripExport(read('src/core/newproj.js')))}
 ${script(stripExport(read('src/core/boardsnap.js')))}
 ${script(read('src/app/sample-dadu8.js'))}
+${script(read('src/app/sample-dadu8b.js'))}
 ${script(stripExport(read('src/core/housing.js')))}
 ${script(stripExport(read('src/core/text2cad.js')))}
 ${script(stripExport(read('src/core/stepw.js')))}

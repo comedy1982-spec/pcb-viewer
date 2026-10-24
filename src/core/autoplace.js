@@ -193,7 +193,12 @@ function place(B,opts){
   // bottom side (--both): passives, and small SMD ICs (SOT-23 · SOIC-8 class, ≤ 7 mm) that are not heat sources / the MCU;
   // through-hole parts, connectors and electrolytics stay on top. opts.bothIcs=false limits it to 2-pin parts.
   const small=o=>{const b=o.c.bb;return b&&(b[2]-b[0])<=7&&(b[3]-b[1])<=7;};
-  const canB=movable.map(o=>both&&!o.tht&&!o.elcap&&!o.conn&&(o.two||(opts.bothIcs!==false&&small(o)&&!o.mcu&&!o.driver&&!o.reg&&!o.fet&&!(o.P>0.3))));
+  // power stage ∪ input: its bottom copper carries the phase / supply current (fill on both outer layers), so no bottom-side
+  // parts there, and the parts of those groups stay on top
+  const PZ=ZN&&ZN.rects&&ZN.rects.stage?[ZN.rects.stage,ZN.rects.input].filter(Boolean).reduce((a,r)=>a?[Math.min(a[0],r[0]),Math.min(a[1],r[1]),Math.max(a[2],r[2]),Math.max(a[3],r[3])]:r.slice(),null):null;
+  const pzOv=A=>PZ?Math.max(0,Math.min(A[2],PZ[2])-Math.max(A[0],PZ[0]))*Math.max(0,Math.min(A[3],PZ[3])-Math.max(A[1],PZ[1])):0;
+  const inPG=o=>!!(ZN&&ZN.groupOf&&/^(stage|input)$/.test(ZN.groupOf[o.ref]||''));
+  const canB=movable.map(o=>!inPG(o)&&both&&!o.tht&&!o.elcap&&!o.conn&&(o.two||(opts.bothIcs!==false&&small(o)&&!o.mcu&&!o.driver&&!o.reg&&!o.fet&&!(o.P>0.3))));
   // obstacles: fixed parts and mounting holes
   const obst=[];(opts.keepout||[]).forEach(k=>obst.push({bb:k.slice(),side:'T',halo:0.3,cx:(k[0]+k[2])/2,cy:(k[1]+k[3])/2}));info.list.forEach(o=>{if(idx.has(o.ref))return;obst.push({bb:o.c.bb.slice(),side:o.tht?'both':o.c.side,halo:o.halo,o,cx:(o.c.bb[0]+o.c.bb[2])/2,cy:(o.c.bb[1]+o.c.bb[3])/2});});
   B.drills.forEach(d=>{if(d.plated||d.own||d._pad)return;const k=d.d/2+0.8;obst.push({bb:[d.x-k,d.y-k,d.x+k,d.y+k],side:'both',halo:0.4,hole:true,cx:d.x,cy:d.y});});
@@ -256,6 +261,7 @@ function place(B,opts){
       else d=Math.min(A[0]-ob[0],ob[2]-A[2],A[1]-ob[1],ob[3]-A[3]);c+=st.edge*Math.max(0,d-0.3)*(1+o.c.pads.length*0.05);}
     else{const cx=(A[0]+A[2])/2-(ob[0]+ob[2])/2,cy=(A[1]+A[3])/2-(ob[1]+ob[3])/2;c+=st.cen*Math.hypot(cx,cy)*Math.sqrt(G[i].area+1);}
     obst.forEach(q=>{c+=pairCost(i,q.bb,q.side,q.halo,q.o||null);});
+    if(PZ&&V[i]>=4){const ov=pzOv(A);if(ov>0)c+=(wOv*2+40)*(1+ov);}
     const z=ZR[i];if(z){const zx=Math.max(0,z[0]-A[0])+Math.max(0,A[2]-z[2])+Math.max(0,z[1]-A[1])+Math.max(0,A[3]-z[3]);if(zx>0)c+=zw*(zx+0.3*zx*zx)*(1+Math.sqrt(G[i].area)/4);}
     return c;}
   const px=(i,k)=>X[i]+G[i].pads[V[i]][k][0],py=(i,k)=>Y[i]+G[i].pads[V[i]][k][1];
@@ -326,6 +332,7 @@ function place(B,opts){
   const placed=[];const fails=[];
   const ok=(i,f)=>{bbI(i,A);const o=ROLE[i];const m=o.conn?0.35:Math.min(edgeM,0.6+0.4*f);if(A[0]<ob[0]+m||A[1]<ob[1]+m||A[2]>ob[2]-m||A[3]>ob[3]-m)return false;
     if((ring.length>4||B.outline.length>1)&&![[A[0],A[1]],[A[2],A[1]],[A[2],A[3]],[A[0],A[3]],[(A[0]+A[2])/2,(A[1]+A[3])/2]].every(p=>PCB.inBoard(p[0],p[1],B.outline)))return false;if(holeHit(A))return false;
+    if(PZ&&V[i]>=4&&pzOv(A)>0)return false;
     const si=sideOf(i);const gap=(q,o2)=>{const t=o2&&TG.get(ROLE[i]._id*100000+o2._id);
       // next to a fine-pitch IC keep a fan-out lane even when space is tight (vias and escape tracks need it)
       const fl=t==null&&(ROLE[i].pitch<0.66||(o2&&o2.pitch<0.66))?escG:0.2;return Math.max(fl,t!=null?t*Math.max(f,0.7):(halo(i)+q)*f);};
@@ -395,19 +402,27 @@ function fanout(B,opts){
       lanes.push({net:q.net,a:[q.x,q.y],b:[q.x+ux*(half+(opts.lane||1.5)),q.y+uy*(half+(opts.lane||1.5))]});});});
   const laneHit=(a,b,net,m)=>{const L=Math.hypot(b[0]-a[0],b[1]-a[1]);const n=Math.max(1,Math.ceil(L/0.1));for(let i=0;i<=n;i++){const x=a[0]+(b[0]-a[0])*i/n,y=a[1]+(b[1]-a[1])*i/n;if(lanes.some(l=>l.net!==net&&PCB.segDist(x,y,l.a,l.b)<m))return true;}return false;};
   const inLane=(x,y,net)=>lanes.some(l=>l.net!==net&&PCB.segDist(x,y,l.a,l.b)<via.d/2+clr+0.12);
+  // exact clearance of a new via (and its stub) to other nets' copper — the grid alone can be off by up to a cell
+  const SX=AUTOROUTE.shapesOfBoard(B).filter(x=>!x.hole||true);const XC=2,XG=new Map();const xadd=(s0)=>{const b=s0.k==='cap'?[Math.min(s0.a[0],s0.b[0])-s0.r,Math.min(s0.a[1],s0.b[1])-s0.r,Math.max(s0.a[0],s0.b[0])+s0.r,Math.max(s0.a[1],s0.b[1])+s0.r]:(e=>[s0.x-e,s0.y-e,s0.x+e,s0.y+e])(Math.hypot(s0.hw,s0.hh));
+    for(let x=Math.floor(b[0]/XC);x<=Math.floor(b[2]/XC);x++)for(let y=Math.floor(b[1]/XC);y<=Math.floor(b[3]/XC);y++){const kk=x*100003+y;let a=XG.get(kk);if(!a)XG.set(kk,a=[]);a.push(s0);}};SX.forEach(xadd);
+  const near=(x,y)=>{const o=new Set();for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const a=XG.get((Math.floor(x/XC)+i)*100003+Math.floor(y/XC)+j);if(a)a.forEach(s0=>o.add(s0));}return o;};
+  const exactOk=(x,y,stub,p,li)=>{const r=via.d/2;for(const s0 of near(x,y)){if(s0.net===p.net&&!s0.hole)continue;const m=s0.hole?Math.max(clr,0.25):clr;if(AUTOROUTE.dist(s0,x,y)-r<m-0.005)return false;}
+    if(stub){const L=Math.hypot(x-p.x,y-p.y),n=Math.max(1,Math.ceil(L/0.05));for(let i=0;i<=n;i++){const qx=p.x+(x-p.x)*i/n,qy=p.y+(y-p.y)*i/n;for(const s0 of near(qx,qy)){if(s0.net===p.net&&!s0.hole)continue;if(!s0.L.includes(li))continue;if(AUTOROUTE.dist(s0,qx,qy)-w/2<clr-0.005)return false;}}}
+    xadd({k:'cap',a:[x,y],b:[x,y],r,L:ALL,net:p.net});if(stub)xadd({k:'cap',a:[p.x,p.y],b:[x,y],r:w/2,L:[li],net:p.net});return true;};
   B.comps.forEach(c=>c.pads.forEach(p=>{
     if(!p.net||!pour[p.net]||p.drill)return;const li=p.side==='B'?NL-1:0;if(pour[p.net].has(li))return;if(joined.has(p))return;
     if(B.vias.some(v=>v.net===p.net&&Math.abs(v.x-p.x)<=p.w/2+v.d/2&&Math.abs(v.y-p.y)<=p.h/2+v.d/2&&Math.hypot(v.x-p.x,v.y-p.y)<Math.max(p.w,p.h)/2+v.d))return;
     const k=P.idOf(p.net);const pw=p.shape==='parts'&&p.lbb?p.lbb[2]-p.lbb[0]:p.w,ph=p.shape==='parts'&&p.lbb?p.lbb[3]-p.lbb[1]:p.h;
     // fine-pitch pins can wait until the signals have escaped (opts.skipFine), then take whatever room is left
     if(opts.skipFine&&Math.min(pw,ph)<0.36){fail.push(p.ref+'.'+p.n);return;}
+    const put0=(x,y,stub)=>exactOk(x,y,stub,p,li)&&(put(x,y,stub),true);
     const put=(x,y,stub)=>{const v={x,y,d:via.d,drill:via.drill,net:p.net,auto:true,fan:true};B.vias.push(v);add.push(v);
       AUTOROUTE.paint(G,{k:'cap',a:[x,y],b:[x,y],r:via.d/2,L:ALL,net:p.net},k,wMax,via.d/2,clr);
       if(stub){const t={t:'seg',a:[p.x,p.y],b:[x,y],w,net:p.net,auto:true,fan:true,_side:keys[li]};B.layers[keys[li]+'.cu'].push(t);add.push(t);AUTOROUTE.paint(G,{k:'cap',a:t.a,b:t.b,r:w/2,L:[li],net:p.net},k,wMax,via.d/2,clr);}};
     // big (exposed / tab) pads: vias inside the pad, a small array for heat when asked
     if(Math.min(pw,ph)>=1.2&&pw*ph>=2){const n=opts.thermal?Math.max(1,Math.min(9,Math.floor(pw/1.2)*Math.floor(ph/1.2))):1;const nx=Math.max(1,Math.round(Math.sqrt(n*pw/ph))),ny=Math.max(1,Math.ceil(n/nx));let any=false;
       const a=(p.ang||0)*D2R;for(let i=0;i<nx;i++)for(let j=0;j<ny;j++){const lx=(i-(nx-1)/2)*Math.min(1.2,(pw-0.8)/Math.max(1,nx-1||1)),ly=(j-(ny-1)/2)*Math.min(1.2,(ph-0.8)/Math.max(1,ny-1||1));
-        const x=p.x+lx*Math.cos(a)-ly*Math.sin(a),y=p.y+lx*Math.sin(a)+ly*Math.cos(a);if(okV(x,y,k)){put(x,y,false);any=true;}}
+        const x=p.x+lx*Math.cos(a)-ly*Math.sin(a),y=p.y+lx*Math.sin(a)+ly*Math.cos(a);if(okV(x,y,k)&&put0(x,y,false))any=true;}
       if(any)return;}
     // a fine-pitch supply pin next to its decoupling cap: tie the pin to the cap pad on the surface and let the cap pad carry the via
     if(Math.min(pw,ph)<0.36){const near=B.nets[p.net].pads.filter(q=>q!==p&&q.side===p.side&&!q.drill&&Math.min(q.w,q.h)>=0.36&&Math.hypot(q.x-p.x,q.y-p.y)<4.5).sort((q,r)=>Math.hypot(q.x-p.x,q.y-p.y)-Math.hypot(r.x-p.x,r.y-p.y));
@@ -421,10 +436,12 @@ function fanout(B,opts){
     const ca=(c.bb[0]+c.bb[2])/2,cb=(c.bb[1]+c.bb[3])/2;let ox=p.x-ca,oy=p.y-cb;const ol=Math.hypot(ox,oy)||1;ox/=ol;oy/=ol;
     const dirs=[];for(let d=0;d<8;d++){const t=d*45*D2R;dirs.push([Math.cos(t),Math.sin(t)]);}
     const a=-(p.ang||0)*D2R;const ext=(ux,uy)=>{const lx=ux*Math.cos(a)-uy*Math.sin(a),ly=ux*Math.sin(a)+uy*Math.cos(a);return Math.min(Math.abs(lx)>1e-9?pw/2/Math.abs(lx):1e9,Math.abs(ly)>1e-9?ph/2/Math.abs(ly):1e9);};
-    const cands=[];dirs.forEach(([ux,uy])=>{const s0=ext(ux,uy)+via.d/2+clr*0.5;for(let s=s0;s<=s0+(Math.min(pw,ph)<0.36?3.4:2.4);s+=0.1)cands.push({x:p.x+ux*s,y:p.y+uy*s,sc:s-1.2*(ux*ox+uy*oy)});});
+    const cands=[];dirs.forEach(([ux,uy])=>{const s0=ext(ux,uy)+via.d/2+clr*0.5;for(let s=s0;s<=s0+(opts.reach?+opts.reach:(Math.min(pw,ph)<0.36?3.4:2.4));s+=0.1)cands.push({x:p.x+ux*s,y:p.y+uy*s,sc:s-1.2*(ux*ox+uy*oy)});});
     cands.sort((q,r)=>q.sc-r.sc);
-    for(const q of cands){if(okV(q.x,q.y,k)&&!inLane(q.x,q.y,p.net)&&okT([p.x,p.y],[q.x,q.y],li,k)){put(q.x,q.y,true);return;}}
-    for(const q of cands){if(okV(q.x,q.y,k)&&okT([p.x,p.y],[q.x,q.y],li,k)){put(q.x,q.y,true);return;}}
+    for(const q of cands){if(okV(q.x,q.y,k)&&!inLane(q.x,q.y,p.net)&&okT([p.x,p.y],[q.x,q.y],li,k)&&put0(q.x,q.y,true))return;}
+    for(const q of cands){if(okV(q.x,q.y,k)&&okT([p.x,p.y],[q.x,q.y],li,k)&&put0(q.x,q.y,true))return;}
+    // no room around the pad (dense double-sided board): a via in the pad itself (filled / capped via-in-pad)
+    if(opts.inPad!==false&&Math.min(pw,ph)>=via.d+0.05&&okV(p.x,p.y,k)&&put0(p.x,p.y,false)){add[add.length-1].inpad=true;return;}
     fail.push(p.ref+'.'+p.n);}));
   PCBEDIT.rebuildNets(B);
   return{vias:add.filter(x=>x.d).length,added:add,fail};

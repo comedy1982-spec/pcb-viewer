@@ -549,6 +549,25 @@ function pruneIslands(B,nets){const S=shapesOfBoard(B);const keys=PC.cuKeys(B);c
     if(g.some(s=>(s.prim&&!s.fill)||(s.via&&!s.via.stitch)))return;g.forEach(s=>{if(s.fill)kill.add(s.prim);else if(s.via)killV.add(s.via);});}));
   if(kill.size)keys.forEach(k=>{B.layers[k+'.cu']=B.layers[k+'.cu'].filter(p=>!kill.has(p));});if(killV.size)B.vias=B.vias.filter(v=>!killV.has(v));
   return{fills:kill.size,vias:killV.size};}
+/* last pass: short unconnected pairs (a pad that found no room for its own via next to copper of its net) joined by a
+   straight or L-shaped track on a layer both ends share, only where the exact clearance to every other net holds */
+function bridgeRats(B,o){o=Object.assign({clear:0.15,width:0.25,maxLen:4},o||{});if(typeof PCBEDIT==='undefined')return{added:0};
+  const keys=PC.cuKeys(B),st=PC.stackOf(B);const sigL=st.map((x,i)=>x.role==='sig'?i:-1).filter(i=>i>=0);let added=0;
+  for(let pass=0;pass<2;pass++){const R=PCBEDIT.ratsnest(B).filter(r=>r.len<=o.maxLen);if(!R.length)break;const S=shapesOfBoard(B);
+    const C=2,G=new Map();const gadd=s=>{const b=bboxOf(s,0);for(let x=Math.floor(b[0]/C);x<=Math.floor(b[2]/C);x++)for(let y=Math.floor(b[1]/C);y<=Math.floor(b[3]/C);y++){const k=x*100003+y;let a=G.get(k);if(!a)G.set(k,a=[]);a.push(s);}};S.forEach(gadd);
+    const near=(x,y)=>{const out=new Set();for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const a=G.get((Math.floor(x/C)+i)*100003+Math.floor(y/C)+j);if(a)a.forEach(s=>out.add(s));}return out;};
+    const at=(p,net)=>S.filter(s=>s.net===net&&dist(s,p[0],p[1])<=0.01);
+    const segOk=(a,b,L,net,w)=>{const n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/0.05));for(let i=0;i<=n;i++){const x=a[0]+(b[0]-a[0])*i/n,y=a[1]+(b[1]-a[1])*i/n;
+      for(const s of near(x,y)){if(!s.L.includes(L))continue;if(s.net===net&&!s.hole)continue;const m=s.hole?Math.max(o.clear,0.25):o.clear;if(dist(s,x,y)-w/2<m-0.005)return false;}}return true;};
+    const ring=B.outline[0];const inB=p=>!ring||PC.inRing(p[0],p[1],ring);
+    R.forEach(r=>{const A=at(r.a,r.net),Bs=at(r.b,r.net);if(!A.length||!Bs.length)return;
+      const LA=new Set([].concat(...A.map(s=>s.L))),Ls=sigL.filter(l=>LA.has(l)&&Bs.some(s=>s.L.includes(l)));
+      for(const L of Ls){const w=o.width;const opts=[[r.a,r.b],[r.a,[r.b[0],r.a[1]],r.b],[r.a,[r.a[0],r.b[1]],r.b]];
+        for(const pts of opts){if(!pts.every(inB))continue;let ok=true;for(let i=1;i<pts.length;i++)if(!segOk(pts[i-1],pts[i],L,r.net,w)){ok=false;break;}if(!ok)continue;
+          const t=pts.length===2?{t:'seg',a:pts[0].slice(),b:pts[1].slice(),w,net:r.net,auto:true,_side:keys[L]}:{t:'path',pts:pts.map(p=>p.slice()),w,net:r.net,auto:true,_side:keys[L]};
+          B.layers[keys[L]+'.cu'].push(t);added++;for(let i=1;i<pts.length;i++)gadd({k:'cap',a:pts[i-1],b:pts[i],r:w/2,L:[L],net:r.net});return;}}});
+    PCBEDIT.rebuildNets(B);}
+  return{added};}
 function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,minArea:2.5,grid:0.05},o||{});const keys=PC.cuKeys(B),NL=keys.length;
   const P=prepare(B,{grid:o.grid,clear:0.15,width:{signal:0.1,power:0.1},via:o.via});const G=P.G;let n=0;const want=new Set(nets);
   B.comps.forEach(c=>c.pads.forEach(p=>{if(!want.has(p.net)||p.drill||p.w*p.h<o.minArea)return;const k=P.idOf(p.net);const sh=padShape(p,NL);const a=(p.ang||0)*D2R,ca=Math.cos(a),sa=Math.sin(a);
@@ -559,6 +578,6 @@ function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,min
       B.vias.push({x:+x.toFixed(3),y:+y.toFixed(3),d:o.via.d,drill:o.via.drill,net:p.net,stitch:true,inpad:true});n++;}}));
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}
 
-return{pruneIslands,padVias,stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+return{bridgeRats,pruneIslands,padVias,stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

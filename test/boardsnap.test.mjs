@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import { load } from './load.mjs';
-const { PRODUCTS, HWARCH, NEWPROJ, BOARDSNAP, SNAP_DADU8, PCBEDIT, PCB } = load();
+const { PRODUCTS, HWARCH, NEWPROJ, BOARDSNAP, SNAP_DADU8, SNAP_DADU8B, PCBEDIT, PCB } = load();
 function fresh(m) {
   const prof = PRODUCTS.detect(m.profile);
   const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[m.fet || 0].label;
@@ -24,4 +24,14 @@ test('board snapshot round trip: save → apply gives the same pads, copper and 
   const B2 = fresh(SNAP_DADU8.meta);BOARDSNAP.apply(B2, JSON.parse(JSON.stringify(S2)));
   let d = 0;B.comps.forEach(c => { const c2 = B2.comps.find(x => x.ref === c.ref);c.pads.forEach((p, i) => { d = Math.max(d, Math.hypot(p.x - c2.pads[i].x, p.y - c2.pads[i].y)); }); });
   assert.ok(d < 0.002, 'pad drift ' + d);
+});
+test('Dadu double-sided example: 85 × 55 mm, parts on the bottom, restores clean (no opens, DRC 0, 20 A widths met)', () => {
+  const B = fresh(SNAP_DADU8B.meta);
+  const r = BOARDSNAP.apply(B, SNAP_DADU8B);
+  assert.deepEqual(r.missing, []);
+  assert.equal(B.W, 85);assert.equal(B.H, 55);
+  assert.ok(B.comps.filter(c => c.side === 'B').length >= 30);
+  assert.equal(PCBEDIT.ratsnest(B).length, 0);
+  assert.equal(PCBEDIT.drc(B).length, 0);
+  for (const n of B.powerReport.nets) assert.ok(n.width === '직결' || n.width >= n.need, n.net + ' ' + n.width);
 });
