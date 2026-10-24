@@ -292,6 +292,15 @@ async function cliRoute(a){CLI.routed=true;
     for(;;){const q=it2.next();if(q.done)break;}PCBEDIT.rebuildNets(BD);const still=new Set(AUTOROUTE.openNets(BD).map(o=>o.net));const narrowed=wideOpen.filter(n=>!still.has(n));
     if(narrowed.length)lines.push(`넓은 폭으로 자리가 없어 기본 폭으로 배선: ${narrowed.map(n=>`${n} (${netWidth[n]} → ${pwr} mm)`).join(', ')} → 동박면(pour)으로 보강하거나 보드를 키우세요`);
     open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));}
+  // supplies that still could not leave a fine-pitch pin (a 0.3 mm supply track does not fit a 0.5 mm pitch): once more at signal width
+  const thinOpen=open.map(o=>o.net).filter(n=>!CLI.stopReq&&!(PW&&PW.nets.includes(n)));
+  if(thinOpen.length){cliSet(prog,`미세 피치 핀에서 신호 폭으로 다시 배선… (${thinOpen.join(', ')})`);await cliTick();const nw3=Object.assign({},netWidth);thinOpen.forEach(n=>{delete nw3[n];});
+    const snap3=AUTOROUTE.copperSnap(BD);const r0=PCBEDIT.ratsnest(BD,thinOpen).length;AUTOROUTE.unroute(BD,thinOpen);PCBEDIT.rebuildNets(BD);
+    const it4=AUTOROUTE.jobRR(BD,thinOpen,{width:{signal:sig,power:sig},netWidth:nw3,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?1500000:600000),viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,rounds:4});
+    for(;;){const q=it4.next();if(q.done)break;}PCBEDIT.rebuildNets(BD);const r1=PCBEDIT.ratsnest(BD,thinOpen).length;
+    if(r1>r0){AUTOROUTE.copperRestore(BD,snap3);PCBEDIT.rebuildNets(BD);}else{const still=new Set(AUTOROUTE.openNets(BD).map(o=>o.net));const fixed=thinOpen.filter(n=>!still.has(n));
+      if(fixed.length)lines.push(`미세 피치 핀 탈출 — 신호 폭 ${sig} mm로 다시 배선: ${fixed.join(', ')}`);}
+    open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));}
   const stopped=!!CLI.stopReq;cliSet(prog,`${stopped?'중지함 — ':''}배선 ${nets.length-open.length}/${nets.length} 넷 · ${(ms/1000).toFixed(1)} s${res?` · 트랙 ${f1(res.len)} mm · 비아 ${res.vias}개${res.rounds?` · 다시 배선 ${res.rounds}회`:''}`:''}`);
   if(open.length)lines.push(`미배선 ${open.length}개: ${open.slice(0,10).map(o=>o.net).join(', ')}${open.length>10?' …':''} → place로 간격을 바꾸거나 board size로 보드를 키우고 다시 route`);
   // return vias next to the layer changes of clock / analog nets
@@ -327,14 +336,15 @@ function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.
   const layers=ml?[0,NL-1]:[0];if(ml)BD.layers[keys[NL-1]+'.cu']=BD.layers[keys[NL-1]+'.cu'].filter(p=>!(p.t==='pour'&&!p.plane));
   const fs=layers.map(l=>AUTOROUTE.powerFill(BD,{nets:fillNets,rect,clr:cl,via,width,layer:l,claim:BD.powerBus&&BD.nets[BD.powerBus.net]&&l===0?[BD.powerBus]:[]}));
   const tb=ml?AUTOROUTE.stitchLayers(BD,fillNets.filter(n=>!PW.planes.has(n)&&WW[n].cls!=='gnd'),{via}):0;
+  const pr=AUTOROUTE.pruneIslands?AUTOROUTE.pruneIslands(BD,hi):{fills:0,vias:0};
   const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return;const need=CURRENT.ipcWidth(WW[n].I,{oz,dT});
     const bs=layers.map(l=>AUTOROUTE.bottleneck(BD,n,{layer:l,proj:l!==0}));const dir=bs[0].terms.length>=2&&!bs[0].open&&bs[0].width==null;
     const ws=bs.map(b=>b.width!=null&&!b.open?b.width:0);const eff=+ws.reduce((x,y)=>x+y,0).toFixed(2);
     rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,layers:ws,open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.ipcRise(eff,WW[n].I,{oz}):null,terms:bs[0].terms});});
   const area={};fs.forEach((f,i)=>f.area.forEach(x=>{area[x.net]=(area[x.net]||0)+x.mm2;}));
-  BD.powerReport={oz,dT,nets:rep,fill:area,vias:fs.reduce((a,f)=>a+f.vias,0)+tb+pv,padVias:pv,planes:[...PW.planes],at:Date.now()};
+  BD.powerReport={oz,dT,nets:rep,fill:area,vias:fs.reduce((a,f)=>a+f.vias,0)+tb+pv-pr.vias,padVias:pv,pruned:pr,planes:[...PW.planes],at:Date.now()};
   const bad=rep.filter(x=>!x.ok);
-  return`전력 동박(${oz} oz · ΔT ${dT} °C · ${ml?'위·아래층':'위층'}${PW.planes.size?' · 평면 '+[...PW.planes].join(', '):''}): ${Object.entries(area).map(([n,a])=>n+' '+a.toFixed(0)+' mm²').join(' · ')} · 스티칭 비아 ${BD.powerReport.vias}개 (패드 안 ${pv})\n`+
+  return`전력 동박(${oz} oz · ΔT ${dT} °C · ${ml?'위·아래층':'위층'}${PW.planes.size?' · 평면 '+[...PW.planes].join(', '):''}): ${Object.entries(area).map(([n,a])=>n+' '+a.toFixed(0)+' mm²').join(' · ')} · 스티칭 비아 ${BD.powerReport.vias}개 (패드 안 ${pv})${pr.fills?` · 고립 동박 ${pr.fills}조각 제거`:''}\n`+
     rep.map(x=>`  ${x.ok?'✓':'✕'} ${x.net} ${x.I} A — 유효 폭 ${typeof x.width==='string'?x.width:x.width+' mm'+(x.layers&&x.layers.length>1?` (위 ${x.layers[0]} + 아래 ${x.layers[1]})`:'')}${x.open?' (위층 단자 사이 끊김)':''} / 필요 ${x.need} mm${x.rise!=null&&!x.ok?` → 온도 상승 약 ${Math.min(999,x.rise)} °C`:''}`).join('\n')+
     (bad.length?`\n→ 전류 경로 부족 ${bad.length}개: 보드를 키우거나(board size) 층을 늘리세요(board layers)`:'');}
 function cliUnroute(){cliEnsureEdit();const before=cliSnap();const n=PCB.cuKeys(BD).reduce((a,s)=>a+BD.layers[s+'.cu'].filter(p=>p.auto).length,0)+BD.vias.filter(v=>v.auto).length;AUTOROUTE.unroute(BD);PCBEDIT.rebuildNets(BD);cliCommit(before,'unroute');cliAfter(false);return`자동 배선 ${n}개(트랙·비아)를 지웠습니다.`;}

@@ -298,6 +298,27 @@ function place(B,opts){
     else{X[i]+=(R()*2-1)*range;Y[i]+=(R()*2-1)*range;}
     const d=costSet([i])-c0;if(d<=0||R()<Math.exp(-d/T))acc++;else load(i,sv);
   }
+  // crystals: the annealer can leave the crystal on the far side of the MCU (long XTAL lines that may not route at all).
+  // Put it just outside the MCU's XTAL pins, facing them, with its load caps behind it; legalisation then nudges them
+  // to the nearest free spot.
+  const escX=opts.escape!=null?+opts.escape:1.3;
+  movable.forEach((o,i)=>{if(!o.xtal)return;const xn=o.nets.filter(nm=>nm&&!isGnd(nm));if(!xn.length)return;
+    const mo=info.list.find(q=>q.mcu&&q.c.pads.some(p=>xn.includes(p.net)));if(!mo)return;const mj=idx.get(mo.ref);
+    let pts,ctr;if(mj!=null){const pp=G[mj].pads[V[mj]],b=G[mj].bb[V[mj]];pts=mo.c.pads.map((p,k)=>xn.includes(p.net)?[X[mj]+pp[k][0],Y[mj]+pp[k][1]]:null).filter(Boolean);ctr=[X[mj]+(b[0]+b[2])/2,Y[mj]+(b[1]+b[3])/2];}
+    else{pts=mo.c.pads.filter(p=>xn.includes(p.net)).map(p=>[p.x,p.y]);ctr=[(mo.c.bb[0]+mo.c.bb[2])/2,(mo.c.bb[1]+mo.c.bb[3])/2];}
+    if(!pts.length)return;const m=[pts.reduce((a,p)=>a+p[0],0)/pts.length,pts.reduce((a,p)=>a+p[1],0)/pts.length];
+    let dx=m[0]-ctr[0],dy=m[1]-ctr[1];if(Math.abs(dx)>Math.abs(dy)){dx=Math.sign(dx)||1;dy=0;}else{dy=Math.sign(dy)||1;dx=0;}
+    const side=mj!=null?V[mj]&4:(mo.c.side==='B'?4:0);let best=null;
+    for(let r=0;r<4;r++){const v=side|r;const b=G[i].bb[v];const ext=dx?(b[2]-b[0])/2:(b[3]-b[1])/2;const d=escX+0.8+ext;
+      const cx=m[0]+dx*d,cy=m[1]+dy*d;const x=cx-(b[0]+b[2])/2,y=cy-(b[1]+b[3])/2;
+      // the crystal pad of each XTAL net should face its MCU pin
+      let c=0;o.c.pads.forEach((p,k)=>{if(!xn.includes(p.net))return;const q=G[i].pads[v][k];const t=pts.find((_,j)=>mo.c.pads.filter(pp=>xn.includes(pp.net))[j].net===p.net)||m;c+=Math.hypot(x+q[0]-t[0],y+q[1]-t[1]);});
+      if(!best||c<best.c)best={c,v,x,y,ext};}
+    X[i]=best.x;Y[i]=best.y;V[i]=best.v;
+    // load caps (two-pin parts on an XTAL net) just beyond the crystal, one on each side of the axis
+    const caps=movable.map((q,k)=>k).filter(k=>k!==i&&ROLE[k].two&&ROLE[k].nets.some(nm=>xn.includes(nm)));
+    caps.forEach((k,j)=>{const b=G[k].bb[V[k]];const far=escX+0.8+2*best.ext+1.4;const sgn=j%2?1:-1;
+      const cx=m[0]+dx*far+(dy?sgn*1.6:0),cy=m[1]+dy*far+(dx?sgn*1.6:0);V[k]=side|(dx?1:0);const b2=G[k].bb[V[k]];X[k]=cx-(b2[0]+b2[2])/2;Y[k]=cy-(b2[1]+b2[3])/2;});});
   wOv=405;
   // legalise on the grid: biggest parts first, nearest free spot (full spacing, then half, then the DRC minimum)
   const grid=opts.grid||0.25;const snap=v=>Math.round(v/grid)*grid;const escG=opts.escape!=null?+opts.escape:1.3;

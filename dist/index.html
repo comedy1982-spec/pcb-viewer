@@ -5383,8 +5383,15 @@ function shapeGap(a,b){ // ≤ 0 when touching (sampled; fine for pads/tracks)
   if(a.k==='cap'&&b.k==='cap'){const d=Math.min(PC.segDist(a.a[0],a.a[1],b.a,b.b),PC.segDist(a.b[0],a.b[1],b.a,b.b),PC.segDist(b.a[0],b.a[1],a.a,a.b),PC.segDist(b.b[0],b.b[1],a.a,a.b));return d-a.r-b.r;}
   if(a.k!=='cap')[a,b]=[b,a];
   if(a.k==='cap'){const n=Math.max(1,Math.ceil(Math.hypot(a.b[0]-a.a[0],a.b[1]-a.a[1])/0.05));let m=1e9;for(let i=0;i<=n;i++){const t=i/n;m=Math.min(m,dist(b,a.a[0]+(a.b[0]-a.a[0])*t,a.a[1]+(a.b[1]-a.a[1])*t)-a.r);}return m;}
-  const pts=s=>{const c=Math.cos(s.ang),sn=Math.sin(s.ang);return[[0,0],[1,1],[1,-1],[-1,1],[-1,-1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
-  return Math.min(...pts(a).map(p=>dist(b,p[0],p[1])),...pts(b).map(p=>dist(a,p[0],p[1])));
+  // two rectangles: exact (separating axes; overlap → −penetration, else closest edge distance) — corner sampling missed crossings
+  const cor=s=>{const c=Math.cos(s.ang),sn=Math.sin(s.ang);return[[1,1],[1,-1],[-1,-1],[-1,1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
+  const P=cor(a),Q=cor(b);let pen=1e9,sep=false;
+  [a.ang,a.ang+Math.PI/2,b.ang,b.ang+Math.PI/2].forEach(t=>{if(sep)return;const ux=Math.cos(t),uy=Math.sin(t);const pr=X=>X.map(p=>p[0]*ux+p[1]*uy);
+    const pa=pr(P),pb=pr(Q);const o=Math.min(Math.max(...pa),Math.max(...pb))-Math.max(Math.min(...pa),Math.min(...pb));if(o<0)sep=true;else pen=Math.min(pen,o);});
+  if(!sep)return -pen;
+  let m=1e9;for(let i=0;i<4;i++){const a0=P[i],a1=P[(i+1)%4],b0=Q[i],b1=Q[(i+1)%4];
+    for(let j=0;j<4;j++){m=Math.min(m,PC.segDist(Q[j][0],Q[j][1],a0,a1),PC.segDist(P[j][0],P[j][1],b0,b1));}}
+  return m;
 }
 // groups of a net that are not yet joined by copper
 function components(S,net){
@@ -5873,6 +5880,15 @@ function stitchLayers(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},step:1.2
 
 /* via-in-pad on the big power pads (exposed pads of the bridge FETs, DPAK tabs, terminal-side pads): the current reaches the
    inner planes / the other outer layer right at the part instead of through one fan-out via */
+/* dead copper: fill islands of a net that touch none of its pads (and, for a plane / poured net, no via down to it) carry
+   no current and only show up as unconnected copper — remove them with their stitching vias (never a routed track) */
+function pruneIslands(B,nets){const S=shapesOfBoard(B);const keys=PC.cuKeys(B);const pour=new Set();
+  keys.forEach(k=>B.layers[k+'.cu'].forEach(p=>{if(p.t==='pour'&&p.net)pour.add(p.net);}));PC.stackOf(B).forEach(x=>{if(x.net&&x.role!=='sig')pour.add(x.net);});
+  const kill=new Set(),killV=new Set();
+  nets.forEach(net=>components(S,net).forEach(g=>{if(g.some(s=>s.pad))return;if(pour.has(net)&&g.some(s=>s.via))return;
+    if(g.some(s=>(s.prim&&!s.fill)||(s.via&&!s.via.stitch)))return;g.forEach(s=>{if(s.fill)kill.add(s.prim);else if(s.via)killV.add(s.via);});}));
+  if(kill.size)keys.forEach(k=>{B.layers[k+'.cu']=B.layers[k+'.cu'].filter(p=>!kill.has(p));});if(killV.size)B.vias=B.vias.filter(v=>!killV.has(v));
+  return{fills:kill.size,vias:killV.size};}
 function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,minArea:2.5,grid:0.05},o||{});const keys=PC.cuKeys(B),NL=keys.length;
   const P=prepare(B,{grid:o.grid,clear:0.15,width:{signal:0.1,power:0.1},via:o.via});const G=P.G;let n=0;const want=new Set(nets);
   B.comps.forEach(c=>c.pads.forEach(p=>{if(!want.has(p.net)||p.drill||p.w*p.h<o.minArea)return;const k=P.idOf(p.net);const sh=padShape(p,NL);const a=(p.ang||0)*D2R,ca=Math.cos(a),sa=Math.sin(a);
@@ -5883,7 +5899,7 @@ function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,min
       B.vias.push({x:+x.toFixed(3),y:+y.toFixed(3),d:o.via.d,drill:o.via.drill,net:p.net,stitch:true,inpad:true});n++;}}));
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}
 
-return{padVias,stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+return{pruneIslands,padVias,stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 
 
@@ -6011,6 +6027,12 @@ const AUTOROUTE_gap=(a,b)=>{ // same sampled gap as the router, local copy to st
   if(a.k==='cap'&&b.k==='cap'){const d=Math.min(PCB.segDist(a.a[0],a.a[1],b.a,b.b),PCB.segDist(a.b[0],a.b[1],b.a,b.b),PCB.segDist(b.a[0],b.a[1],a.a,a.b),PCB.segDist(b.b[0],b.b[1],a.a,a.b));return d-a.r-b.r;}
   if(a.k!=='cap')[a,b]=[b,a];
   if(a.k==='cap'){const n=Math.max(1,Math.ceil(Math.hypot(a.b[0]-a.a[0],a.b[1]-a.a[1])/0.05));let m=1e9;for(let i=0;i<=n;i++){const t=i/n;m=Math.min(m,dist(b,a.a[0]+(a.b[0]-a.a[0])*t,a.a[1]+(a.b[1]-a.a[1])*t)-a.r);}return m;}
+  if(a.k==='rect'&&b.k==='rect'){ // exact: separating axes, else closest edges
+    const cor=s=>{const c=Math.cos(s.ang||0),sn=Math.sin(s.ang||0);return[[1,1],[1,-1],[-1,-1],[-1,1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
+    const P=cor(a),Q=cor(b);let pen=1e9,sep=false;
+    [a.ang||0,(a.ang||0)+Math.PI/2,b.ang||0,(b.ang||0)+Math.PI/2].forEach(t=>{if(sep)return;const ux=Math.cos(t),uy=Math.sin(t);const pr=X=>X.map(p=>p[0]*ux+p[1]*uy);
+      const pa=pr(P),pb=pr(Q);const o=Math.min(Math.max(...pa),Math.max(...pb))-Math.max(Math.min(...pa),Math.min(...pb));if(o<0)sep=true;else pen=Math.min(pen,o);});
+    if(!sep)return -pen;let m=1e9;for(let i=0;i<4;i++)for(let j=0;j<4;j++)m=Math.min(m,PCB.segDist(Q[j][0],Q[j][1],P[i],P[(i+1)%4]),PCB.segDist(P[j][0],P[j][1],Q[i],Q[(i+1)%4]));return m;}
   const pts=s=>{const c=Math.cos(s.ang),sn=Math.sin(s.ang);return[[0,0],[1,1],[1,-1],[-1,1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
   return Math.min(...pts(a).map(p=>dist(b,p[0],p[1])),...pts(b).map(p=>dist(a,p[0],p[1])));
 };
@@ -6506,6 +6528,27 @@ function place(B,opts){
     else{X[i]+=(R()*2-1)*range;Y[i]+=(R()*2-1)*range;}
     const d=costSet([i])-c0;if(d<=0||R()<Math.exp(-d/T))acc++;else load(i,sv);
   }
+  // crystals: the annealer can leave the crystal on the far side of the MCU (long XTAL lines that may not route at all).
+  // Put it just outside the MCU's XTAL pins, facing them, with its load caps behind it; legalisation then nudges them
+  // to the nearest free spot.
+  const escX=opts.escape!=null?+opts.escape:1.3;
+  movable.forEach((o,i)=>{if(!o.xtal)return;const xn=o.nets.filter(nm=>nm&&!isGnd(nm));if(!xn.length)return;
+    const mo=info.list.find(q=>q.mcu&&q.c.pads.some(p=>xn.includes(p.net)));if(!mo)return;const mj=idx.get(mo.ref);
+    let pts,ctr;if(mj!=null){const pp=G[mj].pads[V[mj]],b=G[mj].bb[V[mj]];pts=mo.c.pads.map((p,k)=>xn.includes(p.net)?[X[mj]+pp[k][0],Y[mj]+pp[k][1]]:null).filter(Boolean);ctr=[X[mj]+(b[0]+b[2])/2,Y[mj]+(b[1]+b[3])/2];}
+    else{pts=mo.c.pads.filter(p=>xn.includes(p.net)).map(p=>[p.x,p.y]);ctr=[(mo.c.bb[0]+mo.c.bb[2])/2,(mo.c.bb[1]+mo.c.bb[3])/2];}
+    if(!pts.length)return;const m=[pts.reduce((a,p)=>a+p[0],0)/pts.length,pts.reduce((a,p)=>a+p[1],0)/pts.length];
+    let dx=m[0]-ctr[0],dy=m[1]-ctr[1];if(Math.abs(dx)>Math.abs(dy)){dx=Math.sign(dx)||1;dy=0;}else{dy=Math.sign(dy)||1;dx=0;}
+    const side=mj!=null?V[mj]&4:(mo.c.side==='B'?4:0);let best=null;
+    for(let r=0;r<4;r++){const v=side|r;const b=G[i].bb[v];const ext=dx?(b[2]-b[0])/2:(b[3]-b[1])/2;const d=escX+0.8+ext;
+      const cx=m[0]+dx*d,cy=m[1]+dy*d;const x=cx-(b[0]+b[2])/2,y=cy-(b[1]+b[3])/2;
+      // the crystal pad of each XTAL net should face its MCU pin
+      let c=0;o.c.pads.forEach((p,k)=>{if(!xn.includes(p.net))return;const q=G[i].pads[v][k];const t=pts.find((_,j)=>mo.c.pads.filter(pp=>xn.includes(pp.net))[j].net===p.net)||m;c+=Math.hypot(x+q[0]-t[0],y+q[1]-t[1]);});
+      if(!best||c<best.c)best={c,v,x,y,ext};}
+    X[i]=best.x;Y[i]=best.y;V[i]=best.v;
+    // load caps (two-pin parts on an XTAL net) just beyond the crystal, one on each side of the axis
+    const caps=movable.map((q,k)=>k).filter(k=>k!==i&&ROLE[k].two&&ROLE[k].nets.some(nm=>xn.includes(nm)));
+    caps.forEach((k,j)=>{const b=G[k].bb[V[k]];const far=escX+0.8+2*best.ext+1.4;const sgn=j%2?1:-1;
+      const cx=m[0]+dx*far+(dy?sgn*1.6:0),cy=m[1]+dy*far+(dx?sgn*1.6:0);V[k]=side|(dx?1:0);const b2=G[k].bb[V[k]];X[k]=cx-(b2[0]+b2[2])/2;Y[k]=cy-(b2[1]+b2[3])/2;});});
   wOv=405;
   // legalise on the grid: biggest parts first, nearest free spot (full spacing, then half, then the DRC minimum)
   const grid=opts.grid||0.25;const snap=v=>Math.round(v/grid)*grid;const escG=opts.escape!=null?+opts.escape:1.3;
@@ -14591,6 +14634,15 @@ async function cliRoute(a){CLI.routed=true;
     for(;;){const q=it2.next();if(q.done)break;}PCBEDIT.rebuildNets(BD);const still=new Set(AUTOROUTE.openNets(BD).map(o=>o.net));const narrowed=wideOpen.filter(n=>!still.has(n));
     if(narrowed.length)lines.push(`넓은 폭으로 자리가 없어 기본 폭으로 배선: ${narrowed.map(n=>`${n} (${netWidth[n]} → ${pwr} mm)`).join(', ')} → 동박면(pour)으로 보강하거나 보드를 키우세요`);
     open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));}
+  // supplies that still could not leave a fine-pitch pin (a 0.3 mm supply track does not fit a 0.5 mm pitch): once more at signal width
+  const thinOpen=open.map(o=>o.net).filter(n=>!CLI.stopReq&&!(PW&&PW.nets.includes(n)));
+  if(thinOpen.length){cliSet(prog,`미세 피치 핀에서 신호 폭으로 다시 배선… (${thinOpen.join(', ')})`);await cliTick();const nw3=Object.assign({},netWidth);thinOpen.forEach(n=>{delete nw3[n];});
+    const snap3=AUTOROUTE.copperSnap(BD);const r0=PCBEDIT.ratsnest(BD,thinOpen).length;AUTOROUTE.unroute(BD,thinOpen);PCBEDIT.rebuildNets(BD);
+    const it4=AUTOROUTE.jobRR(BD,thinOpen,{width:{signal:sig,power:sig},netWidth:nw3,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?1500000:600000),viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,rounds:4});
+    for(;;){const q=it4.next();if(q.done)break;}PCBEDIT.rebuildNets(BD);const r1=PCBEDIT.ratsnest(BD,thinOpen).length;
+    if(r1>r0){AUTOROUTE.copperRestore(BD,snap3);PCBEDIT.rebuildNets(BD);}else{const still=new Set(AUTOROUTE.openNets(BD).map(o=>o.net));const fixed=thinOpen.filter(n=>!still.has(n));
+      if(fixed.length)lines.push(`미세 피치 핀 탈출 — 신호 폭 ${sig} mm로 다시 배선: ${fixed.join(', ')}`);}
+    open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));}
   const stopped=!!CLI.stopReq;cliSet(prog,`${stopped?'중지함 — ':''}배선 ${nets.length-open.length}/${nets.length} 넷 · ${(ms/1000).toFixed(1)} s${res?` · 트랙 ${f1(res.len)} mm · 비아 ${res.vias}개${res.rounds?` · 다시 배선 ${res.rounds}회`:''}`:''}`);
   if(open.length)lines.push(`미배선 ${open.length}개: ${open.slice(0,10).map(o=>o.net).join(', ')}${open.length>10?' …':''} → place로 간격을 바꾸거나 board size로 보드를 키우고 다시 route`);
   // return vias next to the layer changes of clock / analog nets
@@ -14626,14 +14678,15 @@ function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.
   const layers=ml?[0,NL-1]:[0];if(ml)BD.layers[keys[NL-1]+'.cu']=BD.layers[keys[NL-1]+'.cu'].filter(p=>!(p.t==='pour'&&!p.plane));
   const fs=layers.map(l=>AUTOROUTE.powerFill(BD,{nets:fillNets,rect,clr:cl,via,width,layer:l,claim:BD.powerBus&&BD.nets[BD.powerBus.net]&&l===0?[BD.powerBus]:[]}));
   const tb=ml?AUTOROUTE.stitchLayers(BD,fillNets.filter(n=>!PW.planes.has(n)&&WW[n].cls!=='gnd'),{via}):0;
+  const pr=AUTOROUTE.pruneIslands?AUTOROUTE.pruneIslands(BD,hi):{fills:0,vias:0};
   const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return;const need=CURRENT.ipcWidth(WW[n].I,{oz,dT});
     const bs=layers.map(l=>AUTOROUTE.bottleneck(BD,n,{layer:l,proj:l!==0}));const dir=bs[0].terms.length>=2&&!bs[0].open&&bs[0].width==null;
     const ws=bs.map(b=>b.width!=null&&!b.open?b.width:0);const eff=+ws.reduce((x,y)=>x+y,0).toFixed(2);
     rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,layers:ws,open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.ipcRise(eff,WW[n].I,{oz}):null,terms:bs[0].terms});});
   const area={};fs.forEach((f,i)=>f.area.forEach(x=>{area[x.net]=(area[x.net]||0)+x.mm2;}));
-  BD.powerReport={oz,dT,nets:rep,fill:area,vias:fs.reduce((a,f)=>a+f.vias,0)+tb+pv,padVias:pv,planes:[...PW.planes],at:Date.now()};
+  BD.powerReport={oz,dT,nets:rep,fill:area,vias:fs.reduce((a,f)=>a+f.vias,0)+tb+pv-pr.vias,padVias:pv,pruned:pr,planes:[...PW.planes],at:Date.now()};
   const bad=rep.filter(x=>!x.ok);
-  return`전력 동박(${oz} oz · ΔT ${dT} °C · ${ml?'위·아래층':'위층'}${PW.planes.size?' · 평면 '+[...PW.planes].join(', '):''}): ${Object.entries(area).map(([n,a])=>n+' '+a.toFixed(0)+' mm²').join(' · ')} · 스티칭 비아 ${BD.powerReport.vias}개 (패드 안 ${pv})\n`+
+  return`전력 동박(${oz} oz · ΔT ${dT} °C · ${ml?'위·아래층':'위층'}${PW.planes.size?' · 평면 '+[...PW.planes].join(', '):''}): ${Object.entries(area).map(([n,a])=>n+' '+a.toFixed(0)+' mm²').join(' · ')} · 스티칭 비아 ${BD.powerReport.vias}개 (패드 안 ${pv})${pr.fills?` · 고립 동박 ${pr.fills}조각 제거`:''}\n`+
     rep.map(x=>`  ${x.ok?'✓':'✕'} ${x.net} ${x.I} A — 유효 폭 ${typeof x.width==='string'?x.width:x.width+' mm'+(x.layers&&x.layers.length>1?` (위 ${x.layers[0]} + 아래 ${x.layers[1]})`:'')}${x.open?' (위층 단자 사이 끊김)':''} / 필요 ${x.need} mm${x.rise!=null&&!x.ok?` → 온도 상승 약 ${Math.min(999,x.rise)} °C`:''}`).join('\n')+
     (bad.length?`\n→ 전류 경로 부족 ${bad.length}개: 보드를 키우거나(board size) 층을 늘리세요(board layers)`:'');}
 function cliUnroute(){cliEnsureEdit();const before=cliSnap();const n=PCB.cuKeys(BD).reduce((a,s)=>a+BD.layers[s+'.cu'].filter(p=>p.auto).length,0)+BD.vias.filter(v=>v.auto).length;AUTOROUTE.unroute(BD);PCBEDIT.rebuildNets(BD);cliCommit(before,'unroute');cliAfter(false);return`자동 배선 ${n}개(트랙·비아)를 지웠습니다.`;}

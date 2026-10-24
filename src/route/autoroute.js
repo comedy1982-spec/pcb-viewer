@@ -39,8 +39,15 @@ function shapeGap(a,b){ // ≤ 0 when touching (sampled; fine for pads/tracks)
   if(a.k==='cap'&&b.k==='cap'){const d=Math.min(PC.segDist(a.a[0],a.a[1],b.a,b.b),PC.segDist(a.b[0],a.b[1],b.a,b.b),PC.segDist(b.a[0],b.a[1],a.a,a.b),PC.segDist(b.b[0],b.b[1],a.a,a.b));return d-a.r-b.r;}
   if(a.k!=='cap')[a,b]=[b,a];
   if(a.k==='cap'){const n=Math.max(1,Math.ceil(Math.hypot(a.b[0]-a.a[0],a.b[1]-a.a[1])/0.05));let m=1e9;for(let i=0;i<=n;i++){const t=i/n;m=Math.min(m,dist(b,a.a[0]+(a.b[0]-a.a[0])*t,a.a[1]+(a.b[1]-a.a[1])*t)-a.r);}return m;}
-  const pts=s=>{const c=Math.cos(s.ang),sn=Math.sin(s.ang);return[[0,0],[1,1],[1,-1],[-1,1],[-1,-1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
-  return Math.min(...pts(a).map(p=>dist(b,p[0],p[1])),...pts(b).map(p=>dist(a,p[0],p[1])));
+  // two rectangles: exact (separating axes; overlap → −penetration, else closest edge distance) — corner sampling missed crossings
+  const cor=s=>{const c=Math.cos(s.ang),sn=Math.sin(s.ang);return[[1,1],[1,-1],[-1,-1],[-1,1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
+  const P=cor(a),Q=cor(b);let pen=1e9,sep=false;
+  [a.ang,a.ang+Math.PI/2,b.ang,b.ang+Math.PI/2].forEach(t=>{if(sep)return;const ux=Math.cos(t),uy=Math.sin(t);const pr=X=>X.map(p=>p[0]*ux+p[1]*uy);
+    const pa=pr(P),pb=pr(Q);const o=Math.min(Math.max(...pa),Math.max(...pb))-Math.max(Math.min(...pa),Math.min(...pb));if(o<0)sep=true;else pen=Math.min(pen,o);});
+  if(!sep)return -pen;
+  let m=1e9;for(let i=0;i<4;i++){const a0=P[i],a1=P[(i+1)%4],b0=Q[i],b1=Q[(i+1)%4];
+    for(let j=0;j<4;j++){m=Math.min(m,PC.segDist(Q[j][0],Q[j][1],a0,a1),PC.segDist(P[j][0],P[j][1],b0,b1));}}
+  return m;
 }
 // groups of a net that are not yet joined by copper
 function components(S,net){
@@ -529,6 +536,15 @@ function stitchLayers(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},step:1.2
 
 /* via-in-pad on the big power pads (exposed pads of the bridge FETs, DPAK tabs, terminal-side pads): the current reaches the
    inner planes / the other outer layer right at the part instead of through one fan-out via */
+/* dead copper: fill islands of a net that touch none of its pads (and, for a plane / poured net, no via down to it) carry
+   no current and only show up as unconnected copper — remove them with their stitching vias (never a routed track) */
+function pruneIslands(B,nets){const S=shapesOfBoard(B);const keys=PC.cuKeys(B);const pour=new Set();
+  keys.forEach(k=>B.layers[k+'.cu'].forEach(p=>{if(p.t==='pour'&&p.net)pour.add(p.net);}));PC.stackOf(B).forEach(x=>{if(x.net&&x.role!=='sig')pour.add(x.net);});
+  const kill=new Set(),killV=new Set();
+  nets.forEach(net=>components(S,net).forEach(g=>{if(g.some(s=>s.pad))return;if(pour.has(net)&&g.some(s=>s.via))return;
+    if(g.some(s=>(s.prim&&!s.fill)||(s.via&&!s.via.stitch)))return;g.forEach(s=>{if(s.fill)kill.add(s.prim);else if(s.via)killV.add(s.via);});}));
+  if(kill.size)keys.forEach(k=>{B.layers[k+'.cu']=B.layers[k+'.cu'].filter(p=>!kill.has(p));});if(killV.size)B.vias=B.vias.filter(v=>!killV.has(v));
+  return{fills:kill.size,vias:killV.size};}
 function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,minArea:2.5,grid:0.05},o||{});const keys=PC.cuKeys(B),NL=keys.length;
   const P=prepare(B,{grid:o.grid,clear:0.15,width:{signal:0.1,power:0.1},via:o.via});const G=P.G;let n=0;const want=new Set(nets);
   B.comps.forEach(c=>c.pads.forEach(p=>{if(!want.has(p.net)||p.drill||p.w*p.h<o.minArea)return;const k=P.idOf(p.net);const sh=padShape(p,NL);const a=(p.ang||0)*D2R,ca=Math.cos(a),sa=Math.sin(a);
@@ -539,6 +555,6 @@ function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,min
       B.vias.push({x:+x.toFixed(3),y:+y.toFixed(3),d:o.via.d,drill:o.via.drill,net:p.net,stitch:true,inpad:true});n++;}}));
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}
 
-return{padVias,stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+return{pruneIslands,padVias,stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

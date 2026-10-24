@@ -120,6 +120,12 @@ const AUTOROUTE_gap=(a,b)=>{ // same sampled gap as the router, local copy to st
   if(a.k==='cap'&&b.k==='cap'){const d=Math.min(PCB.segDist(a.a[0],a.a[1],b.a,b.b),PCB.segDist(a.b[0],a.b[1],b.a,b.b),PCB.segDist(b.a[0],b.a[1],a.a,a.b),PCB.segDist(b.b[0],b.b[1],a.a,a.b));return d-a.r-b.r;}
   if(a.k!=='cap')[a,b]=[b,a];
   if(a.k==='cap'){const n=Math.max(1,Math.ceil(Math.hypot(a.b[0]-a.a[0],a.b[1]-a.a[1])/0.05));let m=1e9;for(let i=0;i<=n;i++){const t=i/n;m=Math.min(m,dist(b,a.a[0]+(a.b[0]-a.a[0])*t,a.a[1]+(a.b[1]-a.a[1])*t)-a.r);}return m;}
+  if(a.k==='rect'&&b.k==='rect'){ // exact: separating axes, else closest edges
+    const cor=s=>{const c=Math.cos(s.ang||0),sn=Math.sin(s.ang||0);return[[1,1],[1,-1],[-1,-1],[-1,1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
+    const P=cor(a),Q=cor(b);let pen=1e9,sep=false;
+    [a.ang||0,(a.ang||0)+Math.PI/2,b.ang||0,(b.ang||0)+Math.PI/2].forEach(t=>{if(sep)return;const ux=Math.cos(t),uy=Math.sin(t);const pr=X=>X.map(p=>p[0]*ux+p[1]*uy);
+      const pa=pr(P),pb=pr(Q);const o=Math.min(Math.max(...pa),Math.max(...pb))-Math.max(Math.min(...pa),Math.min(...pb));if(o<0)sep=true;else pen=Math.min(pen,o);});
+    if(!sep)return -pen;let m=1e9;for(let i=0;i<4;i++)for(let j=0;j<4;j++)m=Math.min(m,PCB.segDist(Q[j][0],Q[j][1],P[i],P[(i+1)%4]),PCB.segDist(P[j][0],P[j][1],Q[i],Q[(i+1)%4]));return m;}
   const pts=s=>{const c=Math.cos(s.ang),sn=Math.sin(s.ang);return[[0,0],[1,1],[1,-1],[-1,1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
   return Math.min(...pts(a).map(p=>dist(b,p[0],p[1])),...pts(b).map(p=>dist(a,p[0],p[1])));
 };
