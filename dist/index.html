@@ -5365,7 +5365,8 @@ function shapesOfBoard(B){
   keys.forEach((s,li)=>B.layers[s+'.cu'].forEach(p=>{
     if(p.t==='seg')S.push({k:'cap',a:p.a,b:p.b,r:p.w/2,L:[li],net:p.net,prim:p});
     else if(p.t==='path')for(let i=1;i<p.pts.length;i++)S.push({k:'cap',a:p.pts[i-1],b:p.pts[i],r:p.w/2,L:[li],net:p.net,prim:p});
-    else if(p.t==='pad'&&!B.comps.some(c=>c.pads.includes(p)))S.push(padShape(p,NL));}));
+    else if(p.t==='pad'&&!B.comps.some(c=>c.pads.includes(p)))S.push(padShape(p,NL));
+    else if(p.t==='poly'&&p.rect&&p.net){const r=p.rect;S.push({k:'rect',x:(r[0]+r[2])/2,y:(r[1]+r[3])/2,hw:(r[2]-r[0])/2,hh:(r[3]-r[1])/2,ang:0,L:[li],net:p.net,prim:p,fill:true});}}));
   B.vias.forEach(v=>S.push({k:'cap',a:[v.x,v.y],b:[v.x,v.y],r:v.d/2,L:all,net:v.net,via:v}));
   B.drills.forEach(d=>{if(!d.plated)S.push({k:'cap',a:[d.x,d.y],b:[d.x2!=null?d.x2:d.x,d.y2!=null?d.y2:d.y],r:d.d/2,L:all,net:null,hole:true});});
   return S;
@@ -5445,7 +5446,7 @@ function astar(G,k,src,tgt,anchors,o){
   const push=(id,f)=>{if(hn===hid.length){const a=new Int32Array(hn*2);a.set(hid);hid=a;const b=new Float32Array(hn*2);b.set(hf);hf=b;}let i=hn++;while(i>0){const p=(i-1)>>1;if(hf[p]<=f)break;hid[i]=hid[p];hf[i]=hf[p];i=p;}hid[i]=id;hf[i]=f;};
   const pop=()=>{const r=hid[0];hn--;if(hn>0){const id=hid[hn],f=hf[hn];let i=0;for(;;){let c=2*i+1;if(c>=hn)break;if(c+1<hn&&hf[c+1]<hf[c])c++;if(hf[c]>=f)break;hid[i]=hid[c];hf[i]=hf[c];i=c;}hid[i]=id;hf[i]=f;}return r;};
   src.forEach(id=>{gs[id]=0;stamp[id]=gen;par[id]=-1;dir[id]=-1;const i=id%N;push(id,h(i%nx,(i/nx)|0));});
-  let exp=0;const viaC=o.viaCost/G.g,bot=o.bottomCost||1,esc=o.escCost?G.esc:null,escC=o.escCost||0,edgeC=o.edgeCost||0;
+  let exp=0;const av=G.avoid||null,avC=o.avoidCost||6;const viaC=o.viaCost/G.g,bot=o.bottomCost||1,esc=o.escCost?G.esc:null,escC=o.escCost||0,edgeC=o.edgeCost||0;
   // PathFinder: cost × (1 + history) × (1 + pres × other nets on the cell) — overuse is allowed and priced, not forbidden
   const pf=o.pf||null,pres=pf?pf.pres:0;
   const dirC=o.dirCost&&o.dirCost!==1&&G.pref?+o.dirCost:0,dirD=dirC?Math.sqrt(dirC):0;const pref=G.pref||null;
@@ -5456,7 +5457,7 @@ function astar(G,k,src,tgt,anchors,o){
     const l=(id/N)|0,i=id-l*N,x=i%nx,y=(i/nx)|0,g0=gs[id],d0=dir[id];const lc=l===NL-1?bot:l?(o.innerCost||1):1;
     for(let d=0;d<8;d++){const xx=x+DX[d],yy=y+DY[d];if(xx<0||yy<0||xx>=nx||yy>=ny)continue;const j=yy*nx+xx;if(!free(l,j))continue;
       if(d>=4&&(!free(l,y*nx+xx)||!free(l,yy*nx+x)))continue;
-      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;let step=DC[d]*lc*wrong(l,d);if(pf){const oc=pf.occ[l][j];step*=(1+pf.hist[l][j])*(oc>0?1+pres*oc:1);}const ng=g0+step+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0)+(edgeC&&G.edgeBand&&G.edgeBand[j]?edgeC:0);
+      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;let step=DC[d]*lc*wrong(l,d);if(av){const a=av[l][j];if(a!==0&&a!==k)step*=avC;}if(pf){const oc=pf.occ[l][j];step*=(1+pf.hist[l][j])*(oc>0?1+pres*oc:1);}const ng=g0+step+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0)+(edgeC&&G.edgeBand&&G.edgeBand[j]?edgeC:0);
       if(stamp[nid]!==gen||ng<gs[nid]){stamp[nid]=gen;gs[nid]=ng;par[nid]=id;dir[nid]=d;push(nid,ng+h(xx,yy));}}
     // via
     let fv=-1;for(const l2 of rl){if(l2===l)continue;const nid=l2*N+i;if(cl[nid]===gen||!free(l2,i))continue;
@@ -5539,6 +5540,11 @@ function prepare(B,opts){
   if(o.escCost)S.forEach(s=>{if(!s.pad||!s.net)return;const k=idOf(s.net),m0=wMax+o.clear,m1=m0+(o.escape||0.45);const bb=bboxOf(s,m1);
     const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(s,G.ox+x*G.g,G.oy+y*G.g);if(d<=m0||d>m1)continue;const i=y*G.nx+x;s.L.forEach(l=>{const v=G.esc[l][i];G.esc[l][i]=v===0||v===k?k:-1;});}});
+  // power corridors: cells near a high-current net's copper on a layer cost other nets o.avoidCost × to cross (they go around or
+  // change layer), so the copper fill that follows is not cut by signal tracks
+  if(o.avoid&&o.avoid.length){G.avoid=Array.from({length:G.NL},()=>new Int32Array(G.N));o.avoid.forEach(c=>{const k=idOf(c.net);(c.shapes||[]).forEach(sh=>{const bb=bboxOf(sh,c.r);
+      const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
+      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){if(dist(sh,G.ox+x*G.g,G.oy+y*G.g)>c.r)continue;const i=y*G.nx+x;sh.L.forEach(l=>{if(c.layers&&!c.layers.includes(l))return;const a=G.avoid[l][i];G.avoid[l][i]=a===0||a===k?k:-1;});}});});}
   return{o,G,S,idOf};
 }
 // nets that still have more than one copper group
@@ -5576,7 +5582,7 @@ function routeNet(P,B,net){
     // big nets: keep the heuristic cheap — only the anchors nearest to the group being joined
     if(anchors.length>24){let sx=0,sy=0,sn=0;srcC.forEach(s=>{const p=s.k==='cap'?s.a:[s.x,s.y];sx+=(p[0]-G.ox)/G.g;sy+=(p[1]-G.oy)/G.g;sn++;});sx/=sn;sy/=sn;anchors=anchors.map(a=>[a,Math.abs(a[0]-sx)+Math.abs(a[1]-sy)]).sort((a,b)=>a[1]-b[1]).slice(0,24).map(a=>a[0]);}
     const wBase=Math.max(o.width.signal,o.width.power);const dil=w>wBase+1e-6?Math.ceil((w-wBase)/2/G.g):0;const edgeCost=o.edgeBand>0&&netPrio(B,net,o.W)===1?(o.edgeCost||1.5):0;
-    const r=astar(G,k,src,tgt,anchors,(dil||edgeCost)?Object.assign({},o,{dil,edgeCost}):o);
+    const nb=o.netBottom&&o.netBottom[net];const r=astar(G,k,src,tgt,anchors,(dil||edgeCost||nb)?Object.assign({},o,{dil,edgeCost},nb?{bottomCost:nb}:{}):o);
     if(!r.path)return Object.assign(added,{ok:false,why:r.fail});
     const cu=toCopper(G,r.path,w,o.via,net,own.get(r.path[0]),own.get(r.path[r.path.length-1]));
     // commit: board + shapes + grid
@@ -5727,7 +5733,7 @@ function routeNetPF(P,B,net,pf){
     const src=new Set(ext),tgt=new Set(),own=new Map();padCells(G,w,cur,src,own);padCells(G,w,rest.flat(),tgt,own);
     let anchors=[];rest.flat().forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
     if(anchors.length>24){let sx=0,sy=0,sn=0;cur.forEach(s=>{const p=s.k==='cap'?s.a:[s.x,s.y];sx+=(p[0]-G.ox)/G.g;sy+=(p[1]-G.oy)/G.g;sn++;});sx/=sn;sy/=sn;anchors=anchors.map(a=>[a,Math.abs(a[0]-sx)+Math.abs(a[1]-sy)]).sort((a,b)=>a[1]-b[1]).slice(0,24).map(a=>a[0]);}
-    const r=astar(G,k,src,tgt,anchors,Object.assign({},o,{dil,edgeCost,pf}));if(!r.path)return{ok:false,why:r.fail};
+    const nb=o.netBottom&&o.netBottom[net];const r=astar(G,k,src,tgt,anchors,Object.assign({},o,{dil,edgeCost,pf},nb?{bottomCost:nb}:{}));if(!r.path)return{ok:false,why:r.fail};
     const endS=own.get(r.path[r.path.length-1]);let gi=rest.findIndex(g=>g.includes(endS));if(gi<0)gi=0;
     const cu=toCopper(G,r.path,w,o.via,net,own.get(r.path[0]),endS);
     cu.tracks.forEach(t=>{tracks.push(t);});cu.vias.forEach(v=>vias.push(v));len+=cu.len;r.path.forEach(id=>ext.add(id));
@@ -5758,7 +5764,7 @@ function* gloss(B,nets,opts){
   const after=tot();return{changed,tried,vias:[before.v,after.v],len:[before.l,after.l],ms:Date.now()-t0};
 }
 function unroute(B,list){ // remove auto tracks/vias (all, or only those in list)
-  const kill=list?new Set(list):null;const keep=p=>!(p.auto&&(!kill||kill.has(p)));
+  const kill=list?new Set(list):null;const keep=p=>!((p.auto||(!kill&&(p.fill||p.stitch)))&&(!kill||kill.has(p))); // unrouting everything also drops the power fill
   const keys=PC.cuKeys(B);keys.forEach(s=>{B.layers[s+'.cu']=B.layers[s+'.cu'].filter(keep);});B.vias=B.vias.filter(keep);
   Object.values(B.nets).forEach(n=>{n.tracks=n.tracks.filter(keep);n.vias=n.vias.filter(keep);n.len={T:0,B:0};n.tracks.forEach(t=>{const L=t._side||keys.find(k=>B.layers[k+'.cu'].includes(t))||'T';const q=t.pts||[t.a,t.b];n.len[L]=n.len[L]||0;for(let i=1;i<q.length;i++)n.len[L]+=Math.hypot(q[i][0]-q[i-1][0],q[i][1]-q[i-1][1]);});});
 }
@@ -5769,7 +5775,87 @@ function drc(B,opts){
     const gap=shapeGap(a,b);if(gap<o.clear-0.03)out.push({net:a.net,other:b.net||(b.hole?'구멍':'(넷 없음)'),gap,at:a.k==='cap'?a.a:[a.x,a.y]});});});
   return out;
 }
-return{gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+
+/* ---------- power copper fill (high-current nets in the power-stage region) ----------
+   A grid zone fill: every free cell of the region (no other net's copper within the clearance, not in the escape ring of
+   another net's pad) is given to the nearest high-current net by a multi-source BFS from that net's own copper; cells of
+   two different fill nets are kept ≥ clearance apart; islands that touch none of the net's copper are dropped. The cells
+   become copper as merged rectangles (fat segments, prim.fill = true), so routing, DRC and connectivity see them.
+   GND fill gets stitching vias to the plane. bottleneck() measures what the copper really offers: the widest path
+   (maximin of the distance transform) between the net's power terminals → an effective width to compare with IPC-2221. */
+function powerFill(B,o){o=Object.assign({layer:0,clr:0.25,esc:0.9,grid:0.1,stitch:1.3,via:{d:0.6,drill:0.3}},o||{});
+  const keys=PC.cuKeys(B),L=o.layer,lk=keys[L];const nets=o.nets.filter(n=>B.nets[n]);if(!nets.length)return{cells:0,nets:[]};
+  B.layers[lk+'.cu']=B.layers[lk+'.cu'].filter(p=>!(p.fill&&nets.includes(p.net)));B.vias=B.vias.filter(v=>!(v.stitch&&nets.includes(v.net)));
+  const P=prepare(B,{grid:o.grid,clear:o.clr,width:{signal:o.grid,power:o.grid},via:o.via});const G=P.G,S=P.S,g=G.g;const occ=G.occT[L];
+  const r0=o.rect;const X0=Math.max(0,Math.ceil((r0[0]-G.ox)/g)),X1=Math.min(G.nx-1,Math.floor((r0[2]-G.ox)/g)),Y0=Math.max(0,Math.ceil((r0[1]-G.oy)/g)),Y1=Math.min(G.ny-1,Math.floor((r0[3]-G.oy)/g));
+  const inR=i=>{const x=i%G.nx,y=(i/G.nx)|0;return x>=X0&&x<=X1&&y>=Y0&&y<=Y1;};
+  const id=nets.map(n=>P.idOf(n)),own=new Int16Array(G.N).fill(-1),blocked=new Uint8Array(G.N);
+  const cellsNear=(s,m,f)=>{const bb=bboxOf(s,m);const x0=Math.max(X0,Math.floor((bb[0]-G.ox)/g)),x1=Math.min(X1,Math.ceil((bb[2]-G.ox)/g)),y0=Math.max(Y0,Math.floor((bb[1]-G.oy)/g)),y1=Math.min(Y1,Math.ceil((bb[3]-G.oy)/g));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(s,G.ox+x*g,G.oy+y*g);if(d<=m)f(y*G.nx+x,d);}};
+  // the escape ring of every other net's pad stays free (a track or via must still reach it)
+  S.forEach(s=>{if(!s.pad||!s.L.includes(L)||nets.includes(s.net)||!s.net)return;cellsNear(s,o.esc,i=>{blocked[i]=1;});});
+  // seeds: the fill nets' own copper on this layer
+  const Q=[];S.forEach(s=>{const k=nets.indexOf(s.net);if(k<0||!s.L.includes(L))return;cellsNear(s,0,i=>{if(own[i]<0&&(occ[i]===id[k])){own[i]=k;Q.push(i);}});});
+  const seed=new Uint8Array(G.N);Q.forEach(i=>{seed[i]=1;});
+  // corridors first: the nets with a target width (o.width[net], mm) grow alone up to half that width around their own copper,
+  // highest current first, so a bus keeps its width where the space allows; then every net grows into what is left
+  if(o.width){const order=nets.map((n,k)=>k).filter(k=>o.width[nets[k]]>0).sort((a,b)=>(o.width[nets[b]]||0)-(o.width[nets[a]]||0));
+    order.forEach(k=>{const lim=Math.ceil(o.width[nets[k]]/2/g);const dep=new Map();const q=[];for(let i=0;i<G.N;i++)if(own[i]===k&&seed[i]){q.push(i);dep.set(i,0);}
+      for(let h=0;h<q.length;h++){const i=q[h],d0=dep.get(i);if(d0>=lim)continue;const x=i%G.nx;for(const j of [x>X0?i-1:-1,x<X1?i+1:-1,i-G.nx,i+G.nx]){if(j<0||j>=G.N||own[j]>=0||blocked[j]||!inR(j))continue;const v=occ[j];if(v!==0&&v!==id[k])continue;own[j]=k;dep.set(j,d0+1);q.push(j);Q.push(j);}}});}
+  for(let h=0;h<Q.length;h++){const i=Q[h],k=own[i];const x=i%G.nx;const nb=[x>X0?i-1:-1,x<X1?i+1:-1,i-G.nx,i+G.nx];
+    for(const j of nb){if(j<0||j>=G.N||own[j]>=0||blocked[j]||!inR(j))continue;const v=occ[j];if(v!==0&&v!==id[k])continue;own[j]=k;Q.push(j);}}
+  // gap between different fill nets ≥ clearance
+  const r=Math.ceil((o.clr+g*0.5)/g);const keep=new Int16Array(own);
+  for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++){const i=y*G.nx+x,k=own[i];if(k<0||seed[i])continue;let bad=false;
+    for(let dy=-r;dy<=r&&!bad;dy++){const yy=y+dy;if(yy<Y0||yy>Y1)continue;for(let dx=-r;dx<=r;dx++){const xx=x+dx;if(xx<X0||xx>X1)continue;const k2=own[yy*G.nx+xx];if(k2>=0&&k2!==k){bad=true;break;}}}if(bad)keep[i]=-1;}
+  // keep only the parts joined to the net's own copper
+  const fin=new Int16Array(G.N).fill(-1);const Q2=[];for(let i=0;i<G.N;i++)if(seed[i]&&keep[i]>=0){fin[i]=keep[i];Q2.push(i);}
+  for(let h=0;h<Q2.length;h++){const i=Q2[h],k=fin[i];const x=i%G.nx;for(const j of [x>X0?i-1:-1,x<X1?i+1:-1,i-G.nx,i+G.nx]){if(j<0||j>=G.N||fin[j]>=0||keep[j]!==k)continue;fin[j]=k;Q2.push(j);}}
+  // cells → rectangles → fat segments
+  const add=[];const cnt=nets.map(()=>0);
+  nets.forEach((n,k)=>{let open={};for(let y=Y0;y<=Y1+1;y++){const runs={};if(y<=Y1){let x=X0;while(x<=X1){if(fin[y*G.nx+x]===k&&!seed[y*G.nx+x]){let e=x;while(e+1<=X1&&fin[y*G.nx+e+1]===k&&!seed[y*G.nx+e+1])e++;runs[x+':'+e]=1;cnt[k]+=e-x+1;x=e+1;}else x++;}}
+      const next={};Object.keys(runs).forEach(key=>{next[key]=open[key]?open[key]:{y0:y};});
+      Object.keys(open).forEach(key=>{if(next[key])return;const[xa,xb]=key.split(':').map(Number);const ya=open[key].y0,yb=y-1;
+        const x0=G.ox+(xa-0.5)*g,x1=G.ox+(xb+0.5)*g,y0=G.oy+(ya-0.5)*g,y1=G.oy+(yb+0.5)*g,w=x1-x0,h=y1-y0;
+        const q=v=>+v.toFixed(3);const R=[q(x0),q(y0),q(x1),q(y1)];
+        add.push({t:'poly',rings:[[[R[0],R[1]],[R[2],R[1]],[R[2],R[3]],[R[0],R[3]]]],rect:R,net:n,fill:true});});open=next;}});
+  // the cells seeded from the net's own copper (pads, tracks) are filled too where they lie outside the copper
+  B.layers[lk+'.cu'].push(...add);
+  // stitching vias: GND (and any plane net) fill → plane, on a lattice inside the fill
+  let nv=0;const planeNets=new Set();keys.forEach((kk,li)=>{if(li===L)return;B.layers[kk+'.cu'].forEach(p=>{if(p.t==='pour'&&p.net)planeNets.add(p.net);});});
+  const vr=Math.ceil((o.via.d/2+0.05)/g),st=Math.max(1,Math.round(o.stitch/g));
+  nets.forEach((n,k)=>{if(!planeNets.has(n))return;const kid=id[k];for(let y=Y0+vr;y<=Y1-vr;y+=st)for(let x=X0+vr;x<=X1-vr;x+=st){let ok=true;
+      for(let dy=-vr;dy<=vr&&ok;dy++)for(let dx=-vr;dx<=vr;dx++){const j=(y+dy)*G.nx+x+dx;if(fin[j]!==k&&!(seed[j]&&own[j]===k)){ok=false;break;}}
+      if(!ok)continue;const i=y*G.nx+x;if(G.occV.some(a=>a[i]!==0&&a[i]!==kid))continue;const v={x:+(G.ox+x*g).toFixed(3),y:+(G.oy+y*g).toFixed(3),d:o.via.d,drill:o.via.drill,net:n,stitch:true};B.vias.push(v);nv++;}});
+  if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}
+  return{nets,cells:cnt.reduce((a,b)=>a+b,0),area:nets.map((n,k)=>({net:n,mm2:+(cnt[k]*g*g).toFixed(1)})),segs:add.length,vias:nv,grid:g,rect:r0};}
+/* effective copper width of a net on a layer between its power terminals (pads of FETs, terminals, shunts, bulk caps) */
+function bottleneck(B,net,o){o=Object.assign({layer:0,grid:0.1,rect:null,padRing:1.0},o||{});const keys=PC.cuKeys(B);const L=o.layer;
+  const P=prepare(B,{grid:o.grid,clear:0.01,width:{signal:o.grid,power:o.grid}});const G=P.G,g=G.g;const S=P.S.filter(s=>s.net===net&&s.L.includes(L));
+  const mask=new Uint8Array(G.N);S.forEach(s=>{const bb=bboxOf(s,0);const x0=Math.max(0,Math.floor((bb[0]-G.ox)/g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/g));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){if(dist(s,G.ox+x*g,G.oy+y*g)<=g*0.5)mask[y*G.nx+x]=1;}});
+  // distance transform (chamfer 3-4), in cells
+  const D=new Float32Array(G.N);for(let i=0;i<G.N;i++)D[i]=mask[i]?1e9:0;const nx=G.nx,ny=G.ny;
+  for(let y=0;y<ny;y++)for(let x=0;x<nx;x++){const i=y*nx+x;if(!D[i])continue;let v=D[i];if(x>0)v=Math.min(v,D[i-1]+1);if(y>0){v=Math.min(v,D[i-nx]+1);if(x>0)v=Math.min(v,D[i-nx-1]+1.414);if(x<nx-1)v=Math.min(v,D[i-nx+1]+1.414);}if(x===0||y===0||x===nx-1||y===ny-1)v=Math.min(v,1);D[i]=v;}
+  for(let y=ny-1;y>=0;y--)for(let x=nx-1;x>=0;x--){const i=y*nx+x;if(!D[i])continue;let v=D[i];if(x<nx-1)v=Math.min(v,D[i+1]+1);if(y<ny-1){v=Math.min(v,D[i+nx]+1);if(x<nx-1)v=Math.min(v,D[i+nx+1]+1.414);if(x>0)v=Math.min(v,D[i+nx-1]+1.414);}D[i]=v;}
+  // terminals: pads of power parts on this net
+  const pw=c=>/^(Q|J|CP)\d/.test(c.ref)||/^R\d/.test(c.ref)&&/^(2512|2010|1206)$/.test(c.fp||'')&&/션트|shunt|0\.\d+Ω|mΩ/i.test((c.desc||'')+' '+(c.val||''))||/^D\d/.test(c.ref)&&/역|TVS|SMAJ|SM8S/i.test((c.desc||'')+(c.val||''));
+  const terms=[];B.comps.forEach(c=>{if(!pw(c))return;const ps=c.pads.filter(p=>p.net===net&&(p.side==='both'||p.drill||(L===0?p.side!=='B':p.side==='B')));if(!ps.length)return;
+    const cells=new Set();ps.forEach(p=>{const s=padShape(p,keys.length);const bb=bboxOf(s,o.padRing);for(let y=Math.max(0,Math.floor((bb[1]-G.oy)/g));y<=Math.min(ny-1,Math.ceil((bb[3]-G.oy)/g));y++)for(let x=Math.max(0,Math.floor((bb[0]-G.ox)/g));x<=Math.min(nx-1,Math.ceil((bb[2]-G.ox)/g));x++){const i=y*nx+x;if(mask[i]&&dist(s,G.ox+x*g,G.oy+y*g)<=o.padRing)cells.add(i);}});
+    if(cells.size)terms.push({ref:c.ref,cells:[...cells]});});
+  if(terms.length<2)return{net,terms:terms.map(t=>t.ref),width:null,pairs:[]};
+  const pairs=[];const INF=1e9;
+  terms.forEach((T,ti)=>{const best=new Float32Array(G.N);const H=[];T.cells.forEach(i=>{best[i]=INF;H.push(i);});
+    // maximin Dijkstra with a bucket-less binary heap
+    const heap=[];const push=(i,v)=>{heap.push([v,i]);let k=heap.length-1;while(k>0){const p=(k-1)>>1;if(heap[p][0]>=heap[k][0])break;[heap[p],heap[k]]=[heap[k],heap[p]];k=p;}};
+    const pop=()=>{const t=heap[0];const l=heap.pop();if(heap.length){heap[0]=l;let k=0;for(;;){const a=2*k+1,b=a+1;let m=k;if(a<heap.length&&heap[a][0]>heap[m][0])m=a;if(b<heap.length&&heap[b][0]>heap[m][0])m=b;if(m===k)break;[heap[m],heap[k]]=[heap[k],heap[m]];k=m;}}return t;};
+    H.forEach(i=>push(i,INF));const done=new Uint8Array(G.N);
+    while(heap.length){const[v,i]=pop();if(done[i])continue;done[i]=1;const x=i%nx;for(const j of [x>0?i-1:-1,x<nx-1?i+1:-1,i-nx,i+nx]){if(j<0||j>=G.N||!mask[j]||done[j])continue;const w=Math.min(v,D[j]);if(w>best[j]){best[j]=w;push(j,w);}}}
+    terms.forEach((U,ui)=>{if(ui<=ti)return;let m=0;U.cells.forEach(i=>{if(best[i]>m)m=best[i];});pairs.push({a:T.ref,b:U.ref,width:m>=INF?null:+(m>0?(2*m-1)*g:0).toFixed(2),open:m===0});});});
+  const ws=pairs.filter(p=>p.width!=null).map(p=>p.width);const open=pairs.filter(p=>p.open).length;
+  return{net,terms:terms.map(t=>t.ref),width:ws.length?Math.min(...ws):null,open,pairs};}
+
+return{powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 
 
@@ -5858,7 +5944,7 @@ function ratsnest(B,onlyNets){
     // islands touching a pour of their net (a via, a through pad or a pad on the poured layer) are already joined
     if(pour[n]){const L=pour[n];const onPour=g=>g.some(s=>s.via||(s.pad&&s.L.some(l=>L.has(l))));const a=isl.filter(onPour),b=isl.filter(g=>!onPour(g));isl=a.length?[[].concat(...a)].concat(b):b;}
     if(isl.length<2)return;
-    const pts=isl.map(g=>g.filter(s=>s.pad||s.via||s.prim).map(s=>s.pad?[s.pad.x,s.pad.y]:s.via?[s.via.x,s.via.y]:s.a));
+    const pts=isl.map(g=>g.filter(s=>s.pad||s.via||s.prim).map(s=>s.pad?[s.pad.x,s.pad.y]:s.via?[s.via.x,s.via.y]:s.a||[s.x,s.y]));
     const inT=new Set([0]);
     while(inT.size<isl.length){let best=null;
       inT.forEach(i=>pts[i].forEach(p=>isl.forEach((_,j)=>{if(inT.has(j))return;pts[j].forEach(q=>{const d=Math.hypot(p[0]-q[0],p[1]-q[1]);if(!best||d<best.d)best={d,a:p,b:q,j};});})));
@@ -6121,7 +6207,8 @@ function strategy(s){const k=ALIAS[String(s||'balanced').toLowerCase().replace(/
    groups: input (connector · reverse FET · TVS) · power (regulators) · mcu (MCU · crystal · debug · LED/button) · comm (CAN)
            · stage (gate driver · bridge FETs · shunts · bulk · phase terminal) · sense (current amps · NTC · hall inputs)
    floorplan(): vertical strips sized by the parts' area, every zone touching a board edge so its connectors reach one —
-     motor:   [comm / input] [power] [mcu / sense] [stage]   (stage along the right edge = housing / heat-sink side)
+     motor:   [comm / mcu] [power / sense] [stage / input]  (stage + battery input share the right edge: the high-current
+              loop battery → bulk → bridge → shunt → GND stays in one column, next to the housing / heat-sink side)
      general: [comm / input] [power] [mcu / sense]
    place() adds a cost for every part outside its zone (soft; opts.zoneHard → much stronger) and seeds scratch placement
    inside the zone. B.zones = {on, template, rects:{g:[x0,y0,x1,y1]}, groupOf:{ref:g}} is reused by later re-placements. */
@@ -6130,7 +6217,7 @@ function floorplan(B,groupOf,o){o=o||{};const ring=B.outline[0]||[[0,0],[B.W,0],
   const x0=Math.min(...ring.map(p=>p[0])),y0=Math.min(...ring.map(p=>p[1])),x1=Math.max(...ring.map(p=>p[0])),y1=Math.max(...ring.map(p=>p[1]));const W=x1-x0,H=y1-y0;
   const area={};B.comps.forEach(c=>{const g=groupOf[c.ref];if(!g||!c.bb)return;area[g]=(area[g]||0)+(c.bb[2]-c.bb[0]+1)*(c.bb[3]-c.bb[1]+1);});
   const has=g=>(area[g]||0)>0;const motor=o.template?o.template==='motor':has('stage');
-  const cols=(motor?[['comm','input'],['power'],['mcu','sense'],['stage']]:[['comm','input'],['power'],['mcu','sense','stage']]).map(c=>c.filter(has)).filter(c=>c.length);
+  const cols=(motor?[['comm','mcu'],['power','sense'],['stage','input']]:[['comm','input'],['power'],['mcu','sense','stage']]).map(c=>c.filter(has)).filter(c=>c.length);
   if(!cols.length)return null;
   const ca=cols.map(c=>c.reduce((s,g)=>s+area[g],0)),tot=ca.reduce((a,b)=>a+b,0);
   let w=ca.map(a=>Math.max(0.12,a/tot));const ws=w.reduce((a,b)=>a+b,0);w=w.map(v=>v/ws*W);
@@ -6147,6 +6234,40 @@ function zoneReport(B){const Z=B.zones;if(!Z||!Z.rects)return null;const out=[];
     cs.forEach(c=>{const b=c.bb;used+=(b[2]-b[0])*(b[3]-b[1]);const cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2;if(cx<r[0]||cx>r[2]||cy<r[1]||cy>r[3])outN.push(c.ref);});
     out.push({g,label:(ZONES[g]||{}).label||g,rect:r,parts:cs.length,util:Math.round(used/((r[2]-r[0])*(r[3]-r[1]))*100),out:outN});});
   return out;}
+
+/* ---------- power-stage macro placement (bridge of 2-FET packages) ----------
+   The power loop decides the copper: battery bus → half-bridge → phase terminal, shunt on the low-side source. The macro
+   puts the motor terminal on the stage zone's outer edge, one 2-FET package per phase in a column facing it (battery pads
+   toward the bus side, phase pad toward the terminal, low-side source / shunt node up) and the shunt right on that source;
+   everything else is placed around them by the annealer. Returns the refs it fixed (or null). */
+function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
+  const fets=B.comps.filter(c=>c.pads.length===10&&c.pads.some(p=>p.n==='9')&&c.pads.some(p=>p.n==='10')&&/^Q/.test(c.ref));if(fets.length<2)return null;
+  const padsBy=(c,ns)=>c.pads.filter(p=>ns.includes(p.n));
+  const role=c=>{const bat=c.pads.find(p=>p.n==='9').net,ph=c.pads.find(p=>p.n==='10').net;const sns=c.pads.find(p=>p.net&&p.net!==bat&&p.net!==ph&&/SNS|GND/i.test(p.net)&&p.n!=='9'&&p.n!=='10');return{bat,ph,sns:sns?sns.net:null};};
+  const R=fets.map(c=>Object.assign({c},role(c)));const phs=new Set(R.map(r=>r.ph));
+  const term=B.comps.filter(c=>/^J/.test(c.ref)&&R.every(r=>c.pads.some(p=>p.net===r.ph))).sort((a,b)=>a.pads.length-b.pads.length)[0];if(!term)return null;
+  R.forEach(r=>{r.sh=r.sns?B.comps.find(c=>/^R/.test(c.ref)&&c.pads.length===2&&c.pads.some(p=>p.net===r.sns)&&/^(2512|2010|1206)$/.test(c.fp||'')):null;});
+  const pose=(c,x,y,rot)=>{canonical(B,c);if(rot)PCBEDIT.rotate(B,c,rot);const bx=(c.bb[0]+c.bb[2])/2,by=(c.bb[1]+c.bb[3])/2;PCBEDIT.move(B,c,x-bx,y-by);PCBEDIT.prepare(B);};
+  const cen=(c,f)=>{const ps=c.pads.filter(f);if(!ps.length)return null;const w=p=>p.w*p.h,W=ps.reduce((a,p)=>a+w(p),0);return[ps.reduce((a,p)=>a+p.x*w(p),0)/W-c.x,ps.reduce((a,p)=>a+p.y*w(p),0)/W-c.y];}; // area-weighted (the exposed pad carries the current)
+  // terminal: pads in a vertical line on the outer (right) edge of the zone
+  let best=null;[0,90,180,270].forEach(rot=>{canonical(B,term);if(rot)PCBEDIT.rotate(B,term,rot);PCBEDIT.prepare(B);const xs=term.pads.map(p=>p.x),ys=term.pads.map(p=>p.y);const sc=(Math.max(...ys)-Math.min(...ys))-(Math.max(...xs)-Math.min(...xs));if(!best||sc>best.sc)best={rot,sc};});
+  const tw=term.bb[2]-term.bb[0];const yc=(rect[1]+rect[3])/2;pose(term,rect[2]-(o.edge||0.6)-tw/2,yc,best.rot);
+  const pinY=ph=>{const p=term.pads.find(q=>q.net===ph);return p?p.y:yc;};
+  R.sort((a,b)=>pinY(b.ph)-pinY(a.ph));
+  // FET orientation: battery away from the terminal, phase toward it, shunt node up
+  const f0=R[0].c;let bestR=null;[0,90,180,270].forEach(rot=>{canonical(B,f0);if(rot)PCBEDIT.rotate(B,f0,rot);PCBEDIT.prepare(B);const r=R[0];
+    const b=cen(f0,p=>p.net===r.bat),ph=cen(f0,p=>p.net===r.ph),sn=cen(f0,p=>p.net===r.sns);const sc=(ph?ph[0]:0)-(b?b[0]:0)+(sn?sn[1]:0)*0.5;if(!bestR||sc>bestR.sc)bestR={rot,sc};});
+  canonical(B,f0);PCBEDIT.rotate(B,f0,bestR.rot);PCBEDIT.prepare(B);const fw=f0.bb[2]-f0.bb[0],fh=f0.bb[3]-f0.bb[1];
+  const shH=R[0].sh?Math.min(R[0].sh.bb[2]-R[0].sh.bb[0],R[0].sh.bb[3]-R[0].sh.bb[1]):0;
+  const H=rect[3]-rect[1];let P=Math.max(fh+shH+3,10);if(P*R.length>H-2)P=Math.max(fh+1.5,(H-2)/R.length);
+  const fx=term.bb[0]-(o.gap||5)-fw/2;const y0=yc+(R.length-1)/2*P;const fixed=[term.ref];
+  R.forEach((r,k)=>{const y=y0-k*P-(shH?shH/2:0);pose(r.c,fx,y,bestR.rot);fixed.push(r.c.ref);
+    if(r.sh){const sn=r.c.pads.filter(p=>p.net===r.sns);const sx=sn.reduce((a,p)=>a+p.x,0)/sn.length,sy=Math.max(...sn.map(p=>p.y));
+      // shunt horizontal, its shunt-node pad over the FET's source pins, the GND end toward the terminal side
+      let bs=null;[0,180].forEach(rot=>{canonical(B,r.sh);if(rot)PCBEDIT.rotate(B,r.sh,rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);if(a&&(!bs||a.x<bs.ax))bs={rot,ax:a.x-r.sh.x};});
+      canonical(B,r.sh);if(bs.rot)PCBEDIT.rotate(B,r.sh,bs.rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);const shw=r.sh.bb[3]-r.sh.bb[1];
+      PCBEDIT.move(B,r.sh,sx-a.x,sy+0.9+shw/2-r.sh.y+(r.sh.y-(r.sh.bb[1]+r.sh.bb[3])/2));PCBEDIT.prepare(B);fixed.push(r.sh.ref);}});
+  return fixed;}
 /* ---------- roles ---------- */
 // smallest centre distance between neighbouring pads (fine-pitch parts need room to fan out)
 function pitchOf(c){let m=1e9;const P=c.pads;if(P.length<6)return m;for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d>0.05&&d<m)m=d;}return m;}
@@ -6232,7 +6353,9 @@ function place(B,opts){
   Object.keys(B.nets).forEach(nm=>{if(isGnd(nm))return;const pins=[];let fx=[];
     info.list.forEach(o=>o.c.pads.forEach((p,k)=>{if(p.net!==nm)return;const i=idx.get(o.ref);if(i!=null)pins.push([i,k]);else fx.push([p.x,p.y]);}));
     if(pins.length+fx.length<2||!pins.length)return;
-    let w=cls(nm)==='전원'?st.pwr*(pins.length+fx.length>10?0.5:1):1;if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
+    let w=cls(nm)==='전원'?st.pwr*(pins.length+fx.length>10?0.5:1):1;
+    // high-current nets (motor supply, phases, shunt nodes): keep the power loop short — pulls FETs, shunts, bulk caps and terminals together
+    const Ihi=B.netCurrent&&+B.netCurrent[nm]||0;if(Ihi>=2)w=Math.max(w,1.5+Math.min(Ihi,60)/20);if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
     const id=NET.length;NET.push({nm,pins,fx,w:w*st.wl});pins.forEach(([i])=>{if(!netsOf[i].includes(id))netsOf[i].push(id);});});
   // decoupling: each cap belongs to the IC with the most pins on its rail (spread over ICs by pin share)
   const DEC=[];const decOf=movable.map(()=>[]);{const load={};
@@ -6452,7 +6575,7 @@ function minimize(B,o){o=o||{};const m=o.margin!=null?+o.margin:1;const r5=v=>Ma
     tries.push({W,H,k,bad});if(o.onTry)o.onTry(tries[tries.length-1]);
     if(!bad)return{ok:true,W,H,k,place:r,tries,W0,H0};}
   return{ok:false,tries,W0,H0};}
-return{ZONES,floorplan,zoneReport,zonesFit,STRATS,ALIAS,strategy,classify,place,metrics,clearCopper,ensurePour,fanout,gndNet,minimize,MIN_KS};
+return{ZONES,floorplan,zoneReport,zonesFit,powerMacro,STRATS,ALIAS,strategy,classify,place,metrics,clearCopper,ensurePour,fanout,gndNet,minimize,MIN_KS};
 })();
 
 
@@ -7084,10 +7207,14 @@ const GROUP_OF={pwr_in:'input',usb_in:'input',ldo:'power',buck:'power',superviso
 function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks.find(x=>x.id===c.block);let k=b?GROUP_OF[b.type]:null;
     if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';g[c.ref]=k||null;});return g;}
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));
-  r.groups=partGroups(plan,r.parts);if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
+  r.groups=partGroups(plan,r.parts);
+  // copper weight / allowed temperature rise for the current-based widths: motor boards default to 2 oz · ΔT 20 °C
+  const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
   if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});
   if(typeof AUTOPLACE!=='undefined'&&opts.place!==false){PCBEDIT.prepare(B);AUTOPLACE.ensurePour(B);const power={};r.power.forEach(x=>{power[x.ref]=x.P;});
-    r.place=AUTOPLACE.place(B,{strategy:opts.strategy||plan.strategy||'balanced',scratch:true,seed:opts.seed||1,power});}
+    // power stage of 2-FET packages: fixed macro (terminal · bridge column · shunts) inside the stage zone, the rest annealed around it
+    let fixed=null;if(B.zones&&B.zones.rects&&B.zones.rects.stage&&AUTOPLACE.powerMacro&&plan.macro!==false){try{fixed=AUTOPLACE.powerMacro(B,B.zones.rects.stage);}catch(e){fixed=null;}}
+    r.macro=fixed;r.place=AUTOPLACE.place(B,{strategy:opts.strategy||plan.strategy||'balanced',scratch:true,seed:opts.seed||1,power,fixed:fixed||[]});}
   return{B,r};}
 function summary(plan){const r=build(plan);const L=[];
   L.push(`프로젝트 ${plan.name} · 블록 ${plan.blocks.length}개 · 부품 ${r.parts.length}개 · 보드 ${r.W} × ${r.H} mm${plan.board?'':' (자동)'} · 배치 전략 ${plan.strategy}`);
@@ -9973,9 +10100,14 @@ function netCurrents(B,opt){opt=opt||{};const out={};const rails={};const Im=mot
   const byV=regs.slice().sort((a,b)=>(railV(a.vin)||0)-(railV(b.vin)||0));
   byV.forEach(r=>{const Iout=r.vouts.reduce((a,n)=>a+out[n].I,0);if(!r.vin||!Iout)return;const vo=r.vouts.length?railV(r.vouts[0])||3.3:3.3,vi=railV(r.vin)||12;
     const Iin=r.role==='buck'?Iout*vo/vi/0.9+0.01:Iout+0.005;out[r.vin].I+=Iin;out[r.vin].loads.push(`${r.c.ref} ${r.role==='buck'?'벅':'LDO'} 입력 ${Iin.toFixed(2)} A (출력 ${Iout.toFixed(2)} A)`);});
+  // currents the circuit generator recorded (motor stage: VM, phases, shunt nodes) are a floor for the estimate
+  if(B.netCurrent)Object.entries(B.netCurrent).forEach(([n,I])=>{if(out[n]&&+I>out[n].I){out[n].I=+I;out[n].loads.push(`회로 생성 기록 ${I} A`);}});
   // input protection nets (VIN_RAW → +12V through a diode/FET): same current as the first rail they feed
   nets.filter(n=>/VIN_RAW|KL30|VIN$/i.test(n)).forEach(n=>{if(out[n].I>0)return;const first=parts.filter(c=>c.pads.some(p=>p.net===n)).flatMap(c=>[...new Set(c.pads.map(p=>p.net))]).filter(x=>x!==n&&isRail(x));const I=Math.max(0,...first.map(x=>out[x].I));if(I){out[n].I=I;out[n].loads.push(`입력 보호단 → ${first[0]} ${I.toFixed(2)} A`);}});
-  nets.forEach(n=>{const o=out[n];if(o.cls==='sig'&&!o.I)o.I=0.02;if(o.cls==='gnd'){o.I=Math.max(...Object.values(out).filter(x=>x.cls==='rail').map(x=>x.I),0);o.loads=['플레인/동박면 귀환'];}});
+  // a "signal" net that carries ampere-level current (shunt nodes, low-side sources) is treated like a motor phase
+  nets.forEach(n=>{const o=out[n];if(o.cls==='sig'&&o.I>=1)o.cls='phase';});
+  // ground returns the largest supply / phase current (motor current comes back through the shunts)
+  nets.forEach(n=>{const o=out[n];if(o.cls==='sig'&&!o.I)o.I=0.02;if(o.cls==='gnd'){o.I=Math.max(...Object.values(out).filter(x=>x.cls==='rail'||x.cls==='phase').map(x=>x.I),0);o.loads=['플레인/동박면 귀환 (모터 전류 포함)'];}});
   return out;}
 /* ---- widths per net, with the user's overrides (B.netWidth: net → mm, B.netCurrent: net → A) ---- */
 function widths(B,opt){opt=opt||{};const oz=opt.oz||B.oz||1,dT=opt.dT||10,cap=opt.cap||3;const cur=netCurrents(B,opt);const out={};
@@ -14336,10 +14468,13 @@ async function cliRoute(a){CLI.routed=true;
   if(!nets.length){const f2=AUTOPLACE.fanout(BD,{thermal:st==='thermal',clear:clr,width:Math.min(0.4,pwr),via});lines[0]+=` · 미세 피치 핀 비아 ${f2.vias}개`;PCBEDIT.rebuildNets(BD);cliCommit(before,'route');cliAfter(false);return lines.concat('배선할 열린 넷이 없습니다.').join('\n');}
   // noise: switching and supply loops first and short, keep the ground plane whole (bottom layer costs more)
   // per-net widths: user overrides always; --iw adds IPC-2221 widths for the current-carrying nets (capped, wider → pour)
-  const netWidth={};const WW=typeof CURRENT!=='undefined'?CURRENT.widths(BD,{oz:BD.oz||1,dT:BD.dT||10,cap:a.iwmax?+a.iwmax:2}):{};
-  Object.keys(WW).forEach(n=>{const w=WW[n];if(w.manual)netWidth[n]=w.w;else if(a.iw&&(w.cls==='rail'||w.cls==='phase')&&w.I>=0.5&&w.ipc>pwr)netWidth[n]=w.w;});
+  const iw=a.iw!=null?!!a.iw&&a.iw!=='off':!a['no-iw']&&!!(BD.newPlan||BD.netCurrent);const wCap=a.iwmax?+a.iwmax:(BD.oz||1)>=2?3:2;
+  const netWidth={};const WW=typeof CURRENT!=='undefined'?CURRENT.widths(BD,{oz:BD.oz||1,dT:BD.dT||10,cap:wCap}):{};
+  Object.keys(WW).forEach(n=>{const w=WW[n];if(w.manual)netWidth[n]=w.w;else if(iw&&(w.cls==='rail'||w.cls==='phase')&&w.I>=0.5&&w.ipc>pwr)netWidth[n]=w.w;});
+  // high-current nets stay on the top layer (the power-stage copper fill goes there; the bottom keeps the GND plane whole)
+  const netBottom={};if(iw)Object.keys(WW).forEach(n=>{const w=WW[n];if(w.I>=3&&(w.cls==='rail'||w.cls==='phase'))netBottom[n]=8;});
   const iwNote=Object.keys(netWidth).length?` · 넷별 폭 ${Object.keys(netWidth).length}개 (${Object.entries(netWidth).slice(0,4).map(([n,w])=>n+' '+w).join(', ')}${Object.keys(netWidth).length>4?' …':''})`+(a.iw?Object.values(WW).some(w=>w.pour&&netWidth[w]===undefined)?'':'':''):'';
-  if(a.iw){const pours=Object.entries(WW).filter(([n,w])=>w.pour&&!w.manual).map(([n,w])=>`${n} ${w.I.toFixed(1)} A → ${w.ipc} mm`);if(pours.length)lines.push(`동박면 권장 (트랙 ${a.iwmax||2} mm 상한): ${pours.join(' · ')}`);}
+  if(iw){const pours=Object.entries(WW).filter(([n,w])=>w.pour&&!w.manual).map(([n,w])=>`${n} ${w.I.toFixed(1)} A → ${w.ipc} mm`);if(pours.length)lines.push(`동박면 권장 (트랙 ${wCap} mm 상한): ${pours.join(' · ')}`);}
   if(iwNote)lines[0]+=iwNote;
   // routing order (ECU practice): ① high-current power/drive → ② clocks·high-speed·differential → ③ sensitive analog → ④ general digital;
   // within a class the shorter net first. --order length keeps the plain shortest-first order.
@@ -14348,8 +14483,19 @@ async function cliRoute(a){CLI.routed=true;
     nets=nets.map(n=>({n,r:sw&&sw.has(n)?0:prioOf(n),e:AUTOROUTE.estimate(BD,n)})).sort((x,y)=>x.r-y.r||x.e-y.e).map(x=>x.n);keepOrder=true;
     const cnt=[0,0,0,0];nets.forEach(n=>cnt[prioOf(n)]++);lines.push(`배선 순서: ${AUTOROUTE.PRIO_LABEL.map((l,i)=>`${i+1}. ${l} ${cnt[i]}`).join(' → ')}`);}
   const prog=cliSay('out',`배선 준비 중… (${nets.length}개 넷)`);await cliTick();
+  // power stage: the high-current nets are routed first on the top layer, then every other net pays to cross a corridor
+  // around them (half the IPC width), so the copper fill added at the end is not cut by signal tracks
+  let avoid=null;const PW=iw?cliPowerNets(WW):null;
+  if(PW&&PW.nets.length){const first=nets.filter(n=>PW.route.includes(n));
+    if(first.length){cliSet(prog,`전력 넷 먼저 배선… (${first.join(', ')})`);await cliTick();const nb1={};PW.route.forEach(n=>{nb1[n]=20;});BD._nb=nb1;
+      const it1=AUTOROUTE.jobRR(BD,first,{width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:2});
+      for(;;){const q=it1.next();if(q.done)break;if(CLI.stopReq)break;}PCBEDIT.rebuildNets(BD);}
+    const SS=AUTOROUTE.shapesOfBoard(BD);const R=PW.rect;const inR=s=>{const x=s.k==='cap'?(s.a[0]+s.b[0])/2:s.x,y=s.k==='cap'?(s.a[1]+s.b[1])/2:s.y;return x>=R[0]-1&&x<=R[2]+1&&y>=R[1]-1&&y<=R[3]+1;};
+    avoid=PW.route.map(n=>({net:n,r:Math.min(4,PW.need[n]/2),layers:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));BD._avoid=avoid;
+    nets=nets.filter(n=>!PW.route.includes(n)||AUTOROUTE.openNets(BD,x=>x===n).length);}
+  else{BD._avoid=null;BD._nb=null;}
   const edgeBand=a.edge===false||a['no-edge']?0:(a.edge!=null&&isFinite(+a.edge)?+a.edge:2);
-  const it=AUTOROUTE.jobRR(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,keepOrder,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,rounds:a.rounds!=null?+a.rounds:undefined});
+  const it=AUTOROUTE.jobRR(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,keepOrder,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,rounds:a.rounds!=null?+a.rounds:undefined});
   const t0=performance.now();let r,last=performance.now();
   for(;;){r=it.next();if(r.done)break;const p=r.value;
     if(performance.now()-last>80){cliSet(prog,p.phase==='route'?`배선 중… ${p.i+1}/${p.total} · ${p.net}`:`막힌 넷 다시 배선 ${p.round}/${p.max} · ${p.net} (완료 ${p.ok}/${p.total})`);await cliTick();last=performance.now();}
@@ -14358,7 +14504,7 @@ async function cliRoute(a){CLI.routed=true;
   // that then shares a cell is re-routed with rising congestion prices until the conflicts are gone
   let pfNote='';if(!a['no-pf']&&a.pf!==false&&!CLI.stopReq){PCBEDIT.rebuildNets(BD);const open1=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net)).length;
     if(open1){cliSet(prog,`협상 배선(PathFinder) 준비… 미배선 ${open1}개`);await cliTick();
-      const it3=AUTOROUTE.jobPF(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,pfRounds:a['pf-rounds']?+a['pf-rounds']:14,pfTimeMs:a['pf-time']?+a['pf-time']*1000:90000});
+      const it3=AUTOROUTE.jobPF(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,pfRounds:a['pf-rounds']?+a['pf-rounds']:14,pfTimeMs:a['pf-time']?+a['pf-time']*1000:90000});
       let r3,last3=performance.now();for(;;){r3=it3.next();if(r3.done)break;const p=r3.value;
         if(performance.now()-last3>80){cliSet(prog,`협상 배선 라운드 ${p.round}/${p.max} · ${p.i+1}/${p.total} ${p.net} (충돌 ${p.conflicts} · 미배선 ${p.open})`);await cliTick();last3=performance.now();}
         if(CLI.stopReq)break;}
@@ -14380,9 +14526,32 @@ async function cliRoute(a){CLI.routed=true;
   if(!a['no-retvia']&&a.retvia!==false){const rv=AUTOROUTE.returnVias(BD,{dist:a.retvia&&isFinite(+a.retvia)?+a.retvia:0.8,clear:clr,via,W:WW});if(rv.added||rv.skipped)lines.push(`리턴(GND) 비아 ${rv.added}개 추가 — 고속·아날로그 넷 층 전환 옆${rv.skipped?` · 자리 없음 ${rv.skipped}개`:''}`);PCBEDIT.rebuildNets(BD);}
   cliCommit(before,'route');cliAfter(false);
   if(!a['no-gloss']&&!CLI.inFix&&!CLI.stopReq&&nets.length){try{const g=await cliGloss({},true);if(g)lines.push(g);}catch(e){lines.push('사후 최적화 건너뜀: '+(e.message||e));}}
+  if(iw&&a.fill!==false&&!a['no-fill']&&!CLI.stopReq){try{const fl=cliPowerFill(WW,clr,via);if(fl)lines.push(fl);}catch(e){lines.push('전력 동박 채우기 건너뜀: '+(e.message||e));}}
   const d=PCBEDIT.drc(BD).length,rats=PCBEDIT.ratsnest(BD).length;lines.push(`DRC ${d}건 · 래츠네스트 ${rats}개`);
   return lines.join('\n');
 }
+/* high-current nets whose IPC width exceeds a track: copper fill in the power-stage region (stage ∪ input zone, else the
+   bounding box of the power parts), stitching vias to the GND plane, then the effective width of each net between its
+   power terminals compared with IPC-2221 at the board's copper weight / ΔT */
+/* the power nets of the board (≥ 3 A supply / phase / ground) and the region their copper may use: stage ∪ input zone, else
+   the box around the power parts. route = the ones routed first and protected by a corridor (not GND: it is a plane). */
+function cliPowerNets(WW){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.powerFill)return null;const oz=BD.oz||1,dT=BD.dT||10;
+  const nets=Object.keys(WW).filter(n=>WW[n].I>=3&&/^(rail|phase|gnd)$/.test(WW[n].cls)&&WW[n].ipc>0.6&&BD.nets[n]);if(!nets.length)return null;
+  let rect=null;const Z=BD.zones&&BD.zones.on!==false&&AUTOPLACE.zonesFit?AUTOPLACE.zonesFit(BD):null;
+  if(Z&&Z.rects&&Z.rects.stage){const rs=[Z.rects.stage,Z.rects.input].filter(Boolean);rect=[Math.min(...rs.map(r=>r[0])),Math.min(...rs.map(r=>r[1])),Math.max(...rs.map(r=>r[2])),Math.max(...rs.map(r=>r[3]))];}
+  else{const ps=BD.comps.filter(c=>/^(Q|J|CP)\d/.test(c.ref)&&c.pads.some(p=>nets.includes(p.net)));if(!ps.length)return null;rect=[Math.min(...ps.map(c=>c.bb[0]))-3,Math.min(...ps.map(c=>c.bb[1]))-3,Math.max(...ps.map(c=>c.bb[2]))+3,Math.max(...ps.map(c=>c.bb[3]))+3];}
+  const need={};nets.forEach(n=>{need[n]=CURRENT.ipcWidth(WW[n].I,{oz,dT});});
+  return{nets,rect,need,route:nets.filter(n=>WW[n].cls!=='gnd')};}
+function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.powerFill)return'';const oz=BD.oz||1,dT=BD.dT||10;
+  const PW=cliPowerNets(WW);if(!PW||!PW.nets.length)return'';const hi=PW.nets,rect=PW.rect;
+  // nets whose power terminals already touch (shunt right on the FET source) need no fill
+  const direct=hi.filter(n=>{if(WW[n].cls==='gnd')return false;const b=AUTOROUTE.bottleneck(BD,n,{});return b.terms.length>=2&&!b.open&&b.width==null;});
+  const f=AUTOROUTE.powerFill(BD,{nets:hi.filter(n=>!direct.includes(n)),rect,clr:Math.max(0.25,clr||0.2),via:via||{d:0.6,drill:0.3},width:PW.need});
+  const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd')return;const b=AUTOROUTE.bottleneck(BD,n,{});const need=CURRENT.ipcWidth(WW[n].I,{oz,dT});const dir=b.terms.length>=2&&!b.open&&b.width==null;
+    rep.push({net:n,I:WW[n].I,width:dir?'직결':b.width,open:b.open,need,ok:dir||b.width!=null&&!b.open&&b.width>=need*0.95,rise:b.width?CURRENT.ipcRise(b.width,WW[n].I,{oz}):null,terms:b.terms});});
+  BD.powerReport={oz,dT,nets:rep,fill:f.area,vias:f.vias,at:Date.now()};
+  const bad=rep.filter(x=>!x.ok);
+  return`전력 동박(${oz} oz · ΔT ${dT} °C): ${f.area.map(x=>x.net+' '+x.mm2+' mm²').join(' · ')} · GND 스티칭 비아 ${f.vias}개\n`+rep.map(x=>`  ${x.ok?'✓':'✕'} ${x.net} ${x.I} A — 유효 폭 ${x.width==null?'측정 불가':x.width+' mm'}${x.open?' (단자 사이 끊김 '+x.open+')':''} / 필요 ${x.need} mm${x.rise!=null&&!x.ok?` → 온도 상승 약 ${Math.min(999,x.rise)} °C`:''}`).join('\n')+(bad.length?`\n→ 전류 경로 부족 ${bad.length}개: 보드를 키우거나(board size) 파워스테이지 부품을 모으세요(reset) — autofix가 자동으로 시도`:'');}
 function cliUnroute(){cliEnsureEdit();const before=cliSnap();const n=PCB.cuKeys(BD).reduce((a,s)=>a+BD.layers[s+'.cu'].filter(p=>p.auto).length,0)+BD.vias.filter(v=>v.auto).length;AUTOROUTE.unroute(BD);PCBEDIT.rebuildNets(BD);cliCommit(before,'unroute');cliAfter(false);return`자동 배선 ${n}개(트랙·비아)를 지웠습니다.`;}
 /* ---- unrouted nets → find a fix by itself (cheapest first, stop at the first fully routed result, keep the best) ----
    Every attempt starts from the same snapshot, so steps do not compound; the board only grows / gains layers in the steps
@@ -14397,7 +14566,7 @@ async function cliGloss(a,quiet){a=a||{};if(BD.pcbPending)throw new Error('배�
   const nets=[...new Set(PCB.cuKeys(BD).flatMap(L=>BD.layers[L+'.cu'].filter(p=>p.auto&&!p.fan&&p.net).map(p=>p.net)).concat(BD.vias.filter(v=>v.auto&&!v.fan&&v.net).map(v=>v.net)))];
   if(!nets.length)return'자동 배선한 넷이 없습니다.';
   const prog=cliSay('out',`사후 최적화 준비… (${nets.length}개 넷)`);await cliTick();const pid=typeof progStart==='function'?progStart('gloss','사후 최적화 (비아 감축)',{total:nets.length,stop:()=>{CLI.stopReq=true;}}):null;
-  const it=AUTOROUTE.gloss(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),viaCost:ml?1.2:2,glossPasses:a.passes?+a.passes:1,glossVia:a.via!=null&&a.via!==true?+a.via:3,glossAll:!!a.all,glossTimeMs:a.time?+a.time*1000:60000});
+  const it=AUTOROUTE.gloss(BD,nets,{avoid:BD._avoid||undefined,avoidCost:6,netBottom:BD._nb||undefined,width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),viaCost:ml?1.2:2,glossPasses:a.passes?+a.passes:1,glossVia:a.via!=null&&a.via!==true?+a.via:3,glossAll:!!a.all,glossTimeMs:a.time?+a.time*1000:60000});
   let r,last=performance.now();try{for(;;){r=it.next();if(r.done)break;const p=r.value;if(performance.now()-last>80){cliSet(prog,`사후 최적화 ${p.pass}/${p.passes} · ${p.i+1}/${p.total} ${p.net} (개선 ${p.changed})`);if(pid)progSet('gloss',{i:p.i,label:`사후 최적화 · ${p.net} (개선 ${p.changed})`});await cliTick();last=performance.now();}if(CLI.stopReq)break;}}
   finally{if(pid)progEnd('gloss');}
   PCBEDIT.rebuildNets(BD);const v=r&&r.done?r.value:null;if(!v){cliRestore(before);return'중지했습니다.';}

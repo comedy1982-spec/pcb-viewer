@@ -42,9 +42,14 @@ function netCurrents(B,opt){opt=opt||{};const out={};const rails={};const Im=mot
   const byV=regs.slice().sort((a,b)=>(railV(a.vin)||0)-(railV(b.vin)||0));
   byV.forEach(r=>{const Iout=r.vouts.reduce((a,n)=>a+out[n].I,0);if(!r.vin||!Iout)return;const vo=r.vouts.length?railV(r.vouts[0])||3.3:3.3,vi=railV(r.vin)||12;
     const Iin=r.role==='buck'?Iout*vo/vi/0.9+0.01:Iout+0.005;out[r.vin].I+=Iin;out[r.vin].loads.push(`${r.c.ref} ${r.role==='buck'?'벅':'LDO'} 입력 ${Iin.toFixed(2)} A (출력 ${Iout.toFixed(2)} A)`);});
+  // currents the circuit generator recorded (motor stage: VM, phases, shunt nodes) are a floor for the estimate
+  if(B.netCurrent)Object.entries(B.netCurrent).forEach(([n,I])=>{if(out[n]&&+I>out[n].I){out[n].I=+I;out[n].loads.push(`회로 생성 기록 ${I} A`);}});
   // input protection nets (VIN_RAW → +12V through a diode/FET): same current as the first rail they feed
   nets.filter(n=>/VIN_RAW|KL30|VIN$/i.test(n)).forEach(n=>{if(out[n].I>0)return;const first=parts.filter(c=>c.pads.some(p=>p.net===n)).flatMap(c=>[...new Set(c.pads.map(p=>p.net))]).filter(x=>x!==n&&isRail(x));const I=Math.max(0,...first.map(x=>out[x].I));if(I){out[n].I=I;out[n].loads.push(`입력 보호단 → ${first[0]} ${I.toFixed(2)} A`);}});
-  nets.forEach(n=>{const o=out[n];if(o.cls==='sig'&&!o.I)o.I=0.02;if(o.cls==='gnd'){o.I=Math.max(...Object.values(out).filter(x=>x.cls==='rail').map(x=>x.I),0);o.loads=['플레인/동박면 귀환'];}});
+  // a "signal" net that carries ampere-level current (shunt nodes, low-side sources) is treated like a motor phase
+  nets.forEach(n=>{const o=out[n];if(o.cls==='sig'&&o.I>=1)o.cls='phase';});
+  // ground returns the largest supply / phase current (motor current comes back through the shunts)
+  nets.forEach(n=>{const o=out[n];if(o.cls==='sig'&&!o.I)o.I=0.02;if(o.cls==='gnd'){o.I=Math.max(...Object.values(out).filter(x=>x.cls==='rail'||x.cls==='phase').map(x=>x.I),0);o.loads=['플레인/동박면 귀환 (모터 전류 포함)'];}});
   return out;}
 /* ---- widths per net, with the user's overrides (B.netWidth: net → mm, B.netCurrent: net → A) ---- */
 function widths(B,opt){opt=opt||{};const oz=opt.oz||B.oz||1,dT=opt.dT||10,cap=opt.cap||3;const cur=netCurrents(B,opt);const out={};

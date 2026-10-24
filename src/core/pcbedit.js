@@ -81,7 +81,7 @@ function ratsnest(B,onlyNets){
     // islands touching a pour of their net (a via, a through pad or a pad on the poured layer) are already joined
     if(pour[n]){const L=pour[n];const onPour=g=>g.some(s=>s.via||(s.pad&&s.L.some(l=>L.has(l))));const a=isl.filter(onPour),b=isl.filter(g=>!onPour(g));isl=a.length?[[].concat(...a)].concat(b):b;}
     if(isl.length<2)return;
-    const pts=isl.map(g=>g.filter(s=>s.pad||s.via||s.prim).map(s=>s.pad?[s.pad.x,s.pad.y]:s.via?[s.via.x,s.via.y]:s.a));
+    const pts=isl.map(g=>g.filter(s=>s.pad||s.via||s.prim).map(s=>s.pad?[s.pad.x,s.pad.y]:s.via?[s.via.x,s.via.y]:s.a||[s.x,s.y]));
     const inT=new Set([0]);
     while(inT.size<isl.length){let best=null;
       inT.forEach(i=>pts[i].forEach(p=>isl.forEach((_,j)=>{if(inT.has(j))return;pts[j].forEach(q=>{const d=Math.hypot(p[0]-q[0],p[1]-q[1]);if(!best||d<best.d)best={d,a:p,b:q,j};});})));

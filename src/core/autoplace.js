@@ -32,7 +32,8 @@ function strategy(s){const k=ALIAS[String(s||'balanced').toLowerCase().replace(/
    groups: input (connector · reverse FET · TVS) · power (regulators) · mcu (MCU · crystal · debug · LED/button) · comm (CAN)
            · stage (gate driver · bridge FETs · shunts · bulk · phase terminal) · sense (current amps · NTC · hall inputs)
    floorplan(): vertical strips sized by the parts' area, every zone touching a board edge so its connectors reach one —
-     motor:   [comm / input] [power] [mcu / sense] [stage]   (stage along the right edge = housing / heat-sink side)
+     motor:   [comm / mcu] [power / sense] [stage / input]  (stage + battery input share the right edge: the high-current
+              loop battery → bulk → bridge → shunt → GND stays in one column, next to the housing / heat-sink side)
      general: [comm / input] [power] [mcu / sense]
    place() adds a cost for every part outside its zone (soft; opts.zoneHard → much stronger) and seeds scratch placement
    inside the zone. B.zones = {on, template, rects:{g:[x0,y0,x1,y1]}, groupOf:{ref:g}} is reused by later re-placements. */
@@ -41,7 +42,7 @@ function floorplan(B,groupOf,o){o=o||{};const ring=B.outline[0]||[[0,0],[B.W,0],
   const x0=Math.min(...ring.map(p=>p[0])),y0=Math.min(...ring.map(p=>p[1])),x1=Math.max(...ring.map(p=>p[0])),y1=Math.max(...ring.map(p=>p[1]));const W=x1-x0,H=y1-y0;
   const area={};B.comps.forEach(c=>{const g=groupOf[c.ref];if(!g||!c.bb)return;area[g]=(area[g]||0)+(c.bb[2]-c.bb[0]+1)*(c.bb[3]-c.bb[1]+1);});
   const has=g=>(area[g]||0)>0;const motor=o.template?o.template==='motor':has('stage');
-  const cols=(motor?[['comm','input'],['power'],['mcu','sense'],['stage']]:[['comm','input'],['power'],['mcu','sense','stage']]).map(c=>c.filter(has)).filter(c=>c.length);
+  const cols=(motor?[['comm','mcu'],['power','sense'],['stage','input']]:[['comm','input'],['power'],['mcu','sense','stage']]).map(c=>c.filter(has)).filter(c=>c.length);
   if(!cols.length)return null;
   const ca=cols.map(c=>c.reduce((s,g)=>s+area[g],0)),tot=ca.reduce((a,b)=>a+b,0);
   let w=ca.map(a=>Math.max(0.12,a/tot));const ws=w.reduce((a,b)=>a+b,0);w=w.map(v=>v/ws*W);
@@ -58,6 +59,52 @@ function zoneReport(B){const Z=B.zones;if(!Z||!Z.rects)return null;const out=[];
     cs.forEach(c=>{const b=c.bb;used+=(b[2]-b[0])*(b[3]-b[1]);const cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2;if(cx<r[0]||cx>r[2]||cy<r[1]||cy>r[3])outN.push(c.ref);});
     out.push({g,label:(ZONES[g]||{}).label||g,rect:r,parts:cs.length,util:Math.round(used/((r[2]-r[0])*(r[3]-r[1]))*100),out:outN});});
   return out;}
+
+/* ---------- power-stage macro placement (bridge of 2-FET packages) ----------
+   The power loop decides the copper: battery bus → half-bridge → phase terminal, shunt on the low-side source. The macro
+   puts the motor terminal on the stage zone's outer edge, one 2-FET package per phase in a column facing it (battery pads
+   toward the bus side, phase pad toward the terminal, low-side source / shunt node up) and the shunt right on that source;
+   everything else is placed around them by the annealer. Returns the refs it fixed (or null). */
+function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
+  const fets=B.comps.filter(c=>c.pads.length===10&&c.pads.some(p=>p.n==='9')&&c.pads.some(p=>p.n==='10')&&/^Q/.test(c.ref));if(fets.length<2)return null;
+  const role=c=>{const bat=c.pads.find(p=>p.n==='9').net,ph=c.pads.find(p=>p.n==='10').net;const sns=c.pads.find(p=>p.net&&p.net!==bat&&p.net!==ph&&/SNS|GND/i.test(p.net)&&p.n!=='9'&&p.n!=='10');return{bat,ph,sns:sns?sns.net:null};};
+  const R=fets.map(c=>Object.assign({c},role(c)));const bat=R[0].bat;
+  const term=B.comps.filter(c=>/^J/.test(c.ref)&&R.every(r=>c.pads.some(p=>p.net===r.ph))).sort((a,b)=>a.pads.length-b.pads.length)[0];if(!term)return null;
+  R.forEach(r=>{r.sh=r.sns?B.comps.find(c=>/^R/.test(c.ref)&&c.pads.length===2&&c.pads.some(p=>p.net===r.sns)&&/^(2512|2010|1206)$/.test(c.fp||'')):null;});
+  // supply entry: the reverse-protection FET between the input terminal net and the bridge supply, and that input terminal
+  const qin=B.comps.find(c=>/^Q/.test(c.ref)&&!fets.includes(c)&&c.pads.some(p=>p.net===bat));const vin=qin?(qin.pads.find(p=>p.net&&p.net!==bat&&B.comps.some(j=>/^J/.test(j.ref)&&j!==term&&j.pads.some(q=>q.net===p.net)))||{}).net:null;
+  const jin=vin?B.comps.find(c=>/^J/.test(c.ref)&&c!==term&&c.pads.some(p=>p.net===vin)):null;
+  const pose=(c,x,y,rot)=>{canonical(B,c);if(rot)PCBEDIT.rotate(B,c,rot);PCBEDIT.prepare(B);const bx=(c.bb[0]+c.bb[2])/2,by=(c.bb[1]+c.bb[3])/2;PCBEDIT.move(B,c,x-bx,y-by);PCBEDIT.prepare(B);};
+  const cen=(c,f)=>{const ps=c.pads.filter(f);if(!ps.length)return null;const w=p=>p.w*p.h,W=ps.reduce((a,p)=>a+w(p),0);return[ps.reduce((a,p)=>a+p.x*w(p),0)/W-c.x,ps.reduce((a,p)=>a+p.y*w(p),0)/W-c.y];}; // area-weighted (the exposed pad carries the current)
+  const bestRot=(c,score)=>{let best=null;[0,90,180,270].forEach(rot=>{canonical(B,c);if(rot)PCBEDIT.rotate(B,c,rot);PCBEDIT.prepare(B);const sc=score(c);if(!best||sc>best.sc)best={rot,sc};});canonical(B,c);if(best.rot)PCBEDIT.rotate(B,c,best.rot);PCBEDIT.prepare(B);return best.rot;};
+  const edge=o.edge||0.6,fixed=[],keepout=[];
+  // motor terminal: pads in a vertical line on the outer (right) edge of the zone
+  const tRot=bestRot(term,c=>{const xs=c.pads.map(p=>p.x),ys=c.pads.map(p=>p.y);return(Math.max(...ys)-Math.min(...ys))-(Math.max(...xs)-Math.min(...xs));});
+  const tw=term.bb[2]-term.bb[0];
+  // FET orientation: battery away from the terminal, phase toward it, shunt node up
+  const fRot=bestRot(R[0].c,c=>{const r=R[0];const b=cen(c,p=>p.net===r.bat),ph=cen(c,p=>p.net===r.ph),sn=cen(c,p=>p.net===r.sns);return(ph?ph[0]:0)-(b?b[0]:0)+(sn?sn[1]:0)*0.5;});
+  const fw=R[0].c.bb[2]-R[0].c.bb[0],fh=R[0].c.bb[3]-R[0].c.bb[1];
+  const shH=R[0].sh?Math.min(R[0].sh.bb[2]-R[0].sh.bb[0],R[0].sh.bb[3]-R[0].sh.bb[1]):0;
+  const busW=Math.max(3,o.busW||4);const shL=R[0].sh?Math.max(R[0].sh.bb[2]-R[0].sh.bb[0],R[0].sh.bb[3]-R[0].sh.bb[1]):0;const tL=rect[2]-edge-tw;
+  const fx=Math.min(tL-(o.gap||5)-fw/2,tL-1-shL-fw/2);const busX1=fx-fw/2-0.4,busX0=busX1-busW,bx=(busX0+busX1)/2;
+  // supply stack along the bus, bottom up: input terminal on the bottom edge, reverse-protection FET above it (supply pad up)
+  let yIn=rect[1]+edge;
+  if(jin){bestRot(jin,c=>{const xs=c.pads.map(p=>p.x),ys=c.pads.map(p=>p.y);return(Math.max(...xs)-Math.min(...xs))-(Math.max(...ys)-Math.min(...ys));});
+    const h=jin.bb[3]-jin.bb[1];pose(jin,bx,yIn+h/2,(jin.rot||0));yIn=jin.bb[3]+1.2;fixed.push(jin.ref);}
+  if(qin){const r=bestRot(qin,c=>{const a=cen(c,p=>p.net===bat),b=cen(c,p=>p.net===vin);return(a?a[1]:0)-(b?b[1]:0);});const h=qin.bb[3]-qin.bb[1];pose(qin,bx,yIn+h/2,r);yIn=qin.bb[3]+1.0;fixed.push(qin.ref);}
+  // FET column (with its shunts) from the top of the zone down, the motor terminal beside it
+  const top=rect[3]-edge;const H=top-yIn;let P=Math.max(fh+shH+2.5,9);if(P*R.length>H)P=Math.max(fh+1.2,H/R.length);
+  const yc=top-P*R.length/2;pose(term,rect[2]-edge-tw/2,yc,tRot);fixed.push(term.ref);
+  const pinY=ph=>{const p=term.pads.find(q=>q.net===ph);return p?p.y:yc;};R.sort((a,b)=>pinY(b.ph)-pinY(a.ph));
+  R.forEach((r,k)=>{const yRow=top-k*P-P/2;pose(r.c,fx,yRow-(shH?shH/2:0),fRot);fixed.push(r.c.ref);
+    if(r.sh){const sn=r.c.pads.filter(p=>p.net===r.sns);const sx=sn.reduce((a,p)=>a+p.x,0)/sn.length,sy=Math.max(...sn.map(p=>p.y));
+      // shunt horizontal, its shunt-node pad over the FET's source pins, the GND end toward the terminal side
+      let bs=null;[0,180].forEach(rot=>{canonical(B,r.sh);if(rot)PCBEDIT.rotate(B,r.sh,rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);if(a&&(!bs||a.x<bs.ax))bs={rot,ax:a.x-r.sh.x};});
+      canonical(B,r.sh);if(bs.rot)PCBEDIT.rotate(B,r.sh,bs.rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);const shw=r.sh.bb[3]-r.sh.bb[1];
+      PCBEDIT.move(B,r.sh,sx-a.x,Math.max(sy,r.c.bb[3])+0.9+shw/2-r.sh.y+(r.sh.y-(r.sh.bb[1]+r.sh.bb[3])/2));PCBEDIT.prepare(B);fixed.push(r.sh.ref);}});
+  // the supply bus (battery side of the bridge) stays free of other parts
+  keepout.push([busX0,yIn-1,busX1,top]);
+  return{fixed,keepout,bus:[busX0,rect[1],busX1,top],net:bat};}
 /* ---------- roles ---------- */
 // smallest centre distance between neighbouring pads (fine-pitch parts need room to fan out)
 function pitchOf(c){let m=1e9;const P=c.pads;if(P.length<6)return m;for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d>0.05&&d<m)m=d;}return m;}
@@ -135,7 +182,7 @@ function place(B,opts){
   const small=o=>{const b=o.c.bb;return b&&(b[2]-b[0])<=7&&(b[3]-b[1])<=7;};
   const canB=movable.map(o=>both&&!o.tht&&!o.elcap&&!o.conn&&(o.two||(opts.bothIcs!==false&&small(o)&&!o.mcu&&!o.driver&&!o.reg&&!o.fet&&!(o.P>0.3))));
   // obstacles: fixed parts and mounting holes
-  const obst=[];info.list.forEach(o=>{if(idx.has(o.ref))return;obst.push({bb:o.c.bb.slice(),side:o.tht?'both':o.c.side,halo:o.halo,o,cx:(o.c.bb[0]+o.c.bb[2])/2,cy:(o.c.bb[1]+o.c.bb[3])/2});});
+  const obst=[];(opts.keepout||[]).forEach(k=>obst.push({bb:k.slice(),side:'T',halo:0.3,cx:(k[0]+k[2])/2,cy:(k[1]+k[3])/2}));info.list.forEach(o=>{if(idx.has(o.ref))return;obst.push({bb:o.c.bb.slice(),side:o.tht?'both':o.c.side,halo:o.halo,o,cx:(o.c.bb[0]+o.c.bb[2])/2,cy:(o.c.bb[1]+o.c.bb[3])/2});});
   B.drills.forEach(d=>{if(d.plated||d.own||d._pad)return;const k=d.d/2+0.8;obst.push({bb:[d.x-k,d.y-k,d.x+k,d.y+k],side:'both',halo:0.4,hole:true,cx:d.x,cy:d.y});});
   // nets → pins
   const cls=nm=>B.netClass?B.netClass(nm):isGnd(nm)?'접지':'신호';const swSet=new Set(info.switchNets);
@@ -143,7 +190,9 @@ function place(B,opts){
   Object.keys(B.nets).forEach(nm=>{if(isGnd(nm))return;const pins=[];let fx=[];
     info.list.forEach(o=>o.c.pads.forEach((p,k)=>{if(p.net!==nm)return;const i=idx.get(o.ref);if(i!=null)pins.push([i,k]);else fx.push([p.x,p.y]);}));
     if(pins.length+fx.length<2||!pins.length)return;
-    let w=cls(nm)==='전원'?st.pwr*(pins.length+fx.length>10?0.5:1):1;if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
+    let w=cls(nm)==='전원'?st.pwr*(pins.length+fx.length>10?0.5:1):1;
+    // high-current nets (motor supply, phases, shunt nodes): keep the power loop short — pulls FETs, shunts, bulk caps and terminals together
+    const Ihi=B.netCurrent&&+B.netCurrent[nm]||0;if(Ihi>=2)w=Math.max(w,1.5+Math.min(Ihi,60)/20);if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
     const id=NET.length;NET.push({nm,pins,fx,w:w*st.wl});pins.forEach(([i])=>{if(!netsOf[i].includes(id))netsOf[i].push(id);});});
   // decoupling: each cap belongs to the IC with the most pins on its rail (spread over ICs by pin share)
   const DEC=[];const decOf=movable.map(()=>[]);{const load={};
@@ -363,6 +412,6 @@ function minimize(B,o){o=o||{};const m=o.margin!=null?+o.margin:1;const r5=v=>Ma
     tries.push({W,H,k,bad});if(o.onTry)o.onTry(tries[tries.length-1]);
     if(!bad)return{ok:true,W,H,k,place:r,tries,W0,H0};}
   return{ok:false,tries,W0,H0};}
-return{ZONES,floorplan,zoneReport,zonesFit,STRATS,ALIAS,strategy,classify,place,metrics,clearCopper,ensurePour,fanout,gndNet,minimize,MIN_KS};
+return{ZONES,floorplan,zoneReport,zonesFit,powerMacro,STRATS,ALIAS,strategy,classify,place,metrics,clearCopper,ensurePour,fanout,gndNet,minimize,MIN_KS};
 })();
 if(typeof module!=='undefined')module.exports=AUTOPLACE;

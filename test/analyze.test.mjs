@@ -46,10 +46,10 @@ test('current: IPC-2221 widths and net current estimate', () => {
   assert.ok(CURRENT.ipcRise(0.3, 3) > 50 && CURRENT.ipcRise(2, 1) < 5);
   assert.equal(CURRENT.railV('+3V3'), 3.3); assert.equal(CURRENT.railV('VCC_5V'), 5); assert.ok(!CURRENT.isRail('USB_DM') && CURRENT.isRail('VBUS') && CURRENT.isPhase('PH_U'));
   const P = NEWPROJ.planFrom('12V 차량 배터리, STM32, CAN, BLDC 모터 구동(홀) 6A, LED 2개'); const { B } = NEWPROJ.toBoard(P.plan || P, { place: false });
-  const W = CURRENT.widths(B);
+  const W = CURRENT.widths(B, { oz: 1 });
   assert.ok(W.PH_U.I >= 6 && W.PH_U.cls === 'phase' && W.PH_U.pour, 'phase current from the requirement');
   assert.ok(W['+12V'].I > 3 && W['+3V3'].I > 0.1 && W['+3V3'].I < 1, 'rails');
   B.netWidth = { '+12V': 1.5 }; B.netCurrent = { '+3V3': 2 };
-  const W2 = CURRENT.widths(B); assert.equal(W2['+12V'].w, 1.5); assert.ok(W2['+12V'].manual); assert.equal(W2['+3V3'].I, 2); assert.ok(W2['+3V3'].ipc > 0.7);
+  const W2 = CURRENT.widths(B, { oz: 1 }); assert.equal(W2['+12V'].w, 1.5); assert.ok(W2['+12V'].manual); assert.equal(W2['+3V3'].I, 2); assert.ok(W2['+3V3'].ipc > 0.7);
   assert.match(CURRENT.text(B), /PH_U.*모터상.*6\.00 A/);
 });

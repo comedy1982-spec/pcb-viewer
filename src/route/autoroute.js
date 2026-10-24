@@ -21,7 +21,8 @@ function shapesOfBoard(B){
   keys.forEach((s,li)=>B.layers[s+'.cu'].forEach(p=>{
     if(p.t==='seg')S.push({k:'cap',a:p.a,b:p.b,r:p.w/2,L:[li],net:p.net,prim:p});
     else if(p.t==='path')for(let i=1;i<p.pts.length;i++)S.push({k:'cap',a:p.pts[i-1],b:p.pts[i],r:p.w/2,L:[li],net:p.net,prim:p});
-    else if(p.t==='pad'&&!B.comps.some(c=>c.pads.includes(p)))S.push(padShape(p,NL));}));
+    else if(p.t==='pad'&&!B.comps.some(c=>c.pads.includes(p)))S.push(padShape(p,NL));
+    else if(p.t==='poly'&&p.rect&&p.net){const r=p.rect;S.push({k:'rect',x:(r[0]+r[2])/2,y:(r[1]+r[3])/2,hw:(r[2]-r[0])/2,hh:(r[3]-r[1])/2,ang:0,L:[li],net:p.net,prim:p,fill:true});}}));
   B.vias.forEach(v=>S.push({k:'cap',a:[v.x,v.y],b:[v.x,v.y],r:v.d/2,L:all,net:v.net,via:v}));
   B.drills.forEach(d=>{if(!d.plated)S.push({k:'cap',a:[d.x,d.y],b:[d.x2!=null?d.x2:d.x,d.y2!=null?d.y2:d.y],r:d.d/2,L:all,net:null,hole:true});});
   return S;
@@ -101,7 +102,7 @@ function astar(G,k,src,tgt,anchors,o){
   const push=(id,f)=>{if(hn===hid.length){const a=new Int32Array(hn*2);a.set(hid);hid=a;const b=new Float32Array(hn*2);b.set(hf);hf=b;}let i=hn++;while(i>0){const p=(i-1)>>1;if(hf[p]<=f)break;hid[i]=hid[p];hf[i]=hf[p];i=p;}hid[i]=id;hf[i]=f;};
   const pop=()=>{const r=hid[0];hn--;if(hn>0){const id=hid[hn],f=hf[hn];let i=0;for(;;){let c=2*i+1;if(c>=hn)break;if(c+1<hn&&hf[c+1]<hf[c])c++;if(hf[c]>=f)break;hid[i]=hid[c];hf[i]=hf[c];i=c;}hid[i]=id;hf[i]=f;}return r;};
   src.forEach(id=>{gs[id]=0;stamp[id]=gen;par[id]=-1;dir[id]=-1;const i=id%N;push(id,h(i%nx,(i/nx)|0));});
-  let exp=0;const viaC=o.viaCost/G.g,bot=o.bottomCost||1,esc=o.escCost?G.esc:null,escC=o.escCost||0,edgeC=o.edgeCost||0;
+  let exp=0;const av=G.avoid||null,avC=o.avoidCost||6;const viaC=o.viaCost/G.g,bot=o.bottomCost||1,esc=o.escCost?G.esc:null,escC=o.escCost||0,edgeC=o.edgeCost||0;
   // PathFinder: cost × (1 + history) × (1 + pres × other nets on the cell) — overuse is allowed and priced, not forbidden
   const pf=o.pf||null,pres=pf?pf.pres:0;
   const dirC=o.dirCost&&o.dirCost!==1&&G.pref?+o.dirCost:0,dirD=dirC?Math.sqrt(dirC):0;const pref=G.pref||null;
@@ -112,7 +113,7 @@ function astar(G,k,src,tgt,anchors,o){
     const l=(id/N)|0,i=id-l*N,x=i%nx,y=(i/nx)|0,g0=gs[id],d0=dir[id];const lc=l===NL-1?bot:l?(o.innerCost||1):1;
     for(let d=0;d<8;d++){const xx=x+DX[d],yy=y+DY[d];if(xx<0||yy<0||xx>=nx||yy>=ny)continue;const j=yy*nx+xx;if(!free(l,j))continue;
       if(d>=4&&(!free(l,y*nx+xx)||!free(l,yy*nx+x)))continue;
-      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;let step=DC[d]*lc*wrong(l,d);if(pf){const oc=pf.occ[l][j];step*=(1+pf.hist[l][j])*(oc>0?1+pres*oc:1);}const ng=g0+step+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0)+(edgeC&&G.edgeBand&&G.edgeBand[j]?edgeC:0);
+      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;let step=DC[d]*lc*wrong(l,d);if(av){const a=av[l][j];if(a!==0&&a!==k)step*=avC;}if(pf){const oc=pf.occ[l][j];step*=(1+pf.hist[l][j])*(oc>0?1+pres*oc:1);}const ng=g0+step+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0)+(edgeC&&G.edgeBand&&G.edgeBand[j]?edgeC:0);
       if(stamp[nid]!==gen||ng<gs[nid]){stamp[nid]=gen;gs[nid]=ng;par[nid]=id;dir[nid]=d;push(nid,ng+h(xx,yy));}}
     // via
     let fv=-1;for(const l2 of rl){if(l2===l)continue;const nid=l2*N+i;if(cl[nid]===gen||!free(l2,i))continue;
@@ -195,6 +196,11 @@ function prepare(B,opts){
   if(o.escCost)S.forEach(s=>{if(!s.pad||!s.net)return;const k=idOf(s.net),m0=wMax+o.clear,m1=m0+(o.escape||0.45);const bb=bboxOf(s,m1);
     const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(s,G.ox+x*G.g,G.oy+y*G.g);if(d<=m0||d>m1)continue;const i=y*G.nx+x;s.L.forEach(l=>{const v=G.esc[l][i];G.esc[l][i]=v===0||v===k?k:-1;});}});
+  // power corridors: cells near a high-current net's copper on a layer cost other nets o.avoidCost × to cross (they go around or
+  // change layer), so the copper fill that follows is not cut by signal tracks
+  if(o.avoid&&o.avoid.length){G.avoid=Array.from({length:G.NL},()=>new Int32Array(G.N));o.avoid.forEach(c=>{const k=idOf(c.net);(c.shapes||[]).forEach(sh=>{const bb=bboxOf(sh,c.r);
+      const x0=Math.max(0,Math.floor((bb[0]-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/G.g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/G.g));
+      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){if(dist(sh,G.ox+x*G.g,G.oy+y*G.g)>c.r)continue;const i=y*G.nx+x;sh.L.forEach(l=>{if(c.layers&&!c.layers.includes(l))return;const a=G.avoid[l][i];G.avoid[l][i]=a===0||a===k?k:-1;});}});});}
   return{o,G,S,idOf};
 }
 // nets that still have more than one copper group
@@ -232,7 +238,7 @@ function routeNet(P,B,net){
     // big nets: keep the heuristic cheap — only the anchors nearest to the group being joined
     if(anchors.length>24){let sx=0,sy=0,sn=0;srcC.forEach(s=>{const p=s.k==='cap'?s.a:[s.x,s.y];sx+=(p[0]-G.ox)/G.g;sy+=(p[1]-G.oy)/G.g;sn++;});sx/=sn;sy/=sn;anchors=anchors.map(a=>[a,Math.abs(a[0]-sx)+Math.abs(a[1]-sy)]).sort((a,b)=>a[1]-b[1]).slice(0,24).map(a=>a[0]);}
     const wBase=Math.max(o.width.signal,o.width.power);const dil=w>wBase+1e-6?Math.ceil((w-wBase)/2/G.g):0;const edgeCost=o.edgeBand>0&&netPrio(B,net,o.W)===1?(o.edgeCost||1.5):0;
-    const r=astar(G,k,src,tgt,anchors,(dil||edgeCost)?Object.assign({},o,{dil,edgeCost}):o);
+    const nb=o.netBottom&&o.netBottom[net];const r=astar(G,k,src,tgt,anchors,(dil||edgeCost||nb)?Object.assign({},o,{dil,edgeCost},nb?{bottomCost:nb}:{}):o);
     if(!r.path)return Object.assign(added,{ok:false,why:r.fail});
     const cu=toCopper(G,r.path,w,o.via,net,own.get(r.path[0]),own.get(r.path[r.path.length-1]));
     // commit: board + shapes + grid
@@ -383,7 +389,7 @@ function routeNetPF(P,B,net,pf){
     const src=new Set(ext),tgt=new Set(),own=new Map();padCells(G,w,cur,src,own);padCells(G,w,rest.flat(),tgt,own);
     let anchors=[];rest.flat().forEach(s=>{const pts=s.k==='cap'?[s.a,s.b]:[[s.x,s.y]];pts.forEach(p=>anchors.push([(p[0]-G.ox)/G.g,(p[1]-G.oy)/G.g]));});
     if(anchors.length>24){let sx=0,sy=0,sn=0;cur.forEach(s=>{const p=s.k==='cap'?s.a:[s.x,s.y];sx+=(p[0]-G.ox)/G.g;sy+=(p[1]-G.oy)/G.g;sn++;});sx/=sn;sy/=sn;anchors=anchors.map(a=>[a,Math.abs(a[0]-sx)+Math.abs(a[1]-sy)]).sort((a,b)=>a[1]-b[1]).slice(0,24).map(a=>a[0]);}
-    const r=astar(G,k,src,tgt,anchors,Object.assign({},o,{dil,edgeCost,pf}));if(!r.path)return{ok:false,why:r.fail};
+    const nb=o.netBottom&&o.netBottom[net];const r=astar(G,k,src,tgt,anchors,Object.assign({},o,{dil,edgeCost,pf},nb?{bottomCost:nb}:{}));if(!r.path)return{ok:false,why:r.fail};
     const endS=own.get(r.path[r.path.length-1]);let gi=rest.findIndex(g=>g.includes(endS));if(gi<0)gi=0;
     const cu=toCopper(G,r.path,w,o.via,net,own.get(r.path[0]),endS);
     cu.tracks.forEach(t=>{tracks.push(t);});cu.vias.forEach(v=>vias.push(v));len+=cu.len;r.path.forEach(id=>ext.add(id));
@@ -414,7 +420,7 @@ function* gloss(B,nets,opts){
   const after=tot();return{changed,tried,vias:[before.v,after.v],len:[before.l,after.l],ms:Date.now()-t0};
 }
 function unroute(B,list){ // remove auto tracks/vias (all, or only those in list)
-  const kill=list?new Set(list):null;const keep=p=>!(p.auto&&(!kill||kill.has(p)));
+  const kill=list?new Set(list):null;const keep=p=>!((p.auto||(!kill&&(p.fill||p.stitch)))&&(!kill||kill.has(p))); // unrouting everything also drops the power fill
   const keys=PC.cuKeys(B);keys.forEach(s=>{B.layers[s+'.cu']=B.layers[s+'.cu'].filter(keep);});B.vias=B.vias.filter(keep);
   Object.values(B.nets).forEach(n=>{n.tracks=n.tracks.filter(keep);n.vias=n.vias.filter(keep);n.len={T:0,B:0};n.tracks.forEach(t=>{const L=t._side||keys.find(k=>B.layers[k+'.cu'].includes(t))||'T';const q=t.pts||[t.a,t.b];n.len[L]=n.len[L]||0;for(let i=1;i<q.length;i++)n.len[L]+=Math.hypot(q[i][0]-q[i-1][0],q[i][1]-q[i-1][1]);});});
 }
@@ -425,6 +431,89 @@ function drc(B,opts){
     const gap=shapeGap(a,b);if(gap<o.clear-0.03)out.push({net:a.net,other:b.net||(b.hole?'구멍':'(넷 없음)'),gap,at:a.k==='cap'?a.a:[a.x,a.y]});});});
   return out;
 }
-return{gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+
+/* ---------- power copper fill (high-current nets in the power-stage region) ----------
+   A grid zone fill: every free cell of the region (no other net's copper within the clearance, not in the escape ring of
+   another net's pad) is given to the nearest high-current net by a multi-source BFS from that net's own copper; cells of
+   two different fill nets are kept ≥ clearance apart; islands that touch none of the net's copper are dropped. The cells
+   become copper as merged rectangles (fat segments, prim.fill = true), so routing, DRC and connectivity see them.
+   GND fill gets stitching vias to the plane. bottleneck() measures what the copper really offers: the widest path
+   (maximin of the distance transform) between the net's power terminals → an effective width to compare with IPC-2221. */
+function powerFill(B,o){o=Object.assign({layer:0,clr:0.25,esc:0.9,grid:0.1,stitch:1.3,via:{d:0.6,drill:0.3}},o||{});
+  const keys=PC.cuKeys(B),L=o.layer,lk=keys[L];const nets=o.nets.filter(n=>B.nets[n]);if(!nets.length)return{cells:0,nets:[]};
+  B.layers[lk+'.cu']=B.layers[lk+'.cu'].filter(p=>!(p.fill&&nets.includes(p.net)));B.vias=B.vias.filter(v=>!(v.stitch&&nets.includes(v.net)));
+  const P=prepare(B,{grid:o.grid,clear:o.clr,width:{signal:o.grid,power:o.grid},via:o.via});const G=P.G,S=P.S,g=G.g;const occ=G.occT[L];
+  const r0=o.rect;const X0=Math.max(0,Math.ceil((r0[0]-G.ox)/g)),X1=Math.min(G.nx-1,Math.floor((r0[2]-G.ox)/g)),Y0=Math.max(0,Math.ceil((r0[1]-G.oy)/g)),Y1=Math.min(G.ny-1,Math.floor((r0[3]-G.oy)/g));
+  const inR=i=>{const x=i%G.nx,y=(i/G.nx)|0;return x>=X0&&x<=X1&&y>=Y0&&y<=Y1;};
+  const id=nets.map(n=>P.idOf(n)),own=new Int16Array(G.N).fill(-1),blocked=new Uint8Array(G.N);
+  const cellsNear=(s,m,f)=>{const bb=bboxOf(s,m);const x0=Math.max(X0,Math.floor((bb[0]-G.ox)/g)),x1=Math.min(X1,Math.ceil((bb[2]-G.ox)/g)),y0=Math.max(Y0,Math.floor((bb[1]-G.oy)/g)),y1=Math.min(Y1,Math.ceil((bb[3]-G.oy)/g));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const d=dist(s,G.ox+x*g,G.oy+y*g);if(d<=m)f(y*G.nx+x,d);}};
+  // the escape ring of every other net's pad stays free (a track or via must still reach it)
+  S.forEach(s=>{if(!s.pad||!s.L.includes(L)||nets.includes(s.net)||!s.net)return;cellsNear(s,o.esc,i=>{blocked[i]=1;});});
+  // seeds: the fill nets' own copper on this layer
+  const Q=[];S.forEach(s=>{const k=nets.indexOf(s.net);if(k<0||!s.L.includes(L))return;cellsNear(s,0,i=>{if(own[i]<0&&(occ[i]===id[k])){own[i]=k;Q.push(i);}});});
+  const seed=new Uint8Array(G.N);Q.forEach(i=>{seed[i]=1;});
+  // corridors first: the nets with a target width (o.width[net], mm) grow alone up to half that width around their own copper,
+  // highest current first, so a bus keeps its width where the space allows; then every net grows into what is left
+  // reserved strips (the supply bus beside the bridge) belong to their net before anything else grows
+  (o.claim||[]).forEach(c=>{const k=nets.indexOf(c.net);if(k<0)return;const r=c.rect;for(let y=Math.max(Y0,Math.ceil((r[1]-G.oy)/g));y<=Math.min(Y1,Math.floor((r[3]-G.oy)/g));y++)for(let x=Math.max(X0,Math.ceil((r[0]-G.ox)/g));x<=Math.min(X1,Math.floor((r[2]-G.ox)/g));x++){const i=y*G.nx+x;
+      if(own[i]>=0||blocked[i])continue;const v=occ[i];if(v!==0&&v!==id[k])continue;own[i]=k;Q.push(i);}});
+  if(o.width){const order=nets.map((n,k)=>k).filter(k=>o.width[nets[k]]>0).sort((a,b)=>(o.width[nets[b]]||0)-(o.width[nets[a]]||0));
+    order.forEach(k=>{const lim=Math.ceil(o.width[nets[k]]/2/g);const dep=new Map();const q=[];for(let i=0;i<G.N;i++)if(own[i]===k&&seed[i]){q.push(i);dep.set(i,0);}
+      for(let h=0;h<q.length;h++){const i=q[h],d0=dep.get(i);if(d0>=lim)continue;const x=i%G.nx;for(const j of [x>X0?i-1:-1,x<X1?i+1:-1,i-G.nx,i+G.nx]){if(j<0||j>=G.N||own[j]>=0||blocked[j]||!inR(j))continue;const v=occ[j];if(v!==0&&v!==id[k])continue;own[j]=k;dep.set(j,d0+1);q.push(j);Q.push(j);}}});}
+  for(let h=0;h<Q.length;h++){const i=Q[h],k=own[i];const x=i%G.nx;const nb=[x>X0?i-1:-1,x<X1?i+1:-1,i-G.nx,i+G.nx];
+    for(const j of nb){if(j<0||j>=G.N||own[j]>=0||blocked[j]||!inR(j))continue;const v=occ[j];if(v!==0&&v!==id[k])continue;own[j]=k;Q.push(j);}}
+  // gap between different fill nets ≥ clearance
+  const r=Math.ceil((o.clr+g*0.5)/g);const keep=new Int16Array(own);
+  for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++){const i=y*G.nx+x,k=own[i];if(k<0||seed[i])continue;let bad=false;
+    for(let dy=-r;dy<=r&&!bad;dy++){const yy=y+dy;if(yy<Y0||yy>Y1)continue;for(let dx=-r;dx<=r;dx++){const xx=x+dx;if(xx<X0||xx>X1)continue;const k2=own[yy*G.nx+xx];if(k2>=0&&k2!==k){bad=true;break;}}}if(bad)keep[i]=-1;}
+  // keep only the parts joined to the net's own copper
+  const fin=new Int16Array(G.N).fill(-1);const Q2=[];for(let i=0;i<G.N;i++)if(seed[i]&&keep[i]>=0){fin[i]=keep[i];Q2.push(i);}
+  for(let h=0;h<Q2.length;h++){const i=Q2[h],k=fin[i];const x=i%G.nx;for(const j of [x>X0?i-1:-1,x<X1?i+1:-1,i-G.nx,i+G.nx]){if(j<0||j>=G.N||fin[j]>=0||keep[j]!==k)continue;fin[j]=k;Q2.push(j);}}
+  // cells → rectangles → fat segments
+  const add=[];const cnt=nets.map(()=>0);
+  nets.forEach((n,k)=>{let open={};for(let y=Y0;y<=Y1+1;y++){const runs={};if(y<=Y1){let x=X0;while(x<=X1){if(fin[y*G.nx+x]===k&&!seed[y*G.nx+x]){let e=x;while(e+1<=X1&&fin[y*G.nx+e+1]===k&&!seed[y*G.nx+e+1])e++;runs[x+':'+e]=1;cnt[k]+=e-x+1;x=e+1;}else x++;}}
+      const next={};Object.keys(runs).forEach(key=>{next[key]=open[key]?open[key]:{y0:y};});
+      Object.keys(open).forEach(key=>{if(next[key])return;const[xa,xb]=key.split(':').map(Number);const ya=open[key].y0,yb=y-1;
+        const x0=G.ox+(xa-0.5)*g,x1=G.ox+(xb+0.5)*g,y0=G.oy+(ya-0.5)*g,y1=G.oy+(yb+0.5)*g,w=x1-x0,h=y1-y0;
+        const q=v=>+v.toFixed(3);const R=[q(x0),q(y0),q(x1),q(y1)];
+        add.push({t:'poly',rings:[[[R[0],R[1]],[R[2],R[1]],[R[2],R[3]],[R[0],R[3]]]],rect:R,net:n,fill:true});});open=next;}});
+  // the cells seeded from the net's own copper (pads, tracks) are filled too where they lie outside the copper
+  B.layers[lk+'.cu'].push(...add);
+  // stitching vias: GND (and any plane net) fill → plane, on a lattice inside the fill
+  let nv=0;const planeNets=new Set();keys.forEach((kk,li)=>{if(li===L)return;B.layers[kk+'.cu'].forEach(p=>{if(p.t==='pour'&&p.net)planeNets.add(p.net);});});
+  const vr=Math.ceil((o.via.d/2+0.05)/g),st=Math.max(1,Math.round(o.stitch/g));
+  nets.forEach((n,k)=>{if(!planeNets.has(n))return;const kid=id[k];for(let y=Y0+vr;y<=Y1-vr;y+=st)for(let x=X0+vr;x<=X1-vr;x+=st){let ok=true;
+      for(let dy=-vr;dy<=vr&&ok;dy++)for(let dx=-vr;dx<=vr;dx++){const j=(y+dy)*G.nx+x+dx;if(fin[j]!==k&&!(seed[j]&&own[j]===k)){ok=false;break;}}
+      if(!ok)continue;const i=y*G.nx+x;if(G.occV.some(a=>a[i]!==0&&a[i]!==kid))continue;const v={x:+(G.ox+x*g).toFixed(3),y:+(G.oy+y*g).toFixed(3),d:o.via.d,drill:o.via.drill,net:n,stitch:true};B.vias.push(v);nv++;}});
+  if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}
+  return{nets,cells:cnt.reduce((a,b)=>a+b,0),area:nets.map((n,k)=>({net:n,mm2:+(cnt[k]*g*g).toFixed(1)})),segs:add.length,vias:nv,grid:g,rect:r0};}
+/* effective copper width of a net on a layer between its power terminals (pads of FETs, terminals, shunts, bulk caps) */
+function bottleneck(B,net,o){o=Object.assign({layer:0,grid:0.1,rect:null,padRing:1.0},o||{});const keys=PC.cuKeys(B);const L=o.layer;
+  const P=prepare(B,{grid:o.grid,clear:0.01,width:{signal:o.grid,power:o.grid}});const G=P.G,g=G.g;const S=P.S.filter(s=>s.net===net&&s.L.includes(L));
+  const mask=new Uint8Array(G.N);S.forEach(s=>{const bb=bboxOf(s,0);const x0=Math.max(0,Math.floor((bb[0]-G.ox)/g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/g));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){if(dist(s,G.ox+x*g,G.oy+y*g)<=g*0.5)mask[y*G.nx+x]=1;}});
+  // distance transform (chamfer 3-4), in cells
+  const D=new Float32Array(G.N);for(let i=0;i<G.N;i++)D[i]=mask[i]?1e9:0;const nx=G.nx,ny=G.ny;
+  for(let y=0;y<ny;y++)for(let x=0;x<nx;x++){const i=y*nx+x;if(!D[i])continue;let v=D[i];if(x>0)v=Math.min(v,D[i-1]+1);if(y>0){v=Math.min(v,D[i-nx]+1);if(x>0)v=Math.min(v,D[i-nx-1]+1.414);if(x<nx-1)v=Math.min(v,D[i-nx+1]+1.414);}if(x===0||y===0||x===nx-1||y===ny-1)v=Math.min(v,1);D[i]=v;}
+  for(let y=ny-1;y>=0;y--)for(let x=nx-1;x>=0;x--){const i=y*nx+x;if(!D[i])continue;let v=D[i];if(x<nx-1)v=Math.min(v,D[i+1]+1);if(y<ny-1){v=Math.min(v,D[i+nx]+1);if(x<nx-1)v=Math.min(v,D[i+nx+1]+1.414);if(x>0)v=Math.min(v,D[i+nx-1]+1.414);}D[i]=v;}
+  // terminals: pads of power parts on this net
+  const pw=c=>/^(Q|J|CP)\d/.test(c.ref)||/^R\d/.test(c.ref)&&/^(2512|2010|1206)$/.test(c.fp||'')&&/션트|shunt|0\.\d+Ω|mΩ/i.test((c.desc||'')+' '+(c.val||''))||/^D\d/.test(c.ref)&&/역|TVS|SMAJ|SM8S/i.test((c.desc||'')+(c.val||''));
+  const terms=[];B.comps.forEach(c=>{if(!pw(c))return;const ps=c.pads.filter(p=>p.net===net&&(p.side==='both'||p.drill||(L===0?p.side!=='B':p.side==='B')));if(!ps.length)return;
+    const cells=new Set();ps.forEach(p=>{const s=padShape(p,keys.length);const bb=bboxOf(s,o.padRing);for(let y=Math.max(0,Math.floor((bb[1]-G.oy)/g));y<=Math.min(ny-1,Math.ceil((bb[3]-G.oy)/g));y++)for(let x=Math.max(0,Math.floor((bb[0]-G.ox)/g));x<=Math.min(nx-1,Math.ceil((bb[2]-G.ox)/g));x++){const i=y*nx+x;if(mask[i]&&dist(s,G.ox+x*g,G.oy+y*g)<=o.padRing)cells.add(i);}});
+    if(cells.size)terms.push({ref:c.ref,cells:[...cells]});});
+  if(terms.length<2)return{net,terms:terms.map(t=>t.ref),width:null,pairs:[]};
+  const pairs=[];const INF=1e9;
+  terms.forEach((T,ti)=>{const best=new Float32Array(G.N);const H=[];T.cells.forEach(i=>{best[i]=INF;H.push(i);});
+    // maximin Dijkstra with a bucket-less binary heap
+    const heap=[];const push=(i,v)=>{heap.push([v,i]);let k=heap.length-1;while(k>0){const p=(k-1)>>1;if(heap[p][0]>=heap[k][0])break;[heap[p],heap[k]]=[heap[k],heap[p]];k=p;}};
+    const pop=()=>{const t=heap[0];const l=heap.pop();if(heap.length){heap[0]=l;let k=0;for(;;){const a=2*k+1,b=a+1;let m=k;if(a<heap.length&&heap[a][0]>heap[m][0])m=a;if(b<heap.length&&heap[b][0]>heap[m][0])m=b;if(m===k)break;[heap[m],heap[k]]=[heap[k],heap[m]];k=m;}}return t;};
+    H.forEach(i=>push(i,INF));const done=new Uint8Array(G.N);
+    while(heap.length){const[v,i]=pop();if(done[i])continue;done[i]=1;const x=i%nx;for(const j of [x>0?i-1:-1,x<nx-1?i+1:-1,i-nx,i+nx]){if(j<0||j>=G.N||!mask[j]||done[j])continue;const w=Math.min(v,D[j]);if(w>best[j]){best[j]=w;push(j,w);}}}
+    terms.forEach((U,ui)=>{if(ui<=ti)return;let m=0;U.cells.forEach(i=>{if(best[i]>m)m=best[i];});pairs.push({a:T.ref,b:U.ref,width:m>=INF?null:+(m>0?(2*m-1)*g:0).toFixed(2),open:m===0});});});
+  const ws=pairs.filter(p=>p.width!=null).map(p=>p.width);const open=pairs.filter(p=>p.open).length;
+  return{net,terms:terms.map(t=>t.ref),width:ws.length?Math.min(...ws):null,open,pairs};}
+
+return{powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

@@ -11,8 +11,8 @@ test('functional zones: motor floorplan (input · power · MCU · stage …), pa
   const R = Object.values(B.zones.rects);
   const tot = R.reduce((s, r) => s + (r[2] - r[0]) * (r[3] - r[1]), 0);
   assert.ok(Math.abs(tot - B.W * B.H) < 1, 'zones cover the board exactly');
-  // stage along the right edge, input on the left edge
-  assert.ok(Math.abs(B.zones.rects.stage[2] - B.W) < 0.01 && B.zones.rects.input[0] === 0);
+  // stage and battery input share the right column (high-current loop in one place), comm / MCU on the left edge
+  assert.ok(Math.abs(B.zones.rects.stage[2] - B.W) < 0.01 && Math.abs(B.zones.rects.input[2] - B.W) < 0.01 && B.zones.rects.comm[0] === 0);
   const rep = AUTOPLACE.zoneReport(B);
   const parts = rep.reduce((s, x) => s + x.parts, 0), out = rep.reduce((s, x) => s + x.out.length, 0);
   assert.ok(out / parts < 0.06, `outside ${out}/${parts}`);
