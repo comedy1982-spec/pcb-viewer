@@ -231,7 +231,9 @@ function place(B,opts){
     const Ihi=B.netCurrent&&+B.netCurrent[nm]||0;if(Ihi>=2)w=Math.max(w,1.5+Math.min(Ihi,60)/20);if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
     // a fixed single-chip gate driver's private pin nets (bootstrap cap, RC filter, VREG / pump cap, pull-ups): the one passive on
     // the net sits right at the pin — otherwise its other, high-current end (phase) drags it to the FETs, 25 mm from the driver
-    if(onDrv&&pins.length===1&&fx.length===1&&!/0\s*Ω|^0R$/i.test(String(movable[pins[0][0]].c.val||'')))w=Math.max(w,8);
+    // (the 0 Ω sense / LSS net ties too: the long run from the shunt to the tie carries no current, so the Kelvin point stays at the
+    // shunt pad while the fine-pitch pin only has to reach the tie next to it)
+    if(onDrv&&pins.length===1&&fx.length===1)w=Math.max(w,8);
     const id=NET.length;NET.push({nm,pins,fx,w:w*st.wl});pins.forEach(([i])=>{if(!netsOf[i].includes(id))netsOf[i].push(id);});});
   // decoupling: each cap belongs to the IC with the most pins on its rail (spread over ICs by pin share)
   const DEC=[];const decOf=movable.map(()=>[]);{const load={};

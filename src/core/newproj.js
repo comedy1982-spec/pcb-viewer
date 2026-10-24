@@ -320,8 +320,8 @@ function allegro3(ctx,drv,vm,I,pwr,N){const mpn=ALLEGRO[drv];const rec=NEWPROJ.p
     Rs=shunt(ctx,ret,I,h+'상',0.06);const cs={U:1,V:2,W:3}[h];ctx.part('R','0Ω','0402',{1:N(h+'_SNSM'),2:'GND'},{desc:`센스 켈빈 넷 타이 CS${cs}M (${h}상 — 션트 GND 패드에 붙여 배치)`});
     // the 20 A shunt node touches only the FET source and the shunt; the driver's sense (+) and low-side source pins get their own
     // traces through net ties at that node (datasheet: independent CSxP / LSSx connections) — they route like signals
-    ctx.part('R','0Ω','0402',{1:N(h+'_SNSP'),2:ret},{desc:`센스 켈빈 넷 타이 CS${cs}P (${h}상 — 션트 노드 패드에 붙여 배치)`});
-    ctx.part('R','0Ω','0402',{1:N(h+'_LSS'),2:ret},{desc:`LSS 넷 타이 (${h}상 — 로우사이드 FET 소스에서 A4911 LSS로 독립 연결)`});const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
+    ctx.part('R','0Ω','0402',{1:N(h+'_SNSP'),2:ret},{desc:`센스 켈빈 넷 타이 CS${cs}P (${h}상 — A4911 핀 옆, 션트 노드까지는 전류 없는 켈빈 선)`});
+    ctx.part('R','0Ω','0402',{1:N(h+'_LSS'),2:ret},{desc:`LSS 넷 타이 (${h}상 — A4911 핀 옆, 로우사이드 FET 소스에서 독립 연결)`});const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
     ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');
     ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
   ctx.part('R','10kΩ','0603',{1:N('DIAG'),2:vio},{desc:`${drv} DIAG 오픈 드레인 풀업 (10~20 kΩ)`});
