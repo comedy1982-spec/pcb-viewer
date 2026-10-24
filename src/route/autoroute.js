@@ -499,7 +499,7 @@ function bottleneck(B,net,o){o=Object.assign({layer:0,grid:0.1,rect:null,padRing
   for(let y=ny-1;y>=0;y--)for(let x=nx-1;x>=0;x--){const i=y*nx+x;if(!D[i])continue;let v=D[i];if(x<nx-1)v=Math.min(v,D[i+1]+1);if(y<ny-1){v=Math.min(v,D[i+nx]+1);if(x<nx-1)v=Math.min(v,D[i+nx+1]+1.414);if(x>0)v=Math.min(v,D[i+nx-1]+1.414);}D[i]=v;}
   // terminals: pads of power parts on this net
   const pw=c=>/^(Q|J|CP)\d/.test(c.ref)||/^R\d/.test(c.ref)&&/^(2512|2010|1206)$/.test(c.fp||'')&&/션트|shunt|0\.\d+Ω|mΩ/i.test((c.desc||'')+' '+(c.val||''))||/^D\d/.test(c.ref)&&/역|TVS|SMAJ|SM8S/i.test((c.desc||'')+(c.val||''));
-  const terms=[];B.comps.forEach(c=>{if(!pw(c))return;const ps=c.pads.filter(p=>p.net===net&&(p.side==='both'||p.drill||(L===0?p.side!=='B':p.side==='B')));if(!ps.length)return;
+  const terms=[];B.comps.forEach(c=>{if(!pw(c))return;const ps=c.pads.filter(p=>p.net===net&&(o.proj||p.side==='both'||p.drill||(L===0?p.side!=='B':p.side==='B')));if(!ps.length)return;
     const cells=new Set();ps.forEach(p=>{const s=padShape(p,keys.length);const bb=bboxOf(s,o.padRing);for(let y=Math.max(0,Math.floor((bb[1]-G.oy)/g));y<=Math.min(ny-1,Math.ceil((bb[3]-G.oy)/g));y++)for(let x=Math.max(0,Math.floor((bb[0]-G.ox)/g));x<=Math.min(nx-1,Math.ceil((bb[2]-G.ox)/g));x++){const i=y*nx+x;if(mask[i]&&dist(s,G.ox+x*g,G.oy+y*g)<=o.padRing)cells.add(i);}});
     if(cells.size)terms.push({ref:c.ref,cells:[...cells]});});
   if(terms.length<2)return{net,terms:terms.map(t=>t.ref),width:null,pairs:[]};
@@ -514,6 +514,18 @@ function bottleneck(B,net,o){o=Object.assign({layer:0,grid:0.1,rect:null,padRing
   const ws=pairs.filter(p=>p.width!=null).map(p=>p.width);const open=pairs.filter(p=>p.open).length;
   return{net,terms:terms.map(t=>t.ref),width:ws.length?Math.min(...ws):null,open,pairs};}
 
-return{powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+
+/* vias between the copper fills of the same net on two layers (outer top + bottom) so both carry the current */
+function stitchLayers(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},step:1.2,grid:0.1,la:0,lb:null},o||{});const keys=PC.cuKeys(B);const la=o.la,lb=o.lb==null?keys.length-1:o.lb;
+  const P=prepare(B,{grid:o.grid,clear:0.15,width:{signal:o.grid,power:o.grid},via:o.via});const G=P.G,g=G.g;const vr=o.via.d/2+0.12;let n=0;
+  nets.forEach(net=>{const k=P.idOf(net);const sh=P.S.filter(s=>s.net===net&&s.fill);const on=l=>{const m=new Uint8Array(G.N);sh.filter(s=>s.L.includes(l)).forEach(s=>{const bb=bboxOf(s,0);
+      for(let y=Math.max(0,Math.floor((bb[1]-G.oy)/g));y<=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/g));y++)for(let x=Math.max(0,Math.floor((bb[0]-G.ox)/g));x<=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/g));x++)if(dist(s,G.ox+x*g,G.oy+y*g)<=-vr)m[y*G.nx+x]=1;});return m;};
+    const A=on(la),Bm=on(lb);const st=Math.max(1,Math.round(o.step/g));
+    for(let y=0;y<G.ny;y+=st)for(let x=0;x<G.nx;x+=st){const i=y*G.nx+x;if(!A[i]||!Bm[i])continue;if(G.occV.some(a=>a[i]!==0&&a[i]!==k))continue;
+      const v={x:+(G.ox+x*g).toFixed(3),y:+(G.oy+y*g).toFixed(3),d:o.via.d,drill:o.via.drill,net,stitch:true};B.vias.push(v);n++;
+      const r=Math.ceil((o.via.d+0.3)/g);for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const j=(y+dy)*G.nx+x+dx;if(j>=0&&j<G.N)G.occV.forEach(a=>{a[j]=-1;});}}});
+  if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}
+
+return{stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

@@ -302,17 +302,29 @@ function cliPowerNets(WW){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.powerFil
   if(Z&&Z.rects&&Z.rects.stage){const rs=[Z.rects.stage,Z.rects.input].filter(Boolean);rect=[Math.min(...rs.map(r=>r[0])),Math.min(...rs.map(r=>r[1])),Math.max(...rs.map(r=>r[2])),Math.max(...rs.map(r=>r[3]))];}
   else{const ps=BD.comps.filter(c=>/^(Q|J|CP)\d/.test(c.ref)&&c.pads.some(p=>nets.includes(p.net)));if(!ps.length)return null;rect=[Math.min(...ps.map(c=>c.bb[0]))-3,Math.min(...ps.map(c=>c.bb[1]))-3,Math.max(...ps.map(c=>c.bb[2]))+3,Math.max(...ps.map(c=>c.bb[3]))+3];}
   const need={};nets.forEach(n=>{need[n]=CURRENT.ipcWidth(WW[n].I,{oz,dT});});
-  return{nets,rect,need,route:nets.filter(n=>WW[n].cls!=='gnd')};}
+  const planes=new Set(PCB.stackOf(BD).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));
+  return{nets,rect,need,planes,route:nets.filter(n=>WW[n].cls!=='gnd'&&!planes.has(n))};}
 function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.powerFill)return'';const oz=BD.oz||1,dT=BD.dT||10;
-  const PW=cliPowerNets(WW);if(!PW||!PW.nets.length)return'';const hi=PW.nets,rect=PW.rect;
+  const PW=cliPowerNets(WW);if(!PW||!PW.nets.length)return'';const hi=PW.nets,rect=PW.rect;const keys=PCB.cuKeys(BD),NL=keys.length,ml=NL>2;
+  via=via||(ml?{d:0.45,drill:0.2}:{d:0.6,drill:0.3});const cl=Math.max(ml?0.2:0.25,clr||0.2);
   // nets whose power terminals already touch (shunt right on the FET source) need no fill
-  const direct=hi.filter(n=>{if(WW[n].cls==='gnd')return false;const b=AUTOROUTE.bottleneck(BD,n,{});return b.terms.length>=2&&!b.open&&b.width==null;});
-  const f=AUTOROUTE.powerFill(BD,{nets:hi.filter(n=>!direct.includes(n)),rect,clr:Math.max(0.25,clr||0.2),via:via||{d:0.6,drill:0.3},width:PW.need,claim:BD.powerBus&&BD.nets[BD.powerBus.net]?[BD.powerBus]:[]});
-  const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd')return;const b=AUTOROUTE.bottleneck(BD,n,{});const need=CURRENT.ipcWidth(WW[n].I,{oz,dT});const dir=b.terms.length>=2&&!b.open&&b.width==null;
-    rep.push({net:n,I:WW[n].I,width:dir?'직결':b.width,open:b.open,need,ok:dir||b.width!=null&&!b.open&&b.width>=need*0.95,rise:b.width?CURRENT.ipcRise(b.width,WW[n].I,{oz}):null,terms:b.terms});});
-  BD.powerReport={oz,dT,nets:rep,fill:f.area,vias:f.vias,at:Date.now()};
+  const direct=hi.filter(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return false;const b=AUTOROUTE.bottleneck(BD,n,{});return b.terms.length>=2&&!b.open&&b.width==null;});
+  const fillNets=hi.filter(n=>!direct.includes(n));const width={};fillNets.forEach(n=>{if(!PW.planes.has(n)&&WW[n].cls!=='gnd')width[n]=PW.need[n];});
+  // multilayer: GND / supply are inner planes, so both outer layers carry the other power nets (phases, input); the bottom GND
+  // pour of a 2-layer board stays and only the top is filled
+  const layers=ml?[0,NL-1]:[0];if(ml)BD.layers[keys[NL-1]+'.cu']=BD.layers[keys[NL-1]+'.cu'].filter(p=>!(p.t==='pour'&&!p.plane));
+  const fs=layers.map(l=>AUTOROUTE.powerFill(BD,{nets:fillNets,rect,clr:cl,via,width,layer:l,claim:BD.powerBus&&BD.nets[BD.powerBus.net]&&l===0?[BD.powerBus]:[]}));
+  const tb=ml?AUTOROUTE.stitchLayers(BD,fillNets.filter(n=>!PW.planes.has(n)&&WW[n].cls!=='gnd'),{via}):0;
+  const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return;const need=CURRENT.ipcWidth(WW[n].I,{oz,dT});
+    const bs=layers.map(l=>AUTOROUTE.bottleneck(BD,n,{layer:l,proj:l!==0}));const dir=bs[0].terms.length>=2&&!bs[0].open&&bs[0].width==null;
+    const ws=bs.map(b=>b.width!=null&&!b.open?b.width:0);const eff=+ws.reduce((x,y)=>x+y,0).toFixed(2);
+    rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,layers:ws,open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.ipcRise(eff,WW[n].I,{oz}):null,terms:bs[0].terms});});
+  const area={};fs.forEach((f,i)=>f.area.forEach(x=>{area[x.net]=(area[x.net]||0)+x.mm2;}));
+  BD.powerReport={oz,dT,nets:rep,fill:area,vias:fs.reduce((a,f)=>a+f.vias,0)+tb,planes:[...PW.planes],at:Date.now()};
   const bad=rep.filter(x=>!x.ok);
-  return`전력 동박(${oz} oz · ΔT ${dT} °C): ${f.area.map(x=>x.net+' '+x.mm2+' mm²').join(' · ')} · GND 스티칭 비아 ${f.vias}개\n`+rep.map(x=>`  ${x.ok?'✓':'✕'} ${x.net} ${x.I} A — 유효 폭 ${x.width==null?'측정 불가':x.width+' mm'}${x.open?' (단자 사이 끊김 '+x.open+')':''} / 필요 ${x.need} mm${x.rise!=null&&!x.ok?` → 온도 상승 약 ${Math.min(999,x.rise)} °C`:''}`).join('\n')+(bad.length?`\n→ 전류 경로 부족 ${bad.length}개: 보드를 키우거나(board size) 파워스테이지 부품을 모으세요(reset) — autofix가 자동으로 시도`:'');}
+  return`전력 동박(${oz} oz · ΔT ${dT} °C · ${ml?'위·아래층':'위층'}${PW.planes.size?' · 평면 '+[...PW.planes].join(', '):''}): ${Object.entries(area).map(([n,a])=>n+' '+a.toFixed(0)+' mm²').join(' · ')} · 스티칭 비아 ${BD.powerReport.vias}개\n`+
+    rep.map(x=>`  ${x.ok?'✓':'✕'} ${x.net} ${x.I} A — 유효 폭 ${typeof x.width==='string'?x.width:x.width+' mm'+(x.layers&&x.layers.length>1?` (위 ${x.layers[0]} + 아래 ${x.layers[1]})`:'')}${x.open?' (위층 단자 사이 끊김)':''} / 필요 ${x.need} mm${x.rise!=null&&!x.ok?` → 온도 상승 약 ${Math.min(999,x.rise)} °C`:''}`).join('\n')+
+    (bad.length?`\n→ 전류 경로 부족 ${bad.length}개: 보드를 키우거나(board size) 층을 늘리세요(board layers)`:'');}
 function cliUnroute(){cliEnsureEdit();const before=cliSnap();const n=PCB.cuKeys(BD).reduce((a,s)=>a+BD.layers[s+'.cu'].filter(p=>p.auto).length,0)+BD.vias.filter(v=>v.auto).length;AUTOROUTE.unroute(BD);PCBEDIT.rebuildNets(BD);cliCommit(before,'unroute');cliAfter(false);return`자동 배선 ${n}개(트랙·비아)를 지웠습니다.`;}
 /* ---- unrouted nets → find a fix by itself (cheapest first, stop at the first fully routed result, keep the best) ----
    Every attempt starts from the same snapshot, so steps do not compound; the board only grows / gains layers in the steps

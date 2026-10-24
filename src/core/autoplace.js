@@ -87,24 +87,28 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
   const shH=R[0].sh?Math.min(R[0].sh.bb[2]-R[0].sh.bb[0],R[0].sh.bb[3]-R[0].sh.bb[1]):0;
   const busW=Math.max(3,o.busW||4);const shL=R[0].sh?Math.max(R[0].sh.bb[2]-R[0].sh.bb[0],R[0].sh.bb[3]-R[0].sh.bb[1]):0;const tL=rect[2]-edge-tw;
   const fx=Math.min(tL-(o.gap||5)-fw/2,tL-1-shL-fw/2);const busX1=fx-fw/2-0.4,busX0=busX1-busW,bx=(busX0+busX1)/2;
-  // supply stack along the bus, bottom up: input terminal on the bottom edge, reverse-protection FET above it (supply pad up)
+  // supply entry on the bottom edge: reverse-protection FET right under the bus (supply pad up), input terminal beside it
   let yIn=rect[1]+edge;
+  if(qin){const r=bestRot(qin,c=>{const a=cen(c,p=>p.net===bat),b=cen(c,p=>p.net===vin);return(a?a[1]:0)-(b?b[1]:0);});const h=qin.bb[3]-qin.bb[1];pose(qin,bx,rect[1]+edge+h/2,r);fixed.push(qin.ref);yIn=Math.max(yIn,qin.bb[3]+1.0);}
   if(jin){bestRot(jin,c=>{const xs=c.pads.map(p=>p.x),ys=c.pads.map(p=>p.y);return(Math.max(...xs)-Math.min(...xs))-(Math.max(...ys)-Math.min(...ys));});
-    const h=jin.bb[3]-jin.bb[1];pose(jin,bx,yIn+h/2,(jin.rot||0));yIn=jin.bb[3]+1.2;fixed.push(jin.ref);}
-  if(qin){const r=bestRot(qin,c=>{const a=cen(c,p=>p.net===bat),b=cen(c,p=>p.net===vin);return(a?a[1]:0)-(b?b[1]:0);});const h=qin.bb[3]-qin.bb[1];pose(qin,bx,yIn+h/2,r);yIn=qin.bb[3]+1.0;fixed.push(qin.ref);}
-  // FET column (with its shunts) from the top of the zone down, the motor terminal beside it
-  const top=rect[3]-edge;const H=top-yIn;let P=Math.max(fh+shH+2.5,9);if(P*R.length>H)P=Math.max(fh+1.2,H/R.length);
+    const w=jin.bb[2]-jin.bb[0],h=jin.bb[3]-jin.bb[1];let x=qin?qin.bb[0]-1.2-w/2:bx;if(x-w/2<rect[0]+edge)x=qin?qin.bb[2]+1.2+w/2:bx;pose(jin,x,rect[1]+edge+h/2,jin.rot||0);fixed.push(jin.ref);if(!qin)yIn=Math.max(yIn,jin.bb[3]+1.2);}
+  // FET column (each row: FET with its shunt above) from the top of the zone down, the motor terminal beside it
+  const top=rect[3]-edge;const H=top-yIn;const shW=R[0].sh?Math.min(R[0].sh.bb[2]-R[0].sh.bb[0],R[0].sh.bb[3]-R[0].sh.bb[1]):0;
+  const blk=fh+(shW?0.9+shW:0)+1.0;let P=Math.max(blk+1.5,9);if(P*R.length>H)P=blk;
   const yc=top-P*R.length/2;pose(term,rect[2]-edge-tw/2,yc,tRot);fixed.push(term.ref);
   const pinY=ph=>{const p=term.pads.find(q=>q.net===ph);return p?p.y:yc;};R.sort((a,b)=>pinY(b.ph)-pinY(a.ph));
-  R.forEach((r,k)=>{const yRow=top-k*P-P/2;pose(r.c,fx,yRow-(shH?shH/2:0),fRot);fixed.push(r.c.ref);
-    if(r.sh){const sn=r.c.pads.filter(p=>p.net===r.sns);const sx=sn.reduce((a,p)=>a+p.x,0)/sn.length,sy=Math.max(...sn.map(p=>p.y));
-      // shunt horizontal, its shunt-node pad over the FET's source pins, the GND end toward the terminal side
-      let bs=null;[0,180].forEach(rot=>{canonical(B,r.sh);if(rot)PCBEDIT.rotate(B,r.sh,rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);if(a&&(!bs||a.x<bs.ax))bs={rot,ax:a.x-r.sh.x};});
-      canonical(B,r.sh);if(bs.rot)PCBEDIT.rotate(B,r.sh,bs.rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);const shw=r.sh.bb[3]-r.sh.bb[1];
-      PCBEDIT.move(B,r.sh,sx-a.x,Math.max(sy,r.c.bb[3])+0.9+shw/2-r.sh.y+(r.sh.y-(r.sh.bb[1]+r.sh.bb[3])/2));PCBEDIT.prepare(B);fixed.push(r.sh.ref);}});
+  R.forEach((r,k)=>{const bTop=top-k*P;const yF=bTop-(shW?0.9+shW:0)-0.5-fh/2;pose(r.c,fx,yF,fRot);fixed.push(r.c.ref);
+    if(r.sh){const sn=r.c.pads.filter(p=>p.net===r.sns);const sx=sn.reduce((a,p)=>a+p.x,0)/sn.length;
+      // shunt horizontal right above the FET, its shunt-node pad over the FET's source pins, the GND end toward the terminal side
+      const left=o.planes&&o.planes.has(bat);let bs=null;[0,180].forEach(rot=>{canonical(B,r.sh);if(rot)PCBEDIT.rotate(B,r.sh,rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);const v=(a.x-r.sh.x)*(left?-1:1);if(a&&(!bs||v<bs.ax))bs={rot,ax:v};});
+      canonical(B,r.sh);if(bs.rot)PCBEDIT.rotate(B,r.sh,bs.rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);
+      PCBEDIT.move(B,r.sh,sx-a.x,r.c.bb[3]+0.9-r.sh.bb[1]);PCBEDIT.prepare(B);fixed.push(r.sh.ref);}});
+  const fitOk=P*R.length<=H+0.01;
   // the supply bus (battery side of the bridge) stays free of other parts
-  keepout.push([busX0,yIn-1,busX1,top]);
-  return{fixed,keepout,bus:[busX0,rect[1],busX1,top],net:bat};}
+  const planeBus=o.planes&&o.planes.has(bat);if(!planeBus)keepout.push([busX0,yIn-1,busX1,top]);
+  // the phase copper between the bridge column and the motor terminal stays free of other parts too
+  const colB=Math.min(...R.map(r=>r.c.bb[1])),fR=Math.max(...R.map(r=>r.c.bb[2]));keepout.push([fR+0.2,colB-0.5,term.bb[0]-0.2,top]);
+  return{fixed,keepout,bus:planeBus?null:[busX0,rect[1],busX1,top],net:bat,fit:fitOk,planeBus};}
 /* ---------- roles ---------- */
 // smallest centre distance between neighbouring pads (fine-pitch parts need room to fan out)
 function pitchOf(c){let m=1e9;const P=c.pads;if(P.length<6)return m;for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d>0.05&&d<m)m=d;}return m;}
@@ -149,7 +153,16 @@ const XF=(x,y,v)=>{if(v>=4)x=-x;switch(v&3){case 1:return[-y,x];case 2:return[-x
 function canonical(B,c){if(c.side==='B')PCBEDIT.flip(B,c);if(Math.abs(c.rot||0)>1e-9)PCBEDIT.rotate(B,c,-(c.rot||0));c.rot=0;}
 function place(B,opts){
   opts=opts||{};const sk=strategy(opts.strategy)||'balanced';const st=Object.assign({},STRATS[sk],opts.weights||{});
-  PCBEDIT.prepare(B);const info=classify(B,opts);const R=rng(opts.seed!=null?opts.seed:1);
+  PCBEDIT.prepare(B);
+  // power stage of 2-FET packages: a fixed macro (terminal · bridge column · shunts · supply entry) in the stage ∪ input
+  // column, the rest annealed around it with its keep-outs (supply bus, phase copper)
+  let macro=null;if(opts.scratch&&opts.macro!==false&&B.zones&&B.zones.on!==false&&B.zones.rects&&B.zones.rects.stage&&!(opts.only)){const Z=zonesFit(B);const rs=[Z.rects.stage,Z.rects.input].filter(Boolean);
+    const col=[Math.min(...rs.map(r=>r[0])),Math.min(...rs.map(r=>r[1])),Math.max(...rs.map(r=>r[2])),Math.max(...rs.map(r=>r[3]))];
+    const Imax=Math.max(0,...Object.values(B.netCurrent||{}).map(Number));const need=typeof CURRENT!=='undefined'&&Imax?CURRENT.ipcWidth(Imax,{oz:B.oz||1,dT:B.dT||10}):4;
+    const planes=new Set(PCB.stackOf(B).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));
+    try{macro=powerMacro(B,col,{busW:Math.min(8,need),planes});}catch(e){macro=null;}
+    if(macro){B.powerBus=macro.bus?{rect:macro.bus,net:macro.net}:null;opts=Object.assign({},opts,{fixed:(opts.fixed||[]).concat(macro.fixed),keepout:(opts.keepout||[]).concat(macro.keepout)});}else B.powerBus=null;}
+  const info=classify(B,opts);const R=rng(opts.seed!=null?opts.seed:1);
   const fixed=new Set((opts.fixed||[]).map(String));const only=opts.only?new Set(opts.only.map(String)):null;
   const movable=info.list.filter(o=>!fixed.has(o.ref)&&(!only||only.has(o.ref)));
   const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];
@@ -316,7 +329,7 @@ function place(B,opts){
     // keep it on the board
     f.p.x=Math.max(ob[0]+1,Math.min(ob[2]-1,f.p.x));f.p.y=Math.max(ob[1]+1,Math.min(ob[3]-1,f.p.y));});
   PCBEDIT.rebuildNets(B);
-  return{moved:n,strategy:sk,label:STRATS[sk].label,iters,accepted:acc,cost:finalCost,fails,bottom:movable.filter((_,i)=>V[i]>=4).map(o=>o.ref),info};
+  return{moved:n,strategy:sk,label:STRATS[sk].label,iters,accepted:acc,cost:finalCost,fails,bottom:movable.filter((_,i)=>V[i]>=4).map(o=>o.ref),info,macro};
 }
 
 /* ---------- metrics of the current placement ---------- */

@@ -234,6 +234,8 @@ function planeNets(B,o){o=o||{};let g=null,gn=0,p=null,pn=0;
   Object.keys(B.nets||{}).forEach(n=>{const k=(B.nets[n].pads||[]).length;if(isGndN(n)){if(k>gn){gn=k;g=n;}return;}
     // supply plane: the logic rail with the most pins (motor / battery rails stay as wide tracks)
     if(B.netClass(n)==='전원'&&!/VBAT|VIN|VBUS|VMOT|VM\b|VS\b|12V|24V|48V|HV/i.test(n)&&k>pn){pn=k;p=n;}});
+  // a board with a recorded high-current supply (motor stage) puts that rail on the power plane
+  if(!o.pwr&&B.netCurrent){const hi=Object.entries(B.netCurrent).filter(([n,I])=>+I>=3&&B.nets[n]&&!isGndN(n)&&/12V|24V|48V|VBAT|VM\b|VMOT|VS\b/i.test(n)).sort((a,b)=>b[1]-a[1])[0];if(hi)p=hi[0];}
   if(o.gnd)g=o.gnd;if(o.pwr)p=o.pwr;return{gnd:g,pwr:p};}
 function setLayers(B,n,o){o=o||{};n=+n;if(!PCB.STACKS[n])throw new Error('층 수는 2, 4, 6, 8, 10 중 하나입니다.');
   if(o.pwr&&!(B.nets||{})[o.pwr])throw new Error('넷 '+o.pwr+'이(가) 없습니다.');

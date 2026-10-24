@@ -411,10 +411,7 @@ function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finali
   const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
   if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});
   if(typeof AUTOPLACE!=='undefined'&&opts.place!==false){PCBEDIT.prepare(B);AUTOPLACE.ensurePour(B);const power={};r.power.forEach(x=>{power[x.ref]=x.P;});
-    // power stage of 2-FET packages: fixed macro (terminal · bridge column · shunts) inside the stage zone, the rest annealed around it
-    let M=null;const zr=B.zones&&B.zones.rects;if(zr&&zr.stage&&AUTOPLACE.powerMacro&&plan.macro!==false){const rs=[zr.stage,zr.input].filter(Boolean);const col=[Math.min(...rs.map(r=>r[0])),Math.min(...rs.map(r=>r[1])),Math.max(...rs.map(r=>r[2])),Math.max(...rs.map(r=>r[3]))];
-      try{const need=typeof CURRENT!=='undefined'?CURRENT.ipcWidth(Math.max(0,...Object.values(r.curr||{})),{oz:B.oz,dT:B.dT}):4;M=AUTOPLACE.powerMacro(B,col,{busW:Math.min(8,need)});}catch(e){M=null;}}
-    r.macro=M;if(M)B.powerBus={rect:M.bus,net:M.net};r.place=AUTOPLACE.place(B,{strategy:opts.strategy||plan.strategy||'balanced',scratch:true,seed:opts.seed||1,power,fixed:M?M.fixed:[],keepout:M?M.keepout:[]});}
+    r.place=AUTOPLACE.place(B,{strategy:opts.strategy||plan.strategy||'balanced',scratch:true,seed:opts.seed||1,power});r.macro=r.place.macro;}
   return{B,r};}
 function summary(plan){const r=build(plan);const L=[];
   L.push(`프로젝트 ${plan.name} · 블록 ${plan.blocks.length}개 · 부품 ${r.parts.length}개 · 보드 ${r.W} × ${r.H} mm${plan.board?'':' (자동)'} · 배치 전략 ${plan.strategy}`);
