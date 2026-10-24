@@ -252,5 +252,121 @@
     "power_in"
    ]
   ]
+ },
+ "IAUC60N04S6N050H": {
+  "t": "OptiMOS 6 half-bridge N-MOSFET 40 V 60 A 5.0 mOhm, AEC-Q101 (datasheet Rev 1.1 p.1 pin diagram)",
+  "pkg": "PG-TDSON-8-57",
+  "fp": "TDSON-8-2FET",
+  "pdf": "https://www.infineon.com/dgdl/Infineon-IAUC60N04S6N050H-DataSheet-v01_00-EN.pdf?fileId=5546d4627506bb3201753090f4715fe6",
+  "p": [
+   [
+    "1",
+    "G_HS",
+    "in"
+   ],
+   [
+    "2",
+    "PHASE",
+    "passive"
+   ],
+   [
+    "3",
+    "PHASE",
+    "passive"
+   ],
+   [
+    "4",
+    "G_LS",
+    "in"
+   ],
+   [
+    "5",
+    "GND",
+    "passive"
+   ],
+   [
+    "6",
+    "GND",
+    "passive"
+   ],
+   [
+    "7",
+    "BATTERY",
+    "passive"
+   ],
+   [
+    "8",
+    "BATTERY",
+    "passive"
+   ],
+   [
+    "9",
+    "BATTERY(EP)",
+    "passive"
+   ],
+   [
+    "10",
+    "PHASE(EP)",
+    "passive"
+   ]
+  ]
+ },
+ "IPG20N04S4L-07": {
+  "t": "OptiMOS-T2 dual N-MOSFET logic level 40 V 20 A 7.2 mOhm, AEC-Q101 (datasheet Rev 1.01 p.1 pin diagram)",
+  "pkg": "PG-TDSON-8",
+  "fp": "TDSON-8-2FET",
+  "pdf": "https://www.infineon.com/dgdl/Infineon-IPG20N04S4L-07-DataSheet-v01_01-EN.pdf?fileId=db3a30432ba3fa6f012bbf622fcf6c0a",
+  "p": [
+   [
+    "1",
+    "S1",
+    "passive"
+   ],
+   [
+    "2",
+    "G1",
+    "in"
+   ],
+   [
+    "3",
+    "S2",
+    "passive"
+   ],
+   [
+    "4",
+    "G2",
+    "in"
+   ],
+   [
+    "5",
+    "D2",
+    "passive"
+   ],
+   [
+    "6",
+    "D2",
+    "passive"
+   ],
+   [
+    "7",
+    "D1",
+    "passive"
+   ],
+   [
+    "8",
+    "D1",
+    "passive"
+   ],
+   [
+    "9",
+    "D1(EP)",
+    "passive"
+   ],
+   [
+    "10",
+    "D2(EP)",
+    "passive"
+   ]
+  ]
  }
 }

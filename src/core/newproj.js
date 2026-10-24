@@ -121,9 +121,9 @@ const LIB={
       ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(sn)ctx.curr(ret,I);
       ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
   gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
-    params:{i:{def:20,desc:'상전류 A (FET 병렬 수·션트·트레이스 폭)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
+    params:{i:{def:20,desc:'상전류 A (FET 병렬 수·션트·트레이스 폭)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
     build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||20);const k=ctx.uniq('PH');const N=x=>k==='PH'?'PH_'+x:k+'_'+x;
-      const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V);
+      const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,p.fet&&p.fet!=='single'?p.fet:null);
       if(V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
       ['U','V','W'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
         ctx.part('U','IR2104S','SOIC-8',{1:vm,2:N('IN_'+h),3:N('EN'),4:'GND',5:lo,6:ph,7:ho,8:vb},{mpn:'IR2104STRPBF',desc:`하프브리지 게이트 드라이버 (${h}상)`,pinNames:{1:'VCC',2:'IN',3:'nSD',4:'COM',5:'LO',6:'VS',7:'HO',8:'VB'},P:0.05});
@@ -236,12 +236,35 @@ function guessName(s){const lo=s.toLowerCase();const bl=/bldc|3상/.test(lo);con
 
 /* ---- power stage helpers for hbridge / gdrv3: FET choice and parallel count by current, shunt + amplifier, bulk caps ---- */
 const FETS=[{mpn:'IPD90N04S4-04',v:40,rds:0.0038,label:'40 V 90 A OptiMOS-T2 (AEC-Q101)'},{mpn:'IPD50N06S4L-12',v:60,rds:0.0117,label:'60 V 50 A OptiMOS-T2 (AEC-Q101)'},{mpn:'IPD50N10S3L-16',v:100,rds:0.016,label:'100 V 50 A OptiMOS-T (AEC-Q101)'}];
-function motorPower(ctx,I,V){const f=FETS.find(x=>x.v>=(V||12)*2.5)||FETS[FETS.length-1];const par=I<=25?1:I<=60?2:I<=100?3:4;
+function motorPower(ctx,I,V,fet){const F=fet&&FET2[fet];
+  if(F&&F.v>=(V||12)*2.5){const par=Math.max(1,Math.ceil(I/F.i));if(I>F.i*0.66*par&&ctx.warn)ctx.warn(`${fet}: 상전류 ${I} A — 정격 ${F.i} A(케이스 25~100 °C)의 66 % 초과, 방열(써멀 비아 · 하우징 접촉) 확인`);const Pq=+(((I/par)**2)*F.rds*0.6+0.02).toFixed(2);
+    if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['2512','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
+    if(par>2&&ctx.warn)ctx.warn(`${fet}: 상전류 ${I} A에 상마다 ${par}개 병렬 — 더 큰 정격(하프브리지 IAUC60N04S6N050H 또는 단일 FET) 권장`);
+    return{f:{mpn:fet,label:F.label,rds:F.rds},f2:Object.assign({mpn:fet},F),par,Pq,I};}
+  if(F&&ctx.warn)ctx.warn(`${fet}: ${F.v} V 정격 — VM ${V} V에 내압 여유 부족, 단일 FET로 대체`);
+  const f=FETS.find(x=>x.v>=(V||12)*2.5)||FETS[FETS.length-1];const par=I<=25?1:I<=60?2:I<=100?3:4;
   if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['TO-252','2512','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
   const Pq=+(((I/par)**2)*f.rds*0.6+0.02).toFixed(2);return{f,par,Pq,I};}
 function termFp(n){if(typeof PCB==='undefined'||!PCB.FP)return;const k=`TERM-${n}-5.08`;if(PCB.FP[k])return;const p=5.08,y0=(n-1)/2*p;
   const f={kind:'hdr',body:[7.6,n*p+0.5,10],pads:Array.from({length:n},(_,i)=>({n:''+(i+1),x:0,y:+(y0-i*p).toFixed(3),w:3,h:3,round:true,drill:1.4})),gen:true};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP[k]=f;}
-function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
+/* two-FET packages in Infineon PG-TDSON-8 (5 × 6 mm), pinout from the datasheets (page 1 pin diagram):
+   IAUC60N04S6N050H half-bridge — 1 G(HS) · 2,3 Phase · 4 G(LS) · 5,6 ground (LS source) · 7,8 battery (HS drain); pads 9 = battery, 10 = phase
+   IPG20N04S4L-07 dual (independent) — 1 S1 · 2 G1 · 3 S2 · 4 G2 · 5,6 D2 · 7,8 D1; pads 9 = D1, 10 = D2 → FET1 high side, FET2 low side */
+const FET2={
+  'IAUC60N04S6N050H':{kind:'hb',v:40,rds:0.005,i:60,label:'하프브리지 40 V 60 A 5.0 mΩ OptiMOS 6 (AEC-Q101)',pin:(hg,lg,vm,ph,ret)=>({1:hg,2:ph,3:ph,4:lg,5:ret,6:ret,7:vm,8:vm,9:vm,10:ph}),names:{1:'G_HS',2:'PH',3:'PH',4:'G_LS',5:'GND',6:'GND',7:'BAT',8:'BAT',9:'BAT',10:'PH'}},
+  'IPG20N04S4L-07':{kind:'dual',v:40,rds:0.0072,i:20,label:'듀얼 40 V 20 A 7.2 mΩ OptiMOS-T2 로직 레벨 (AEC-Q101)',pin:(hg,lg,vm,ph,ret)=>({1:ph,2:hg,3:ret,4:lg,5:ph,6:ph,7:vm,8:vm,9:vm,10:ph}),names:{1:'S1',2:'G1',3:'S2',4:'G2',5:'D2',6:'D2',7:'D1',8:'D1',9:'D1',10:'D2'}}};
+function fetPkg(){if(typeof PCB==='undefined'||!PCB.FP||PCB.FP['TDSON-8-2FET'])return;
+  // pins 1–4 left column (top → bottom), 5–8 right column (bottom → top); exposed pad 9 on the 1/2 · 7/8 half, 10 on the 3/4 · 5/6 half
+  const p=[];for(let i=0;i<4;i++)p.push({n:''+(1+i),x:-2.95,y:+(1.905-1.27*i).toFixed(3),w:1.1,h:0.6});for(let i=0;i<4;i++)p.push({n:''+(5+i),x:2.95,y:+(-1.905+1.27*i).toFixed(3),w:1.1,h:0.6});
+  p.push({n:'9',x:0,y:1.2,w:3.6,h:1.9});p.push({n:'10',x:0,y:-1.2,w:3.6,h:1.9});
+  const f={kind:'ic',stand:0,body:[5.15,6.1,1.0],pads:p,dot:[-2.95,2.75],gen:true};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP['TDSON-8-2FET']=f;}
+function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){if(pw.f2){fetPkg();const F=pw.f2;
+    for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
+      ctx.part('R','10Ω','0603',{1:ho,2:hg},{desc:`하이사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:hg,2:ph},{desc:'하이사이드 G-S 풀다운'});
+      ctx.part('R','10Ω','0603',{1:lo,2:lg},{desc:`로우사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:lg,2:ret},{desc:'로우사이드 G-S 풀다운'});
+      ctx.part('Q',F.mpn,'TDSON-8-2FET',F.pin(hg,lg,vm,ph,ret),{mpn:F.mpn,desc:`${h}상 ${F.kind==='hb'?'하프브리지':'듀얼'} MOSFET (상·하 FET 2개) ${F.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:F.names,P:pw.Pq*2});}
+    return;}
+  for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
     ctx.part('R','10Ω','0603',{1:ho,2:hg},{desc:`하이사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:hg,2:ph},{desc:'하이사이드 G-S 풀다운'});
     ctx.part('Q',pw.f.mpn,'TO-252',{1:hg,2:vm,3:ph},{mpn:pw.f.mpn,desc:`하이사이드 N-MOSFET ${pw.f.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:{1:'G',2:'D',3:'S'},P:pw.Pq});
     ctx.part('R','10Ω','0603',{1:lo,2:lg},{desc:`로우사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:lg,2:ret},{desc:'로우사이드 G-S 풀다운'});

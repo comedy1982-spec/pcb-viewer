@@ -23,3 +23,25 @@ test('Dadu profile: 12 V BLDC, 9 V hall supply, PMIC, gate driver + 6 MOSFET, CA
   assert.equal(hp.rows[0].mpn, 'TPS7B86-Q1');
   assert.ok(hp.rows.filter(r => r.spec.vout === 3.3).every(r => !r.ok), 'fixed 3.3 V LDOs flagged for the 9 V rail');
 });
+test('Dadu: 2-FET packages (Infineon half-bridge / dual) — pinout from the datasheets, 3 packages for the 6-bridge, clean placement', () => {
+  const { PCBEDIT } = load();
+  const prof = PRODUCTS.detect('Dadu');
+  const opt = k => prof.questions.find(q => q.key === 'fet').options.find(o => o.label.startsWith(k)).label;
+  // IAUC60N04S6N050H: 1 G_HS · 2,3 phase · 4 G_LS · 5,6 ground · 7,8 battery · pads 9 battery / 10 phase
+  let R = PRODUCTS.apply(prof, { fet: opt('하프브리지'), cur: '~40 A (펌프 · 블로어)' }, 'Dadu');
+  let B = NEWPROJ.build(HWARCH.toPlan(R.arch).plan);
+  let Q = B.parts.filter(p => p.val === 'IAUC60N04S6N050H');
+  assert.equal(Q.length, 3);
+  const u = Q.find(q => q.pins[2] === 'PH_U');
+  assert.deepEqual(u.pins, { 1: 'PH_U_HG', 2: 'PH_U', 3: 'PH_U', 4: 'PH_U_LG', 5: 'PH_U_SNS', 6: 'PH_U_SNS', 7: '+12V', 8: '+12V', 9: '+12V', 10: 'PH_U' });
+  // IPG20N04S4L-07 dual: FET1 (S1=1, G1=2, D1=7,8,9) high side · FET2 (S2=3, G2=4, D2=5,6,10) low side
+  R = PRODUCTS.apply(prof, { fet: opt('듀얼'), cur: '~20 A (팬 · 소형 펌프)' }, 'Dadu');
+  const T = HWARCH.toPlan(R.arch);
+  B = NEWPROJ.build(T.plan);
+  Q = B.parts.filter(p => p.val === 'IPG20N04S4L-07');
+  assert.equal(Q.length, 3);
+  const v = Q.find(q => q.pins[1] === 'PH_V');
+  assert.deepEqual(v.pins, { 1: 'PH_V', 2: 'PH_V_HG', 3: 'PH_V_SNS', 4: 'PH_V_LG', 5: 'PH_V', 6: 'PH_V', 7: '+12V', 8: '+12V', 9: '+12V', 10: 'PH_V' });
+  const { B: C } = NEWPROJ.toBoard(T.plan, { seed: 1 });
+  assert.equal(PCBEDIT.drc(C).filter(d => d.code === 'courtyard' || d.code === 'edge').length, 0);
+});
