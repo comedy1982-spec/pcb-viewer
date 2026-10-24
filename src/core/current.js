@@ -16,7 +16,8 @@ const LOADS=[
   [/TPS5433|TPS5430|LM2596|MP1584|LMR\d|TPS56|AP6\d/i,3,'buck'],[/TPS62|TLV62|MP2|RT8|AP3|TPS5401/i,1.5,'buck'],[/AMS1117|LD1117|NCP1117|AZ1117|LM1117|TLV1117/i,1,'ldo'],[/AP2112|MCP1700|XC6206|ME6211|RT9013|TLV7|AP7\d/i,0.5,'ldo'],[/TLF35584|TPS65381|FS26|L9396|TLE9471|FS45/i,1.2,'pmic'],
   [/TC3\d\d|AURIX|S32K3|SPC58|RH850|TMS570/i,0.4,'mcu'],[/STM32|S32K1|ATSAM|ESP32|RP2040|LPC|nRF52/i,0.15,'mcu'],[/TJA10|TJA14|TLE92|TCAN|MCP254|MCP251|ATA656|SN65HVD/i,0.1,'can'],[/W25Q|MX25|IS25|AT25|GD25/i,0.03,'flash'],
   [/INA240|INA2\d\d|AD8418|NCS21|MAX40056|TLE4972|ACS7|TLI497/i,0.01,'sense'],[/TPS3823|TPS382|MAX809|STM6|TLV803|ADM6/i,0.001,'sup'],[/LED|WS2812|SK6812/i,0.02,'led'],[/CC2420|CC25|nRF24|ESP8266|ATWINC|BG9|SIM8/i,0.3,'rf']];
-function partLoad(c){const key=`${c.mpn||''} ${c.val||''} ${c.desc||''}`;for(const[re,I,role]of LOADS){if(re.test(key))return{I,role};}
+function partLoad(c){const ref0=String(c.ref||'');if(/^(R|C|CP|L|FB|J|TP|Y|X)\d/i.test(ref0))return null; // passives / connectors: their description may name the IC they serve
+  const key=`${c.mpn||''} ${c.val||''} ${c.desc||''}`;for(const[re,I,role]of LOADS){if(re.test(key))return{I,role};}
   const ref=String(c.ref||'');if(/^D/.test(ref)&&/LED/i.test(key))return{I:0.02,role:'led'};if(/^U/.test(ref))return{I:0.05,role:'ic'};if(/^Q/.test(ref))return{I:1,role:'fet'};return null;}
 /* ---- rails: voltage read from the net name ---- */
 const isGnd=n=>/^(GND|AGND|DGND|PGND|VSS|GNDA|GNDD|EARTH|0V)$/i.test(String(n||'').replace(/^\//,''));
