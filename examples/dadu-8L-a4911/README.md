@@ -1,29 +1,39 @@
-# Dadu — A4911 게이트 드라이버 · 8층 양면 90 × 60 mm (자동 배선 + 수작업 3곳)
+# Dadu — A4911 게이트 드라이버 · 8층 양면 90 × 60 mm (자동 배선 + 수작업 1곳)
 
-`gdrv3 --driver A4911`(Allegro A4911 한 칩으로 FET 6개 구동 · 내장 센스 앰프 · SPI). 자동 배선 결과 DRC 0 · 상/입력 전류 폭 충족, **미연결 3곳은 KiCad에서 손으로 연결**.
+`gdrv3 --driver A4911`(Allegro A4911 한 칩으로 FET 6개 구동 · 내장 센스 앰프 ×3 · SPI 진단). 자동 배선 결과 DRC 0 · 상/입력 전류 폭 충족, **미연결 1곳(PWM 신호)은 KiCad에서 손으로 연결**.
 
 | 파일 | 내용 |
 |---|---|
 | `Dadu_8L_A4911_90x60.kicad_pcb` | KiCad 보드 파일 |
-| `top.png` / `bottom.png` | 위층 / 아래층 화면 |
+| `top.png` / `bottom.png` | 위층 / 아래층(좌우 반전 보기) 화면 |
 
-## 만든 방법
+## 만든 방법 (v1.73.1 이후)
 ```
-node scripts/pcbrun.cjs --param gdrv3.driver=A4911 --cmds "board layers 8; board size 90 60 --anchor center; reset --strategy compact --both --seed 1; route"
+node scripts/pcbrun.cjs --param gdrv3.driver=A4911 --cmds "board layers 8; board size 90 60 --anchor center; reset --strategy compact --both --seed 47515; route"
 ```
 
 ## 결과
-- 8층: 신호 · GND · 신호 · GND · +12V · 신호 · +3V3 · 신호, 아래층 부품 47개, DRC 0
-- 20 A 필요 폭 6.14 mm: PH_U 7.31 · PH_V 9.87 · PH_W 8.62 · VIN_RAW 18.2 mm ✓
+- 8층: 신호 · GND · 신호 · GND · +12V · 신호 · +3V3 · 신호, 아래층 부품 51개, DRC 0
+- 20 A 필요 폭 6.14 mm (2 oz · ΔT 20 °C): PH_U 9.75 · PH_V 9.67 · PH_W 6.53 · VIN_RAW 17.6 mm ✓
 
-## 손으로 이을 3곳 (KiCad 좌표, mm)
+## 손으로 이을 1곳 (KiCad 좌표, mm)
 | 넷 | 시작 | 끝 | 거리 | 방법 |
 |---|---|---|---|---|
-| GND | 트랙 끝 (74.90, 43.40) | U7(A4911) 9번 GND (75.02, 44.58) | 1.2 | 위층 짧은 트랙 |
-| PH_U_SNSM | R17(넷 타이) 1번 (82.34, 28.02) | U7 34번 CS1M (78.02, 53.08) | 25 | 내층 신호층(In2/In5), PH_U_SNS(CS1P) 선과 나란히 · 같은 길이로 (켈빈 쌍) |
-| PH_ISNS_V_AMP | R25(RC 필터) 1번 (56.75, 69.50) | U7 32번 CS2O (77.02, 53.08) | 26 | 내층 신호층 |
+| PH_INL_U (U상 로우사이드 PWM) | U4(TC364) 9번 (44.50, 45.25) | U7(A4911) 19번 LA (72.02, 49.08) | 28 | 내층 신호층(In2 · In5), 0.2 mm |
+
+연결 뒤 KiCad DRC를 다시 돌려 확인.
+
+## A4911 주변 설계 (데이터시트 A4911-1 Rev. 11 기준)
+- VBB · VBRG 100 nF, VREG 22 µF 세라믹 25 V, 차지펌프 CP1–CP2 470 nF
+- 부트스트랩 68 nF 25 V ×3 — CBOOT = 20 × Qg(17 nC) / VREG(8 V) × 1.5
+- 센스 앰프: 션트 2 mΩ, CSxP · CSxM은 켈빈(0 Ω 넷 타이로 션트 양 끝에서 독립 연결), CSxO → 1 kΩ · 1 nF → MCU ADC, OOS도 ADC
+- LSSx: 0 Ω 넷 타이로 로우사이드 FET 소스에서 독립 연결, GND 핀 6 · 9는 노출 패드로 몸체 아래 연결
+- DIAG 10 kΩ 풀업, ENABLE 10 kΩ 풀다운, SPI(QSPI1) · STRn · RESETn, PWM ×6(GTM)
+
+## 펌웨어
+- 초기화에서 SPI로 SAO = 11(오프셋 1.5 V) · 이득 20 → 센스 출력 0.7~2.3 V(3.3 V ADC 안). OOS를 읽어 CSxO에서 빼기.
+- VREG 기본 8 V(VRG = 0). VRG = 1(11 V)이면 부트스트랩 여유 증가.
 
 ## 주의
-- 펌웨어 초기화에서 SPI로 SAO = 11(오프셋 1.5 V) · 이득 20 — MCU ADC 3.3 V 범위 안(0.7~2.3 V). OOS도 ADC로 읽어 빼기.
-- 부트스트랩 68 nF는 VREG 8 V 기준 계산 — VRG = 1(11 V)이면 여유 증가.
-- 입력 · 모터 단자 품번 미지정(정격 20 A 이상).
+- 입력 · 모터 단자 품번 미지정(정격 20 A 이상으로 지정).
+- 같은 설정의 다른 시드: 31677은 미연결 0이지만 PH_V 4.81 mm(부족), 나머지는 미연결 1~3.
