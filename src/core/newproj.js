@@ -36,8 +36,8 @@ const LIB={
   pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'TVS 넣기 (1/0)'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'}},
     build(ctx,p){const vin=+p.vin;const rail=railOf(vin);ctx.provide(rail,vin,'입력');
       const Im=(ctx.plan&&ctx.plan.blocks||[]).filter(b=>b.type==='hbridge'||b.type==='gdrv3').reduce((a,b)=>a+(+b.params.i||0),0);
-      if(Im>2){termFp(2);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
-        ctx.part('J',`${vin}V 입력`,'TERM-2-5.08',{1:'VIN_RAW',2:'GND'},{mpn:'1729128',desc:`${vin} V 전원 입력 (5.08 mm 단자 · ${Im} A)`,pinNames:{1:'+',2:'GND'}});
+      if(Im>2){termFp(2,Im>15?7.62:5.08);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
+        ctx.part('J',`${vin}V 입력`,termName(2,Im),{1:'VIN_RAW',2:'GND'},{mpn:Im>15?'':'1729128',desc:`${vin} V 전원 입력 (${Im>15?'7.62 mm 단자 — 20 A 이상 정격 품번 지정 필요':'5.08 mm 단자'} · ${Im} A)`,pinNames:{1:'+',2:'GND'}});
         for(let i=0;i<n;i++)ctx.part('Q','SQD50P04-09L','TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:'SQD50P04-09L_GE3',desc:`역전압 보호 P-MOSFET (−40 V · 9 mΩ · AEC-Q101)${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((Im/n)**2)*0.009+0.02).toFixed(2)});
         ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:'VIN_PG',2:rail},{mpn:'BZT52C12',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'A',2:'K'}});
         ctx.curr('VIN_RAW',Im);ctx.curr(rail,Im);}
@@ -117,7 +117,7 @@ const LIB={
       bulk(ctx,vm,I,'H-브리지');
       if(sn)shuntAmp(ctx,ret,N('ISNS'),I,'H-브리지 공통');
       ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 브리지 OFF)'});
-      ctx.part('J','모터','TERM-2-5.08',{1:N('A'),2:N('B')},{mpn:'1729128',desc:`DC 모터 단자 (5.08 mm · ${I} A)`,pinNames:{1:'M+',2:'M−'}});
+      termFp(2,I>15?7.62:5.08);ctx.part('J','모터',termName(2,I),{1:N('A'),2:N('B')},{mpn:I>15?'':'1729128',desc:`DC 모터 단자 (${I>15?'7.62':'5.08'} mm · ${I} A)`,pinNames:{1:'M+',2:'M−'}});
       ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(sn)ctx.curr(ret,I);
       ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
   gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
@@ -134,7 +134,7 @@ const LIB={
         ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('IN_'+h),'pwm','pwm3');});
       bulk(ctx,vm,I,'3상 인버터');ctx.curr(vm,I);
       ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 인버터 OFF)'});ctx.sig(N('EN'),'gpio_out');
-      ctx.part('J','모터 상','TERM-3-5.08',{1:N('U'),2:N('V'),3:N('W')},{mpn:'1729131',desc:`3상 모터 단자 (5.08 mm · ${I} A)`,pinNames:{1:'U',2:'V',3:'W'}});
+      termFp(3,I>15?7.62:5.08);ctx.part('J','모터 상',termName(3,I),{1:N('U'),2:N('V'),3:N('W')},{mpn:I>15?'':'1729131',desc:`3상 모터 단자 (${I>15?'7.62 mm — 20 A 이상 정격 품번 지정 필요':'5.08 mm'} · ${I} A)`,pinNames:{1:'U',2:'V',3:'W'}});
       if(+p.hall){const hv=+p.hallv||5;const hr=railOf(hv);ctx.use(hr);ctx.use('+3V3');const hin=x=>N('HALL_'+x+(hv>5?'_IN':''));ctx.part('J','홀','HDR-1x5',{1:hr,2:hin('A'),3:hin('B'),4:hin('C'),5:'GND'},{mpn:'61300511121',desc:`홀 센서 커넥터 (공급 ${hv} V)`,pinNames:{1:hv+'V',2:'H1',3:'H2',4:'H3',5:'GND'}});
         // open-collector hall outputs pulled up to the MCU rail; with a supply above 5 V a series resistor + clamp keeps a shorted / push-pull sensor off the MCU pin
         ['A','B','C'].forEach(x=>{const raw=N('HALL_'+x+(hv>5?'_IN':''));if(hv>5){ctx.part('R','1kΩ','0603',{1:raw,2:N('HALL_'+x)},{desc:'홀 입력 직렬 저항 (과전압 전류 제한)'});ctx.part('D','BAT54S','SOT-23',{1:'GND',2:'+3V3',3:N('HALL_'+x)},{mpn:'BAT54S',desc:'홀 입력 클램프 (GND·3.3 V)',pinNames:{1:'A1',2:'K2',3:'K1/A2'}});
@@ -249,8 +249,10 @@ function motorPower(ctx,I,V,fet){const F=fet&&FET2[fet];
   const f=FETS.find(x=>x.v>=(V||12)*2.5)||FETS[FETS.length-1];const par=I<=25?1:I<=60?2:I<=100?3:4;
   if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['TO-252','2512','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
   const Pq=+(((I/par)**2)*f.rds*0.6+0.02).toFixed(2);return{f,par,Pq,I};}
-function termFp(n){if(typeof PCB==='undefined'||!PCB.FP)return;const k=`TERM-${n}-5.08`;if(PCB.FP[k])return;const p=5.08,y0=(n-1)/2*p;
-  const f={kind:'hdr',body:[7.6,n*p+0.5,10],pads:Array.from({length:n},(_,i)=>({n:''+(i+1),x:0,y:+(y0-i*p).toFixed(3),w:3,h:3,round:true,drill:1.4})),gen:true};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP[k]=f;}
+// screw terminal: 5.08 mm pitch (≤ ~15 A), 7.62 mm pitch for higher currents (wider copper between the pins, larger pad / drill)
+const termName=(n,I)=>`TERM-${n}-${I>15?'7.62':'5.08'}`;
+function termFp(n,pitch){if(typeof PCB==='undefined'||!PCB.FP)return;pitch=pitch||5.08;const k=`TERM-${n}-${pitch.toFixed(2)}`;if(PCB.FP[k])return;const p=pitch,y0=(n-1)/2*p;const big=p>6;
+  const f={kind:'hdr',body:[big?10:7.6,n*p+0.5,big?12:10],pads:Array.from({length:n},(_,i)=>({n:''+(i+1),x:0,y:+(y0-i*p).toFixed(3),w:big?4.2:3,h:big?4.2:3,round:true,drill:big?1.9:1.4})),gen:true};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP[k]=f;}
 /* two-FET packages in Infineon PG-TDSON-8 (5 × 6 mm), pinout from the datasheets (page 1 pin diagram):
    IAUC60N04S6N050H half-bridge — 1 G(HS) · 2,3 Phase · 4 G(LS) · 5,6 ground (LS source) · 7,8 battery (HS drain); pads 9 = battery, 10 = phase
    IPG20N04S4L-07 dual (independent) — 1 S1 · 2 G1 · 3 S2 · 4 G2 · 5,6 D2 · 7,8 D1; pads 9 = D1, 10 = D2 → FET1 high side, FET2 low side */

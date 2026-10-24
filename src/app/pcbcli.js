@@ -248,16 +248,20 @@ async function cliRoute(a){CLI.routed=true;
   if(PW&&PW.nets.length){
     // the power nets are routed thin: their width comes from the copper fill (no wide-track attempts that fail and retry)
     PW.nets.forEach(n=>{if(!(WW[n]&&WW[n].manual))delete netWidth[n];});
+    // via-in-pad on the big power pads before anything is routed under them (multilayer: planes and the far outer layer)
+    if(ml){const pv0=AUTOROUTE.padVias(BD,PW.nets,{via});if(pv0)lines.push(`전력 패드 안 비아 ${pv0}개 (평면·아래층으로 전류 분산)`);}
     // the stage is routed locally first, before any corridor exists: power nets, then every net with a pad on a part in the
     // stage region (gate drive, bootstrap, shunt sense) — so a gate pin is never sealed in by the power copper
     const R0=PW.rect,inStage=c=>{const x=(c.bb[0]+c.bb[2])/2,y=(c.bb[1]+c.bb[3])/2;return x>=R0[0]&&x<=R0[2]&&y>=R0[1]&&y<=R0[3];};
     const stageNets=new Set();BD.comps.filter(c=>/^(Q|U|R|D|C)\d/.test(c.ref)&&inStage(c)&&c.pads.some(p=>PW.nets.includes(p.net))).forEach(c=>c.pads.forEach(p=>{if(p.net&&!PW.planes.has(p.net)&&!/^(GND|AGND|PGND)$/i.test(p.net))stageNets.add(p.net);}));
     const first=nets.filter(n=>PW.route.includes(n)).concat(nets.filter(n=>!PW.route.includes(n)&&stageNets.has(n)));
     if(first.length){cliSet(prog,`파워스테이지 먼저 배선… (전력 ${PW.route.length} · 구동 ${first.length-PW.route.length})`);await cliTick();const nb1={};PW.route.forEach(n=>{nb1[n]=20;});BD._nb=nb1;
-      const it1=AUTOROUTE.jobRR(BD,first,{width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6});
-      for(;;){const q=it1.next();if(q.done)break;if(CLI.stopReq)break;}PCBEDIT.rebuildNets(BD);}
+      const pw1=first.filter(n=>PW.route.includes(n)),st1=first.filter(n=>!PW.route.includes(n));
+      // power nets on the top layer only (their width comes from the fill there), then the stage's drive nets anywhere
+      for(const [list,extra] of [[pw1,{innerCost:30}],[st1,{netBottom:undefined}]]){if(!list.length)continue;const it1=AUTOROUTE.jobRR(BD,list,Object.assign({width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6},extra));
+      for(;;){const q=it1.next();if(q.done)break;if(CLI.stopReq)break;}}PCBEDIT.rebuildNets(BD);}
     const SS=AUTOROUTE.shapesOfBoard(BD);const R=PW.rect;const inR=s=>{const x=s.k==='cap'?(s.a[0]+s.b[0])/2:s.x,y=s.k==='cap'?(s.a[1]+s.b[1])/2:s.y;return x>=R[0]-1&&x<=R[2]+1&&y>=R[1]-1&&y<=R[3]+1;};
-    avoid=PW.route.map(n=>({net:n,r:Math.min(4,PW.need[n]/2),layers:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
+    const NLc=PCB.cuKeys(BD).length;avoid=PW.route.map(n=>({net:n,r:Math.min(4,PW.need[n]/2),layers:ml?[0,NLc-1]:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
     if(BD.powerBus&&BD.nets[BD.powerBus.net]){const b=BD.powerBus.rect;avoid.push({net:BD.powerBus.net,r:0.2,layers:[0],shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L:[0]}]});}
     BD._avoid=avoid;
     const done=new Set(first.filter(n=>!AUTOROUTE.openNets(BD,x=>x===n).length));nets=nets.filter(n=>!done.has(n));}

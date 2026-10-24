@@ -5785,7 +5785,7 @@ function drc(B,opts){
    (maximin of the distance transform) between the net's power terminals → an effective width to compare with IPC-2221. */
 function powerFill(B,o){o=Object.assign({layer:0,clr:0.25,esc:0.9,grid:0.1,stitch:1.3,via:{d:0.6,drill:0.3}},o||{});
   const keys=PC.cuKeys(B),L=o.layer,lk=keys[L];const nets=o.nets.filter(n=>B.nets[n]);if(!nets.length)return{cells:0,nets:[]};
-  B.layers[lk+'.cu']=B.layers[lk+'.cu'].filter(p=>!(p.fill&&nets.includes(p.net)));B.vias=B.vias.filter(v=>!(v.stitch&&nets.includes(v.net)));
+  B.layers[lk+'.cu']=B.layers[lk+'.cu'].filter(p=>!(p.fill&&nets.includes(p.net)));B.vias=B.vias.filter(v=>!(v.stitch&&v.fillL===L&&nets.includes(v.net))); // only this layer's earlier plane stitching (pad vias / layer stitching stay)
   const P=prepare(B,{grid:o.grid,clear:o.clr,width:{signal:o.grid,power:o.grid},via:o.via});const G=P.G,S=P.S,g=G.g;const occ=G.occT[L];
   const r0=o.rect;const X0=Math.max(0,Math.ceil((r0[0]-G.ox)/g)),X1=Math.min(G.nx-1,Math.floor((r0[2]-G.ox)/g)),Y0=Math.max(0,Math.ceil((r0[1]-G.oy)/g)),Y1=Math.min(G.ny-1,Math.floor((r0[3]-G.oy)/g));
   const inR=i=>{const x=i%G.nx,y=(i/G.nx)|0;return x>=X0&&x<=X1&&y>=Y0&&y<=Y1;};
@@ -5829,7 +5829,7 @@ function powerFill(B,o){o=Object.assign({layer:0,clr:0.25,esc:0.9,grid:0.1,stitc
   const vr=Math.ceil((o.via.d/2+0.05)/g),st=Math.max(1,Math.round(o.stitch/g));
   nets.forEach((n,k)=>{if(!planeNets.has(n))return;const kid=id[k];for(let y=Y0+vr;y<=Y1-vr;y+=st)for(let x=X0+vr;x<=X1-vr;x+=st){let ok=true;
       for(let dy=-vr;dy<=vr&&ok;dy++)for(let dx=-vr;dx<=vr;dx++){const j=(y+dy)*G.nx+x+dx;if(fin[j]!==k&&!(seed[j]&&own[j]===k)){ok=false;break;}}
-      if(!ok)continue;const i=y*G.nx+x;if(G.occV.some(a=>a[i]!==0&&a[i]!==kid))continue;const v={x:+(G.ox+x*g).toFixed(3),y:+(G.oy+y*g).toFixed(3),d:o.via.d,drill:o.via.drill,net:n,stitch:true};B.vias.push(v);nv++;}});
+      if(!ok)continue;const i=y*G.nx+x;if(G.occV.some(a=>a[i]!==0&&a[i]!==kid))continue;const v={x:+(G.ox+x*g).toFixed(3),y:+(G.oy+y*g).toFixed(3),d:o.via.d,drill:o.via.drill,net:n,stitch:true,fillL:L};B.vias.push(v);nv++;}});
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}
   return{nets,cells:cnt.reduce((a,b)=>a+b,0),area:nets.map((n,k)=>({net:n,mm2:+(cnt[k]*g*g).toFixed(1)})),segs:add.length,vias:nv,grid:g,rect:r0};}
 /* effective copper width of a net on a layer between its power terminals (pads of FETs, terminals, shunts, bulk caps) */
@@ -6133,9 +6133,12 @@ function setLayers(B,n,o){o=o||{};n=+n;if(!PCB.STACKS[n])throw new Error('층 �
   const old=PCB.cuKeys(B);let dropped=0;
   old.slice(1,-1).forEach(k=>{dropped+=B.layers[k+'.cu'].filter(p=>p.t==='seg'||p.t==='path').length;delete B.layers[k+'.cu'];});
   const roles=PCB.STACKS[n];const pn=planeNets(B,o);const R=cornerRadius(B);
+  // 6+ layers with the motor supply on the power plane: the last inner GND plane carries the logic rail (it has the most pins)
+  let pn2=null;if(n>=8&&pn.pwr&&B.netCurrent&&+B.netCurrent[pn.pwr]>=3){const q=planeNets(Object.assign({},B,{netCurrent:null}),{});if(q.pwr&&q.pwr!==pn.pwr)pn2=q.pwr;}
+  const lastG=pn2?roles.lastIndexOf('gnd'):-1;
   B.copperLayers=n;const stack=[];
-  roles.forEach((role,i)=>{const k=i===0?'T':i===n-1?'B':'In'+i;if(k!=='T'&&k!=='B')B.layers[k+'.cu']=[];
-    const net=role==='gnd'?pn.gnd:role==='pwr'?(pn.pwr||pn.gnd):null;const r2=role==='pwr'&&!pn.pwr?'gnd':role;
+  roles.forEach((role,i)=>{const k=i===0?'T':i===n-1?'B':'In'+i;if(k!=='T'&&k!=='B')B.layers[k+'.cu']=[];if(i===lastG)role='pwr';
+    const net=i===lastG?pn2:role==='gnd'?pn.gnd:role==='pwr'?(pn.pwr||pn.gnd):null;const r2=role==='pwr'&&!pn.pwr?'gnd':role;
     stack.push({k,role:r2,net});if(net&&k!=='T'&&k!=='B')B.layers[k+'.cu'].push({t:'pour',net,inset:0.5,clr:0.3,r:Math.max(0,R-0.5),plane:true});});
   B.stack=stack;
   // finished thickness: 1.6 mm up to 8 layers, 2.0 mm for 10
@@ -6892,8 +6895,8 @@ const LIB={
   pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'TVS 넣기 (1/0)'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'}},
     build(ctx,p){const vin=+p.vin;const rail=railOf(vin);ctx.provide(rail,vin,'입력');
       const Im=(ctx.plan&&ctx.plan.blocks||[]).filter(b=>b.type==='hbridge'||b.type==='gdrv3').reduce((a,b)=>a+(+b.params.i||0),0);
-      if(Im>2){termFp(2);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
-        ctx.part('J',`${vin}V 입력`,'TERM-2-5.08',{1:'VIN_RAW',2:'GND'},{mpn:'1729128',desc:`${vin} V 전원 입력 (5.08 mm 단자 · ${Im} A)`,pinNames:{1:'+',2:'GND'}});
+      if(Im>2){termFp(2,Im>15?7.62:5.08);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
+        ctx.part('J',`${vin}V 입력`,termName(2,Im),{1:'VIN_RAW',2:'GND'},{mpn:Im>15?'':'1729128',desc:`${vin} V 전원 입력 (${Im>15?'7.62 mm 단자 — 20 A 이상 정격 품번 지정 필요':'5.08 mm 단자'} · ${Im} A)`,pinNames:{1:'+',2:'GND'}});
         for(let i=0;i<n;i++)ctx.part('Q','SQD50P04-09L','TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:'SQD50P04-09L_GE3',desc:`역전압 보호 P-MOSFET (−40 V · 9 mΩ · AEC-Q101)${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((Im/n)**2)*0.009+0.02).toFixed(2)});
         ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:'VIN_PG',2:rail},{mpn:'BZT52C12',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'A',2:'K'}});
         ctx.curr('VIN_RAW',Im);ctx.curr(rail,Im);}
@@ -6973,7 +6976,7 @@ const LIB={
       bulk(ctx,vm,I,'H-브리지');
       if(sn)shuntAmp(ctx,ret,N('ISNS'),I,'H-브리지 공통');
       ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 브리지 OFF)'});
-      ctx.part('J','모터','TERM-2-5.08',{1:N('A'),2:N('B')},{mpn:'1729128',desc:`DC 모터 단자 (5.08 mm · ${I} A)`,pinNames:{1:'M+',2:'M−'}});
+      termFp(2,I>15?7.62:5.08);ctx.part('J','모터',termName(2,I),{1:N('A'),2:N('B')},{mpn:I>15?'':'1729128',desc:`DC 모터 단자 (${I>15?'7.62':'5.08'} mm · ${I} A)`,pinNames:{1:'M+',2:'M−'}});
       ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(sn)ctx.curr(ret,I);
       ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
   gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
@@ -6990,7 +6993,7 @@ const LIB={
         ctx.curr(ph,I);ctx.curr(ret,I);ctx.sig(N('IN_'+h),'pwm','pwm3');});
       bulk(ctx,vm,I,'3상 인버터');ctx.curr(vm,I);
       ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 인버터 OFF)'});ctx.sig(N('EN'),'gpio_out');
-      ctx.part('J','모터 상','TERM-3-5.08',{1:N('U'),2:N('V'),3:N('W')},{mpn:'1729131',desc:`3상 모터 단자 (5.08 mm · ${I} A)`,pinNames:{1:'U',2:'V',3:'W'}});
+      termFp(3,I>15?7.62:5.08);ctx.part('J','모터 상',termName(3,I),{1:N('U'),2:N('V'),3:N('W')},{mpn:I>15?'':'1729131',desc:`3상 모터 단자 (${I>15?'7.62 mm — 20 A 이상 정격 품번 지정 필요':'5.08 mm'} · ${I} A)`,pinNames:{1:'U',2:'V',3:'W'}});
       if(+p.hall){const hv=+p.hallv||5;const hr=railOf(hv);ctx.use(hr);ctx.use('+3V3');const hin=x=>N('HALL_'+x+(hv>5?'_IN':''));ctx.part('J','홀','HDR-1x5',{1:hr,2:hin('A'),3:hin('B'),4:hin('C'),5:'GND'},{mpn:'61300511121',desc:`홀 센서 커넥터 (공급 ${hv} V)`,pinNames:{1:hv+'V',2:'H1',3:'H2',4:'H3',5:'GND'}});
         // open-collector hall outputs pulled up to the MCU rail; with a supply above 5 V a series resistor + clamp keeps a shorted / push-pull sensor off the MCU pin
         ['A','B','C'].forEach(x=>{const raw=N('HALL_'+x+(hv>5?'_IN':''));if(hv>5){ctx.part('R','1kΩ','0603',{1:raw,2:N('HALL_'+x)},{desc:'홀 입력 직렬 저항 (과전압 전류 제한)'});ctx.part('D','BAT54S','SOT-23',{1:'GND',2:'+3V3',3:N('HALL_'+x)},{mpn:'BAT54S',desc:'홀 입력 클램프 (GND·3.3 V)',pinNames:{1:'A1',2:'K2',3:'K1/A2'}});
@@ -7105,8 +7108,10 @@ function motorPower(ctx,I,V,fet){const F=fet&&FET2[fet];
   const f=FETS.find(x=>x.v>=(V||12)*2.5)||FETS[FETS.length-1];const par=I<=25?1:I<=60?2:I<=100?3:4;
   if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['TO-252','2512','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
   const Pq=+(((I/par)**2)*f.rds*0.6+0.02).toFixed(2);return{f,par,Pq,I};}
-function termFp(n){if(typeof PCB==='undefined'||!PCB.FP)return;const k=`TERM-${n}-5.08`;if(PCB.FP[k])return;const p=5.08,y0=(n-1)/2*p;
-  const f={kind:'hdr',body:[7.6,n*p+0.5,10],pads:Array.from({length:n},(_,i)=>({n:''+(i+1),x:0,y:+(y0-i*p).toFixed(3),w:3,h:3,round:true,drill:1.4})),gen:true};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP[k]=f;}
+// screw terminal: 5.08 mm pitch (≤ ~15 A), 7.62 mm pitch for higher currents (wider copper between the pins, larger pad / drill)
+const termName=(n,I)=>`TERM-${n}-${I>15?'7.62':'5.08'}`;
+function termFp(n,pitch){if(typeof PCB==='undefined'||!PCB.FP)return;pitch=pitch||5.08;const k=`TERM-${n}-${pitch.toFixed(2)}`;if(PCB.FP[k])return;const p=pitch,y0=(n-1)/2*p;const big=p>6;
+  const f={kind:'hdr',body:[big?10:7.6,n*p+0.5,big?12:10],pads:Array.from({length:n},(_,i)=>({n:''+(i+1),x:0,y:+(y0-i*p).toFixed(3),w:big?4.2:3,h:big?4.2:3,round:true,drill:big?1.9:1.4})),gen:true};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP[k]=f;}
 /* two-FET packages in Infineon PG-TDSON-8 (5 × 6 mm), pinout from the datasheets (page 1 pin diagram):
    IAUC60N04S6N050H half-bridge — 1 G(HS) · 2,3 Phase · 4 G(LS) · 5,6 ground (LS source) · 7,8 battery (HS drain); pads 9 = battery, 10 = phase
    IPG20N04S4L-07 dual (independent) — 1 S1 · 2 G1 · 3 S2 · 4 G2 · 5,6 D2 · 7,8 D1; pads 9 = D1, 10 = D2 → FET1 high side, FET2 low side */
@@ -14542,16 +14547,20 @@ async function cliRoute(a){CLI.routed=true;
   if(PW&&PW.nets.length){
     // the power nets are routed thin: their width comes from the copper fill (no wide-track attempts that fail and retry)
     PW.nets.forEach(n=>{if(!(WW[n]&&WW[n].manual))delete netWidth[n];});
+    // via-in-pad on the big power pads before anything is routed under them (multilayer: planes and the far outer layer)
+    if(ml){const pv0=AUTOROUTE.padVias(BD,PW.nets,{via});if(pv0)lines.push(`전력 패드 안 비아 ${pv0}개 (평면·아래층으로 전류 분산)`);}
     // the stage is routed locally first, before any corridor exists: power nets, then every net with a pad on a part in the
     // stage region (gate drive, bootstrap, shunt sense) — so a gate pin is never sealed in by the power copper
     const R0=PW.rect,inStage=c=>{const x=(c.bb[0]+c.bb[2])/2,y=(c.bb[1]+c.bb[3])/2;return x>=R0[0]&&x<=R0[2]&&y>=R0[1]&&y<=R0[3];};
     const stageNets=new Set();BD.comps.filter(c=>/^(Q|U|R|D|C)\d/.test(c.ref)&&inStage(c)&&c.pads.some(p=>PW.nets.includes(p.net))).forEach(c=>c.pads.forEach(p=>{if(p.net&&!PW.planes.has(p.net)&&!/^(GND|AGND|PGND)$/i.test(p.net))stageNets.add(p.net);}));
     const first=nets.filter(n=>PW.route.includes(n)).concat(nets.filter(n=>!PW.route.includes(n)&&stageNets.has(n)));
     if(first.length){cliSet(prog,`파워스테이지 먼저 배선… (전력 ${PW.route.length} · 구동 ${first.length-PW.route.length})`);await cliTick();const nb1={};PW.route.forEach(n=>{nb1[n]=20;});BD._nb=nb1;
-      const it1=AUTOROUTE.jobRR(BD,first,{width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6});
-      for(;;){const q=it1.next();if(q.done)break;if(CLI.stopReq)break;}PCBEDIT.rebuildNets(BD);}
+      const pw1=first.filter(n=>PW.route.includes(n)),st1=first.filter(n=>!PW.route.includes(n));
+      // power nets on the top layer only (their width comes from the fill there), then the stage's drive nets anywhere
+      for(const [list,extra] of [[pw1,{innerCost:30}],[st1,{netBottom:undefined}]]){if(!list.length)continue;const it1=AUTOROUTE.jobRR(BD,list,Object.assign({width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6},extra));
+      for(;;){const q=it1.next();if(q.done)break;if(CLI.stopReq)break;}}PCBEDIT.rebuildNets(BD);}
     const SS=AUTOROUTE.shapesOfBoard(BD);const R=PW.rect;const inR=s=>{const x=s.k==='cap'?(s.a[0]+s.b[0])/2:s.x,y=s.k==='cap'?(s.a[1]+s.b[1])/2:s.y;return x>=R[0]-1&&x<=R[2]+1&&y>=R[1]-1&&y<=R[3]+1;};
-    avoid=PW.route.map(n=>({net:n,r:Math.min(4,PW.need[n]/2),layers:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
+    const NLc=PCB.cuKeys(BD).length;avoid=PW.route.map(n=>({net:n,r:Math.min(4,PW.need[n]/2),layers:ml?[0,NLc-1]:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
     if(BD.powerBus&&BD.nets[BD.powerBus.net]){const b=BD.powerBus.rect;avoid.push({net:BD.powerBus.net,r:0.2,layers:[0],shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L:[0]}]});}
     BD._avoid=avoid;
     const done=new Set(first.filter(n=>!AUTOROUTE.openNets(BD,x=>x===n).length));nets=nets.filter(n=>!done.has(n));}

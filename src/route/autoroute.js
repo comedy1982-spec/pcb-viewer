@@ -441,7 +441,7 @@ function drc(B,opts){
    (maximin of the distance transform) between the net's power terminals → an effective width to compare with IPC-2221. */
 function powerFill(B,o){o=Object.assign({layer:0,clr:0.25,esc:0.9,grid:0.1,stitch:1.3,via:{d:0.6,drill:0.3}},o||{});
   const keys=PC.cuKeys(B),L=o.layer,lk=keys[L];const nets=o.nets.filter(n=>B.nets[n]);if(!nets.length)return{cells:0,nets:[]};
-  B.layers[lk+'.cu']=B.layers[lk+'.cu'].filter(p=>!(p.fill&&nets.includes(p.net)));B.vias=B.vias.filter(v=>!(v.stitch&&nets.includes(v.net)));
+  B.layers[lk+'.cu']=B.layers[lk+'.cu'].filter(p=>!(p.fill&&nets.includes(p.net)));B.vias=B.vias.filter(v=>!(v.stitch&&v.fillL===L&&nets.includes(v.net))); // only this layer's earlier plane stitching (pad vias / layer stitching stay)
   const P=prepare(B,{grid:o.grid,clear:o.clr,width:{signal:o.grid,power:o.grid},via:o.via});const G=P.G,S=P.S,g=G.g;const occ=G.occT[L];
   const r0=o.rect;const X0=Math.max(0,Math.ceil((r0[0]-G.ox)/g)),X1=Math.min(G.nx-1,Math.floor((r0[2]-G.ox)/g)),Y0=Math.max(0,Math.ceil((r0[1]-G.oy)/g)),Y1=Math.min(G.ny-1,Math.floor((r0[3]-G.oy)/g));
   const inR=i=>{const x=i%G.nx,y=(i/G.nx)|0;return x>=X0&&x<=X1&&y>=Y0&&y<=Y1;};
@@ -485,7 +485,7 @@ function powerFill(B,o){o=Object.assign({layer:0,clr:0.25,esc:0.9,grid:0.1,stitc
   const vr=Math.ceil((o.via.d/2+0.05)/g),st=Math.max(1,Math.round(o.stitch/g));
   nets.forEach((n,k)=>{if(!planeNets.has(n))return;const kid=id[k];for(let y=Y0+vr;y<=Y1-vr;y+=st)for(let x=X0+vr;x<=X1-vr;x+=st){let ok=true;
       for(let dy=-vr;dy<=vr&&ok;dy++)for(let dx=-vr;dx<=vr;dx++){const j=(y+dy)*G.nx+x+dx;if(fin[j]!==k&&!(seed[j]&&own[j]===k)){ok=false;break;}}
-      if(!ok)continue;const i=y*G.nx+x;if(G.occV.some(a=>a[i]!==0&&a[i]!==kid))continue;const v={x:+(G.ox+x*g).toFixed(3),y:+(G.oy+y*g).toFixed(3),d:o.via.d,drill:o.via.drill,net:n,stitch:true};B.vias.push(v);nv++;}});
+      if(!ok)continue;const i=y*G.nx+x;if(G.occV.some(a=>a[i]!==0&&a[i]!==kid))continue;const v={x:+(G.ox+x*g).toFixed(3),y:+(G.oy+y*g).toFixed(3),d:o.via.d,drill:o.via.drill,net:n,stitch:true,fillL:L};B.vias.push(v);nv++;}});
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}
   return{nets,cells:cnt.reduce((a,b)=>a+b,0),area:nets.map((n,k)=>({net:n,mm2:+(cnt[k]*g*g).toFixed(1)})),segs:add.length,vias:nv,grid:g,rect:r0};}
 /* effective copper width of a net on a layer between its power terminals (pads of FETs, terminals, shunts, bulk caps) */
