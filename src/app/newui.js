@@ -12,6 +12,7 @@ const NP_TPL=[
   ['빈 프로젝트','새 프로젝트','']];
 const NP_HELP=[
   ['help','명령 목록'],
+  ['shrink [0|1|2]','패키지 축소 — 1 표준(0805·1206→0603 · 션트 · SOT-223 LDO→SOT-23/WSON · DPAK FET→하프브리지) · 2 최대(+0603→0402) · 0 해제 · 인자 없이 = 결과 보기. "패키지 축소", "최대로 축소"도 됨'],
   ['arch <요구사항>','요구사항 → HW 블록 다이어그램 (부품 미정, 결정론 규칙)'],
   ['block <그룹> "<이름>" [--feat "기능1; 기능2"] [--id ID] [--ext]','HW 블록 추가. 그룹: power comm ctrl io ext (전원 · 통신 · 제어 · 구동/센싱/진단 · 외부)'],
   ['feat <ID> "<기능>" · feat <ID> --clear · rename <ID> "<이름>" · move <ID> <그룹> · del <ID>','블록 기능 줄 · 이름 · 그룹 · 삭제'],
@@ -34,7 +35,7 @@ const NP_HELP=[
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
-const NP_CMDS=new Set(['cands','candidates','check','datasheet','sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
+const NP_CMDS=new Set(['shrink','cands','candidates','check','datasheet','sg','parts','dup','bind','safety','variants','arch','block','feat','rename','move','link','unlink','del','impl','map','view','diagram','help','?','plan','status','name','req','auto','blocks','mcus','add','set','remove','mcu','board','strategy','generate','undo','clear','ai']);
 function npSay(k,t){const e={k,t,id:++NP.seq};NP.log.push(e);if(NP.log.length>300)NP.log.shift();npPaint(e);return e;}
 function npSet(e,t){e.t=t;npPaint(e,true);}
 function npPaint(e,upd){copPaint('np',e,upd);}
@@ -73,6 +74,11 @@ async function npRun(line,by){
       const out=[];for(const b of bs){const R=npCandRank(b);if(R)out.push(PARTRANK.text(b,R));}
       if(a._[1]){const b=bs[0];const R=npCandRank(b);const r=R&&R.rows.find(x=>x.mpn.toUpperCase()===String(a._[1]).toUpperCase()||String(x.rank)===String(a._[1]));if(!r)throw new Error('후보에 없음: '+a._[1]);return await npSetPart(b,{mpn:r.mpn,mfr:r.mfr,note:r.note});}
       return out.join('\n\n')||'후보가 있는 블록이 없습니다.';}
+    case'shrink':{const P=npEnsure();const v=String(a._[0]==null?'':a._[0]).toLowerCase();
+      if(v!==''){const lv=/^(0|off|해제|끄기|없음)$/.test(v)?0:/^(2|max|최대)$/.test(v)?2:/^(1|on|표준|보통)$/.test(v)?1:null;if(lv==null)throw new Error('shrink 0 · 1 · 2');
+        npPush();P.shrink=lv;npRender();}
+      const r=NEWPROJ.build(P);const txt=NEWPROJ.shrinkText(r);const gen=typeof BD!=='undefined'&&BD&&!BD.blank&&BD.newPlan;
+      return txt+(v!==''&&P.shrink?`\n보드 ${r.W} × ${r.H} mm (자동 크기) · 부품 면적 ${Math.round(r.area)} mm²`:'')+(v!==''&&gen?'\n→ 이미 만든 회로·PCB에 반영하려면 회로를 다시 생성하세요 (generate)':'');}
     case'check':{const A=NP.arch;if(!A||!A.blocks.length)throw new Error('다이어그램이 없습니다.');const I=HWARCH.check(A);
       if(a.fix){let n=0;for(const x of I){if(x.code==='noImpl'&&x.guess){try{await npRun(`impl ${x.id} ${x.guess}`);n++;}catch(e){}}}npRender();return (n?`추천 구현 ${n}개 지정\n`:'')+HWARCH.checkText(HWARCH.check(A));}
       return HWARCH.checkText(I);}
@@ -156,7 +162,10 @@ async function npRun(line,by){
 }
 async function npExec(line){
   npSay('cmd',line);npBusy(true);
-  try{const f=(cliTok(line)[0]||'').toLowerCase();
+  try{// "패키지 축소", "최대로 축소해줘", "소형화 해제" → shrink
+    if(/(패키지|부품)?\s*(축소|소형\s*화?\s*패키지|패키지\s*소형화)/.test(line)&&!/배치|placement|strategy/i.test(line)&&!NP_CMDS.has((cliTok(line)[0]||'').toLowerCase())){
+      const lv=/해제|끄|취소|원래/.test(line)?0:/최대|최소|0402|가장/.test(line)?2:/결과|보여|상태/.test(line)?'':1;line=('shrink '+lv).trim();npSay('out','→ '+line);}
+    const f=(cliTok(line)[0]||'').toLowerCase();
     if(NP_CMDS.has(f)){const o=await npRun(line);if(o)npSay('ok',o);}
     else if(typeof plIntent==='function'&&plIntent(line)&&BD&&!BD.blank){await plReplaceFlow(plIntent(line),'np');}
     else if(typeof plIntent==='function'&&plIntent(line)){npSay('out','부품 교체는 회로가 만들어진 뒤(2단계 이후) 할 수 있습니다. 블록 수준에서는 impl <블록> <라이브러리 블록>으로 구현을 바꾸세요.');}
@@ -447,7 +456,7 @@ $('#npGen').addEventListener('click',()=>{if(NP.busy)return;npExec('generate');}
 var SYS={sel:null,src:null,D:null,view:'hw',A:null};
 function archEnsure(){if(!NP.arch)NP.arch=HWARCH.blank($('#npName').value.trim()||(BD&&BD.name)||null);return NP.arch;}
 // the circuit plan follows the architecture until the user edits the plan by hand
-function archToPlan(force){if(!NP.arch)return;if(NP.planManual&&!force)return;const prev=NP.plan;const t=HWARCH.toPlan(NP.arch);NP.plan=t.plan;NP.planManual=false;if(prev){NP.plan.board=prev.board;if(prev.pcb)NP.plan.pcb=prev.pcb;if(prev.strategy&&prev.strategy!=='balanced')NP.plan.strategy=prev.strategy;}}
+function archToPlan(force){if(!NP.arch)return;if(NP.planManual&&!force)return;const prev=NP.plan;const t=HWARCH.toPlan(NP.arch);NP.plan=t.plan;NP.planManual=false;if(prev){NP.plan.board=prev.board;if(prev.pcb)NP.plan.pcb=prev.pcb;if(prev.strategy&&prev.strategy!=='balanced')NP.plan.strategy=prev.strategy;if(prev.shrink)NP.plan.shrink=prev.shrink;}}
 function sysArch(){if(NP.arch&&NP.arch.blocks.length)return NP.arch;if(BD&&!BD.blank){const D=SYSDIAG.fromBoard(BD);return HWARCH.fromDiagram(D);}return null;}
 function sysDiagram(){
   if(SYS.src!=='board'&&NP.plan&&NP.plan.blocks.length){SYS.D=SYSDIAG.fromPlan(NP.plan);SYS.D.from='plan';}
