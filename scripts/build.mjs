@@ -51,6 +51,7 @@ ${script(stripExport(read('src/core/guide.js')))}
 ${script(stripExport(read('src/core/newproj.js')))}
 ${script(stripExport(read('src/core/boardsnap.js')))}
 ${script(stripExport(read('src/core/powertopo.js')))}
+${script(stripExport(read('src/core/safemech.js')))}
 ${script(read('src/app/sample-dadu8.js'))}
 ${script(read('src/app/sample-dadu8b.js'))}
 ${script(read('src/app/sample-dadu8c.js'))}

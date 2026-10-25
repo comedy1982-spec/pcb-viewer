@@ -80,3 +80,23 @@ test('input options: IGN (KL15) sense, UVLO on the buck EN (TPS54331 formula), l
   B = NEWPROJ.build(plan);
   assert.ok(B.warn.some(w => /3\.5 V 초과/.test(w)), 'stop voltage below the EN limit is refused');
 });
+test('safety mechanisms per block and safety goal (Dadu defaults): roles, A4911 / lockstep mechanisms, timing vs FTTI, gaps', () => {
+  const { SGARCH, SAFEMECH } = load();
+  const R = PRODUCTS.apply(PRODUCTS.detect('Dadu'), { cur: '~20 A (팬 · 소형 펌프)' }, 'Dadu');
+  const A = R.arch; SGARCH.setGoals(A, SGARCH.defaults('dadu'));
+  const M = SAFEMECH.map(A, NEWPROJ.build(HWARCH.toPlan(A).plan).parts);
+  const role = id => M.blocks.find(b => b.id === id).role;
+  assert.deepEqual(['hall', 'isense', 'ptemp', 'gate', 'inv', 'mcu', 'sbc', 'hallps', 'canx', 'pin'].map(role), ['pos', 'cur', 'temp', 'gate', 'inv', 'mcu', 'sbc', 'sps', 'comm', 'pin']);
+  assert.equal(M.K.driver, 'A4911'); assert.ok(M.K.lockstep);
+  const sg1 = M.sgs.find(g => g.id === 'SG1');
+  const ids = id => sg1.blocks.find(b => b.id === id).mechs.map(m => m.id);
+  assert.ok(ids('hall').includes('hall_code') && ids('hall').includes('hall_speed'), 'hall range + plausibility');
+  assert.ok(ids('isense').includes('cur_sum') && ids('isense').includes('cur_vds'), 'current redundancy comparisons');
+  assert.ok(ids('gate').includes('drv_spi') && ids('gate').includes('drv_en'));
+  assert.ok(ids('mcu').includes('mcu_lock') && ids('mcu').includes('sw_pfm'));
+  assert.ok(sg1.total != null && sg1.total <= sg1.ftti, 'detection + reaction within FTTI');
+  assert.ok(sg1.issues.some(i => /Hall Sensor Supply/.test(i)), '9 V hall supply is not monitored yet');
+  assert.ok(M.sgs.find(g => g.id === 'SG2').ok);
+  assert.ok(/SG1/.test(SAFEMECH.text(M)) && /<table>/.test(SAFEMECH.html(M, { mode: 'block' })));
+  assert.equal(SAFEMECH.aoaSg(M)[0][0], 'SG');
+});
