@@ -718,9 +718,9 @@ $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImp
 const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC],tc364:['AURIX TC364 핀 추천',()=>SAMPLE_TC364]};
 /* a placed + routed example kept as a snapshot: the board is generated from its product profile, then the layout restored */
 function boardFromSnap(S){const m=S.meta;const prof=PRODUCTS.detect(m.profile);const ans={cur:m.cur};const fq=prof.questions.find(q=>q.key==='fet');if(fq)ans.fet=fq.options[m.fet||0].label;
-  const R=PRODUCTS.apply(prof,ans,m.profile);const plan=HWARCH.toPlan(R.arch).plan;plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
+  const R=PRODUCTS.apply(prof,ans,m.profile);const plan=HWARCH.toPlan(R.arch).plan;const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'});plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
   const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+m.profile.toLowerCase()+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch:R.arch};}
-const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B]};
+const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C]};
 function loadSnapExample(which){const r=boardFromSnap(SNAP_EXAMPLES[which][1]());
   Object.assign(NP,{plan:r.plan,arch:r.arch,answers:{},vkey:null,picked:null,chooser:false,variants:null,hist:[],planManual:false});const n=$('#npName');if(n)n.value=r.B.name;
   setBoard(r.B);closeImport();if(typeof setMode==='function'){APP.mode='steps';setMode('steps');if(typeof setStep==='function')setStep(3);}
@@ -734,7 +734,7 @@ $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));
 $('#impSample3').addEventListener('click',()=>loadExample('bldc'));
 $('#impSample4').addEventListener('click',()=>loadExample('tc364'));
-{const b5=$('#impSample5');if(b5)b5.addEventListener('click',()=>loadExample('dadu8'));const b6=$('#impSample6');if(b6)b6.addEventListener('click',()=>loadExample('dadu8b'));}
+{const b5=$('#impSample5');if(b5)b5.addEventListener('click',()=>loadExample('dadu8'));const b6=$('#impSample6');if(b6)b6.addEventListener('click',()=>loadExample('dadu8b'));const b7=$('#impSample7');if(b7)b7.addEventListener('click',()=>loadExample('dadu8c'));}
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{

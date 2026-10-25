@@ -143,7 +143,7 @@ T.dadu={key:'dadu',name:'Dadu ECU (12 V BLDC 구동)',re:/dadu|다두/i,
     {id:'mcu',group:'ctrl',label:'Main MCU AURIX TC364',feats:['Core: AURIX TC36x (TriCore · 락스텝)','GTM PWM ×6 (3상)','홀 입력 ×3 (캡처 · 인터럽트)','ADC (상전류 · VBAT · 온도)'],impl:[{type:'mcu',params:{part:'TC364DP-64F300F'}},{type:'xtal',params:{}}],why:'모터 제어 · 통신'},
     {id:'canbus',group:'comm',label:'CAN-FD Bus (H / L)',ext:true,feats:['차량 네트워크 · UDS 진단'],why:'차량 통신'},
     {id:'canx',group:'comm',label:'CAN-FD Transceiver',feats:['중재 500 kbps · 데이터 2 Mbps','물리 계층 (5 V) · ESD · 종단'],impl:[{type:'can',params:{}}],why:'CAN 물리 계층'},
-    {id:'gate',group:'io',label:'3-Phase Gate Driver',feats:['하이/로우 사이드 ×3 (부트스트랩)','게이트 진단 · 단락 · 저전압 보호','PWM ×6 · EN · nFAULT'],impl:[{type:'gdrv3',params:{i:20,hall:1,hallv:9}}],why:'3상 MOSFET 구동'},
+    {id:'gate',group:'io',label:'3-Phase Gate Driver',feats:['하이/로우 사이드 ×3 (부트스트랩)','게이트 진단 · 단락 · 저전압 보호','PWM ×6 · EN · nFAULT'],impl:[{type:'gdrv3',params:{i:20,hall:1,hallv:9,driver:'A4911'}}],why:'3상 MOSFET 구동 — Allegro A4911 (한 칩 · 센스 앰프 ×3 · SPI 진단)'},
     {id:'inv',group:'io',label:'MOSFET 6-Bridge (3-Phase)',feats:['N-MOSFET ×6 (40 V · 저 RDS(on))','상 션트 ×3','방열 (써멀 비아 · 하우징 접촉)'],why:'모터 전력단'},
     {id:'hall',group:'io',label:'Hall Sensor Interface ×3',feats:['홀 A/B/C 입력 (오픈 컬렉터)','풀업 3.3 V · RC 필터 · 클램프','센서 공급 9 V'],why:'회전자 위치 (6스텝 · 속도)'},
     {id:'isense',group:'io',label:'Phase Current / VBAT Monitor',feats:['상 션트 앰프 → ADC','VBAT 분압 감시','과전류 HW 감지'],impl:[{type:'vmon',params:{}}],why:'전류 제한 · 진단'},
@@ -203,7 +203,7 @@ const PARTS={
   bms:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,iso:ISO_AFE,cur:ISOADC,hvm:HVM,ctr:HSD},
   bcm:{pin:PIN12,sbc:SBC_B,mcu:MCU_B,canx:CANX,lin:LINX,hsd:HSD,lsd:LSD},
   inv:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,gate:GATEISO,pm:PM,isense:ISOADC,rdc:RDC,hvm:HVM},
-  dadu:{pin:PIN12,sbc:SBC.concat(SBC_B),hallps:HALL9,mcu:MCU_D,canx:CANX,gate:GATE3,inv:FET40,isense:ISENSE,ptemp:NTC}};
+  dadu:{pin:PIN12,sbc:SBC.concat(SBC_B),hallps:HALL9,mcu:MCU_D,canx:CANX,gate:GATE3.filter(x=>/^A491[18]/.test(x[0])).concat(GATE3.filter(x=>!/^A491[18]/.test(x[0]))),inv:FET40,isense:ISENSE,ptemp:NTC}};
 const normPart=x=>{if(!x)return null;if(typeof x==='string')return{mpn:x,mfr:'',note:''};if(Array.isArray(x))return{mpn:S(x[0]),mfr:S(x[1]),note:S(x[2])};return{mpn:S(x.mpn||x.part),mfr:S(x.mfr||x.maker),note:S(x.note||x.desc),grade:S(x.grade)};};
 function candidates(prof,id){const b=(prof.blocks||[]).find(x=>x.id===id);if(!b)return[];return(b.parts||[]).map(normPart).filter(p=>p&&p.mpn);}
 /* ---- detection ---- */
