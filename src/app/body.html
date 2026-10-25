@@ -148,7 +148,7 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
   <div class="sys-mid">
     <section class="sys-dia" id="sysDia" aria-label="시스템 다이어그램">
       <div class="sys-bar"><b id="sysTitle">시스템 다이어그램</b><span class="sys-src" id="sysSrc"></span><span class="cli-sp"></span>
-        <span class="seg sys-view" role="tablist" aria-label="다이어그램 종류"><button role="tab" data-sv="hw" aria-selected="true">HW 블록</button><button role="tab" data-sv="parts" aria-selected="false">부품 구성</button></span><button type="button" class="pill vbtn" id="sysFromBoard" title="지금 보드의 부품과 넷에서 블록 다이어그램을 추출합니다 (부품 번호는 빼고 기능 블록으로)">보드에서 추출</button><button type="button" class="pill vbtn" id="sysZoom">100%</button><button type="button" class="pill vbtn" id="sysSvgDl">SVG 저장</button></div>
+        <span class="seg sys-view" role="tablist" aria-label="다이어그램 종류"><button role="tab" data-sv="hw" aria-selected="true">HW 블록</button><button role="tab" data-sv="parts" aria-selected="false">부품 구성</button><button role="tab" data-sv="power" aria-selected="false">전원 토폴로지</button></span><button type="button" class="pill vbtn" id="sysFromBoard" title="지금 보드의 부품과 넷에서 블록 다이어그램을 추출합니다 (부품 번호는 빼고 기능 블록으로)">보드에서 추출</button><button type="button" class="pill vbtn" id="sysZoom">100%</button><button type="button" class="pill vbtn" id="sysSvgDl">SVG 저장</button></div>
       <div class="sys-svg" id="sysSvg"></div>
     </section>
 

@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert';
+import { load } from './load.mjs';
+const { PRODUCTS, HWARCH, NEWPROJ, POWERTOPO } = load();
+test('power topology of Dadu: KL30 → reverse FET → +12V → buck +5V → LDO +3V3 and LM317 +9V; loads per IC and per unit', () => {
+  const prof = PRODUCTS.detect('Dadu');const fq = prof.questions.find(q => q.key === 'fet');
+  const R = PRODUCTS.apply(prof, { fet: fq.options[0].label, cur: '~20 A (팬 · 소형 펌프)' }, 'Dadu');const plan = HWARCH.toPlan(R.arch).plan;
+  const { B } = NEWPROJ.toBoard(plan, { place: false });
+  const M = POWERTOPO.build(B, { units: POWERTOPO.unitsFromPlan(B.newPlan, R.arch), motorI: 20 });
+  assert.deepEqual(M.roots.map(r => r.net), ['VIN_RAW']);
+  const src = n => M.rails[n].src && M.rails[n].src.c.val;
+  assert.match(src('+12V'), /SQD50P04/);assert.equal(M.rails['+12V'].src.kind, 'switch');
+  assert.equal(src('+5V'), 'TPS54331');assert.equal(M.rails['+5V'].src.kind, 'buck');
+  assert.match(src('+3V3'), /AMS1117/);assert.match(src('+9V'), /LM317/);
+  assert.ok(M.rails['+3V3'].loads.some(l => /TC364/.test(l.label) && l.I > 0.3));
+  assert.ok(M.rails['+5V'].loads.some(l => /TLE9251/.test(l.label)), 'CAN transceiver draws from VCC (5 V)');
+  assert.ok(M.rails['+12V'].loads.some(l => l.kind === 'motor' && l.I === 14));
+  assert.ok(M.rails['+3V3'].src.loss > 0.5 && M.rails['+3V3'].src.loss < 1, 'LDO 5 V → 3.3 V at ~0.4 A');
+  const u = Object.values(M.units).map(x => x.label);assert.ok(u.includes('Main MCU AURIX TC364') && u.includes('3-Phase Gate Driver'));
+  assert.ok(!M.rails['VIN_PG'], 'gate nets are not rails');
+  assert.match(POWERTOPO.svg(M, { mode: 'unit' }), /^<svg/);assert.match(POWERTOPO.text(M, { mode: 'unit' }), /유닛 합계/);
+});

@@ -21,6 +21,7 @@ const NP_HELP=[
   ['datasheet <MPN> [--pkg SOIC] [--pins 14]','데이터시트 PDF(.pdf/.txt)를 올려 핀 표를 읽고 라이브러리(출처: 데이터시트)에 저장 — 그 부품을 쓰는 블록은 impl … part로 다시 연결. 표가 여럿이면 패키지를 고르고, AI 모드에서는 규칙이 확실하지 않을 때 Claude가 판독'],
   ['sg [list] · sg defaults · sg add "<목표>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "<안전 상태>" --path mcu,gate · sg del SG2 · sg tag <블록> SG1 [--off] · sg variants · sg apply single|dual|decomp · sg verify','안전 목표(SG) 기반 아키텍처: 목표마다 위반 경로 블록·링크에 SG 태그, 구조 변형 3안(단일 MCU+외부 감시 · 메인+세이프티 MCU · ASIL 분해 2채널)을 DC·FTTI·부품·원가로 비교, 규칙으로 검증(감지·독립 차단 경로·FTTI·독립성·공통 원인)'],
   ['safety level <QM|A|B|C|D> [--goal "…"] · safety block <ID> <등급|auto> · safety apply [all|sw|uv wdt_ext drv_fb sbc cutoff2 …] · safety sw · safety ffi · safety','기능 안전: 시스템/블록 ASIL, 등급별 권장 HW 메커니즘 블록(전원 감시·외부 워치독·fault 리드백·SBC·이중 차단·리던던트 센서·2채널)과 SW 메커니즘(흐름 감시·BIST·범위 검사·메모리·클럭·ADC·E2E·리드백·타당성·HW 주기 테스트·파티셔닝 — MCU 블록에 기록), HW 부품마다 필요한 SW, FFI 경계, 상태'],
+  ['power [ic|unit]','전원 토폴로지: 레일마다 공급원(입력 · 레귤레이터 · 보호 FET)과 부하 IC / 유닛, 전류 · 전력 · 레귤레이터 손실 (전형값 추정) — 시스템 다이어그램의 [전원 토폴로지] 탭'],
   ['parts [블록ID [번호|MPN]]','제품 프로필의 블록별 부품 후보(제조사별 3–5개) 보기 · 고르기. 고른 부품은 블록에 기록되고, 핀을 아는 단일 IC 블록(CAN·게이트 드라이버·HSD·센서 앰프 …)이면 회로 구현(impl … part)으로 바뀜.'],
   ['dup <블록ID|회로블록>','블록 복제 — 같은 구현·연결을 가진 두 번째 블록 (예: 모터 드라이버 2개 → dup drv)'],
   ['bind','블록 이름·기능에 적힌 부품 번호(CC2420 등)를 impl part 로 연결 (AI 모드면 핀 배열 추정)'],
@@ -129,6 +130,7 @@ async function npRun(line,by){
       npPush();const sel=/^\d+$/.test(key)?c[+key-1]:(c.find(p=>PARTLIB.norm(p.mpn)===PARTLIB.norm(key))||{mpn:key,mfr:'',note:''});if(!sel)throw new Error('번호 범위: 1–'+c.length);return await npSetPart(b,sel);}
     case'bind':{const r=await npBindParts();return r.length?'부품 번호 → 회로 구현: '+r.join(', '):'블록 이름·기능에서 라이브러리에 있는 부품 번호를 찾지 못했습니다 (impl <ID> part <MPN> 으로 직접 지정).';}
     case'map':{const A=archEnsure();const t=HWARCH.toPlan(A);return`${A.blocks.filter(b=>!b.ext).map(b=>`${b.id} ${b.label} ⇒ ${(b.impl||[]).length?npImplText(b):'(없음 — 회로 단계에서 직접)'}`).join('\n')}${t.log.length?'\n'+t.log.join(' · '):''}\n\n${NEWPROJ.summary(t.plan).text.split('\n').slice(0,4).join('\n')}`;}
+    case'power':case'ptopo':{const M=sysPowerModel();if(!M)return'회로 계획이나 보드가 없습니다.';const m=/unit|유닛|블록/.test(a._[0]||'')?'unit':'ic';SYS.view='power';SYS.pmode=m;sysRender();return POWERTOPO.text(M,{mode:m});}
     case'view':{const v=/part|부품/.test(a._[0]||'')?'parts':'hw';SYS.view=v;sysRender();return v==='hw'?'HW 블록 다이어그램':'부품 구성도';}
     case'diagram':{const A=sysArch();if(SYS.view!=='parts'&&A)return HWARCH.text(A);const D=sysDiagram();return D?SYSDIAG.text(D):'다이어그램이 없습니다. 요구사항으로 계획을 세우거나 보드를 불러오세요.';}
     case'name':{npPush();npEnsure().name=a._.join(' ')||'새 프로젝트';npRender();return'이름: '+NP.plan.name;}
@@ -473,14 +475,26 @@ function sysRender(){if(typeof POPS!=='undefined'&&[...POPS].some(C=>C.kind==='s
     if(SYS.sel&&!A.blocks.some(b=>b.id===SYS.sel))SYS.sel=null;host.innerHTML=HWARCH.svg(A,{sel:SYS.sel});
     $('#sysTitle').textContent=(A.name||'시스템')+' · HW 블록 다이어그램';
     $('#sysSrc').textContent=`${A.fromBoard&&!NP.arch?'보드에서 추출 (부품 번호 제외)':'아키텍처'} · 블록 ${A.blocks.length} · 인터페이스 ${A.links.length}`;}
+  else if(SYS.view==='power'){const M=sysPowerModel();
+    if(!M){host.innerHTML='<p class="lead" style="padding:20px">회로 계획이나 보드가 없습니다. 요구사항으로 블록 다이어그램을 만들면 전원 토폴로지가 그려집니다.</p>';return;}
+    const pm=SYS.pmode==='unit'?'unit':'ic';host.innerHTML=POWERTOPO.svg(M,{mode:pm});host.insertAdjacentHTML('afterbegin',`<div class="seg pt-mode" role="tablist" aria-label="전원 토폴로지 묶음" style="display:inline-flex;margin:0 0 8px"><button role="tab" data-pm="ic" aria-selected="${pm==='ic'}">IC별</button><button role="tab" data-pm="unit" aria-selected="${pm==='unit'}">유닛별</button></div>`);host.querySelectorAll('[data-pm]').forEach(b=>b.addEventListener('click',()=>{SYS.pmode=b.dataset.pm;sysRender();}));
+    $('#sysTitle').textContent=(M.name||'시스템')+' · 전원 토폴로지';
+    $('#sysSrc').textContent=`${M.from==='plan'?'회로 계획':'보드'} · 레일 ${Object.keys(M.rails).length} · 레귤레이터·스위치 ${M.edges.length} · 입력 약 ${M.Pin} W · 손실 ${M.loss} W (전형값 추정)`;}
   else{const D=sysDiagram();
     if(!D){host.innerHTML='<p class="lead" style="padding:20px">회로 계획이나 보드가 없습니다.</p>';return;}
     if(SYS.sel&&!D.nodes.some(n=>n.id===SYS.sel))SYS.sel=null;host.innerHTML=SYSDIAG.svg(D,{sel:SYS.sel});
     $('#sysTitle').textContent=(D.name||'시스템')+' · 부품 구성도';
     $('#sysSrc').textContent=D.from==='plan'?`회로 계획 · 블록 ${D.nodes.filter(n=>!n.ext).length} · 연결 ${D.edges.length}`:`보드 (${BD.name}) · 블록 ${D.nodes.filter(n=>!n.ext).length} · 연결 ${D.edges.length}`;}
-  {const sv=host.firstElementChild;if(sv&&sv.viewBox){const W=sv.viewBox.baseVal.width;sv.style.width=(SYS.zoom==='1'?W:host.clientWidth-14)+'px';sv.style.minWidth='0';}const z=$('#sysZoom');if(z)z.textContent=SYS.zoom==='1'?'화면 맞춤':'100%';}
+  {const sv=host.querySelector('svg');if(sv&&sv.viewBox){const W=sv.viewBox.baseVal.width;sv.style.width=(SYS.zoom==='1'?W:host.clientWidth-14)+'px';sv.style.minWidth='0';}const z=$('#sysZoom');if(z)z.textContent=SYS.zoom==='1'?'화면 맞춤':'100%';}
   host.querySelectorAll('[data-n]').forEach(g=>{const pick=()=>{SYS.sel=SYS.sel===g.dataset.n?null:g.dataset.n;sysRender();};g.addEventListener('click',pick);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick();}});});
   sysSelPaint();archListPaint();}
+/* power topology of the current design: the board when there is one, otherwise the board generated from the plan (not placed) */
+function sysPowerModel(){if(typeof POWERTOPO==='undefined')return null;let B=BD&&!BD.blank&&BD.comps&&BD.comps.length?BD:null,from='board';
+  if(!B&&NP.plan){try{B=NEWPROJ.toBoard(NP.plan,{place:false}).B;from='plan';}catch(e){B=null;}}if(!B)return null;
+  const plan=B.newPlan||NP.plan||null;const units=plan?POWERTOPO.unitsFromPlan(plan,NP.arch||null):null;
+  const g=plan&&(plan.blocks||[]).find(b=>/^(gdrv3|hbridge|bldc|dcmotor)$/.test(b.type)&&+b.params.i>0);
+  const zl=typeof AUTOPLACE!=='undefined'&&AUTOPLACE.ZONES?Object.fromEntries(Object.entries(AUTOPLACE.ZONES).map(([k,v])=>[k,v.label])):{};
+  const M=POWERTOPO.build(B,{units,motorI:g?+g.params.i:null,zoneLabels:zl});M.from=from;M.name=(NP.arch&&NP.arch.name)||B.name;return M;}
 function archListPaint(){const host=$('#arBlocks');if(!host)return;const A=NP.arch&&NP.arch.blocks.length?NP.arch:null;
   if(!A){host.innerHTML=`<p class="lead" style="margin:0">${BD&&SYS.A?'지금 다이어그램은 보드에서 추출한 것입니다. [보드에서 추출]을 누르면 편집할 수 있는 블록으로 가져옵니다.':'아직 블록이 없습니다.'}</p>`;return;}
   host.innerHTML=HWARCH.GROUPS.map(g=>{const bs=A.blocks.filter(b=>b.group===g[0]);if(!bs.length)return'';return`<div class="ar-g"><span>${esc(g[1])}</span>${bs.map(b=>`<div class="ar-b${SYS.sel===b.id?' on':''}" data-asel="${esc(b.id)}"><b>${esc(b.label)}</b><span class="mono">${esc(b.id)}</span><button type="button" class="linkbtn" data-adel="${esc(b.id)}" aria-label="${esc(b.label)} 삭제">삭제</button></div>`).join('')}</div>`;}).join('');
