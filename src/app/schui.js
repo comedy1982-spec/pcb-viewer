@@ -109,6 +109,8 @@ function schApply(h,V){
   else if(h.type==='pin'){S.selRef=BD.byRef[h.s.ref]?h.s.ref:null;S.hlNet=h.g&&h.g.net||null;}
   else{S.selRef=null;S.hlNet=h.g&&h.g.net||null;}
   S.tab='sel';refresh(true);if(!V||V===SV)schInfoPaint(h);
+  // a click on a part symbol opens that part's datasheet in the 데이터시트 tab
+  if(h&&h.type==='sym'&&S.selRef&&typeof dsOpen==='function')dsOpen(S.selRef);
 }
 /* floating info card on the schematic: what the clicked part is, its datasheet keys and every pin → net */
 function schInfoPaint(h){const el=$('#schInfo');if(!el)return;
