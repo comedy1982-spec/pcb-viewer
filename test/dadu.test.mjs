@@ -61,3 +61,22 @@ test('Dadu with an Allegro A4911 driver: one LQFP-48-EP chip drives the 6 FETs �
   assert.equal(r.parts.filter(p => /^부트스트랩 C[ABC]–S/.test(p.desc) && p.val === '68nF').length, 3);assert.ok(r.pinmap['PH_ISNS_OOS']);
   const r2 = mk('A4918');assert.equal(r2.parts.filter(p => p.val === 'IR2104S').length, 3);assert.ok((r2.warn || []).some(w => /A4918: 핀 표가 없어 IR2104/.test(w)));
 });
+test('input options: IGN (KL15) sense, UVLO on the buck EN (TPS54331 formula), load-dump TVS — from params or requirement text', () => {
+  const prof = PRODUCTS.detect('Dadu');
+  const R = PRODUCTS.apply(prof, { cur: '~20 A (팬 · 소형 펌프)' }, 'Dadu');
+  let plan = HWARCH.toPlan(R.arch).plan;
+  let B = NEWPROJ.build(plan);
+  assert.ok(B.parts.some(c => c.val === '100kΩ' && c.pins[2] === 'BUCK_EN'), 'default: EN pull-up');
+  assert.ok(!B.parts.some(c => c.pins[1] === 'IGN_IN'), 'default: no IGN');
+  plan.req = '12 V 차량용, IGN(KL15) 입력, 저전압 차단 6 V, 로드덤프 보호';
+  B = NEWPROJ.build(plan);
+  assert.equal(plan.blocks.find(b => b.type === 'pwr_in').params.ign, 0, 'the plan itself is not changed');
+  const r1 = B.parts.find(c => c.pins[1] === '+12V' && c.pins[2] === 'BUCK_EN'), r2 = B.parts.find(c => c.pins[1] === 'BUCK_EN' && c.pins[2] === 'GND');
+  assert.equal(r1.val, '332kΩ'); assert.equal(r2.val, '68.1kΩ');  // TI example: 7 V start / 6 V stop
+  assert.ok(B.parts.some(c => c.val === 'SMBJ26CA' && c.fp === 'SMB' && c.pins[2] === 'VIN_RAW'), 'bidirectional load-dump TVS ahead of reverse protection');
+  assert.ok(B.parts.some(c => c.val === 'BAT54S' && c.pins[3] === 'IGN_DET'));
+  assert.ok(B.assigned.some(a => a.net === 'IGN_DET'), 'IGN_DET gets an MCU pin');
+  const pi = plan.blocks.find(b => b.type === 'pwr_in'); pi.params = Object.assign({}, pi.params, { uvlo: 3 }); plan.req = '';
+  B = NEWPROJ.build(plan);
+  assert.ok(B.warn.some(w => /3\.5 V 초과/.test(w)), 'stop voltage below the EN limit is refused');
+});

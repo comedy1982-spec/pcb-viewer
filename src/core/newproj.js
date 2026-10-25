@@ -33,7 +33,7 @@ const tvsFor=v=>v<=5.5?'SMAJ5.0A':v<=13?'SMAJ15A':v<=26?'SMAJ28A':'SMAJ58A';
 
 /* ---------- blocks ---------- */
 const LIB={
-  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'TVS 넣기 (1/0)'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'}},
+  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'입력 TVS: 1 (서지) · loaddump (로드덤프 SMB, ISO 16750-2 중앙 억제 전제) · 0'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'},ign:{def:0,desc:'IGN(KL15) 입력 감지 — 분압 · 필터 · 클램프 → MCU 웨이크업 (1/0)'},uvlo:{def:'off',desc:'입력 저전압 차단: off · auto (12 V계 6.0 V 정지 / 7.0 V 재시작) · 정지 전압 V (재시작 = +1 V) — 1단 벅 EN 분압'}},
     build(ctx,p){const vin=+p.vin;const rail=railOf(vin);ctx.provide(rail,vin,'입력');
       const Im=(ctx.plan&&ctx.plan.blocks||[]).filter(b=>b.type==='hbridge'||b.type==='gdrv3').reduce((a,b)=>a+(+b.params.i||0),0);
       if(Im>2){termFp(2,Im>15?7.62:5.08);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
@@ -43,7 +43,17 @@ const LIB={
         ctx.curr('VIN_RAW',Im);ctx.curr(rail,Im);}
       else{ctx.part('J',`${vin}V 입력`,'HDR-1x2',{1:'VIN_RAW',2:'GND'},{mpn:'61300211121',desc:`${vin} V 전원 입력`,pinNames:{1:'+',2:'GND'}});
       ctx.part('D','SS14','SMA',{1:'VIN_RAW',2:rail},{mpn:'SS14',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'A',2:'K'}});}
-      if(+p.tvs)ctx.part('D',tvsFor(vin),'SMA',{1:'GND',2:rail},{desc:`입력 서지 TVS (${tvsFor(vin)})`,pinNames:{1:'A',2:'K'}});
+      if(String(p.tvs)==='loaddump'){const t=vin<=16?'SMBJ26CA':vin<=32?'SMBJ36CA':'SMBJ58CA';if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'SMB');
+        ctx.part('D',t,'SMB',{1:'GND',2:'VIN_RAW'},{mpn:t,desc:`로드덤프 TVS ${t} (양방향 600 W · 역전압 보호 앞단이라 역접속에도 안전 · 중앙 억제 로드덤프 전제, 미억제면 SM8S급 필요)`,pinNames:{1:'A1',2:'A2'}});}
+      else if(+p.tvs)ctx.part('D',tvsFor(vin),'SMA',{1:'GND',2:rail},{desc:`입력 서지 TVS (${tvsFor(vin)})`,pinNames:{1:'A',2:'K'}});
+      // IGN (KL15): wake / ignition sense for the MCU — 33 k / 10 k divider (12 V → 2.8 V), RC 10 nF, clamp to the logic rail, TVS on the pin
+      if(+p.ign){const vl='+3V3';ctx.use(vl);
+        ctx.part('J','IGN','HDR-1x2',{1:'IGN_IN',2:'GND'},{mpn:'61300211121',desc:'IGN (KL15) 점화 신호 입력',pinNames:{1:'IGN',2:'GND'}});
+        const ld=String(p.tvs)==='loaddump',ti=ld?(vin<=16?'SMBJ26CA':vin<=32?'SMBJ36CA':'SMBJ58CA'):tvsFor(vin).replace(/A$/,'CA');if(ld&&typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'SMB');
+        ctx.part('D',ti,ld?'SMB':'SMA',{1:'GND',2:'IGN_IN'},{mpn:ti,desc:`IGN 서지 TVS ${ti} (양방향 — IGN 역접속에도 도통 안 함)`,pinNames:{1:'A1',2:'A2'}});
+        ctx.part('R','33kΩ','0603',{1:'IGN_IN',2:'IGN_DET'},{desc:`IGN 분압 상단 (${vin} V → ${(vin*10/43).toFixed(1)} V)`});ctx.part('R','10kΩ','0603',{1:'IGN_DET',2:'GND'},{desc:'IGN 분압 하단'});
+        ctx.part('C','10nF','0603',{1:'IGN_DET',2:'GND'},{desc:'IGN 노이즈 필터 (τ ≈ 77 µs)'});
+        ctx.part('D','BAT54S','SOT-23',{1:'GND',2:vl,3:'IGN_DET'},{mpn:'BAT54S',desc:`IGN 입력 클램프 (GND · ${vl})`,pinNames:{1:'A1',2:'K2',3:'K1/A2'}});ctx.sig('IGN_DET','irq_in');}
       const bulk=p.bulk==='auto'?(ctx.has('bldc')||ctx.has('dcmotor')||ctx.has('hbridge')||ctx.has('gdrv3')?'470µF':vin>6?'22µF':'10µF'):p.bulk;ctx.cap(rail,bulk,'입력 벌크 커패시터');ctx.cap(rail,'100nF','입력 고주파 바이패스');}},
   usb_in:{label:'USB-C 전원·데이터',desc:'USB-C 리셉터클 · CC 5.1 kΩ 풀다운 · VBUS 5 V · D+/D− → MCU USB',params:{data:{def:1,desc:'USB 데이터 연결 (1/0)'}},
     build(ctx,p){ctx.provide('VBUS',5,'USB');const d=+p.data;
@@ -74,6 +84,17 @@ const LIB={
       ctx.part('R',fb[0],'0603',{1:out,2:'BUCK_FB'},{desc:`피드백 상단 (VOUT = 0.8 V × (1 + R상/R하) ≈ ${vout} V)`});ctx.part('R',fb[1],'0603',{1:'BUCK_FB',2:'GND'},{desc:'피드백 하단'});
       ctx.part('C','10nF','0603',{1:'BUCK_SS',2:'GND'},{desc:'소프트 스타트'});
       ctx.part('R','76.8kΩ','0603',{1:'BUCK_COMP',2:'BUCK_RC'},{desc:'보상 Rc'});ctx.part('C','3.3nF','0603',{1:'BUCK_RC',2:'GND'},{desc:'보상 Cc'});ctx.part('C','47pF','0603',{1:'BUCK_COMP',2:'GND'},{desc:'보상 고주파 극점'});
+      // input undervoltage lockout on EN (TPS54331 datasheet): Ren1 = (Vstart − Vstop) / 3 µA, Ren2 = 1.25 V / ((Vstop − 1.25) / Ren1 + 4 µA), Vstop > 3.5 V
+      const pin=(ctx.plan&&ctx.plan.blocks||[]).find(b=>b.type==='pwr_in');const uv=pin&&pin.params?pin.params.uvlo:null;const vIn=ctx.railV?ctx.railV(src):0;
+      if(uv&&uv!=='off'&&pin&&railOf(+pin.params.vin)===src){const vstop=uv==='auto'||uv===true||uv==='1'?(vIn>16?Math.round(vIn*0.6):6):+uv;const vstart=vstop+(vIn>16?2:1);
+        if(!(vstop>3.5)||vstart>=vIn){ctx.warn(`저전압 차단 ${vstop} V: TPS54331 정지 전압은 3.5 V 초과 · 재시작 ${vstart} V는 입력 ${vIn} V보다 낮아야 함 — EN 풀업 유지`);ctx.part('R','100kΩ','0603',{1:src,2:'BUCK_EN'},{desc:'EN 풀업 (입력 인가 시 동작)'});return;}
+        const E96=[1,1.02,1.05,1.07,1.1,1.13,1.15,1.18,1.21,1.24,1.27,1.3,1.33,1.37,1.4,1.43,1.47,1.5,1.54,1.58,1.62,1.65,1.69,1.74,1.78,1.82,1.87,1.91,1.96,2,2.05,2.1,2.15,2.21,2.26,2.32,2.37,2.43,2.49,2.55,2.61,2.67,2.74,2.8,2.87,2.94,3.01,3.09,3.16,3.24,3.32,3.4,3.48,3.57,3.65,3.74,3.83,3.92,4.02,4.12,4.22,4.32,4.42,4.53,4.64,4.75,4.87,4.99,5.11,5.23,5.36,5.49,5.62,5.76,5.9,6.04,6.19,6.34,6.49,6.65,6.81,6.98,7.15,7.32,7.5,7.68,7.87,8.06,8.25,8.45,8.66,8.87,9.09,9.31,9.53,9.76];
+        const e96=v=>{const d=Math.pow(10,Math.floor(Math.log10(v)));return E96.map(e=>e*d).concat([10*d]).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);};const k=r=>r>=1e6?(+(r/1e6).toFixed(2))+'MΩ':(+(r/1000).toFixed(1))+'kΩ';
+        const r1=e96((vstart-vstop)/3e-6),r2=e96(1.25/((vstop-1.25)/r1+4e-6));const vs2=+(1.25*(1+r1/r2)+0+r1*1e-6).toFixed(2); // start ≈ 1.25·(1 + R1/R2) − R1·I1, with I1 ≈ 1 µA
+        const vst=+((vstop>0?((1.25*(r1+r2)/r2)-r1*1e-6):0)).toFixed(2),vsp=+(((1.25*(r1+r2)/r2)-r1*4e-6)).toFixed(2);void vs2;
+        ctx.part('R',k(r1),'0603',{1:src,2:'BUCK_EN'},{desc:`저전압 차단 EN 분압 상단 (목표 정지 ${vstop} V · 재시작 ${vstart} V, 계산 약 ${vsp} V / ${vst} V)`});
+        ctx.part('R',k(r2),'0603',{1:'BUCK_EN',2:'GND'},{desc:'저전압 차단 EN 분압 하단 (TPS54331 EN 1.25 V · 히스테리시스 3 µA)'});
+        ctx.warn(`입력 저전압 차단: ${src} ${vstop} V 이하에서 ${out} 벅 정지, ${vstart} V 이상에서 재시작 (EN 분압 ${k(r1)} / ${k(r2)})`);return;}
       ctx.part('R','100kΩ','0603',{1:src,2:'BUCK_EN'},{desc:'EN 풀업 (입력 인가 시 동작)'});}},
   mcu:{label:'MCU',desc:'MCU + 전원 핀 디커플링 + 리셋 + 부트 + 디버그 헤더',params:{part:{def:'STM32F042K6U6',desc:'STM32F042K6U6 · TC364DP'}},
     build(ctx,p){const k=mcuKey(p.part)||'STM32F042K6U6';const M=MCUS[k];ctx.setMcu(k);
@@ -341,7 +362,14 @@ function shuntAmp(ctx,net,out,I,what){const R=shunt(ctx,net,I,what);
 function bulk(ctx,vm,I,what){const n=Math.max(1,Math.min(4,Math.ceil(I/20)));for(let i=0;i<n;i++)ctx.part('CP','470µF','CP-SMD-10x10',{1:vm,2:'GND'},{mpn:'EEE-FK1V471P',desc:`${what} VM 벌크 (35 V 470 µF · 리플 전류)`});
   ctx.part('C','2.2µF','1210',{1:vm,2:'GND'},{desc:`${what} VM 세라믹 (50 V)`});ctx.part('C','2.2µF','1210',{1:vm,2:'GND'},{desc:`${what} VM 세라믹 (50 V)`});ctx.cap(vm,'100nF',`${what} VM 고주파 바이패스`);}
 /* ---------- build: plan → parts, nets, MCU pin assignment, board spec ---------- */
-function build(plan){const asil=plan.asil&&String(plan.asil).toUpperCase()!=='QM'?String(plan.asil).toUpperCase():null;
+/* input-stage options from the requirement text (explicit block parameters win): IGN / KL15, undervoltage lockout, load dump */
+function inputOptions(plan){const t=String(plan&&plan.req||'');const i=(plan.blocks||[]).findIndex(b=>b.type==='pwr_in');if(i<0||!t)return plan;
+  const P=Object.assign({},plan.blocks[i].params),dflt=(k,d)=>P[k]==null||String(P[k])===String(d);let ch=0;
+  if(dflt('ign',0)&&/\bIGN\b|KL\s*15|점화|이그니션|ignition/i.test(t)){P.ign=1;ch=1;}
+  if(dflt('uvlo','off')){const m=t.match(/(?:저전압|약전압|UVLO|언더\s*볼티지|undervoltage)[^0-9\n]{0,12}(\d+(?:\.\d+)?)\s*V/i);if(m){P.uvlo=+m[1];ch=1;}else if(/저전압|약전압|UVLO|언더\s*볼티지|undervoltage/i.test(t)){P.uvlo='auto';ch=1;}}
+  if(dflt('tvs',1)&&/로드\s*덤프|load\s*dump/i.test(t)){P.tvs='loaddump';ch=1;}
+  if(!ch)return plan;const blocks=plan.blocks.slice();blocks[i]=Object.assign({},blocks[i],{params:P});return Object.assign({},plan,{blocks});}
+function build(plan){plan=inputOptions(plan);const asil=plan.asil&&String(plan.asil).toUpperCase()!=='QM'?String(plan.asil).toUpperCase():null;
   const parts=[],warn=[],rails={},used=new Set(),sigs=[],fixedPins={},xt=[],curr={};let mcu=null;const cnt={};const uq={};
   const has=t=>plan.blocks.some(b=>b.type===t);
   const shrinkLog=[];const ctx={plan,shrinkLog,

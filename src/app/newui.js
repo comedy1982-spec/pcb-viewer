@@ -27,6 +27,7 @@ const NP_HELP=[
   ['bind','블록 이름·기능에 적힌 부품 번호(CC2420 등)를 impl part 로 연결 (AI 모드면 핀 배열 추정)'],
   ['map · view hw|parts','아키텍처 → 회로 블록 대응 · 다이어그램 종류 (HW 블록 / 부품 구성)'],['plan · status','블록·전원 레일·MCU 핀 배정·BOM·경고'],['name <이름> · req <요구사항>','프로젝트 이름·요구사항'],
   ['auto','요구사항 문장을 규칙으로 블록 계획으로 바꿈 (결정론)'],['blocks · mcus','블록 라이브러리와 파라미터 · MCU 목록'],
+  ['set pwr_in ign 1 · uvlo auto|6 · tvs loaddump','입력단 옵션: IGN(KL15) 감지 → MCU 웨이크업 · 저전압 차단(벅 EN 분압) · 로드덤프 TVS (말로: "IGN 추가", "저전압 차단 6V", "로드덤프 보호")'],
   ['add <블록> [--파라미터 값]','블록 추가 (예: add led --n 3 --color 빨강, add ldo --vout 5, add pwr_in --vin 24)'],
   ['set <블록ID> <파라미터> <값> · remove <블록ID>','블록 수정·삭제 (ID는 plan에 표시)'],['mcu <stm32|tc364>','MCU 바꾸기'],
   ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
@@ -205,6 +206,12 @@ function npNL2(t){const s=t.trim();const out=[];let m;
   // "LED 3개로" / "LED를 3개로 늘려"
   if((m=s.match(/(led|버튼|button)\s*(?:을|를)?\s*(\d+)\s*개/i))){const k=npWordKey(m[1]);if(k==='led')return[`set led n ${m[2]}`];}
   // "입력 24V로" / "전원 12V로 바꿔"
+  // input-stage options: IGN (KL15) sense, undervoltage lockout, load-dump TVS
+  {const off=/빼|제거|없애|끄|off\b/i.test(s),out=[];
+    if(/\bIGN\b|KL\s*15|점화|이그니션/i.test(s))out.push(`set pwr_in ign ${off?0:1}`);
+    if(/저전압|약전압|UVLO|undervoltage/i.test(s)){const v=(s.match(/(\d+(?:\.\d+)?)\s*v/i)||[])[1];out.push(`set pwr_in uvlo ${off?'off':v||'auto'}`);}
+    if(/로드\s*덤프|load\s*dump/i.test(s))out.push(`set pwr_in tvs ${off?1:'loaddump'}`);
+    if(out.length)return out;}
   if((m=s.match(/(입력|전원|vin)[^\d]{0,6}(\d+(?:\.\d+)?)\s*v/i))&&/바꿔|변경|로\b|으로/.test(s))return[`set pwr_in vin ${m[2]}`];
   // "X 추가/넣어" · "X 빼/삭제"
   if((m=s.match(/^(.+?)\s*(?:을|를)?\s*(?:추가|넣어|넣고|달아|붙여|add)/i))){const k=npWordKey(m[1]);if(k){const n=(s.match(/(\d+)\s*개/)||[])[1];const v=(s.match(/(\d+(?:\.\d+)?)\s*v/i)||[])[1];return[`add ${k}${k==='led'&&n?' --n '+n:''}${/^(ldo|buck)$/.test(k)&&v?' --vout '+v:''}${k==='pwr_in'&&v?' --vin '+v:''}`];}}

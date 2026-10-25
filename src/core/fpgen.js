@@ -17,7 +17,7 @@ function family(pkg){const s=String(pkg||'').toUpperCase().replace(/\s+/g,'_');l
   if((m=s.match(/^(TO-?252|DPAK|TO-?263|D2PAK|TO-?220)/)))return{fam:/263|D2/.test(s)?'TO-263':/220/.test(s)?'TO-220':'TO-252',n:3};
   if((m=s.match(/^(HDR|HEADER|PIN|JST|CONN?)[-_]?(\d+)X(\d+)/)))return{fam:'HDR',rows:+m[2],n:+m[2]*+m[3],pitch:/JST|PH/.test(s)?2.0:2.54};
   if((m=s.match(/^(\d{4})$/))&&['0201','0402','0603','0805','1206','1210','2010','2512'].includes(m[1]))return{fam:'CHIP',code:m[1],n:2};
-  if((m=s.match(/^(SMA|SMB|SMC|DO-?214)/)))return{fam:'SMA',n:2};
+  if((m=s.match(/^(SMA|SMB|SMC|DO-?214A[ABC]?)/)))return{fam:/^SMC|214AB/.test(s)?'SMC':/^SMB|214AA/.test(s)?'SMB':'SMA',n:2};
   return null;}
 /* dual-row gull-wing (SOIC / TSSOP / SOT-23-N) */
 function dual(n,pitch,rowGap,padL,padW,body,kind,ep){const half=n/2,pads=[];const y0=(half-1)/2*pitch;
@@ -36,6 +36,8 @@ function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nP
     case'CHIP':{const d={'0201':[0.6,0.3,0.25,0.3,0.4,0.4],'0402':[1.0,0.5,0.35,0.5,0.6,0.6],'0603':[1.6,0.8,0.45,0.8,0.8,0.9],'0805':[2.0,1.25,0.6,1.0,1.0,1.3],'1206':[3.2,1.6,0.6,1.5,1.2,1.8],'1210':[3.2,2.5,1.6,1.5,1.2,2.7],'2010':[5.0,2.5,0.6,2.3,1.4,2.8],'2512':[6.3,3.2,0.6,2.9,1.6,3.5]}[f.code];
       return{kind:'chip',body:[d[0],d[1],d[2]],pads:[{n:'1',x:-d[3],y:0,w:d[4],h:d[5]},{n:'2',x:d[3],y:0,w:d[4],h:d[5]}],gen:true};}
     case'SMA':return{kind:'diode',body:[4.3,2.6,2.1],pads:[{n:'1',x:-2.0,y:0,w:1.5,h:1.7},{n:'2',x:2.0,y:0,w:1.5,h:1.7}],gen:true};
+    case'SMB':return{kind:'diode',body:[4.6,3.6,2.3],pads:[{n:'1',x:-2.15,y:0,w:1.8,h:2.3},{n:'2',x:2.15,y:0,w:1.8,h:2.3}],gen:true};
+    case'SMC':return{kind:'diode',body:[7.0,6.0,2.3],pads:[{n:'1',x:-3.4,y:0,w:2.2,h:3.3},{n:'2',x:3.4,y:0,w:2.2,h:3.3}],gen:true};
     case'SOT-23':{if(n===3)return{kind:'ic',stand:0.05,body:[2.9,1.3,1.0],pads:[{n:'1',x:-0.95,y:-1.05,w:0.6,h:0.9},{n:'2',x:0.95,y:-1.05,w:0.6,h:0.9},{n:'3',x:0,y:1.05,w:0.6,h:0.9}],gen:true};
       const k=n%2?n+1:n;const pitch=k<=6?0.95:0.65;const o=dual(k,pitch,2.6,0.9,pitch<0.8?0.4:0.6,[2.9,1.6,1.1],'ic',false);
       // 5-pin (SOT-23-5 / TSOT-25): pins 1-3 on one side, 4-5 on the other (pin 4 opposite pin 3, pin 5 opposite pin 1)
@@ -61,7 +63,7 @@ function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nP
   return null;}
 /* a canonical footprint name for the library key */
 function name(pkg,n){const f=family(pkg);if(!f)return null;const k=n&&n>=2?n:f.n;
-  switch(f.fam){case'CHIP':return f.code;case'SMA':return'SMA';case'SOT-23':return k===3?'SOT-23':'SOT-23-'+k;case'SOT-89':case'SOT-223':case'TO-252':case'TO-263':case'TO-220':return f.fam;
+  switch(f.fam){case'CHIP':return f.code;case'SMA':case'SMB':case'SMC':return f.fam;case'SOT-23':return k===3?'SOT-23':'SOT-23-'+k;case'SOT-89':case'SOT-223':case'TO-252':case'TO-263':case'TO-220':return f.fam;
     case'HDR':return`HDR-${f.rows||1}x${Math.ceil(k/(f.rows||1))}`;
     case'QFP':{const ep=!!f.ep||k%4===1;const kk=ep&&k%4===1?k-1:k;return'QFP-'+kk+(ep?'-EP':'')+(f.size&&f.size[0]?'-'+f.size[0]+'x'+f.size[1]:'')+(f.pitch?'-P'+f.pitch:'');}
     default:return f.fam+'-'+k;}}
