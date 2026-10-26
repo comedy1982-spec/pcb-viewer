@@ -33,9 +33,10 @@ if (!fs.existsSync(html) || fs.statSync(html).mtimeMs < fs.statSync(path.join(ro
   const steps = [];for (const c of cmds) { const t = Date.now();await p.evaluate(c => window.__cli(c), c);steps.push({ cmd: c, s: +((Date.now() - t) / 1000).toFixed(1) }); }
   const r = await p.evaluate(() => {
     const B = window.__BD();const R = PCBEDIT.ratsnest(B);const pr = B.powerReport;const by = {};R.forEach(x => { by[x.net] = (by[x.net] || 0) + 1; });
-    const power = pr ? pr.nets.map(n => ({ net: n.net, width: n.width, need: n.need, ok: n.width === '직결' || n.width >= n.need })) : [];
+    const power = pr ? pr.nets.map(n => ({ net: n.net, width: n.width, need: n.need, ok: n.width === '직결' || n.width >= n.need, pk: n.pk ? +(n.rise + (n.pk.rise || 0)).toFixed(1) : null })) : [];
     const drc = PCBEDIT.drc(B);
-    return { W: B.W, H: B.H, layers: PCB.cuKeys(B).length, bottom: B.comps.filter(c => c.side === 'B').length, rats: R.length, ratNets: by, drc: drc.length, drcMsgs: drc.slice(0, 5).map(d => d.msg), power, log: (window.__CLI().log || []).slice(-3).map(e => String(e.t).slice(0, 400)) };
+    const vc = (pr && pr.viaChk) || [], pc = (pr && pr.planeChk) || [];
+    return { via: { n: vc.length, bad: vc.filter(v => !v.ok).map(v => v.net + ' ' + v.ref + (v.n ? ' ' + v.n + '개 +' + (v.rise + v.riseP).toFixed(0) + '°C' : ' 0개')) }, plane: pc.map(x => x.net + (x.ok ? ' ✓' : ' ✕') + ' +' + (x.rise + x.riseP).toFixed(1)), W: B.W, H: B.H, layers: PCB.cuKeys(B).length, bottom: B.comps.filter(c => c.side === 'B').length, rats: R.length, ratNets: by, drc: drc.length, drcMsgs: drc.slice(0, 5).map(d => d.msg), power, log: (window.__CLI().log || []).slice(-3).map(e => String(e.t).slice(0, 400)) };
   });
   r.tag = tag;r.steps = steps;r.ok = !r.rats && !r.drc && r.power.every(x => x.ok);r.errors = errs.slice(0, 3);
   if (arg('snap')) fs.writeFileSync(path.join(out, tag + '.snap.json'), await p.evaluate(m => JSON.stringify(BOARDSNAP.save(window.__BD(), m)), { name: arg('profile', 'Dadu'), profile: arg('profile', 'Dadu'), fet: +arg('fet', 0), cur: arg('cur', '~20 A (팬 · 소형 펌프)'), shrink: +arg('shrink', 2), strategy: 'compact', W: +arg('w', 100), H: +arg('h', 65) }));

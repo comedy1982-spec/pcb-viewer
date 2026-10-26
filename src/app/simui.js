@@ -203,7 +203,7 @@ function thConfig(){
   let fromCkt=0;BD.comps.forEach(c=>{if(c.kind==='none')return;P[c.ref]=0;if(thIsJ(c))J[c.ref]=thDefaults(c);if(c.P>0){P[c.ref]=+c.P;fromCkt++;}});
   if(BD.source==='예제'&&!BD.demo)Object.assign(P,{U2:0.45,U1:0.12,U3:0.03,D1:0.008,R2:0.006});
   if(BD.demo==='bldc')P.M1=0;Object.assign(P,TH_PRESET[BD.demo]||{});
-  const cuO=BD.oz?Math.round(35*BD.oz):ENV.cu;SR.cfg.th={P,J,fromCkt,res:160,Ta:ENV.Ta,conv:'nat_v',v:0,eps:0.9,cuT:cuO,cuB:cuO,cuIn:35,inner:true,prof:{text:PROF_PRESETS(+(BD&&BD.lossI0)||20)[0][2],res:100},plating:25,kz:0.3,kxy:0.3,tim:{k:3,blt:1.0},house:{mat:'ADC12',area:200,wall:2},I:{},irJ:false,meas:{},sel:null,layer:'T',open:{stack:false,src:true,tim:false,bc:true}};
+  const cuO=BD.oz?Math.round(35*BD.oz):ENV.cu;SR.cfg.th={P,J,fromCkt,res:160,Ta:ENV.Ta,conv:'nat_v',v:0,eps:0.9,cuT:cuO,cuB:cuO,cuIn:35,inner:true,prof:{text:PROF_PRESETS(+(BD&&BD.lossI0)||20,+(BD&&BD.lossIpk)||0,+(BD&&BD.lossTpk)||2)[0][2],res:100},plating:25,kz:0.3,kxy:0.3,tim:{k:3,blt:1.0},house:{mat:'ADC12',area:200,wall:2},I:{},irJ:false,meas:{},sel:null,layer:'T',open:{stack:false,src:true,tim:false,bc:true}};
   return SR.cfg.th;
 }
 function coverageGrid(res,plating){
@@ -305,13 +305,15 @@ function thCurveSVG(o){
    constant (MCU · regulators · gate driver). FETs keep 0.02 W (switching / gate) fixed. Board = thermalTransient; each junction
    follows its board spot through a first-order package lag τ = θJB · C_pkg. */
 const thLK=c=>c.lk||(/역전압|reverse/i.test(c.desc||'')?'batt':((/^Q\d/.test(c.ref)&&/MOSFET|상|레그|브리지/.test(c.desc||''))||(/^R\d/.test(c.ref)&&/션트/.test(c.desc||'')&&/상|레그|모터/.test(c.desc||'')))?'phase':'const');
-const thI0=()=>+(BD&&BD.lossI0)||20;
-const PROF_PRESETS=I=>{const h=+(I*0.5).toFixed(1),q=+(I*0.7).toFixed(1);return[
-  ['start','기동 → 정격 운전 → 정지',`0, 0, 0\n0.5, ${I}, 100\n3, ${I}, 100\n3.5, ${h}, 60\n600, ${h}, 60\n600.5, 0, 0\n900, 0, 0`],
-  ['rated','정격 연속 10분 (상전류 50 % · 듀티 60 %)',`0, ${h}, 60\n600, ${h}, 60`],
-  ['peak','피크 연속 10분 (최악 — 지금 정상 해석과 같은 조건)',`0, ${I}, 100\n600, ${I}, 100`],
-  ['stall','정격 1분 → 구속 5 s (피크 · 100 %) → 차단',`0, ${h}, 60\n60, ${h}, 60\n60.2, ${I}, 100\n65, ${I}, 100\n65.2, 0, 0\n240, 0, 0`],
-  ['cycle','펌프 반복: 30 s ON (70 % · 듀티 80 %) / 30 s OFF × 5',Array.from({length:5},(_,k)=>`${k*60}, ${q}, 80\n${k*60+30}, ${q}, 80\n${k*60+30.2}, 0, 0\n${k*60+59.8}, 0, 0`).join('\n')]];};
+const thI0=()=>+(BD&&BD.lossI0)||20;const thPk=()=>[thI0(),+(BD&&BD.lossIpk)||thI0(),+(BD&&BD.lossTpk)||2];
+/* scenarios from the board's continuous current I (losses were worked out at it) and its peak Ipk / duration tp (start · stall) */
+const PROF_PRESETS=(I,Ipk,tp)=>{Ipk=+Ipk||I;tp=+tp||2;const pk=Ipk>I;const P=pk?Ipk:I,h=pk?I:+(I*0.5).toFixed(1),q=pk?I:+(I*0.7).toFixed(1),hd=pk?100:60,T=+(0.5+tp).toFixed(2);return[
+  ['start',`기동 피크 ${P} A ${tp} s → 상시 ${h} A 10분 → 정지`,`0, 0, 0\n0.5, ${P}, 100\n${T}, ${P}, 100\n${+(T+0.5).toFixed(2)}, ${h}, ${hd}\n600, ${h}, ${hd}\n600.5, 0, 0\n900, 0, 0`],
+  ['rated',`상시 ${h} A 연속 10분`,`0, ${h}, ${hd}\n600, ${h}, ${hd}`],
+  ['peak',`피크 ${P} A 연속 10분 (최악 — 피크가 끝나지 않을 때)`,`0, ${P}, 100\n600, ${P}, 100`],
+  ['stall',`상시 1분 → 구속 피크 ${P} A ${tp} s → 차단`,`0, ${h}, ${hd}\n60, ${h}, ${hd}\n60.2, ${P}, 100\n${+(60.2+tp).toFixed(2)}, ${P}, 100\n${+(60.4+tp).toFixed(2)}, 0, 0\n240, 0, 0`],
+  ['repeat',`상시 운전 중 피크 ${P} A ${tp} s를 30 s마다 10회`,Array.from({length:10},(_,k)=>`${k*30}, ${h}, ${hd}\n${k*30+25}, ${h}, ${hd}\n${k*30+25.1}, ${P}, 100\n${+(k*30+25.1+tp).toFixed(2)}, ${P}, 100\n${+(k*30+25.2+tp).toFixed(2)}, ${h}, ${hd}`).join('\n')+`\n300, ${h}, ${hd}`],
+  ['cycle',`펌프 반복: 30 s ON (${q} A · 듀티 80 %) / 30 s OFF × 5`,Array.from({length:5},(_,k)=>`${k*60}, ${q}, 80\n${k*60+30}, ${q}, 80\n${k*60+30.2}, 0, 0\n${k*60+59.8}, 0, 0`).join('\n')]];};
 function profParse(txt){const rows=[];String(txt||'').split(/\n|;/).forEach(l=>{const v=l.split(/[,\t ]+/).map(x=>x.trim()).filter(Boolean).map(Number);if(v.length<2||v.some(x=>!isFinite(x)))return;rows.push([v[0],Math.max(0,v[1]),v.length>2?Math.max(0,Math.min(100,v[2])):100]);});
   rows.sort((a,b)=>a[0]-b[0]);if(!rows.length)throw new Error('프로파일이 비었습니다 — 줄마다 "시간 s, 상전류 A, 듀티 %"');if(rows[0][0]>0)rows.unshift([0,rows[0][1],rows[0][2]]);
   if(rows[rows.length-1][0]<=0)throw new Error('마지막 시간이 0보다 커야 합니다');return rows;}
@@ -364,7 +366,7 @@ function profChart(P){const W=620,H=250,ml=44,mr=62,mt=12,mb=26,Hs=70;const T=P.
   <polyline points="${P.out.D.map((v,i)=>`${XI(P.out.t[i]).toFixed(1)},${YD(v).toFixed(1)}`).join(' ')}" fill="none" stroke="#2e9e5b" stroke-width="1.2" stroke-dasharray="4 3"/>
   <text x="${ml-6}" y="${H+14}" font-size="9.5" text-anchor="end" fill="#3d7fd9">${Imax.toFixed(0)} A</text><text x="${W-mr+3}" y="${H+14}" font-size="9.5" fill="#2e9e5b">100 %</text>
   </svg><div class="lead" style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;margin:2px 0 0">${top.map((x,i)=>`<span><i style="display:inline-block;width:12px;height:3px;background:${COL[i]};vertical-align:middle;margin-right:4px"></i>${esc(x.ref)} ${esc((x.val||'').slice(0,12))}</span>`).join('')}<span><i style="display:inline-block;width:12px;border-top:2px dashed currentColor;opacity:.6;vertical-align:middle;margin-right:4px"></i>보드 최고</span><span style="color:#3d7fd9">— 상전류</span><span style="color:#2e9e5b">‐‐ 듀티</span></div>`;}
-function thProfHTML(cfg){const pc=cfg.prof;const I0=thI0();const P=SR.thp;const pr=PROF_PRESETS(I0);
+function thProfHTML(cfg){const pc=cfg.prof;const I0=thI0();const P=SR.thp;const pr=PROF_PRESETS(...thPk());
   let res='';if(P&&P.error)res=`<p class="errline">${esc(P.error)}</p>`;
   else if(P){const w=P.peaks[0];const st=w?thSt(w.margin):['info','—'];
     res=`<div class="res">${SR.stale.thp?'<p class="lead" style="color:#b5541c">입력이 바뀌었습니다 — [프로파일 해석]을 다시 누르세요.</p>':''}
@@ -373,7 +375,7 @@ function thProfHTML(cfg){const pc=cfg.prof;const I0=thI0();const P=SR.thp;const 
     ${profChart(P)}
     <table class="stbl thres"><thead><tr><th>부품</th><th>손실 기준</th><th class="r">최고 Tj</th><th class="r">시점</th><th class="r">끝</th><th class="r">마진</th><th>판정</th></tr></thead><tbody>${P.peaks.slice(0,10).map(x=>{const s=thSt(x.margin);return`<tr><td class="mono">${esc(x.ref)}<div class="cls">${esc((x.val||'').slice(0,14))}</div></td><td class="cls">${x.lk==='phase'?'상전류²':x.lk==='batt'?'배터리 전류²':'고정'} · ${x.P0} W</td><td class="r mono">${x.peak.toFixed(1)}</td><td class="r mono">${x.tpk.toFixed(1)} s</td><td class="r mono">${x.end.toFixed(1)}</td><td class="r mono">${(x.margin>=0?'+':'')+x.margin.toFixed(1)}</td><td><span class="st ${s[0]==='err'?'crit':s[0]==='warn'?'warn':'good'}"><i></i>${s[1]}${x.over>0?` (${x.over.toFixed(1)} s)`:''}</span></td></tr>`;}).join('')}</tbody></table>
     <p class="lead">과도 해석 ${P.steps} 단계 · ${P.cells} 셀 · ${(P.ms/1000).toFixed(1)} s. 손실 기준 전류 I0 = ${P.I0} A — 상전류 부품 ${P.nPh}개 ×(I/I0)², 배터리 쪽 ${P.nBa}개 ×(I·D/I0)², 나머지 ${P.nCo}개 고정. 정션은 보드 온도 + θJB·P를 패키지 시정수(θJB × 패키지 열용량)로 따라갑니다. 냉간 시작(Ta)에서 출발.</p></div>`;}
-  return`<details class="thsec" data-sec="prof" ${cfg.open.prof?'open':''}><summary><b>⑤ 전류 프로파일 (시나리오 과도 해석)</b><span>${P&&!P.error?`최고 Tj ${P.peaks[0]?P.peaks[0].peak.toFixed(0)+' °C':'—'} · ${P.T} s`:`손실 기준 ${I0} A`}</span></summary>
+  return`<details class="thsec" data-sec="prof" ${cfg.open.prof?'open':''}><summary><b>⑤ 전류 프로파일 (시나리오 과도 해석)</b><span>${P&&!P.error?`최고 Tj ${P.peaks[0]?P.peaks[0].peak.toFixed(0)+' °C':'—'} · ${P.T} s`:`손실 기준 ${I0} A${(+(BD&&BD.lossIpk)||0)>I0?` · 피크 ${BD.lossIpk} A ${BD.lossTpk} s`:''}`}</span></summary>
     <p class="lead">시간에 따른 상전류 · PWM 듀티를 넣으면 부품 손실을 시간마다 다시 계산해 보드 · 정션 온도 변화를 풉니다. 줄마다 <code>시간 s, 상전류 A, 듀티 %</code> — 사이는 직선 보간, 같은 시간 근처 두 줄이면 계단. 위 ①–④ 설정(적층 · 부품 P · θJB · TIM · 환경)을 그대로 씁니다.</p>
     <div class="thgrid"><label class="fld"><span>시나리오 예</span><select id="prof-pre"><option value="">— 고르기 —</option>${pr.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join('')}</select></label>
       <label class="fld"><span>계산 격자</span><select id="prof-res"><option value="70"${pc.res==70?' selected':''}>빠르게 (70칸)</option><option value="100"${pc.res==100?' selected':''}>보통 (100칸)</option><option value="140"${pc.res==140?' selected':''}>정밀 (140칸)</option></select></label></div>
@@ -462,7 +464,7 @@ function thBind(b){
   b.querySelectorAll('[data-cur]').forEach(i=>i.addEventListener('change',()=>{const v=num(i.value,0);if(v>0)cfg.I[i.dataset.cur]=v;else delete cfg.I[i.dataset.cur];stale();}));
   b.querySelector('#th-irj')?.addEventListener('change',e=>{cfg.irJ=e.target.checked;stale();});
   b.querySelector('#th-res')?.addEventListener('change',e=>{cfg.res=+e.target.value;});
-  b.querySelector('#prof-pre')?.addEventListener('change',e=>{const k=e.target.value;const p=PROF_PRESETS(thI0()).find(x=>x[0]===k);if(!p)return;cfg.prof.text=p[2];if(SR.thp)SR.stale.thp=true;renderSim();});
+  b.querySelector('#prof-pre')?.addEventListener('change',e=>{const k=e.target.value;const p=PROF_PRESETS(...thPk()).find(x=>x[0]===k);if(!p)return;cfg.prof.text=p[2];if(SR.thp)SR.stale.thp=true;renderSim();});
   b.querySelector('#prof-txt')?.addEventListener('change',e=>{cfg.prof.text=e.target.value;if(SR.thp)SR.stale.thp=true;});
   b.querySelector('#prof-res')?.addEventListener('change',e=>{cfg.prof.res=+e.target.value;});
   b.querySelector('#prof-run')?.addEventListener('click',()=>{const btn=b.querySelector('#prof-run');cfg.prof.text=b.querySelector('#prof-txt').value;btn.disabled=true;btn.textContent='계산 중…';cfg.open.prof=true;

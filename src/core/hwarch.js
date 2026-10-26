@@ -57,9 +57,9 @@ function archFrom(text,name){
   const nm=(()=>{const m=lo.match(/(?:bldc|모터|motor|액추에이터)[^.\n]{0,16}?(\d+)\s*(?:개|대|축|ea)/)||lo.match(/(\d+)\s*(?:개|대|축)\s*(?:의\s*)?(?:bldc|모터|motor)/)||lo.match(/(?:듀얼|dual|2축|two)\s*(?:bldc|모터|motor)/);return m?(m[1]?Math.max(1,Math.min(8,+m[1])):2):1;})();
   for(let i=1;i<=(motor?nm:0);i++){const id=i===1?'drv':'drv'+i,sfx=nm>1?` #${i}`:'';
     const kind=motorKind(lo,bldc);
-    if(kind.type==='gdrv3')addBlock(A,'io','3-Phase Gate Driver + MOSFET Inverter'+sfx,{id,feats:[`외부 N-MOSFET ×6${kind.par>1?' (병렬 '+kind.par+')':''} · 상전류 ${kind.i} A`,'게이트 드라이버 ×3 · 부트스트랩','레그 션트 ×3 + 전류 앰프'],impl:[{type:'gdrv3',params:{i:kind.i,hall:hall?1:0}}]});
+    if(kind.type==='gdrv3')addBlock(A,'io','3-Phase Gate Driver + MOSFET Inverter'+sfx,{id,feats:[`외부 N-MOSFET ×6${kind.par>1?' (병렬 '+kind.par+')':''} · 상전류 ${kind.i} A`,'게이트 드라이버 ×3 · 부트스트랩','레그 션트 ×3 + 전류 앰프'],impl:[{type:'gdrv3',params:Object.assign({i:kind.i,hall:hall?1:0},kind.ipk?{ipk:kind.ipk}:{},kind.tpk?{tpk:kind.tpk}:{})}]});
     else if(kind.type==='bldc')addBlock(A,'io','3-Phase Inverter / Gate Driver'+sfx,{id,feats:['FET 내장 3상 드라이버 (≤ 2.5 A)','PWM ×3 · 상 전류'],impl:[{type:'bldc',params:{hall:hall?1:0}}]});
-    else if(kind.type==='hbridge')addBlock(A,'io','H-Bridge Gate Driver + MOSFET ×4'+sfx,{id,feats:[`외부 N-MOSFET ×4${kind.par>1?' (병렬 '+kind.par+')':''} · ${kind.i} A`,'게이트 드라이버 ×2 · 부트스트랩 · 정/역회전','공통 션트 + 전류 앰프'],impl:[{type:'hbridge',params:{i:kind.i}}]});
+    else if(kind.type==='hbridge')addBlock(A,'io','H-Bridge Gate Driver + MOSFET ×4'+sfx,{id,feats:[`외부 N-MOSFET ×4${kind.par>1?' (병렬 '+kind.par+')':''} · ${kind.i} A`,'게이트 드라이버 ×2 · 부트스트랩 · 정/역회전','공통 션트 + 전류 앰프'],impl:[{type:'hbridge',params:Object.assign({i:kind.i},kind.ipk?{ipk:kind.ipk}:{},kind.tpk?{tpk:kind.tpk}:{})}]});
     else addBlock(A,'io','Low-side MOSFET Switch'+sfx,{id,feats:['단방향 · 로우사이드 FET 1개 (≤ 3 A)','과전류 검출 션트'],impl:[{type:'dcmotor',params:{shunt:1}}]});
     link(A,'mcu',id,`Control (PWM / EN)${sfx}`,{kind:'signal'});link(A,'reg',id,`VCC_DRV ${vin} V`,{kind:'power'});}
   if(curr||temp||hall){addBlock(A,'io',`${curr?'Current Sensing':''}${curr&&(temp||hall)?' & ':''}${temp?'Temp. Sensor':''}${!curr&&!temp&&hall?'Position Sensor':''}`,{id:'sense',feats:[curr?'전류 센싱 (Shunt + Amp)':null,temp?'온도 센서 (NTC)':null,hall?'홀 / 위치 센서':null,'HW Diagnostics'].filter(Boolean),impl:[{type:'vmon',params:{}}]});
@@ -94,16 +94,18 @@ function fromDiagram(D){
   A.fromBoard=true;return A;}
 
 /* motor power stage from the words: current class, H-bridge / external FET / gate driver / direction → library block */
-function motorKind(text,bldc){const t=String(text||'').toLowerCase();const ms=[...t.matchAll(/(\d+(?:\.\d+)?)\s*a(?![a-z가-힣])/g)].map(m=>+m[1]).filter(v=>v>=0.1&&v<=400);const i=ms.length?Math.max(...ms):null;
+function motorKind(text,bldc){const t=String(text||'').toLowerCase();const mc=typeof NEWPROJ!=='undefined'&&NEWPROJ.motorCurrents?NEWPROJ.motorCurrents(text):{};
+  // a peak figure (피크 · 기동 · 구속 N A) is not the rating: the continuous one is, else the largest other ampere figure
+  const ms=[...t.matchAll(/(\d+(?:\.\d+)?)\s*a(?![a-z가-힣])/g)].map(m=>+m[1]).filter(v=>v>=0.1&&v<=400&&v!==mc.ipk);const i=mc.i!=null?mc.i:ms.length?Math.max(...ms):null;const pk=o=>{if(mc.ipk!=null&&mc.ipk>(o.i||0))o.ipk=mc.ipk;if(mc.tpk!=null)o.tpk=mc.tpk;return o;};
   const ext=/외부\s*(n-?)?\s*(mos)?fet|게이트\s*드라이버|gate\s*driver|mosfet\s*[x×]?\s*\d|\d\s*(n-?)?\s*mosfet|인버터|inverter|파워\s*스테이지|power\s*stage|프리\s*드라이버|pre-?driver/.test(t);
   const hb=/h-?\s*bridge|h\s*브리지|풀\s*브리지|full\s*bridge|정\s*[/·,]?\s*역|양방향|bidirection|reverse|4\s*(n-?)?\s*mosfet|mosfet\s*[x×]\s*4/.test(t);
-  if(bldc){const big=(i!=null&&i>2.5)||ext;const I=i!=null?i:20;return big?{type:'gdrv3',i:I,par:I<=25?1:I<=60?2:I<=100?3:4}:{type:'bldc',i:i||2};}
-  const big=(i!=null&&i>3)||ext||hb;const I=i!=null?i:hb||ext?10:2;return big?{type:'hbridge',i:I,par:I<=25?1:I<=60?2:I<=100?3:4}:{type:'dcmotor',i:I};}
+  if(bldc){const big=(i!=null&&i>2.5)||ext||(mc.ipk||0)>2.5;const I=i!=null?i:20;return big?pk({type:'gdrv3',i:I,par:I<=25?1:I<=60?2:I<=100?3:4}):{type:'bldc',i:i||2};}
+  const big=(i!=null&&i>3)||ext||hb;const I=i!=null?i:hb||ext?10:2;return big?pk({type:'hbridge',i:I,par:I<=25?1:I<=60?2:I<=100?3:4}):{type:'dcmotor',i:I};}
 /* blocks whose words ask for an external-FET stage but whose circuit is the small single-FET / integrated driver: upgrade */
 function upgradeMotor(A,log){const hv=/고전압|\bhv\b|[4-9]\d\d\s*v\b|igbt|\bsic\b|절연\s*게이트/i.test((A.req||'')+' '+(A.blocks||[]).map(b=>b.label+' '+(b.feats||[]).join(' ')).join(' '));if(hv){log&&log.push('고전압 인버터 — 저전압 게이트 드라이버/FET 블록으로 바꾸지 않음 (절연 게이트 드라이버는 datasheet로 부품 지정)');return log;}
   (A.blocks||[]).forEach(b=>{const txt=[b.label].concat(b.feats||[]).join(' ')+' '+(A.req||'');(b.impl||[]).forEach(im=>{
-    if(im.type==='dcmotor'){const k=motorKind([b.label].concat(b.feats||[]).join(' ')+' '+(A.req||''),false);if(k.type==='hbridge'){im.type='hbridge';im.params={i:k.i};log&&log.push(`${b.id}: 단일 로우사이드 FET → H-브리지 (게이트 드라이버 + MOSFET ×4, ${k.i} A)`);}}
-    else if(im.type==='bldc'){const k=motorKind(txt,true);if(k.type==='gdrv3'){im.type='gdrv3';im.params={i:k.i,hall:im.params&&im.params.hall!=null?im.params.hall:1};log&&log.push(`${b.id}: FET 내장 DRV8313 → 3상 게이트 드라이버 + MOSFET ×6 (${k.i} A)`);}}});});
+    if(im.type==='dcmotor'){const k=motorKind([b.label].concat(b.feats||[]).join(' ')+' '+(A.req||''),false);if(k.type==='hbridge'){im.type='hbridge';im.params=Object.assign({i:k.i},k.ipk?{ipk:k.ipk}:{},k.tpk?{tpk:k.tpk}:{});log&&log.push(`${b.id}: 단일 로우사이드 FET → H-브리지 (게이트 드라이버 + MOSFET ×4, ${k.i} A)`);}}
+    else if(im.type==='bldc'){const k=motorKind(txt,true);if(k.type==='gdrv3'){im.type='gdrv3';im.params=Object.assign({i:k.i,hall:im.params&&im.params.hall!=null?im.params.hall:1},k.ipk?{ipk:k.ipk}:{},k.tpk?{tpk:k.tpk}:{});log&&log.push(`${b.id}: FET 내장 DRV8313 → 3상 게이트 드라이버 + MOSFET ×6 (${k.i} A)`);}}});});
   // inverter / MOSFET blocks without a circuit next to a gate-driver block: realised by that block
   markVia(A);
   return log;}

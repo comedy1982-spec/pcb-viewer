@@ -82,7 +82,7 @@ kbd{background:#fff}
 <main>
 <h1>AllinOneDesign 사용 설명서</h1>
 <p class="lead">요구사항에서 시스템 다이어그램 → 회로 → PCB → 기구까지, 브라우저 하나에서 AI와 함께 설계하는 도구입니다. 이 설명서는 화면 순서대로 따라가며 읽도록 썼습니다.</p>
-<p class="meta">v1.79.0 기준 · 2026-10-26 갱신</p>
+<p class="meta">v1.80.0 기준 · 2026-10-26 갱신</p>
 
 <h2 id="whatsnew">새로 바뀐 점 (v1.51 – v1.77)</h2>
 <div class="grid2">
@@ -252,7 +252,7 @@ kbd{background:#fff}
 
 <h3 id="s3-power">대전류 보드 — 전류 폭 · 파워스테이지 · 8층 · 양면</h3>
 <ul>
-  <li><b>전류 기반 폭</b>: 신규 설계 보드는 회로 생성이 기록한 전류로 IPC-2221 필요 폭을 기본 적용합니다(모터 보드 2 oz · ΔT 20 °C, 20 A → 6.14 mm, <code>--no-iw</code>로 끔). 위 · 아래층 전력 동박을 채우고 스티칭 비아로 묶은 뒤 <b>단자 사이 유효 폭</b>(위 + 아래)을 재서 보고합니다(<code>report</code>).</li>
+  <li><b>전류 기반 폭 — 상시 · 피크</b>: 신규 설계 보드는 회로가 기록한 <b>상시 전류</b>로 IPC-2221 폭(모터 보드 2 oz · ΔT 20 °C)을 잡고, <b>피크 전류 · 지속 시간</b>이 있으면 상시 상승 + 피크 동안의 상승이 40 °C 이내가 되도록 넓힙니다(예: 상시 10 A만 2.36 mm, 피크 40 A 2 s면 4.44 mm, 40 A 연속이면 16 mm). 시스템 설계에서 상시 · 피크 · 지속 시간을 묻거나 요구사항 문장("상시 10 A · 피크 40 A 2초")에서 읽습니다. 보고서에 <b>내층 평면</b>과 <b>단자 비아</b>(층을 바꾸는 전류 몫, 부족하면 0.6/0.3 mm 비아 자동 추가) 검사가 함께 나옵니다. <code>--no-iw</code>로 끔. 위 · 아래층 전력 동박을 채우고 스티칭 비아로 묶은 뒤 <b>단자 사이 유효 폭</b>(위 + 아래)을 재서 보고합니다(<code>report</code>).</li>
   <li><b>파워스테이지 매크로 배치</b>: 모터 단자는 오른쪽 가장자리, FET 열이 단자를 향하고 션트는 FET 옆, 단일 칩 드라이버(A4911)는 FET 열 옆, 입력 단자 · 역접속 FET는 아래 가장자리. 상 출력 통로에는 다른 부품을 두지 않습니다.</li>
   <li><b>기능 영역(플로어플랜)</b>: 부품을 입력 · 보호 / 전원 / MCU / 통신 / 파워스테이지 / 센싱 그룹으로 나누고 영역 안에 배치합니다. 2D에 색 사각형으로 표시(레이어 패널 "기능 영역"). <code>zone</code> · <code>zone auto motor</code> · <code>zone hard|soft|off</code>, "영역 보여줘".</li>
   <li><b>층 구성</b>: 4층 = 신호 · GND · 전원 · 신호, 6층 = 신호 · GND · 신호 · 전원 · GND · 신호, 8층 = 신호 · GND · 신호 · GND · +12V · 신호 · +3V3 · 신호. 6층 이상에서 모터 공급이 평면을 쓰면 마지막 GND 내층이 로직 레일 평면이 됩니다.</li>
@@ -305,6 +305,7 @@ kbd{background:#fff}
 <tr><td>Dadu 8층 (배선 완료)</td><td>IR2104 ×3 · 100 × 65 mm · 단면</td><td>PH_U/V/W 9.6–9.8 · VIN_RAW 19 mm (필요 6.14 mm)</td></tr>
 <tr><td>Dadu 8층 양면 85 × 55</td><td>IR2104 ×3 · 아래층 부품 48개</td><td>면적 28 % 감소, 전류 폭 모두 충족</td></tr>
 <tr><td>Dadu A4911 · 8층 양면 90 × 60</td><td>A4911 한 칩 · 아래층 부품 51개</td><td>DRC 0 · PH_W 최소 6.53 mm ✓ · PWM 신호 1곳은 손 배선(<code>examples/dadu-8L-a4911/README.md</code>에 좌표)</td></tr>
+<tr><td>Dadu A4911 상시 10 A · 피크 40 A · 90 × 60</td><td>상시 10 A · 피크 40 A 2초 · 션트 1 mΩ 2010 · 아래층 부품 42개</td><td>DRC 0 · 필요 폭 4.44 mm(피크 기준) — 상 출력 6.5–9.9 mm · 비아 · 내층 평면 검사 통과 · 신호 2곳 손 배선(<code>examples/dadu-8L-a4911-10A40A/README.md</code>)</td></tr>
 </table>
 <div class="grid2">
 <figure style="margin:0"><img src="img/ex-top.jpg" alt="Dadu A4911 8층 양면 예제의 위층 화면"><figcaption>위층 — 오른쪽 파워스테이지 · 넓은 상 동박, 왼쪽 MCU · 통신</figcaption></figure>

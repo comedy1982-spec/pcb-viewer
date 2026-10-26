@@ -175,7 +175,7 @@ function place(B,opts){
   // column, the rest annealed around it with its keep-outs (supply bus, phase copper)
   let macro=null;if(opts.scratch&&opts.macro!==false&&B.zones&&B.zones.on!==false&&B.zones.rects&&B.zones.rects.stage&&!(opts.only)){const Z=zonesFit(B);const rs=[Z.rects.stage,Z.rects.input].filter(Boolean);
     const col=[Math.min(...rs.map(r=>r[0])),Math.min(...rs.map(r=>r[1])),Math.max(...rs.map(r=>r[2])),Math.max(...rs.map(r=>r[3]))];
-    const Imax=Math.max(0,...Object.values(B.netCurrent||{}).map(Number));const need=typeof CURRENT!=='undefined'&&Imax?CURRENT.ipcWidth(Imax,{oz:B.oz||1,dT:B.dT||10}):4;
+    const Imax=Math.max(0,...Object.values(B.netCurrent||{}).map(Number));const Pk=Object.values(B.netPeak||{}).sort((a,b)=>b.I-a.I)[0]||null;const need=typeof CURRENT!=='undefined'&&Imax?(CURRENT.needWidth?CURRENT.needWidth(Imax,Pk,{oz:B.oz||1,dT:B.dT||10,dTpk:B.dTpk||40,tb:B.t}).w:CURRENT.ipcWidth(Imax,{oz:B.oz||1,dT:B.dT||10})):4;
     const planes=new Set(PCB.stackOf(B).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));
     try{macro=powerMacro(B,col,{busW:Math.min(8,need),planes});}catch(e){macro=null;}
     if(macro){B.powerBus=macro.bus?{rect:macro.bus,net:macro.net}:null;opts=Object.assign({},opts,{fixed:(opts.fixed||[]).concat(macro.fixed),keepout:(opts.keepout||[]).concat(macro.keepout)});}else B.powerBus=null;}

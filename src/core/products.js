@@ -155,10 +155,21 @@ T.dadu={key:'dadu',name:'Dadu ECU (12 V BLDC 구동)',re:/dadu|다두/i,
     ['inv','conn','Phase U/V/W','power'],['conn','hall','Hall A/B/C','signal'],['hall','mcu','Hall A/B/C (캡처)','signal'],['inv','isense','Shunt','signal'],['sbc','isense','VCC_MCU 3.3 V','power'],['isense','mcu','Analog Feedback (ADC)','signal'],
     ['sbc','ptemp','VCC_MCU 3.3 V','power'],['ptemp','mcu','NTC (ADC)','signal'],['sbc','dbg','VCC_MCU 3.3 V','power'],['dbg','mcu','JTAG / UART','signal']],
   questions:[
-    {key:'cur',block:'gate',q:'모터 상전류 등급은?',why:'MOSFET 크기·병렬 수·션트·커넥터·방열이 정해집니다.',re:/\d+\s*a\b/i,
-      options:[{label:'~20 A (팬 · 소형 펌프)',effect:{impl:{id:'gate',type:'gdrv3',params:{i:20}},feats:{inv:['상전류 20 A급']},req:'상전류 20 A'}},
+    {key:'cur',block:'gate',q:'모터 상시(연속) 상전류는?',why:'손실 · 발열 · MOSFET 병렬 수와 PCB 패턴의 상시 폭이 정해집니다.',re:/(상시|연속|정격)[^\d]{0,8}\d+\s*a\b|\d+\s*a\b/i,
+      options:[{label:'~10 A (소형 팬 · 펌프)',effect:{impl:{id:'gate',type:'gdrv3',params:{i:10}},feats:{inv:['상시 상전류 10 A']},req:'상시 상전류 10 A'}},
+{label:'~20 A (팬 · 소형 펌프)',effect:{impl:{id:'gate',type:'gdrv3',params:{i:20}},feats:{inv:['상전류 20 A급']},req:'상전류 20 A'}},
                {label:'~40 A (펌프 · 블로어)',effect:{impl:{id:'gate',type:'gdrv3',params:{i:40}},feats:{inv:['상전류 40 A급 · MOSFET 병렬 ×2'],conn:['커넥터 40 A급']},req:'상전류 40 A'}},
                {label:'~80 A (액추에이터 · 대형 펌프)',effect:{impl:{id:'gate',type:'gdrv3',params:{i:80}},feats:{inv:['상전류 80 A급 · MOSFET 병렬 ×3 · 버스바'],conn:['커넥터 80 A급']},req:'상전류 80 A'}}]},
+    {key:'pk',block:'gate',q:'피크 상전류(기동 · 구속 · 과부하)는?',why:'MOSFET 펄스 정격 · 션트 측정 범위 · 단자와 PCB 패턴의 피크 온도 상승이 정해집니다. 숫자로 적어도 됩니다(예: 40 A).',re:/피크|peak|기동\s*전류|구속|돌입/i,
+      num:{id:'gate',type:'gdrv3',param:'ipk',unit:'A'},
+      options:[{label:'상시와 같음 (피크 없음)',effect:{impl:{id:'gate',type:'gdrv3',params:{ipk:'auto'}}}},
+               {label:'상시의 2배',effect:{impl:{id:'gate',type:'gdrv3',params:{ipk:'x2'}},feats:{inv:['피크 상전류 = 상시 × 2']},req:'피크 상전류 상시의 2배'}},
+               {label:'상시의 4배',effect:{impl:{id:'gate',type:'gdrv3',params:{ipk:'x4'}},feats:{inv:['피크 상전류 = 상시 × 4']},req:'피크 상전류 상시의 4배'}}]},
+    {key:'tpk',block:'gate',q:'피크는 한 번에 얼마나 지속되나요?',why:'패턴 동박이 피크 동안 데워지는 정도(과도 온도 상승)로 폭을 정합니다. 숫자로 적어도 됩니다(예: 3초).',re:/\d+(\.\d+)?\s*(초|ms|sec)\b/i,
+      num:{id:'gate',type:'gdrv3',param:'tpk',unit:'s'},
+      options:[{label:'2초 이내 (기동 · 짧은 구속 후 SW 차단)',effect:{impl:{id:'gate',type:'gdrv3',params:{tpk:2}},req:'피크 2초 이내'}},
+               {label:'10초 이내 (가속 · 부하 변동)',effect:{impl:{id:'gate',type:'gdrv3',params:{tpk:10}},req:'피크 10초 이내'}},
+               {label:'30초 이상 (사실상 연속)',effect:{impl:{id:'gate',type:'gdrv3',params:{tpk:30}},req:'피크 30초 이상'}}]},
     {key:'hallps',block:'hallps',q:'홀 센서 9 V 전원은 크랭킹(배터리 6 V)에서도 유지해야 하나요?',why:'LDO는 배터리가 약 11 V 아래로 내려가면 9 V가 무너집니다. 유지하려면 벅부스트가 필요합니다.',re:/벅\s*부스트|buck-?boost|크랭킹/i,
       options:[{label:'아니오 — LDO 9 V (저가)',effect:{feats:{hallps:['LDO 9 V (TPS7B86-Q1 급, 드롭아웃 0.5 V)']}}},
                {label:'예 — 벅부스트 9 V (6–16 V 입력에서 유지)',effect:{feats:{hallps:['벅부스트 9 V (LM5176-Q1 · TPS55165-Q1 급) — 회로 생성 후 부품 지정']},req:'홀 전원 벅부스트'}}]},
@@ -220,6 +231,8 @@ function apply(prof,answers,name,H){H=H||(typeof HWARCH!=='undefined'?HWARCH:nul
   for(const q of prof.questions||[]){const a=answers&&answers[q.key];if(a==null||a==='')continue;
     const parts=String(a).split(/,\s*/).map(s=>s.trim()).filter(Boolean);let matched=0;
     for(const p of parts){const opt=(q.options||[]).find(o=>o.label===p)||(q.options||[]).find(o=>o.label.toLowerCase().startsWith(p.toLowerCase()));
+      if(!opt&&q.num){const m=p.match(/(\d+(?:\.\d+)?)\s*(ms|초|s|sec|a)?/i);const b=A.blocks.find(x=>x.id===q.num.id);const im=b&&(b.impl||[]).find(i=>i.type===q.num.type);
+        if(m&&im){let v=+m[1];if(q.num.unit==='s'&&/^ms$/i.test(m[2]||''))v/=1000;im.params=Object.assign({},im.params,{[q.num.param]:v});log.push(`${q.block}: ${q.num.param} = ${v} ${q.num.unit}`);reqAdd.push(`${q.q.replace(/[?는은]+$/,'')} ${p}`);matched++;continue;}}
       if(!opt){const b=A.blocks.find(x=>x.id===q.block);if(b){b.feats.push('요구: '+p);log.push(`${q.block}: 요구 "${p}" 기록`);}reqAdd.push(p);continue;}
       matched++;const e=opt.effect||{};
       if(e.feats)for(const id of Object.keys(e.feats)){const b=A.blocks.find(x=>x.id===id);if(b)for(const f of e.feats[id])if(!b.feats.includes(f))b.feats.push(f);}

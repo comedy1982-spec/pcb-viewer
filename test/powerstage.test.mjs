@@ -78,3 +78,25 @@ test('transient thermal: settles to the steady solution, follows a step, and par
   assert.ok(B.comps.some(c => c.lk === 'batt' && /SQD50P04/.test(c.val)), 'reverse FET scales with battery current');
   assert.ok(B.comps.filter(c => c.lk === 'phase').length >= 6, 'bridge FETs and shunts scale with phase current');
 });
+test('continuous + peak current: requirement words, block params, parts by peak, losses by continuous, widths for the peak', () => {
+  const { NEWPROJ, CURRENT, PRODUCTS, HWARCH } = load();
+  assert.deepEqual(NEWPROJ.motorCurrents('BLDC 상시 10 A · 피크 40 A 2초'), { i: 10, ipk: 40, tpk: 2 });
+  assert.deepEqual(NEWPROJ.motorCurrents('continuous 10 A, peak 40 A for 500 ms'), { i: 10, ipk: 40, tpk: 0.5 });
+  // IPC alone at 10 A is 2.36 mm (2 oz · 20 °C); a 40 A · 2 s peak needs more, a 30 s one far more, 40 A continuous the most
+  const w2 = CURRENT.needWidth(10, { I: 40, t: 2 }, { oz: 2, dT: 20, dTpk: 40 }), w30 = CURRENT.needWidth(10, { I: 40, t: 30 }, { oz: 2, dT: 20, dTpk: 40 });
+  assert.equal(w2.by, 'peak');assert.ok(w2.w > CURRENT.ipcWidth(10, { oz: 2, dT: 20 }) && w2.w < w30.w && w30.w < CURRENT.ipcWidth(40, { oz: 2, dT: 20 }));
+  assert.ok(w2.rise + w2.riseP <= 40.01);
+  // a via carries little for long: continuous by the IPC chart, a seconds-long peak hardly adds (end-cooled barrel)
+  const v = CURRENT.viaRise(0.3, 1.5, { I: 6, t: 2 });assert.ok(v.rise < 20 && v.riseP < 5);
+  const prof = PRODUCTS.detect('Dadu');
+  const R = PRODUCTS.apply(prof, { cur: '~10 A (소형 팬 · 펌프)', pk: '40 A', tpk: '2초 이내 (기동 · 짧은 구속 후 SW 차단)' }, 'Dadu');
+  const g = R.arch.blocks.find(b => b.id === 'gate').impl.find(i => i.type === 'gdrv3');
+  assert.equal(g.params.i, 10);assert.equal(+g.params.ipk, 40);assert.equal(+g.params.tpk, 2);
+  const plan = HWARCH.toPlan(R.arch).plan;const r = NEWPROJ.build(plan);
+  const sh = r.parts.find(c => /U상 전류 션트/.test(c.desc));assert.equal(sh.val, '1mΩ', 'shunt range covers the 40 A peak');assert.ok(sh.P <= 0.11, 'shunt loss at 10 A');
+  assert.ok(r.parts.find(c => c.val === 'SQD50P04-09L').P < 1.0, 'reverse FET loss at 10 A');
+  assert.ok(r.parts.some(c => /TERM-3-7\.62/.test(c.fp)), 'terminals sized for the peak');
+  const { B } = NEWPROJ.toBoard(plan, { place: false });
+  assert.equal(B.netCurrent.PH_U, 10);assert.deepEqual(B.netPeak.PH_U, { I: 40, t: 2 });assert.equal(B.lossIpk, 40);
+  const W = CURRENT.widths(B, { oz: B.oz, dT: B.dT });assert.equal(W.PH_U.by, 'peak');assert.ok(W.PH_U.ipc > 4 && W.PH_U.ipc < 6.14);
+});

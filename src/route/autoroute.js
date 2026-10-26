@@ -529,10 +529,16 @@ function bottleneck(B,net,o){o=Object.assign({layer:0,grid:0.1,rect:null,padRing
 /* vias between the copper fills of the same net on two layers (outer top + bottom) so both carry the current */
 function stitchLayers(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},step:1.2,grid:0.1,la:0,lb:null},o||{});const keys=PC.cuKeys(B);const la=o.la,lb=o.lb==null?keys.length-1:o.lb;
   const P=prepare(B,{grid:o.grid,clear:0.15,width:{signal:o.grid,power:o.grid},via:o.via});const G=P.G,g=G.g;const vr=o.via.d/2+0.12;let n=0;
-  nets.forEach(net=>{const k=P.idOf(net);const sh=P.S.filter(s=>s.net===net&&s.fill);const on=l=>{const m=new Uint8Array(G.N);sh.filter(s=>s.L.includes(l)).forEach(s=>{const bb=bboxOf(s,0);
-      for(let y=Math.max(0,Math.floor((bb[1]-G.oy)/g));y<=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/g));y++)for(let x=Math.max(0,Math.floor((bb[0]-G.ox)/g));x<=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/g));x++)if(dist(s,G.ox+x*g,G.oy+y*g)<=-vr)m[y*G.nx+x]=1;});return m;};
-    const A=on(la),Bm=on(lb);const st=Math.max(1,Math.round(o.step/g));
-    for(let y=0;y<G.ny;y+=st)for(let x=0;x<G.nx;x+=st){const i=y*G.nx+x;if(!A[i]||!Bm[i])continue;if(G.occV.some(a=>a[i]!==0&&a[i]!==k))continue;
+  // a via fits where the net's copper on that layer — the union of its fill tiles (and, with o.pads, its pads) — covers the whole
+  // via disk: cover the grid cells, then keep the cells whose ring of radius vr is covered too (fills are many small tiles)
+  nets.forEach(net=>{const k=P.idOf(net);const sh=P.S.filter(s=>s.net===net&&(s.fill||(o.pads&&s.pad)));const rr=Math.ceil(vr/g);const ring=[[0,0]];for(let q=0;q<16;q++){const a=q*Math.PI/8;ring.push([Math.round(rr*Math.cos(a)),Math.round(rr*Math.sin(a))]);}
+    const on=l=>{const cov=new Uint8Array(G.N);sh.filter(s=>s.L.includes(l)).forEach(s=>{const bb=bboxOf(s,0);
+      for(let y=Math.max(0,Math.floor((bb[1]-G.oy)/g));y<=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/g));y++)for(let x=Math.max(0,Math.floor((bb[0]-G.ox)/g));x<=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/g));x++)if(dist(s,G.ox+x*g,G.oy+y*g)<=0.001)cov[y*G.nx+x]=1;});
+      const m=new Uint8Array(G.N);for(let y=0;y<G.ny;y++)for(let x=0;x<G.nx;x++){if(!cov[y*G.nx+x])continue;let ok=1;for(const[dx,dy]of ring){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=G.nx||Y>=G.ny||!cov[Y*G.nx+X]){ok=0;break;}}if(ok)m[y*G.nx+x]=1;}return m;};
+    const inR=(x,y)=>!o.rects||o.rects.some(r=>x>=r[0]&&x<=r[2]&&y>=r[1]&&y<=r[3]);const room=v=>!B.vias.some(q=>Math.hypot(q.x-v.x,q.y-v.y)<(q.d+o.via.d)/2+0.2);
+    const A=on(la),Bm=la===lb?A:on(lb);const st=o.rects?1:Math.max(1,Math.round(o.step/g));if(o.dbg){const c=a=>a.reduce((x,v)=>x+v,0);let inr=0,fr=0,rm=0;for(let y=0;y<G.ny;y++)for(let x=0;x<G.nx;x++){const i=y*G.nx+x;if(!A[i]||!Bm[i]||!inR(G.ox+x*g,G.oy+y*g))continue;inr++;if(G.occV.some(a=>a[i]!==0&&a[i]!==k))continue;fr++;if(room({x:G.ox+x*g,y:G.oy+y*g}))rm++;}o.dbg.push({net,sh:sh.length,A:c(A),inr,fr,rm});}
+    // o.rects: only inside these boxes (vias around one power terminal); la === lb: from that copper down to the net's plane
+    for(let y=0;y<G.ny;y+=st)for(let x=0;x<G.nx;x+=st){const i=y*G.nx+x;if(!A[i]||!Bm[i])continue;if(!inR(G.ox+x*g,G.oy+y*g))continue;if(G.occV.some(a=>a[i]!==0&&a[i]!==k))continue;if(o.rects&&!room({x:G.ox+x*g,y:G.oy+y*g}))continue;
       const v={x:+(G.ox+x*g).toFixed(3),y:+(G.oy+y*g).toFixed(3),d:o.via.d,drill:o.via.drill,net,stitch:true};B.vias.push(v);n++;
       const r=Math.ceil((o.via.d+0.3)/g);for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const j=(y+dy)*G.nx+x+dx;if(j>=0&&j<G.N)G.occV.forEach(a=>{a[j]=-1;});}}});
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}

@@ -718,13 +718,13 @@ $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImp
 const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC],tc364:['AURIX TC364 핀 추천',()=>SAMPLE_TC364]};
 /* a placed + routed example kept as a snapshot: the board is generated from its product profile, then the layout restored */
 function boardFromSnap(S){const m=S.meta;const prof=PRODUCTS.detect(m.profile);const ans={cur:m.cur};const fq=prof.questions.find(q=>q.key==='fet');if(fq)ans.fet=fq.options[m.fet||0].label;
-  const R=PRODUCTS.apply(prof,ans,m.profile);const plan=HWARCH.toPlan(R.arch).plan;const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'});plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
+  const R=PRODUCTS.apply(prof,ans,m.profile);const plan=HWARCH.toPlan(R.arch).plan;const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'},m.gdrv3||{});plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
   const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+m.profile.toLowerCase()+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch:R.arch};}
-const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C]};
+const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C],dadu8d:['Dadu A4911 상시 10 A · 피크 40 A · 90 × 60',()=>SNAP_DADU8D]};
 function loadSnapExample(which){const r=boardFromSnap(SNAP_EXAMPLES[which][1]());
   Object.assign(NP,{plan:r.plan,arch:r.arch,answers:{},vkey:null,picked:null,chooser:false,variants:null,hist:[],planManual:false});const n=$('#npName');if(n)n.value=r.B.name;
   setBoard(r.B);closeImport();if(typeof setMode==='function'){APP.mode='steps';setMode('steps');if(typeof setStep==='function')setStep(3);}
-  const nb=r.B.comps.filter(c=>c.side==='B').length;toast(`${r.B.name} 예제: ${+r.B.W.toFixed(1)} × ${+r.B.H.toFixed(1)} mm · ${PCB.cuKeys(r.B).length}층${nb?` · 양면(아래층 부품 ${nb}개)`:''}, 배치·배선·전력 동박까지 끝난 보드입니다(미연결 0 · DRC 0). 1·2단계에서 블록 다이어그램과 회로를 보고, PCB 콘솔의 drc · report로 확인하거나 [내보내기]로 KiCad 파일을 받을 수 있습니다.`);}
+  const nb=r.B.comps.filter(c=>c.side==='B').length;toast(`${r.B.name} 예제: ${+r.B.W.toFixed(1)} × ${+r.B.H.toFixed(1)} mm · ${PCB.cuKeys(r.B).length}층${nb?` · 양면(아래층 부품 ${nb}개)`:''}, 배치·배선·전력 동박까지 끝난 보드입니다(DRC 0${PCBEDIT.ratsnest(r.B).length?` · 손으로 이을 연결 ${PCBEDIT.ratsnest(r.B).length}곳 — 저장소 examples 폴더 README에 좌표`:' · 미연결 0'}). 1·2단계에서 블록 다이어그램과 회로를 보고, PCB 콘솔의 drc · report로 확인하거나 [내보내기]로 KiCad 파일을 받을 수 있습니다.`);}
 function loadExample(which){if(SNAP_EXAMPLES[which])return loadSnapExample(which);const spec=(EXAMPLES[which]||EXAMPLES.sense)[1]();setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
   if(which==='mcu'){selectComp('U1',false);toast('MCU DC 모터 예제입니다. U1(MCU)의 펌웨어 파라미터를 바꾸고 "빌드 & 시뮬레이션"을 누르면 3D에서 모터와 LED가 움직입니다. HSIS 탭에서 펌웨어·회로 대조 결과를 볼 수 있습니다.');}
   else if(which==='bldc'){selectComp('U1',false);toast('MCU BLDC 3상 예제입니다. STM32F042 펌웨어가 홀 센서로 DRV8313을 6스텝 정류합니다. "빌드 & 시뮬레이션"으로 3상 모터를 돌려 보세요.');}
@@ -734,7 +734,7 @@ $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));
 $('#impSample3').addEventListener('click',()=>loadExample('bldc'));
 $('#impSample4').addEventListener('click',()=>loadExample('tc364'));
-{const b5=$('#impSample5');if(b5)b5.addEventListener('click',()=>loadExample('dadu8'));const b6=$('#impSample6');if(b6)b6.addEventListener('click',()=>loadExample('dadu8b'));const b7=$('#impSample7');if(b7)b7.addEventListener('click',()=>loadExample('dadu8c'));}
+{const b5=$('#impSample5');if(b5)b5.addEventListener('click',()=>loadExample('dadu8'));const b6=$('#impSample6');if(b6)b6.addEventListener('click',()=>loadExample('dadu8b'));const b7=$('#impSample7');if(b7)b7.addEventListener('click',()=>loadExample('dadu8c'));const b8=$('#impSample8');if(b8)b8.addEventListener('click',()=>loadExample('dadu8d'));}
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{
