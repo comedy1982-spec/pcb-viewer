@@ -82,7 +82,7 @@ kbd{background:#fff}
 <main>
 <h1>AllinOneDesign 사용 설명서</h1>
 <p class="lead">요구사항에서 시스템 다이어그램 → 회로 → PCB → 기구까지, 브라우저 하나에서 AI와 함께 설계하는 도구입니다. 이 설명서는 화면 순서대로 따라가며 읽도록 썼습니다.</p>
-<p class="meta">v1.80.0 기준 · 2026-10-26 갱신</p>
+<p class="meta">v1.80.1 기준 · 2026-10-27 갱신</p>
 
 <h2 id="whatsnew">새로 바뀐 점 (v1.51 – v1.77)</h2>
 <div class="grid2">
@@ -262,6 +262,7 @@ kbd{background:#fff}
 
 <h3 id="s3-fix">배선이 다 안 끝날 때 — fix · PathFinder · gloss</h3>
 <ol class="steps">
+  <li><b>미세 피치 핀 탈출 순서</b>: 0.5–0.65 mm 피치 IC 한 변에 신호 핀이 연달아 있으면 같은 우선순위 안에서 그 구간의 가운데 핀부터 배선합니다 — 가운데 핀이 이웃에게 갇히지 않게.</li>
   <li><b>PathFinder 협상 배선</b>이 기본입니다: 순차 A* → 막힌 넷 뜯어 다시 → 남으면 혼잡을 서로 양보하며 여러 라운드(<code>route --no-pf</code>로 끔).</li>
   <li><b>gloss</b>(사후 최적화)가 <code>route</code> 끝에 자동으로 돌아 비아를 20 % 안팎 줄입니다(<code>--no-gloss</code>).</li>
   <li>그래도 미배선이 남으면 <b>fix</b>가 비용이 적은 순서로 시도합니다 — 다시 배선 → 다른 시드 재배치 → 다른 전략 → 보드 10 · 20 · 35 · 50 % 키움 → 층 늘림 → (허용 시) MCU 핀 재배정. 가장 좋은 결과 하나만 남기고 되돌리기 한 번으로 원상복구. <code>autofix on</code>(기본)이면 배선 명령 뒤 자동 실행. "크기는 유지하고 미배선 없애줘"(<code>--no-grow</code>).</li>
@@ -305,7 +306,7 @@ kbd{background:#fff}
 <tr><td>Dadu 8층 (배선 완료)</td><td>IR2104 ×3 · 100 × 65 mm · 단면</td><td>PH_U/V/W 9.6–9.8 · VIN_RAW 19 mm (필요 6.14 mm)</td></tr>
 <tr><td>Dadu 8층 양면 85 × 55</td><td>IR2104 ×3 · 아래층 부품 48개</td><td>면적 28 % 감소, 전류 폭 모두 충족</td></tr>
 <tr><td>Dadu A4911 · 8층 양면 90 × 60</td><td>A4911 한 칩 · 아래층 부품 51개</td><td>DRC 0 · PH_W 최소 6.53 mm ✓ · PWM 신호 1곳은 손 배선(<code>examples/dadu-8L-a4911/README.md</code>에 좌표)</td></tr>
-<tr><td>Dadu A4911 상시 10 A · 피크 40 A · 90 × 60</td><td>상시 10 A · 피크 40 A 2초 · 션트 1 mΩ 2010 · 아래층 부품 42개</td><td>DRC 0 · 필요 폭 4.44 mm(피크 기준) — 상 출력 6.5–9.9 mm · 비아 · 내층 평면 검사 통과 · 신호 2곳 손 배선(<code>examples/dadu-8L-a4911-10A40A/README.md</code>)</td></tr>
+<tr><td>Dadu A4911 상시 10 A · 피크 40 A · 90 × 60</td><td>상시 10 A · 피크 40 A 2초 · 션트 1 mΩ 2010 · 아래층 부품 44개</td><td>미연결 0 · DRC 0 · 필요 폭 4.44 mm(피크 기준) — 상 출력 7.5–9.9 mm · 비아 · 내층 평면 검사 통과</td></tr>
 </table>
 <div class="grid2">
 <figure style="margin:0"><img src="img/ex-top.jpg" alt="Dadu A4911 8층 양면 예제의 위층 화면"><figcaption>위층 — 오른쪽 파워스테이지 · 넓은 상 동박, 왼쪽 MCU · 통신</figcaption></figure>

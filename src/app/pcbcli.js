@@ -220,6 +220,23 @@ function cliPlace(a,scratch){
   cliCommit(before,scratch?'reset':'place');cliAfter(false);
   return grown+(cleared.tracks||cleared.vias?`트랙·동박 ${cleared.tracks}개와 비아 ${cleared.vias}개를 지웠습니다.\n`:'')+(pour?`${pour.net} 동박면을 ${pour.layer==='B'?'하단':'상단'}에 깔았습니다.\n`:'')+cliPlaceText(r,m,scratch)+(fixed.length?`\n고정 부품: ${fixed.join(', ')}`:'');
 }
+/* depth of each net's pins inside runs of adjacent signal pins on fine-pitch rows (QFP / SOIC / TSSOP sides): 0 at a run end,
+   1 for the next pin in, … — the router escapes the deepest first */
+function cliFineDepth(nets){const want=new Set(nets);const planes=new Set(PCB.stackOf(BD).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));const out={};
+  const sigNet=n=>n&&want.has(n)&&!planes.has(n)&&!/^(GND|AGND|PGND|DGND)$/i.test(n);
+  BD.comps.forEach(c=>{const ps=c.pads.filter(p=>!p.drill);if(ps.length<8)return;
+    // pitch = most common nearest-neighbour distance; only fine-pitch parts
+    const nn=ps.map(p=>Math.min(...ps.filter(q=>q!==p).map(q=>Math.hypot(q.x-p.x,q.y-p.y))));const pitch=nn.slice().sort((a,b)=>a-b)[Math.floor(nn.length/2)];if(!(pitch>0.3&&pitch<=0.66))return;
+    const used=new Set();ps.forEach(p0=>{if(used.has(p0))return;
+      // grow the straight row through p0 (neighbours at one pitch along the same line)
+      const row=[p0];used.add(p0);let grew=true;while(grew){grew=false;for(const q of ps){if(used.has(q))continue;const ends=[row[0],row[row.length-1]];
+        for(const e of ends){if(Math.abs(Math.hypot(q.x-e.x,q.y-e.y)-pitch)<pitch*0.2){if(row.length>1){const a=row[0],b=row[row.length-1];const cr=Math.abs((b.x-a.x)*(q.y-a.y)-(b.y-a.y)*(q.x-a.x))/Math.max(1e-6,Math.hypot(b.x-a.x,b.y-a.y));if(cr>pitch*0.3)continue;}
+          if(e===row[0])row.unshift(q);else row.push(q);used.add(q);grew=true;break;}}}}
+      if(row.length<3)return;
+      // runs of consecutive signal pins (different nets); depth = distance to the nearer run end
+      let i=0;while(i<row.length){if(!sigNet(row[i].net)){i++;continue;}let j=i;while(j+1<row.length&&sigNet(row[j+1].net)&&row[j+1].net!==row[j].net)j++;
+        for(let k=i;k<=j;k++){const d=Math.min(k-i,j-k);const n=row[k].net;if(d>(out[n]||0))out[n]=d;}i=j+1;}});});
+  return out;}
 async function cliRoute(a){CLI.routed=true;
   if(BD.pcbPending)throw new Error('부품이 아직 배치되지 않았습니다. 먼저 reset(배치) 또는 auto를 실행하세요.');
   cliEnsureEdit();const st=cliStrat(a);const before=cliSnap();
@@ -249,7 +266,12 @@ async function cliRoute(a){CLI.routed=true;
   // within a class the shorter net first. --order length keeps the plain shortest-first order.
   let keepOrder=false;const prioOf=n=>AUTOROUTE.netPrio(BD,n,WW);
   if(a.order!=='length'){const I=st==='noise'?AUTOPLACE.classify(BD,{}):null;const sw=I?new Set(I.switchNets):null;
-    nets=nets.map(n=>({n,r:sw&&sw.has(n)?0:prioOf(n),e:AUTOROUTE.estimate(BD,n)})).sort((x,y)=>x.r-y.r||x.e-y.e).map(x=>x.n);keepOrder=true;
+    // fine-pitch escape (≤ 0.65 mm pitch rows): a pin with signal neighbours on both sides can only leave straight out between
+    // them — route a run of such pins from its middle outwards, else the neighbours take both lanes and seal it in (SPI SDO
+    // between SCK and SDI). Within a class: deeper pins first, then the shorter net.
+    const depth=cliFineDepth(nets);
+    nets=nets.map(n=>({n,r:sw&&sw.has(n)?0:prioOf(n),d:depth[n]||0,e:AUTOROUTE.estimate(BD,n)})).sort((x,y)=>x.r-y.r||y.d-x.d||x.e-y.e).map(x=>x.n);keepOrder=true;
+    {const k=Object.values(depth).filter(v=>v>0).length;if(k)lines.push(`미세 피치 핀 탈출 순서: 가운데 핀부터 ${k}개 넷`);}
     const cnt=[0,0,0,0];nets.forEach(n=>cnt[prioOf(n)]++);lines.push(`배선 순서: ${AUTOROUTE.PRIO_LABEL.map((l,i)=>`${i+1}. ${l} ${cnt[i]}`).join(' → ')}`);}
   const prog=cliSay('out',`배선 준비 중… (${nets.length}개 넷)`);await cliTick();
   // power stage: the high-current nets are routed first on the top layer, then every other net pays to cross a corridor

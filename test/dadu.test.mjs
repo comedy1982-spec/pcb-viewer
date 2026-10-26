@@ -100,13 +100,13 @@ test('safety mechanisms per block and safety goal (Dadu defaults): roles, A4911 
   assert.ok(/SG1/.test(SAFEMECH.text(M)) && /<table>/.test(SAFEMECH.html(M, { mode: 'block' })));
   assert.equal(SAFEMECH.aoaSg(M)[0][0], 'SG');
 });
-test('Dadu A4911 10 A / 40 A example snapshot restores: DRC 0, two hand connections, peak-rated copper', () => {
+test('Dadu A4911 10 A / 40 A example snapshot restores: DRC 0, nothing left unconnected, peak-rated copper', () => {
   const L = load();const { BOARDSNAP, PCBEDIT } = L;const S = L.SNAP_DADU8D;const m = S.meta;
   const prof = PRODUCTS.detect(m.profile);const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[m.fet || 0].label;
   const R = PRODUCTS.apply(prof, ans, m.profile);const plan = HWARCH.toPlan(R.arch).plan;const g3 = plan.blocks.find(b => b.type === 'gdrv3');
   g3.params = Object.assign({}, g3.params, { driver: m.driver }, m.gdrv3);plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };plan.name = m.name;
   const { B } = NEWPROJ.toBoard(plan, { place: false });const r = BOARDSNAP.apply(B, S);
-  assert.equal(r.missing.length, 0);assert.equal(PCBEDIT.drc(B).length, 0);assert.ok(PCBEDIT.ratsnest(B).length <= 2);
+  assert.equal(r.missing.length, 0);assert.equal(PCBEDIT.drc(B).length, 0);assert.equal(PCBEDIT.ratsnest(B).length, 0);
   assert.ok(B.powerReport.nets.filter(n => n.width !== '직결').every(n => n.width >= n.need));assert.equal(B.powerReport.nets[0].need, 4.44);
   assert.ok((B.powerReport.viaChk || []).every(v => v.ok));
 });
