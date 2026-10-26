@@ -20,8 +20,9 @@ function nominalV(n){
 }
 
 /* ---------- linear algebra ---------- */
-function cg(n,mul,b,diag,tol,maxIt){
-  const x=new Float64Array(n),r=Float64Array.from(b),z=new Float64Array(n),p=new Float64Array(n),Ap=new Float64Array(n);
+function cg(n,mul,b,diag,tol,maxIt,x0){
+  const x=x0?Float64Array.from(x0):new Float64Array(n),r=Float64Array.from(b);if(x0){const t=new Float64Array(n);mul(x,t);for(let i=0;i<n;i++)r[i]-=t[i];}
+  const z=new Float64Array(n),p=new Float64Array(n),Ap=new Float64Array(n);
   for(let i=0;i<n;i++){z[i]=r[i]/diag[i];p[i]=z[i];}
   let rz=0,bn=0;for(let i=0;i<n;i++){rz+=r[i]*z[i];bn+=b[i]*b[i];}bn=Math.sqrt(bn)||1;
   let it=0;
@@ -218,6 +219,49 @@ function thermalSolve2(grid,env,Pt,Pb,extra){
 /* convection coefficient presets (W/m²K): natural convection depends on mounting, forced from air speed (flat-plate fit) */
 function hConv(mode,v){if(mode==='forced'){const s=Math.max(0,v||0);return{hT:7+15*Math.sqrt(s),hB:7+15*Math.sqrt(s)};}
   if(mode==='nat_h')return{hT:10,hB:5};return{hT:9,hB:9};}
+/* ---------- transient thermal: the same two-sheet network as thermalSolve2 plus heat capacity, backward Euler in time ----------
+   grid / env as thermalSolve2. src: [{Pt,Pb,f(t)}] heat maps (W per cell) scaled by f(t) — e.g. constant · phase-current² ·
+   battery-current² groups. opts: {times:[s] step ends, T0 (Ta | vector from a previous run), extra:[{cells,layer,gB,gA,C,P0,f}],
+   cap: per-cell extra J/K (optional), probe(t,acc) called after every step with accessors top(k) · bot(k) · j(q) · max · mean}.
+   Heat capacity per cell: FR-4 ρc 2.0 MJ/m³K over the board thickness + copper 3.45 MJ/m³K × (outer + inner thickness × coverage),
+   split half to each sheet. Radiation is relinearised every step around the current mean temperature. */
+function thermalTransient(grid,env,src,opts){
+  opts=opts||{};const extra=opts.extra||[];
+  const{nx,ny,a,mask,covT,covB,viaG}=grid;const n=nx*ny;
+  const tb=env.t*1e-3,kcu=env.kcu||390,kxy=env.kxy||0.3,kz=env.kz||0.3;const RC_FR4=2.0e6,RC_CU=3.45e6;
+  const GsT=new Float64Array(n),GsB=new Float64Array(n),Gz=new Float64Array(n);const pT=grid.pkgT,pB=grid.pkgB,iT=grid.inT,iB=grid.inB;
+  for(let i=0;i<n;i++)if(mask[i]){GsT[i]=kcu*env.cuT*1e-6*covT[i]+kxy*tb/2+(pT?pT[i]:0)+(iT?iT[i]:0);GsB[i]=kcu*env.cuB*1e-6*covB[i]+kxy*tb/2+(pB?pB[i]:0)+(iB?iB[i]:0);Gz[i]=kz*a*a/tb+(viaG?viaG[i]:0);}
+  const id=new Int32Array(n).fill(-1);let m=0;for(let i=0;i<n;i++)if(mask[i])id[i]=m++;
+  const gh=(x,y)=>2*x*y/(x+y);const nb=[];
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(!mask[k])continue;const u=id[k];
+    if(i+1<nx&&mask[k+1]){nb.push(u,id[k+1],gh(GsT[k],GsT[k+1]),m+u,m+id[k+1],gh(GsB[k],GsB[k+1]));}
+    if(j+1<ny&&mask[k+nx]){nb.push(u,id[k+nx],gh(GsT[k],GsT[k+nx]),m+u,m+id[k+nx],gh(GsB[k],GsB[k+nx]));}
+    nb.push(u,m+u,Gz[k]);}
+  extra.forEach((e,q)=>{const node=2*m+q;const cs=e.cells.filter(k=>id[k]>=0);const g=e.gB/Math.max(1,cs.length);cs.forEach(k=>nb.push(node,(e.layer==='B'?m:0)+id[k],g));});
+  const NB=Float64Array.from(nb),L=NB.length,NN=2*m+extra.length;
+  const Gd=new Float64Array(NN);for(let q=0;q<L;q+=3){Gd[NB[q]]+=NB[q+2];Gd[NB[q+1]]+=NB[q+2];}extra.forEach((e,q)=>{Gd[2*m+q]+=e.gA;});
+  const C=new Float64Array(NN);
+  for(let k=0;k<n;k++){const u=id[k];if(u<0)continue;const A=a*a;const fr=RC_FR4*tb*A/2;
+    C[u]=fr+RC_CU*A*(env.cuT*1e-6*covT[k]+(iT?iT[k]/kcu:0))+(opts.cap?opts.cap[k]/2:0);C[m+u]=fr+RC_CU*A*(env.cuB*1e-6*covB[k]+(iB?iB[k]/kcu:0))+(opts.cap?opts.cap[k]/2:0);}
+  extra.forEach((e,q)=>{C[2*m+q]=Math.max(1e-3,e.C||0.05);});
+  // per-cell heat of each source group (dense over the solver nodes)
+  const S=src.map(g=>{const v=new Float64Array(2*m);for(let k=0;k<n;k++){const u=id[k];if(u<0)continue;v[u]=g.Pt?g.Pt[k]:0;v[m+u]=g.Pb?g.Pb[k]:0;}return{v,f:g.f};});
+  let x=new Float64Array(NN);if(opts.T0&&opts.T0.length===NN)x=Float64Array.from(opts.T0);else x.fill(typeof opts.T0==='number'?opts.T0:env.Ta);
+  const times=opts.times||[];let t0=0,its=0;const A2=a*a;
+  const acc={top:k=>id[k]>=0?x[id[k]]:NaN,bot:k=>id[k]>=0?x[m+id[k]]:NaN,j:q=>x[2*m+q],max:0,mean:0,m};
+  for(const t1 of times){const dt=Math.max(1e-4,t1-t0);let sm=0,mx=-1e9;for(let i=0;i<2*m;i++){sm+=x[i];if(x[i]>mx)mx=x[i];}const Tm=sm/(2*m);
+    const hr=hRad(env.eps,env.Ta,Tm);const gT=(env.hT+hr)*A2,gB=(env.hB+hr)*A2;
+    const diag=new Float64Array(NN),bb=new Float64Array(NN);
+    for(let i=0;i<NN;i++){const c=C[i]/dt;diag[i]=Gd[i]+c;bb[i]=c*x[i];}
+    for(let u=0;u<m;u++){diag[u]+=gT;diag[m+u]+=gB;bb[u]+=gT*env.Ta;bb[m+u]+=gB*env.Ta;}
+    S.forEach(g=>{const f=g.f(t1);if(!f)return;const v=g.v;for(let i=0;i<2*m;i++)bb[i]+=f*v[i];});
+    extra.forEach((e,q)=>{bb[2*m+q]+=e.gA*env.Ta+(e.P0||0)*(e.f?e.f(t1):1);});
+    const mul=(p,y)=>{for(let i=0;i<NN;i++)y[i]=diag[i]*p[i];for(let q=0;q<L;q+=3){const u=NB[q],v=NB[q+1],g=NB[q+2];y[u]-=g*p[v];y[v]-=g*p[u];}};
+    const sol=cg(NN,mul,bb,diag,1e-8,3000,x);x=sol.x;its+=sol.it;
+    sm=0;mx=-1e9;for(let i=0;i<2*m;i++){sm+=x[i];if(x[i]>mx)mx=x[i];}acc.max=mx;acc.mean=sm/(2*m);
+    if(opts.probe)opts.probe(t1,acc);t0=t1;}
+  return{x,iters:its,m,Ctot:C.reduce((p,v)=>p+v,0)};
+}
 /* vertical conductance of one plated through hole (barrel ring of plating thickness tp) */
 function viaG(drill,tp,t,kcu){const r=drill*1e-3/2,R=r+tp*1e-6;return(kcu||390)*Math.PI*(R*R-r*r)/(t*1e-3);}
 
@@ -432,6 +476,6 @@ function transient(ckt,tstop,steps,probes,ctl){
   return Object.assign({time,data,final:report(C,x,tstop,st),anim:an},{C});
 }
 
-return{parseVal,fmtSI,nominalV,irSolve,siAnalyze,microstrip,thermalSolve,thermalSolve2,hConv,hRad,viaG,RHO20,ALPHA,extractCircuit,dcop,transient,IPCmax,IPC};
+return{parseVal,fmtSI,nominalV,irSolve,siAnalyze,microstrip,thermalSolve,thermalSolve2,thermalTransient,hConv,hRad,viaG,RHO20,ALPHA,extractCircuit,dcop,transient,IPCmax,IPC};
 })();
 if(typeof module!=='undefined')module.exports=SIM;

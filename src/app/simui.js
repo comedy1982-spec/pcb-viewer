@@ -21,7 +21,7 @@ function envSync(){
   envSync();if(SR.emc)SR.stale.emc=true;if(SR.ir)SR.stale.ir=true;if(SR.th)SR.stale.th=true;if(SR.si)runSI();renderSim();refresh(false);}));
 
 function simReset(){
-  const nl=BD.copperLayers||2;ENV.h=nl>2?Math.max(0.08,(BD.t-nl*ENV.cu*1e-3)/(nl-1)):Math.max(0.1,BD.t-2*ENV.cu*1e-3);SR.ir=SR.si=SR.th=SR.sp=SR.emc=null;SR.fw=null;SR.stale={};SR.cfg={ir:null,th:null,sp:null,emc:null,si:{z:50,zd:90}};
+  const nl=BD.copperLayers||2;ENV.h=nl>2?Math.max(0.08,(BD.t-nl*ENV.cu*1e-3)/(nl-1)):Math.max(0.1,BD.t-2*ENV.cu*1e-3);SR.ir=SR.si=SR.th=SR.thp=SR.sp=SR.emc=null;SR.fw=null;SR.stale={};SR.cfg={ir:null,th:null,sp:null,emc:null,si:{z:50,zd:90}};
   if(S.panel==='sim')renderSim();else simCellsDirty();updateLegend();
 }
 function setPanel(p){
@@ -203,7 +203,7 @@ function thConfig(){
   let fromCkt=0;BD.comps.forEach(c=>{if(c.kind==='none')return;P[c.ref]=0;if(thIsJ(c))J[c.ref]=thDefaults(c);if(c.P>0){P[c.ref]=+c.P;fromCkt++;}});
   if(BD.source==='예제'&&!BD.demo)Object.assign(P,{U2:0.45,U1:0.12,U3:0.03,D1:0.008,R2:0.006});
   if(BD.demo==='bldc')P.M1=0;Object.assign(P,TH_PRESET[BD.demo]||{});
-  const cuO=BD.oz?Math.round(35*BD.oz):ENV.cu;SR.cfg.th={P,J,fromCkt,res:160,Ta:ENV.Ta,conv:'nat_v',v:0,eps:0.9,cuT:cuO,cuB:cuO,cuIn:35,inner:true,plating:25,kz:0.3,kxy:0.3,tim:{k:3,blt:1.0},house:{mat:'ADC12',area:200,wall:2},I:{},irJ:false,meas:{},sel:null,layer:'T',open:{stack:false,src:true,tim:false,bc:true}};
+  const cuO=BD.oz?Math.round(35*BD.oz):ENV.cu;SR.cfg.th={P,J,fromCkt,res:160,Ta:ENV.Ta,conv:'nat_v',v:0,eps:0.9,cuT:cuO,cuB:cuO,cuIn:35,inner:true,prof:{text:PROF_PRESETS(+(BD&&BD.lossI0)||20)[0][2],res:100},plating:25,kz:0.3,kxy:0.3,tim:{k:3,blt:1.0},house:{mat:'ADC12',area:200,wall:2},I:{},irJ:false,meas:{},sel:null,layer:'T',open:{stack:false,src:true,tim:false,bc:true}};
   return SR.cfg.th;
 }
 function coverageGrid(res,plating){
@@ -298,6 +298,87 @@ function thCurveSVG(o){
     <text x="${L-4}" y="${Y(y1)+4}" text-anchor="end" class="ax">${y1.toFixed(0)}</text><text x="${L-4}" y="${H-B}" text-anchor="end" class="ax">${y0.toFixed(0)}</text>
     ${[0,9,16,25,36].map(n=>`<text x="${X(n)}" y="${H-4}" text-anchor="middle" class="ax">${n}</text>`).join('')}</svg>`;
 }
+/* ---------- current profile → transient thermal ----------
+   A scenario is a table of time points (s) · phase current (A) · PWM duty (%), linearly interpolated (two rows at nearly the
+   same time make a step). Losses the circuit generator worked out at the motor blocks' phase current I0 are scaled per part:
+   phase-current parts (bridge FETs · shunts) × (I/I0)², battery-side parts (reverse-polarity FET) × (I·D/I0)², the rest stay
+   constant (MCU · regulators · gate driver). FETs keep 0.02 W (switching / gate) fixed. Board = thermalTransient; each junction
+   follows its board spot through a first-order package lag τ = θJB · C_pkg. */
+const thLK=c=>c.lk||(/역전압|reverse/i.test(c.desc||'')?'batt':((/^Q\d/.test(c.ref)&&/MOSFET|상|레그|브리지/.test(c.desc||''))||(/^R\d/.test(c.ref)&&/션트/.test(c.desc||'')&&/상|레그|모터/.test(c.desc||'')))?'phase':'const');
+const thI0=()=>+(BD&&BD.lossI0)||20;
+const PROF_PRESETS=I=>{const h=+(I*0.5).toFixed(1),q=+(I*0.7).toFixed(1);return[
+  ['start','기동 → 정격 운전 → 정지',`0, 0, 0\n0.5, ${I}, 100\n3, ${I}, 100\n3.5, ${h}, 60\n600, ${h}, 60\n600.5, 0, 0\n900, 0, 0`],
+  ['rated','정격 연속 10분 (상전류 50 % · 듀티 60 %)',`0, ${h}, 60\n600, ${h}, 60`],
+  ['peak','피크 연속 10분 (최악 — 지금 정상 해석과 같은 조건)',`0, ${I}, 100\n600, ${I}, 100`],
+  ['stall','정격 1분 → 구속 5 s (피크 · 100 %) → 차단',`0, ${h}, 60\n60, ${h}, 60\n60.2, ${I}, 100\n65, ${I}, 100\n65.2, 0, 0\n240, 0, 0`],
+  ['cycle','펌프 반복: 30 s ON (70 % · 듀티 80 %) / 30 s OFF × 5',Array.from({length:5},(_,k)=>`${k*60}, ${q}, 80\n${k*60+30}, ${q}, 80\n${k*60+30.2}, 0, 0\n${k*60+59.8}, 0, 0`).join('\n')]];};
+function profParse(txt){const rows=[];String(txt||'').split(/\n|;/).forEach(l=>{const v=l.split(/[,\t ]+/).map(x=>x.trim()).filter(Boolean).map(Number);if(v.length<2||v.some(x=>!isFinite(x)))return;rows.push([v[0],Math.max(0,v[1]),v.length>2?Math.max(0,Math.min(100,v[2])):100]);});
+  rows.sort((a,b)=>a[0]-b[0]);if(!rows.length)throw new Error('프로파일이 비었습니다 — 줄마다 "시간 s, 상전류 A, 듀티 %"');if(rows[0][0]>0)rows.unshift([0,rows[0][1],rows[0][2]]);
+  if(rows[rows.length-1][0]<=0)throw new Error('마지막 시간이 0보다 커야 합니다');return rows;}
+function profAt(R,t){if(t<=R[0][0])return[R[0][1],R[0][2]];for(let i=1;i<R.length;i++)if(t<=R[i][0]){const a=R[i-1],b=R[i],u=b[0]>a[0]?(t-a[0])/(b[0]-a[0]):1;return[a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];}const z=R[R.length-1];return[z[1],z[2]];}
+function profTimes(R){const T=R[R.length-1][0],dmax=Math.max(0.25,T/260);const out=[];for(let i=1;i<R.length;i++){const a=R[i-1][0],b=R[i][0];if(b<=a)continue;let t=a,dt=Math.min(0.02,(b-a)/2);while(t<b-1e-9){t=Math.min(b,t+dt);out.push(+t.toFixed(4));dt=Math.min(dmax,dt*1.3);}}
+  return out.length>1500?out.filter((_,i)=>i%Math.ceil(out.length/1500)===0||i===out.length-1):out;}
+const pkgHt=fp=>/TO-?252|DPAK/i.test(fp||'')?2.3:/TO-?263|D2PAK/i.test(fp||'')?4.5:/TDSON|SON|QFN|DFN/i.test(fp||'')?1:/QFP/i.test(fp||'')?1.4:/SOIC|SOP/i.test(fp||'')?1.6:/2512|2010|1206/i.test(fp||'')?0.6:1.2;
+function runTHprof(){
+  const cfg=thConfig();const pc=cfg.prof;const R=profParse(pc.text);const I0=thI0();const t0=Date.now();
+  const g=coverageGrid(pc.res||100,cfg.plating);const n=g.nx*g.ny;const h=SIM.hConv(cfg.conv,cfg.v);
+  const cells={};BD.comps.forEach(c=>{cells[c.ref]=compCells(c,g);});
+  g.pkgT=new Float64Array(n);g.pkgB=new Float64Array(n);BD.comps.forEach(c=>{if(!thIsJ(c))return;const arr=c.side==='B'?g.pkgB:g.pkgT;cells[c.ref].forEach(k=>{arr[k]=390*0.2e-3;});});
+  g.inT=new Float64Array(n);g.inB=new Float64Array(n);if(cfg.inner!==false)g.inner.forEach(L=>{const arr=L.pos<=0.5?g.inT:g.inB;const G=390*cfg.cuIn*1e-6;for(let k=0;k<n;k++)arr[k]+=G*L.cov[k];});
+  const env={t:BD.t,cuT:cfg.cuT,cuB:cfg.cuB,kxy:cfg.kxy,kz:cfg.kz,hT:h.hT,hB:h.hB,eps:cfg.eps,Ta:cfg.Ta};
+  const fPh=t=>{const[I]=profAt(R,t);return(I/I0)**2;},fBa=t=>{const[I,D]=profAt(R,t);return(I*D/100/I0)**2;};const fOf={const:()=>1,phase:fPh,batt:fBa};
+  // split each part's table power into the fixed share and the current-scaled share
+  const parts=BD.comps.filter(c=>c.kind!=='none'&&(+cfg.P[c.ref]||0)>0).map(c=>{const P0=+cfg.P[c.ref];const lk=thLK(c);const fix=lk==='const'?P0:/^Q/.test(c.ref)?Math.min(P0,0.02):0;
+    const A=Math.max(1e-6,(c.body.w||1)*(c.body.h||1)*1e-6);return{c,P0,lk,fix,sc:P0-fix,Cp:Math.max(0.02,A*pkgHt(c.fp)*1e-3*2.0e6),P:t=>fix+(P0-fix)*fOf[lk](t)};});
+  const topC=parts.filter(o=>cfg.J[o.c.ref]&&cfg.J[o.c.ref].top);
+  const maps={const:[new Float64Array(n),new Float64Array(n)],phase:[new Float64Array(n),new Float64Array(n)],batt:[new Float64Array(n),new Float64Array(n)]};
+  parts.forEach(o=>{if(topC.includes(o))return;const cs=cells[o.c.ref];const L=o.c.side==='B'?1:0;cs.forEach(k=>{maps.const[L][k]+=o.fix/cs.length;maps[o.lk==='const'?'const':o.lk][L][k]+=(o.lk==='const'?0:o.sc)/cs.length;});});
+  const src=[['const',()=>1],['phase',fPh],['batt',fBa]].map(([k,f])=>({Pt:maps[k][0],Pb:maps[k][1],f}));
+  const extra=topC.map(o=>{const J=cfg.J[o.c.ref];const A=Math.max(1e-6,o.c.body.w*o.c.body.h*1e-6);return{ref:o.c.ref,cells:cells[o.c.ref],layer:o.c.side==='B'?'B':'T',gB:1/J.thJB,gA:1/(J.thJC+cfg.tim.blt*1e-3/(cfg.tim.k*A)+housingR(cfg,A,h)),C:o.Cp,P0:1,f:o.P};});
+  const watch=parts.filter(o=>cfg.J[o.c.ref]).map(o=>({o,J:cfg.J[o.c.ref],q:extra.findIndex(e=>e.ref===o.c.ref),d:0,ser:[]}));
+  const times=profTimes(R);const out={t:[0],max:[cfg.Ta],I:[R[0][1]],D:[R[0][2]],P:[parts.reduce((a,o)=>a+o.P(0),0)]};watch.forEach(w=>w.ser.push(cfg.Ta));let tp=0;
+  SIM.thermalTransient(g,env,src,{times,extra,T0:cfg.Ta,probe:(t,A)=>{const dt=t-tp;tp=t;
+    watch.forEach(w=>{const c=w.o.c,cs=cells[c.ref];let Tj;if(w.q>=0)Tj=A.j(w.q);else{let s=0,k2=0;cs.forEach(k=>{const v=c.side==='B'?A.bot(k):A.top(k);if(isFinite(v)){s+=v;k2++;}});const Tb=k2?s/k2:cfg.Ta;
+      const tau=Math.max(0.01,w.J.thJB*w.o.Cp);const tgt=w.o.P(t)*w.J.thJB;w.d+=(tgt-w.d)*(1-Math.exp(-dt/tau));Tj=Tb+w.d;}w.ser.push(Tj);});
+    const[I,D]=profAt(R,t);out.t.push(t);out.max.push(A.max);out.I.push(I);out.D.push(D);out.P.push(parts.reduce((a,o)=>a+o.P(t),0));}});
+  const peaks=watch.map(w=>{let pk=-1e9,ip=0;w.ser.forEach((v,i)=>{if(v>pk){pk=v;ip=i;}});let over=0;for(let i=1;i<w.ser.length;i++)if(w.ser[i]>w.J.tjmax)over+=out.t[i]-out.t[i-1];
+    return{ref:w.o.c.ref,val:w.o.c.val,lk:w.o.lk,P0:w.o.P0,peak:pk,tpk:out.t[ip],end:w.ser[w.ser.length-1],tjmax:w.J.tjmax,margin:w.J.tjmax-pk,over,ser:w.ser};}).sort((a,b)=>a.margin-b.margin);
+  let bm=-1e9,ib=0;out.max.forEach((v,i)=>{if(v>bm){bm=v;ib=i;}});
+  const E=out.t.reduce((a,t,i)=>i?a+(out.P[i]+out.P[i-1])/2*(t-out.t[i-1]):0,0);
+  SR.thp={rows:R,I0,out,peaks,boardMax:bm,tBoard:out.t[ib],ms:Date.now()-t0,steps:times.length,cells:g.nx*g.ny,energy:E,T:R[R.length-1][0],nPh:parts.filter(o=>o.lk==='phase').length,nBa:parts.filter(o=>o.lk==='batt').length,nCo:parts.filter(o=>o.lk==='const').length};}
+function profChart(P){const W=620,H=250,ml=44,mr=62,mt=12,mb=26,Hs=70;const T=P.T||1;const top=P.peaks.slice(0,5);const COL=['#d9534f','#e8a33d','#3d7fd9','#2e9e5b','#8a4fd0'];
+  const ys=[P.boardMax,...top.map(x=>Math.max(x.peak,x.tjmax))];let y1=Math.max(...ys,P.out.max[0]+5),y0=Math.min(P.out.max[0],...top.map(x=>x.ser[0]));y1=Math.ceil((y1+5)/10)*10;y0=Math.floor(y0/10)*10;
+  const X=t=>ml+(W-ml-mr)*t/T,Y=v=>mt+(H-mt-mb)*(1-(v-y0)/(y1-y0||1));const pts=(arr)=>arr.map((v,i)=>`${X(P.out.t[i]).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const tick=n=>{const st=[1,2,5,10,20,30,60,120,300,600,1200,1800,3600].find(s=>T/s<=n)||3600;const a=[];for(let t=0;t<=T+1e-9;t+=st)a.push(t);return a;};
+  const gy=[];for(let v=y0;v<=y1;v+=(y1-y0)>80?20:10)gy.push(v);const tk=tick(8);
+  const w=top[0];const Imax=Math.max(1,...P.out.I);const XI=X,YI=v=>H+8+(Hs-16)*(1-v/Imax),YD=v=>H+8+(Hs-16)*(1-v/100);
+  return`<svg viewBox="0 0 ${W} ${H+Hs}" style="width:100%;height:auto;color:var(--fg,#1d2126)" role="img" aria-label="전류 프로파일에 따른 온도 변화">
+  ${gy.map(v=>`<line x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="currentColor" stroke-opacity=".1"/><text x="${ml-6}" y="${Y(v)+3}" font-size="10" text-anchor="end" fill="currentColor" fill-opacity=".6">${v}</text>`).join('')}
+  ${tk.map(t=>`<text x="${X(t)}" y="${H-mb+14}" font-size="10" text-anchor="middle" fill="currentColor" fill-opacity=".6">${t>=60&&t%60===0?t/60+' min':t+' s'}</text>`).join('')}
+  ${w?`<line x1="${ml}" x2="${W-mr}" y1="${Y(w.tjmax)}" y2="${Y(w.tjmax)}" stroke="${COL[0]}" stroke-dasharray="5 4" stroke-opacity=".7"/><text x="${W-mr+3}" y="${Y(w.tjmax)+3}" font-size="9.5" fill="${COL[0]}">Tjmax ${w.tjmax}</text>`:''}
+  <polyline points="${pts(P.out.max)}" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-dasharray="3 3" stroke-width="1.4"/>
+  ${top.map((x,i)=>`<polyline points="${pts(x.ser)}" fill="none" stroke="${COL[i]}" stroke-width="1.8"/>`).join('')}
+  <text x="${ml}" y="${mt-2}" font-size="10" fill="currentColor" fill-opacity=".6">°C</text>
+  <line x1="${ml}" x2="${W-mr}" y1="${H+Hs-8}" y2="${H+Hs-8}" stroke="currentColor" stroke-opacity=".2"/>
+  <polyline points="${P.out.I.map((v,i)=>`${XI(P.out.t[i]).toFixed(1)},${YI(v).toFixed(1)}`).join(' ')}" fill="none" stroke="#3d7fd9" stroke-width="1.5"/>
+  <polyline points="${P.out.D.map((v,i)=>`${XI(P.out.t[i]).toFixed(1)},${YD(v).toFixed(1)}`).join(' ')}" fill="none" stroke="#2e9e5b" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <text x="${ml-6}" y="${H+14}" font-size="9.5" text-anchor="end" fill="#3d7fd9">${Imax.toFixed(0)} A</text><text x="${W-mr+3}" y="${H+14}" font-size="9.5" fill="#2e9e5b">100 %</text>
+  </svg><div class="lead" style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;margin:2px 0 0">${top.map((x,i)=>`<span><i style="display:inline-block;width:12px;height:3px;background:${COL[i]};vertical-align:middle;margin-right:4px"></i>${esc(x.ref)} ${esc((x.val||'').slice(0,12))}</span>`).join('')}<span><i style="display:inline-block;width:12px;border-top:2px dashed currentColor;opacity:.6;vertical-align:middle;margin-right:4px"></i>보드 최고</span><span style="color:#3d7fd9">— 상전류</span><span style="color:#2e9e5b">‐‐ 듀티</span></div>`;}
+function thProfHTML(cfg){const pc=cfg.prof;const I0=thI0();const P=SR.thp;const pr=PROF_PRESETS(I0);
+  let res='';if(P&&P.error)res=`<p class="errline">${esc(P.error)}</p>`;
+  else if(P){const w=P.peaks[0];const st=w?thSt(w.margin):['info','—'];
+    res=`<div class="res">${SR.stale.thp?'<p class="lead" style="color:#b5541c">입력이 바뀌었습니다 — [프로파일 해석]을 다시 누르세요.</p>':''}
+    <div class="kpis"><div class="kpi"><b>${w?w.peak.toFixed(1)+' °C':'—'}</b><span>최고 Tj${w?` · ${esc(w.ref)} @ ${w.tpk.toFixed(1)} s`:''}</span></div><div class="kpi"><b class="${st[0]==='err'?'c-err':''}">${w?(w.margin>=0?'+':'')+w.margin.toFixed(1)+' °C':'—'}</b><span>최소 마진${w&&w.over>0?` · Tjmax 초과 ${w.over.toFixed(1)} s`:''}</span></div>
+      <div class="kpi"><b>${P.boardMax.toFixed(1)} °C</b><span>보드 최고 @ ${P.tBoard.toFixed(0)} s</span></div><div class="kpi"><b>${(P.energy/1000).toFixed(2)} kJ</b><span>발열 에너지 · 평균 ${(P.energy/P.T).toFixed(1)} W</span></div></div>
+    ${profChart(P)}
+    <table class="stbl thres"><thead><tr><th>부품</th><th>손실 기준</th><th class="r">최고 Tj</th><th class="r">시점</th><th class="r">끝</th><th class="r">마진</th><th>판정</th></tr></thead><tbody>${P.peaks.slice(0,10).map(x=>{const s=thSt(x.margin);return`<tr><td class="mono">${esc(x.ref)}<div class="cls">${esc((x.val||'').slice(0,14))}</div></td><td class="cls">${x.lk==='phase'?'상전류²':x.lk==='batt'?'배터리 전류²':'고정'} · ${x.P0} W</td><td class="r mono">${x.peak.toFixed(1)}</td><td class="r mono">${x.tpk.toFixed(1)} s</td><td class="r mono">${x.end.toFixed(1)}</td><td class="r mono">${(x.margin>=0?'+':'')+x.margin.toFixed(1)}</td><td><span class="st ${s[0]==='err'?'crit':s[0]==='warn'?'warn':'good'}"><i></i>${s[1]}${x.over>0?` (${x.over.toFixed(1)} s)`:''}</span></td></tr>`;}).join('')}</tbody></table>
+    <p class="lead">과도 해석 ${P.steps} 단계 · ${P.cells} 셀 · ${(P.ms/1000).toFixed(1)} s. 손실 기준 전류 I0 = ${P.I0} A — 상전류 부품 ${P.nPh}개 ×(I/I0)², 배터리 쪽 ${P.nBa}개 ×(I·D/I0)², 나머지 ${P.nCo}개 고정. 정션은 보드 온도 + θJB·P를 패키지 시정수(θJB × 패키지 열용량)로 따라갑니다. 냉간 시작(Ta)에서 출발.</p></div>`;}
+  return`<details class="thsec" data-sec="prof" ${cfg.open.prof?'open':''}><summary><b>⑤ 전류 프로파일 (시나리오 과도 해석)</b><span>${P&&!P.error?`최고 Tj ${P.peaks[0]?P.peaks[0].peak.toFixed(0)+' °C':'—'} · ${P.T} s`:`손실 기준 ${I0} A`}</span></summary>
+    <p class="lead">시간에 따른 상전류 · PWM 듀티를 넣으면 부품 손실을 시간마다 다시 계산해 보드 · 정션 온도 변화를 풉니다. 줄마다 <code>시간 s, 상전류 A, 듀티 %</code> — 사이는 직선 보간, 같은 시간 근처 두 줄이면 계단. 위 ①–④ 설정(적층 · 부품 P · θJB · TIM · 환경)을 그대로 씁니다.</p>
+    <div class="thgrid"><label class="fld"><span>시나리오 예</span><select id="prof-pre"><option value="">— 고르기 —</option>${pr.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join('')}</select></label>
+      <label class="fld"><span>계산 격자</span><select id="prof-res"><option value="70"${pc.res==70?' selected':''}>빠르게 (70칸)</option><option value="100"${pc.res==100?' selected':''}>보통 (100칸)</option><option value="140"${pc.res==140?' selected':''}>정밀 (140칸)</option></select></label></div>
+    <label class="fld"><span>프로파일 (시간 s, 상전류 A, 듀티 %)</span><textarea id="prof-txt" rows="7" spellcheck="false" style="font-family:var(--f-mono,monospace);font-size:12px">${esc(pc.text)}</textarea></label>
+    <div class="acts"><button class="btn primary" id="prof-run">프로파일 해석</button><button class="btn sm ghost" id="prof-csv" title="결과 시계열을 CSV로">CSV 저장</button></div>${res}</details>`;}
 function thDetail(o,cfg){
   if(!o||o.Tj==null)return o?`<p class="lead">${esc(o.ref)}는 정션 모델이 없는 부품입니다. 보드 온도 ${o.Tbmax.toFixed(1)} °C.</p>`:'';
   const st=thSt(o.margin);const tot=Math.max(1e-6,o.Tj-cfg.Ta);const seg=(v,cls,lab)=>v>0.05?`<span class="${cls}" style="flex:${v}" title="${lab} +${v.toFixed(1)} °C">${v/tot>0.12?`${lab} +${v.toFixed(1)}`:''}</span>`:'';
@@ -366,7 +447,7 @@ function thHTML(){
     <div class="sub">대전류 패턴 줄 히팅 (I²R)</div>`+`<p class="lead">넷 전류를 넣으면 트랙 저항 ρ(T)=1.72×10⁻⁸·(1+0.00393·(T−20)) Ω·m로 I²R 발열을 계산해 넣습니다 (트랙 전체에 같은 전류 가정).</p>
     <div class="thgrid">${pw.map(n=>`<label class="fld"><span class="mono">${esc(n)}</span><input type="number" min="0" step="0.1" data-cur="${esc(n)}" value="${cfg.I[n]||''}" placeholder="A"></label>`).join('')||'<p class="lead">트랙이 있는 전원·모터 넷이 없습니다.</p>'}</div>
     ${SR.ir&&SR.ir.segs?`<label class="chkl"><input type="checkbox" id="th-irj" ${cfg.irJ?'checked':''}> 전압 강하 해석(${esc(SR.ir.net)})의 트랙별 전류 사용</label>`:''}`)}
-  <div class="row2"><label class="fld"><span>계산 격자</span><select id="th-res"><option value="120"${cfg.res==120?' selected':''}>빠르게 (120칸)</option><option value="160"${cfg.res==160?' selected':''}>보통 (160칸)</option><option value="260"${cfg.res==260?' selected':''}>정밀 (260칸)</option></select></label><div class="fld"><span>&nbsp;</span><button class="btn primary" id="th-run">열 해석 실행</button></div></div>${res}</div>`;
+  <div class="row2"><label class="fld"><span>계산 격자</span><select id="th-res"><option value="120"${cfg.res==120?' selected':''}>빠르게 (120칸)</option><option value="160"${cfg.res==160?' selected':''}>보통 (160칸)</option><option value="260"${cfg.res==260?' selected':''}>정밀 (260칸)</option></select></label><div class="fld"><span>&nbsp;</span><button class="btn primary" id="th-run">열 해석 실행</button></div></div>${res}${thProfHTML(cfg)}</div>`;
 }
 function thBind(b){
   const cfg=SR.cfg.th;const stale=()=>{if(SR.th&&!SR.th.error)SR.stale.th=true;};
@@ -381,6 +462,14 @@ function thBind(b){
   b.querySelectorAll('[data-cur]').forEach(i=>i.addEventListener('change',()=>{const v=num(i.value,0);if(v>0)cfg.I[i.dataset.cur]=v;else delete cfg.I[i.dataset.cur];stale();}));
   b.querySelector('#th-irj')?.addEventListener('change',e=>{cfg.irJ=e.target.checked;stale();});
   b.querySelector('#th-res')?.addEventListener('change',e=>{cfg.res=+e.target.value;});
+  b.querySelector('#prof-pre')?.addEventListener('change',e=>{const k=e.target.value;const p=PROF_PRESETS(thI0()).find(x=>x[0]===k);if(!p)return;cfg.prof.text=p[2];if(SR.thp)SR.stale.thp=true;renderSim();});
+  b.querySelector('#prof-txt')?.addEventListener('change',e=>{cfg.prof.text=e.target.value;if(SR.thp)SR.stale.thp=true;});
+  b.querySelector('#prof-res')?.addEventListener('change',e=>{cfg.prof.res=+e.target.value;});
+  b.querySelector('#prof-run')?.addEventListener('click',()=>{const btn=b.querySelector('#prof-run');cfg.prof.text=b.querySelector('#prof-txt').value;btn.disabled=true;btn.textContent='계산 중…';cfg.open.prof=true;
+    setTimeout(()=>{try{runTHprof();SR.stale.thp=false;}catch(e){console.error(e);SR.thp={error:'프로파일 해석 오류: '+e.message};}renderSim();},20);});
+  b.querySelector('#prof-csv')?.addEventListener('click',async()=>{const P=SR.thp;if(!P||P.error)return toast('먼저 [프로파일 해석]을 실행하세요.');const top=P.peaks.slice(0,12);
+    const L=[['t_s','I_A','duty_pct','P_W','board_max_C',...top.map(x=>x.ref+'_Tj_C')].join(',')];P.out.t.forEach((t,i)=>L.push([t,P.out.I[i].toFixed(2),P.out.D[i].toFixed(1),P.out.P[i].toFixed(3),P.out.max[i].toFixed(2),...top.map(x=>x.ser[i].toFixed(2))].join(',')));
+    const fn=await offerFile(String(BD.name||'board').replace(/[^\w\-]+/g,'_')+'_thermal_profile.csv',new TextEncoder().encode(L.join('\n')),'text/csv');if(fn)toast('프로파일 결과를 CSV로 내려받았습니다.');});
   b.querySelector('#th-ckt')?.addEventListener('click',()=>{Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);BD.comps.forEach(c=>{if(c.P>0&&cfg.P[c.ref]!=null)cfg.P[c.ref]=+c.P;});stale();renderSim();});
   b.querySelector('#th-inner')?.addEventListener('change',e=>{cfg.inner=e.target.checked;stale();renderSim();});
   b.querySelector('#th-ic')?.addEventListener('click',()=>{BD.comps.forEach(c=>{if(c.kind==='ic')cfg.P[c.ref]=0.1;});renderSim();});

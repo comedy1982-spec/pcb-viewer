@@ -59,3 +59,22 @@ test('thermal solver: inner copper sheets spread heat (lower peak than the outer
   const r1 = SIM.thermalSolve2(Object.assign({}, g, { inT: inner, inB: inner }), env, Pt, Pb, []);
   assert.ok(r1.tmax < r0.tmax - 5, `${r0.tmax.toFixed(1)} → ${r1.tmax.toFixed(1)}`);
 });
+test('transient thermal: settles to the steady solution, follows a step, and parts carry their load kind for current profiles', () => {
+  const { SIM, PRODUCTS, HWARCH, NEWPROJ } = load();
+  const nx = 45, ny = 30, n = nx * ny, a = 2e-3;const mask = new Uint8Array(n).fill(1);const cov = new Float32Array(n).fill(0.5);
+  const g = { nx, ny, a, mask, covT: cov, covB: cov, viaG: new Float64Array(n) };
+  const env = { t: 1.6, cuT: 70, cuB: 70, kxy: 0.3, kz: 0.3, hT: 9, hB: 9, eps: 0.9, Ta: 25 };
+  const Pt = new Float64Array(n);Pt[15 * nx + 22] = 2;
+  const st = SIM.thermalSolve2(g, env, Pt, new Float64Array(n), []);
+  const times = [];let t = 0, dt = 0.05;while (t < 4000) { t += dt;times.push(t);dt = Math.min(dt * 1.2, 25); }
+  let last = 0, at10 = null;SIM.thermalTransient(g, env, [{ Pt, f: () => 1 }], { times, probe: (tt, A) => { last = A.max;if (at10 == null && tt >= 10) at10 = A.max; } });
+  assert.ok(Math.abs(last - st.tmax) < 0.2, `${last} vs ${st.tmax}`);
+  assert.ok(at10 > 25 && at10 < st.tmax, 'still heating after 10 s');
+  let off = 0;SIM.thermalTransient(g, env, [{ Pt, f: tt => tt < 1 ? 1 : 0 }], { times: [0.5, 1, 30, 600], probe: (tt, A) => { off = A.max; } });
+  assert.ok(off < 26, 'cools back to ambient once the heat stops');
+  const R = PRODUCTS.apply(PRODUCTS.detect('Dadu'), { cur: '~20 A (팬 · 소형 펌프)' }, 'Dadu');
+  const { B } = NEWPROJ.toBoard(HWARCH.toPlan(R.arch).plan, { place: false });
+  assert.equal(B.lossI0, 20);
+  assert.ok(B.comps.some(c => c.lk === 'batt' && /SQD50P04/.test(c.val)), 'reverse FET scales with battery current');
+  assert.ok(B.comps.filter(c => c.lk === 'phase').length >= 6, 'bridge FETs and shunts scale with phase current');
+});
