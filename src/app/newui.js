@@ -192,8 +192,10 @@ function npGroupOf(k){return/^(pwr_in|usb_in|ldo|buck|supervisor|hs_switch|vmon)
 function npImplText(b){return ((b.impl||[]).map(i=>i.type==='part'?'part '+(i.params&&i.params.mpn||'?'):i.type).join(' + ')||'(구현 없음)')+(b.part&&!(b.impl||[]).some(i=>i.type==='part')?' · 부품 '+b.part.mpn:'');}
 function npArchImpl(idOrType){const A=NP.arch;if(!A)return null;const raw=String(idOrType||'').trim();
   if(raw&&typeof PARTLIB!=='undefined'){const n=PARTLIB.norm(raw);for(const b of A.blocks){const im=(b.impl||[]).find(i=>i.type==='part'&&i.params&&PARTLIB.norm(i.params.mpn||'')===n);if(im)return{b,im};}} // part number first (remove A4918)
-  const t=raw.toLowerCase().replace(/\d+$/,'');const k=NEWPROJ.blockKey(t)||t;
-  for(const b of A.blocks){const im=(b.impl||[]).find(i=>i.type===k);if(im)return{b,im};}return null;}
+  // circuit block type as written (gdrv3, pwr_in), then without a trailing index (ldo2 → ldo), then the HW block id (gate → its first circuit block)
+  const lo=raw.toLowerCase(),t=lo.replace(/\d+$/,'');const keys=[NEWPROJ.LIB[lo]?lo:null,NEWPROJ.blockKey(lo),NEWPROJ.blockKey(t)||t].filter(Boolean);
+  for(const k of keys)for(const b of A.blocks){const im=(b.impl||[]).find(i=>i.type===k);if(im)return{b,im};}
+  const hb=A.blocks.find(b=>b.id.toLowerCase()===lo&&(b.impl||[]).length);return hb?{b:hb,im:hb.impl.find(i=>i.type!=='part')||hb.impl[0]}:null;}
 /* part-composition sentences → block commands (step 1, deterministic) */
 function npNL2(t){const s=t.trim();const out=[];let m;
   if((m=s.match(/ASIL[\s\-_]*([ABCD])\b/i))&&/대응|적용|맞춰|설계|등급|으로|로\b/.test(s))return[`safety level ${m[1].toUpperCase()}`,'safety apply all'];
@@ -511,6 +513,8 @@ function sysSafetyModel(){if(typeof SAFEMECH==='undefined')return null;const A=N
   return SAFEMECH.map(A,parts);}
 /* power topology of the current design: the board when there is one, otherwise the board generated from the plan (not placed) */
 function sysPowerModel(){if(typeof POWERTOPO==='undefined')return null;let B=BD&&!BD.blank&&BD.comps&&BD.comps.length?BD:null,from='board';
+  // a board that is not this plan's (an example left open while designing a new one) must not stand in for the plan — same rule as the parts view
+  if(B&&NP.plan&&NP.plan.blocks&&NP.plan.blocks.length&&SYS.src!=='board'&&!B.newPlan)B=null;
   if(!B&&NP.plan){try{B=NEWPROJ.toBoard(NP.plan,{place:false}).B;from='plan';}catch(e){B=null;}}if(!B)return null;
   const plan=B.newPlan||NP.plan||null;const units=plan?POWERTOPO.unitsFromPlan(plan,NP.arch||null):null;
   const g=plan&&(plan.blocks||[]).find(b=>/^(gdrv3|hbridge|bldc|dcmotor)$/.test(b.type)&&+b.params.i>0);
