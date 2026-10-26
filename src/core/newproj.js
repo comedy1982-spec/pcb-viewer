@@ -290,7 +290,7 @@ function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){if(pw.f2){fetPkg();const F=pw.f2;
     for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
       ctx.part('R','10Ω','0603',{1:ho,2:hg},{desc:`하이사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:hg,2:ph},{desc:'하이사이드 G-S 풀다운'});
       ctx.part('R','10Ω','0603',{1:lo,2:lg},{desc:`로우사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:lg,2:ret},{desc:'로우사이드 G-S 풀다운'});
-      ctx.part('Q',F.mpn,'TDSON-8-2FET',F.pin(hg,lg,vm,ph,ret),{mpn:F.mpn,desc:`${h}상 ${F.kind==='hb'?'하프브리지':'듀얼'} MOSFET (상·하 FET 2개) ${F.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:F.names,P:pw.Pq*2});}
+      ctx.part('Q',F.mpn,'TDSON-8-2FET',F.pin(hg,lg,vm,ph,ret),{mpn:F.mpn,desc:`${h}상 ${F.kind==='hb'?'하프브리지':'듀얼'} MOSFET (상·하 FET 2개) ${F.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:F.names,P:+(pw.Pq*1.1).toFixed(2)});}
     return;}
   for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
     ctx.part('R','10Ω','0603',{1:ho,2:hg},{desc:`하이사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:hg,2:ph},{desc:'하이사이드 G-S 풀다운'});
@@ -373,7 +373,7 @@ function build(plan){plan=inputOptions(plan);const asil=plan.asil&&String(plan.a
   const parts=[],warn=[],rails={},used=new Set(),sigs=[],fixedPins={},xt=[],curr={};let mcu=null;const cnt={};const uq={};
   const has=t=>plan.blocks.some(b=>b.type===t);
   const shrinkLog=[];const ctx={plan,shrinkLog,
-    part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,ldo:o.ldo,mcu:!!o.mcu};parts.push(c);return c;},
+    part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,ldo:o.ldo,buck:o.buck,mcu:!!o.mcu};parts.push(c);return c;},
     cap(rail,val,desc){if(!rail)return;used.add(rail);return ctx.part('C',val,capFp(val),{1:rail,2:'GND'},{desc,mpn:capMpn[val]});},
     provide(rail,v,by){rails[rail]={v,by,block:ctx._b};},railV(r){return rails[r]?rails[r].v:(typeof SIM!=='undefined'&&SIM.nominalV?SIM.nominalV(r):0);},use(r){if(r)used.add(r);},has,
     railNear(v){const r=Object.entries(rails).filter(([,x])=>x.v>0).sort((a,b)=>Math.abs(a[1].v-v)-Math.abs(b[1].v-v))[0];return r?r[0]:ctx.highest(0);},
@@ -493,6 +493,8 @@ const GROUP_OF={pwr_in:'input',usb_in:'input',ldo:'power',buck:'power',superviso
 function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks.find(x=>x.id===c.block);let k=b?GROUP_OF[b.type]:null;
     if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';g[c.ref]=k||null;});return g;}
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));
+  // dissipation the generator worked out (FET conduction · regulator loss · shunt I²R · IC typical) travels with the part — the thermal analysis starts from it
+  {const PM=Object.fromEntries(r.parts.filter(c=>c.P>0).map(c=>[c.ref,c.P]));B.comps.forEach(c=>{if(PM[c.ref])c.P=PM[c.ref];});}
   r.groups=partGroups(plan,r.parts);
   // copper weight / allowed temperature rise for the current-based widths: motor boards default to 2 oz · ΔT 20 °C
   const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}

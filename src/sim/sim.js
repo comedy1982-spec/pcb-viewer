@@ -179,7 +179,8 @@ function thermalSolve(grid,env,P){
 
 /* ---------- thermal, 2-layer board (top/bottom copper sheets coupled through FR-4 and thermal vias) ----------
    grid: {nx,ny,a(m),mask,covT,covB,viaG(W/K per cell, vertical via conductance), pkgT/pkgB (extra sheet conductance of package
-         lead frames / exposed pads that spread heat over the footprint)}
+         lead frames / exposed pads that spread heat over the footprint), inT/inB (W/K sheet conductance of the inner copper layers,
+         each lumped into the nearer outer sheet — planes are thin FR-4 away from it and joined by the same vias)}
    env:  {t(mm), cuT, cuB (µm), kxy, kz (FR-4 W/m·K), kcu, hT, hB (convection W/m²K), eps, Ta}
    Radiation is linearised around the mean board temperature and refined over a few outer passes. */
 const SIGMA=5.670e-8;
@@ -191,7 +192,8 @@ function thermalSolve2(grid,env,Pt,Pb,extra){
   const tb=env.t*1e-3,kcu=env.kcu||390,kxy=env.kxy||0.3,kz=env.kz||0.3;
   const GsT=new Float64Array(n),GsB=new Float64Array(n),Gz=new Float64Array(n);
   const pT=grid.pkgT,pB=grid.pkgB;
-  for(let i=0;i<n;i++)if(mask[i]){GsT[i]=kcu*env.cuT*1e-6*covT[i]+kxy*tb/2+(pT?pT[i]:0);GsB[i]=kcu*env.cuB*1e-6*covB[i]+kxy*tb/2+(pB?pB[i]:0);Gz[i]=kz*a*a/tb+(viaG?viaG[i]:0);}
+  const iT=grid.inT,iB=grid.inB; // inner copper (planes · inner signal layers) lumped into the nearer outer sheet as extra lateral conductance
+  for(let i=0;i<n;i++)if(mask[i]){GsT[i]=kcu*env.cuT*1e-6*covT[i]+kxy*tb/2+(pT?pT[i]:0)+(iT?iT[i]:0);GsB[i]=kcu*env.cuB*1e-6*covB[i]+kxy*tb/2+(pB?pB[i]:0)+(iB?iB[i]:0);Gz[i]=kz*a*a/tb+(viaG?viaG[i]:0);}
   const id=new Int32Array(n).fill(-1);let m=0;for(let i=0;i<n;i++)if(mask[i])id[i]=m++;
   const gh=(x,y)=>2*x*y/(x+y);const nb=[];
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(!mask[k])continue;const u=id[k];

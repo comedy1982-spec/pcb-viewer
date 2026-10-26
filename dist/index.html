@@ -3607,7 +3607,8 @@ function thermalSolve(grid,env,P){
 
 /* ---------- thermal, 2-layer board (top/bottom copper sheets coupled through FR-4 and thermal vias) ----------
    grid: {nx,ny,a(m),mask,covT,covB,viaG(W/K per cell, vertical via conductance), pkgT/pkgB (extra sheet conductance of package
-         lead frames / exposed pads that spread heat over the footprint)}
+         lead frames / exposed pads that spread heat over the footprint), inT/inB (W/K sheet conductance of the inner copper layers,
+         each lumped into the nearer outer sheet — planes are thin FR-4 away from it and joined by the same vias)}
    env:  {t(mm), cuT, cuB (µm), kxy, kz (FR-4 W/m·K), kcu, hT, hB (convection W/m²K), eps, Ta}
    Radiation is linearised around the mean board temperature and refined over a few outer passes. */
 const SIGMA=5.670e-8;
@@ -3619,7 +3620,8 @@ function thermalSolve2(grid,env,Pt,Pb,extra){
   const tb=env.t*1e-3,kcu=env.kcu||390,kxy=env.kxy||0.3,kz=env.kz||0.3;
   const GsT=new Float64Array(n),GsB=new Float64Array(n),Gz=new Float64Array(n);
   const pT=grid.pkgT,pB=grid.pkgB;
-  for(let i=0;i<n;i++)if(mask[i]){GsT[i]=kcu*env.cuT*1e-6*covT[i]+kxy*tb/2+(pT?pT[i]:0);GsB[i]=kcu*env.cuB*1e-6*covB[i]+kxy*tb/2+(pB?pB[i]:0);Gz[i]=kz*a*a/tb+(viaG?viaG[i]:0);}
+  const iT=grid.inT,iB=grid.inB; // inner copper (planes · inner signal layers) lumped into the nearer outer sheet as extra lateral conductance
+  for(let i=0;i<n;i++)if(mask[i]){GsT[i]=kcu*env.cuT*1e-6*covT[i]+kxy*tb/2+(pT?pT[i]:0)+(iT?iT[i]:0);GsB[i]=kcu*env.cuB*1e-6*covB[i]+kxy*tb/2+(pB?pB[i]:0)+(iB?iB[i]:0);Gz[i]=kz*a*a/tb+(viaG?viaG[i]:0);}
   const id=new Int32Array(n).fill(-1);let m=0;for(let i=0;i<n;i++)if(mask[i])id[i]=m++;
   const gh=(x,y)=>2*x*y/(x+y);const nb=[];
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(!mask[k])continue;const u=id[k];
@@ -7264,7 +7266,7 @@ function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){if(pw.f2){fetPkg();const F=pw.f2;
     for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
       ctx.part('R','10Ω','0603',{1:ho,2:hg},{desc:`하이사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:hg,2:ph},{desc:'하이사이드 G-S 풀다운'});
       ctx.part('R','10Ω','0603',{1:lo,2:lg},{desc:`로우사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:lg,2:ret},{desc:'로우사이드 G-S 풀다운'});
-      ctx.part('Q',F.mpn,'TDSON-8-2FET',F.pin(hg,lg,vm,ph,ret),{mpn:F.mpn,desc:`${h}상 ${F.kind==='hb'?'하프브리지':'듀얼'} MOSFET (상·하 FET 2개) ${F.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:F.names,P:pw.Pq*2});}
+      ctx.part('Q',F.mpn,'TDSON-8-2FET',F.pin(hg,lg,vm,ph,ret),{mpn:F.mpn,desc:`${h}상 ${F.kind==='hb'?'하프브리지':'듀얼'} MOSFET (상·하 FET 2개) ${F.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:F.names,P:+(pw.Pq*1.1).toFixed(2)});}
     return;}
   for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
     ctx.part('R','10Ω','0603',{1:ho,2:hg},{desc:`하이사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:hg,2:ph},{desc:'하이사이드 G-S 풀다운'});
@@ -7347,7 +7349,7 @@ function build(plan){plan=inputOptions(plan);const asil=plan.asil&&String(plan.a
   const parts=[],warn=[],rails={},used=new Set(),sigs=[],fixedPins={},xt=[],curr={};let mcu=null;const cnt={};const uq={};
   const has=t=>plan.blocks.some(b=>b.type===t);
   const shrinkLog=[];const ctx={plan,shrinkLog,
-    part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,ldo:o.ldo,mcu:!!o.mcu};parts.push(c);return c;},
+    part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,ldo:o.ldo,buck:o.buck,mcu:!!o.mcu};parts.push(c);return c;},
     cap(rail,val,desc){if(!rail)return;used.add(rail);return ctx.part('C',val,capFp(val),{1:rail,2:'GND'},{desc,mpn:capMpn[val]});},
     provide(rail,v,by){rails[rail]={v,by,block:ctx._b};},railV(r){return rails[r]?rails[r].v:(typeof SIM!=='undefined'&&SIM.nominalV?SIM.nominalV(r):0);},use(r){if(r)used.add(r);},has,
     railNear(v){const r=Object.entries(rails).filter(([,x])=>x.v>0).sort((a,b)=>Math.abs(a[1].v-v)-Math.abs(b[1].v-v))[0];return r?r[0]:ctx.highest(0);},
@@ -7467,6 +7469,8 @@ const GROUP_OF={pwr_in:'input',usb_in:'input',ldo:'power',buck:'power',superviso
 function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks.find(x=>x.id===c.block);let k=b?GROUP_OF[b.type]:null;
     if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';g[c.ref]=k||null;});return g;}
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));
+  // dissipation the generator worked out (FET conduction · regulator loss · shunt I²R · IC typical) travels with the part — the thermal analysis starts from it
+  {const PM=Object.fromEntries(r.parts.filter(c=>c.P>0).map(c=>[c.ref,c.P]));B.comps.forEach(c=>{if(PM[c.ref])c.P=PM[c.ref];});}
   r.groups=partGroups(plan,r.parts);
   // copper weight / allowed temperature rise for the current-based widths: motor boards default to 2 oz · ΔT 20 °C
   const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
@@ -12145,10 +12149,10 @@ function thDefaults(c){const db=typeof PARTS!=='undefined'?PARTS.find(c.mpn)||PA
   o.src=t.thJB!=null?'DS':t.tjmax!=null?'DS·추정':'추정';o.note=t.src||`${c.fp||'패키지'} 일반값 (추정)`;return o;}
 function thConfig(){
   if(SR.cfg.th)return SR.cfg.th;const P={},J={};
-  BD.comps.forEach(c=>{if(c.kind==='none')return;P[c.ref]=0;if(thIsJ(c))J[c.ref]=thDefaults(c);});
+  let fromCkt=0;BD.comps.forEach(c=>{if(c.kind==='none')return;P[c.ref]=0;if(thIsJ(c))J[c.ref]=thDefaults(c);if(c.P>0){P[c.ref]=+c.P;fromCkt++;}});
   if(BD.source==='예제'&&!BD.demo)Object.assign(P,{U2:0.45,U1:0.12,U3:0.03,D1:0.008,R2:0.006});
   if(BD.demo==='bldc')P.M1=0;Object.assign(P,TH_PRESET[BD.demo]||{});
-  SR.cfg.th={P,J,res:160,Ta:ENV.Ta,conv:'nat_v',v:0,eps:0.9,cuT:ENV.cu,cuB:ENV.cu,plating:25,kz:0.3,kxy:0.3,tim:{k:3,blt:1.0},house:{mat:'ADC12',area:200,wall:2},I:{},irJ:false,meas:{},sel:null,layer:'T',open:{stack:false,src:true,tim:false,bc:true}};
+  const cuO=BD.oz?Math.round(35*BD.oz):ENV.cu;SR.cfg.th={P,J,fromCkt,res:160,Ta:ENV.Ta,conv:'nat_v',v:0,eps:0.9,cuT:cuO,cuB:cuO,cuIn:35,inner:true,plating:25,kz:0.3,kxy:0.3,tim:{k:3,blt:1.0},house:{mat:'ADC12',area:200,wall:2},I:{},irJ:false,meas:{},sel:null,layer:'T',open:{stack:false,src:true,tim:false,bc:true}};
   return SR.cfg.th;
 }
 function coverageGrid(res,plating){
@@ -12161,10 +12165,18 @@ function coverageGrid(res,plating){
   ['T','B'].forEach(L=>{const cov=L==='T'?covT:covB;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,nx,ny);setT();c.lineCap='round';c.lineJoin='round';
     drawPrims(c,BD.layers[L+'.cu'],p=>p.t==='text'||p.clear?null:'#fff',{clear:'#fff'});c.fillStyle='#fff';BD.vias.forEach(v=>circ(c,v.x,v.y,v.d/2));
     d=read();for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)cov[j*nx+i]=d[((ny-1-j)*nx+i)*4+3]/255;});
+  // inner copper layers: planes = the inset board area minus antipads of other-net vias / plated holes; inner signal layers = their tracks
+  const inner=[];const st=PCB.stackOf(BD);st.slice(1,-1).forEach((L,idx)=>{const prims=BD.layers[L.k+'.cu']||[];c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,nx,ny);setT();
+    const pl=prims.find(q=>q.t==='pour'&&q.plane);
+    if(pl){c.globalCompositeOperation='source-over';c.fillStyle='#fff';c.beginPath();rr(c,pl.inset,pl.inset,BD.W-2*pl.inset,BD.H-2*pl.inset,pl.r||0);c.fill();c.globalCompositeOperation='destination-out';
+      BD.vias.forEach(v=>{if(v.net!==pl.net)circ(c,v.x,v.y,v.d/2+(pl.clr||0.3));});BD.drills.forEach(h=>{if(h.plated&&h.net!==pl.net)circ(c,h.x,h.y,h.d/2+0.2+(pl.clr||0.3));});c.globalCompositeOperation='source-over';}
+    c.lineCap='round';c.lineJoin='round';drawPrims(c,prims.filter(q=>q.t==='seg'||q.t==='path'||q.t==='poly'),q=>q.clear?null:'#fff');
+    d=read();const cov=new Float32Array(n);let s=0,cnt=0;for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;cov[k]=d[((ny-1-j)*nx+i)*4+3]/255;if(mask[k]){s+=cov[k];cnt++;}}
+    inner.push({k:L.k,role:L.role,net:L.net||pl&&pl.net||null,pos:(idx+1)/(st.length-1),cov,mean:cnt?s/cnt:0});});
   // thermal vias: every via and plated hole adds a copper barrel between the layers
   const viaG=new Float64Array(n);let nv=0;const put=(x,y,dr)=>{const i=Math.floor(x/cell),j=Math.floor(y/cell);if(i<0||j<0||i>=nx||j>=ny)return;viaG[j*nx+i]+=SIM.viaG(dr,plating,BD.t);nv++;};
   BD.vias.forEach(v=>put(v.x,v.y,v.drill||0.3));BD.drills.forEach(h=>{if(h.plated)put(h.x,h.y,h.d);});
-  return{nx,ny,cell,a:cell*1e-3,mask,covT,covB,cov:covT,viaG,nv};
+  return{nx,ny,cell,a:cell*1e-3,mask,covT,covB,cov:covT,viaG,nv,inner};
 }
 function compCells(c,g){
   const b=c.body,out=[];const a=-b.ang*D2R,ca=Math.cos(a),sa=Math.sin(a);
@@ -12191,6 +12203,8 @@ function runTH(){
   const cells={};BD.comps.forEach(c=>{cells[c.ref]=compCells(c,g);});
   // package lead frame / exposed pad spreads heat over the footprint (≈ 0.2 mm copper slug)
   g.pkgT=new Float64Array(n);g.pkgB=new Float64Array(n);BD.comps.forEach(c=>{if(!thIsJ(c))return;const arr=c.side==='B'?g.pkgB:g.pkgT;cells[c.ref].forEach(k=>{arr[k]=390*0.2e-3;});});
+  g.inT=new Float64Array(n);g.inB=new Float64Array(n);const inUsed=[];
+  if(cfg.inner!==false&&g.inner.length){g.inner.forEach(L=>{const arr=L.pos<=0.5?g.inT:g.inB;const G=390*cfg.cuIn*1e-6;for(let k=0;k<n;k++)arr[k]+=G*L.cov[k];inUsed.push({k:L.k,role:L.role,net:L.net,mean:L.mean,side:L.pos<=0.5?'T':'B'});});}
   const comps=BD.comps.filter(c=>(+cfg.P[c.ref]||0)>0);let ptot=comps.reduce((a,c)=>a+(+cfg.P[c.ref]),0);
   if(!(ptot>0)&&!Object.values(cfg.I).some(v=>v>0)&&!cfg.irJ){SR.th={error:'소비전력이 0입니다. 부품별 전력을 넣어 주세요.'};return;}
   const env={t:BD.t,cuT:cfg.cuT,cuB:cfg.cuB,kxy:cfg.kxy,kz:cfg.kz,hT:h.hT,hB:h.hB,eps:cfg.eps,Ta:cfg.Ta};
@@ -12218,7 +12232,7 @@ function runTH(){
     for(let j=0;j<g.ny;j++)for(let i=0;i<g.nx;i++){const k=j*g.nx+i,v=T[k];const o=((g.ny-1-j)*g.nx+i)*4;if(!isFinite(v)){id.data[o+3]=0;continue;}const t=(v-cfg.Ta)/span;const c=rampRGB(ORANGE,t);id.data[o]=c[0];id.data[o+1]=c[1];id.data[o+2]=c[2];id.data[o+3]=Math.round(255*(0.18+0.8*Math.min(1,t*1.3)));}
     ic.putImageData(id,0,0);return img;};
   const js=res.filter(x=>x.Tj!=null);const worst=js.slice().sort((a,b)=>a.margin-b.margin)[0];
-  SR.th=Object.assign(r,{imgs:{T:mk(r.T),B:mk(r.Tb)},img:null,nx:g.nx,ny:g.ny,cell:g.cell,tot:ptot+jl.tot,joule:jl.tot,hot:res,worst,h,Ta:cfg.Ta,nv:g.nv,cells:g.nx*g.ny,tmin:Math.min(cfg.Ta,r.tmin)});
+  SR.th=Object.assign(r,{imgs:{T:mk(r.T),B:mk(r.Tb)},img:null,nx:g.nx,ny:g.ny,cell:g.cell,tot:ptot+jl.tot,joule:jl.tot,hot:res,worst,h,Ta:cfg.Ta,nv:g.nv,inner:inUsed,cells:g.nx*g.ny,tmin:Math.min(cfg.Ta,r.tmin)});
   SR.th.img=SR.th.imgs.T;SR.stale.th=false;if(!cfg.sel||!res.find(x=>x.ref===cfg.sel))cfg.sel=(worst||res[0]||{}).ref||null;
 }
 const avgT=(T,cs)=>{let s=0,n=0;cs.forEach(k=>{if(isFinite(T[k])){s+=T[k];n++;}});return n?s/n:NaN;};
@@ -12253,7 +12267,7 @@ function thHTML(){
   const cfg=thConfig(),R=SR.th;const comps=BD.comps.filter(c=>c.kind!=='none');const h=SIM.hConv(cfg.conv,cfg.v);
   const ptot=comps.reduce((a,c)=>a+(+cfg.P[c.ref]||0),0),nsrc=comps.filter(c=>(+cfg.P[c.ref]||0)>0).length;
   const oz=v=>v>=100?'3 oz':v>=60?'2 oz':v>=30?'1 oz':'0.5 oz';
-  const steps=[['1','적층',`${BD.copperLayers||2}층${(BD.copperLayers||2)>2?' (열 모델은 외층 2장 + 써멀 비아로 근사)':''} · ${oz(cfg.cuT)}/${oz(cfg.cuB)} · ${BD.t} mm`,true],['2','발열원',`${nsrc}개 · ${SIM.fmtSI(ptot,'W')}`,nsrc>0],['3','경계 조건',`Ta ${cfg.Ta} °C · h ${h.hT.toFixed(0)} · ε ${cfg.eps}`,true],
+  const steps=[['1','적층',`${BD.copperLayers||2}층${(BD.copperLayers||2)>2?(cfg.inner!==false?` (내층 ${(BD.copperLayers||2)-2}장 ${oz(cfg.cuIn)} 포함)`:' (내층 제외 — 외층 2장만)'):''} · ${oz(cfg.cuT)}/${oz(cfg.cuB)} · ${BD.t} mm`,true],['2','발열원',`${nsrc}개 · ${SIM.fmtSI(ptot,'W')}`,nsrc>0],['3','경계 조건',`Ta ${cfg.Ta} °C · h ${h.hT.toFixed(0)} · ε ${cfg.eps}`,true],
     ['4','메싱·솔빙',R&&!R.error?`${R.cells} 셀 · ${R.iters} 반복`:`${cfg.res} 칸 격자`,!!(R&&!R.error)],['5','Tj·핫스팟',R&&R.worst?`최소 마진 ${R.worst.margin.toFixed(1)} °C`:'계산 후 판정',!!(R&&R.worst)]];
   const srcRows=comps.filter(c=>thIsJ(c)||(+cfg.P[c.ref]||0)>0||/^(Q|M)\d/.test(c.ref)).map(c=>{const J=cfg.J[c.ref];const k=esc(c.ref).replace(/[^\w]/g,'_');
     return`<tr><td class="mono">${esc(c.ref)}<div class="cls">${esc((c.val||'').slice(0,14))}</div></td><td class="r"><input type="number" min="0" step="0.01" data-pw="${esc(c.ref)}" value="${cfg.P[c.ref]||0}" aria-label="${esc(c.ref)} 소비전력 W" id="pw-${k}"></td>
@@ -12268,16 +12282,18 @@ function thHTML(){
     <table class="stbl thres"><thead><tr><th>부품</th><th class="r">P</th><th class="r">Tj</th><th class="r">마진</th><th>판정</th></tr></thead><tbody>${R.hot.filter(x=>x.Tj!=null||x.P>0).slice(0,12).map(x=>{const s=thSt(x.margin);return`<tr class="click${cfg.sel===x.ref?' on':''}" data-thref="${esc(x.ref)}"><td class="mono">${esc(x.ref)} <span class="cls">${esc((x.val||'').slice(0,10))}</span></td><td class="r mono">${SIM.fmtSI(x.P,'W')}</td><td class="r mono">${x.Tj!=null?x.Tj.toFixed(1):x.Tbmax.toFixed(1)+'*'}</td><td class="r mono">${x.margin!=null?(x.margin>=0?'+':'')+x.margin.toFixed(1):'—'}</td><td>${x.margin!=null?thPill(s):''}</td></tr>`;}).join('')}</tbody></table>
     <p class="lead" style="margin:0">* 정션 모델이 없는 부품은 보드 최고 온도. 판정: 마진 15 °C 이상 정상 · 0–15 °C 주의 · 음수 초과.${R.joule>0?` 줄 히팅 ${SIM.fmtSI(R.joule,'W')} 포함.`:''}</p>
     ${thDetail(sel,cfg)}
-    <p class="lead">모델: 상·하 동박층(면방향 k<sub>Cu</sub>·두께·피복률 + FR-4 k<sub>xy</sub>)을 FR-4 k<sub>z</sub>와 써멀 비아(도금 ${cfg.plating} µm, 보드 비아 ${R.nv}개)로 연결한 2층 판에 양면 대류(h)·선형화 복사(ε, h<sub>rad</sub> ${R.hRad.toFixed(1)} W/m²K)를 경계로 정상 상태를 풉니다. 부품은 2-저항 모델(θ<sub>JB</sub>, 상부 방열 시 θ<sub>JC</sub>+TIM+하우징). 초기 설계 탐색용 근사이며 양산 검증은 3D CFD/FEA와 실측 보정을 병행해야 합니다 (JEDEC JESD51 · IPC-2152 · IPC-2221).</p></div>`;}
+    <p class="lead">모델: 상·하 동박층(면방향 k<sub>Cu</sub>·두께·피복률 + FR-4 k<sub>xy</sub>)을 FR-4 k<sub>z</sub>와 써멀 비아(도금 ${cfg.plating} µm, 보드 비아 ${R.nv}개)로 연결한 2층 판${R.inner&&R.inner.length?`(내층 ${R.inner.length}장 — ${R.inner.map(L=>`${PCB.cuName(L.k)} ${L.net||(L.role==='sig'?'신호':'')} ${Math.round(L.mean*100)}%→${L.side==='T'?'상':'하'}`).join(' · ')} — 은 가까운 외층의 면방향 전도에 더함)`:''}에 양면 대류(h)·선형화 복사(ε, h<sub>rad</sub> ${R.hRad.toFixed(1)} W/m²K)를 경계로 정상 상태를 풉니다. 부품은 2-저항 모델(θ<sub>JB</sub>, 상부 방열 시 θ<sub>JC</sub>+TIM+하우징). 초기 설계 탐색용 근사이며 양산 검증은 3D CFD/FEA와 실측 보정을 병행해야 합니다 (JEDEC JESD51 · IPC-2152 · IPC-2221).</p></div>`;}
   const sec=(k,title,sum,body)=>`<details class="thsec" data-sec="${k}" ${cfg.open[k]?'open':''}><summary><b>${title}</b><span>${sum}</span></summary>${body}</details>`;
   return`<div class="sim"><ol class="thsteps">${steps.map(([n,t,d,ok])=>`<li class="${ok?'ok':''}"><b>${n}</b><span>${t}</span><small>${esc(d)}</small></li>`).join('')}</ol>
   ${sec('stack','① PCB 구조·재질',`${oz(cfg.cuT)}/${oz(cfg.cuB)} · 도금 ${cfg.plating} µm`,`<div class="thgrid">
     <label class="fld"><span>상단 동박</span><select data-thk="cuT">${[[18,'0.5 oz · 17.5 µm'],[35,'1 oz · 35 µm'],[70,'2 oz · 70 µm'],[105,'3 oz · 105 µm']].map(([v,l])=>`<option value="${v}"${cfg.cuT==v?' selected':''}>${l}</option>`).join('')}</select></label>
     <label class="fld"><span>하단 동박</span><select data-thk="cuB">${[[18,'0.5 oz · 17.5 µm'],[35,'1 oz · 35 µm'],[70,'2 oz · 70 µm'],[105,'3 oz · 105 µm']].map(([v,l])=>`<option value="${v}"${cfg.cuB==v?' selected':''}>${l}</option>`).join('')}</select></label>
+    ${(BD.copperLayers||2)>2?`<label class="fld"><span>내층 동박 (${(BD.copperLayers||2)-2}장)</span><select data-thk="cuIn">${[[18,'0.5 oz · 17.5 µm'],[35,'1 oz · 35 µm'],[70,'2 oz · 70 µm']].map(([v,l])=>`<option value="${v}"${cfg.cuIn==v?' selected':''}>${l}</option>`).join('')}</select></label>
+    <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="th-inner" ${cfg.inner!==false?'checked':''}><span>내층(GND · 전원 평면 · 내층 신호) 열 확산 포함</span></label>`:''}
     <label class="fld"><span>비아 도금 (µm)</span><input type="number" min="10" max="50" step="1" data-thk="plating" value="${cfg.plating}"></label>
     <label class="fld"><span>FR-4 k<sub>z</sub> (W/m·K)</span><input type="number" min="0.2" max="1" step="0.05" data-thk="kz" value="${cfg.kz}"></label></div>
     <p class="lead">보드 두께 ${BD.t} mm (보드 데이터). 구리 390 W/m·K 대비 FR-4는 약 0.3 W/m·K로 1,300배 낮아, 수직 방향 열은 써멀 비아가 좌우합니다.</p>`)}
-  ${sec('src','② 부품 발열·열저항',`${nsrc}개 · ${SIM.fmtSI(ptot,'W')}`,`<div class="acts">${SR.sp&&SR.sp.parts?'<button class="btn sm" id="th-imp">회로 결과의 전력 가져오기</button>':''}<button class="btn sm" id="th-ic">IC마다 0.1 W</button><button class="btn sm ghost" id="th-zero">모두 0</button></div>
+  ${sec('src','② 부품 발열·열저항',`${nsrc}개 · ${SIM.fmtSI(ptot,'W')}${cfg.fromCkt?` · 회로 손실 ${cfg.fromCkt}개 자동`:''}`,`<div class="acts">${BD.comps.some(c=>c.P>0)?'<button class="btn sm" id="th-ckt" title="회로 생성기가 계산한 손실 — FET 전도 손실(정격 상전류 기준) · 레귤레이터 손실 · 션트 I²R · IC 전형값">회로 손실로 채우기</button>':''}${SR.sp&&SR.sp.parts?'<button class="btn sm" id="th-imp">회로 결과의 전력 가져오기</button>':''}<button class="btn sm" id="th-ic">IC마다 0.1 W</button><button class="btn sm ghost" id="th-zero">모두 0</button></div>
     <div class="scroll"><table class="stbl thsrc"><thead><tr><th>부품</th><th class="r">P (W)</th><th class="r">θ<sub>JB</sub></th><th class="r">T<sub>j,max</sub></th><th>출처</th><th title="TIM + 하우징 상부 방열">상부</th></tr></thead><tbody>${srcRows}</tbody></table></div>
     <p class="lead">θ<sub>JB</sub>(°C/W)·T<sub>j,max</sub>(°C)는 데이터시트 값(DS)이 있으면 그 값을, 없으면 패키지 일반값(추정)을 넣었습니다. 출처에 마우스를 올리면 근거가 보입니다.</p>
 `)}
@@ -12314,6 +12330,8 @@ function thBind(b){
   b.querySelectorAll('[data-cur]').forEach(i=>i.addEventListener('change',()=>{const v=num(i.value,0);if(v>0)cfg.I[i.dataset.cur]=v;else delete cfg.I[i.dataset.cur];stale();}));
   b.querySelector('#th-irj')?.addEventListener('change',e=>{cfg.irJ=e.target.checked;stale();});
   b.querySelector('#th-res')?.addEventListener('change',e=>{cfg.res=+e.target.value;});
+  b.querySelector('#th-ckt')?.addEventListener('click',()=>{Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);BD.comps.forEach(c=>{if(c.P>0&&cfg.P[c.ref]!=null)cfg.P[c.ref]=+c.P;});stale();renderSim();});
+  b.querySelector('#th-inner')?.addEventListener('change',e=>{cfg.inner=e.target.checked;stale();renderSim();});
   b.querySelector('#th-ic')?.addEventListener('click',()=>{BD.comps.forEach(c=>{if(c.kind==='ic')cfg.P[c.ref]=0.1;});renderSim();});
   b.querySelector('#th-zero')?.addEventListener('click',()=>{Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);renderSim();});
   b.querySelector('#th-imp')?.addEventListener('click',()=>{importPower();renderSim();});

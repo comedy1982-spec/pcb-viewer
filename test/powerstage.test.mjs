@@ -35,3 +35,27 @@ test('gdrv3 parallels FETs by current; mapping picks hbridge/gdrv3 from the word
   const H = HWARCH.blank('HV'); H.req = '800 V SiC 트랙션 인버터'; HWARCH.addBlock(H, 'io', 'Isolated Gate Drivers', { impl: [{ type: 'bldc', params: {} }] });
   assert.equal(HWARCH.toPlan(H).plan.blocks[0].type, 'bldc', 'no low-voltage stage for HV');
 });
+test('thermal inputs: generated parts carry their dissipation onto the board (FET · regulator incl. buck · shunt · IC), half-bridge package ≈ one FET of the leg', () => {
+  const { PRODUCTS, HWARCH, NEWPROJ } = load();
+  const R = PRODUCTS.apply(PRODUCTS.detect('Dadu'), { cur: '~20 A (팬 · 소형 펌프)' }, 'Dadu');
+  const plan = HWARCH.toPlan(R.arch).plan;
+  const { B } = NEWPROJ.toBoard(plan, { place: false });
+  const P = ref => (B.comps.find(c => c.ref === ref) || {}).P || 0;
+  const buck = B.comps.find(c => c.val === 'TPS54331');
+  assert.ok(P(buck.ref) > 0, 'buck loss is computed (it was dropped before)');
+  assert.ok(B.comps.find(c => /TC364/.test(c.val)).P > 0);
+  const hb = B.comps.filter(c => c.fp === 'TDSON-8-2FET');
+  if (hb.length) hb.forEach(c => assert.ok(c.P < 2, `${c.ref} ${c.P} W`));
+  assert.ok(B.comps.filter(c => c.P > 0).length >= 10);
+});
+test('thermal solver: inner copper sheets spread heat (lower peak than the outer layers alone)', () => {
+  const { SIM } = load();
+  const nx = 40, ny = 30, n = nx * ny, a = 2e-3;const mask = new Uint8Array(n).fill(1);const cov = new Float32Array(n).fill(0.3);
+  const g = { nx, ny, a, mask, covT: cov, covB: cov, viaG: new Float64Array(n) };
+  const env = { t: 1.6, cuT: 70, cuB: 70, kxy: 0.3, kz: 0.3, hT: 9, hB: 9, eps: 0.9, Ta: 25 };
+  const Pt = new Float64Array(n);Pt[15 * nx + 20] = 3;const Pb = new Float64Array(n);
+  const r0 = SIM.thermalSolve2(g, env, Pt, Pb, []);
+  const inner = new Float64Array(n).fill(390 * 35e-6 * 0.9 * 2);
+  const r1 = SIM.thermalSolve2(Object.assign({}, g, { inT: inner, inB: inner }), env, Pt, Pb, []);
+  assert.ok(r1.tmax < r0.tmax - 5, `${r0.tmax.toFixed(1)} → ${r1.tmax.toFixed(1)}`);
+});
