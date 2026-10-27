@@ -141,9 +141,15 @@ test('ELD only (Dadu based): 12 V BAT/IGN/GND 3-pin input, A4911 on two legs as 
   const hb = T.plan.blocks.find(b => b.type === 'hbridge').params;assert.equal(+hb.i, 7);assert.equal(+hb.ipk, 20);assert.equal(hb.driver, 'A4911');
   const B = NEWPROJ.build(T.plan);
   const J = B.parts.filter(p => /^J/.test(p.ref));
-  const jin = J.find(p => p.val === 'BAT/IGN/GND');assert.deepEqual(jin.pins, { 1: 'VIN_RAW', 2: 'IGN_IN', 3: 'GND' });
-  assert.ok(!J.some(p => p.val === 'IGN'), 'IGN is on the 3-pin connector, no separate header');
-  const jo = J.find(p => p.val === 'ELD');assert.equal(Object.keys(jo.pins).length, 2);assert.equal(jo.pinNames[1], 'ELD+');
+  // one vehicle connector: Molex MX150 sealed right-angle 2×6 — power signals on two contacts each (20 A peak > 15 A per contact)
+  const ecu = J.find(p => p.val === 'ECU');assert.equal(ecu.fp, 'MX150-2x6-RA');assert.equal(ecu.mpn, '0348301201');
+  const on = net => Object.keys(ecu.pins).filter(k => ecu.pins[k] === net).length;
+  assert.deepEqual(['VIN_RAW', 'GND', 'HB_A', 'HB_B', 'IGN_IN', 'CANH', 'CANL'].map(on), [2, 2, 2, 2, 1, 1, 1]);
+  assert.deepEqual([1, 7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12].map(k => ecu.pinNames[k]), ['BAT', 'BAT', 'GND', 'GND', 'IGN', 'NC', 'CAN_H', 'CAN_L', 'ELD+', 'ELD+', 'ELD−', 'ELD−']);
+  assert.ok(!J.some(p => /^(IGN|CAN|ELD|BAT\/IGN\/GND)$/.test(p.val)), 'no other external connector');
+  // the separate-connector variant still works: BAT / IGN / GND 3-pin + ELD 2-pin
+  const T2 = HWARCH.toPlan(R.arch);T2.plan.blocks.find(b => b.type === 'pwr_in').params.conn = 'combo';const J2 = NEWPROJ.build(T2.plan).parts.filter(p => /^J/.test(p.ref));
+  assert.deepEqual(J2.find(p => p.val === 'BAT/IGN/GND').pins, { 1: 'VIN_RAW', 2: 'IGN_IN', 3: 'GND' });assert.equal(J2.find(p => p.val === 'ELD').pinNames[1], 'ELD+');
   const u = B.parts.find(p => p.val === 'A4911');const pin = nm => u.pins[Object.keys(u.pinNames).find(k => u.pinNames[k] === nm)];
   assert.equal(pin('SA'), 'HB_A');assert.equal(pin('SB'), 'HB_B');assert.equal(pin('SC'), 'GND');assert.equal(pin('HC'), 'GND');assert.ok(!pin('GHC'), 'unused gate output open');
   assert.equal(B.parts.filter(p => /^Q/.test(p.ref) && p.lk !== 'batt').length, 4);

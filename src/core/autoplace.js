@@ -72,14 +72,64 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
   const term=B.comps.filter(c=>/^J/.test(c.ref)&&R.every(r=>c.pads.some(p=>p.net===r.ph))).sort((a,b)=>a.pads.length-b.pads.length)[0];if(!term)return null;
   R.forEach(r=>{r.sh=r.sns?B.comps.find(c=>/^R/.test(c.ref)&&c.pads.length===2&&c.pads.some(p=>p.net===r.sns)&&/^(2512|2010|1206)$/.test(c.fp||'')):null;});
   // supply entry: the reverse-protection FET between the input terminal net and the bridge supply, and that input terminal
-  const qin=B.comps.find(c=>/^Q/.test(c.ref)&&!fets.includes(c)&&c.pads.some(p=>p.net===bat));const vin=qin?(qin.pads.find(p=>p.net&&p.net!==bat&&B.comps.some(j=>/^J/.test(j.ref)&&j!==term&&j.pads.some(q=>q.net===p.net)))||{}).net:null;
+  const qin=B.comps.find(c=>/^Q/.test(c.ref)&&!fets.includes(c)&&c.pads.some(p=>p.net===bat));const vin=qin?(qin.pads.find(p=>p.net&&p.net!==bat&&B.comps.some(j=>/^J/.test(j.ref)&&j.pads.some(q=>q.net===p.net)))||{}).net:null;
   const jin=vin?B.comps.find(c=>/^J/.test(c.ref)&&c!==term&&c.pads.some(p=>p.net===vin)):null;
   const pose=(c,x,y,rot)=>{canonical(B,c);if(rot)PCBEDIT.rotate(B,c,rot);PCBEDIT.prepare(B);const bx=(c.bb[0]+c.bb[2])/2,by=(c.bb[1]+c.bb[3])/2;PCBEDIT.move(B,c,x-bx,y-by);PCBEDIT.prepare(B);};
   const cen=(c,f)=>{const ps=c.pads.filter(f);if(!ps.length)return null;const w=p=>p.w*p.h,W=ps.reduce((a,p)=>a+w(p),0);return[ps.reduce((a,p)=>a+p.x*w(p),0)/W-c.x,ps.reduce((a,p)=>a+p.y*w(p),0)/W-c.y];}; // area-weighted (the exposed pad carries the current)
   const bestRot=(c,score)=>{let best=null;[0,90,180,270].forEach(rot=>{canonical(B,c);if(rot)PCBEDIT.rotate(B,c,rot);PCBEDIT.prepare(B);const sc=score(c);if(!best||sc>best.sc)best={rot,sc};});canonical(B,c);if(best.rot)PCBEDIT.rotate(B,c,best.rot);PCBEDIT.prepare(B);return best.rot;};
   const edge=o.edge||0.6,fixed=[],keepout=[];
+  function placeDrv(busX0){let drv=null;{const gateNets=new Set();R.forEach(r=>r.c.pads.forEach(p=>{if(p.net&&p.net!==r.bat&&p.net!==r.ph&&p.net!==r.sns&&!/GND/i.test(p.net))gateNets.add(p.net);}));
+    const drvNets=new Set();B.comps.filter(c=>/^R/.test(c.ref)&&c.pads.length===2).forEach(c=>{const a=c.pads[0].net,b=c.pads[1].net;if(gateNets.has(a)&&b&&!gateNets.has(b)&&b!==bat)drvNets.add(b);else if(gateNets.has(b)&&a&&!gateNets.has(a)&&a!==bat)drvNets.add(a);});
+    const cand=B.comps.filter(c=>/^U/.test(c.ref)&&!fixed.includes(c.ref)).map(c=>({c,n:new Set(c.pads.filter(p=>drvNets.has(p.net)).map(p=>p.net)).size})).sort((a,b)=>b.n-a.n);
+    if(cand.length&&cand[0].n>=4&&(cand.length<2||cand[1].n<cand[0].n)){drv=cand[0].c;
+      const dRot=bestRot(drv,c=>{const g=cen(c,p=>drvNets.has(p.net));return g?g[0]:0;});const dw=drv.bb[2]-drv.bb[0];
+      const colParts=fixed.map(r=>B.comps.find(x=>x.ref===r)).filter(c=>c&&c!==term&&c!==qin&&c!==jin);const leftEdge=Math.min(planeBus0()?Infinity:busX0,...colParts.map(c=>c.bb[0]));let x=leftEdge-(o.drvGap||6)-dw/2;if(x-dw/2<rect[0]+edge)x=rect[0]+edge+dw/2;
+      // no room beside the column (a wide connector took the zone): leave the driver to the annealer instead of stacking it on the column
+      if(x+dw/2>leftEdge-1){canonical(B,drv);PCBEDIT.prepare(B);drv=null;}else{
+      const ys=R.map(r=>(r.c.bb[1]+r.c.bb[3])/2);pose(drv,x,(Math.min(...ys)+Math.max(...ys))/2,dRot);
+      // clear of the other macro parts (e.g. the supply FET beside an ECU connector): slide along the column, else leave it to the annealer
+      const oth=fixed.map(r=>B.comps.find(c=>c.ref===r)).filter(Boolean);const hit=()=>oth.some(c=>drv.bb[0]<c.bb[2]+0.5&&c.bb[0]<drv.bb[2]+0.5&&drv.bb[1]<c.bb[3]+0.5&&c.bb[1]<drv.bb[3]+0.5);
+      if(hit()){let ok=false;for(const d of [0.5,1,1.5,2,3,4,5,6,8,10,12,-0.5,-1,-2,-3,-4,-6,-8]){PCBEDIT.move(B,drv,0,d);PCBEDIT.prepare(B);if(!hit()&&drv.bb[1]>=rect[1]+edge&&drv.bb[3]<=rect[3]-edge){ok=true;break;}PCBEDIT.move(B,drv,0,-d);PCBEDIT.prepare(B);}
+        if(!ok){canonical(B,drv);PCBEDIT.prepare(B);drv=null;}}
+      if(drv)fixed.push(drv.ref);}}}return drv;}
+  function rowAt(r,k,top,P,fx,fRot,fh,shW){const bTop=top-k*P;const yF=bTop-(shW?0.9+shW:0)-0.5-fh/2;pose(r.c,fx,yF,fRot);fixed.push(r.c.ref);
+    if(r.sh){const sn=r.c.pads.filter(p=>p.net===r.sns);const sx=sn.reduce((a,p)=>a+p.x,0)/sn.length;
+      // shunt horizontal right above the FET, its shunt-node pad over the FET's source pins, the GND end toward the terminal side
+      const left=o.planes&&o.planes.has(bat);let bs=null;[0,180].forEach(rot=>{canonical(B,r.sh);if(rot)PCBEDIT.rotate(B,r.sh,rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);const v=(a.x-r.sh.x)*(left?-1:1);if(a&&(!bs||v<bs.ax))bs={rot,ax:v};});
+      canonical(B,r.sh);if(bs.rot)PCBEDIT.rotate(B,r.sh,bs.rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);
+      PCBEDIT.move(B,r.sh,sx-a.x,r.c.bb[3]+0.9-r.sh.bb[1]);PCBEDIT.prepare(B);fixed.push(r.sh.ref);
+      // Kelvin net tie of the sense amplifier's minus input (SNS → SNSM): on the shunt's ground pad, just above it
+      const tie=B.comps.find(c=>/^R/.test(c.ref)&&c.pads.length===2&&c.pads.some(p=>p.net===r.sns+'M')&&c.pads.some(p=>/GND/i.test(p.net||'')));
+      if(tie){const g=r.sh.pads.find(p=>p.net&&p.net!==r.sns);if(g){canonical(B,tie);PCBEDIT.prepare(B);const right=g.x>(r.sh.bb[0]+r.sh.bb[2])/2;
+        // in line with the shunt, beyond its ground end, ground pad toward the shunt
+        const tg0=tie.pads.find(p=>/GND/i.test(p.net||''));if((tg0.x>tie.x)===right){PCBEDIT.rotate(B,tie,180);PCBEDIT.prepare(B);}const tg=tie.pads.find(p=>/GND/i.test(p.net||''));
+        const x=right?r.sh.bb[2]+0.3-tie.bb[0]:r.sh.bb[0]-0.3-tie.bb[2];PCBEDIT.move(B,tie,x,g.y-tg.y);PCBEDIT.prepare(B);fixed.push(tie.ref);}}}}
+  // ECU connector (supply, ground, signals and the load outputs in one right-angle header): connector on the zone's bottom
+  // edge, body down (mating face to the board edge), contacts side by side; the bridge column stands above it with its phase pads
+  // toward the load contacts, which rise straight up beside the column — no strap crosses another
+  if(vin&&term.pads.some(p=>p.net===vin)){
+    const tRot=bestRot(term,c=>{const xs=c.pads.map(p=>p.x),ys=c.pads.map(p=>p.y);const py=ys.reduce((a,b)=>a+b,0)/ys.length;const by=c.body&&c.body.cy!=null?c.body.cy:py;
+      return(Math.max(...xs)-Math.min(...xs))-(Math.max(...ys)-Math.min(...ys))+(py-by);});
+    const tw=term.bb[2]-term.bb[0],th=term.bb[3]-term.bb[1];pose(term,rect[2]-edge-tw/2,rect[1]+edge+th/2,tRot);fixed.push(term.ref);
+    const padX=net=>{const ps=term.pads.filter(p=>p.net===net);return ps.length?ps.reduce((a,p)=>a+p.x,0)/ps.length:0;};
+    const lp=term.pads.filter(p=>R.some(r=>r.ph===p.net));if(!lp.length)return null;const lx0=Math.min(...lp.map(p=>p.x-p.w/2));
+    const fRot=bestRot(R[0].c,c=>{const r=R[0];const b=cen(c,p=>p.net===r.bat),ph=cen(c,p=>p.net===r.ph),sn=cen(c,p=>p.net===r.sns);return(ph?ph[0]:0)-(b?b[0]:0)+(sn?sn[1]:0)*0.5;});
+    const fw=R[0].c.bb[2]-R[0].c.bb[0],fh=R[0].c.bb[3]-R[0].c.bb[1];const shW=R[0].sh?Math.min(R[0].sh.bb[2]-R[0].sh.bb[0],R[0].sh.bb[3]-R[0].sh.bb[1]):0;
+    const fx=lx0-1.5-fw/2;if(fx-fw/2<rect[0]+edge)return null;
+    let yIn=term.bb[3]+1.0;
+    if(qin){const r=bestRot(qin,c=>{const a=cen(c,p=>p.net===vin),b=cen(c,p=>p.net===bat);return(b?b[1]:0)-(a?a[1]:0);});const h=qin.bb[3]-qin.bb[1],w=qin.bb[2]-qin.bb[0];
+      let x=padX(vin);if(x+w/2>fx-fw/2-1)x=fx-fw/2-1-w/2;pose(qin,x,term.bb[3]+1.0+h/2,r);fixed.push(qin.ref);}
+    const top=rect[3]-edge-(R[0].sh?(o.shRoom!=null?o.shRoom:2.5):0);const H=top-yIn;
+    const blk=fh+(shW?0.9+shW:0)+1.0;let P=Math.max(blk+1.5,9);if(P*R.length>H)P=blk;
+    R.sort((a,b)=>padX(b.ph)-padX(a.ph));R.forEach((r,k)=>rowAt(r,k,top,P,fx,fRot,fh,shW));
+    const fR=Math.max(...R.map(r=>r.c.bb[2]));keepout.push([fR+0.2,term.bb[3]+0.2,rect[2]-edge,top]);
+    const planeBus=o.planes&&o.planes.has(bat);const busX1=fx-fw/2-0.4,busX0=busX1-Math.max(3,o.busW||4);if(!planeBus)keepout.push([busX0,yIn-1,busX1,top]);
+    const drv=placeDrv(busX0);
+    return{fixed,keepout,bus:planeBus?null:[busX0,rect[1],busX1,top],net:bat,fit:P*R.length<=H+0.01,planeBus,driver:drv?drv.ref:null};}
   // motor terminal: pads in a vertical line on the outer (right) edge of the zone
-  const tRot=bestRot(term,c=>{const xs=c.pads.map(p=>p.x),ys=c.pads.map(p=>p.y);return(Math.max(...ys)-Math.min(...ys))-(Math.max(...xs)-Math.min(...xs));});
+  // a right-angle connector (body beside its pins, e.g. the one ECU connector) turns its body — the mating face — to the board edge
+  const tRot=bestRot(term,c=>{const xs=c.pads.map(p=>p.x),ys=c.pads.map(p=>p.y);const px=xs.reduce((a,b)=>a+b,0)/xs.length;const bx=c.body&&c.body.cx!=null?c.body.cx:px;
+    return(Math.max(...ys)-Math.min(...ys))-(Math.max(...xs)-Math.min(...xs))+(bx-px);});
   const tw=term.bb[2]-term.bb[0];
   // FET orientation: battery away from the terminal, phase toward it, shunt node up
   const fRot=bestRot(R[0].c,c=>{const r=R[0];const b=cen(c,p=>p.net===r.bat),ph=cen(c,p=>p.net===r.ph),sn=cen(c,p=>p.net===r.sns);return(ph?ph[0]:0)-(b?b[0]:0)+(sn?sn[1]:0)*0.5;});
@@ -98,28 +148,23 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
   const blk=fh+(shW?0.9+shW:0)+1.0;let P=Math.max(blk+1.5,9);if(P*R.length>H)P=blk;
   const yc=top-P*R.length/2;pose(term,rect[2]-edge-tw/2,yc,tRot);fixed.push(term.ref);
   const pinY=ph=>{const p=term.pads.find(q=>q.net===ph);return p?p.y:yc;};R.sort((a,b)=>pinY(b.ph)-pinY(a.ph));
-  R.forEach((r,k)=>{const bTop=top-k*P;const yF=bTop-(shW?0.9+shW:0)-0.5-fh/2;pose(r.c,fx,yF,fRot);fixed.push(r.c.ref);
-    if(r.sh){const sn=r.c.pads.filter(p=>p.net===r.sns);const sx=sn.reduce((a,p)=>a+p.x,0)/sn.length;
-      // shunt horizontal right above the FET, its shunt-node pad over the FET's source pins, the GND end toward the terminal side
-      const left=o.planes&&o.planes.has(bat);let bs=null;[0,180].forEach(rot=>{canonical(B,r.sh);if(rot)PCBEDIT.rotate(B,r.sh,rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);const v=(a.x-r.sh.x)*(left?-1:1);if(a&&(!bs||v<bs.ax))bs={rot,ax:v};});
-      canonical(B,r.sh);if(bs.rot)PCBEDIT.rotate(B,r.sh,bs.rot);PCBEDIT.prepare(B);const a=r.sh.pads.find(p=>p.net===r.sns);
-      PCBEDIT.move(B,r.sh,sx-a.x,r.c.bb[3]+0.9-r.sh.bb[1]);PCBEDIT.prepare(B);fixed.push(r.sh.ref);
-      // Kelvin net tie of the sense amplifier's minus input (SNS → SNSM): on the shunt's ground pad, just above it
-      const tie=B.comps.find(c=>/^R/.test(c.ref)&&c.pads.length===2&&c.pads.some(p=>p.net===r.sns+'M')&&c.pads.some(p=>/GND/i.test(p.net||'')));
-      if(tie){const g=r.sh.pads.find(p=>p.net&&p.net!==r.sns);if(g){canonical(B,tie);PCBEDIT.prepare(B);const right=g.x>(r.sh.bb[0]+r.sh.bb[2])/2;
-        // in line with the shunt, beyond its ground end, ground pad toward the shunt
-        const tg0=tie.pads.find(p=>/GND/i.test(p.net||''));if((tg0.x>tie.x)===right){PCBEDIT.rotate(B,tie,180);PCBEDIT.prepare(B);}const tg=tie.pads.find(p=>/GND/i.test(p.net||''));
-        const x=right?r.sh.bb[2]+0.3-tie.bb[0]:r.sh.bb[0]-0.3-tie.bb[2];PCBEDIT.move(B,tie,x,g.y-tg.y);PCBEDIT.prepare(B);fixed.push(tie.ref);}}}});
+  R.forEach((r,k)=>rowAt(r,k,top,P,fx,fRot,fh,shW));
   // single-chip 3-phase gate driver (A4911 class): the IC whose pins reach the most gate-drive nets (driver side of the
   // gate resistors) sits beside the FET column, centred on it, gate pins toward the FETs — its 12 gate / bootstrap lines
   // stay short and do not have to cross the board. Per-phase drivers (IR2104: two drive nets each) keep the annealer.
-  let drv=null;{const gateNets=new Set();R.forEach(r=>r.c.pads.forEach(p=>{if(p.net&&p.net!==r.bat&&p.net!==r.ph&&p.net!==r.sns&&!/GND/i.test(p.net))gateNets.add(p.net);}));
-    const drvNets=new Set();B.comps.filter(c=>/^R/.test(c.ref)&&c.pads.length===2).forEach(c=>{const a=c.pads[0].net,b=c.pads[1].net;if(gateNets.has(a)&&b&&!gateNets.has(b)&&b!==bat)drvNets.add(b);else if(gateNets.has(b)&&a&&!gateNets.has(a)&&a!==bat)drvNets.add(a);});
-    const cand=B.comps.filter(c=>/^U/.test(c.ref)&&!fixed.includes(c.ref)).map(c=>({c,n:new Set(c.pads.filter(p=>drvNets.has(p.net)).map(p=>p.net)).size})).sort((a,b)=>b.n-a.n);
-    if(cand.length&&cand[0].n>=4&&(cand.length<2||cand[1].n<cand[0].n)){drv=cand[0].c;
-      const dRot=bestRot(drv,c=>{const g=cen(c,p=>drvNets.has(p.net));return g?g[0]:0;});const dw=drv.bb[2]-drv.bb[0];
-      const leftEdge=planeBus0()?Math.min(...R.map(r=>r.c.bb[0])):busX0;let x=leftEdge-(o.drvGap||6)-dw/2;if(x-dw/2<rect[0]+edge)x=rect[0]+edge+dw/2;
-      const ys=R.map(r=>(r.c.bb[1]+r.c.bb[3])/2);pose(drv,x,(Math.min(...ys)+Math.max(...ys))/2,dRot);fixed.push(drv.ref);}}
+  let drv=placeDrv(busX0);
+  // one connector for supply and load (ECU connector): the reverse-protection FET goes right beside the connector's supply
+  // contacts, supply pad toward them, when that spot is free — the supply copper is then a short wide strap
+  if(qin&&vin&&term.pads.some(p=>p.net===vin)){
+    // the connector's supply end goes to the zone boundary on its side (the bridge column keeps the other end)
+    {const ps=term.pads.filter(p=>p.net===vin);const py=ps.reduce((a,p)=>a+p.y,0)/ps.length,cy=(term.bb[1]+term.bb[3])/2;const dy=py<cy?rect[1]+edge-term.bb[1]:rect[3]-edge-term.bb[3];
+      const others=fixed.filter(x=>x!==term.ref&&x!==qin.ref).map(x=>B.comps.find(c=>c.ref===x)).filter(Boolean);const bb=[term.bb[0],term.bb[1]+dy,term.bb[2],term.bb[3]+dy];
+      if(!others.some(c=>bb[0]<c.bb[2]+0.5&&c.bb[0]<bb[2]+0.5&&bb[1]<c.bb[3]+0.5&&c.bb[1]<bb[3]+0.5)){PCBEDIT.move(B,term,0,dy);PCBEDIT.prepare(B);}}
+    const ps=term.pads.filter(p=>p.net===vin);const tx=Math.min(...ps.map(p=>p.x-p.w/2)),ty=ps.reduce((a,p)=>a+p.y,0)/ps.length;
+    const save={x:qin.x,y:qin.y,rot:qin.rot};const r=bestRot(qin,c=>{const a=cen(c,p=>p.net===vin),b=cen(c,p=>p.net===bat);return(a?a[0]:0)-(b?b[0]:0);});const w=qin.bb[2]-qin.bb[0];
+    pose(qin,tx-1.2-w/2,ty,r);const others=fixed.filter(x=>x!==qin.ref).map(x=>B.comps.find(c=>c.ref===x)).filter(Boolean);
+    const ok=qin.bb[0]>=rect[0]+edge&&qin.bb[1]>=rect[1]+edge&&qin.bb[3]<=rect[3]-edge&&!others.some(c=>qin.bb[0]<c.bb[2]+0.5&&c.bb[0]<qin.bb[2]+0.5&&qin.bb[1]<c.bb[3]+0.5&&c.bb[1]<qin.bb[3]+0.5);
+    if(!ok){canonical(B,qin);if(save.rot)PCBEDIT.rotate(B,qin,save.rot);PCBEDIT.prepare(B);PCBEDIT.move(B,qin,save.x-qin.x,save.y-qin.y);PCBEDIT.prepare(B);}}
   // mounting holes (unplated drills with their placement halo): a macro part that lands on one slides the shortest way
   // along x or y that keeps it inside the zone and off the other macro parts
   {const holes=B.drills.filter(d=>!d.plated&&!d.own&&!d._pad).map(d=>{const k=d.d/2+0.8;return[d.x-k,d.y-k,d.x+k,d.y+k];});

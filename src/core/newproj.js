@@ -33,7 +33,7 @@ const tvsFor=v=>v<=5.5?'SMAJ5.0A':v<=13?'SMAJ15A':v<=26?'SMAJ28A':'SMAJ58A';
 
 /* ---------- blocks ---------- */
 const LIB={
-  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'입력 TVS: 1 (서지) · loaddump (로드덤프 SMB, ISO 16750-2 중앙 억제 전제) · 0'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'},ign:{def:0,desc:'IGN(KL15) 입력 감지 — 분압 · 필터 · 클램프 → MCU 웨이크업 (1/0)'},uvlo:{def:'off',desc:'입력 저전압 차단: off · auto (12 V계 6.0 V 정지 / 7.0 V 재시작) · 정지 전압 V (재시작 = +1 V) — 1단 벅 EN 분압'},conn:{def:'sep',desc:'외부 커넥터: sep (전원 2핀 + IGN 2핀 따로) · combo (BAT · IGN · GND 3핀 하나, ign=1일 때)'}},
+  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'입력 TVS: 1 (서지) · loaddump (로드덤프 SMB, ISO 16750-2 중앙 억제 전제) · 0'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'},ign:{def:0,desc:'IGN(KL15) 입력 감지 — 분압 · 필터 · 클램프 → MCU 웨이크업 (1/0)'},uvlo:{def:'off',desc:'입력 저전압 차단: off · auto (12 V계 6.0 V 정지 / 7.0 V 재시작) · 정지 전압 V (재시작 = +1 V) — 1단 벅 EN 분압'},conn:{def:'sep',desc:'외부 커넥터: sep (전원 2핀 + IGN 2핀 따로) · combo (BAT · IGN · GND 3핀 하나, ign=1일 때) · ecu (차량용 ECU 커넥터 하나 — Molex MX150 방수 직각 헤더: 전원 · IGN · 부하 출력 · CAN을 한 커넥터로, 전류에 맞춰 핀 병렬)'}},
     build(ctx,p){const vin=+p.vin;const rail=railOf(vin);ctx.provide(rail,vin,'입력');const combo=+p.ign&&String(p.conn)==='combo';
       const inJ=(fp,o)=>combo?ctx.part('J','BAT/IGN/GND',fp.replace(/^TERM-2-/,'TERM-3-').replace(/^HDR-1x2$/,'HDR-1x3'),{1:'VIN_RAW',2:'IGN_IN',3:'GND'},Object.assign({},o,{desc:o.desc.replace(/전원 입력/,'전원 입력 커넥터 BAT(KL30) · IGN(KL15) · GND 3핀'),pinNames:{1:'BAT',2:'IGN',3:'GND'}})):ctx.part('J',`${vin}V 입력`,fp,{1:'VIN_RAW',2:'GND'},o);
       const mb=(ctx.plan&&ctx.plan.blocks||[]).filter(b=>b.type==='hbridge'||b.type==='gdrv3');const Im=mb.reduce((a,b)=>a+(+b.params.i||0),0);
@@ -285,6 +285,45 @@ const bigTerm=(I,Ipk)=>I>15||(+Ipk||0)>30;
 function peakOf(p,I){const v=p&&p.ipk;const mx=String(v||'').match(/^[x×]\s*(\d+(?:\.\d+)?)$/i);const Ipk=v==null||v==='auto'||v===''?I:mx?I*+mx[1]:Math.max(I,parseFloat(v)||I);return{Ipk,tpk:Math.max(0.01,+(p&&p.tpk)||2)};}
 function termFp(n,pitch){if(typeof PCB==='undefined'||!PCB.FP)return;pitch=pitch||5.08;const k=`TERM-${n}-${pitch.toFixed(2)}`;if(PCB.FP[k])return;const p=pitch,y0=(n-1)/2*p;const big=p>6;
   const f={kind:'hdr',body:[big?10:7.6,n*p+0.5,big?12:10],pads:Array.from({length:n},(_,i)=>({n:''+(i+1),x:0,y:+(y0-i*p).toFixed(3),w:big?4.2:3,h:big?4.2:3,round:true,drill:big?1.9:1.4})),gen:true};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP[k]=f;}
+/* one vehicle connector for the whole ECU: Molex MX150 sealed right-angle PCB header (2 rows, 3.50 mm mating pitch, 1.5 mm
+   terminals, max. steady-state 15 A per contact (Molex MX150 selection guide), IP67/IP69K, −40…125 °C, 14 V). The board's
+   separate external connectors (supply, IGN, load output, CAN) are folded into it; each power signal gets parallel contacts
+   so the continuous current stays ≤ 80 % of 15 A and the peak ≤ 15 A per contact. PCB footprint dimensions are assumed
+   (3.50 mm grid, 1.4 mm holes) — check against the Molex drawing of series 34830 before release. */
+const MX150={pitch:3.5,iMax:15,sizes:[4,6,8,12,16,20]};
+function mx150Fp(n){if(typeof PCB==='undefined'||!PCB.FP)return'MX150-2x'+n/2+'-RA';const k='MX150-2x'+n/2+'-RA';if(PCB.FP[k])return k;const c=n/2,p=MX150.pitch,D=22,W=c*p+8;
+  const pads=[];for(let r=0;r<2;r++)for(let i=0;i<c;i++)pads.push({n:''+(r*c+i+1),x:+((i-(c-1)/2)*p).toFixed(3),y:+(D/2-3-r*p).toFixed(3),w:2.3,h:2.3,round:true,drill:1.4});
+  const f={kind:'hdr',body:[W,D,14],pads,gen:true,note:'Molex MX150 방수 직각 헤더 (가정 치수 — 34830 도면 확인)'};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP[k]=f;return k;}
+function ecuConnector(plan,parts,curr,peak,warn){
+  const J=parts.filter(c=>/^J/.test(c.ref));const pick=f=>J.filter(f);
+  const inJ=pick(c=>Object.values(c.pins).includes('VIN_RAW')),ignJ=pick(c=>c.val==='IGN'),canJ=pick(c=>c.val==='CAN'&&Object.values(c.pins).includes('CANH'));
+  const ldB=new Set(plan.blocks.filter(b=>/^(hbridge|gdrv3|dcmotor|bldc)$/.test(b.type)).map(b=>b.id));const outJ=pick(c=>ldB.has(c.block));
+  if(!inJ.length){warn.push('ECU 커넥터: 전원 입력 커넥터가 없어 합치지 않았습니다');return;}
+  const need=(net)=>{const I=+curr[net]||0,pk=peak[net]?+peak[net].I:I;return Math.max(1,Math.ceil(I/(MX150.iMax*0.8)),Math.ceil(pk/MX150.iMax));};
+  const sig=[];const add=(name,net)=>{if(net&&!sig.some(s=>s.net===net))sig.push({name,net,n:need(net)});};
+  add('BAT','VIN_RAW');add('GND','GND');
+  outJ.forEach(c=>Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>add((c.pinNames&&c.pinNames[k])||c.val+k,c.pins[k])));
+  if(Object.values(inJ[0].pins).includes('IGN_IN')||ignJ.length)add('IGN','IGN_IN');
+  if(canJ.length){add('CAN_H','CANH');add('CAN_L','CANL');}
+  // contacts by column (inner row + outer row): a power signal with parallel contacts takes whole columns, so its copper enters
+  // on the inner pad and the outer pad hangs on it — no other net between them. Single contacts pair up; CAN_H / CAN_L share one column.
+  sig.forEach(s=>{if(s.n>1&&s.n%2)s.n++;});
+  // column order from one end: supply and ground, the small signals, then the load outputs at the far end (the power stage sits there)
+  const cols=[];const whole=s=>{for(let i=0;i<s.n/2;i++)cols.push([s,s]);};const isLoad=s=>!/^(VIN_RAW|GND)$/.test(s.net);
+  sig.filter(s=>s.n>1&&!isLoad(s)).forEach(whole);
+  const can=sig.filter(s=>s.n===1&&/^CAN/.test(s.net)),one=sig.filter(s=>s.n===1&&!/^CAN/.test(s.net));if(one.length%2)one.push(null);
+  for(let i=0;i<one.length;i+=2)cols.push([one[i],one[i+1]]);if(can.length===2)cols.push([can[0],can[1]]);else can.forEach(c=>cols.push([c,null]));
+  sig.filter(s=>s.n>1&&isLoad(s)).forEach(whole);
+  const n=MX150.sizes.find(v=>v>=cols.length*2);if(!n){warn.push(`ECU 커넥터: 접점 ${cols.length*2}개 — MX150 20핀을 넘어 합치지 않았습니다`);return;}
+  while(cols.length<n/2)cols.push([null,null]);const c2=n/2;
+  const pins={},names={};cols.forEach((cl,i)=>{[0,1].forEach(r=>{const k=r*c2+i+1,s=cl[r];names[k]=s?s.name:'NC';if(s)pins[k]=s.net;});});
+  const fp=mx150Fp(n);const all=inJ.concat(ignJ,canJ,outJ);const blk=inJ[0].block;
+  const at=parts.indexOf(inJ[0]);for(const c of all){const i=parts.indexOf(c);if(i>=0)parts.splice(i,1);}
+  const I0=+curr.VIN_RAW||0,pk0=peak.VIN_RAW?+peak.VIN_RAW.I:I0;
+  parts.splice(Math.max(0,Math.min(at,parts.length)),0,{ref:'J1',val:'ECU',fp,pins,mpn:'034830'+String(n).padStart(2,'0')+'01',desc:`ECU 커넥터 Molex MX150 방수 직각 헤더 2열 ${n}핀 (34830 계열 · 품번은 계열 규칙으로 추정 · 3.50 mm · 접점당 최대 15 A · IP67/IP69K) — ${sig.map(s=>s.name+(s.n>1?'×'+s.n:'')).join(' · ')} · 상대 커넥터 MX150 리셉터클 33472-${String(n).padStart(2,'0')}xx · 품번 · 풋프린트 치수는 Molex 도면으로 확인`,pinNames:names,block:blk,P:0,mcu:false});
+  // keep reference designators compact: J1 = ECU connector, the rest renumbered
+  let m=1;parts.filter(c=>/^J/.test(c.ref)&&c.val!=='ECU').forEach(c=>{m++;c.ref='J'+m;});
+  warn.push(`ECU 커넥터: 외부 커넥터 ${all.length}개를 MX150 ${n}핀 하나로 — 핀 ${sig.map(s=>s.name+(s.n>1?'×'+s.n:'')).join(', ')} (BAT 상시 ${I0} A${pk0>I0?' · 피크 '+pk0+' A':''} → 접점 ${need('VIN_RAW')}개 병렬)`);}
 /* two-FET packages in Infineon PG-TDSON-8 (5 × 6 mm), pinout from the datasheets (page 1 pin diagram):
    IAUC60N04S6N050H half-bridge — 1 G(HS) · 2,3 Phase · 4 G(LS) · 5,6 ground (LS source) · 7,8 battery (HS drain); pads 9 = battery, 10 = phase
    IPG20N04S4L-07 dual (independent) — 1 S1 · 2 G1 · 3 S2 · 4 G2 · 5,6 D2 · 7,8 D1; pads 9 = D1, 10 = D2 → FET1 high side, FET2 low side */
@@ -411,6 +450,7 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
   // power first (rails), then MCU, then the rest
   const order=['pwr_in','usb_in','buck','ldo','mcu','xtal'];const bl=plan.blocks.slice().sort((a,b)=>{const i=order.indexOf(a.type),j=order.indexOf(b.type);return(i<0?9:i)-(j<0?9:j);});
   bl.forEach(b=>{ctx._b=b.id;try{LIB[b.type].build(ctx,b.params);}catch(e){warn.push(`${b.id}: ${e.message}`);}});
+  {const pi=plan.blocks.find(b=>b.type==='pwr_in');if(pi&&String(pi.params&&pi.params.conn)==='ecu')ecuConnector(plan,parts,curr,peak,warn);}
   // rails used but never produced
   used.forEach(r=>{if(r!=='GND'&&r!=='VDD'&&!rails[r])warn.push(`${r} 레일을 만드는 블록이 없음 (예: add ldo --vout ${r==='+5V'?5:3.3})`);});
   // LDO checks: headroom and dissipation from the loads on its rail
