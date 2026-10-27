@@ -19,6 +19,7 @@ const NP_HELP=[
   ['link <A> <B> "<신호/레일>" [--kind power|signal|bus] [--both] · unlink <A> <B>','블록 사이 인터페이스 (화살표와 라벨)'],
   ['impl <ID> <회로블록|none> [--파라미터 값] [--swap <기존블록>] · impl <ID> part <MPN> [--pins SI=SPI_MOSI,…]','HW 블록을 구현할 회로 라이브러리 블록 (2단계 부품 선정용). part <MPN>이면 부품 라이브러리/Claude 추정 핀 배열로 그 부품을 직접 넣음(전원·접지 자동, SPI/I²C/UART/IRQ 핀은 MCU 배정). 블록에 이미 부품·주 구현(bldc, can …)이 있으면 그것을 바꿈(--add 이면 추가). --swap 이면 기존 구현을 바꿈'],
   ['datasheet <MPN> [--pkg SOIC] [--pins 14]','데이터시트 PDF(.pdf/.txt)를 올려 핀 표를 읽고 라이브러리(출처: 데이터시트)에 저장 — 그 부품을 쓰는 블록은 impl … part로 다시 연결. 표가 여럿이면 패키지를 고르고, AI 모드에서는 규칙이 확실하지 않을 때 Claude가 판독'],
+  ['safety thr','안전 메커니즘의 HW 진단 임계값을 부품 공차(초기 · 온도 계수 · ADC · 기준 전압 · 비교기 오차)로 계산 — VBAT · NTC · 상전류 · Σi · 과전류(OCT) · VDS · 전원 감시 · 워치독 · UVLO · IGN (최악 조합 EVA + RSS)'],
   ['safety map [sg|block]','안전 메커니즘을 안전 목표(SG)별 · 블록별로 보기 — 센서 범위·타당성, 리던던시 비교, 상전류 감시, 드라이버 진단, MCU HW/SW, 차단 경로, 검출+반응 시간 vs FTTI, 블록 DC (다이어그램의 [안전 메커니즘] 탭, 엑셀 저장)'],
   ['sg [list] · sg defaults · sg add "<목표>" --asil D --ftti 50 --kind actuation|loss|thermal|hv|data --state "<안전 상태>" --path mcu,gate · sg del SG2 · sg tag <블록> SG1 [--off] · sg variants · sg apply single|dual|decomp · sg verify','안전 목표(SG) 기반 아키텍처: 목표마다 위반 경로 블록·링크에 SG 태그, 구조 변형 3안(단일 MCU+외부 감시 · 메인+세이프티 MCU · ASIL 분해 2채널)을 DC·FTTI·부품·원가로 비교, 규칙으로 검증(감지·독립 차단 경로·FTTI·독립성·공통 원인)'],
   ['safety level <QM|A|B|C|D> [--goal "…"] · safety block <ID> <등급|auto> · safety apply [all|sw|uv wdt_ext drv_fb sbc cutoff2 …] · safety sw · safety ffi · safety','기능 안전: 시스템/블록 ASIL, 등급별 권장 HW 메커니즘 블록(전원 감시·외부 워치독·fault 리드백·SBC·이중 차단·리던던트 센서·2채널)과 SW 메커니즘(흐름 감시·BIST·범위 검사·메모리·클럭·ADC·E2E·리드백·타당성·HW 주기 테스트·파티셔닝 — MCU 블록에 기록), HW 부품마다 필요한 SW, FFI 경계, 상태'],
@@ -117,6 +118,7 @@ async function npRun(line,by){
       if(sub==='goal'){npPush();const g=a._.slice(1).join(' ');if(a.clear)A.safety.goals=[];else if(g)A.safety.goals.push(g);npRender();return'안전 목표: '+(A.safety.goals.join(' / ')||'(없음)');}
       if(sub==='block'){npPush();const b=HWARCH.find(A,a._[1]);const lv=String(a._[2]||'').toUpperCase();if(lv==='-'||lv==='NONE'||lv==='AUTO')delete b.asil;else{if(!SAFETY.LEVELS.includes(lv))throw new Error('safety block <ID> <QM|A|B|C|D|auto>');b.asil=lv;}npRender();return`${b.id} ${b.label}: ASIL ${SAFETY.blockLevel(A,b)}${b.asil?'':' (시스템 등급 상속)'}`;}
       if(sub==='apply'){npPush();const ids=a._.length>1&&a._[1]!=='all'?a._.slice(1):'all';const added=SAFETY.apply(A,HWARCH,ids);NP.planManual=false;archToPlan(true);npRender();const hw=added.filter(b=>!b.sw),sw=added.filter(b=>b.sw);return added.length?`${hw.length?`HW 메커니즘 블록 ${hw.length}개 추가: ${hw.map(b=>`${b.id} "${b.label}"${(b.impl||[]).length?' ⇒ '+b.impl.map(i=>i.type).join('+'):' (회로 블록 없음 — 2단계에서 직접)'}`).join(', ')}`:''}${sw.length?`${hw.length?'\n':''}SW 메커니즘 ${sw.length}개를 MCU 블록에 기록: ${sw.map(b=>b.label).join(' · ')}`:''}\n`+SAFETY.archText(A):'추가할 메커니즘이 없습니다 (이미 모두 있음).';}
+      if(sub==='thr'||sub==='threshold'||sub==='thresholds'){const R=sysSafetyModel();const T=sysThrModel(R);if(!T)return'회로가 없습니다.';SYS.view='safety';SYS.smode='thr';if(typeof sysRender==='function')sysRender();return DIAGTHR.text(T);}
       if(sub==='map'||sub==='mech'||sub==='mechanisms'){const R=sysSafetyModel();if(!R)return'블록 다이어그램이 없습니다.';SYS.view='safety';SYS.smode=/block|블록/.test(a._[1]||'')?'block':'sg';if(typeof sysRender==='function')sysRender();return SAFEMECH.text(R);}
       if(sub==='sw'){const SW=SAFETY.swMechanisms(A);const N=SAFETY.hwNeeds(A);return`SW 메커니즘 (ASIL ${SAFETY.level(A)} 기준 ${SW.length}개)\n`+SW.map(m=>`${m.present?'✓':'○'} [${m.min}+] ${m.label} — ${m.desc}`).join('\n')+(N.length?'\n\nHW 부품이 등급을 내려면 필요한 SW:\n'+N.map(n=>`• ${n.label} (${n.block}): ${n.needs}`).join('\n'):'');}
       if(sub==='ffi'){const F=SAFETY.boundaries(A);return F.length?F.map(f=>f.msg).join('\n'):'ASIL이 다른 블록 사이의 인터페이스(FFI 경계)가 없습니다.';}
@@ -495,10 +497,12 @@ function sysRender(){if(typeof POPS!=='undefined'&&[...POPS].some(C=>C.kind==='s
     $('#sysSrc').textContent=`${M.from==='plan'?'회로 계획':'보드'} · 레일 ${Object.keys(M.rails).length} · 레귤레이터·스위치 ${M.edges.length} · 입력 약 ${M.Pin} W · 손실 ${M.loss} W (전형값 추정)`;}
   else if(SYS.view==='safety'){const R=sysSafetyModel();
     if(!R){host.innerHTML='<p class="lead" style="padding:20px">HW 블록 다이어그램이 없습니다. 요구사항으로 블록 다이어그램을 먼저 만드세요.</p>';return;}
-    const sm=SYS.smode==='block'?'block':'sg';host.innerHTML=`<div class="seg sm-mode" role="tablist" aria-label="안전 메커니즘 보기" style="display:inline-flex;margin:0 0 10px"><button role="tab" data-smv="sg" aria-selected="${sm==='sg'}">SG별</button><button role="tab" data-smv="block" aria-selected="${sm==='block'}">블록별</button></div>`+SAFEMECH.html(R,{mode:sm,product:NP.arch&&NP.arch.product||''});
+    const sm=SYS.smode==='block'?'block':SYS.smode==='thr'?'thr':'sg';const T=sm==='thr'?sysThrModel(R):null;
+    host.innerHTML=`<div class="seg sm-mode" role="tablist" aria-label="안전 메커니즘 보기" style="display:inline-flex;margin:0 0 10px"><button role="tab" data-smv="sg" aria-selected="${sm==='sg'}">SG별</button><button role="tab" data-smv="block" aria-selected="${sm==='block'}">블록별</button><button role="tab" data-smv="thr" aria-selected="${sm==='thr'}">진단 임계값</button></div>`+(sm==='thr'?(T?SAFEMECH.CSS+DIAGTHR.html(T):'<p class="lead">회로가 없습니다 — 회로 계획이나 보드가 있어야 부품 공차로 임계값을 계산합니다.</p>'):SAFEMECH.html(R,{mode:sm,product:NP.arch&&NP.arch.product||''}));
+    host.querySelectorAll('[data-dta]').forEach(i=>i.addEventListener('change',()=>{const k=i.dataset.dta,v=String(i.value).trim();SYS.dta=SYS.dta||{};if(k==='vop'||k==='ntc'){const a=v.split(/[^\d.]+/).map(Number).filter(x=>isFinite(x)&&x>0);if(a.length>=2)SYS.dta[k]=a.slice(0,2);}else if(isFinite(+v))SYS.dta[k]=+v;sysRender();}));
     host.querySelectorAll('[data-smv]').forEach(b=>b.addEventListener('click',()=>{SYS.smode=b.dataset.smv;sysRender();}));
     $('#sysTitle').textContent=((NP.arch&&NP.arch.name)||'시스템')+' · 안전 메커니즘';
-    $('#sysSrc').textContent=R.sgs.length?`안전 목표 ${R.sgs.length} · 충족 ${R.sgs.filter(g=>g.ok).length} · 점검 ${R.sgs.reduce((n,g)=>n+g.issues.length,0)}건 · DC·시간은 ISO 26262-5 전형값 추정`:'안전 목표 없음';}
+    $('#sysSrc').textContent=sm==='thr'&&T?`진단 임계값 ${T.rows.length}개 · 점검 ${T.rows.filter(r=>!r.ok).length} · 부품 공차 최악 조합(EVA) — 출처 "가정"은 데이터시트로 확인`:R.sgs.length?`안전 목표 ${R.sgs.length} · 충족 ${R.sgs.filter(g=>g.ok).length} · 점검 ${R.sgs.reduce((n,g)=>n+g.issues.length,0)}건 · DC·시간은 ISO 26262-5 전형값 추정`:'안전 목표 없음';}
   else{const D=sysDiagram();
     if(!D){host.innerHTML='<p class="lead" style="padding:20px">회로 계획이나 보드가 없습니다.</p>';return;}
     if(SYS.sel&&!D.nodes.some(n=>n.id===SYS.sel))SYS.sel=null;host.innerHTML=SYSDIAG.svg(D,{sel:SYS.sel});
@@ -512,6 +516,13 @@ function sysSafetyModel(){if(typeof SAFEMECH==='undefined')return null;const A=N
   if(NP.plan&&NP.plan.blocks&&NP.plan.blocks.length){try{parts=NEWPROJ.build(NP.plan).parts;}catch(e){parts=[];}}
   else if(BD&&BD.comps)parts=BD.comps.map(c=>({val:c.val,mpn:c.mpn,desc:c.desc,pins:Object.fromEntries(c.pads.map((p,i)=>[p.n||i,p.net]))}));
   return SAFEMECH.map(A,parts);}
+/* HW diagnostic thresholds of the current circuit: parts (plan built, or the board) + the motor currents + the shortest FTTI */
+function sysThrModel(R){if(typeof DIAGTHR==='undefined')return null;let parts=[];
+  if(NP.plan&&NP.plan.blocks&&NP.plan.blocks.length){try{parts=NEWPROJ.build(NP.plan).parts;}catch(e){parts=[];}}
+  else if(BD&&BD.comps)parts=BD.comps.map(c=>({ref:c.ref,val:c.val,mpn:c.mpn,desc:c.desc,lk:c.lk,pins:Object.fromEntries(c.pads.map((p,i)=>[p.n||i,p.net]))}));
+  if(!parts.length)return null;const mb=NP.plan&&(NP.plan.blocks||[]).find(b=>/^(gdrv3|hbridge)$/.test(b.type));let I=+(BD&&BD.lossI0)||10,Ipk=+(BD&&BD.lossIpk)||I,tpk=+(BD&&BD.lossTpk)||2;
+  if(mb){I=+mb.params.i||I;const pk=NEWPROJ.peakOf(mb.params,I);Ipk=pk.Ipk;tpk=pk.tpk;}
+  const ft=(R&&R.sgs||[]).map(g=>+g.ftti).filter(x=>x>0);return DIAGTHR.compute(parts,{I,Ipk,tpk,ftti:ft.length?Math.min(...ft):null,assume:SYS.dta||{}});}
 /* power topology of the current design: the board when there is one, otherwise the board generated from the plan (not placed) */
 function sysPowerModel(){if(typeof POWERTOPO==='undefined')return null;let B=BD&&!BD.blank&&BD.comps&&BD.comps.length?BD:null,from='board';
   // a board that is not this plan's (an example left open while designing a new one) must not stand in for the plan — same rule as the parts view
@@ -590,7 +601,7 @@ $('#sysFromBoard').addEventListener('click',()=>{if(!BD){toast('불러온 보드
   else{SYS.src=SYS.src==='board'&&NP.plan&&NP.plan.blocks.length?'plan':'board';SYS.sel=null;sysRender();}});
 $('#arAdd').addEventListener('click',()=>{const l=$('#arLabel').value.trim();if(!l){$('#arLabel').focus();return;}npExec(`block ${$('#arGroup').value} "${l.replace(/"/g,'')}"`);$('#arLabel').value='';});
 $('#arGroup').innerHTML=HWARCH.GROUPS.map(g=>`<option value="${g[0]}">${g[1]}</option>`).join('');
-$('#sysSvgDl').addEventListener('click',async()=>{if(SYS.view==='safety'){const R=sysSafetyModel();if(!R||!R.sgs.length)return toast('안전 목표가 없습니다.');return exportXlsx([{name:'SG별 메커니즘',aoa:SAFEMECH.aoaSg(R)},{name:'블록×SG',aoa:SAFEMECH.aoaBlock(R)}],String((NP.arch&&NP.arch.name)||'system').replace(/[^\w\-]+/g,'_')+'_safety_mechanisms.xlsx','안전 메커니즘 표를 엑셀로 내려받았습니다.');}
+$('#sysSvgDl').addEventListener('click',async()=>{if(SYS.view==='safety'){const R=sysSafetyModel();if(!R||!R.sgs.length)return toast('안전 목표가 없습니다.');const T=sysThrModel(R);return exportXlsx([{name:'SG별 메커니즘',aoa:SAFEMECH.aoaSg(R)},{name:'블록×SG',aoa:SAFEMECH.aoaBlock(R)}].concat(T?[{name:'진단 임계값',aoa:DIAGTHR.aoa(T)}]:[]),String((NP.arch&&NP.arch.name)||'system').replace(/[^\w\-]+/g,'_')+'_safety_mechanisms.xlsx','안전 메커니즘 표를 엑셀로 내려받았습니다.');}
   const svgS=SYS.view==='hw'?(SYS.A&&HWARCH.svg(SYS.A)):(SYS.D&&SYSDIAG.svg(SYS.D));if(!svgS)return;const svg=svgS.replace('<svg ','<svg style="color:#1d2126;background:#fff;--surface:#fff;--raised:#fff" ');
   const nm=SYS.view==='hw'?SYS.A.name:SYS.D.name;const fn=await offerFile(String(nm||'system').replace(/[^\w\-]+/g,'_')+(SYS.view==='hw'?'_hw_block.svg':'_parts.svg'),new TextEncoder().encode(svg),'image/svg+xml');if(fn)toast('다이어그램을 SVG로 내려받았습니다.');});
 

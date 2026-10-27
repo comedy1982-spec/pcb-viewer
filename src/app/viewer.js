@@ -718,7 +718,10 @@ $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImp
 const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC],tc364:['AURIX TC364 핀 추천',()=>SAMPLE_TC364]};
 /* a placed + routed example kept as a snapshot: the board is generated from its product profile, then the layout restored */
 function boardFromSnap(S){const m=S.meta;const prof=PRODUCTS.detect(m.profile);const ans={cur:m.cur};const fq=prof.questions.find(q=>q.key==='fet');if(fq)ans.fet=fq.options[m.fet||0].label;
-  const R=PRODUCTS.apply(prof,ans,m.profile);const plan=HWARCH.toPlan(R.arch).plan;const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'},m.gdrv3||{});plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
+  const R=PRODUCTS.apply(prof,ans,m.profile);
+  // the snapshot's motor-stage settings go into the diagram too, so a later edit that regenerates the plan keeps them
+  (R.arch.blocks||[]).forEach(b=>(b.impl||[]).forEach(im=>{if(im.type==='gdrv3')im.params=Object.assign({},im.params,{driver:m.driver||'IR2104'},m.gdrv3||{});}));
+  const plan=HWARCH.toPlan(R.arch).plan;const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'},m.gdrv3||{});plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
   const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+m.profile.toLowerCase()+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch:R.arch};}
 const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C],dadu8d:['Dadu A4911 상시 10 A · 피크 40 A · 90 × 60',()=>SNAP_DADU8D]};
 function loadSnapExample(which){const r=boardFromSnap(SNAP_EXAMPLES[which][1]());

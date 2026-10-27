@@ -110,3 +110,21 @@ test('Dadu A4911 10 A / 40 A example snapshot restores: DRC 0, nothing left unco
   assert.ok(B.powerReport.nets.filter(n => n.width !== '직결').every(n => n.width >= n.need));assert.equal(B.powerReport.nets[0].need, 4.44);
   assert.ok((B.powerReport.viaChk || []).every(v => v.ok));
 });
+test('diagnostic thresholds from part tolerances (Dadu A4911 10 A / 40 A): EVA bands, recommended thresholds, findings', () => {
+  const { DIAGTHR } = load();
+  const R = PRODUCTS.apply(PRODUCTS.detect('Dadu'), { cur: '~10 A (소형 팬 · 펌프)' }, 'Dadu');const plan = HWARCH.toPlan(R.arch).plan;
+  plan.blocks.filter(b => b.type === 'gdrv3').forEach(b => Object.assign(b.params, { driver: 'A4911', ipk: 40, tpk: 2 }));
+  const pin = plan.blocks.find(b => b.type === 'pwr_in');pin.params.ign = 1;pin.params.uvlo = 'auto';
+  const parts = NEWPROJ.build(plan).parts;const T = DIAGTHR.compute(parts, { I: 10, Ipk: 40, tpk: 2, ftti: 100 });
+  const by = id => T.rows.find(r => r.mech === id);
+  ['vbat_rng', 'ntc_derate', 'ntc_range', 'cur_range', 'cur_sum', 'cur_ocp', 'cur_vds', 'sbc_uv', 'sbc_wdt', 'pin_uvlo', 'pin_ign', 'drv_uv'].forEach(id => assert.ok(by(id), id));
+  // worst-case corners: a ratio of two 1 % resistors spans about ±2 %
+  const e = DIAGTHR.eva([{ nom: 100, lo: 99, hi: 101 }, { nom: 22, lo: 21.78, hi: 22.22 }], ([a, b]) => b / (a + b));assert.ok(e.hi / e.nom - 1 > 0.015 && e.hi / e.nom - 1 < 0.02 && e.rssHi < e.hi);
+  assert.match(by('cur_ocp').thr, /OCT = 3/);                       // 1.2 V / (1 mΩ · 20) = 60 A nominal, minimum above the 40 A peak
+  assert.match(by('cur_range').thr, /SW 과전류 4[4-6]\./);
+  assert.ok(!by('sbc_wdt').ok, '1.1–2.3 s watchdog cannot act inside a 100 ms FTTI');
+  assert.ok(!by('vbat_rng').ok && /16kΩ/.test(by('vbat_rng').advice), 'OV detection reaches the ADC full scale → smaller bottom resistor');
+  assert.ok(!by('pin_ign').ok && /24kΩ/.test(by('pin_ign').advice), 'IGN on not guaranteed at 9 V → smaller top resistor');
+  assert.ok(by('pin_uvlo').ok && /재시작 6\.4–7\.66 V/.test(by('pin_uvlo').detect));
+  assert.equal(DIAGTHR.aoa(T)[0][0], '메커니즘');
+});

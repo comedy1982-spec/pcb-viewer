@@ -161,6 +161,6 @@ function html(R,o){o=o||{};if(!R.sgs.length)return`${CSS}<div class="sm"><p>안�
   return`${CSS}<div class="sm">${legend()}${R.sgs.map(g=>`<section class="sm-sg"><div class="sm-sgh"><b>${h(g.id)} ${h(g.text)}</b><span class="sm-tag">ASIL ${h(g.asil)}</span><span class="sm-tag">FTTI ${g.ftti} ms</span><span class="sm-tag ${g.total!=null&&g.total<=g.ftti?'sm-ok':'sm-bad'}">검출 ${ms_(g.tdet)} + 반응 ${ms_(g.tact)} ${g.total!=null&&g.total<=g.ftti?'≤':'>'} FTTI</span><span class="sm-tag ${g.ok?'sm-ok':'sm-bad'}">${g.ok?'충족':'점검 '+g.issues.length}</span><span class="sm-st">→ ${h(g.state)}</span></div>
     <div class="sm-flow">${[0,1,2].map(s=>`<div class="sm-col"><h4>${COLS[s]}</h4>${g.blocks.filter(b=>b.stage===s).map(b=>`<div class="sm-blk${b.gap||b.need||b.low?' sm-gap':''}"><div class="sm-bt">${h(b.label)}<span>${h(b.roleLabel)}${b.dc?` · DC ${b.dc}%`:''}</span></div><ul>${b.mechs.map(mli).join('')||'<li class="sm-st sm-need">메커니즘 없음</li>'}</ul></div>`).join('')||'<div class="sm-st">—</div>'}</div>`).join('')}</div>
     ${g.issues.length?`<ul class="sm-foot">${g.issues.map(i=>`<li>⚠ ${h(i)}</li>`).join('')}</ul>`:''}</section>`).join('')}</div>`;}
-return{CATS,ROLES,M,roleOf,facts,map,text,html,aoaSg,aoaBlock};
+return{CATS,ROLES,M,roleOf,facts,map,text,html,aoaSg,aoaBlock,CSS};
 })();
 if(typeof module!=='undefined')module.exports=SAFEMECH;
