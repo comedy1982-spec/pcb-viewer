@@ -580,6 +580,9 @@ function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,min
     const hx=p.w/2-o.via.d/2-0.1,hy=p.h/2-o.via.d/2-0.1;if(hx<0||hy<0)return;const nx=Math.max(1,Math.floor(2*hx/o.pitch)+1),ny=Math.max(1,Math.floor(2*hy/o.pitch)+1);
     for(let i=0;i<nx;i++)for(let j=0;j<ny;j++){const u=nx>1?-hx+2*hx*i/(nx-1):0,v=ny>1?-hy+2*hy*j/(ny-1):0;const x=p.x+u*ca-v*sa,y=p.y+u*sa+v*ca;
       const ci=Math.round((x-G.ox)/G.g),cj=Math.round((y-G.oy)/G.g);if(ci<0||cj<0||ci>=G.nx||cj>=G.ny)continue;const idx=cj*G.nx+ci;
+      // a smaller fan-out via of the same net already in the pad: make it the power via (same spot, the trace ending on it stays connected)
+      const up=B.vias.find(q=>q.net===p.net&&!q.inpad&&(q.drill||0)<o.via.drill&&Math.hypot(q.x-x,q.y-y)<o.via.d+0.15&&Math.abs((q.x-p.x)*ca+(q.y-p.y)*sa)<=hx+1e-6&&Math.abs(-(q.x-p.x)*sa+(q.y-p.y)*ca)<=hy+1e-6);
+      if(up){if(!B.vias.some(q=>q!==up&&q.net!==p.net&&Math.hypot(q.x-up.x,q.y-up.y)<(q.d||0.45)/2+o.via.d/2+0.15)){up.d=o.via.d;up.drill=o.via.drill;up.inpad=true;n++;}continue;}
       if(G.occV.some((arr,l)=>arr[idx]!==0&&arr[idx]!==k))continue;if(B.vias.some(q=>Math.hypot(q.x-x,q.y-y)<o.via.d+0.15))continue;
       B.vias.push({x:+x.toFixed(3),y:+y.toFixed(3),d:o.via.d,drill:o.via.drill,net:p.net,stitch:true,inpad:true});n++;}}));
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}

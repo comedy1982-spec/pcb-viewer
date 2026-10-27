@@ -128,3 +128,38 @@ test('diagnostic thresholds from part tolerances (Dadu A4911 10 A / 40 A): EVA b
   assert.ok(by('pin_uvlo').ok && /재시작 6\.4–7\.66 V/.test(by('pin_uvlo').detect));
   assert.equal(DIAGTHR.aoa(T)[0][0], '메커니즘');
 });
+test('ELD only (Dadu based): 12 V BAT/IGN/GND 3-pin input, A4911 on two legs as an H-bridge for a 7 A / 20 A solenoid, ELD 2-pin output, NTC only', () => {
+  const { SGARCH, SAFEMECH, DIAGTHR } = load();
+  const prof = PRODUCTS.detect('eld only라는 제품, dadu기반');
+  assert.equal(prof.key, 'eld');
+  const R = PRODUCTS.apply(prof, {}, 'ELD');
+  assert.deepEqual(HWARCH.check(R.arch), []);
+  const T = HWARCH.toPlan(R.arch);assert.deepEqual(T.unmapped, []);
+  const types = T.plan.blocks.map(b => b.type);
+  assert.ok(!types.includes('gdrv3') && types.includes('hbridge') && types.includes('ntc') && types.includes('can'));
+  assert.ok(!R.arch.blocks.some(b => /hall/i.test(b.id)), 'no hall / sensor supply');
+  const hb = T.plan.blocks.find(b => b.type === 'hbridge').params;assert.equal(+hb.i, 7);assert.equal(+hb.ipk, 20);assert.equal(hb.driver, 'A4911');
+  const B = NEWPROJ.build(T.plan);
+  const J = B.parts.filter(p => /^J/.test(p.ref));
+  const jin = J.find(p => p.val === 'BAT/IGN/GND');assert.deepEqual(jin.pins, { 1: 'VIN_RAW', 2: 'IGN_IN', 3: 'GND' });
+  assert.ok(!J.some(p => p.val === 'IGN'), 'IGN is on the 3-pin connector, no separate header');
+  const jo = J.find(p => p.val === 'ELD');assert.equal(Object.keys(jo.pins).length, 2);assert.equal(jo.pinNames[1], 'ELD+');
+  const u = B.parts.find(p => p.val === 'A4911');const pin = nm => u.pins[Object.keys(u.pinNames).find(k => u.pinNames[k] === nm)];
+  assert.equal(pin('SA'), 'HB_A');assert.equal(pin('SB'), 'HB_B');assert.equal(pin('SC'), 'GND');assert.equal(pin('HC'), 'GND');assert.ok(!pin('GHC'), 'unused gate output open');
+  assert.equal(B.parts.filter(p => /^Q/.test(p.ref) && p.lk !== 'batt').length, 4);
+  assert.equal(B.parts.filter(p => /션트/.test(p.desc || '') && /mΩ/.test(p.val)).length, 2);
+  assert.ok(!B.parts.some(p => /IR2104|INA181/.test(p.val)));
+  const A = R.arch;SGARCH.setGoals(A, SGARCH.defaults('eld'));const M = SAFEMECH.map(A, B.parts);
+  assert.equal(M.K.driver, 'A4911');assert.ok(!M.sgs.some(g => g.blocks.some(b => b.mechs.some(m => m.id === 'cur_sum'))));assert.ok(M.sgs.every(g => g.ok));
+  const D = DIAGTHR.compute(B.parts, { I: 7, Ipk: 20, tpk: 2, ftti: 100 });const ids = D.rows.map(r => r.mech);
+  ['cur_range', 'cur_ocp', 'cur_vds', 'ntc_derate', 'pin_ign'].forEach(id => assert.ok(ids.includes(id), id));assert.ok(!ids.includes('cur_sum'), 'no 3-phase sum on an H-bridge');
+});
+test('ELD only A4911 H-bridge example snapshot restores: DRC 0, nothing unconnected, copper and vias rated for 7 A / 20 A', () => {
+  const L = load();const { BOARDSNAP, PCBEDIT } = L;const S = L.SNAP_ELD6;const m = S.meta;
+  const prof = PRODUCTS.detect(m.profile);assert.equal(prof.key, 'eld');const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[m.fet || 0].label;
+  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };plan.name = m.name;
+  const { B } = NEWPROJ.toBoard(plan, { place: false });const r = BOARDSNAP.apply(B, S);
+  assert.equal(r.missing.length, 0);assert.equal(PCBEDIT.drc(B).length, 0);assert.equal(PCBEDIT.ratsnest(B).length, 0);
+  assert.ok(B.powerReport.nets.filter(n => n.width !== '직결').every(n => n.width >= n.need));
+  assert.ok((B.powerReport.viaChk || []).every(v => v.ok));
+});

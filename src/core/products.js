@@ -186,6 +186,45 @@ T.dadu={key:'dadu',name:'Dadu ECU (12 V BLDC 구동)',re:/dadu|다두/i,
     {key:'temp',block:'ptemp',q:'PCB 온도 센서 위치·개수는?',why:'NTC 수와 MCU ADC 채널이 정해집니다.',re:/ntc\s*\d|온도\s*센서\s*\d/i,
       options:[{label:'1개 — MOSFET 브리지 근처',effect:{}},
                {label:'2개 — MOSFET 브리지 + MCU/PMIC 근처',effect:{impl:{id:'ptemp',type:'ntc',params:{n:2}},feats:{ptemp:['NTC ×2 (브리지 · 제어부)']}}}]}]};
+T.eld={key:'eld',name:'ELD only (12 V 솔레노이드 H-브리지)',re:/\beld\b|e\s*-?\s*lock(ing)?\s*diff|전자식\s*디퍼런셜\s*잠금/i,
+  defaults:['12 V 차량 배터리 (KL30 · 6–16 V · 로드덤프)','IGN (KL15) 웨이크 · 감지','외부 커넥터: 입력 3핀 BAT · IGN · GND / 출력 ELD 2핀','PMIC (5 V · 3.3 V · 워치독)','AURIX TC364 (TriCore 락스텝)','CAN-FD (중재 500 kbps · 데이터 2 Mbps)','ELD 솔레노이드 H-브리지 (A4911) · 상시 7 A · 피크 20 A','PCB 온도 센서 (NTC) — 외부 센서 없음'],
+  req:'12 V 차량 배터리, IGN(KL15) 입력, AURIX TC364, CAN-FD, ELD 솔레노이드 H-브리지 구동(A4911) 상시 7 A 피크 20 A, PMIC, PCB 온도 센싱',
+  blocks:[
+    {id:'pin',group:'power',label:'Battery Input KL30 (12 V)',feats:['역전압 보호 (Reverse Polarity FET)','로드덤프 · 서지 보호 (TVS)','IGN (KL15) 분압 · 필터 · 클램프 → 웨이크','입력 커넥터 3핀 BAT · IGN · GND'],impl:[{type:'pwr_in',params:{vin:12,ign:1,conn:'combo'}}],why:'차량 배터리 직결 · 이그니션 감지'},
+    {id:'sbc',group:'power',label:'PMIC (5 V · 3.3 V · WDT)',feats:['VCC_5V 5 V (CAN)','VCC_MCU 3.3 V','전원 감시 (UV/OV) · 워치독 · 리셋'],impl:[{type:'ldo',params:{vout:5}},{type:'ldo',params:{vout:3.3,vin:'+5V'}},{type:'supervisor',params:{}}],why:'MCU·CAN 전원과 감시'},
+    {id:'mcu',group:'ctrl',label:'Main MCU AURIX TC364',feats:['Core: AURIX TC36x (TriCore · 락스텝)','GTM PWM ×2 (H-브리지 정/역)','ADC (솔레노이드 전류 · VBAT · 온도)','IGN 웨이크 입력'],impl:[{type:'mcu',params:{part:'TC364DP-64F300F'}},{type:'xtal',params:{}}],why:'솔레노이드 전류 제어 · 통신'},
+    {id:'canbus',group:'comm',label:'CAN-FD Bus (H / L)',ext:true,feats:['차량 네트워크 · UDS 진단'],why:'차량 통신'},
+    {id:'canx',group:'comm',label:'CAN-FD Transceiver',feats:['중재 500 kbps · 데이터 2 Mbps','물리 계층 (5 V) · ESD · 종단'],impl:[{type:'can',params:{}}],why:'CAN 물리 계층'},
+    {id:'gate',group:'io',label:'H-Bridge Gate Driver (A4911)',feats:['Allegro A4911 — 3상 중 A·B 레그로 H-브리지 (C 레그 미사용 · 고장 마스크)','센스 앰프 ×2 (레그 션트) · VDS 단락 감시','SPI 진단 · DIAG · ENABLE','정/역 극성 구동 (체결 · 해제)'],impl:[{type:'hbridge',params:{i:7,ipk:20,tpk:2,load:'solenoid',out:'ELD',driver:'A4911'}}],why:'ELD 솔레노이드 정/역 구동 — Dadu와 같은 A4911 (진단 · 센스 앰프 내장)'},
+    {id:'inv',group:'io',label:'MOSFET H-Bridge (4 FET)',feats:['N-MOSFET ×4 (40 V · 저 RDS(on))','레그 션트 ×2 (A4911 센스 앰프)','끌 때 역기전력 → 바디 다이오드로 VM 회생'],why:'솔레노이드 전력단'},
+    {id:'isense',group:'io',label:'Solenoid Current / VBAT Monitor',feats:['A4911 CSA → ADC (풀인 · 유지 전류 제어)','VBAT 분압 감시','HW 과전류 (OCT) · VDS 감시'],impl:[{type:'vmon',params:{}}],why:'전류 제어 · 진단'},
+    {id:'ptemp',group:'io',label:'PCB Temperature Sensor',feats:['NTC (MOSFET 브리지 근처)','ADC 입력 · 과열 디레이팅'],impl:[{type:'ntc',params:{n:1}}],why:'보드 과열 보호 — PCB에 실장하는 유일한 센서'},
+    {id:'dbg',group:'io',label:'Debug / Calib. Interface',feats:['JTAG / DAP','UART','XCP over CAN'],impl:[{type:'uart',params:{}}],why:'개발 · 캘리브레이션'},
+    {id:'conn',group:'ext',label:'Vehicle & ELD Connector',ext:true,feats:['입력 3핀: BAT (KL30) · IGN (KL15) · GND','출력 2핀: ELD+ · ELD− (솔레노이드)','CAN-H · CAN-L'],why:'외부 연결'}],
+  links:[['conn','pin','BAT · IGN · GND','power'],['pin','sbc','VBAT 12 V','power'],['pin','mcu','IGN_DET (웨이크)','signal'],['sbc','mcu','VCC_MCU 3.3 V · nRESET · WDI','power'],['sbc','canx','VCC_5V','power'],
+    ['canbus','canx','CAN_H / CAN_L','bus'],['canx','mcu','TXD / RXD','signal'],['pin','gate','VBAT (게이트 전원)','power'],['mcu','gate','PWM ×4 · EN · SPI','signal'],['gate','mcu','DIAG','safe'],['gate','inv','Gate ×4','signal'],['pin','inv','VBAT (솔레노이드)','power'],
+    ['inv','conn','ELD+ / ELD−','power'],['inv','isense','Shunt','signal'],['sbc','isense','VCC_MCU 3.3 V','power'],['isense','mcu','Analog Feedback (ADC)','signal'],
+    ['sbc','ptemp','VCC_MCU 3.3 V','power'],['ptemp','mcu','NTC (ADC)','signal'],['sbc','dbg','VCC_MCU 3.3 V','power'],['dbg','mcu','JTAG / UART','signal']],
+  questions:[
+    {key:'cur',block:'gate',q:'솔레노이드 상시(유지) 전류는?',why:'손실 · 발열 · MOSFET 크기와 PCB 패턴의 상시 폭이 정해집니다.',re:/(상시|연속|유지|정격)[^\d]{0,8}\d+\s*a\b/i,
+      options:[{label:'~7 A (ELD 솔레노이드)',effect:{impl:{id:'gate',type:'hbridge',params:{i:7}},feats:{inv:['상시 7 A']},req:'상시 7 A'}},
+               {label:'~10 A',effect:{impl:{id:'gate',type:'hbridge',params:{i:10}},feats:{inv:['상시 10 A']},req:'상시 10 A'}},
+               {label:'~15 A',effect:{impl:{id:'gate',type:'hbridge',params:{i:15}},feats:{inv:['상시 15 A']},req:'상시 15 A'}}]},
+    {key:'pk',block:'gate',q:'피크 전류(풀인 · 구속)는?',why:'MOSFET 펄스 정격 · 션트 측정 범위 · 단자와 PCB 패턴의 피크 온도 상승이 정해집니다. 숫자로 적어도 됩니다(예: 20 A).',re:/피크|peak|풀인|pull-?in|돌입/i,
+      num:{id:'gate',type:'hbridge',param:'ipk',unit:'A'},
+      options:[{label:'20 A (풀인)',effect:{impl:{id:'gate',type:'hbridge',params:{ipk:20}},feats:{inv:['피크 20 A']},req:'피크 20 A'}},
+               {label:'상시와 같음 (피크 없음)',effect:{impl:{id:'gate',type:'hbridge',params:{ipk:'auto'}}}},
+               {label:'상시의 4배',effect:{impl:{id:'gate',type:'hbridge',params:{ipk:'x4'}},req:'피크 상시의 4배'}}]},
+    {key:'tpk',block:'gate',q:'피크는 한 번에 얼마나 지속되나요?',why:'풀인 후 PWM으로 유지 전류까지 낮추면 짧고, 구속·체결 실패 재시도면 깁니다. 숫자로 적어도 됩니다(예: 0.3초).',re:/\d+(\.\d+)?\s*(초|ms|sec)\b/i,
+      num:{id:'gate',type:'hbridge',param:'tpk',unit:'s'},
+      options:[{label:'2초 이내 (풀인 · 재시도 포함, 보수적)',effect:{impl:{id:'gate',type:'hbridge',params:{tpk:2}},req:'피크 2초 이내'}},
+               {label:'0.5초 이내 (풀인 후 바로 유지 전류)',effect:{impl:{id:'gate',type:'hbridge',params:{tpk:0.5}},req:'피크 0.5초 이내'}},
+               {label:'10초 이내 (체결 실패 · 구속 지속)',effect:{impl:{id:'gate',type:'hbridge',params:{tpk:10}},req:'피크 10초 이내'}}]},
+    {key:'fet',block:'inv',q:'MOSFET H-브리지 패키지는?',why:'2-FET 패키지(5×6 mm)를 쓰면 부품 수와 면적이 절반이 되고 루프가 짧아집니다.',re:/하프\s*브리지\s*mosfet|듀얼\s*(fet|mosfet)|IAUC|IPG20/i,
+      options:[{label:'단일 FET ×4 (DPAK)',effect:{impl:{id:'gate',type:'hbridge',params:{fet:'single'}}}},
+               {label:'하프브리지 IAUC60N04S6N050H ×2 (레그마다 1개)',effect:{impl:{id:'gate',type:'hbridge',params:{fet:'IAUC60N04S6N050H'}},feats:{inv:['하프브리지 IAUC60N04S6N050H ×2 (40 V · 5.0 mΩ · PG-TDSON-8)']}}},
+               {label:'듀얼 IPG20N04S4L-07 ×2',effect:{impl:{id:'gate',type:'hbridge',params:{fet:'IPG20N04S4L-07'}},feats:{inv:['듀얼 IPG20N04S4L-07 ×2 (40 V · 7.2 mΩ)']}}}]},
+    T.dadu.questions.find(q=>q.key==='canfd'),T.dadu.questions.find(q=>q.key==='asil')]};
 /* ---- part candidates per block (several makers each): [mpn, maker, note] ---- */
 const SBC=[['TLF35584QVVS2','Infineon','안전 PMIC · Q&A 워치독 · FS0B · ASIL D'],['TPS65381A-Q1','TI','안전 PMIC · 워치독 · 진단 · ASIL D'],['FS2600','NXP','FS26 안전 SBC · 다중 레일 · ASIL D'],['L9396','ST','차량용 안전 PMIC · 워치독']];
 const MCU_D=[['TC364DP-64F300F','Infineon','AURIX TC36x 락스텝 · GTM · SENT · ASIL D'],['S32K344','NXP','Cortex-M7 락스텝 · ASIL D'],['SPC58EC80E5','ST','Power Architecture 락스텝 · ASIL D'],['RH850/U2A8','Renesas','락스텝 · ASIL D'],['TMS570LC4357','TI','Cortex-R5F 락스텝 · ASIL D']];
@@ -209,16 +248,18 @@ const PM=[['FS820R08A6P2','Infineon','HybridPACK Drive 750 V IGBT'],['CAB450M12X
 const RDC=[['AD2S1210','ADI','RDC 16비트 · 여자 출력'],['PGA411-Q1','TI','리졸버 IF · 여자 앰프 · 진단'],['TLE5012B','Infineon','GMR 각도 센서 (대체)']];
 const ANG=[['TLE5012B','Infineon','GMR 각도 · SPI/SENT'],['AS5147P-Q1','ams OSRAM','AMR 각도 · SPI'],['ADA4571','ADI','AMR 각도 (아날로그)'],['MLX90380','Melexis','각도 센서 · SENT']];
 const TORQ=[['MLX90372','Melexis','토크/각도 · SENT 이중'],['TLE4998S8','Infineon','선형 홀 · SENT'],['A1346','Allegro','선형 홀 · SENT'],['ADA4571','ADI','AMR (아날로그)']];
+const GATEH=[['A4911KJPTR-T-1','Allegro','3상 드라이버를 A·B 레그로 H-브리지 · SPI 진단 · 센스 앰프 ×3 (생성 회로 기본)'],['IR2104S','Infineon','하프브리지 드라이버 ×2 · 데드타임 내장'],['DRV8702-Q1','TI','H-브리지 게이트 드라이버 · 전류 센스 앰프 · 진단'],['DRV8703-Q1','TI','H-브리지 게이트 드라이버 · SPI 진단'],['A3941','Allegro','풀브리지 MOSFET 드라이버 · 차량용'],['TLE7182EM','Infineon','H-브리지 MOSFET 드라이버 · 차량용']];
 const PARTS={
   eps:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,gate:GATE3,inv:FET40,pcut:FET40,isense:ISENSE,tsens:TORQ,asens:ANG},
   bms:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,iso:ISO_AFE,cur:ISOADC,hvm:HVM,ctr:HSD},
   bcm:{pin:PIN12,sbc:SBC_B,mcu:MCU_B,canx:CANX,lin:LINX,hsd:HSD,lsd:LSD},
   inv:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,gate:GATEISO,pm:PM,isense:ISOADC,rdc:RDC,hvm:HVM},
+  eld:{pin:PIN12,sbc:SBC.concat(SBC_B),mcu:MCU_D,canx:CANX,gate:GATEH,inv:FET40,isense:ISENSE,ptemp:NTC},
   dadu:{pin:PIN12,sbc:SBC.concat(SBC_B),hallps:HALL9,mcu:MCU_D,canx:CANX,gate:GATE3.filter(x=>/^A491[18]/.test(x[0])).concat(GATE3.filter(x=>!/^A491[18]/.test(x[0]))),inv:FET40,isense:ISENSE,ptemp:NTC}};
 const normPart=x=>{if(!x)return null;if(typeof x==='string')return{mpn:x,mfr:'',note:''};if(Array.isArray(x))return{mpn:S(x[0]),mfr:S(x[1]),note:S(x[2])};return{mpn:S(x.mpn||x.part),mfr:S(x.mfr||x.maker),note:S(x.note||x.desc),grade:S(x.grade)};};
 function candidates(prof,id){const b=(prof.blocks||[]).find(x=>x.id===id);if(!b)return[];return(b.parts||[]).map(normPart).filter(p=>p&&p.mpn);}
 /* ---- detection ---- */
-function detect(text){const s=String(text||'');for(const k of Object.keys(T)){if(T[k].re.test(s)){const p=clone(T[k]);const P=PARTS[k]||{};for(const b of p.blocks){const c=P[b.id];if(c)b.parts=c.map(normPart);else b.parts=(b.parts||[]).map(normPart);}return p;}}return null;}
+function detect(text){const s=String(text||'');for(const k of ['eld'].concat(Object.keys(T).filter(k=>k!=='eld'))){if(T[k].re.test(s)){const p=clone(T[k]);const P=PARTS[k]||{};for(const b of p.blocks){const c=P[b.id];if(c)b.parts=c.map(normPart);else b.parts=(b.parts||[]).map(normPart);}return p;}}return null;}
 function clone(o){if(o==null||typeof o!=='object')return o;if(o instanceof RegExp||Object.prototype.toString.call(o)==='[object RegExp]')return new RegExp(o.source,o.flags);if(Array.isArray(o))return o.map(clone);const r={};for(const k of Object.keys(o))r[k]=clone(o[k]);return r;}
 /* ---- apply profile + answers → architecture (needs HWARCH) ---- */
 function apply(prof,answers,name,H){H=H||(typeof HWARCH!=='undefined'?HWARCH:null);if(!H)throw new Error('HWARCH 필요');

@@ -89,13 +89,13 @@ function compute(parts,o){o=o||{};const A=Object.assign({},DEF,o.assume||{});con
     const meas=I=>eva(ps,([rs,av,vi,vo,vr,e])=>{const sig=av*(I*rs+vi)+vo;const rd=sig*vref/vr+e;return rd/(Av*Rs);});
     const eI=I=>{const b=meas(I);return Math.max(b.hi-I,I-b.lo);};const ePk=eI(Ipk);const oc=(Ipk+ePk)*(1+A.margin/100);const eOc=eI(oc);
     const vMax=voos+Av*Rs*oc*1.05,vMin=voos-Av*Rs*oc*1.05;const rangeOk=vMax<vref*0.97&&vMin>0.05;
-    row({mech:'cur_range',block:'cur',title:'상전류 측정 · SW 과전류 (션트 → A4911 CSA → ADC)',chain:ps.filter(p=>p.hi!==p.lo).map(p=>p.name).concat([`VOOS ${voos} V (SAO) · ${drift?'기동 때 한 번 영점 보정 — 온도 드리프트 남음':'PWM OFF마다 영점 보정 — 초기 오프셋 ±'+S.vios*1e3+' mV(입력) · ±'+S.evo*1e3+' mV(출력)와 드리프트 제거'}`]),
+    row({mech:'cur_range',block:'cur',title:(shunts.length>=3?'상전류':'레그(부하) 전류')+' 측정 · SW 과전류 (션트 → A4911 CSA → ADC)',chain:ps.filter(p=>p.hi!==p.lo).map(p=>p.name).concat([`VOOS ${voos} V (SAO) · ${drift?'기동 때 한 번 영점 보정 — 온도 드리프트 남음':'PWM OFF마다 영점 보정 — 초기 오프셋 ±'+S.vios*1e3+' mV(입력) · ±'+S.evo*1e3+' mV(출력)와 드리프트 제거'}`]),
       normal:`피크 ${Ipk} A 읽음 오차 ±${R(ePk,2)} A · 상시 ${Iop} A ±${R(eI(Iop),2)} A`,thr:`SW 과전류 ${R(oc,1)} A (|CSxO − OOS| ≥ ${R(oc*Av*Rs,3)} V)`,detect:`실제 ${R(oc-eOc,1)}–${R(oc+eOc,1)} A에서 판정`,
       margin:`CSA 출력 ${R(vMin,2)}–${R(vMax,2)} V (ADC 0–${vref} V ${rangeOk?'안':'밖!'}) · 해상도 ${R(lsb/(Av*Rs)*1000,0)} mA/LSB`,ok:rangeOk,
       advice:rangeOk?'영점 보정 없이 쓰면 초기 오프셋 ±1 mV(입력) · ±75 mV(출력)가 그대로 남아 오차가 크게 늘어남 — PWM OFF 구간 보정 필수':'게인(SAG) 또는 오프셋(SAO)을 바꿔 피크가 ADC 안에 들어오게',src:['가정','DS','DS','DS','가정','가정']});
     // sum of the three phases: one at +Ipk, two at −Ipk/2 — every channel error adds
     const sumE=ePk+2*eI(Ipk/2),sumThr=sumE*(1+A.margin/100);
-    row({mech:'cur_sum',block:'cur',title:'3상 합 Σi ≈ 0 교차 비교',chain:['채널 3개 오차의 최악 합 (한 상 +Ipk, 두 상 −Ipk/2)'],normal:`정상일 때 |Σi| 최대 ${R(sumE,2)} A`,thr:`|Σi| > ${R(sumThr,2)} A 가 N회 연속`,detect:`채널 하나가 ${R(sumThr+sumE,2)} A 이상 틀리면 반드시 검출`,
+    if(shunts.length>=3)row({mech:'cur_sum',block:'cur',title:'3상 합 Σi ≈ 0 교차 비교',chain:['채널 3개 오차의 최악 합 (한 상 +Ipk, 두 상 −Ipk/2)'],normal:`정상일 때 |Σi| 최대 ${R(sumE,2)} A`,thr:`|Σi| > ${R(sumThr,2)} A 가 N회 연속`,detect:`채널 하나가 ${R(sumThr+sumE,2)} A 이상 틀리면 반드시 검출`,
       margin:`피크 대비 ${R(sumThr/Ipk*100,1)} %`,ok:sumThr<Ipk*0.25,advice:'검출 한계(=임계+정상 오차)보다 작은 센서 오차는 이 비교로 못 잡음 — 범위 검사 · 이종 비교와 함께',src:['DS','가정']});
     // A4911 overcurrent comparator: IOCT = VOCT / (Rs · Av), VOCT = (n+1) · 0.3 V
     const O=SPEC.A4911.oct;let n=0,best=null;for(;n<16;n++){const v=(n+1)*O.step;const iMin=v*O.rel[0]/(Rs*(1+A.shTol/100+A.shTCR*1e-6*dT)*Av*(1+S.ea/100));const iMax=v*O.rel[1]/(Rs*(1-A.shTol/100-A.shTCR*1e-6*dT)*Av*(1-S.ea/100));if(iMin>Ipk*(1+A.margin/100)&&!best)best={n,v,iMin,iMax};}

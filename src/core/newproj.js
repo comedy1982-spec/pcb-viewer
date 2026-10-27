@@ -33,23 +33,24 @@ const tvsFor=v=>v<=5.5?'SMAJ5.0A':v<=13?'SMAJ15A':v<=26?'SMAJ28A':'SMAJ58A';
 
 /* ---------- blocks ---------- */
 const LIB={
-  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'입력 TVS: 1 (서지) · loaddump (로드덤프 SMB, ISO 16750-2 중앙 억제 전제) · 0'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'},ign:{def:0,desc:'IGN(KL15) 입력 감지 — 분압 · 필터 · 클램프 → MCU 웨이크업 (1/0)'},uvlo:{def:'off',desc:'입력 저전압 차단: off · auto (12 V계 6.0 V 정지 / 7.0 V 재시작) · 정지 전압 V (재시작 = +1 V) — 1단 벅 EN 분압'}},
-    build(ctx,p){const vin=+p.vin;const rail=railOf(vin);ctx.provide(rail,vin,'입력');
+  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'입력 TVS: 1 (서지) · loaddump (로드덤프 SMB, ISO 16750-2 중앙 억제 전제) · 0'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'},ign:{def:0,desc:'IGN(KL15) 입력 감지 — 분압 · 필터 · 클램프 → MCU 웨이크업 (1/0)'},uvlo:{def:'off',desc:'입력 저전압 차단: off · auto (12 V계 6.0 V 정지 / 7.0 V 재시작) · 정지 전압 V (재시작 = +1 V) — 1단 벅 EN 분압'},conn:{def:'sep',desc:'외부 커넥터: sep (전원 2핀 + IGN 2핀 따로) · combo (BAT · IGN · GND 3핀 하나, ign=1일 때)'}},
+    build(ctx,p){const vin=+p.vin;const rail=railOf(vin);ctx.provide(rail,vin,'입력');const combo=+p.ign&&String(p.conn)==='combo';
+      const inJ=(fp,o)=>combo?ctx.part('J','BAT/IGN/GND',fp.replace(/^TERM-2-/,'TERM-3-').replace(/^HDR-1x2$/,'HDR-1x3'),{1:'VIN_RAW',2:'IGN_IN',3:'GND'},Object.assign({},o,{desc:o.desc.replace(/전원 입력/,'전원 입력 커넥터 BAT(KL30) · IGN(KL15) · GND 3핀'),pinNames:{1:'BAT',2:'IGN',3:'GND'}})):ctx.part('J',`${vin}V 입력`,fp,{1:'VIN_RAW',2:'GND'},o);
       const mb=(ctx.plan&&ctx.plan.blocks||[]).filter(b=>b.type==='hbridge'||b.type==='gdrv3');const Im=mb.reduce((a,b)=>a+(+b.params.i||0),0);
       const Impk=mb.reduce((a,b)=>a+peakOf(b.params,+b.params.i||0).Ipk,0),tpkIn=Math.max(0.01,...mb.map(b=>peakOf(b.params,+b.params.i||0).tpk),0.01);
       if(Im>2){const big=bigTerm(Im,Impk);termFp(2,big?7.62:5.08);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
-        ctx.part('J',`${vin}V 입력`,termName(2,big?99:Im),{1:'VIN_RAW',2:'GND'},{mpn:big?'':'1729128',desc:`${vin} V 전원 입력 (${big?`7.62 mm 단자 — 상시 ${Im} A · 피크 ${Impk} A 정격 품번 지정 필요`:'5.08 mm 단자'} · 상시 ${Im} A${Impk>Im?` · 피크 ${Impk} A ${tpkIn} s`:''})`,pinNames:{1:'+',2:'GND'}});
+        if(combo)termFp(3,big?7.62:5.08);inJ(termName(2,big?99:Im),{mpn:big?'':combo?'1729131':'1729128',desc:`${vin} V 전원 입력 (${big?`7.62 mm 단자 — 상시 ${Im} A · 피크 ${Impk} A 정격 품번 지정 필요`:'5.08 mm 단자'} · 상시 ${Im} A${Impk>Im?` · 피크 ${Impk} A ${tpkIn} s`:''})`,pinNames:{1:'+',2:'GND'}});
         for(let i=0;i<n;i++)ctx.part('Q','SQD50P04-09L','TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:'SQD50P04-09L_GE3',desc:`역전압 보호 P-MOSFET (−40 V · 9 mΩ · AEC-Q101)${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((Im/n)**2)*0.009+0.02).toFixed(2),lk:'batt'});
         ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:'VIN_PG',2:rail},{mpn:'BZT52C12',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'A',2:'K'}});
         ctx.curr('VIN_RAW',Im);ctx.curr(rail,Im);ctx.peak('VIN_RAW',Impk,tpkIn);ctx.peak(rail,Impk,tpkIn);ctx.curr('GND',Im);ctx.peak('GND',Impk,tpkIn);}
-      else{ctx.part('J',`${vin}V 입력`,'HDR-1x2',{1:'VIN_RAW',2:'GND'},{mpn:'61300211121',desc:`${vin} V 전원 입력`,pinNames:{1:'+',2:'GND'}});
+      else{if(combo&&typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'HDR-1x3',3);inJ('HDR-1x2',{mpn:combo?'61300311121':'61300211121',desc:`${vin} V 전원 입력`,pinNames:{1:'+',2:'GND'}});
       ctx.part('D','SS14','SMA',{1:'VIN_RAW',2:rail},{mpn:'SS14',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'A',2:'K'}});}
       if(String(p.tvs)==='loaddump'){const t=vin<=16?'SMBJ26CA':vin<=32?'SMBJ36CA':'SMBJ58CA';if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'SMB');
         ctx.part('D',t,'SMB',{1:'GND',2:'VIN_RAW'},{mpn:t,desc:`로드덤프 TVS ${t} (양방향 600 W · 역전압 보호 앞단이라 역접속에도 안전 · 중앙 억제 로드덤프 전제, 미억제면 SM8S급 필요)`,pinNames:{1:'A1',2:'A2'}});}
       else if(+p.tvs)ctx.part('D',tvsFor(vin),'SMA',{1:'GND',2:rail},{desc:`입력 서지 TVS (${tvsFor(vin)})`,pinNames:{1:'A',2:'K'}});
       // IGN (KL15): wake / ignition sense for the MCU — 33 k / 10 k divider (12 V → 2.8 V), RC 10 nF, clamp to the logic rail, TVS on the pin
       if(+p.ign){const vl='+3V3';ctx.use(vl);
-        ctx.part('J','IGN','HDR-1x2',{1:'IGN_IN',2:'GND'},{mpn:'61300211121',desc:'IGN (KL15) 점화 신호 입력',pinNames:{1:'IGN',2:'GND'}});
+        if(!combo)ctx.part('J','IGN','HDR-1x2',{1:'IGN_IN',2:'GND'},{mpn:'61300211121',desc:'IGN (KL15) 점화 신호 입력',pinNames:{1:'IGN',2:'GND'}});
         const ld=String(p.tvs)==='loaddump',ti=ld?(vin<=16?'SMBJ26CA':vin<=32?'SMBJ36CA':'SMBJ58CA'):tvsFor(vin).replace(/A$/,'CA');if(ld&&typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'SMB');
         ctx.part('D',ti,ld?'SMB':'SMA',{1:'GND',2:'IGN_IN'},{mpn:ti,desc:`IGN 서지 TVS ${ti} (양방향 — IGN 역접속에도 도통 안 함)`,pinNames:{1:'A1',2:'A2'}});
         ctx.part('R','33kΩ','0603',{1:'IGN_IN',2:'IGN_DET'},{desc:`IGN 분압 상단 (${vin} V → ${(vin*10/43).toFixed(1)} V)`});ctx.part('R','10kΩ','0603',{1:'IGN_DET',2:'GND'},{desc:'IGN 분압 하단'});
@@ -125,22 +126,24 @@ const LIB={
       ctx.part('J','모터·홀','HDR-1x8',J,{mpn:'61300811121',desc:'BLDC 상(W V U) + 홀(H1–H3) + 5 V',pinNames:{1:'W',2:'V',3:'U',4:'H1',5:'H2',6:'H3',7:'5V',8:'GND'}});
       if(h){ctx.use('+5V');['A','B','C'].forEach(x=>{ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:'HALL_'+x},{desc:'홀 출력 풀업 (오픈 컬렉터)'});ctx.part('C','1nF','0603',{1:'HALL_'+x,2:'GND'},{desc:'홀 입력 필터'});ctx.sig('HALL_'+x,'irq_in');});}}},
   hbridge:{label:'H-브리지 (게이트 드라이버 + 외부 N-MOSFET 4개)',desc:'하프브리지 게이트 드라이버 ×2 (IR2104S: 부트스트랩 다이오드·캡, 데드타임 내장) + N-MOSFET ×4 (DPAK, 전류 등급에 맞춰 병렬) + 게이트 저항·G-S 풀다운 + 로우사이드 공통 션트 + 전류 앰프(INA181-Q1 ×50) → ADC + VM 벌크/세라믹 + 모터 단자(5.08 mm) · 정/역회전 PWM',
-    params:{i:{def:10,desc:'모터 상시(연속) 전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'},shunt:{def:1,desc:'전류 검출 (1/0)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×4) · IAUC60N04S6N050H (하프브리지 ×2) · IPG20N04S4L-07 (듀얼 ×2)'}},
+    params:{i:{def:10,desc:'모터 상시(연속) 전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'},shunt:{def:1,desc:'전류 검출 (1/0)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×4) · IAUC60N04S6N050H (하프브리지 ×2) · IPG20N04S4L-07 (듀얼 ×2)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×2) · A4911 · A4918 (Allegro 3상 중 2레그 사용 · SPI 진단 · 센스 앰프 ×2)'},load:{def:'motor',desc:'부하: motor (DC 모터) · solenoid (솔레노이드 — 정/역 극성 구동, 끌 때 역기전력은 FET 바디 다이오드로 VM 회생)'},out:{def:'auto',desc:'출력 단자 이름 (auto = 모터 · 솔레노이드는 ELD 등)'}},
     build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||10);const{Ipk,tpk}=peakOf(p,I);const k=ctx.uniq('HB');const N=x=>k==='HB'?'HB_'+x:k+'_'+x;
       const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,fetChoice(ctx,p,I,V,k),Ipk);const sn=+p.shunt;
-      if(V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
+      let drv=allegroDrv(p.driver);pwr.tpk=tpk;if(drv&&!allegro3(ctx,drv,vm,I,pwr,N,{legs:{A:'A',B:'B'}}))drv=null;
+      if(!drv&&V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
       const ret=sn?N('SNS'):'GND';
-      ['A','B'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO');
+      if(!drv)['A','B'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO');
         ctx.part('U','IR2104S','SOIC-8',{1:vm,2:N('IN'+h),3:N('EN'),4:'GND',5:lo,6:ph,7:ho,8:vb},{mpn:'IR2104STRPBF',desc:`하프브리지 게이트 드라이버 (${h} 레그 · 데드타임 520 ns)`,pinNames:{1:'VCC',2:'IN',3:'nSD',4:'COM',5:'LO',6:'VS',7:'HO',8:'VB'},P:0.05});
         ctx.cap(vm,'1µF',`IR2104 VCC 디커플링 (${h})`);
         ctx.part('D','ES1D','SMA',{1:vm,2:vb},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'A',2:'K'}});
         ctx.part('C','1µF','0805',{1:vb,2:ph},{desc:`부트스트랩 캡 VB–VS (${h})`});
         fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);ctx.peak(ph,Ipk,tpk);});
-      bulk(ctx,vm,I,'H-브리지');ctx.peak(vm,Ipk,tpk);if(sn)ctx.peak(ret,Ipk,tpk);
-      if(sn)shuntAmp(ctx,ret,N('ISNS'),I,'H-브리지 공통',Ipk,tpk);
-      ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 브리지 OFF)'});
-      const big=bigTerm(I,Ipk);termFp(2,big?7.62:5.08);ctx.part('J','모터',termName(2,big?99:I),{1:N('A'),2:N('B')},{mpn:big?'':'1729128',desc:`DC 모터 단자 (${big?'7.62':'5.08'} mm · 상시 ${I} A${Ipk>I?` · 피크 ${Ipk} A ${tpk} s`:''})`,pinNames:{1:'M+',2:'M−'}});
-      ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(sn)ctx.curr(ret,I);
+      bulk(ctx,vm,I,'H-브리지');ctx.peak(vm,Ipk,tpk);if(sn&&!drv)ctx.peak(ret,Ipk,tpk);
+      if(sn&&!drv)shuntAmp(ctx,ret,N('ISNS'),I,'H-브리지 공통',Ipk,tpk);
+      if(!drv)ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 브리지 OFF)'});
+      const big=bigTerm(I,Ipk);termFp(2,big?7.62:5.08);const sol=/^sol/i.test(String(p.load||''));const on=p.out&&p.out!=='auto'?String(p.out):sol?'솔레노이드':'모터';
+      ctx.part('J',on,termName(2,big?99:I),{1:N('A'),2:N('B')},{mpn:big?'':'1729128',desc:`${sol?on+' 솔레노이드 출력 2핀':'DC 모터 단자'} (${big?'7.62':'5.08'} mm · 상시 ${I} A${Ipk>I?` · 피크 ${Ipk} A ${tpk} s`:''})`,pinNames:sol?{1:on+'+',2:on+'−'}:{1:'M+',2:'M−'}});
+      ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(drv)return;if(sn)ctx.curr(ret,I);
       ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
   gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
     params:{i:{def:20,desc:'상시(연속) 상전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 상전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×3) · A4911 · A4918 (Allegro 3상 · SPI 진단 · 센스 앰프 ×3 내장)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
@@ -312,7 +315,7 @@ function shunt(ctx,net,I,what,vmax,Ipk,tpk){vmax=vmax||0.045;Ipk=Math.max(I,+Ipk
    registered pin table (datasheets/pins.json → KPINS), so a part whose table is missing is reported instead of guessed. */
 const ALLEGRO={A4911:'A4911KJPTR-T-1',A4918:'A4918KJPTR-1A-3-T'};
 function allegroDrv(d){const m=String(d||'').toUpperCase().match(/A491[18]/);return m?m[0]:null;}
-function allegro3(ctx,drv,vm,I,pwr,N){const mpn=ALLEGRO[drv];const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(mpn):null;
+function allegro3(ctx,drv,vm,I,pwr,N,o){o=o||{};const mpn=ALLEGRO[drv];const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(mpn):null;
   if(!rec||!(rec.pins&&rec.pins.length)){ctx.warn(`${drv}: 핀 표가 없어 IR2104 ×3 스테이지로 대신 만들었습니다 — ${drv} 전체 데이터시트의 핀 배치를 datasheets/pins.json에 추가하면 ${drv} 회로가 생성됩니다`);return false;}
   const num={};rec.pins.forEach(q=>{const nm=String(q.name||'').toUpperCase();(num[nm]=num[nm]||[]).push(String(q.num));});
   const pins={},names={};rec.pins.forEach(q=>{names[String(q.num)]=String(q.name||'');});
@@ -328,28 +331,32 @@ function allegro3(ctx,drv,vm,I,pwr,N){const mpn=ALLEGRO[drv];const rec=NEWPROJ.p
   const crMin=Math.max(22,40*CB/1000);const CR=[22,47,100].find(v=>v>=crMin)||100;
   set('VBB',vm);set('VBRG',vm);set('GND','GND');set('PAD','GND');set('EP','GND');set('VREG',vreg);set('CP1',N('CP1'));set('CP2',N('CP2'));
   set('OOS',N('ISNS_OOS'));set('ENABLE',N('EN'));set('RESETN',N('RESETN'));set('STRN',N('STRN'));set('SCK',N('SCK'));set('SDI',N('SDI'));set('SDO',N('SDO'));set('DIAG',N('DIAG'));
-  const PH={A:'U',B:'V',C:'W'};const amp=[];let Rs=0.002;
+  const PH=o.legs||{A:'U',B:'V',C:'W'};const CSN={A:1,B:2,C:3};const amp=[];let Rs=0.002;const unused=['A','B','C'].filter(x=>!PH[x]);const LG=h=>o.legs?h+' 레그':h+'상';
   Object.entries(PH).forEach(([x,h],i)=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS'),out=N('ISNS_'+h);
     set('GH'+x,ho);set('GL'+x,lo);set('S'+x,ph);set('C'+x,vb);set('LSS'+x,N(h+'_LSS'));set('H'+x,N('INH_'+h));set('L'+x,N('INL_'+h));
     // sense amplifier i+1 across the leg shunt (Kelvin to the shunt ends)
     // datasheet layout rules: CSxP / CSxM as independent, matched traces to the two shunt ends (Kelvin) — CSxM gets its own net,
     // tied to ground by a 0 Ω net tie placed on the shunt's ground pad
-    const c=String(i+1);if(num['CS'+c+'P']){set('CS'+c+'P',N(h+'_SNSP'));set('CS'+c+'M',N(h+'_SNSM'));set('CS'+c+'O',N('ISNS_'+h+'_AMP'));amp.push(h);}});
+    const c=String(CSN[x]);if(num['CS'+c+'P']){set('CS'+c+'P',N(h+'_SNSP'));set('CS'+c+'M',N(h+'_SNSM'));set('CS'+c+'O',N('ISNS_'+h+'_AMP'));amp.push(h);}});
+  // unused leg (H-bridge on a 3-phase driver): inputs and LSS to ground, SC to ground so the bootstrap node stays defined (small cap on CC),
+  // gate outputs open, sense amplifier inputs grounded; its faults (VC · CHO · CLO · OC3) are masked over SPI (datasheet: Fault Masks)
+  unused.forEach(x=>{const c=String(CSN[x]);set('S'+x,'GND');set('C'+x,N('C'+x+'_UNUSED'));set('LSS'+x,'GND');set('H'+x,'GND');set('L'+x,'GND');if(num['CS'+c+'P']){set('CS'+c+'P','GND');set('CS'+c+'M','GND');}});
   const fpName=String(rec.fp||'').replace(/^[^:]*:/,'');
   ctx.part('U',drv,rec.fp&&typeof PCB!=='undefined'&&PCB.FP[rec.fp]?rec.fp:(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'?FPGEN.ensure(PCB,fpName||rec.pkg,rec.pins.length)||FPGEN.ensure(PCB,rec.pkg,rec.pins.length):'')||rec.pkg||'LQFP-48',pins,
-    {mpn,desc:`3상 MOSFET 게이트 드라이버 (Allegro ${drv} · SPI 진단 · 센스 앰프 ×3)`,pinNames:names,P:0.3});
+    {mpn,desc:unused.length?`H-브리지 게이트 드라이버 (Allegro ${drv} 3상 중 ${Object.keys(PH).join('·')} 레그 사용 · ${unused.join('·')} 레그 미사용 — SPI로 ${unused.map(x=>'V'+x+' · '+x+'HO · '+x+'LO · OC'+CSN[x]).join(' · ')} 고장 마스크 · SPI 진단 · 센스 앰프 ×${Object.keys(PH).length})`:`3상 MOSFET 게이트 드라이버 (Allegro ${drv} · SPI 진단 · 센스 앰프 ×3)`,pinNames:names,P:0.3});
+  unused.forEach(x=>ctx.part('C','100nF','0402',{1:N('C'+x+'_UNUSED'),2:'GND'},{desc:`${drv} 미사용 ${x} 레그 부트스트랩 핀 C${x} (S${x} = GND, 노드 고정용)`}));
   ctx.cap(vm,'100nF',`${drv} VBB 디커플링 (단자 가까이)`);ctx.cap(vm,'100nF',`${drv} VBRG 디커플링`);
   ctx.part('C',CR+'µF','1206',{1:vreg,2:'GND'},{desc:`${drv} VREG 저장 커패시터 ${CR} µF 세라믹 25 V (≥ 40 × CBOOT · 데이터시트 CREG 22 µF)`});
   ctx.part('C','470nF','0805',{1:N('CP1'),2:N('CP2')},{desc:`${drv} 차지펌프 커패시터 CP1–CP2 (≥ 470 nF, 데이터시트)`});
   Object.entries(PH).forEach(([x,h])=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
-    ctx.part('C',cbLab,'0603',{1:vb,2:ph},{desc:`부트스트랩 C${x}–S${x} (${h}상 · ${cbLab} 25 V — 20 × Qg ${qg} nC / 8 V × 1.5${qgKnown?'':' · Qg 미상 60 nC 가정'})`});
+    ctx.part('C',cbLab,'0603',{1:vb,2:ph},{desc:`부트스트랩 C${x}–S${x} (${LG(h)} · ${cbLab} 25 V — 20 × Qg ${qg} nC / 8 V × 1.5${qgKnown?'':' · Qg 미상 60 nC 가정'})`});
     fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);
     // the amplifier is in the driver (gain 20 V/V, 2.5 V offset by default; input range −1.8…2 V): shunt sized for ≤ 60 mV at the phase current (±1.2 V at the output, ~1 W)
-    Rs=shunt(ctx,ret,I,h+'상',0.06,pwr.Ipk,pwr.tpk);ctx.peak(ret,pwr.Ipk,pwr.tpk||2);const cs={U:1,V:2,W:3}[h];ctx.part('R','0Ω','0402',{1:N(h+'_SNSM'),2:'GND'},{desc:`센스 켈빈 넷 타이 CS${cs}M (${h}상 — 션트 GND 패드에 붙여 배치)`});
+    Rs=shunt(ctx,ret,I,LG(h),0.06,pwr.Ipk,pwr.tpk);ctx.peak(ret,pwr.Ipk,pwr.tpk||2);const cs=CSN[x];ctx.part('R','0Ω','0402',{1:N(h+'_SNSM'),2:'GND'},{desc:`센스 켈빈 넷 타이 CS${cs}M (${LG(h)} — 션트 GND 패드에 붙여 배치)`});
     // the 20 A shunt node touches only the FET source and the shunt; the driver's sense (+) and low-side source pins get their own
     // traces through net ties at that node (datasheet: independent CSxP / LSSx connections) — they route like signals
-    ctx.part('R','0Ω','0402',{1:N(h+'_SNSP'),2:ret},{desc:`센스 켈빈 넷 타이 CS${cs}P (${h}상 — A4911 핀 옆, 션트 노드까지는 전류 없는 켈빈 선)`});
-    ctx.part('R','0Ω','0402',{1:N(h+'_LSS'),2:ret},{desc:`LSS 넷 타이 (${h}상 — A4911 핀 옆, 로우사이드 FET 소스에서 독립 연결)`});const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
+    ctx.part('R','0Ω','0402',{1:N(h+'_SNSP'),2:ret},{desc:`센스 켈빈 넷 타이 CS${cs}P (${LG(h)} — A4911 핀 옆, 션트 노드까지는 전류 없는 켈빈 선)`});
+    ctx.part('R','0Ω','0402',{1:N(h+'_LSS'),2:ret},{desc:`LSS 넷 타이 (${LG(h)} — A4911 핀 옆, 로우사이드 FET 소스에서 독립 연결)`});const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
     ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');
     ctx.curr(ph,I);ctx.curr(ret,I);ctx.peak(ph,pwr.Ipk||I,pwr.tpk||2);ctx.peak(ret,pwr.Ipk||I,pwr.tpk||2);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
   ctx.part('R','10kΩ','0603',{1:N('DIAG'),2:vio},{desc:`${drv} DIAG 오픈 드레인 풀업 (10~20 kΩ)`});

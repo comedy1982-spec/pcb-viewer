@@ -25,6 +25,9 @@ const GOALS={
   dadu:[{id:'SG1',text:'의도하지 않은 모터 구동 · 역회전 방지',asil:'B',ftti:100,kind:'actuation',state:'전 FET OFF (드라이버 ENABLE Low) · 프리휠 정지',path:['hall','isense','hallps','mcu','sbc','gate','inv']},
         {id:'SG2',text:'과전류·과열에 의한 손상 · 화재 방지',asil:'B',ftti:500,kind:'thermal',state:'전류 제한 → 구동 정지',path:['isense','ptemp','mcu','gate','inv']},
         {id:'SG3',text:'모터 상태(속도 · 전류 · 고장) 잘못 보고 방지',asil:'A',ftti:1000,kind:'data',state:'CAN 고장 플래그 · 대체값',path:['hall','isense','ptemp','mcu','canx']}],
+  eld:[{id:'SG1',text:'의도하지 않은 ELD 체결 · 해제 방지 (주행 중 차량 거동)',asil:'B',ftti:100,kind:'actuation',state:'H-브리지 전 FET OFF (nSD Low) · 솔레노이드 무통전',path:['isense','mcu','sbc','gate','inv']},
+        {id:'SG2',text:'과전류·과열에 의한 손상 · 화재 방지',asil:'B',ftti:500,kind:'thermal',state:'전류 제한 → 구동 정지',path:['isense','ptemp','mcu','gate','inv']},
+        {id:'SG3',text:'ELD 상태(체결 · 전류 · 고장) 잘못 보고 방지',asil:'A',ftti:1000,kind:'data',state:'CAN 고장 플래그 · 대체값',path:['isense','ptemp','mcu','canx']}],
   inv:[{id:'SG1',text:'의도하지 않은 토크 · 역토크 방지',asil:'D',ftti:20,kind:'actuation',state:'ASC(능동 단락) 또는 게이트 전면 차단',path:['mcu','gdrv','pm','rdc','isense','sbc']},
        {id:'SG2',text:'HV 활성 상태 노출 방지 (인터록 · 방전)',asil:'C',ftti:1000,kind:'hv',state:'능동 방전 · 컨택터 개방 요청',path:['hvm','mcu','gdrv','pin']},
        {id:'SG3',text:'과전류·과열에 의한 파워 모듈 손상 방지',asil:'B',ftti:100,kind:'thermal',state:'전류 제한 → 차단',path:['pm','isense','gdrv']}]};

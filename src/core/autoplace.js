@@ -93,7 +93,8 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
   if(jin){bestRot(jin,c=>{const xs=c.pads.map(p=>p.x),ys=c.pads.map(p=>p.y);return(Math.max(...xs)-Math.min(...xs))-(Math.max(...ys)-Math.min(...ys));});
     const w=jin.bb[2]-jin.bb[0],h=jin.bb[3]-jin.bb[1];let x=qin?qin.bb[0]-1.2-w/2:bx;if(x-w/2<rect[0]+edge)x=qin?qin.bb[2]+1.2+w/2:bx;pose(jin,x,rect[1]+edge+h/2,jin.rot||0);fixed.push(jin.ref);if(!qin)yIn=Math.max(yIn,jin.bb[3]+1.2);}
   // FET column (each row: FET with its shunt above) from the top of the zone down, the motor terminal beside it
-  const top=rect[3]-edge;const H=top-yIn;const shW=R[0].sh?Math.min(R[0].sh.bb[2]-R[0].sh.bb[0],R[0].sh.bb[3]-R[0].sh.bb[1]):0;
+  // room above the top shunt for its ground vias (the shunt's ground end carries the full leg current down to the plane)
+  const top=rect[3]-edge-(R[0].sh?(o.shRoom!=null?o.shRoom:2.5):0);const H=top-yIn;const shW=R[0].sh?Math.min(R[0].sh.bb[2]-R[0].sh.bb[0],R[0].sh.bb[3]-R[0].sh.bb[1]):0;
   const blk=fh+(shW?0.9+shW:0)+1.0;let P=Math.max(blk+1.5,9);if(P*R.length>H)P=blk;
   const yc=top-P*R.length/2;pose(term,rect[2]-edge-tw/2,yc,tRot);fixed.push(term.ref);
   const pinY=ph=>{const p=term.pads.find(q=>q.net===ph);return p?p.y:yc;};R.sort((a,b)=>pinY(b.ph)-pinY(a.ph));
@@ -119,6 +120,16 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
       const dRot=bestRot(drv,c=>{const g=cen(c,p=>drvNets.has(p.net));return g?g[0]:0;});const dw=drv.bb[2]-drv.bb[0];
       const leftEdge=planeBus0()?Math.min(...R.map(r=>r.c.bb[0])):busX0;let x=leftEdge-(o.drvGap||6)-dw/2;if(x-dw/2<rect[0]+edge)x=rect[0]+edge+dw/2;
       const ys=R.map(r=>(r.c.bb[1]+r.c.bb[3])/2);pose(drv,x,(Math.min(...ys)+Math.max(...ys))/2,dRot);fixed.push(drv.ref);}}
+  // mounting holes (unplated drills with their placement halo): a macro part that lands on one slides the shortest way
+  // along x or y that keeps it inside the zone and off the other macro parts
+  {const holes=B.drills.filter(d=>!d.plated&&!d.own&&!d._pad).map(d=>{const k=d.d/2+0.8;return[d.x-k,d.y-k,d.x+k,d.y+k];});
+    const ov=(a,b,g)=>a[0]<b[2]+g&&b[0]<a[2]+g&&a[1]<b[3]+g&&b[1]<a[3]+g;
+    if(holes.length)fixed.slice().forEach(ref=>{const c=B.comps.find(x=>x.ref===ref);if(!c||!holes.some(h=>ov(c.bb,h,0)))return;
+      const others=fixed.filter(r=>r!==ref).map(r=>B.comps.find(x=>x.ref===r)).filter(Boolean);const tries=[];
+      holes.filter(h=>ov(c.bb,h,0)).forEach(h=>{tries.push([h[0]-0.2-c.bb[2],0],[h[2]+0.2-c.bb[0],0],[0,h[1]-0.2-c.bb[3]],[0,h[3]+0.2-c.bb[1]]);});
+      tries.sort((a,b)=>Math.hypot(a[0],a[1])-Math.hypot(b[0],b[1]));
+      for(const [dx,dy] of tries){const bb=[c.bb[0]+dx,c.bb[1]+dy,c.bb[2]+dx,c.bb[3]+dy];if(bb[0]<rect[0]+edge-0.01||bb[1]<rect[1]+edge-0.01||bb[2]>rect[2]-edge+0.01||bb[3]>rect[3]-edge+0.01)continue;
+        if(holes.some(h=>ov(bb,h,0))||others.some(q=>ov(bb,q.bb,0.5)))continue;PCBEDIT.move(B,c,dx,dy);PCBEDIT.prepare(B);break;}});}
   function planeBus0(){return!!(o.planes&&o.planes.has(bat));}
   const fitOk=P*R.length<=H+0.01;
   // the supply bus (battery side of the bridge) stays free of other parts

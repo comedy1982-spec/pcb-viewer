@@ -5,6 +5,7 @@ const NP_TPL=[
   ['BMS 마스터','BMS','BMS 배터리 관리 시스템 마스터 설계'],
   ['eLSD ECU','eLSD ECU','eLSD ECU: 12V 배터리 입력(역전압·서지 보호), AURIX MCU, CAN-FD 통신, DC 모터 H-bridge 게이트 드라이버, 전류·온도 센싱, UART/JTAG 디버그와 XCP 캘리브레이션, 워치독, ASIL B'],
   ['Dadu ECU','Dadu ECU v0.1','Dadu ECU: 12V BLDC 모터 구동, 홀 센서(공급 9V), PMIC, 3상 게이트 드라이버 + MOSFET 6개 브리지, CAN-FD, AURIX TC364, PCB 온도 센서'],
+  ['ELD only','ELD only v0.1','ELD only: Dadu 기반, 12V 배터리 · IGN · GND 3핀 입력, ELD 솔레노이드 H-브리지(A4911) 구동 상시 7A 피크 20A (출력 2핀), PCB 온도 센서만 실장, CAN-FD, AURIX TC364'],
   ['BLDC 팬 컨트롤러','BLDC 팬 컨트롤러 v0.1','12V 입력 BLDC 모터 컨트롤러, STM32, 홀 센서, CAN 통신, 상태 LED 2개, 버튼 1개, 전압 감시'],
   ['CAN 센서 노드','CAN 센서 노드 v0.1','12V 입력 CAN 센서 노드, STM32, I2C 센서 확장, UART 디버그, LED 1개'],
   ['USB DC 모터 보드','USB DC 모터 보드 v0.1','USB 전원 DC 모터 구동, 전류 감시, LED 2개, 버튼 1개'],
@@ -356,9 +357,9 @@ const NP_SWAP=/^(can|bldc|dcmotor|hs_switch|vmon|uart|i2c|flash|led|button)$/;
 async function npSetPart(b,p){const prev=JSON.parse(JSON.stringify(b.impl||[]));b.part={mpn:p.mpn,mfr:p.mfr||'',note:p.note||''};
   b.feats=(b.feats||[]).filter(f=>!/^부품: /.test(f));b.feats.push(`부품: ${p.mpn}${p.mfr?' ('+p.mfr+')':''}`);
   // Allegro 3-phase drivers drive the whole inverter block: keep gdrv3 (FETs · shunts · bootstrap) and switch its driver
-  {const L0=b.impl||[];const g=L0.find(i=>i.type==='gdrv3');const m=String(p.mpn||'').toUpperCase().match(/A491[18]/);
+  {const L0=b.impl||[];const g=L0.find(i=>i.type==='gdrv3'||i.type==='hbridge');const m=String(p.mpn||'').toUpperCase().match(/A491[18]|IR2104/);
     if(g&&m){g.params=Object.assign({},g.params,{driver:m[0]});const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;
-      NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — 3상 인버터(gdrv3) 구동 IC를 ${m[0]}로 (FET·션트·부트스트랩·센스 앰프·SPI 자동 연결)${rec&&rec.pins&&rec.pins.length?'':' · 핀 표가 없어 지금은 IR2104로 생성 — datasheet '+p.mpn+' 로 핀 표를 넣으면 반영'}`;}}
+      NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — ${g.type==='hbridge'?'H-브리지(hbridge)':'3상 인버터(gdrv3)'} 구동 IC를 ${m[0]}로 (FET·션트·부트스트랩·센스 앰프·SPI 자동 연결)${rec&&rec.pins&&rec.pins.length?'':' · 핀 표가 없어 지금은 IR2104로 생성 — datasheet '+p.mpn+' 로 핀 표를 넣으면 반영'}`;}}
   const L=b.impl||[];const single=!L.length||(L.length===1&&NP_SWAP.test(L[0].type))||L.some(i=>i.type==='part');let how='기록 (회로는 라이브러리 블록 구성 유지 · 2단계에서 add part로 교체 가능)';
   if(single){const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;const pins=r=>!!(r&&r.pins&&r.pins.length);
     if(pins(rec)||(AIM.mode==='ai'&&CLI.sample)){try{await npRun(`impl ${b.id} part ${p.mpn}`);const r2=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;if(pins(r2))how=`회로 구현 → part ${p.mpn}${r2.src==='ai'?' (Claude 추정 핀)':''}`;else{b.impl=prev;how='핀 정보를 얻지 못해 기록만 (라이브러리 블록 유지)';}}catch(e){b.impl=prev;how='회로 구현 실패: '+(e.message||e)+' → 기록만';}}

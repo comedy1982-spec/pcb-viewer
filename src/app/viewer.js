@@ -722,8 +722,8 @@ function boardFromSnap(S){const m=S.meta;const prof=PRODUCTS.detect(m.profile);c
   // the snapshot's motor-stage settings go into the diagram too, so a later edit that regenerates the plan keeps them
   (R.arch.blocks||[]).forEach(b=>(b.impl||[]).forEach(im=>{if(im.type==='gdrv3')im.params=Object.assign({},im.params,{driver:m.driver||'IR2104'},m.gdrv3||{});}));
   const plan=HWARCH.toPlan(R.arch).plan;const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'},m.gdrv3||{});plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
-  const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+m.profile.toLowerCase()+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch:R.arch};}
-const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C],dadu8d:['Dadu A4911 상시 10 A · 피크 40 A · 90 × 60',()=>SNAP_DADU8D]};
+  const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+m.profile.toLowerCase().replace(/\s+/g,'-')+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch:R.arch};}
+const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C],dadu8d:['Dadu A4911 상시 10 A · 피크 40 A · 90 × 60',()=>SNAP_DADU8D],eld6:['ELD only A4911 H-브리지 7 A / 20 A · 80 × 55',()=>SNAP_ELD6]};
 function loadSnapExample(which){const r=boardFromSnap(SNAP_EXAMPLES[which][1]());
   Object.assign(NP,{plan:r.plan,arch:r.arch,answers:{},vkey:null,picked:null,chooser:false,variants:null,hist:[],planManual:false});const n=$('#npName');if(n)n.value=r.B.name;
   setBoard(r.B);closeImport();if(typeof setMode==='function'){APP.mode='steps';setMode('steps');if(typeof setStep==='function')setStep(3);}
@@ -737,7 +737,7 @@ $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));
 $('#impSample3').addEventListener('click',()=>loadExample('bldc'));
 $('#impSample4').addEventListener('click',()=>loadExample('tc364'));
-{const b5=$('#impSample5');if(b5)b5.addEventListener('click',()=>loadExample('dadu8'));const b6=$('#impSample6');if(b6)b6.addEventListener('click',()=>loadExample('dadu8b'));const b7=$('#impSample7');if(b7)b7.addEventListener('click',()=>loadExample('dadu8c'));const b8=$('#impSample8');if(b8)b8.addEventListener('click',()=>loadExample('dadu8d'));}
+{const b5=$('#impSample5');if(b5)b5.addEventListener('click',()=>loadExample('dadu8'));const b6=$('#impSample6');if(b6)b6.addEventListener('click',()=>loadExample('dadu8b'));const b7=$('#impSample7');if(b7)b7.addEventListener('click',()=>loadExample('dadu8c'));const b8=$('#impSample8');if(b8)b8.addEventListener('click',()=>loadExample('dadu8d'));const b9=$('#impSample9');if(b9)b9.addEventListener('click',()=>loadExample('eld6'));}
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{

@@ -281,7 +281,7 @@ async function cliRoute(a){CLI.routed=true;
     // the power nets are routed thin: their width comes from the copper fill (no wide-track attempts that fail and retry)
     PW.nets.forEach(n=>{if(!(WW[n]&&WW[n].manual))delete netWidth[n];});
     // via-in-pad on the big power pads before anything is routed under them (multilayer: planes and the far outer layer)
-    if(ml){const pv0=AUTOROUTE.padVias(BD,PW.nets,{via:{d:Math.max(via.d,0.6),drill:Math.max(via.drill,0.3)},pitch:1.1});if(pv0)lines.push(`전력 패드 안 비아 ${pv0}개 (평면·아래층으로 전류 분산)`);}
+    if(ml){const pv0=AUTOROUTE.padVias(BD,PW.nets,{via:{d:Math.max(via.d,0.6),drill:Math.max(via.drill,0.3)},pitch:0.9});if(pv0)lines.push(`전력 패드 안 비아 ${pv0}개 (평면·아래층으로 전류 분산)`);}
     // the stage is routed locally first, before any corridor exists: power nets, then every net with a pad on a part in the
     // stage region (gate drive, bootstrap, shunt sense) — so a gate pin is never sealed in by the power copper
     const R0=PW.rect,inStage=c=>{const x=(c.bb[0]+c.bb[2])/2,y=(c.bb[1]+c.bb[3])/2;return x>=R0[0]&&x<=R0[2]&&y>=R0[1]&&y<=R0[3];};
@@ -371,7 +371,7 @@ function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.
   const fillNets=hi.filter(n=>!direct.includes(n));const width={};fillNets.forEach(n=>{if(!PW.planes.has(n)&&WW[n].cls!=='gnd')width[n]=PW.need[n];});
   // multilayer: GND / supply are inner planes, so both outer layers carry the other power nets (phases, input); the bottom GND
   // pour of a 2-layer board stays and only the top is filled
-  const pv=ml?AUTOROUTE.padVias(BD,hi,{via:{d:Math.max(via.d,0.6),drill:Math.max(via.drill,0.3)},pitch:1.1}):0; // power pads: 0.6 / 0.3 mm vias carry ~1.5× a 0.45 / 0.2 one
+  const pv=ml?AUTOROUTE.padVias(BD,hi,{via:{d:Math.max(via.d,0.6),drill:Math.max(via.drill,0.3)},pitch:0.9}):0; // power pads: 0.6 / 0.3 mm vias carry ~1.5× a 0.45 / 0.2 one
   const layers=ml?[0,NL-1]:[0];let refan=0;
   if(ml){const had=BD.layers[keys[NL-1]+'.cu'].some(p=>p.t==='pour'&&!p.plane);BD.layers[keys[NL-1]+'.cu']=BD.layers[keys[NL-1]+'.cu'].filter(p=>!(p.t==='pour'&&!p.plane));
     // bottom-side pads counted on that pour (no via of their own) now need one down to their inner plane
