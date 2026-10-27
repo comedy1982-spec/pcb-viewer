@@ -18,11 +18,11 @@ const CLI_HELP=[
   ['strategies','배치 전략 설명 (balanced · thermal · noise · compact)'],
   ['reset [--strategy S] [--seed N] [--both] [--route] [--no-grow]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 자리가 모자라면 보드를 10 %씩 키워(최대 3배 면적) 다시 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립). --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
-  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90] [--dir 1.5] [--mst] [--gloss]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔 · --mst: 다핀 넷을 MST 순서(짧은 핀 쌍부터)로 — 기본 끔(실측 효과 미미) · --dir N: 층별 선호 방향(홀수 신호층 수평·짝수 수직, 역방향 N배 비용 — 기본 끔, DCM-10A 실측에서 비아 +25%): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
+  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90] [--dir 1.5] [--mst] [--gloss] [--par auto|N|0]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔 · --mst: 다핀 넷을 MST 순서(짧은 핀 쌍부터)로 — 기본 끔(실측 효과 미미) · --dir N: 층별 선호 방향(홀수 신호층 수평·짝수 수직, 역방향 N배 비용 — 기본 끔, DCM-10A 실측에서 비아 +25%): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
   ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
-  ['gloss [--passes 1] [--via 3] [--all]','사후 최적화: 넷을 하나씩 다른 넷은 고정한 채 비아 비용 3배로 다시 깔아 비아가 줄거나(같으면 길이가 줄면) 채택 · DRC·연결 악화 시 되돌림. route --gloss 로 배선에 이어 실행'],
+  ['gloss [--passes 1] [--via 3] [--all] [--par auto|N|0]','사후 최적화: 넷을 하나씩 다른 넷은 고정한 채 비아 비용 3배로 다시 깔아 비아가 줄거나(같으면 길이가 줄면) 채택 · DRC·연결 악화 시 되돌림. route --gloss 로 배선에 이어 실행'],
   ['fix [--maxgrow 1.5] [--maxlayers 6] [--no-grow] [--no-layers] [--pinswap]','미배선 자동 개선: 비용이 적은 순서로 시도하고 다 배선되면 멈춤 — ① 전부 다시 배선(짧은 넷 먼저) ② 다른 시드로 재배치 ③ 다른 전략 ④ 보드 10·20·35·50% 키움 ⑤ 층 늘림(2→4→6) ⑥ (--pinswap) MCU 핀 재배정. 가장 좋은 결과를 남기고 한 번에 되돌리기. autofix on|off: 배선 뒤 미배선이 남으면 자동 실행(기본 켬)'],
   ['auto [S] [--tries N]','리셋 → 배치 → 배선 → DRC → 리포트를 한 번에. 미배선이 남으면 다른 시드로 다시 시도해 가장 좋은 결과를 남김'],
   ['lock <부품…> · unlock <부품…|all> · locks','자동 배치에서 고정할 부품'],
@@ -238,6 +238,24 @@ function cliFineDepth(nets){const want=new Set(nets);const planes=new Set(PCB.st
       let i=0;while(i<row.length){if(!sigNet(row[i].net)){i++;continue;}let j=i;while(j+1<row.length&&sigNet(row[j+1].net)&&row[j+1].net!==row[j].net)j++;
         for(let k=i;k<=j;k++){const d=Math.min(k-i,j-k);const n=row[k].net;if(d>(out[n]||0))out[n]=d;}i=j+1;}});});
   return out;}
+/* ---- parallel routing: Web Workers built from the page's own core scripts (data-w) ---- */
+let WK_URL=null;function wkUrl(){if(WK_URL)return WK_URL;const src=[...document.querySelectorAll('script[data-w]')].map(s=>s.textContent).join('\n')+'\n(AUTOROUTE.workerMain)();';WK_URL=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));return WK_URL;}
+function wkRun(msg){return new Promise((res,rej)=>{let w;try{w=new Worker(wkUrl());}catch(e){return rej(e);}const kill=()=>{try{w.terminate();}catch(e){}};
+  w.onmessage=e=>{kill();const m=e.data;if(m&&m.ok)res(m);else rej(new Error(m&&m.err||'worker'));};w.onerror=e=>{kill();rej(new Error(e.message||'worker error'));};w.postMessage(msg);});}
+/* how many workers: --par N / --par auto; without --par the routing pass stays sequential (the hard, cross-board nets dominate it and are
+   sequential by nature) and the post-optimisation uses workers when the machine has 4 cores or more (its per-net work splits by strip) */
+function wkCount(a,auto){if(typeof Worker==='undefined')return 0;const hc=navigator.hardwareConcurrency||2;const v=a.par!=null?a.par:(CLI.par!=null?CLI.par:(auto&&hc>=4?'auto':0));if(v===false||/^(0|off|no)$/i.test(String(v)))return 0;
+  if(v===true||v==='auto')return Math.min(4,Math.max(2,hc-1));return Math.max(0,Math.min(8,+v||0));}
+/* split the board into K strips (vertical cuts, each at the x that leaves the most nets wholly inside one side); a net is local to a strip
+   when its pads plus a margin fit inside — those are routed in parallel, each worker confined to its strip; the rest stay sequential */
+function wkRegions(B,nets,K,margin){const bb={};nets.forEach(n=>{const ps=(B.nets[n]&&B.nets[n].pads)||[];if(!ps.length)return;bb[n]=[Math.min(...ps.map(p=>p.x))-margin,Math.min(...ps.map(p=>p.y))-margin,Math.max(...ps.map(p=>p.x))+margin,Math.max(...ps.map(p=>p.y))+margin];});
+  const fits=(n,r)=>{const b=bb[n];return!!b&&b[0]>=r[0]&&b[1]>=r[1]&&b[2]<=r[2]&&b[3]<=r[3];};
+  let regs=[[0,0,B.W,B.H]];
+  while(regs.length<K){let best=null;regs.forEach((r,ri)=>{const vert=(r[2]-r[0])>=(r[3]-r[1]);const lo=vert?r[0]:r[1],hi=vert?r[2]:r[3];if(hi-lo<20)return;
+      for(let c=lo+8;c<=hi-8;c+=1){const A=vert?[r[0],r[1],c,r[3]]:[r[0],r[1],r[2],c],Bq=vert?[c,r[1],r[2],r[3]]:[r[0],c,r[2],r[3]];const na=nets.filter(n=>fits(n,A)).length,nb=nets.filter(n=>fits(n,Bq)).length;const sc=Math.min(na,nb)*2+na+nb;if(!best||sc>best.sc)best={ri,A,B:Bq,sc,na,nb};}});
+    if(!best||Math.min(best.na,best.nb)<4)break;regs.splice(best.ri,1,best.A,best.B);}
+  if(regs.length<2)return null;const groups=regs.map(r=>({rect:r,nets:nets.filter(n=>fits(n,r))}));const local=new Set();groups.forEach(g=>g.nets.forEach(n=>local.add(n)));
+  return{groups:groups.filter(g=>g.nets.length),global:nets.filter(n=>!local.has(n))};}
 async function cliRoute(a){CLI.routed=true;
   if(BD.pcbPending)throw new Error('부품이 아직 배치되지 않았습니다. 먼저 reset(배치) 또는 auto를 실행하세요.');
   cliEnsureEdit();const st=cliStrat(a);const before=cliSnap();
@@ -304,7 +322,17 @@ async function cliRoute(a){CLI.routed=true;
     const done=new Set(first.filter(n=>!AUTOROUTE.openNets(BD,x=>x===n).length));nets=nets.filter(n=>!done.has(n));}
   else{BD._avoid=null;BD._nb=null;}
   const edgeBand=a.edge===false||a['no-edge']?0:(a.edge!=null&&isFinite(+a.edge)?+a.edge:2);
-  const it=AUTOROUTE.jobRR(BD,nets,{rounds:a.rounds!=null?+a.rounds:(PW&&PW.nets.length?8:undefined),width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,keepOrder,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true});
+  // parallel pass: the plain signal nets (analog · general digital) whose pads sit inside one strip of the board are routed in
+  // Web Workers, one strip each, with the search confined to the strip — nothing two workers do can collide. Power, clocks and
+  // the nets that span strips stay on the main thread afterwards, with rip-up over everything (the workers' copper included).
+  const K=wkCount(a);if(K>=2&&nets.length>=12&&!CLI.stopReq){const cand=nets.filter(n=>prioOf(n)>=2);const R=wkRegions(BD,cand,K,1.5);
+    if(R&&R.groups.length>=2){cliSet(prog,`병렬 배선 준비… (워커 ${R.groups.length} · 지역 넷 ${R.groups.reduce((x,g)=>x+g.nets.length,0)})`);await cliTick();const tP=performance.now();
+      const board=AUTOROUTE.pack(BD);const optsW={rounds:4,width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,sealLim:a.seal!=null?+a.seal:undefined};
+      let out=null;try{out=await Promise.all(R.groups.map((g,i)=>wkRun({id:i,cmd:'route',board,nets:g.nets,opts:optsW,region:g.rect})));}catch(e){lines.push('병렬 배선 건너뜀: '+(e.message||e));}
+      if(out){let nt=0,nv=0,okN=0;const routed=new Set();out.forEach((o,i)=>{o.tracks.forEach(t=>{const side=t._side;delete t._side;BD.layers[side+'.cu'].push(t);nt++;});o.vias.forEach(v=>{BD.vias.push(v);nv++;});(o.res&&o.res.results||[]).forEach(r=>{if(r.ok){okN++;routed.add(r.net);}});});
+        PCBEDIT.rebuildNets(BD);const still=new Set(AUTOROUTE.openNets(BD).map(o=>o.net));nets=nets.filter(n=>still.has(n));
+        lines.push(`병렬 배선: 워커 ${R.groups.length}개 (${R.groups.map(g=>g.nets.length).join('+')} 넷 · 전역 ${R.global.length}) → ${okN}개 연결 · 트랙 ${nt} · 비아 ${nv} · ${((performance.now()-tP)/1000).toFixed(1)} s (워커 안 ${out.map(o=>(o.ms/1000).toFixed(1)).join('/')} s)`);}}}
+  const it=AUTOROUTE.jobRR(BD,nets,{rounds:a.rounds!=null?+a.rounds:(PW&&PW.nets.length?8:undefined),width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,keepOrder,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,sealLim:a.seal!=null?+a.seal:undefined});
   const t0=performance.now();let r,last=performance.now();
   for(;;){r=it.next();if(r.done)break;const p=r.value;
     if(performance.now()-last>80){cliSet(prog,p.phase==='route'?`배선 중… ${p.i+1}/${p.total} · ${p.net}`:`막힌 넷 다시 배선 ${p.round}/${p.max} · ${p.net} (완료 ${p.ok}/${p.total})`);await cliTick();last=performance.now();}
@@ -313,7 +341,7 @@ async function cliRoute(a){CLI.routed=true;
   // that then shares a cell is re-routed with rising congestion prices until the conflicts are gone
   let pfNote='';if(!a['no-pf']&&a.pf!==false&&!CLI.stopReq){PCBEDIT.rebuildNets(BD);const open1=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net)).length;
     if(open1){cliSet(prog,`협상 배선(PathFinder) 준비… 미배선 ${open1}개`);await cliTick();
-      const it3=AUTOROUTE.jobPF(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,pfRounds:a['pf-rounds']?+a['pf-rounds']:(PW&&PW.nets.length?8:14),pfTimeMs:a['pf-time']?+a['pf-time']*1000:(PW&&PW.nets.length?30000:90000)});
+      const it3=AUTOROUTE.jobPF(BD,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,sealLim:a.seal!=null?+a.seal:undefined,pfRounds:a['pf-rounds']?+a['pf-rounds']:(PW&&PW.nets.length?8:14),pfTimeMs:a['pf-time']?+a['pf-time']*1000:(PW&&PW.nets.length?30000:90000)});
       let r3,last3=performance.now();for(;;){r3=it3.next();if(r3.done)break;const p=r3.value;
         if(performance.now()-last3>80){cliSet(prog,`협상 배선 라운드 ${p.round}/${p.max} · ${p.i+1}/${p.total} ${p.net} (충돌 ${p.conflicts} · 미배선 ${p.open})`);await cliTick();last3=performance.now();}
         if(CLI.stopReq)break;}
@@ -325,7 +353,7 @@ async function cliRoute(a){CLI.routed=true;
   // wide nets that did not fit: route them once more at the base width and say so (the user can pour copper instead)
   const wideOpen=open.map(o=>o.net).filter(n=>netWidth[n]>pwr&&!CLI.stopReq);
   if(wideOpen.length){cliSet(prog,`폭을 줄여 다시 배선… (${wideOpen.join(', ')})`);await cliTick();const nw2=Object.assign({},netWidth);wideOpen.forEach(n=>{nw2[n]=pwr;});
-    const it2=AUTOROUTE.jobRR(BD,wideOpen,{width:{signal:sig,power:pwr},netWidth:nw2,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,rounds:4});
+    const it2=AUTOROUTE.jobRR(BD,wideOpen,{width:{signal:sig,power:pwr},netWidth:nw2,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(BD.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||CLI.mst===true,sealLim:a.seal!=null?+a.seal:undefined,rounds:4});
     for(;;){const q=it2.next();if(q.done)break;}PCBEDIT.rebuildNets(BD);const still=new Set(AUTOROUTE.openNets(BD).map(o=>o.net));const narrowed=wideOpen.filter(n=>!still.has(n));
     if(narrowed.length)lines.push(`넓은 폭으로 자리가 없어 기본 폭으로 배선: ${narrowed.map(n=>`${n} (${netWidth[n]} → ${pwr} mm)`).join(', ')} → 동박면(pour)으로 보강하거나 보드를 키우세요`);
     open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));}
@@ -345,7 +373,7 @@ async function cliRoute(a){CLI.routed=true;
   cliCommit(before,'route');cliAfter(false);
   // post-optimisation (via reduction) only on request: --gloss, or the gloss command / [비아 줄이기] chip afterwards — it costs about as much as the routing itself
   const wantGloss=a.gloss===true||/^(1|on|yes)$/i.test(String(a.gloss||''));
-  if(wantGloss&&!a['no-gloss']&&!CLI.inFix&&!CLI.stopReq&&nets.length){try{const g=await cliGloss({},true);if(g)lines.push(g);}catch(e){lines.push('사후 최적화 건너뜀: '+(e.message||e));}}
+  if(wantGloss&&!a['no-gloss']&&!CLI.inFix&&!CLI.stopReq&&nets.length){try{const g=await cliGloss({par:a.par},true);if(g)lines.push(g);}catch(e){lines.push('사후 최적화 건너뜀: '+(e.message||e));}}
   else if(!CLI.inFix&&nets.length&&BD.vias.some(v=>v.auto&&!v.fan))lines.push('비아 줄이기(사후 최적화)는 생략 — 필요하면 gloss 명령 또는 [비아 줄이기] 버튼');
   if(iw&&a.fill!==false&&!a['no-fill']&&!CLI.stopReq){try{const fl=cliPowerFill(WW,clr,via);if(fl)lines.push(fl);}catch(e){lines.push('전력 동박 채우기 건너뜀: '+(e.message||e));}}
   // pads of plane nets still without a via (dense double-sided boards): one more fan-out pass that looks further for room
@@ -423,13 +451,22 @@ async function cliGloss(a,quiet){a=a||{};if(BD.pcbPending)throw new Error('배�
   const nets=[...new Set(PCB.cuKeys(BD).flatMap(L=>BD.layers[L+'.cu'].filter(p=>p.auto&&!p.fan&&p.net).map(p=>p.net)).concat(BD.vias.filter(v=>v.auto&&!v.fan&&v.net).map(v=>v.net)))];
   if(!nets.length)return'자동 배선한 넷이 없습니다.';
   const prog=cliSay('out',`사후 최적화 준비… (${nets.length}개 넷)`);await cliTick();const pid=typeof progStart==='function'?progStart('gloss','사후 최적화 (비아 감축)',{total:nets.length,stop:()=>{CLI.stopReq=true;}}):null;
-  const it=AUTOROUTE.gloss(BD,nets,{avoid:BD._avoid||undefined,avoidCost:6,netBottom:BD._nb||undefined,width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),viaCost:ml?1.2:2,glossPasses:a.passes?+a.passes:1,glossVia:a.via!=null&&a.via!==true?+a.via:3,glossAll:!!a.all,glossTimeMs:a.time?+a.time*1000:60000});
+  // parallel: nets local to one strip of the board are re-routed in workers confined to their strip; the rest on the main thread
+  let glossNets=nets;const K=wkCount(a,true);let parLine='';if(K>=2&&nets.length>=12&&!CLI.stopReq){const R=wkRegions(BD,nets,K,1.5);
+    if(R&&R.groups.length>=2){cliSet(prog,`병렬 사후 최적화… (워커 ${R.groups.length})`);await cliTick();const tP=performance.now();const board=AUTOROUTE.pack(BD);
+      const optsW={avoid:BD._avoid||undefined,avoidCost:6,netBottom:BD._nb||undefined,width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:120000,viaCost:ml?1.2:2,glossPasses:a.passes?+a.passes:1,glossVia:a.via!=null&&a.via!==true?+a.via:3,glossAll:!!a.all,glossTimeMs:a.time?+a.time*1000:60000};
+      let out=null;try{out=await Promise.all(R.groups.map((g,i)=>wkRun({id:i,cmd:'gloss',board,nets:g.nets,opts:optsW,region:g.rect})));}catch(e){parLine='병렬 사후 최적화 건너뜀: '+(e.message||e);}
+      if(out){let nc=0;out.forEach(o=>{const cs=new Set(o.changed);if(!cs.size)return;PCB.cuKeys(BD).forEach(k=>{BD.layers[k+'.cu']=BD.layers[k+'.cu'].filter(p=>!(p.auto&&!p.fan&&cs.has(p.net)));});BD.vias=BD.vias.filter(v=>!(v.auto&&!v.fan&&cs.has(v.net)));
+          o.tracks.forEach(t=>{const side=t._side;delete t._side;BD.layers[side+'.cu'].push(t);});o.vias.forEach(v=>BD.vias.push(v));nc+=cs.size;});
+        PCBEDIT.rebuildNets(BD);glossNets=R.global;parLine=`병렬 사후 최적화: 워커 ${R.groups.length}개 (${R.groups.map(g=>g.nets.length).join('+')} 넷) → ${nc}개 개선 · ${((performance.now()-tP)/1000).toFixed(1)} s (워커 안 ${out.map(o=>(o.ms/1000).toFixed(1)).join('/')} s) · 전역 ${R.global.length}개는 이어서`;}}}
+  if(parLine)cliSay('out',parLine);
+  const it=AUTOROUTE.gloss(BD,glossNets,{avoid:BD._avoid||undefined,avoidCost:6,netBottom:BD._nb||undefined,width:{signal:sig,power:pwr},netWidth,widthCap:a.iwmax?+a.iwmax:2,W:WW,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),viaCost:ml?1.2:2,glossPasses:a.passes?+a.passes:1,glossVia:a.via!=null&&a.via!==true?+a.via:3,glossAll:!!a.all,glossTimeMs:a.time?+a.time*1000:60000});
   let r,last=performance.now();try{for(;;){r=it.next();if(r.done)break;const p=r.value;if(performance.now()-last>80){cliSet(prog,`사후 최적화 ${p.pass}/${p.passes} · ${p.i+1}/${p.total} ${p.net} (개선 ${p.changed})`);if(pid)progSet('gloss',{i:p.i,label:`사후 최적화 · ${p.net} (개선 ${p.changed})`});await cliTick();last=performance.now();}if(CLI.stopReq)break;}}
   finally{if(pid)progEnd('gloss');}
   PCBEDIT.rebuildNets(BD);const v=r&&r.done?r.value:null;if(!v){cliRestore(before);return'중지했습니다.';}
   cliSet(prog,`사후 최적화: 비아 ${v.vias[0]} → ${v.vias[1]} · 트랙 ${f1(v.len[0])} → ${f1(v.len[1])} mm · 넷 ${v.changed}/${v.tried} 개선 · ${(v.ms/1000).toFixed(1)} s`);
   if(v.changed){cliCommit(before,'gloss');cliAfter(false);}
-  const line=`사후 최적화: 비아 ${v.vias[0]} → ${v.vias[1]} (${v.vias[0]?Math.round((1-v.vias[1]/Math.max(1,v.vias[0]))*100):0}% 감소) · 트랙 ${f1(v.len[0])} → ${f1(v.len[1])} mm · 넷 ${v.changed}개 개선`;return quiet?line:line+` · DRC ${PCBEDIT.drc(BD).length}건`;}
+  const line=(parLine?parLine+'\n':'')+`사후 최적화: 비아 ${v.vias[0]} → ${v.vias[1]} (${v.vias[0]?Math.round((1-v.vias[1]/Math.max(1,v.vias[0]))*100):0}% 감소) · 트랙 ${f1(v.len[0])} → ${f1(v.len[1])} mm · 넷 ${v.changed}개 개선`;return quiet?line:line+` · DRC ${PCBEDIT.drc(BD).length}건`;}
 async function cliFix(a){a=a||{};if(BD.pcbPending)throw new Error('부품이 아직 배치되지 않았습니다. 먼저 reset 또는 auto를 실행하세요.');
   cliEnsureEdit();const st0=cliStrat(a);const start=cliSnap();const u0=PE.undo.length;const W0=BD.W,H0=BD.H,L0=BD.copperLayers||2;
   const open0=cliOpenCount();if(!open0&&!a.force)return'미배선(래츠네스트)이 없습니다.';

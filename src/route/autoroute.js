@@ -194,6 +194,14 @@ function widthFor(B,net,o){let w=B.netClass&&B.netClass(net)==='전원'?o.width.
   if(o.netWidth&&o.netWidth[net]>0)w=Math.min(o.netWidth[net],o.widthCap||3); // per-net width (current-based / user)
   // supplies that land on fine-pitch pins neck down so the track fits between the neighbouring pads
   if(o.neck&&w>o.neck&&B.nets[net]&&B.nets[net].pads.some(p=>Math.min(p.w,p.h)<0.36&&!p.drill))return o.neck;return w;}
+/* rip-up rounds and the post-optimisation re-prepare the grid many times, but only the auto copper (routed tracks and vias)
+   changes between them: prepareFast keeps the static grid — pads, outline, holes, fixed copper, fan-out vias, pin lanes, escape
+   rings, corridors — from the first call in `cache` and only repaints the auto copper each time (≈ 5 × faster than a full prepare) */
+const isAutoShape=s=>!!((s.prim&&s.prim.auto&&!s.prim.fan)||(s.via&&s.via.auto&&!s.via.fan));
+function prepareFast(B,opts,cache){const o0=Object.assign({},opts||{});
+  if(!cache.P){const P=prepare(B,Object.assign({},o0,{skipAuto:true}));const G=P.G;cache.P=P;cache.occT=G.occT.map(a=>a.slice());cache.occV=G.occV.map(a=>a.slice());return prepareFast(B,opts,cache);}
+  const P=cache.P,G=P.G,o=P.o;G.occT.forEach((a,l)=>a.set(cache.occT[l]));G.occV.forEach((a,l)=>a.set(cache.occV[l]));
+  const wMax=Math.max(o.width.signal,o.width.power)/2;P.S=shapesOfBoard(B);P.S.forEach(s=>{if(isAutoShape(s))paint(G,s,P.idOf(s.net),wMax,o.via.d/2,o.clear);});return P;}
 function prepare(B,opts){
   const o=Object.assign({},DEF,opts||{});o.width=Object.assign({},DEF.width,(opts||{}).width);o.via=Object.assign({},DEF.via,(opts||{}).via);
   const G=makeGrid(B,o);const S=shapesOfBoard(B);const ids={};let nid=1;const idOf=n=>n==null?-1:(ids[n]||(ids[n]=++nid));
@@ -207,13 +215,15 @@ function prepare(B,opts){
     G.edgeBand=band;}
   const wMax=Math.max(o.width.signal,o.width.power)/2;
   outlineBlock(B,G,o.edge);
+  // region (parallel routing): cells outside o.region [x0,y0,x1,y1] are off limits on every layer, so a worker's tracks stay inside its strip
+  if(o.region){const r=o.region;for(let y=0;y<G.ny;y++){const py=G.oy+y*G.g;const outY=py<r[1]||py>r[3];for(let x=0;x<G.nx;x++){if(!outY){const px=G.ox+x*G.g;if(px>=r[0]&&px<=r[2])continue;}const i=y*G.nx+x;for(let l=0;l<G.NL;l++){G.occT[l][i]=-1;G.occV[l][i]=-1;}}}}
   // plane layers (inner GND / PWR) carry no tracks; through vias pass them with an antipad
   const st=PC.stackOf(B);G.keys=PC.cuKeys(B);G.route=st.map((x,i)=>x.role==='sig'?i:-1).filter(i=>i>=0);
   st.forEach((x,i)=>{if(x.role!=='sig')G.occT[i].fill(-1);});
   // preferred routing direction per signal layer (odd signal layer horizontal, even vertical — adjacent layers cross,
   // so one layer's tracks do not wall off the other); a wrong-way move costs o.dirCost ×, a diagonal √(dirCost) ×
   G.pref=new Array(G.NL).fill(0);if(o.dirCost&&o.dirCost!==1&&G.route.length>=2)G.route.forEach((l,i)=>{G.pref[l]=i%2===0?1:2;});
-  S.forEach(s=>paint(G,s,s.hole?-1:idOf(s.net),wMax,o.via.d/2,s.hole?Math.max(o.clear,o.holeClear||0.25):o.clear));
+  S.forEach(s=>{if(o.skipAuto&&isAutoShape(s))return;paint(G,s,s.hole?-1:idOf(s.net),wMax,o.via.d/2,s.hole?Math.max(o.clear,o.holeClear||0.25):o.clear);});
   // pin escapes: a short virtual stub of each IC pad's own net, straight out along the pad, so other nets cannot seal the pin
   if(o.reserve){B.comps.forEach(c=>{if(c.pads.length<6)return;const cx=(c.bb[0]+c.bb[2])/2,cy=(c.bb[1]+c.bb[3])/2;
     c.pads.forEach(p=>{if(!p.net||isGnd(p.net)||p.drill)return;const a=(p.ang||0)*D2R;let ux=Math.cos(a),uy=Math.sin(a),half=p.w/2;if(p.h>p.w){ux=-Math.sin(a);uy=Math.cos(a);half=p.h/2;}
@@ -321,7 +331,7 @@ function autoLen(B){let l=0,v=0;PC.cuKeys(B).forEach(L=>B.layers[L+'.cu'].forEac
 function* jobRR(B,nets,opts){
   const o=Object.assign({},DEF,opts||{});const maxRounds=o.rounds!=null?o.rounds:Math.min(16,4+nets.length);
   let order=o.keepOrder?nets.slice():nets.map(n=>({n,e:estimate(B,n)})).sort((a,b)=>a.e-b.e).map(x=>x.n);
-  let P=prepare(B,o);const res={};
+  const pc={};let P=prepareFast(B,o,pc);const res={};
   for(let i=0;i<order.length;i++){yield{phase:'route',i,total:order.length,net:order[i]};res[order[i]]=routeNet(P,B,order[i]);}
   const okCount=()=>{const S=shapesOfBoard(B);return nets.filter(n=>groups(B,S,n).length<=1).length;};
   let best={ok:okCount(),...autoLen(B)};const tries={};let rounds=0;
@@ -340,12 +350,12 @@ function* jobRR(B,nets,opts){
     if(!blockers.length)continue;
     const snap=copperSnap(B);
     const kill=[];PC.cuKeys(B).forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(p.auto&&!p.fan&&(p.net===X||blockers.includes(p.net)))kill.push(p);}));B.vias.forEach(v=>{if(v.auto&&!v.fan&&(v.net===X||blockers.includes(v.net)))kill.push(v);});
-    unroute(B,kill);P=prepare(B,o);
+    unroute(B,kill);P=prepareFast(B,o,pc);
     [X,...blockers].forEach(n=>{res[n]=routeNet(P,B,n);});
     const now={ok:okCount(),...autoLen(B)};
     if(now.ok>best.ok||(now.ok===best.ok&&now.l+3*now.v<best.l+3*best.v-0.5)){best=now;queue=failedNow().filter(n=>(tries[n]||0)<3);}
     else{copperRestore(B,snap);P=null;}
-    if(!P)P=prepare(B,o);
+    if(!P)P=prepareFast(B,o,pc);
   }
   const fail=failedNow();const al=autoLen(B);
   return{ok:nets.length-fail.length,total:nets.length,fail:fail.map(n=>({net:n,why:(res[n]&&res[n].why)||'막힘'})),len:al.l,vias:al.v,rounds,results:nets.map(n=>({net:n,ok:!fail.includes(n)}))};
@@ -438,14 +448,14 @@ function* gloss(B,nets,opts){
   const o=Object.assign({},DEF,opts||{});const passes=o.glossPasses||1,viaMul=o.glossVia||3,maxLen=o.glossMaxLen||1.6;const t0=Date.now(),tLimit=o.glossTimeMs||60000;
   const stat=net=>{let l=0,v=0;PC.cuKeys(B).forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(!p.auto||p.fan||p.net!==net||!(p.t==='path'||p.t==='seg'))return;const q=p.pts||[p.a,p.b];for(let i=1;i<q.length;i++)l+=Math.hypot(q[i][0]-q[i-1][0],q[i][1]-q[i-1][1]);}));B.vias.forEach(x=>{if(x.auto&&!x.fan&&x.net===net)v++;});return{l,v};};
   const tot=()=>{let l=0,v=0;nets.forEach(n=>{const s=stat(n);l+=s.l;v+=s.v;});return{l,v};};const before=tot();
-  const drc0=drc(B,o).length;let changed=0,tried=0;
+  const drc0=drc(B,o).length;let changed=0,tried=0;const gc={};
   for(let pass=0;pass<passes;pass++){
     const order=nets.map(n=>({n,s:stat(n)})).filter(x=>x.s.v>0||(o.glossAll&&x.s.l>0)).sort((a,b)=>b.s.v-a.s.v||b.s.l-a.s.l).map(x=>x.n);let any=false;
     for(let i=0;i<order.length;i++){const net=order[i];if(Date.now()-t0>tLimit)break;tried++;
       yield{phase:'gloss',pass:pass+1,passes,i,total:order.length,net,changed};
       const s0=stat(net);
       const snap=copperSnap(B);const kill=[];PC.cuKeys(B).forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(p.auto&&!p.fan&&p.net===net)kill.push(p);}));B.vias.forEach(v=>{if(v.auto&&!v.fan&&v.net===net)kill.push(v);});
-      unroute(B,kill);const P=prepare(B,Object.assign({},o,{viaCost:(o.viaCost||2)*viaMul,pf:null}));const r=routeNet(P,B,net);
+      unroute(B,kill);const P=prepareFast(B,Object.assign({},o,{viaCost:(o.viaCost||2)*viaMul,pf:null}),gc);const r=routeNet(P,B,net);
       const s1=stat(net);const ok=r.ok&&groups(B,shapesOfBoard(B),net).length<=1&&(s1.v<s0.v||(s1.v===s0.v&&s1.l<s0.l-0.2))&&s1.l<=s0.l*maxLen+3;
       if(ok&&drc(B,o).length>drc0){copperRestore(B,snap);continue;}
       if(ok){changed++;any=true;}else copperRestore(B,snap);}
@@ -612,6 +622,27 @@ function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,min
       B.vias.push({x:+x.toFixed(3),y:+y.toFixed(3),d:o.via.d,drill:o.via.drill,net:p.net,stitch:true,inpad:true});n++;}}));
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}
 
-return{bridgeRats,pruneIslands,padVias,stitchLayers,powerFill,bottleneck,bottleneckPrep,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+/* ---------- parallel routing: a plain copy of the board for a Web Worker ----------
+   pack(B) keeps what the router reads (outline, holes, copper prims, vias, pads, stack, net classes) without the app's cyclic
+   references; unpack() rebuilds a board the router and PCBEDIT.rebuildNets accept. workerMain is the worker's message loop:
+   {cmd:'route', board, nets, opts, region} → routes the nets inside the region with jobRR and answers the copper it added. */
+function pack(B){const keys=PC.cuKeys(B);const layers={};keys.forEach(k=>{layers[k+'.cu']=B.layers[k+'.cu'].map(p=>p.t==='seg'?{t:'seg',a:p.a,b:p.b,w:p.w,net:p.net,auto:!!p.auto,fan:!!p.fan}:p.t==='path'?{t:'path',pts:p.pts,w:p.w,net:p.net,auto:!!p.auto,fan:!!p.fan}:p.t==='pad'?{t:'pad',x:p.x,y:p.y,w:p.w,h:p.h,ang:p.ang,shape:p.shape,net:p.net,drill:p.drill,side:p.side}:p.t==='poly'?{t:'poly',rect:p.rect,net:p.net}:p.t==='pour'?{t:'pour',net:p.net,plane:p.plane}:null).filter(Boolean);});
+  const cls={};Object.keys(B.nets||{}).forEach(n=>{cls[n]=B.netClass?B.netClass(n):null;});
+  return{W:B.W,H:B.H,outline:B.outline,copperLayers:B.copperLayers,stack:B.stack||null,oz:B.oz,layers,vias:B.vias.map(v=>({x:v.x,y:v.y,d:v.d,drill:v.drill,net:v.net,auto:!!v.auto,fan:!!v.fan})),
+    drills:B.drills.map(d=>({x:d.x,y:d.y,x2:d.x2,y2:d.y2,d:d.d,plated:!!d.plated})),comps:B.comps.map(c=>({ref:c.ref,x:c.x,y:c.y,side:c.side,bb:c.bb,pads:c.pads.map(p=>({x:p.x,y:p.y,w:p.w,h:p.h,ang:p.ang,shape:p.shape,net:p.net,drill:p.drill,side:p.side,n:p.n}))})),netClass:cls};}
+function unpack(o){const B={W:o.W,H:o.H,outline:o.outline,copperLayers:o.copperLayers,stack:o.stack||undefined,oz:o.oz,layers:o.layers,vias:o.vias,drills:o.drills,comps:o.comps,nets:{}};
+  const cls=o.netClass||{};B.netClass=n=>cls[n]||(isGnd(n)?'접지':'신호');if(typeof PCBEDIT!=='undefined')PCBEDIT.rebuildNets(B);return B;}
+function workerMain(){self.onmessage=e=>{const m=e.data;try{
+    if(m.cmd==='route'){const B=unpack(m.board);const keys=PC.cuKeys(B);const n0={};keys.forEach(k=>{n0[k]=B.layers[k+'.cu'].length;});const v0=B.vias.length;const t0=Date.now();
+      const it=jobRR(B,m.nets,Object.assign({},m.opts,{region:m.region}));let r;for(;;){r=it.next();if(r.done)break;}
+      const tracks=[];keys.forEach(k=>B.layers[k+'.cu'].slice(n0[k]).forEach(p=>tracks.push(Object.assign({},p,{_side:k}))));const vias=B.vias.slice(v0).map(v=>Object.assign({},v));
+      self.postMessage({id:m.id,ok:true,tracks,vias,res:r.value,ms:Date.now()-t0});}
+    else if(m.cmd==='gloss'){const B=unpack(m.board);const keys=PC.cuKeys(B);const t0=Date.now();const stat=net=>{let l=0,v=0;keys.forEach(L=>B.layers[L+'.cu'].forEach(p=>{if(!p.auto||p.fan||p.net!==net||!(p.t==='path'||p.t==='seg'))return;const q=p.pts||[p.a,p.b];for(let i=1;i<q.length;i++)l+=Math.hypot(q[i][0]-q[i-1][0],q[i][1]-q[i-1][1]);}));B.vias.forEach(x=>{if(x.auto&&!x.fan&&x.net===net)v++;});return l.toFixed(3)+'/'+v;};
+      const s0={};m.nets.forEach(n=>{s0[n]=stat(n);});const it=gloss(B,m.nets,Object.assign({},m.opts,{region:m.region}));let r;for(;;){r=it.next();if(r.done)break;}
+      const changed=m.nets.filter(n=>stat(n)!==s0[n]);const cs=new Set(changed);const tracks=[];keys.forEach(k=>B.layers[k+'.cu'].forEach(p=>{if(p.auto&&!p.fan&&cs.has(p.net))tracks.push(Object.assign({},p,{_side:k}));}));const vias=B.vias.filter(v=>v.auto&&!v.fan&&cs.has(v.net)).map(v=>Object.assign({},v));
+      self.postMessage({id:m.id,ok:true,changed,tracks,vias,res:r.value,ms:Date.now()-t0});}
+    else self.postMessage({id:m.id,ok:false,err:'unknown cmd'});}
+  catch(err){self.postMessage({id:m.id,ok:false,err:String(err&&err.message||err)});}};}
+return{pack,unpack,workerMain,prepareFast,bridgeRats,pruneIslands,padVias,stitchLayers,powerFill,bottleneck,bottleneckPrep,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

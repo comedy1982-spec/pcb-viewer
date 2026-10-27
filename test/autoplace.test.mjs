@@ -81,3 +81,21 @@ test('fixed parts stay put and --only moves just the named parts', () => {
   AUTOPLACE.place(B, { only: ['C3'], seed: 2 });
   assert.deepEqual(B.comps.filter(c => c.ref !== 'C3').map(c => [c.ref, c.x, c.y]), others);
 });
+test('parallel routing pieces: pack/unpack round trip, a strip-confined route stays inside its strip, prepareFast equals prepare', () => {
+  const B = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_MCU))));
+  PCBEDIT.prepare(B); AUTOPLACE.ensurePour(B);
+  AUTOPLACE.place(B, { strategy: 'balanced', scratch: true, seed: 3 }); AUTOPLACE.fanout(B, {});
+  const nets = AUTOROUTE.openNets(B).map(o => o.net);
+  const W = AUTOROUTE.unpack(AUTOROUTE.pack(B));
+  assert.equal(W.comps.length, B.comps.length); assert.equal(W.vias.length, B.vias.length);
+  assert.deepEqual(AUTOROUTE.openNets(W).map(o => o.net).sort(), nets.slice().sort());
+  // the static grid plus the auto copper equals a full prepare
+  const o = { width: { signal: 0.2, power: 0.3 }, clear: 0.2, reserve: 0.6, neck: 0.25, maxExp: 300000 };
+  const it = AUTOROUTE.jobRR(B, nets.slice(0, 3), o); let q; do { q = it.next(); } while (!q.done);
+  const P1 = AUTOROUTE.prepare(B, o), P2 = AUTOROUTE.prepareFast(B, o, {});
+  for (let l = 0; l < P1.G.NL; l++) { assert.ok(P1.G.occT[l].every((v, i) => v === P2.G.occT[l][i]), 'occT layer ' + l); assert.ok(P1.G.occV[l].every((v, i) => v === P2.G.occV[l][i]), 'occV layer ' + l); }
+  // a route confined to a strip never leaves it
+  const rect = [0, 0, B.W / 2 + 4, B.H]; const inside = nets.slice(3).filter(n => B.nets[n].pads.every(p => p.x < rect[2] - 1.5));
+  if (inside.length) { const it2 = AUTOROUTE.jobRR(B, inside, Object.assign({}, o, { region: rect })); do { q = it2.next(); } while (!q.done);
+    PCB.cuKeys(B).forEach(k => B.layers[k + '.cu'].forEach(p => { if (p.auto && inside.includes(p.net) && p.pts) p.pts.forEach(pt => assert.ok(pt[0] <= rect[2] + 0.01, 'inside the strip')); })); }
+});
