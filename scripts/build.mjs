@@ -45,6 +45,7 @@ ${script(stripExport(read('src/parts/dsdb.js')))}
 ${script(stripExport(read('src/hsis/hsis.js')))}
 ${script(stripExport(read('src/hsis/pinrec.js')))}
 ${script(stripExport(read('src/hsis/mcal.js')))}
+${scriptW(read('src/route/kernel.b64.js'))}
 ${scriptW(stripExport(read('src/route/autoroute.js')))}
 ${scriptW(stripExport(read('src/core/pcbedit.js')))}
 ${script(stripExport(read('src/core/autoplace.js')))}

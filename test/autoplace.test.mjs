@@ -99,3 +99,20 @@ test('parallel routing pieces: pack/unpack round trip, a strip-confined route st
   if (inside.length) { const it2 = AUTOROUTE.jobRR(B, inside, Object.assign({}, o, { region: rect })); do { q = it2.next(); } while (!q.done);
     PCB.cuKeys(B).forEach(k => B.layers[k + '.cu'].forEach(p => { if (p.auto && inside.includes(p.net) && p.pts) p.pts.forEach(pt => assert.ok(pt[0] <= rect[2] + 0.01, 'inside the strip')); })); }
 });
+test('WebAssembly kernels: the A* and paint in kernel.c route the same board to the same result as the JS versions', async () => {
+  const mod = await AUTOROUTE.wasmInit();
+  assert.ok(mod, 'kernel compiles (' + (AUTOROUTE.WASM.err || '') + ')');
+  const run = (wasm) => {
+    const B = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_MCU))));
+    PCBEDIT.prepare(B); AUTOPLACE.ensurePour(B); AUTOPLACE.place(B, { strategy: 'balanced', scratch: true, seed: 3 }); AUTOPLACE.fanout(B, {});
+    const nets = AUTOROUTE.openNets(B).map(o => o.net);
+    const o = { width: { signal: 0.2, power: 0.3 }, clear: 0.2, reserve: 0.6, neck: 0.25, maxExp: 300000, wasm };
+    const t = Date.now(); const it = AUTOROUTE.jobRR(B, nets, o); let q; do { q = it.next(); } while (!q.done); PCBEDIT.rebuildNets(B);
+    return { ok: q.value.ok, len: +q.value.len.toFixed(1), vias: q.value.vias, rats: PCBEDIT.ratsnest(B).length, drc: PCBEDIT.drc(B).length, w: !!AUTOROUTE.prepare(B, o).G.w, ms: Date.now() - t };
+  };
+  const js = run(false), wa = run(true);
+  assert.equal(js.w, false); assert.equal(wa.w, true, 'wasm grid in use');
+  assert.equal(wa.ok, js.ok); assert.equal(wa.rats, js.rats); assert.equal(wa.drc, js.drc);
+  assert.ok(Math.abs(wa.len - js.len) < Math.max(2, js.len * 0.02), 'track length ' + js.len + ' vs ' + wa.len);
+  assert.ok(Math.abs(wa.vias - js.vias) <= Math.max(2, js.vias * 0.05), 'vias ' + js.vias + ' vs ' + wa.vias);
+});

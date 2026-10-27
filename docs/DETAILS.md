@@ -1016,3 +1016,11 @@ ELD 80 × 55 6층(넷 62) 헤드리스 기준 route 67 s → 14 s(같은 결과:
 - 배치 정렬(legalise)에서 ≤ 0.65 mm 피치 IC와 다른 부품 사이 최소 간격 1.3 → **2.3 mm** (다층 보드; 2층은 1.3 유지). 디커플링 캡처럼 짝지어진 부품은 1.3 mm. 핀 열 양쪽에 탈출 트랙과 비아 자리가 남아 핀이 갇히지 않게.
 - ELD 80 × 55 6층 시드 1–6 미배선 합계 6 → 2 (시드 1: 4 → 0). 어닐링 비용에도 같은 띠를 넣어 봤으나 전체 배치가 흐트러져 더 나빠(7/3/1) 정렬 단계에만 둠.
 - Dadu 90 × 60 8층(A4911 · 10/40 A)은 시드 11·12에서 아직 4–6개 미배선 — 드라이버와 FET 열 사이에 게이트 저항 12개가 1.5 mm 간격으로 쌓여 게이트 선 12개가 그 사이를 지나야 하는 혼잡이 원인(띠와 무관). 다음 과제: 게이트 저항을 FET 쪽에 레그별로 붙이는 매크로 배치.
+
+## v1.87.0 WebAssembly 배선 커널
+
+- `src/route/kernel.c` → `scripts/build-wasm.sh`(clang wasm32 + wasm-ld, libc 없음) → `src/route/kernel.b64.js`(base64, 커밋됨 — 앱 빌드·테스트에 C 툴체인 불필요). 페이지 로드 때 비동기 컴파일, 워커에도 같은 모듈(`data-w`).
+- 그리드마다 `WebAssembly.Memory` 하나를 갖고 그 안에 occT · occV · esc · avoid · 가장자리 띠 · A* 스크래치(gs · par · stamp · dir) · src/tgt 비트맵 · PathFinder 배열 · 인덱스 힙을 둠. JS 쪽은 같은 메모리 위의 typed-array 뷰를 보므로 병목 폭 측정 · 스티치 · PF 기록 등 나머지 코드는 그대로. 메모리는 풀(최대 3개)로 재사용(`releaseGrid`).
+- 커널 둘: `astar`(막힌 핀 플러드 포함, 인덱스 이진 힙 — 중복 push 없음) · `paint`(캡슐 · 회전 사각형 후광). JS 판과 같은 비용식, 같은 결과(ELD: 32/32 · 1876.7 mm · 비아 255, JS 1876.8 · 255).
+- 효과(ELD 6층 헤드리스 route): 동박 칠하기 4.3 → 0.4 s, A* 2.6 → 2.1 s(V8가 이미 빠름), 전체 11.7 → 7.0 s. 앱 3개 동시 실행 36–46 → 19–25 s. 저녁 시작 시점 130–150 s 대비 약 6배.
+- WebAssembly가 없거나 CSP로 막히면(`AUTOROUTE.WASM.err`) JS 커널로 자동 — route 결과 첫 줄에 "WebAssembly 커널 / JS 커널" 표시. `route --wasm 0`은 없음(`AUTOROUTE.WASM.on=false`로 끔).

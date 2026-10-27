@@ -349,6 +349,7 @@ async function cliRoute(a){CLI.routed=true;
       pfNote=`협상 배선(PathFinder): 미배선 ${open1} → ${open2}${v?` · 라운드 ${v.rounds} · ${(v.ms/1000).toFixed(1)} s${v.dropped?` · 충돌 잔류 ${v.dropped}`:''}`:''}`;lines.push(pfNote);}}
   const fan2=AUTOPLACE.fanout(BD,{thermal:st==='thermal',clear:clr,width:Math.min(0.4,pwr),via});fan.vias+=fan2.vias;fan.fail=fan2.fail;lines[0]=`${PCB.stackOf(BD).some(x=>x.role==='pwr')?'GND·전원 플레인':'GND'} 팬아웃 비아 ${fan.vias}개${fan.fail.length?` (자리 없음: ${fan.fail.slice(0,6).join(', ')})`:''}${ml?` · 비아 ${via.d}/${via.drill} mm · 간격 ${clr} mm`:''}`;
   PCBEDIT.rebuildNets(BD);const res=r&&r.done?r.value:null;const ms=performance.now()-t0;
+  lines[0]+=AUTOROUTE.WASM&&AUTOROUTE.WASM.mod?' · WebAssembly 커널':' · JS 커널'+(AUTOROUTE.WASM&&AUTOROUTE.WASM.err?' ('+AUTOROUTE.WASM.err+')':'');
   let open=AUTOROUTE.openNets(BD).filter(o=>nets.includes(o.net));
   // wide nets that did not fit: route them once more at the base width and say so (the user can pour copper instead)
   const wideOpen=open.map(o=>o.net).filter(n=>netWidth[n]>pwr&&!CLI.stopReq);
@@ -400,7 +401,7 @@ function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.
   via=via||(ml?{d:0.45,drill:0.2}:{d:0.6,drill:0.3});const cl=Math.max(ml?0.2:0.25,clr||0.2);
   // nets whose power terminals already touch (shunt right on the FET source) need no fill
   const BP0=AUTOROUTE.bottleneckPrep(BD);const direct=hi.filter(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return false;const b=AUTOROUTE.bottleneck(BD,n,{P:BP0});return b.terms.length>=2&&!b.open&&b.width==null;});
-  const fillNets=hi.filter(n=>!direct.includes(n));const width={};fillNets.forEach(n=>{if(!PW.planes.has(n)&&WW[n].cls!=='gnd')width[n]=PW.need[n];});
+  AUTOROUTE.releaseGrid(BP0.G);  const fillNets=hi.filter(n=>!direct.includes(n));const width={};fillNets.forEach(n=>{if(!PW.planes.has(n)&&WW[n].cls!=='gnd')width[n]=PW.need[n];});
   // multilayer: GND / supply are inner planes, so both outer layers carry the other power nets (phases, input); the bottom GND
   // pour of a 2-layer board stays and only the top is filled
   const pv=ml?AUTOROUTE.padVias(BD,hi,{via:{d:Math.max(via.d,0.6),drill:Math.max(via.drill,0.3)},pitch:0.9}):0; // power pads: 0.6 / 0.3 mm vias carry ~1.5× a 0.45 / 0.2 one
@@ -421,7 +422,7 @@ function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.
   // also reachable on the top copper → half; nets whose terminals touch directly need none
   const share={};hi.forEach(n=>{const x=rep.find(q=>q.net===n);if(x){share[n]=x.width==='직결'?0:(x.layers&&x.layers.length>1&&(x.layers[0]+x.layers[1])>0?x.layers[1]/(x.layers[0]+x.layers[1]):1);return;}
     let top=null;try{const b=AUTOROUTE.bottleneck(BD,n,{layer:0,P:BP1});top=b&&!b.open&&b.width>0?b.width:null;}catch(e){}share[n]=top?0.5:1;});
-  let VC=ml&&CURRENT.viaCheck?CURRENT.viaCheck(BD,{nets:hi,I:Ic,pk:Pk,share}):[];
+  AUTOROUTE.releaseGrid(BP1.G);  let VC=ml&&CURRENT.viaCheck?CURRENT.viaCheck(BD,{nets:hi,I:Ic,pk:Pk,share}):[];
   // terminals whose vias run too hot: add 0.6 / 0.3 mm vias in the net's copper around them (to the bottom copper, or down to the
   // net's plane), widening the search once; then check again
   let farm=0;if(ml&&VC.some(v=>!v.ok)&&AUTOROUTE.stitchLayers){const pv={d:0.6,drill:0.3};
