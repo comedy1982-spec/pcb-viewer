@@ -18,11 +18,11 @@ const CLI_HELP=[
   ['strategies','배치 전략 설명 (balanced · thermal · noise · compact)'],
   ['reset [--strategy S] [--seed N] [--both] [--route] [--no-grow]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 자리가 모자라면 보드를 10 %씩 키워(최대 3배 면적) 다시 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립). --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
-  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90] [--dir 1.5] [--mst]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔 · --mst: 다핀 넷을 MST 순서(짧은 핀 쌍부터)로 — 기본 끔(실측 효과 미미) · --dir N: 층별 선호 방향(홀수 신호층 수평·짝수 수직, 역방향 N배 비용 — 기본 끔, DCM-10A 실측에서 비아 +25%): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
+  ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90] [--dir 1.5] [--mst] [--gloss]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔 · --mst: 다핀 넷을 MST 순서(짧은 핀 쌍부터)로 — 기본 끔(실측 효과 미미) · --dir N: 층별 선호 방향(홀수 신호층 수평·짝수 수직, 역방향 N배 비용 — 기본 끔, DCM-10A 실측에서 비아 +25%): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
   ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
-  ['gloss [--passes 1] [--via 3] [--all]','사후 최적화: 넷을 하나씩 다른 넷은 고정한 채 비아 비용 3배로 다시 깔아 비아가 줄거나(같으면 길이가 줄면) 채택 · DRC·연결 악화 시 되돌림. route 뒤 자동 실행(--no-gloss 로 끔)'],
+  ['gloss [--passes 1] [--via 3] [--all]','사후 최적화: 넷을 하나씩 다른 넷은 고정한 채 비아 비용 3배로 다시 깔아 비아가 줄거나(같으면 길이가 줄면) 채택 · DRC·연결 악화 시 되돌림. route --gloss 로 배선에 이어 실행'],
   ['fix [--maxgrow 1.5] [--maxlayers 6] [--no-grow] [--no-layers] [--pinswap]','미배선 자동 개선: 비용이 적은 순서로 시도하고 다 배선되면 멈춤 — ① 전부 다시 배선(짧은 넷 먼저) ② 다른 시드로 재배치 ③ 다른 전략 ④ 보드 10·20·35·50% 키움 ⑤ 층 늘림(2→4→6) ⑥ (--pinswap) MCU 핀 재배정. 가장 좋은 결과를 남기고 한 번에 되돌리기. autofix on|off: 배선 뒤 미배선이 남으면 자동 실행(기본 켬)'],
   ['auto [S] [--tries N]','리셋 → 배치 → 배선 → DRC → 리포트를 한 번에. 미배선이 남으면 다른 시드로 다시 시도해 가장 좋은 결과를 남김'],
   ['lock <부품…> · unlock <부품…|all> · locks','자동 배치에서 고정할 부품'],
@@ -59,6 +59,7 @@ const CLI_CHIPS=[['열 분산 자동 배치·배선','auto thermal','열 분산 
   ['노이즈 최소화 자동 배치·배선','auto noise','노이즈 최소화 전략으로 처음부터 배치하고 배선해줘. EMC 리포트를 보고 디커플링·Hot-loop가 나쁘면 개선해줘'],
   ['회로도로 리셋','reset --strategy balanced','회로도 기준으로 처음부터 배치해줘 (배선은 하지 말고 배치 지표만 알려줘)'],
   ['자동 배선','route','열린 넷을 자동 배선하고, 미배선이 남으면 원인을 보고 해결해줘'],
+  ['비아 줄이기','gloss','배선을 넷별로 다시 깔아 비아를 줄여줘 (사후 최적화)'],
   ['가이드라인 점검','guide check','PCB 설계 가이드라인을 점검하고 가장 중요한 개선 3가지를 알려줘'],
   ['하우징 설계','housing','현재 보드에 맞는 보호 하우징을 설계하고 재질·IP·진동 조건별 트레이드오프를 비교해 추천해줘'],
   ['리포트','report all','배치·열·EMC 리포트를 보고 문제를 우선순위대로 요약해줘'],['도움말','help','이 콘솔로 할 수 있는 일을 짧게 알려줘']];
@@ -342,7 +343,10 @@ async function cliRoute(a){CLI.routed=true;
   // return vias next to the layer changes of clock / analog nets
   if(!a['no-retvia']&&a.retvia!==false){const rv=AUTOROUTE.returnVias(BD,{dist:a.retvia&&isFinite(+a.retvia)?+a.retvia:0.8,clear:clr,via,W:WW});if(rv.added||rv.skipped)lines.push(`리턴(GND) 비아 ${rv.added}개 추가 — 고속·아날로그 넷 층 전환 옆${rv.skipped?` · 자리 없음 ${rv.skipped}개`:''}`);PCBEDIT.rebuildNets(BD);}
   cliCommit(before,'route');cliAfter(false);
-  if(!a['no-gloss']&&!CLI.inFix&&!CLI.stopReq&&nets.length){try{const g=await cliGloss({},true);if(g)lines.push(g);}catch(e){lines.push('사후 최적화 건너뜀: '+(e.message||e));}}
+  // post-optimisation (via reduction) only on request: --gloss, or the gloss command / [비아 줄이기] chip afterwards — it costs about as much as the routing itself
+  const wantGloss=a.gloss===true||/^(1|on|yes)$/i.test(String(a.gloss||''));
+  if(wantGloss&&!a['no-gloss']&&!CLI.inFix&&!CLI.stopReq&&nets.length){try{const g=await cliGloss({},true);if(g)lines.push(g);}catch(e){lines.push('사후 최적화 건너뜀: '+(e.message||e));}}
+  else if(!CLI.inFix&&nets.length&&BD.vias.some(v=>v.auto&&!v.fan))lines.push('비아 줄이기(사후 최적화)는 생략 — 필요하면 gloss 명령 또는 [비아 줄이기] 버튼');
   if(iw&&a.fill!==false&&!a['no-fill']&&!CLI.stopReq){try{const fl=cliPowerFill(WW,clr,via);if(fl)lines.push(fl);}catch(e){lines.push('전력 동박 채우기 건너뜀: '+(e.message||e));}}
   // pads of plane nets still without a via (dense double-sided boards): one more fan-out pass that looks further for room
   if(!CLI.stopReq&&ml&&AUTOPLACE.fanout){const pl=new Set(PCB.stackOf(BD).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));if(PCBEDIT.ratsnest(BD).some(r=>pl.has(r.net))){const f3=AUTOPLACE.fanout(BD,{clear:clr,width:0.25,via,reach:4});if(f3.vias)lines.push(`평면 비아 ${f3.vias}개 추가 (멀리 찾은 자리)`);}}
@@ -367,7 +371,7 @@ function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.
   const PW=cliPowerNets(WW);if(!PW||!PW.nets.length)return'';const hi=PW.nets,rect=PW.rect;const keys=PCB.cuKeys(BD),NL=keys.length,ml=NL>2;
   via=via||(ml?{d:0.45,drill:0.2}:{d:0.6,drill:0.3});const cl=Math.max(ml?0.2:0.25,clr||0.2);
   // nets whose power terminals already touch (shunt right on the FET source) need no fill
-  const direct=hi.filter(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return false;const b=AUTOROUTE.bottleneck(BD,n,{});return b.terms.length>=2&&!b.open&&b.width==null;});
+  const BP0=AUTOROUTE.bottleneckPrep(BD);const direct=hi.filter(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return false;const b=AUTOROUTE.bottleneck(BD,n,{P:BP0});return b.terms.length>=2&&!b.open&&b.width==null;});
   const fillNets=hi.filter(n=>!direct.includes(n));const width={};fillNets.forEach(n=>{if(!PW.planes.has(n)&&WW[n].cls!=='gnd')width[n]=PW.need[n];});
   // multilayer: GND / supply are inner planes, so both outer layers carry the other power nets (phases, input); the bottom GND
   // pour of a 2-layer board stays and only the top is filled
@@ -379,8 +383,8 @@ function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.
   const fs=layers.map(l=>AUTOROUTE.powerFill(BD,{nets:fillNets,rect,clr:cl,via,width,layer:l,claim:BD.powerBus&&BD.nets[BD.powerBus.net]&&l===0?[BD.powerBus]:[]}));
   const tb=ml?AUTOROUTE.stitchLayers(BD,fillNets.filter(n=>!PW.planes.has(n)&&WW[n].cls!=='gnd'),{via}):0;
   const pr=AUTOROUTE.pruneIslands?AUTOROUTE.pruneIslands(BD,hi):{fills:0,vias:0};
-  const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return;const need=WW[n].ipc!=null?WW[n].ipc:CURRENT.ipcWidth(WW[n].I,{oz,dT});const pk=WW[n].pk||null;
-    const bs=layers.map(l=>AUTOROUTE.bottleneck(BD,n,{layer:l,proj:l!==0}));const dir=bs[0].terms.length>=2&&!bs[0].open&&bs[0].width==null;
+  const BP1=AUTOROUTE.bottleneckPrep(BD);const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return;const need=WW[n].ipc!=null?WW[n].ipc:CURRENT.ipcWidth(WW[n].I,{oz,dT});const pk=WW[n].pk||null;
+    const bs=layers.map(l=>AUTOROUTE.bottleneck(BD,n,{layer:l,proj:l!==0,P:BP1}));const dir=bs[0].terms.length>=2&&!bs[0].open&&bs[0].width==null;
     const ws=bs.map(b=>b.width!=null&&!b.open?b.width:0);const eff=+ws.reduce((x,y)=>x+y,0).toFixed(2);
     rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,layers:ws,open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.ipcRise(eff,WW[n].I,{oz}):null,pk:pk?{I:pk.I,t:pk.t,rise:!dir&&eff?CURRENT.peakRise(eff,pk.I,pk.t,{oz,tb:BD.t}):null}:null,by:WW[n].by,terms:bs[0].terms});});
   const area={};fs.forEach((f,i)=>f.area.forEach(x=>{area[x.net]=(area[x.net]||0)+x.mm2;}));
@@ -388,7 +392,7 @@ function cliPowerFill(WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.
   const Ic={},Pk={};hi.forEach(n=>{Ic[n]=WW[n].I;if(WW[n].pk)Pk[n]=WW[n].pk;});// share of a net's current that has to change layers at a terminal: top + bottom copper in parallel → the bottom share; a plane net
   // also reachable on the top copper → half; nets whose terminals touch directly need none
   const share={};hi.forEach(n=>{const x=rep.find(q=>q.net===n);if(x){share[n]=x.width==='직결'?0:(x.layers&&x.layers.length>1&&(x.layers[0]+x.layers[1])>0?x.layers[1]/(x.layers[0]+x.layers[1]):1);return;}
-    let top=null;try{const b=AUTOROUTE.bottleneck(BD,n,{layer:0});top=b&&!b.open&&b.width>0?b.width:null;}catch(e){}share[n]=top?0.5:1;});
+    let top=null;try{const b=AUTOROUTE.bottleneck(BD,n,{layer:0,P:BP1});top=b&&!b.open&&b.width>0?b.width:null;}catch(e){}share[n]=top?0.5:1;});
   let VC=ml&&CURRENT.viaCheck?CURRENT.viaCheck(BD,{nets:hi,I:Ic,pk:Pk,share}):[];
   // terminals whose vias run too hot: add 0.6 / 0.3 mm vias in the net's copper around them (to the bottom copper, or down to the
   // net's plane), widening the search once; then check again

@@ -292,9 +292,9 @@ async function pcbStart(p){
   {if(p.shape&&p.shape!=='rect'){const w=p.board?p.board.w:BD.W,h=p.board?p.board.h:BD.H;const arg=String(p.shapeArg||'');const num=parseFloat(arg);const cut=(arg.match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/)||[])[0];const at=(arg.match(/\b(tr|tl|br|bl)\b/i)||[])[1];
       cmds.push(p.shape==='round'?`board shape round ${w} ${h}${isFinite(num)?' --corner '+num:''}`:p.shape==='circle'?`board shape circle ${isFinite(num)?num:Math.min(w,h)}`:p.shape==='hex'||p.shape==='oct'?`board shape ${p.shape} ${isFinite(num)?num:w}`:p.shape==='L'||p.shape==='T'?`board shape ${p.shape} ${w} ${h}${cut?' --cut '+cut.replace(/\s/g,''):''}${at?' --at '+at:''}`:`board shape ${p.shape} ${w} ${h}`);}}
   // fast: fewer placement iterations, routing with 3 rip-up rounds, a short negotiated pass and no post-optimisation
-  const FAST=' --effort 0.5',FASTR=' --rounds 3 --pf-rounds 4 --pf-time 20 --no-gloss';
-  if(p.min&&!p.fast)cmds.push(`board minimize --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
-  else cmds.push(`reset --strategy ${p.strategy}${p.both?' --both':''}${p.fast?FAST:''}${p.route?' --route'+(p.fast?FASTR:''):''}`);
+  const FAST=' --effort 0.5',FASTR=' --rounds 3 --pf-rounds 4 --pf-time 20',FULLR=' --gloss';
+  if(p.min&&!p.fast)cmds.push(`board minimize --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route --gloss':''}`);
+  else cmds.push(`reset --strategy ${p.strategy}${p.both?' --both':''}${p.fast?FAST:''}${p.route?' --route'+(p.fast?FASTR:FULLR):''}`);
   cliSay('out',(p.fast?'빠른 배치·배선':'PCB 설계 (원안대로)')+': '+cmds.join(' → ')+(p.fast?'\n남은 미배선은 route 또는 [원안대로 배치·배선]으로 마무리할 수 있습니다.':''));progStart('pcbstart','PCB 설계 시작',{total:cmds.length,stop:()=>{CLI.stopReq=true;}});
   try{for(let k=0;k<cmds.length;k++){const c=cmds[k];progSet('pcbstart',{i:k,label:`PCB 설계 ${k+1}/${cmds.length} 단계 · ${c.split(' --')[0]}`});await cliExec(c);if(CLI.stopReq)break;}}finally{progEnd('pcbstart');}
   stepPaint();}

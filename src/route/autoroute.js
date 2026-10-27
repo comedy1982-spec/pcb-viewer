@@ -76,7 +76,13 @@ function makeGrid(B,o){
   const ox=mode(fine.map(p=>p.x))-g,oy=mode(fine.map(p=>p.y))-g;
   const nx=Math.ceil((B.W-ox)/g)+2,ny=Math.ceil((B.H-oy)/g)+2,N=nx*ny;
   const NL=PC.cuKeys(B).length,mk=()=>Array.from({length:NL},()=>new Int32Array(N));
-  return{g,ox,oy,nx,ny,N,NL,occT:mk(),occV:mk(),esc:mk()};
+  // (experimental, o.coarse: true) two-level search: cells within o.fineR mm of a fine-pitch pad (or of any pad of a ≤ 0.66 mm pitch part) are stepped one at a
+  // time; everywhere else the A* moves two cells per step (the 0.1 mm grid only matters where tracks squeeze between fine pins)
+  let fineM=null;if(o.coarse===true){fineM=new Uint8Array(N);const R=o.fineR||1.0;const fp=new Set(fine);
+    B.comps.forEach(c=>{if(c.pads.length>=6){let m=1e9;const P=c.pads;for(let i=0;i<P.length&&i<48;i++)for(let j=i+1;j<P.length&&j<48;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d>0.05&&d<m)m=d;}if(m<0.66)P.forEach(p=>fp.add(p));}});
+    fp.forEach(p=>{const r=Math.max(p.w,p.h)/2+R;const x0=Math.max(0,Math.floor((p.x-r-ox)/g)),x1=Math.min(nx-1,Math.ceil((p.x+r-ox)/g)),y0=Math.max(0,Math.floor((p.y-r-oy)/g)),y1=Math.min(ny-1,Math.ceil((p.y+r-oy)/g));
+      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)fineM[y*nx+x]=1;});}
+  return{g,ox,oy,nx,ny,N,NL,occT:mk(),occV:mk(),esc:mk(),fine:fineM};
 }
 function mark(arr,i,k){const v=arr[i];if(v===-1)return;if(k===-1||(v!==0&&v!==k))arr[i]=-1;else arr[i]=k;}
 function paint(G,s,k,wHalf,viaR,clr){
@@ -119,13 +125,25 @@ function astar(G,k,src,tgt,anchors,o){
   const dirC=o.dirCost&&o.dirCost!==1&&G.pref?+o.dirCost:0,dirD=dirC?Math.sqrt(dirC):0;const pref=G.pref||null;
   // per move direction: 0..3 orthogonal (0,1 horizontal · 2,3 vertical), 4..7 diagonal
   const wrong=(l,d)=>{if(!dirC)return 1;const p=pref[l];if(!p)return 1;if(d>=4)return dirD;const horiz=d<2;return (p===1)===horiz?1:dirC;};
-  while(hn){const id=pop();if(cl[id]===gen)continue;cl[id]=gen;if(tgt.has(id)){const path=[];let c=id;while(c>=0){path.push(c);c=par[c];}return{path:path.reverse(),exp};}
+  const fine=dil>0||o.coarse!==true?null:G.fine||null;
+  // sealed-in check: a pin whose free region is tiny and holds no cell of the other side cannot be joined — a flood of a few
+  // thousand cells says so at once, where the A* would otherwise widen over the whole board up to the expansion limit
+  const sealed=(from,to,lim)=>{const seen=new Set();const q=[];from.forEach(id=>{seen.add(id);q.push(id);});let qi=0;
+    while(qi<q.length){const id=q[qi++];if(to.has(id))return false;if(seen.size>lim)return false;const l=(id/N)|0,i=id-l*N,x=i%nx,y=(i/nx)|0;
+      for(let d=0;d<4;d++){const xx=x+DX[d],yy=y+DY[d];if(xx<0||yy<0||xx>=nx||yy>=ny)continue;const j=yy*nx+xx,nid=l*N+j;if(seen.has(nid)||!free(l,j))continue;seen.add(nid);q.push(nid);}
+      for(const l2 of rl){if(l2===l)continue;const nid=l2*N+i;if(seen.has(nid)||!free(l2,i))continue;if(!((from.has(id)&&from.has(nid))||(to.has(id)&&to.has(nid)))&&!freeV(i))continue;seen.add(nid);q.push(nid);}}
+    return true;};
+  const sealLim=o.sealLim||4000;if(sealLim>0&&(sealed(src,tgt,sealLim)||sealed(tgt,src,sealLim)))return{fail:'경로 없음 (핀이 막힘)',exp:0};
+  while(hn){const id=pop();if(cl[id]===gen)continue;cl[id]=gen;if(tgt.has(id)){const path=[];let c=id;while(c>=0){path.push(c);const dd=dir[c];const pc=par[c];if(dd>=16&&pc>=0){const l=(c/N)|0;const ci=c-l*N,pi=pc-l*N;path.push(l*N+((ci+pi)>>1));}c=pc;}return{path:path.reverse(),exp};}
     if(++exp>o.maxExp)return{fail:'탐색 한도 초과',exp};
-    const l=(id/N)|0,i=id-l*N,x=i%nx,y=(i/nx)|0,g0=gs[id],d0=dir[id];const lc=l===NL-1?bot:l?(o.innerCost||1):1;
-    for(let d=0;d<8;d++){const xx=x+DX[d],yy=y+DY[d];if(xx<0||yy<0||xx>=nx||yy>=ny)continue;const j=yy*nx+xx;if(!free(l,j))continue;
+    const l=(id/N)|0,i=id-l*N,x=i%nx,y=(i/nx)|0,g0=gs[id],d0=dir[id]>=16?dir[id]-16:dir[id];const lc=l===NL-1?bot:l?(o.innerCost||1):1;
+    const smax=fine&&!fine[i]?2:1;
+    for(let d=0;d<8;d++){let xx=x+DX[d],yy=y+DY[d];if(xx<0||yy<0||xx>=nx||yy>=ny)continue;let j=yy*nx+xx;if(!free(l,j))continue;
       if(d>=4&&(!free(l,y*nx+xx)||!free(l,yy*nx+x)))continue;
-      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;let step=DC[d]*lc*wrong(l,d);if(av){const a=av[l][j];if(a!==0&&a!==k)step*=avC;}if(pf){const oc=pf.occ[l][j];step*=(1+pf.hist[l][j])*(oc>0?1+pres*oc:1);}const ng=g0+step+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0)+(edgeC&&G.edgeBand&&G.edgeBand[j]?edgeC:0);
-      if(stamp[nid]!==gen||ng<gs[nid]){stamp[nid]=gen;gs[nid]=ng;par[nid]=id;dir[nid]=d;push(nid,ng+h(xx,yy));}}
+      // second cell of a coarse step: stop short at a target, at the fine zone or where the way is blocked
+      let t=1;if(smax===2&&!tgt.has(l*N+j)&&!fine[j]){const x2=xx+DX[d],y2=yy+DY[d];if(x2>=0&&y2>=0&&x2<nx&&y2<ny){const j2=y2*nx+x2;if(free(l,j2)&&!(d>=4&&(!free(l,yy*nx+x2)||!free(l,y2*nx+xx)))){xx=x2;yy=y2;j=j2;t=2;}}}
+      const nid=l*N+j;if(cl[nid]===gen)continue;const ev=esc?esc[l][j]:0;let step=DC[d]*t*lc*wrong(l,d);if(av){const a=av[l][j];if(a!==0&&a!==k)step*=avC;}if(pf){const oc=pf.occ[l][j];step*=(1+pf.hist[l][j])*(oc>0?1+pres*oc:1);}const ng=g0+step+(d0>=0&&d0!==d&&d0<8?0.35:0)+(ev!==0&&ev!==k?escC:0)*t+(edgeC&&G.edgeBand&&G.edgeBand[j]?edgeC:0)*t;
+      if(stamp[nid]!==gen||ng<gs[nid]){stamp[nid]=gen;gs[nid]=ng;par[nid]=id;dir[nid]=t===2?d+16:d;push(nid,ng+h(xx,yy));}}
     // via
     let fv=-1;for(const l2 of rl){if(l2===l)continue;const nid=l2*N+i;if(cl[nid]===gen||!free(l2,i))continue;
       const thr=(src.has(id)&&src.has(nid))||(tgt.has(id)&&tgt.has(nid));if(!thr){if(fv<0)fv=freeV(i)?1:0;if(!fv)continue;}
@@ -181,8 +199,12 @@ function prepare(B,opts){
   const G=makeGrid(B,o);const S=shapesOfBoard(B);const ids={};let nid=1;const idOf=n=>n==null?-1:(ids[n]||(ids[n]=++nid));
   // edge band: cells within o.edgeBand mm of the outline (high-speed nets pay extra there — radiation / return path)
   if(o.edgeBand>0){const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];const band=new Uint8Array(G.N);const bb=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
-    for(let y=0;y<G.ny;y++){const py=G.oy+y*G.g;for(let x=0;x<G.nx;x++){const px=G.ox+x*G.g;if(px-bb[0]<o.edgeBand||bb[2]-px<o.edgeBand||py-bb[1]<o.edgeBand||bb[3]-py<o.edgeBand){band[y*G.nx+x]=1;continue;}
-        if(ring.length>4){let m=1e9;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const dd=PC.segDist(px,py,ring[j],ring[i]);if(dd<m)m=dd;if(m<o.edgeBand)break;}if(m<o.edgeBand)band[y*G.nx+x]=1;}}}G.edgeBand=band;}
+    for(let y=0;y<G.ny;y++){const py=G.oy+y*G.g;for(let x=0;x<G.nx;x++){const px=G.ox+x*G.g;if(px-bb[0]<o.edgeBand||bb[2]-px<o.edgeBand||py-bb[1]<o.edgeBand||bb[3]-py<o.edgeBand)band[y*G.nx+x]=1;}}
+    // a shaped outline (rounded corners, cut-outs): the band follows each ring segment — only the cells near that segment are visited
+    if(ring.length>4)for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[j],b=ring[i];const e=o.edgeBand;
+      const x0=Math.max(0,Math.floor((Math.min(a[0],b[0])-e-G.ox)/G.g)),x1=Math.min(G.nx-1,Math.ceil((Math.max(a[0],b[0])+e-G.ox)/G.g)),y0=Math.max(0,Math.floor((Math.min(a[1],b[1])-e-G.oy)/G.g)),y1=Math.min(G.ny-1,Math.ceil((Math.max(a[1],b[1])+e-G.oy)/G.g));
+      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const k=y*G.nx+x;if(band[k])continue;if(PC.segDist(G.ox+x*G.g,G.oy+y*G.g,a,b)<e)band[k]=1;}}
+    G.edgeBand=band;}
   const wMax=Math.max(o.width.signal,o.width.power)/2;
   outlineBlock(B,G,o.edge);
   // plane layers (inner GND / PWR) carry no tracks; through vias pass them with an antipad
@@ -500,8 +522,11 @@ function powerFill(B,o){o=Object.assign({layer:0,clr:0.25,esc:0.9,grid:0.1,stitc
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}
   return{nets,cells:cnt.reduce((a,b)=>a+b,0),area:nets.map((n,k)=>({net:n,mm2:+(cnt[k]*g*g).toFixed(1)})),segs:add.length,vias:nv,grid:g,rect:r0};}
 /* effective copper width of a net on a layer between its power terminals (pads of FETs, terminals, shunts, bulk caps) */
-function bottleneck(B,net,o){o=Object.assign({layer:0,grid:0.1,rect:null,padRing:1.0},o||{});const keys=PC.cuKeys(B);const L=o.layer;
-  const P=prepare(B,{grid:o.grid,clear:0.01,width:{signal:o.grid,power:o.grid}});const G=P.G,g=G.g;const S=P.S.filter(s=>s.net===net&&s.L.includes(L));
+/* bottleneck(B,net,{layer,grid,P}): o.P is a prepared grid to reuse across nets and layers (prepare() rasterises the whole board
+   and dominates the cost); 0.2 mm resolves a power strap's width to ±0.2 mm, the fine grid is only for signals */
+function bottleneckPrep(B,grid){grid=grid||0.2;return prepare(B,{grid,clear:0.01,width:{signal:grid,power:grid}});}
+function bottleneck(B,net,o){o=Object.assign({layer:0,grid:0.2,rect:null,padRing:1.0},o||{});const keys=PC.cuKeys(B);const L=o.layer;
+  const P=o.P||bottleneckPrep(B,o.grid);const G=P.G,g=G.g;const S=P.S.filter(s=>s.net===net&&s.L.includes(L));
   const mask=new Uint8Array(G.N);S.forEach(s=>{const bb=bboxOf(s,0);const x0=Math.max(0,Math.floor((bb[0]-G.ox)/g)),x1=Math.min(G.nx-1,Math.ceil((bb[2]-G.ox)/g)),y0=Math.max(0,Math.floor((bb[1]-G.oy)/g)),y1=Math.min(G.ny-1,Math.ceil((bb[3]-G.oy)/g));
     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){if(dist(s,G.ox+x*g,G.oy+y*g)<=g*0.5)mask[y*G.nx+x]=1;}});
   // distance transform (chamfer 3-4), in cells
@@ -527,7 +552,7 @@ function bottleneck(B,net,o){o=Object.assign({layer:0,grid:0.1,rect:null,padRing
 
 
 /* vias between the copper fills of the same net on two layers (outer top + bottom) so both carry the current */
-function stitchLayers(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},step:1.2,grid:0.1,la:0,lb:null},o||{});const keys=PC.cuKeys(B);const la=o.la,lb=o.lb==null?keys.length-1:o.lb;
+function stitchLayers(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},step:1.2,grid:0.2,la:0,lb:null},o||{});const keys=PC.cuKeys(B);const la=o.la,lb=o.lb==null?keys.length-1:o.lb;
   const P=prepare(B,{grid:o.grid,clear:0.15,width:{signal:o.grid,power:o.grid},via:o.via});const G=P.G,g=G.g;const vr=o.via.d/2+0.12;let n=0;
   // a via fits where the net's copper on that layer — the union of its fill tiles (and, with o.pads, its pads) — covers the whole
   // via disk: cover the grid cells, then keep the cells whose ring of radius vr is covered too (fills are many small tiles)
@@ -587,6 +612,6 @@ function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,min
       B.vias.push({x:+x.toFixed(3),y:+y.toFixed(3),d:o.via.d,drill:o.via.drill,net:p.net,stitch:true,inpad:true});n++;}}));
   if(typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(e){}return n;}
 
-return{bridgeRats,pruneIslands,padVias,stitchLayers,powerFill,bottleneck,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+return{bridgeRats,pruneIslands,padVias,stitchLayers,powerFill,bottleneck,bottleneckPrep,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;
