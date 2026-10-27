@@ -87,7 +87,7 @@ const ICON_MAP=[
   ['#st-ir','volt'],['#st-si','wave'],['#st-th','thermo'],['#st-emc','emc'],['#st-sp','circuit'],
   ['#htab-table','table'],['#htab-pins','chip'],['#htab-trace','link'],['#htab-chk','check'],['#htab-rec','wand'],['#htab-mcal','gear'],['#htab-tc','clipboard'],
   ['#schFitBtn','fit'],['#schPop','export'],['#schEdit','edit'],['#schOpen','upload'],['#pbPlay','play'],
-  ['#npPlan','sys'],['#npGen','next'],['#npAdd','plus'],['#arAdd','plus'],['#sysFromBoard','extract'],['#sysZoom','zoom'],['#sysSvgDl','download'],
+  ['#npPlan','sys'],['#npGen','next'],['#schNext','next'],['#npAdd','plus'],['#arAdd','plus'],['#sysFromBoard','extract'],['#sysZoom','zoom'],['#sysSvgDl','download'],
   ['#cadOpen','lid'],['#cadExp','zip'],['#cadDwg','drawing'],['#cadBom','table'],['#cadUndo','undo'],['#cadSelClr','close'],['#cadSelMode','ai'],
   ['#impGo','pcb'],['#impClear','close'],['#fwRun','play'],['#fwCheck','check'],['#fw3d','cube'],['#fwReset','undo'],
   ['[data-cam="fit"]','fit'],['[data-cam="iso"]','cube'],['[data-cam="top"]','top'],['[data-cam="bot"]','bottom'],['[data-pe]','edit'],['[data-pop]','export'],['[data-exp="svg"]','image'],['[data-exp="png"]','image'],

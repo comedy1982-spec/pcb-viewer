@@ -276,11 +276,13 @@ function pcbGatePaint(){
       <label class="chkl"><input type="checkbox" name="route"${p.route!==false?' checked':''}> 이어서 자동 배선${'' }</label>
       <label class="chkl" title="기본은 상단 단면 조립(리플로 1회, 가장 저렴). 양면이면 수동소자·소형 IC를 하단에도 놓아 보드가 작아지지만 조립 공정이 2회가 됩니다."><input type="checkbox" name="both"${p.both?' checked':''}> 양면 배치 (하단에 수동소자·소형 IC)</label></div>
     <p class="lead pg-note">PCB 단계에서는 배선을 위해 MCU 핀 배정을 바꾸는 등 회로를 함께 고칠 수 있습니다 (CLI pinswap · 분할 보기에서 회로도 편집).</p>
-    <div class="acts"><button type="button" class="btn sm" data-sch>회로도로 돌아가기</button><button type="button" class="btn sm" data-cli title="오른쪽 설계 도우미에 명령이나 문장으로 지시">도우미로 지시</button><button class="btn primary sm">PCB 설계 시작</button></div></form>`;
+    <div class="acts"><button type="button" class="btn sm" data-sch>회로도로 돌아가기</button><button type="button" class="btn sm" data-cli title="오른쪽 설계 도우미에 명령이나 문장으로 지시">도우미로 지시</button><button type="button" class="btn sm" data-fast title="배치 반복을 줄이고(effort 0.5) 배선은 rip-up 3회 · 협상 배선 짧게 · 사후 최적화 생략 — 미배선이 남을 수 있지만 몇 배 빠름. 크기 '최소화'는 '자동'으로 대신합니다">빠른 배치·배선</button><button class="btn primary sm" title="위 조건 그대로 전체 품질로 배치 · 배선 (사후 최적화 포함)">원안대로 배치·배선</button></div></form>`;
   $('#vp').appendChild(el);const F=el.querySelector('[data-f]');const wh=F.querySelector('.pg-wh');const sz=F.querySelector('[name=size]');const shp=F.querySelector('[name=shape]'),sha=F.querySelector('.pg-sh');const upd=()=>{wh.hidden=sz.value!=='fix';sha.hidden=shp.value==='rect'||shp.value==='oval';const ph={round:'모서리 R (mm) · 비우면 10%',circle:'지름 (mm) · 비우면 가로',L:'절개 가로x세로 [tr|tl|br|bl]',T:'기둥 가로x세로',hex:'폭(평행면 간) mm',oct:'폭 mm'};sha.querySelector('input').placeholder=ph[shp.value]||'';};sz.addEventListener('change',upd);shp.addEventListener('change',upd);upd();
   el.querySelector('[data-sch]').addEventListener('click',()=>setStep(2));
   el.querySelector('[data-cli]').addEventListener('click',()=>{if(S.view!=='T'&&S.view!=='B')setView('T');cliToggle(true);});
-  F.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(F);const q={layers:+d.get('layers'),min:d.get('size')==='min',board:d.get('size')==='fix'?{w:+d.get('w'),h:+d.get('h')}:null,strategy:d.get('s'),route:!!d.get('route'),both:!!d.get('both'),shape:d.get('shape')||'rect',shapeArg:(d.get('shapeArg')||'').trim()};BD.pcbPlan=q;pcbStart(q);});
+  const read=()=>{const d=new FormData(F);return{layers:+d.get('layers'),min:d.get('size')==='min',board:d.get('size')==='fix'?{w:+d.get('w'),h:+d.get('h')}:null,strategy:d.get('s'),route:!!d.get('route'),both:!!d.get('both'),shape:d.get('shape')||'rect',shapeArg:(d.get('shapeArg')||'').trim()};};
+  F.addEventListener('submit',e=>{e.preventDefault();const q=read();BD.pcbPlan=q;pcbStart(q);});
+  el.querySelector('[data-fast]').addEventListener('click',()=>{const q=Object.assign(read(),{fast:true});BD.pcbPlan=q;pcbStart(q);});
 }
 async function pcbStart(p){
   p=Object.assign({layers:2,min:false,route:true,strategy:'balanced',board:null},p||{});const g=$('#pcbGate');if(g)g.remove();
@@ -289,9 +291,11 @@ async function pcbStart(p){
   if(p.board&&!p.min)cmds.push(`board size ${p.board.w} ${p.board.h} --anchor center`);
   {if(p.shape&&p.shape!=='rect'){const w=p.board?p.board.w:BD.W,h=p.board?p.board.h:BD.H;const arg=String(p.shapeArg||'');const num=parseFloat(arg);const cut=(arg.match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/)||[])[0];const at=(arg.match(/\b(tr|tl|br|bl)\b/i)||[])[1];
       cmds.push(p.shape==='round'?`board shape round ${w} ${h}${isFinite(num)?' --corner '+num:''}`:p.shape==='circle'?`board shape circle ${isFinite(num)?num:Math.min(w,h)}`:p.shape==='hex'||p.shape==='oct'?`board shape ${p.shape} ${isFinite(num)?num:w}`:p.shape==='L'||p.shape==='T'?`board shape ${p.shape} ${w} ${h}${cut?' --cut '+cut.replace(/\s/g,''):''}${at?' --at '+at:''}`:`board shape ${p.shape} ${w} ${h}`);}}
-  if(p.min)cmds.push(`board minimize --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
-  else cmds.push(`reset --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
-  cliSay('out','PCB 설계 시작: '+cmds.join(' → '));progStart('pcbstart','PCB 설계 시작',{total:cmds.length,stop:()=>{CLI.stopReq=true;}});
+  // fast: fewer placement iterations, routing with 3 rip-up rounds, a short negotiated pass and no post-optimisation
+  const FAST=' --effort 0.5',FASTR=' --rounds 3 --pf-rounds 4 --pf-time 20 --no-gloss';
+  if(p.min&&!p.fast)cmds.push(`board minimize --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route':''}`);
+  else cmds.push(`reset --strategy ${p.strategy}${p.both?' --both':''}${p.fast?FAST:''}${p.route?' --route'+(p.fast?FASTR:''):''}`);
+  cliSay('out',(p.fast?'빠른 배치·배선':'PCB 설계 (원안대로)')+': '+cmds.join(' → ')+(p.fast?'\n남은 미배선은 route 또는 [원안대로 배치·배선]으로 마무리할 수 있습니다.':''));progStart('pcbstart','PCB 설계 시작',{total:cmds.length,stop:()=>{CLI.stopReq=true;}});
   try{for(let k=0;k<cmds.length;k++){const c=cmds[k];progSet('pcbstart',{i:k,label:`PCB 설계 ${k+1}/${cmds.length} 단계 · ${c.split(' --')[0]}`});await cliExec(c);if(CLI.stopReq)break;}}finally{progEnd('pcbstart');}
   stepPaint();}
 /* ---------- step 2 entry: three circuit variants to pick from (price · features · extensibility) ---------- */
@@ -472,6 +476,7 @@ $('#npPlan').addEventListener('click',()=>{if(NP.busy)return;const req=$('#npReq
 $('#npAdd').addEventListener('click',()=>npExec('add '+$('#npAddSel').value));
 $('#npName').addEventListener('change',()=>{const v=$('#npName').value.trim();if(NP.arch&&v)NP.arch.name=v;if(NP.plan){NP.plan.name=v||NP.plan.name;}npRender();});
 $('#npGen').addEventListener('click',()=>{if(NP.busy)return;npExec('generate');});
+{const nx=$('#schNext');if(nx)nx.addEventListener('click',()=>setStep(3));}
 
 /* ---------- step 1: HW architecture block diagram (HWARCH) · part-level view (SYSDIAG) ---------- */
 var SYS={sel:null,src:null,D:null,view:'hw',A:null};
@@ -614,7 +619,7 @@ function setStep(n){n=+n;
   else if(n===4){if(!BD||BD.blank){toast('회로(2단계)를 먼저 생성하세요.');return;}if(BD.pcbPending){toast('4단계 기구 설계는 PCB(3단계)를 배치한 뒤에 할 수 있습니다.');setStep(3);return;}setWorkspace('cad');}
   stepPaint();}
 function stepCur(){const w=HS.ws;return w==='sys'?1:w==='cad'?4:w==='board'?(S.sch==='full'?2:3):0;}
-function stepPaint(){const cur=stepCur();const real=!!(BD&&!BD.blank);const done={1:!!(NP.plan&&NP.plan.blocks.length)||real,2:real,3:!!(real&&BD.comps.length&&!BD.pcbPending),4:!!(real&&BD.housing&&BD.housing.R)};
+function stepPaint(){const cur=stepCur();const real=!!(BD&&!BD.blank);{const nx=$('#schNext');if(nx){nx.hidden=!(real&&cur===2&&!NP.chooser&&!$('#planGate'));nx.textContent=BD&&BD.pcbPending?'다음: PCB 설계 →':'PCB로 →';}}const done={1:!!(NP.plan&&NP.plan.blocks.length)||real,2:real,3:!!(real&&BD.comps.length&&!BD.pcbPending),4:!!(real&&BD.housing&&BD.housing.R)};
   pcbGatePaint();planGatePaint();
   $$('[data-step]').forEach(b=>{const k=+b.dataset.step;const lock=k===4&&!!(BD&&BD.pcbPending)||k>2&&!real||k===2&&!real&&!(NP.chooser&&NP.plan&&NP.plan.blocks.length);b.classList.toggle('lock',lock);b.title=lock?(k===4?'PCB(3단계)를 먼저 설계하세요':'회로(2단계)를 먼저 생성하세요'):'';});
   $$('[data-step]').forEach(b=>{const k=+b.dataset.step;b.classList.toggle('on',k===cur);b.classList.toggle('done',k!==cur&&done[k]);if(k===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
