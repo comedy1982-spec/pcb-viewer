@@ -321,6 +321,10 @@ function place(B,opts){
   const conflict=(s,t)=>s==='both'||t==='both'||s===t;
   const Dth=0.38*diag,Dhs=0.25*diag,Dn=Math.min(30,0.3*diag);
   let wOv=5;const halo=i=>ROLE[i].halo*st.halo;
+  // fan-out lane around fine-pitch ICs (≤ 0.65 mm pitch): 2.3 mm to any other part — room for the escape tracks and their vias
+  // on both sides of the pin row, so no pin is sealed in and the router does not rip up and retry; decoupling caps keep 1.3 mm
+  // (multilayer boards: every escaping signal also needs a via next to the pin row; 2-layer boards keep the older 1.3 mm)
+  const escG=opts.escape!=null?+opts.escape:((B.copperLayers||2)>2?2.3:1.3);const laneH=(i,ob2,t)=>(ROLE[i].pitch<0.66||(ob2&&ob2.pitch<0.66))?(t!=null?Math.max(0.2,escG-1.0):escG):0;
   // per-part flags so the pair term only measures distance when a rule applies
   movable.forEach(o=>{o._h=o.P>0.04;o._q=o.noisy||o.sens||o._h||o.hs;o._k=o.mcu||o.xtal?1.4:1;});info.list.forEach(o=>{if(o._h==null){o._h=o.P>0.04;o._q=o.noisy||o.sens||o._h||o.hs;o._k=o.mcu||o.xtal?1.4:1;}});
   function pairCost(i,b,sb,hb,ob2){ // i movable; b = box of the other part, ob2 = role of the other (or null)
@@ -406,7 +410,7 @@ function place(B,opts){
       const cx=m[0]+dx*far+(dy?sgn*1.6:0),cy=m[1]+dy*far+(dx?sgn*1.6:0);V[k]=side|(dx?1:0);const b2=G[k].bb[V[k]];X[k]=cx-(b2[0]+b2[2])/2;Y[k]=cy-(b2[1]+b2[3])/2;});});
   wOv=405;
   // legalise on the grid: biggest parts first, nearest free spot (full spacing, then half, then the DRC minimum)
-  const grid=opts.grid||0.25;const snap=v=>Math.round(v/grid)*grid;const escG=opts.escape!=null?+opts.escape:1.3;
+  const grid=opts.grid||0.25;const snap=v=>Math.round(v/grid)*grid;
   const order=movable.map((_,i)=>i).sort((a,b)=>(ROLE[b].conn-ROLE[a].conn)||G[b].area-G[a].area);
   const placed=[];const fails=[];
   const ok=(i,f)=>{bbI(i,A);const o=ROLE[i];const m=o.conn?0.35:Math.min(edgeM,0.6+0.4*f);if(A[0]<ob[0]+m||A[1]<ob[1]+m||A[2]>ob[2]-m||A[3]>ob[3]-m)return false;
@@ -414,7 +418,7 @@ function place(B,opts){
     if(PZ&&V[i]>=4&&pzOv(A)>0)return false;
     const si=sideOf(i);const gap=(q,o2)=>{const t=o2&&TG.get(ROLE[i]._id*100000+o2._id);
       // next to a fine-pitch IC keep a fan-out lane even when space is tight (vias and escape tracks need it)
-      const fl=t==null&&(ROLE[i].pitch<0.66||(o2&&o2.pitch<0.66))?escG:0.2;return Math.max(fl,t!=null?t*Math.max(f,0.7):(halo(i)+q)*f);};
+      const fl=Math.max(0.2,laneH(i,o2,t));return Math.max(fl,t!=null?t*Math.max(f,0.7):(halo(i)+q)*f);};
     for(const q of obst){if(!conflict(si,q.side))continue;const g=gap(q.halo,q.o);if(A[0]<q.bb[2]+g&&q.bb[0]<A[2]+g&&A[1]<q.bb[3]+g&&q.bb[1]<A[3]+g)return false;}
     for(const j of placed){if(!conflict(si,sideOf(j)))continue;bbI(j,Bq);const g=gap(halo(j),ROLE[j]);if(A[0]<Bq[2]+g&&Bq[0]<A[2]+g&&A[1]<Bq[3]+g&&Bq[1]<A[3]+g)return false;}
     return true;};
