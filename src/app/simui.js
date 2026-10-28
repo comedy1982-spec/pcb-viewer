@@ -1,6 +1,8 @@
 /* ---------- simulation UI (shares viewer scope) ---------- */
 const BLUE=['#104281','#184f95','#256abf','#3987e5','#6da7ec','#9ec5f4','#cde2fb'];
 const ORANGE=['#4a1c0b','#7a2d10','#ab4017','#d95926','#eb6834','#f39a6f','#f9c8ad'];
+// board temperature: a thermal-camera ramp (cool blue → hot red / white) — an orange ramp reads as bare copper in the 3D view
+const HEAT=['#1a2a6c','#2257c4','#1fa2c8','#2fbf71','#c9d53a','#f6a623','#e2451c','#a50f15'];
 const STATUS={good:'#0ca30c',warn:'#fab219',crit:'#d03b3b'};
 function ramp(arr,t){t=Math.max(0,Math.min(1,isFinite(t)?t:0));const f=t*(arr.length-1),i=Math.min(arr.length-2,Math.floor(f)),k=f-i;
   const a=parseInt(arr[i].slice(1),16),b=parseInt(arr[i+1].slice(1),16);const m=(s)=>Math.round(((a>>s)&255)*(1-k)+((b>>s)&255)*k);return`rgb(${m(16)},${m(8)},${m(0)})`;}
@@ -75,6 +77,9 @@ function overlayTip(h,x,y){
   if(k==='sp'&&h.net&&SR.sp.nets[h.net]!=null)return`<div>${f(SR.sp.nets[h.net],'V',3)}</div>`;
   return'';
 }
+/* 3D: colour of a part by its temperature (junction if known, else the hottest board cell under it) on the board map's scale */
+function thSpanMax(R){return Math.max(R.tmax,...(R.hot||[]).map(o=>o.Tj!=null?o.Tj:-Infinity).filter(isFinite));}
+function thPartT(o){return o?(o.Tj!=null?o.Tj:o.Tbmax!=null&&isFinite(o.Tbmax)?o.Tbmax:o.Tb):NaN;}
 function updateLegend(){const el=$('#legend'),html=legendHTML(ovKey());el.hidden=!html;if(html)el.innerHTML=html;}
 function legendHTML(k){
   if(!k)return'';let html='';const el={set innerHTML(v){html=v;}};
@@ -82,7 +87,7 @@ function legendHTML(k){
   if(k==='ir'){const R=SR.ir,v=SR.irView;const md=Math.max(0,R.Vs-R.vmin,...R.pads.map(p=>R.Vs-p.v).filter(isFinite));
     const [t,arr,hi]=v==='v'?['전압 강하 · '+R.net,BLUE,SIM.fmtSI(md,'V')]:v==='i'?['트랙 전류 · '+R.net,BLUE,SIM.fmtSI(R.maxI,'A')]:['온도 상승 (IPC-2221) · '+R.net,ORANGE,Math.max(R.maxDT,1).toFixed(1)+' °C'];
     el.innerHTML=`<span class="lt">${esc(t)}</span>${bar(arr)}<div class="lr"><span>0</span><span>${hi}</span></div>`;}
-  else if(k==='th'){const R=SR.th;el.innerHTML=`<span class="lt">보드 온도 · ${S.view==='B'?'하단':'상단'} 동박층</span>${bar(ORANGE)}<div class="lr"><span>${R.tmin.toFixed(1)} °C</span><span>${R.tmax.toFixed(1)} °C</span></div>`;}
+  else if(k==='th'){const R=SR.th;el.innerHTML=`<span class="lt">보드 온도 · ${S.view==='B'?'하단':'상단'} 동박층${S.view==='3d'?' · 부품은 접합/본체 온도':''}</span>${bar(HEAT)}<div class="lr"><span>${(R.lo!=null?R.lo:R.tmin).toFixed(1)} °C</span><span>${(R.hi!=null?R.hi:thSpanMax(R)).toFixed(1)} °C</span></div>`;}
   else if(k==='si'){el.innerHTML=`<span class="lt">특성 임피던스 · 목표 ${SR.cfg.si.z} Ω</span><div class="chips"><span><i style="background:${STATUS.good}"></i>±10% 이내</span><span><i style="background:${STATUS.warn}"></i>±25% 이내</span><span><i style="background:${STATUS.crit}"></i>벗어남</span></div>`;}
   else if(k==='emc'){el.innerHTML=`<span class="lt">EMC 결합 경로${SR.cfg.emc&&SR.cfg.emc.focus!=null&&SR.emc.checks[SR.cfg.emc.focus]?' · '+esc(SR.emc.checks[SR.cfg.emc.focus].item):''}</span><div class="chips"><span><i style="background:#eb6834"></i>스위칭 노드</span><span><i style="background:#d03b3b"></i>커뮤테이션 루프</span><span><i style="background:#3987e5"></i>크로스토크 피해선</span><span><i style="background:#a77bf3"></i>게이트</span><span><i style="background:#fab219"></i>ESL 큰 캡</span><span>✕ 기준면 슬롯</span></div>`;}
   else if(k==='sp'){const vmax=Math.max(0.1,...Object.values(SR.sp.nets).map(Math.abs));el.innerHTML=`<span class="lt">넷 전압 · ${esc(SR.sp.label)}</span>${bar(BLUE)}<div class="lr"><span>0 V</span><span>${vmax.toFixed(2)} V</span></div>`;}
@@ -279,11 +284,14 @@ function runTH(){
       const R0=Pb>0?Math.max(1e-3,o.dVert/Pb):1/gFr,G0=Math.max(gFr*0.25,1/R0-N*g1);o.vias.Rvert=R0;
       o.curve=[0,2,4,6,9,12,16,20,25,30,36].map(k=>({N:k,Tj:cfg.Ta+o.dSpread+o.dPkg+Pb/(G0+k*g1)}));}
     return o;}).sort((a,b)=>(b.Tj??b.Tbmax)-(a.Tj??a.Tbmax));
-  const mk=(T)=>{const img=document.createElement('canvas');img.width=g.nx;img.height=g.ny;const ic=img.getContext('2d');const id=ic.createImageData(g.nx,g.ny);const span=Math.max(1e-6,r.tmax-cfg.Ta);
-    for(let j=0;j<g.ny;j++)for(let i=0;i<g.nx;i++){const k=j*g.nx+i,v=T[k];const o=((g.ny-1-j)*g.nx+i)*4;if(!isFinite(v)){id.data[o+3]=0;continue;}const t=(v-cfg.Ta)/span;const c=rampRGB(ORANGE,t);id.data[o]=c[0];id.data[o+1]=c[1];id.data[o+2]=c[2];id.data[o+3]=Math.round(255*(0.18+0.8*Math.min(1,t*1.3)));}
+  // colour scale: from the coolest board cell (not the ambient — the board rarely gets near it, and the map would be one colour) to the
+  // hottest of board and junctions, so 2D, 3D board and 3D parts read on one legend
+  const fin=a=>{let m=Infinity;for(const v of a)if(isFinite(v)&&v<m)m=v;return m;};const lo=Math.min(fin(r.T),fin(r.Tb));const hiJ=Math.max(r.tmax,...res.map(o=>o.Tj!=null?o.Tj:-Infinity).filter(isFinite));
+  const mk=(T)=>{const img=document.createElement('canvas');img.width=g.nx;img.height=g.ny;const ic=img.getContext('2d');const id=ic.createImageData(g.nx,g.ny);const span=Math.max(1e-6,hiJ-lo);
+    for(let j=0;j<g.ny;j++)for(let i=0;i<g.nx;i++){const k=j*g.nx+i,v=T[k];const o=((g.ny-1-j)*g.nx+i)*4;if(!isFinite(v)){id.data[o+3]=0;continue;}const t=(v-lo)/span;const c=rampRGB(HEAT,t);id.data[o]=c[0];id.data[o+1]=c[1];id.data[o+2]=c[2];id.data[o+3]=Math.round(255*(0.62+0.33*Math.min(1,t*1.3)));}
     ic.putImageData(id,0,0);return img;};
   const js=res.filter(x=>x.Tj!=null);const worst=js.slice().sort((a,b)=>a.margin-b.margin)[0];
-  SR.th=Object.assign(r,{imgs:{T:mk(r.T),B:mk(r.Tb)},img:null,nx:g.nx,ny:g.ny,cell:g.cell,tot:ptot+jl.tot,joule:jl.tot,hot:res,worst,h,Ta:cfg.Ta,nv:g.nv,inner:inUsed,cells:g.nx*g.ny,tmin:Math.min(cfg.Ta,r.tmin)});
+  SR.th=Object.assign(r,{imgs:{T:mk(r.T),B:mk(r.Tb)},img:null,nx:g.nx,ny:g.ny,cell:g.cell,tot:ptot+jl.tot,joule:jl.tot,hot:res,worst,h,Ta:cfg.Ta,nv:g.nv,inner:inUsed,cells:g.nx*g.ny,tmin:Math.min(cfg.Ta,r.tmin),lo,hi:hiJ});
   SR.th.img=SR.th.imgs.T;SR.stale.th=false;if(!cfg.sel||!res.find(x=>x.ref===cfg.sel))cfg.sel=(worst||res[0]||{}).ref||null;
 }
 const avgT=(T,cs)=>{let s=0,n=0;cs.forEach(k=>{if(isFinite(T[k])){s+=T[k];n++;}});return n?s/n:NaN;};

@@ -391,7 +391,7 @@ function rebuild3D(){
   BD.comps.forEach(c=>{if(c.kind==='none'||!(c.body.w>0.1&&c.body.h>0.1))return;const g=build3D(c);compRoot.add(g);G3.comps[c.ref]=g;
     if(g.userData.led)G3.leds[c.ref]=g.userData.led;if(g.userData.rotor)G3.rotors[c.ref]=g.userData.rotor;});PLAY.applied=null;
   if(typeof mech3D==='function'&&BD.housing&&BD.housing.show)mech3D();
-  G3.board=BD;setExplode(S.explode,true);updateTextures();resize3D();homeCam(false);
+  G3.board=BD;G3.heatKey=undefined;setExplode(S.explode,true);heat3D();updateTextures();resize3D();homeCam(false);
 }
 function resize3D(){if(!G3||S.view!=='3d'||S.sch==='full')return;const w=cv3.clientWidth,h=cv3.clientHeight;if(!w||!h)return;G3.renderer.setSize(w,h,false);G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.dirty=true;}
 function fitR(){const a=G3.cam.aspect||1.5,t=Math.tan(G3.cam.fov*D2R/2);return Math.max(BD.H*1.25/(2*t),BD.W*1.25/(2*t*a));}
@@ -464,8 +464,19 @@ $('#pbDur').addEventListener('change',e=>{const v=e.target.value;PLAY.rt=v==='rt
 function sync3D(){
   if(!G3||!G3.board)return;const g=S.selRef&&G3.comps[S.selRef];
   if(g){G3.sel.setFromObject(g);G3.sel.visible=true;}else G3.sel.visible=false;
-  G3.compRoot.visible=S.layers.body3d;updateTextures();
+  G3.compRoot.visible=S.layers.body3d;heat3D();updateTextures();
 }
+/* thermal overlay in 3D: the board texture is shown unlit (emissive) so the light does not wash the colours out, and every part body
+   takes the colour of its own temperature; switching the overlay off restores the materials */
+function heat3D(){if(!G3||!G3.comps)return;const on=typeof ovKey==='function'&&ovKey()==='th'&&SR.th&&SR.th.hot;
+  (G3.planes||[]).forEach(pl=>{const m=pl.material;const want=on?1:0;if(m.userData.heat===want)return;m.userData.heat=want;
+    if(on){m.emissiveMap=m.map;m.emissive=new THREE.Color(0xffffff);m.emissiveIntensity=0.72;}else{m.emissiveMap=null;m.emissive=new THREE.Color(0x000000);m.emissiveIntensity=1;}m.needsUpdate=true;});
+  const key=on?SR.th:null;if(G3.heatKey===key)return;G3.heatKey=key;
+  Object.values(G3.comps).forEach(g=>g.traverse(o=>{if(!o.isMesh||o.userData.noPick)return;if(o.userData.mat0){o.material=o.userData.mat0;delete o.userData.mat0;}}));
+  if(!on)return;const R=SR.th,lo=R.lo!=null?R.lo:R.tmin,hi=Math.max(lo+1e-6,R.hi!=null?R.hi:thSpanMax(R));const byRef={};R.hot.forEach(o=>{byRef[o.ref]=o;});const cache={};
+  Object.entries(G3.comps).forEach(([ref,g])=>{const T=thPartT(byRef[ref]);if(!isFinite(T))return;const t=Math.max(0,Math.min(1,(T-lo)/(hi-lo)));const q=Math.round(t*40);
+    const mat=cache[q]||(cache[q]=(()=>{const c=new THREE.Color(ramp(HEAT,q/40));return new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:0.22,roughness:0.7,metalness:0});})());
+    g.traverse(o=>{if(!o.isMesh||o.userData.noPick||o.isSprite)return;if(!o.userData.mat0)o.userData.mat0=o.material;o.material=mat;});});}
 function pick3D(px,py){const r=cv3.getBoundingClientRect();return pick3DCam(G3.cam,r.width,r.height,px,py);}
 function pick3DCam(cam,w,h,px,py){
   const v=new THREE.Vector2((px/w)*2-1,-(py/h)*2+1),rc=new THREE.Raycaster();rc.setFromCamera(v,cam);
