@@ -34,8 +34,8 @@ ${scriptW(stripExport(read('src/core/pcb-core.js')))}
 ${script(stripExport(read('src/parts/mcu-pins.js')))}
 ${script(stripExport(read('src/sch/sch.js')))}
 ${script(stripExport(read('src/sch/schedit.js')))}
-${script(stripExport(read('src/sim/sim.js')))}
-${script(stripExport(read('src/sim/emc.js')))}
+${scriptW(stripExport(read('src/sim/sim.js')))}
+${scriptW(stripExport(read('src/sim/emc.js')))}
 ${script(read('src/app/sample.js'))}
 ${script(read('src/app/sample-mcu.js'))}
 ${script(read('src/app/sample-tc364.js'))}
@@ -48,10 +48,10 @@ ${script(stripExport(read('src/hsis/mcal.js')))}
 ${scriptW(read('src/route/kernel.b64.js'))}
 ${scriptW(stripExport(read('src/route/autoroute.js')))}
 ${scriptW(stripExport(read('src/core/pcbedit.js')))}
-${script(stripExport(read('src/core/autoplace.js')))}
+${scriptW(stripExport(read('src/core/autoplace.js')))}
 ${script(stripExport(read('src/core/guide.js')))}
 ${script(stripExport(read('src/core/newproj.js')))}
-${script(stripExport(read('src/core/boardsnap.js')))}
+${scriptW(stripExport(read('src/core/boardsnap.js')))}
 ${script(stripExport(read('src/core/powertopo.js')))}
 ${script(stripExport(read('src/core/safemech.js')))}
 ${script(stripExport(read('src/core/diagthr.js')))}
@@ -77,7 +77,8 @@ ${script(stripExport(read('src/core/safety.js')))}
 ${script(stripExport(read('src/core/products.js')))}
 ${script(stripExport(read('src/core/sgarch.js')))}
 ${script(stripExport(read('src/core/dspdf.js')))}
-${script(stripExport(read('src/core/current.js')))}
+${scriptW(stripExport(read('src/core/current.js')))}
+${scriptW(stripExport(read('src/route/routejob.js')))}
 ${script(stripExport(read('src/hsis/testgen.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}

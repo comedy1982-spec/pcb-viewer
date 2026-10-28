@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert';
+import { load } from './load.mjs';
+const { PCB, PCBEDIT, AUTOROUTE, ROUTEJOB, BOARDSNAP, SAMPLE_MCU } = load();
+const ui = { set: () => {}, say: (k, t) => ({ k, t }), tick: () => Promise.resolve(), stopped: () => false };
+const fresh = () => { const B = PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(SAMPLE_MCU)))); B.pcbPending = true; return B; };
+const stat = B => ({ rats: PCBEDIT.ratsnest(B).length, drc: PCBEDIT.drc(B).length, auto: PCB.cuKeys(B).reduce((a, k) => a + B.layers[k + '.cu'].filter(p => p.auto).length, 0), vias: B.vias.length, W: B.W, H: B.H });
+test('ROUTEJOB: the place and route pipelines run on a JSON copy of the board (as in the worker) and come back through a snapshot with the same result as running on the board itself', async () => {
+  await AUTOROUTE.wasmInit();
+  const a = { strategy: 'balanced', seed: 3, scratch: true, par: 0 };
+  const B1 = fresh(); await ROUTEJOB.runJob(B1, 'place', a, ui); const t1 = await ROUTEJOB.runJob(B1, 'route', { par: 0 }, ui);
+  const B2 = fresh(); const C = ROUTEJOB.boardFromJSON(ROUTEJOB.boardToJSON(B2));
+  assert.equal(C.comps.length, B2.comps.length); assert.ok(C.comps[0].pads[0] === C.layers['T.cu'].find(p => p.t === 'pad' && p.ref === C.comps[0].ref), 'pad prims re-linked to the parts');
+  await ROUTEJOB.runJob(C, 'place', a, ui); const t2 = await ROUTEJOB.runJob(C, 'route', { par: 0 }, ui);
+  const snap = BOARDSNAP.save(C, {}); assert.ok(snap.pours.length >= 1, 'pours travel with the snapshot');
+  const r = BOARDSNAP.apply(B2, snap); assert.equal(r.missing.length, 0);
+  const s1 = stat(B1), s2 = stat(B2);
+  assert.deepEqual(s2, s1);
+  assert.equal(t2.split('\n')[0], t1.split('\n')[0]);
+  assert.equal(B2.pcbPending, false);
+});

@@ -16,6 +16,8 @@ function save(B,meta){const keys=PCB.cuKeys(B);const nets=[];const ni=n=>{if(n==
     else if(p.t==='path')S.path.push([L,ni(p.net),q(p.w),flags(p)].concat(...p.pts.map(t=>[q(t[0]),q(t[1])])));
     else if(p.t==='poly'&&p.rect&&p.fill)S.fill.push([L,ni(p.net)].concat(p.rect.map(q)));}));
   B.vias.forEach(v=>S.via.push([ni(v.net),q(v.x),q(v.y),q(v.d),q(v.drill),flags(v),v.fillL!=null?v.fillL:-1]));
+  // copper pours (plane / ground fills) — plain objects, so a job's result carries exactly the pours it worked with
+  S.pours=[];keys.forEach((k,L)=>B.layers[k+'.cu'].forEach(p=>{if(p.t==='pour')S.pours.push([L,JSON.parse(JSON.stringify(p))]);}));
   if(B.powerReport)S.powerReport=JSON.parse(JSON.stringify(B.powerReport));
   if(B.powerBus)S.powerBus=JSON.parse(JSON.stringify(B.powerBus));
   return S;}
@@ -36,6 +38,7 @@ function apply(B,S){if(!S||S.v!==1)throw new Error('스냅샷 형식이 다릅�
   S.path.forEach(r=>{const [L,n,w,m]=r;const pts=[];for(let i=4;i<r.length;i+=2)pts.push([f(r[i]),f(r[i+1])]);const p=unflag({t:'path',pts,w:f(w),net:net(n)},m);if(m&FLAG.auto)p._side=keys[L];B.layers[keys[L]+'.cu'].push(p);});
   S.fill.forEach(([L,n,x0,y0,x1,y1])=>{const R=[f(x0),f(y0),f(x1),f(y1)];B.layers[keys[L]+'.cu'].push({t:'poly',rings:[[[R[0],R[1]],[R[2],R[1]],[R[2],R[3]],[R[0],R[3]]]],rect:R,net:net(n),fill:true});});
   B.vias=S.via.map(([n,x,y,d,dr,m,fl])=>{const v=unflag({x:f(x),y:f(y),d:f(d),drill:f(dr),net:net(n)},m);if(fl>=0)v.fillL=fl;return v;});
+  if(S.pours){keys.forEach(k=>{B.layers[k+'.cu']=B.layers[k+'.cu'].filter(p=>p.t!=='pour');});S.pours.slice().reverse().forEach(([L,p])=>{B.layers[keys[L]+'.cu'].unshift(JSON.parse(JSON.stringify(p)));});}
   if(S.powerReport)B.powerReport=JSON.parse(JSON.stringify(S.powerReport));
   if(S.powerBus)B.powerBus=JSON.parse(JSON.stringify(S.powerBus));
   B.pcbPending=false;PCBEDIT.rebuildNets(B);return{missing:miss};}

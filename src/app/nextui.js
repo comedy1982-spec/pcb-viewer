@@ -4,12 +4,15 @@
 var NX={key:'',m:null,ovKey:'',ovOn:false,ovRaf:0};
 /* ---- design metrics, cached on the revision fingerprint ---- */
 function nxBomTotal(B){const P=typeof PARTS!=='undefined'?PARTS:null;if(!P||!B)return null;let t=0,n=0;B.comps.forEach(c=>{if(/^TP\d/i.test(c.ref))return;const info=P.find(c.mpn)||P.find(c.val);const pr=P.price(c.mpn,info&&info.cat);if(pr!=null){t+=pr;n++;}});return{total:+t.toFixed(2),priced:n};}
+function revSigSafe(){try{return typeof revSig==='function'?revSig():'';}catch(e){return '';}}
 function nxMetrics(){if(!BD)return null;const key=(typeof revSig==='function'?revSig():'')+'|'+(PE&&PE.drc?PE.drc.length:-1)+'|'+(typeof SR!=='undefined'&&SR.th?1:0)+'|'+(HS.res?HS.ver:0);if(key===NX.key&&NX.m)return NX.m;
   const m={blank:!!BD.blank,pcb:!BD.blank&&!BD.pcbPending};
   const bom=nxBomTotal(BD);m.bom=bom?bom.total:null;m.bomN=bom?bom.priced:0;m.parts=BD.comps.length;
   try{const last=typeof REV!=='undefined'&&REV.list.slice().reverse().find(r=>r.kind==='tag'||r.label);if(last&&last.stats&&last.stats.bom!=null)m.bomRef={label:revLabel(last),v:last.stats.bom};}catch(e){}
-  if(m.pcb){try{if(PE&&(!PE.drc||!PE.drcKey||PE.drcKey!==key)){PCBEDIT.prepare(BD);PE.drc=PCBEDIT.drc(BD);PE.rats=PCBEDIT.ratsnest(BD);PE.drcKey=key;}m.drc=PE.drc.length;m.open=PE.rats?PE.rats.length:null;}catch(e){m.drc=null;}}
-  try{const sheets=BD.schSheets||(typeof schData==='function'&&schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:m.pcb?'all':'sch',sheets});m.gPct=g.pct;m.gCrit=g.crit;m.gFail=g.rules.filter(r=>r.status==='fail').length;m.gVerdict=g.verdict;}catch(e){}
+  if(m.pcb){try{if(PE&&PE.fresh&&PE.fresh.B===BD){PE.rats=PE.fresh.rats;PE.drc=PE.fresh.drc;PE.fresh=null;PE.drcKey=key;}
+    if(PE&&PE.drc&&PE.drcAt===revSigSafe()){PE.drcKey=key;}  // the edit-mode recheck (peRecalc) just ran on this very board state
+    if(PE&&(!PE.drc||!PE.drcKey||PE.drcKey!==key)){PCBEDIT.prepare(BD);PE.drc=PCBEDIT.drc(BD);PE.rats=PCBEDIT.ratsnest(BD);PE.drcKey=key;}m.drc=PE.drc.length;m.open=PE.rats?PE.rats.length:null;}catch(e){m.drc=null;}}
+  try{const sheets=BD.schSheets||(typeof schData==='function'&&schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:m.pcb?'all':'sch',sheets,drc:m.pcb&&PE&&PE.drc&&PE.drcKey===key?PE.drc:null});m.gPct=g.pct;m.gCrit=g.crit;m.gFail=g.rules.filter(r=>r.status==='fail').length;m.gVerdict=g.verdict;}catch(e){}
   if(HS.H){try{if(!HS.res)hsisRun();const st=Object.values(HS.res.status||{});m.hsis={ok:st.filter(x=>x==='ok').length,n:st.length,err:st.filter(x=>x==='err').length};}catch(e){}}
   if(typeof SR!=='undefined'&&SR.th&&SR.th.parts){const hot=SR.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'sim'};}
   if(m.pcb&&typeof mechRun==='function'&&BD.housing){try{const R=mechRun();m.house={mass:R.d.mass,ok:R.d.feasible,ip:R.d.ip,mat:R.d.m.short,warn:R.warn.length};if(!m.tj){const hot=R.d.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'housing',lim:R.inp.tj};}}catch(e){}}

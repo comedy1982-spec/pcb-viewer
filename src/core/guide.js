@@ -193,7 +193,7 @@ function evaluate(B,opts){
   opts=opts||{};const scope=opts.scope||'pcb';const g=state(B);
   if(typeof PCBEDIT!=='undefined')PCBEDIT.prepare(B);
   const X={};const lazy=(k,f)=>Object.defineProperty(X,k,{get(){const v=f();Object.defineProperty(X,k,{value:v});return v;},configurable:true});
-  lazy('emc',()=>{try{return EMC.analyze(B,{});}catch(e){return null;}});lazy('met',()=>AUTOPLACE.metrics(B,{}));lazy('drc',()=>PCBEDIT.drc(B));
+  lazy('emc',()=>{try{return EMC.analyze(B,{});}catch(e){return null;}});lazy('met',()=>AUTOPLACE.metrics(B,{}));lazy('drc',()=>opts.drc||PCBEDIT.drc(B));
   lazy('plane',()=>{const st=PCB.stackOf(B);const i=st.findIndex(x=>x.role==='gnd'&&x.net&&x.k!=='T'&&x.k!=='B');return i<0?null:{layer:st[i].k,net:st[i].net,idx:i+1,n:st.length};});
   lazy('pour',()=>{for(const L of['B','T']){const p=B.layers[L+'.cu'].find(q=>q.t==='pour'&&isGnd(q.net));if(p)return{layer:L,net:p.net};}return null;});
   X.sheets=opts.sheets||null;lazy('parts',()=>partsOf(B,X.sheets));lazy('nets',()=>netsOf(X.parts));
