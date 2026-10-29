@@ -13,6 +13,8 @@ function peEnd(){PE.on=false;PE.route=null;PE.drag=null;peBar();draw2D();}
 function peRecalc(full,nets){
   // a background job already computed the ratsnest and DRC of the board it handed back: use them once instead of a 2 s recheck here
   if(full&&PE.fresh&&PE.fresh.B===BD){PE.rats=PE.fresh.rats;PE.drc=PE.fresh.drc;PE.fresh=null;PE.drcAt=typeof revSigSafe==='function'?revSigSafe():null;peStat();return;}
+  // the board is exactly what the last background job returned (same signature): reuse its ratsnest + DRC
+  if(full&&typeof cliMetricNow==='function'){const m=cliMetricNow();if(m){PE.rats=m.rats;PE.drc=m.drc;PE.drcAt=m.sig;peStat();return;}}
   try{if(full||!nets){PE.rats=PCBEDIT.ratsnest(BD);PE.drc=PCBEDIT.drc(BD);PE.drcAt=typeof revSigSafe==='function'?revSigSafe():null;}
     else{const keep=PE.rats.filter(r=>!nets.has(r.net));PE.rats=keep.concat(PCBEDIT.ratsnest(BD,nets));}}catch(e){console.error(e);}
   peStat();

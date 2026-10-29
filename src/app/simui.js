@@ -254,7 +254,9 @@ function jouleMap(cfg,g,Tt,Tb){
 }
 function housingR(cfg,A,h){const m=TH_MAT.find(x=>x[0]===cfg.house.mat)||TH_MAT[0];const Ah=Math.max(1e-4,cfg.house.area*1e-4);const hh=(h?h.hT:9)+SIM.hRad(cfg.eps,cfg.Ta,cfg.Ta+20);
   return cfg.house.wall*1e-3/(m[1]*A)+1/(hh*Ah);}
-function runTH(){
+/* thermal analysis: the set-up and the colour maps run here, the network solve (SIM.thermalSolve2, ≈ 1–10 s) runs in the
+   background worker when one is available (runTHAsync) so panning and the console keep working; runTH() is the same, inline */
+function thPrep(){
   const cfg=thConfig();const g=coverageGrid(cfg.res,cfg.plating);const n=g.nx*g.ny;const h=SIM.hConv(cfg.conv,cfg.v);
   const cells={};BD.comps.forEach(c=>{cells[c.ref]=compCells(c,g);});
   // package lead frame / exposed pad spreads heat over the footprint (≈ 0.2 mm copper slug)
@@ -267,12 +269,11 @@ function runTH(){
   // components with a top path (TIM + housing) become junction nodes of the network: P splits between board and housing
   const topC=comps.filter(c=>cfg.J[c.ref]&&cfg.J[c.ref].top);const extra=topC.map(c=>{const J=cfg.J[c.ref];const A=Math.max(1e-6,c.body.w*c.body.h*1e-6);
     return{ref:c.ref,cells:cells[c.ref],layer:c.side==='B'?'B':'T',gB:1/J.thJB,gA:1/(J.thJC+cfg.tim.blt*1e-3/(cfg.tim.k*A)+housingR(cfg,A,h)),P:+cfg.P[c.ref]};});
-  let r=null,jl=null;
-  for(let it=0;it<2;it++){
-    const Pt=new Float64Array(n),Pb=new Float64Array(n);
-    comps.forEach(c=>{if(topC.includes(c))return;const w=+cfg.P[c.ref];const cs=cells[c.ref];const arr=c.side==='B'?Pb:Pt;cs.forEach(k=>{arr[k]+=w/cs.length;});});
-    jl=jouleMap(cfg,g,r&&r.T,r&&r.Tb);for(let k=0;k<n;k++){Pt[k]+=jl.Pt[k];Pb[k]+=jl.Pb[k];}
-    r=SIM.thermalSolve2(g,env,Pt,Pb,extra);if(!jl.n)break;}
+  return{cfg,g,n,h,cells,inUsed,comps,ptot,env,topC,extra};}
+function thLoad(X,r){const{cfg,g,n,comps,topC,cells}=X;const Pt=new Float64Array(n),Pb=new Float64Array(n);
+  comps.forEach(c=>{if(topC.includes(c))return;const w=+cfg.P[c.ref];const cs=cells[c.ref];const arr=c.side==='B'?Pb:Pt;cs.forEach(k=>{arr[k]+=w/cs.length;});});
+  const jl=jouleMap(cfg,g,r&&r.T,r&&r.Tb);for(let k=0;k<n;k++){Pt[k]+=jl.Pt[k];Pb[k]+=jl.Pb[k];}return{Pt,Pb,jl};}
+function thFinish(X,r,jl){const{cfg,g,n,h,cells,inUsed,comps,ptot,env,topC,extra}=X;
   const share={};comps.forEach(c=>{share[c.ref]=1;});extra.forEach((e,q)=>{share[e.ref]=e.P>0?Math.max(0,Math.min(1,1-e.gA*(r.Tj[q]-cfg.Ta)/e.P)):1;});
   const res=BD.comps.filter(c=>c.kind!=='none').map(c=>{const P=+cfg.P[c.ref]||0,cs=cells[c.ref];const Ton=c.side==='B'?r.Tb:r.T,Toff=c.side==='B'?r.T:r.Tb;
     const Tb=avgT(Ton,cs),Tbmax=Math.max(...cs.map(k=>Ton[k]).filter(isFinite)),Tback=avgT(Toff,cs);const J=cfg.J[c.ref];const o={ref:c.ref,val:c.val,P,Tb,Tbmax,Tback,side:c.side};
@@ -294,6 +295,14 @@ function runTH(){
   SR.th=Object.assign(r,{imgs:{T:mk(r.T),B:mk(r.Tb)},img:null,nx:g.nx,ny:g.ny,cell:g.cell,tot:ptot+jl.tot,joule:jl.tot,hot:res,worst,h,Ta:cfg.Ta,nv:g.nv,inner:inUsed,cells:g.nx*g.ny,tmin:Math.min(cfg.Ta,r.tmin),lo,hi:hiJ});
   SR.th.img=SR.th.imgs.T;SR.stale.th=false;if(!cfg.sel||!res.find(x=>x.ref===cfg.sel))cfg.sel=(worst||res[0]||{}).ref||null;
 }
+function runTH(){const X=thPrep();if(!X)return;let r=null,jl=null;for(let it=0;it<2;it++){const L=thLoad(X,r);jl=L.jl;r=SIM.thermalSolve2(X.g,X.env,L.Pt,L.Pb,X.extra);if(!jl.n)break;}thFinish(X,r,jl);}
+async function runTHAsync(){const X=thPrep();if(!X)return;let r=null,jl=null;
+  for(let it=0;it<2;it++){const L=thLoad(X,r);jl=L.jl;r=await thSolveBg(X.g,X.env,L.Pt,L.Pb,X.extra);if(!jl.n)break;}thFinish(X,r,jl);}
+/* one network solve in the background worker (the routing worker: core scripts + sim.js are already compiled there); inline when unavailable */
+function thSolveBg(g,env,Pt,Pb,extra){if(typeof Worker==='undefined'||typeof jobWorkerGet!=='function'||(typeof CLI!=='undefined'&&CLI.jobWorker===false))return Promise.resolve(SIM.thermalSolve2(g,env,Pt,Pb,extra));
+  return new Promise(res=>{let w;try{w=jobWorkerGet();}catch(e){return res(SIM.thermalSolve2(g,env,Pt,Pb,extra));}const id=++CLI.seq;const prev=w.onmessage;
+    const done=r=>{w.removeEventListener('message',on);res(r);};const on=e=>{const m=e.data;if(!m||m.id!==id)return;if(m.ok&&m.r)done(m.r);else done(SIM.thermalSolve2(g,env,Pt,Pb,extra));};
+    w.addEventListener('message',on);try{w.postMessage({id,cmd:'thermal',g,env,Pt,Pb,extra});}catch(e){done(SIM.thermalSolve2(g,env,Pt,Pb,extra));}void prev;});}
 const avgT=(T,cs)=>{let s=0,n=0;cs.forEach(k=>{if(isFinite(T[k])){s+=T[k];n++;}});return n?s/n:NaN;};
 const thSt=m=>m==null?['info','—']:m<0?['err','초과']:m<15?['warn','주의']:['ok','정상'];
 const thPill=st=>`<span class="sv ${st[0]}"><i aria-hidden="true">${st[0]==='err'?'✕':st[0]==='warn'?'!':'✓'}</i>${st[1]}</span>`;
@@ -485,7 +494,7 @@ function thBind(b){
   b.querySelector('#th-ic')?.addEventListener('click',()=>{BD.comps.forEach(c=>{if(c.kind==='ic')cfg.P[c.ref]=0.1;});renderSim();});
   b.querySelector('#th-zero')?.addEventListener('click',()=>{Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);renderSim();});
   b.querySelector('#th-imp')?.addEventListener('click',()=>{importPower();renderSim();});
-  b.querySelector('#th-run')?.addEventListener('click',()=>{const btn=b.querySelector('#th-run');btn.disabled=true;btn.textContent='계산 중…';setTimeout(()=>{try{runTH();}catch(e){console.error(e);SR.th={error:'계산 중 오류: '+e.message};}renderSim();updateLegend();refresh(false);},20);});
+  b.querySelector('#th-run')?.addEventListener('click',()=>{const btn=b.querySelector('#th-run');btn.disabled=true;btn.textContent='계산 중…';setTimeout(async()=>{try{await runTHAsync();}catch(e){console.error(e);SR.th={error:'계산 중 오류: '+e.message};}renderSim();updateLegend();refresh(false);},20);});
   b.querySelectorAll('[data-thref]').forEach(r=>r.addEventListener('click',()=>{cfg.sel=r.dataset.thref;S.selRef=r.dataset.thref;S.hlNet=null;renderSim();refresh(false);}));
   b.querySelectorAll('[data-thl]').forEach(x=>x.addEventListener('click',()=>{cfg.layer=x.dataset.thl;if(SR.th&&SR.th.imgs)SR.th.img=SR.th.imgs[cfg.layer];renderSim();if(S.view==='3d'||S.view!==cfg.layer)setView(cfg.layer);refresh(false);}));
   b.querySelector('#th-meas')?.addEventListener('change',e=>{const v=e.target.value;if(v==='')delete cfg.meas[cfg.sel];else cfg.meas[cfg.sel]=num(v,null);renderSim();});

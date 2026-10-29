@@ -111,3 +111,15 @@ test('setOutlineRing: drawn outline moves the origin and keeps parts in place', 
   assert.equal(bd.outline[0].length, 5); assert.equal(bd.shape.kind, 'poly');
   assert.throws(() => PCBEDIT.setOutlineRing(bd, [[0, 0], [2, 0], [2, 2]], {}), /보드 크기/);
 });
+
+test('resize with anchor center moves copies of tracks and vias, so an undo snapshot taken before still holds the old geometry', () => {
+  const bd = board(SAMPLE);
+  const segs0 = bd.layers['T.cu'].filter(p => p.t === 'seg'), vias0 = bd.vias.slice();
+  assert.ok(segs0.length && vias0.length);
+  const before = segs0.map(p => [p.a[0], p.a[1], p.b[0], p.b[1]].join()), vb = vias0.map(v => v.x + ',' + v.y);
+  PCBEDIT.resizeBoard(bd, bd.W + 20, bd.H + 10, { anchor: 'center' });
+  assert.deepEqual(segs0.map(p => [p.a[0], p.a[1], p.b[0], p.b[1]].join()), before, 'old track objects untouched');
+  assert.deepEqual(vias0.map(v => v.x + ',' + v.y), vb, 'old via objects untouched');
+  const moved = bd.layers['T.cu'].filter(p => p.t === 'seg');
+  assert.ok(Math.abs(moved[0].a[0] - segs0[0].a[0] - 10) < 1e-9 && Math.abs(moved[0].a[1] - segs0[0].a[1] - 5) < 1e-9, 'board copper moved with the parts');
+});

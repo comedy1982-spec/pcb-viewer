@@ -210,10 +210,14 @@ function shapeText(B){const sh=B.shape;if(!sh)return rectLike(B)?(cornerRadius(B
   return SHAPES[k]+(k==='circle'?` Ø${+sh.d||B.W}`:k==='L'||k==='T'?` (${k==='L'?'절개':'기둥'} ${sh.cw||'-'}×${sh.ch||'-'}${sh.at?' '+sh.at:''})`:'')+((B.outline||[]).length>1?` · 컷아웃 ${B.outline.length-1}개`:'');}
 // shift everything on the board (parts carry their pads, drills and silkscreen)
 function translateAll(B,dx,dy,skip){
-  const seen=new Set();const mv=p=>{if(!p||seen.has(p))return;seen.add(p);p[0]+=dx;p[1]+=dy;};
+  // copy-on-write: tracks, fills and vias are replaced by moved copies, not shifted in place — undo snapshots and the fix /
+  // minimize loops keep references to the old objects, which must stay where they were
+  const mv=q=>[q[0]+dx,q[1]+dy];
   B.comps.forEach(c=>move(B,c,dx,dy));
-  PCB.cuKeys(B).map(k=>k+'.cu').concat(['T.silk','B.silk']).forEach(L=>B.layers[L].forEach(p=>{if(p.own||p.t==='pad'||p.t==='pour')return;if(p.t==='seg'){mv(p.a);mv(p.b);}else if(p.t==='path')p.pts.forEach(mv);else if(p.t==='poly')p.rings.forEach(r=>r.forEach(mv));else if(p.x!=null){p.x+=dx;p.y+=dy;}}));
-  B.vias.forEach(v=>{v.x+=dx;v.y+=dy;});B.drills.forEach(d=>{if(d.own||d._pad||(skip&&skip.has(d)))return;d.x+=dx;d.y+=dy;});
+  PCB.cuKeys(B).map(k=>k+'.cu').concat(['T.silk','B.silk']).forEach(L=>{B.layers[L]=B.layers[L].map(p=>{if(p.own||p.t==='pad'||p.t==='pour')return p;
+    if(p.t==='seg')return Object.assign({},p,{a:mv(p.a),b:mv(p.b)});if(p.t==='path')return Object.assign({},p,{pts:p.pts.map(mv)});
+    if(p.t==='poly')return Object.assign({},p,{rings:p.rings.map(r=>r.map(mv))});if(p.x!=null)return Object.assign({},p,{x:p.x+dx,y:p.y+dy});return p;});});
+  B.vias=B.vias.map(v=>Object.assign({},v,{x:v.x+dx,y:v.y+dy}));B.drills.forEach(d=>{if(d.own||d._pad||(skip&&skip.has(d)))return;d.x+=dx;d.y+=dy;});
 }
 /* resize the board. anchor 'bl' keeps the lower-left corner, 'center' keeps the parts centred. Mounting holes near a corner keep
    their distance to that corner; a rectangular outline is rebuilt (with corner radius R), any other outline is scaled. */

@@ -6308,10 +6308,14 @@ function shapeText(B){const sh=B.shape;if(!sh)return rectLike(B)?(cornerRadius(B
   return SHAPES[k]+(k==='circle'?` Ø${+sh.d||B.W}`:k==='L'||k==='T'?` (${k==='L'?'절개':'기둥'} ${sh.cw||'-'}×${sh.ch||'-'}${sh.at?' '+sh.at:''})`:'')+((B.outline||[]).length>1?` · 컷아웃 ${B.outline.length-1}개`:'');}
 // shift everything on the board (parts carry their pads, drills and silkscreen)
 function translateAll(B,dx,dy,skip){
-  const seen=new Set();const mv=p=>{if(!p||seen.has(p))return;seen.add(p);p[0]+=dx;p[1]+=dy;};
+  // copy-on-write: tracks, fills and vias are replaced by moved copies, not shifted in place — undo snapshots and the fix /
+  // minimize loops keep references to the old objects, which must stay where they were
+  const mv=q=>[q[0]+dx,q[1]+dy];
   B.comps.forEach(c=>move(B,c,dx,dy));
-  PCB.cuKeys(B).map(k=>k+'.cu').concat(['T.silk','B.silk']).forEach(L=>B.layers[L].forEach(p=>{if(p.own||p.t==='pad'||p.t==='pour')return;if(p.t==='seg'){mv(p.a);mv(p.b);}else if(p.t==='path')p.pts.forEach(mv);else if(p.t==='poly')p.rings.forEach(r=>r.forEach(mv));else if(p.x!=null){p.x+=dx;p.y+=dy;}}));
-  B.vias.forEach(v=>{v.x+=dx;v.y+=dy;});B.drills.forEach(d=>{if(d.own||d._pad||(skip&&skip.has(d)))return;d.x+=dx;d.y+=dy;});
+  PCB.cuKeys(B).map(k=>k+'.cu').concat(['T.silk','B.silk']).forEach(L=>{B.layers[L]=B.layers[L].map(p=>{if(p.own||p.t==='pad'||p.t==='pour')return p;
+    if(p.t==='seg')return Object.assign({},p,{a:mv(p.a),b:mv(p.b)});if(p.t==='path')return Object.assign({},p,{pts:p.pts.map(mv)});
+    if(p.t==='poly')return Object.assign({},p,{rings:p.rings.map(r=>r.map(mv))});if(p.x!=null)return Object.assign({},p,{x:p.x+dx,y:p.y+dy});return p;});});
+  B.vias=B.vias.map(v=>Object.assign({},v,{x:v.x+dx,y:v.y+dy}));B.drills.forEach(d=>{if(d.own||d._pad||(skip&&skip.has(d)))return;d.x+=dx;d.y+=dy;});
 }
 /* resize the board. anchor 'bl' keeps the lower-left corner, 'center' keeps the parts centred. Mounting holes near a corner keep
    their distance to that corner; a rectangular outline is rebuilt (with corner radius R), any other outline is scaled. */
@@ -11600,8 +11604,11 @@ function boardFromJSON(s){const B=JSON.parse(s);const cls=B.__netClass||{};delet
   Object.keys(B.layers).forEach(k=>{B.layers[k]=B.layers[k].map(p=>p&&p.t==='pad'&&p.ref!=null?(padOf.get(key(p))||p):p);});
   B.netClass=n=>cls[n]||(/^(GND|AGND|DGND|PGND|VSS)$/i.test(String(n||''))?'접지':'신호');B.byRef={};B.comps.forEach(c=>{B.byRef[c.ref]=c;});PCBEDIT.prepare(B);PCBEDIT.rebuildNets(B);return B;}
 async function runJob(B,kind,a,ui){ui=ui||{};const U={set:ui.set||(()=>{}),say:ui.say||((k,t)=>({k,t})),tick:ui.tick||(()=>Promise.resolve()),stopped:ui.stopped||(()=>false),prog:ui.prog||null,progSet:ui.progSet||(()=>{}),progEnd:ui.progEnd||(()=>{}),par:ui.par||null};
+  // one board-size try of `board minimize`: clear copper, anneal at the size, report whether every part fits (the board comes back resized)
+  if(kind==='minsize'){AUTOPLACE.clearCopper(B);const r=AUTOPLACE.minimize(B,a.opt||{});return JSON.stringify({ok:!!r.ok,W:r.W,H:r.H,tries:r.tries});}
   if(kind==='place')return placeJob(B,a,!!a.scratch,U);if(kind==='route')return await routeJob(B,a,U);if(kind==='gloss')return await glossJob(B,a,U,!!a.quiet);throw new Error('unknown job '+kind);}
 function workerMain(){self.onmessage=e=>{const m=e.data;const go=async()=>{try{
+    if(m.cmd==='thermal'){const r=SIM.thermalSolve2(m.g,m.env,m.Pt,m.Pb,m.extra);self.postMessage({id:m.id,ok:true,r});return;}
     if(m.cmd!=='job')throw new Error('unknown cmd');if(typeof AUTOROUTE!=='undefined'&&AUTOROUTE.wasmInit)await AUTOROUTE.wasmInit();
     const B=boardFromJSON(m.board);let last=0;const ui={set:t=>{const now=Date.now();if(now-last>60){last=now;self.postMessage({id:m.id,prog:t});}},say:(k,t)=>({k,t}),tick:()=>Promise.resolve(),stopped:()=>false,prog:null};
     const text=await runJob(B,m.kind,m.a,ui);const snap=BOARDSNAP.save(B,{});let rats=null,drc=null;try{rats=PCBEDIT.ratsnest(B);drc=PCBEDIT.drc(B).map(d=>Object.assign({},d,{refs:d.refs||[]}));}catch(e){}
@@ -13091,7 +13098,9 @@ function jouleMap(cfg,g,Tt,Tb){
 }
 function housingR(cfg,A,h){const m=TH_MAT.find(x=>x[0]===cfg.house.mat)||TH_MAT[0];const Ah=Math.max(1e-4,cfg.house.area*1e-4);const hh=(h?h.hT:9)+SIM.hRad(cfg.eps,cfg.Ta,cfg.Ta+20);
   return cfg.house.wall*1e-3/(m[1]*A)+1/(hh*Ah);}
-function runTH(){
+/* thermal analysis: the set-up and the colour maps run here, the network solve (SIM.thermalSolve2, ≈ 1–10 s) runs in the
+   background worker when one is available (runTHAsync) so panning and the console keep working; runTH() is the same, inline */
+function thPrep(){
   const cfg=thConfig();const g=coverageGrid(cfg.res,cfg.plating);const n=g.nx*g.ny;const h=SIM.hConv(cfg.conv,cfg.v);
   const cells={};BD.comps.forEach(c=>{cells[c.ref]=compCells(c,g);});
   // package lead frame / exposed pad spreads heat over the footprint (≈ 0.2 mm copper slug)
@@ -13104,12 +13113,11 @@ function runTH(){
   // components with a top path (TIM + housing) become junction nodes of the network: P splits between board and housing
   const topC=comps.filter(c=>cfg.J[c.ref]&&cfg.J[c.ref].top);const extra=topC.map(c=>{const J=cfg.J[c.ref];const A=Math.max(1e-6,c.body.w*c.body.h*1e-6);
     return{ref:c.ref,cells:cells[c.ref],layer:c.side==='B'?'B':'T',gB:1/J.thJB,gA:1/(J.thJC+cfg.tim.blt*1e-3/(cfg.tim.k*A)+housingR(cfg,A,h)),P:+cfg.P[c.ref]};});
-  let r=null,jl=null;
-  for(let it=0;it<2;it++){
-    const Pt=new Float64Array(n),Pb=new Float64Array(n);
-    comps.forEach(c=>{if(topC.includes(c))return;const w=+cfg.P[c.ref];const cs=cells[c.ref];const arr=c.side==='B'?Pb:Pt;cs.forEach(k=>{arr[k]+=w/cs.length;});});
-    jl=jouleMap(cfg,g,r&&r.T,r&&r.Tb);for(let k=0;k<n;k++){Pt[k]+=jl.Pt[k];Pb[k]+=jl.Pb[k];}
-    r=SIM.thermalSolve2(g,env,Pt,Pb,extra);if(!jl.n)break;}
+  return{cfg,g,n,h,cells,inUsed,comps,ptot,env,topC,extra};}
+function thLoad(X,r){const{cfg,g,n,comps,topC,cells}=X;const Pt=new Float64Array(n),Pb=new Float64Array(n);
+  comps.forEach(c=>{if(topC.includes(c))return;const w=+cfg.P[c.ref];const cs=cells[c.ref];const arr=c.side==='B'?Pb:Pt;cs.forEach(k=>{arr[k]+=w/cs.length;});});
+  const jl=jouleMap(cfg,g,r&&r.T,r&&r.Tb);for(let k=0;k<n;k++){Pt[k]+=jl.Pt[k];Pb[k]+=jl.Pb[k];}return{Pt,Pb,jl};}
+function thFinish(X,r,jl){const{cfg,g,n,h,cells,inUsed,comps,ptot,env,topC,extra}=X;
   const share={};comps.forEach(c=>{share[c.ref]=1;});extra.forEach((e,q)=>{share[e.ref]=e.P>0?Math.max(0,Math.min(1,1-e.gA*(r.Tj[q]-cfg.Ta)/e.P)):1;});
   const res=BD.comps.filter(c=>c.kind!=='none').map(c=>{const P=+cfg.P[c.ref]||0,cs=cells[c.ref];const Ton=c.side==='B'?r.Tb:r.T,Toff=c.side==='B'?r.T:r.Tb;
     const Tb=avgT(Ton,cs),Tbmax=Math.max(...cs.map(k=>Ton[k]).filter(isFinite)),Tback=avgT(Toff,cs);const J=cfg.J[c.ref];const o={ref:c.ref,val:c.val,P,Tb,Tbmax,Tback,side:c.side};
@@ -13131,6 +13139,14 @@ function runTH(){
   SR.th=Object.assign(r,{imgs:{T:mk(r.T),B:mk(r.Tb)},img:null,nx:g.nx,ny:g.ny,cell:g.cell,tot:ptot+jl.tot,joule:jl.tot,hot:res,worst,h,Ta:cfg.Ta,nv:g.nv,inner:inUsed,cells:g.nx*g.ny,tmin:Math.min(cfg.Ta,r.tmin),lo,hi:hiJ});
   SR.th.img=SR.th.imgs.T;SR.stale.th=false;if(!cfg.sel||!res.find(x=>x.ref===cfg.sel))cfg.sel=(worst||res[0]||{}).ref||null;
 }
+function runTH(){const X=thPrep();if(!X)return;let r=null,jl=null;for(let it=0;it<2;it++){const L=thLoad(X,r);jl=L.jl;r=SIM.thermalSolve2(X.g,X.env,L.Pt,L.Pb,X.extra);if(!jl.n)break;}thFinish(X,r,jl);}
+async function runTHAsync(){const X=thPrep();if(!X)return;let r=null,jl=null;
+  for(let it=0;it<2;it++){const L=thLoad(X,r);jl=L.jl;r=await thSolveBg(X.g,X.env,L.Pt,L.Pb,X.extra);if(!jl.n)break;}thFinish(X,r,jl);}
+/* one network solve in the background worker (the routing worker: core scripts + sim.js are already compiled there); inline when unavailable */
+function thSolveBg(g,env,Pt,Pb,extra){if(typeof Worker==='undefined'||typeof jobWorkerGet!=='function'||(typeof CLI!=='undefined'&&CLI.jobWorker===false))return Promise.resolve(SIM.thermalSolve2(g,env,Pt,Pb,extra));
+  return new Promise(res=>{let w;try{w=jobWorkerGet();}catch(e){return res(SIM.thermalSolve2(g,env,Pt,Pb,extra));}const id=++CLI.seq;const prev=w.onmessage;
+    const done=r=>{w.removeEventListener('message',on);res(r);};const on=e=>{const m=e.data;if(!m||m.id!==id)return;if(m.ok&&m.r)done(m.r);else done(SIM.thermalSolve2(g,env,Pt,Pb,extra));};
+    w.addEventListener('message',on);try{w.postMessage({id,cmd:'thermal',g,env,Pt,Pb,extra});}catch(e){done(SIM.thermalSolve2(g,env,Pt,Pb,extra));}void prev;});}
 const avgT=(T,cs)=>{let s=0,n=0;cs.forEach(k=>{if(isFinite(T[k])){s+=T[k];n++;}});return n?s/n:NaN;};
 const thSt=m=>m==null?['info','—']:m<0?['err','초과']:m<15?['warn','주의']:['ok','정상'];
 const thPill=st=>`<span class="sv ${st[0]}"><i aria-hidden="true">${st[0]==='err'?'✕':st[0]==='warn'?'!':'✓'}</i>${st[1]}</span>`;
@@ -13322,7 +13338,7 @@ function thBind(b){
   b.querySelector('#th-ic')?.addEventListener('click',()=>{BD.comps.forEach(c=>{if(c.kind==='ic')cfg.P[c.ref]=0.1;});renderSim();});
   b.querySelector('#th-zero')?.addEventListener('click',()=>{Object.keys(cfg.P).forEach(k=>cfg.P[k]=0);renderSim();});
   b.querySelector('#th-imp')?.addEventListener('click',()=>{importPower();renderSim();});
-  b.querySelector('#th-run')?.addEventListener('click',()=>{const btn=b.querySelector('#th-run');btn.disabled=true;btn.textContent='계산 중…';setTimeout(()=>{try{runTH();}catch(e){console.error(e);SR.th={error:'계산 중 오류: '+e.message};}renderSim();updateLegend();refresh(false);},20);});
+  b.querySelector('#th-run')?.addEventListener('click',()=>{const btn=b.querySelector('#th-run');btn.disabled=true;btn.textContent='계산 중…';setTimeout(async()=>{try{await runTHAsync();}catch(e){console.error(e);SR.th={error:'계산 중 오류: '+e.message};}renderSim();updateLegend();refresh(false);},20);});
   b.querySelectorAll('[data-thref]').forEach(r=>r.addEventListener('click',()=>{cfg.sel=r.dataset.thref;S.selRef=r.dataset.thref;S.hlNet=null;renderSim();refresh(false);}));
   b.querySelectorAll('[data-thl]').forEach(x=>x.addEventListener('click',()=>{cfg.layer=x.dataset.thl;if(SR.th&&SR.th.imgs)SR.th.img=SR.th.imgs[cfg.layer];renderSim();if(S.view==='3d'||S.view!==cfg.layer)setView(cfg.layer);refresh(false);}));
   b.querySelector('#th-meas')?.addEventListener('change',e=>{const v=e.target.value;if(v==='')delete cfg.meas[cfg.sel];else cfg.meas[cfg.sel]=num(v,null);renderSim();});
@@ -15404,6 +15420,8 @@ function peEnd(){PE.on=false;PE.route=null;PE.drag=null;peBar();draw2D();}
 function peRecalc(full,nets){
   // a background job already computed the ratsnest and DRC of the board it handed back: use them once instead of a 2 s recheck here
   if(full&&PE.fresh&&PE.fresh.B===BD){PE.rats=PE.fresh.rats;PE.drc=PE.fresh.drc;PE.fresh=null;PE.drcAt=typeof revSigSafe==='function'?revSigSafe():null;peStat();return;}
+  // the board is exactly what the last background job returned (same signature): reuse its ratsnest + DRC
+  if(full&&typeof cliMetricNow==='function'){const m=cliMetricNow();if(m){PE.rats=m.rats;PE.drc=m.drc;PE.drcAt=m.sig;peStat();return;}}
   try{if(full||!nets){PE.rats=PCBEDIT.ratsnest(BD);PE.drc=PCBEDIT.drc(BD);PE.drcAt=typeof revSigSafe==='function'?revSigSafe():null;}
     else{const keep=PE.rats.filter(r=>!nets.has(r.net));PE.rats=keep.concat(PCBEDIT.ratsnest(BD,nets));}}catch(e){console.error(e);}
   peStat();
@@ -15905,7 +15923,7 @@ function cliPaint(e,upd){copPaint('pcb',e,upd);}
 function cliPanel(){return copEnsure();}
 // the console lives in the 설계 도우미 panel now: "open" just focuses it
 function cliToggle(on){if(on===false)return;copFocus('pcb');}
-function cliBusy(b){CLI.busy=b;copBusyPaint();const r=$('#cliRun'),s=$('#cliStop'),i=$('#cliIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CLI.stopReq=false;CLI.abort=null;setTimeout(()=>i&&CLI.open&&i.focus(),10);}}
+function cliBusy(b){CLI.busy=b;copBusyPaint();const r=$('#cliRun'),s=$('#cliStop'),i=$('#cliIn');if(r)r.disabled=b;if(s)s.hidden=!b;if(i)i.disabled=b;if(!b){CLI.stopReq=false;CLI.abort=null;if(typeof stepPaint==='function')setTimeout(stepPaint,0);setTimeout(()=>i&&CLI.open&&i.focus(),10);}}
 const cliTick=()=>new Promise(r=>setTimeout(r,0));
 
 /* ---- Claude (sample capability): probe once, quietly ---- */
@@ -15941,7 +15959,7 @@ function cliRestore(s){
   PCBEDIT.rebuildNets(BD);}
 function cliCommit(before,label){const after=cliSnap();pePush({copper:true,label,undo:()=>cliRestore(before),redo:()=>cliRestore(after)});}
 function cliEnsureEdit(){if(!PE.on)peBegin();else PCBEDIT.prepare(BD);if(!(S.view==='T'||S.view==='B'))setView('T');}
-function cliAfter(fit,keepSch){PE.drag=null;PE.route=null;if(fit)fit2();try{header();}catch(e){}if(typeof stepPaint==='function')setTimeout(stepPaint,0);if(typeof SV!=='undefined'&&!keepSch){SV.data=null;SV.lastKey='';}peChanged(true);}
+function cliAfter(fit,keepSch){PE.drag=null;PE.route=null;if((CLI.inFix||CLI.inMin)&&!PE.fresh){PCBEDIT.rebuildNets(BD);PE.stale=true;return;}if(fit)fit2();try{header();}catch(e){}if(typeof stepPaint==='function')setTimeout(stepPaint,0);if(typeof SV!=='undefined'&&!keepSch){SV.data=null;SV.lastKey='';}peChanged(true);}
 function cliPower(){try{const cfg=thConfig();const P={};let any=false;Object.entries(cfg.P||{}).forEach(([k,v])=>{if(+v>0){P[k]=+v;any=true;}});return any?P:null;}catch(e){return null;}}
 function cliStrat(a,def){const s=a.strategy||a.s||def||CLI.strategy;const k=AUTOPLACE.strategy(s);if(!k)throw new Error(`알 수 없는 전략: ${s} (balanced · thermal · noise · compact)`);return k;}
 const f1=v=>(Math.round(v*10)/10).toString();
@@ -16001,11 +16019,15 @@ function cliLayers(a){const n=parseInt(a._[1]);if(!PCB.STACKS[n])throw new Error
   cliCommit(before,'layers');cliAfter(true);
   if(n>2)L.push(`신호층 ${PCB.stackOf(BD).filter(x=>x.role==='sig').map(x=>PCB.cuName(x.k)).join(' · ')}을 배선에 씁니다.${open?` 열린 넷 ${open}개 → route (또는 board minimize --route)로 배선하세요.`:''}`);
   return L.join('\n');}
-async function cliMinimize(a){
+/* one size try: annealing at a candidate size takes seconds, so it runs in the background worker (board comes back resized and placed) */
+async function cliMinTry(opt,a){if(jobUseWorker(a||{})){try{const m=await jobInWorker('minsize',{opt},()=>{});jobApply(m);return JSON.parse(m.text);}catch(e){if(/^중지/.test(e.message||''))throw e;}}
+  AUTOPLACE.clearCopper(BD);const r=AUTOPLACE.minimize(BD,opt);return{ok:!!r.ok,W:r.W,H:r.H,tries:r.tries};}
+async function cliMinimize(a){CLI.inMin=true;try{return await cliMinimizeRun(a);}finally{CLI.inMin=false;}}
+async function cliMinimizeRun(a){
   cliEnsureEdit();const start=cliSnap();const u0=PE.undo.length;const W0=BD.W,H0=BD.H;const m=a.margin!=null?+a.margin:1;
   if(a.keep||(a._[0]||'').toLowerCase()==='fit'){
     const cs=BD.comps.filter(c=>c.kind!=='none');const bb=[Math.min(...cs.map(c=>c.bb[0])),Math.min(...cs.map(c=>c.bb[1])),Math.max(...cs.map(c=>c.bb[2])),Math.max(...cs.map(c=>c.bb[3]))];
-    const W=Math.ceil((bb[2]-bb[0]+2*m)*2)/2,H=Math.ceil((bb[3]-bb[1]+2*m)*2)/2;PCBEDIT.translateAll(BD,m-bb[0],m-bb[1]);PCBEDIT.resizeBoard(BD,W,H,{anchor:'bl'});PCBEDIT.rebuildNets(BD);
+    const W=Math.ceil((bb[2]-bb[0]+2*m)*2)/2,H=Math.ceil((bb[3]-bb[1]+2*m)*2)/2;PCBEDIT.translateAll(BD,m-bb[0],m-bb[1]);PCBEDIT.resizeBoard(BD,W,H,{anchor:'bl'});PCBEDIT.rebuildNets(BD);CLI.inMin=false;
     const after=cliSnap();pePush({copper:true,label:'minimize',undo:()=>{cliRestore(start);cliAfter(true);},redo:()=>{cliRestore(after);cliAfter(true);}});cliAfter(true);
     return`외곽을 부품에 맞춰 ${f1(W0)} × ${f1(H0)} → ${f1(W)} × ${f1(H)} mm로 줄였습니다 (여유 ${m} mm, 배치 유지). 장착 구멍이 부품과 겹치는지 drc로 확인하세요.`;}
   const st=cliStrat(a,'compact');const KS=AUTOPLACE.MIN_KS;const prog=cliSay('out','가장 작은 보드 크기를 찾는 중…');await cliTick();
@@ -16016,8 +16038,7 @@ async function cliMinimize(a){
   // before the board grows — the annealer's layout varies, and one seed is often enough to close the last connections
   const seeds=a.route?Math.max(1,a.seeds!=null?+a.seeds:2):1;let si=0;
   for(let i=0;i<KS.length;i++){
-    AUTOPLACE.clearCopper(BD);
-    const r=AUTOPLACE.minimize(BD,{ks:[KS[i]],max:false,strategy:st,margin:m,power:cliPower(),fixed:[...CLI.lock].filter(x=>BD.byRef[x]),seed:(a.seed!=null?+a.seed:1)+si*7919,both:!!a.both});const t=r.tries[0];
+    const r=await cliMinTry({ks:[KS[i]],max:false,strategy:st,margin:m,power:cliPower(),fixed:[...CLI.lock].filter(x=>BD.byRef[x]),seed:(a.seed!=null?+a.seed:1)+si*7919,both:!!a.both},a);const t=r.tries[0];
     if(t.W*t.H>W0*H0+1e-6){if(!grow){cliSay('out',`${f1(t.W)} × ${f1(t.H)} mm는 원래 보드보다 커서 멈춥니다 (--grow 로 계속).`);break;}
       if(t.W*t.H>maxA){cliSay('out',`${f1(t.W)} × ${f1(t.H)} mm는 원래 면적의 ${(a.maxgrow||3)}배를 넘어 멈춥니다 (--maxgrow N 으로 한도 변경).`);break;}
       if(!grew){grew=true;cliSay('out',`원래 크기 ${f1(W0)} × ${f1(H0)} mm에는 부품이 들어가지 않습니다 — 보드를 키워 가며 배치합니다.`);}}
@@ -16026,15 +16047,15 @@ async function cliMinimize(a){
     if(!a.route){best={snap:cliSnap(),W:t.W,H:t.H,open:null};break;}
     AUTOPLACE.ensurePour(BD);routeTries++;cliSay('ok',`${f1(t.W)} × ${f1(t.H)} mm에서 배선 시도 ${routeTries}/${maxRoute}`);cliSay('ok',await cliRoute({strategy:st}));
     // judge the whole result: unconnected pads (planes and copper fill included), DRC errors and power paths short of their IPC width
-    const rats=cliOpenCount(),drcN=PCBEDIT.drc(BD).length,pwBad=BD.powerReport?BD.powerReport.nets.filter(x=>!x.ok).length:0;const open=rats+drcN+pwBad;
+    const rats=cliOpenCount(),drcN=cliDrcCount(),pwBad=BD.powerReport?BD.powerReport.nets.filter(x=>!x.ok).length:0;const open=rats+drcN+pwBad;
     cliSay('ok',`${f1(t.W)} × ${f1(t.H)} mm: 미연결 ${rats} · DRC ${drcN} · 전류 폭 부족 ${pwBad}`);
     if(!best||open<best.open)best={snap:cliSnap(),W:t.W,H:t.H,open,rats,drcN,pwBad};
     if(!open||CLI.stopReq||routeTries>=maxRoute)break;
     if(++si<seeds){i--;cliSay('out',`문제 ${open}건 — 같은 크기에서 다른 배치로 다시 시도합니다 (${si+1}/${seeds}).`);await cliTick();continue;}
     si=0;cliSay('out',`문제 ${open}건 — 한 단계 큰 크기로 다시 시도합니다.`);await cliTick();}
   PE.undo.splice(u0);
-  if(!best){cliRestore(start);BD.pcbPending=pend0;cliAfter(true);return grow?`원래 면적의 ${a.maxgrow||3}배까지 키워도 배치할 수 없었습니다. lock한 부품을 풀거나 --margin을 줄이거나 --both(양면)로 해 보세요.`:`원래 크기 ${f1(W0)} × ${f1(H0)} mm보다 작게 배치할 수 없었습니다. board minimize --grow 로 키워 가며 배치하거나, lock한 부품을 풀거나 --margin을 줄여 보세요.`;}
-  cliRestore(best.snap);const after=cliSnap();pePush({copper:true,label:'minimize',undo:()=>{cliRestore(start);cliAfter(true);},redo:()=>{cliRestore(after);cliAfter(true);}});cliAfter(true);
+  if(!best){cliRestore(start);BD.pcbPending=pend0;CLI.inMin=false;cliAfter(true);return grow?`원래 면적의 ${a.maxgrow||3}배까지 키워도 배치할 수 없었습니다. lock한 부품을 풀거나 --margin을 줄이거나 --both(양면)로 해 보세요.`:`원래 크기 ${f1(W0)} × ${f1(H0)} mm보다 작게 배치할 수 없었습니다. board minimize --grow 로 키워 가며 배치하거나, lock한 부품을 풀거나 --margin을 줄여 보세요.`;}
+  cliRestore(best.snap);CLI.inMin=false;const after=cliSnap();pePush({copper:true,label:'minimize',undo:()=>{cliRestore(start);cliAfter(true);},redo:()=>{cliRestore(after);cliAfter(true);}});cliAfter(true);
   const A0=W0*H0,A1=best.W*best.H;
   return`보드 ${f1(W0)} × ${f1(H0)} → ${f1(best.W)} × ${f1(best.H)} mm (면적 ${A1<=A0?Math.round((1-A1/A0)*100)+'% 감소':Math.round((A1/A0-1)*100)+'% 증가 — 원래 크기에 부품이 안 들어가 키움'}) · ${st} 전략으로 다시 배치${a.both?' · 양면':''} · ${BD.copperLayers||2}층`+
     (best.open==null?'\n배선은 지웠습니다 → route로 배선하세요 (배선까지 확인하려면 board minimize --route).':best.open?`\n가장 좋은 결과도 문제 ${best.open}건 (미연결 ${best.rats} · DRC ${best.drcN} · 전류 폭 부족 ${best.pwBad}) — board size로 조금 키우거나 --tries 를 늘려 보세요.`:'\n모든 넷 배선 완료 · DRC 0 · 전류 폭 충족.')+'\n'+cliMetricText(AUTOPLACE.metrics(BD,{power:cliPower()}));}
@@ -16065,7 +16086,7 @@ async function cliPinswap(a){
 /* depth of each net's pins inside runs of adjacent signal pins on fine-pitch rows (QFP / SOIC / TSSOP sides): 0 at a run end,
    1 for the next pin in, … — the router escapes the deepest first */
 /* ---- parallel routing: Web Workers built from the page's own core scripts (data-w) ---- */
-let WK_URL=null;function wkUrl(){if(WK_URL)return WK_URL;const src=[...document.querySelectorAll('script[data-w]')].map(s=>s.textContent).join('\n')+'\nROUTEJOB.workerMain();const __hj=self.onmessage;AUTOROUTE.workerMain();const __hr=self.onmessage;self.onmessage=e=>(e.data&&e.data.cmd==="job"?__hj:__hr)(e);';WK_URL=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));return WK_URL;}
+let WK_URL=null;function wkUrl(){if(WK_URL)return WK_URL;const src=[...document.querySelectorAll('script[data-w]')].map(s=>s.textContent).join('\n')+'\nROUTEJOB.workerMain();const __hj=self.onmessage;AUTOROUTE.workerMain();const __hr=self.onmessage;self.onmessage=e=>(e.data&&(e.data.cmd==="job"||e.data.cmd==="thermal")?__hj:__hr)(e);';WK_URL=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));return WK_URL;}
 function wkRun(msg){return new Promise((res,rej)=>{let w;try{w=new Worker(wkUrl());}catch(e){return rej(e);}const kill=()=>{try{w.terminate();}catch(e){}};
   w.onmessage=e=>{kill();const m=e.data;if(m&&m.ok)res(m);else rej(new Error(m&&m.err||'worker'));};w.onerror=e=>{kill();rej(new Error(e.message||'worker error'));};w.postMessage(msg);});}
 /* how many workers: --par N / --par auto; without --par the routing pass stays sequential (the hard, cross-board nets dominate it and are
@@ -16103,7 +16124,9 @@ function jobInWorker(kind,A,onProg){return new Promise((res,rej)=>{let w;try{w=j
   w.onerror=e=>{done=true;clearInterval(iv);jobWorkerDrop();rej(new Error(e.message||'worker error'));};
   const json=ROUTEJOB.boardToJSON(BD);w.postMessage({id,cmd:'job',kind,board:json,a:Object.assign({},A,{par:0})});});}
 function jobApply(m){const r=BOARDSNAP.apply(BD,m.snap);const x=m.extra||{};if(x.zones)BD.zones=x.zones;BD._avoid=x._avoid||null;BD._nb=x._nb||null;BD.pcbPending=!!x.pcbPending;
-  if(x.rats&&x.drc&&typeof PE!=='undefined'){const byRef=BD.byRef||{};x.drc.forEach(d=>{if(d.refs)d.refs=d.refs.filter(Boolean);});PE.fresh={B:BD,rats:x.rats,drc:x.drc};PE.drcKey=null;}return r;}
+  if(x.rats&&x.drc&&typeof PE!=='undefined'){const byRef=BD.byRef||{};x.drc.forEach(d=>{if(d.refs)d.refs=d.refs.filter(Boolean);});PE.fresh={B:BD,rats:x.rats,drc:x.drc};PE.drcKey=null;
+    // also kept with the board's signature: the fix / minimize loops score a result from it instead of a 2–5 s ratsnest + DRC on this thread
+    CLI.jobMetric={B:BD,sig:typeof revSigSafe==='function'?revSigSafe():null,rats:x.rats,drc:x.drc};}return r;}
 async function cliJob(kind,a,label,strat){const A=jobArgs(a,strat);cliEnsureEdit();const before=cliSnap();let text=null;
   if(jobUseWorker(a)){const prog=cliSay('out',`${label} — 백그라운드에서 실행 중… (화면은 그대로 쓸 수 있습니다)`);const t0=performance.now();
     try{const m=await jobInWorker(kind,A,t=>cliSet(prog,t));jobApply(m);text=m.text;cliSet(prog,`${label} 완료 · ${((performance.now()-t0)/1000).toFixed(1)} s (백그라운드)`);}
@@ -16121,7 +16144,9 @@ function cliUnroute(){cliEnsureEdit();const before=cliSnap();const n=PCB.cuKeys(
    that say so. Score: (unconnected + DRC) ×1000 + area growth ×400 (per 100 %) + added layers ×150 → a DRC error weighs as much as an open
    connection, and growing the board or adding layers has to remove at least one problem to be chosen. */
 /* unconnected pad pairs left on the board, including GND / poured nets (a pad that could not reach its plane) */
-function cliOpenCount(){try{return PCBEDIT.ratsnest(BD).length;}catch(e){return AUTOROUTE.openNets(BD).length;}}
+function cliMetricNow(){const m=CLI.jobMetric;return m&&m.B===BD&&m.sig&&m.sig===(typeof revSigSafe==='function'?revSigSafe():'')?m:null;}
+function cliOpenCount(){const m=cliMetricNow();if(m)return m.rats.length;try{return PCBEDIT.ratsnest(BD).length;}catch(e){return AUTOROUTE.openNets(BD).length;}}
+function cliDrcCount(){const m=cliMetricNow();return m?m.drc.length:PCBEDIT.drc(BD).length;}
 /* post-route optimisation on the nets that have auto copper (see AUTOROUTE.gloss) */
 async function cliFix(a){a=a||{};if(BD.pcbPending)throw new Error('부품이 아직 배치되지 않았습니다. 먼저 reset 또는 auto를 실행하세요.');
   cliEnsureEdit();const st0=cliStrat(a);const start=cliSnap();const u0=PE.undo.length;const W0=BD.W,H0=BD.H,L0=BD.copperLayers||2;
@@ -16141,7 +16166,7 @@ async function cliFix(a){a=a||{};if(BD.pcbPending)throw new Error('부품이 아
   if(!shaped&&a.grow!==false&&!a['no-grow'])[1.1,1.2,1.35,1.5].filter(f=>f<=maxG+1e-9).forEach(f=>steps.push({k:'grow'+f,label:`보드 ${Math.round((f-1)*100)}% 키움 (${f1(W0*f)} × ${f1(H0*f)} mm) → 재배치 → 배선`,area:f*f,run:async()=>{await size(f);await place(st0,1);await route(st0);}}));
   if(a.layers!==false&&!a['no-layers'])stacks.forEach(n=>{steps.push({k:'L'+n,label:`${n}층으로 → 재배치 → 배선 (크기 유지)`,L:n,run:async()=>{await layers(n);await place(st0,1);await route(st0);}});
     if(!shaped&&a.grow!==false&&!a['no-grow']&&maxG>=1.2)steps.push({k:'L'+n+'g',label:`${n}층 + 보드 20% 키움 → 재배치 → 배선`,L:n,area:1.44,run:async()=>{await layers(n);await size(1.2);await place(st0,1);await route(st0);}});});
-  const score=()=>{const o=cliOpenCount(),d=PCBEDIT.drc(BD).length;return{o,d,s:(o+d)*1000+Math.max(0,(BD.W*BD.H)/(W0*H0)-1)*400+Math.max(0,(BD.copperLayers||2)-L0)*150};};
+  const score=()=>{const o=cliOpenCount(),d=cliDrcCount();return{o,d,s:(o+d)*1000+Math.max(0,(BD.W*BD.H)/(W0*H0)-1)*400+Math.max(0,(BD.copperLayers||2)-L0)*150};};
   const s0=score();let best={...s0,snap:start,label:'처음 상태'};const tried=[];
   cliSay('out',`미연결 ${open0}개(래츠네스트) — 개선안을 차례로 시도합니다 (${steps.length}단계, 다 배선되면 멈춤).`);
   const pid=typeof progStart==='function'?progStart('fix','미배선 개선',{total:steps.length,stop:()=>{CLI.stopReq=true;}}):null;
@@ -16180,10 +16205,10 @@ async function cliAuto(a){
   PE.undo.splice(u0);const after=cliSnap();pePush({copper:true,label:'auto',undo:()=>cliRestore(start),redo:()=>cliRestore(after)});cliAfter(false);
   return cliReport({_:['place']});
 }
-function cliReport(a){
+async function cliReport(a){
   const what=a._[0]||'place';const out=[];
   if(what==='place'||what==='all'){out.push('[배치]');out.push(cliMetricText(AUTOPLACE.metrics(BD,{power:cliPower()})));const open=AUTOROUTE.openNets(BD).length;out.push(`열린 넷 ${open}개 · DRC ${PCBEDIT.drc(BD).length}건`);}
-  if(what==='thermal'||what==='all'){out.push('[열 해석]');try{SR.cfg.th=null;const cfg=thConfig();runTH();const T=SR.th;
+  if(what==='thermal'||what==='all'){out.push('[열 해석]');try{SR.cfg.th=null;const cfg=thConfig();await runTHAsync();const T=SR.th;
       if(!T||T.error)out.push(T&&T.error||'열 해석을 실행하지 못했습니다.');
       else{out.push(`주변 ${cfg.Ta} °C · 총 ${T.tot.toFixed(2)} W · 보드 최고 ${f1(T.tmax)} °C`);T.hot.filter(x=>x.P>0).slice(0,6).forEach(x=>out.push(`  ${x.ref.padEnd(5)} ${x.P.toFixed(2)} W · 보드 ${f1(x.Tbmax)} °C${x.Tj!=null?` · Tj ${f1(x.Tj)} °C (여유 ${f1(x.margin)} °C)`:''}`));}
       if(S.panel==='sim'&&typeof renderSim==='function')renderSim();}catch(e){out.push('열 해석 오류: '+(e.message||e));}}
@@ -18253,12 +18278,17 @@ var NX={key:'',m:null,ovKey:'',ovOn:false,ovRaf:0};
 function nxBomTotal(B){const P=typeof PARTS!=='undefined'?PARTS:null;if(!P||!B)return null;let t=0,n=0;B.comps.forEach(c=>{if(/^TP\d/i.test(c.ref))return;const info=P.find(c.mpn)||P.find(c.val);const pr=P.price(c.mpn,info&&info.cat);if(pr!=null){t+=pr;n++;}});return{total:+t.toFixed(2),priced:n};}
 function revSigSafe(){try{return typeof revSig==='function'?revSig():'';}catch(e){return '';}}
 function nxMetrics(){if(!BD)return null;const key=(typeof revSig==='function'?revSig():'')+'|'+(PE&&PE.drc?PE.drc.length:-1)+'|'+(typeof SR!=='undefined'&&SR.th?1:0)+'|'+(HS.res?HS.ver:0);if(key===NX.key&&NX.m)return NX.m;
+  // a fix / minimize / console job is still changing the board: keep showing the last figures (repainted when it ends) — no 1–5 s recheck per repaint
+  if(NX.m&&typeof CLI!=='undefined'&&(CLI.inFix||CLI.inMin||CLI.busy)&&!(typeof cliMetricNow==='function'&&cliMetricNow()))return NX.m;
   const m={blank:!!BD.blank,pcb:!BD.blank&&!BD.pcbPending};
   const bom=nxBomTotal(BD);m.bom=bom?bom.total:null;m.bomN=bom?bom.priced:0;m.parts=BD.comps.length;
   try{const last=typeof REV!=='undefined'&&REV.list.slice().reverse().find(r=>r.kind==='tag'||r.label);if(last&&last.stats&&last.stats.bom!=null)m.bomRef={label:revLabel(last),v:last.stats.bom};}catch(e){}
   if(m.pcb){try{if(PE&&PE.fresh&&PE.fresh.B===BD){PE.rats=PE.fresh.rats;PE.drc=PE.fresh.drc;PE.fresh=null;PE.drcKey=key;}
     if(PE&&PE.drc&&PE.drcAt===revSigSafe()){PE.drcKey=key;}  // the edit-mode recheck (peRecalc) just ran on this very board state
-    if(PE&&(!PE.drc||!PE.drcKey||PE.drcKey!==key)){PCBEDIT.prepare(BD);PE.drc=PCBEDIT.drc(BD);PE.rats=PCBEDIT.ratsnest(BD);PE.drcKey=key;}m.drc=PE.drc.length;m.open=PE.rats?PE.rats.length:null;}catch(e){m.drc=null;}}
+    if(PE&&(!PE.drc||!PE.drcKey||PE.drcKey!==key)&&typeof cliMetricNow==='function'){const jm=cliMetricNow();if(jm){PE.rats=jm.rats;PE.drc=jm.drc;PE.drcKey=key;}}  // what the last background job measured on this exact board
+    // while a fix / minimize / background job is still changing the board, the strip keeps the last figures instead of a 2–5 s recheck per repaint
+    const busy=typeof CLI!=='undefined'&&(CLI.inFix||CLI.inMin||CLI.busy);
+    if(PE&&(!PE.drc||!PE.drcKey||PE.drcKey!==key)&&!busy){PCBEDIT.prepare(BD);PE.drc=PCBEDIT.drc(BD);PE.rats=PCBEDIT.ratsnest(BD);PE.drcKey=key;}m.drc=PE.drc?PE.drc.length:null;m.open=PE.rats?PE.rats.length:null;if(busy&&PE.drcKey!==key)m.stale=true;}catch(e){m.drc=null;}}
   try{const sheets=BD.schSheets||(typeof schData==='function'&&schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:m.pcb?'all':'sch',sheets,drc:m.pcb&&PE&&PE.drc&&PE.drcKey===key?PE.drc:null});m.gPct=g.pct;m.gCrit=g.crit;m.gFail=g.rules.filter(r=>r.status==='fail').length;m.gVerdict=g.verdict;}catch(e){}
   if(HS.H){try{if(!HS.res)hsisRun();const st=Object.values(HS.res.status||{});m.hsis={ok:st.filter(x=>x==='ok').length,n:st.length,err:st.filter(x=>x==='err').length};}catch(e){}}
   if(typeof SR!=='undefined'&&SR.th&&SR.th.parts){const hot=SR.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'sim'};}
@@ -18266,7 +18296,7 @@ function nxMetrics(){if(!BD)return null;const key=(typeof revSig==='function'?re
   if(typeof mbMetrics==='function')m.mb=mbMetrics();
   if(typeof SAFETY!=='undefined'){const A=typeof NP!=='undefined'?NP.arch:null;const lv=A&&A.safety&&A.safety.level||(BD.safety&&BD.safety.level)||'QM';if(lv!=='QM'){try{const R=SAFETY.circuitChecks(BD,{level:lv,arch:A});const F=SAFETY.fmeda(BD,{level:lv,arch:A});const P=SAFETY.parts(BD,{level:lv,arch:A,lib:typeof plAll==='function'?plAll():undefined});m.safety={level:lv,err:R.checks.filter(c=>c.sev==='err').length,warn:R.checks.filter(c=>c.sev==='warn').length,spfm:F.spfm,ok:F.verdict.every(v=>v.ok),parts:P.bad.length};}catch(e){console.warn(e);}}}
   const A=typeof sysArch==='function'?sysArch():NP.arch;if(A)m.blocks={n:A.blocks.length,links:(A.links||[]).length,fromBoard:!NP.arch};m.answers=NP.answers?Object.keys(NP.answers).length:0;
-  NX.key=key;NX.m=m;return m;}
+  if(!m.stale){NX.key=key;NX.m=m;}return m;}
 /* ---- status strip under the header ---- */
 function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP!=='undefined'?APP.mode:'viewer';if(!BD||mode==='home'){el.hidden=true;return;}el.hidden=false;
   const m=nxMetrics();if(!m)return;const st=typeof stepCur==='function'?stepCur():0;const f=(v,d)=>v==null?'—':(+v).toFixed(d==null?0:d);

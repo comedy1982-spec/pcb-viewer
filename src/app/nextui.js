@@ -6,12 +6,17 @@ var NX={key:'',m:null,ovKey:'',ovOn:false,ovRaf:0};
 function nxBomTotal(B){const P=typeof PARTS!=='undefined'?PARTS:null;if(!P||!B)return null;let t=0,n=0;B.comps.forEach(c=>{if(/^TP\d/i.test(c.ref))return;const info=P.find(c.mpn)||P.find(c.val);const pr=P.price(c.mpn,info&&info.cat);if(pr!=null){t+=pr;n++;}});return{total:+t.toFixed(2),priced:n};}
 function revSigSafe(){try{return typeof revSig==='function'?revSig():'';}catch(e){return '';}}
 function nxMetrics(){if(!BD)return null;const key=(typeof revSig==='function'?revSig():'')+'|'+(PE&&PE.drc?PE.drc.length:-1)+'|'+(typeof SR!=='undefined'&&SR.th?1:0)+'|'+(HS.res?HS.ver:0);if(key===NX.key&&NX.m)return NX.m;
+  // a fix / minimize / console job is still changing the board: keep showing the last figures (repainted when it ends) — no 1–5 s recheck per repaint
+  if(NX.m&&typeof CLI!=='undefined'&&(CLI.inFix||CLI.inMin||CLI.busy)&&!(typeof cliMetricNow==='function'&&cliMetricNow()))return NX.m;
   const m={blank:!!BD.blank,pcb:!BD.blank&&!BD.pcbPending};
   const bom=nxBomTotal(BD);m.bom=bom?bom.total:null;m.bomN=bom?bom.priced:0;m.parts=BD.comps.length;
   try{const last=typeof REV!=='undefined'&&REV.list.slice().reverse().find(r=>r.kind==='tag'||r.label);if(last&&last.stats&&last.stats.bom!=null)m.bomRef={label:revLabel(last),v:last.stats.bom};}catch(e){}
   if(m.pcb){try{if(PE&&PE.fresh&&PE.fresh.B===BD){PE.rats=PE.fresh.rats;PE.drc=PE.fresh.drc;PE.fresh=null;PE.drcKey=key;}
     if(PE&&PE.drc&&PE.drcAt===revSigSafe()){PE.drcKey=key;}  // the edit-mode recheck (peRecalc) just ran on this very board state
-    if(PE&&(!PE.drc||!PE.drcKey||PE.drcKey!==key)){PCBEDIT.prepare(BD);PE.drc=PCBEDIT.drc(BD);PE.rats=PCBEDIT.ratsnest(BD);PE.drcKey=key;}m.drc=PE.drc.length;m.open=PE.rats?PE.rats.length:null;}catch(e){m.drc=null;}}
+    if(PE&&(!PE.drc||!PE.drcKey||PE.drcKey!==key)&&typeof cliMetricNow==='function'){const jm=cliMetricNow();if(jm){PE.rats=jm.rats;PE.drc=jm.drc;PE.drcKey=key;}}  // what the last background job measured on this exact board
+    // while a fix / minimize / background job is still changing the board, the strip keeps the last figures instead of a 2–5 s recheck per repaint
+    const busy=typeof CLI!=='undefined'&&(CLI.inFix||CLI.inMin||CLI.busy);
+    if(PE&&(!PE.drc||!PE.drcKey||PE.drcKey!==key)&&!busy){PCBEDIT.prepare(BD);PE.drc=PCBEDIT.drc(BD);PE.rats=PCBEDIT.ratsnest(BD);PE.drcKey=key;}m.drc=PE.drc?PE.drc.length:null;m.open=PE.rats?PE.rats.length:null;if(busy&&PE.drcKey!==key)m.stale=true;}catch(e){m.drc=null;}}
   try{const sheets=BD.schSheets||(typeof schData==='function'&&schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:m.pcb?'all':'sch',sheets,drc:m.pcb&&PE&&PE.drc&&PE.drcKey===key?PE.drc:null});m.gPct=g.pct;m.gCrit=g.crit;m.gFail=g.rules.filter(r=>r.status==='fail').length;m.gVerdict=g.verdict;}catch(e){}
   if(HS.H){try{if(!HS.res)hsisRun();const st=Object.values(HS.res.status||{});m.hsis={ok:st.filter(x=>x==='ok').length,n:st.length,err:st.filter(x=>x==='err').length};}catch(e){}}
   if(typeof SR!=='undefined'&&SR.th&&SR.th.parts){const hot=SR.th.parts.slice().sort((a,b)=>b.Tj-a.Tj)[0];if(hot)m.tj={ref:hot.ref,v:hot.Tj,src:'sim'};}
@@ -19,7 +24,7 @@ function nxMetrics(){if(!BD)return null;const key=(typeof revSig==='function'?re
   if(typeof mbMetrics==='function')m.mb=mbMetrics();
   if(typeof SAFETY!=='undefined'){const A=typeof NP!=='undefined'?NP.arch:null;const lv=A&&A.safety&&A.safety.level||(BD.safety&&BD.safety.level)||'QM';if(lv!=='QM'){try{const R=SAFETY.circuitChecks(BD,{level:lv,arch:A});const F=SAFETY.fmeda(BD,{level:lv,arch:A});const P=SAFETY.parts(BD,{level:lv,arch:A,lib:typeof plAll==='function'?plAll():undefined});m.safety={level:lv,err:R.checks.filter(c=>c.sev==='err').length,warn:R.checks.filter(c=>c.sev==='warn').length,spfm:F.spfm,ok:F.verdict.every(v=>v.ok),parts:P.bad.length};}catch(e){console.warn(e);}}}
   const A=typeof sysArch==='function'?sysArch():NP.arch;if(A)m.blocks={n:A.blocks.length,links:(A.links||[]).length,fromBoard:!NP.arch};m.answers=NP.answers?Object.keys(NP.answers).length:0;
-  NX.key=key;NX.m=m;return m;}
+  if(!m.stale){NX.key=key;NX.m=m;}return m;}
 /* ---- status strip under the header ---- */
 function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP!=='undefined'?APP.mode:'viewer';if(!BD||mode==='home'){el.hidden=true;return;}el.hidden=false;
   const m=nxMetrics();if(!m)return;const st=typeof stepCur==='function'?stepCur():0;const f=(v,d)=>v==null?'—':(+v).toFixed(d==null?0:d);

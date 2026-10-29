@@ -256,8 +256,11 @@ function boardFromJSON(s){const B=JSON.parse(s);const cls=B.__netClass||{};delet
   Object.keys(B.layers).forEach(k=>{B.layers[k]=B.layers[k].map(p=>p&&p.t==='pad'&&p.ref!=null?(padOf.get(key(p))||p):p);});
   B.netClass=n=>cls[n]||(/^(GND|AGND|DGND|PGND|VSS)$/i.test(String(n||''))?'접지':'신호');B.byRef={};B.comps.forEach(c=>{B.byRef[c.ref]=c;});PCBEDIT.prepare(B);PCBEDIT.rebuildNets(B);return B;}
 async function runJob(B,kind,a,ui){ui=ui||{};const U={set:ui.set||(()=>{}),say:ui.say||((k,t)=>({k,t})),tick:ui.tick||(()=>Promise.resolve()),stopped:ui.stopped||(()=>false),prog:ui.prog||null,progSet:ui.progSet||(()=>{}),progEnd:ui.progEnd||(()=>{}),par:ui.par||null};
+  // one board-size try of `board minimize`: clear copper, anneal at the size, report whether every part fits (the board comes back resized)
+  if(kind==='minsize'){AUTOPLACE.clearCopper(B);const r=AUTOPLACE.minimize(B,a.opt||{});return JSON.stringify({ok:!!r.ok,W:r.W,H:r.H,tries:r.tries});}
   if(kind==='place')return placeJob(B,a,!!a.scratch,U);if(kind==='route')return await routeJob(B,a,U);if(kind==='gloss')return await glossJob(B,a,U,!!a.quiet);throw new Error('unknown job '+kind);}
 function workerMain(){self.onmessage=e=>{const m=e.data;const go=async()=>{try{
+    if(m.cmd==='thermal'){const r=SIM.thermalSolve2(m.g,m.env,m.Pt,m.Pb,m.extra);self.postMessage({id:m.id,ok:true,r});return;}
     if(m.cmd!=='job')throw new Error('unknown cmd');if(typeof AUTOROUTE!=='undefined'&&AUTOROUTE.wasmInit)await AUTOROUTE.wasmInit();
     const B=boardFromJSON(m.board);let last=0;const ui={set:t=>{const now=Date.now();if(now-last>60){last=now;self.postMessage({id:m.id,prog:t});}},say:(k,t)=>({k,t}),tick:()=>Promise.resolve(),stopped:()=>false,prog:null};
     const text=await runJob(B,m.kind,m.a,ui);const snap=BOARDSNAP.save(B,{});let rats=null,drc=null;try{rats=PCBEDIT.ratsnest(B);drc=PCBEDIT.drc(B).map(d=>Object.assign({},d,{refs:d.refs||[]}));}catch(e){}
