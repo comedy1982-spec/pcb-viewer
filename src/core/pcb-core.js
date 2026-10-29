@@ -562,7 +562,10 @@ function fromSpec(spec){
     else if(f&&kind!=='chip'&&kind!=='led'){const m=0.3,[a,b,cc,d]=f.lbb,x0=a-m,y0=b-m,x1=cc+m,y1=d+m,L=Math.min(1.1,(x1-x0)/3,(y1-y0)/3);
       [[x0,y0,1,1],[x1,y0,-1,1],[x1,y1,-1,-1],[x0,y1,1,-1]].forEach(([px,py,sx,sy])=>S.push({t:'path',pts:[xf(px+sx*L,py),xf(px,py),xf(px,py+sy*L)],w:0.13}));
       if(f.dot){const[dx,dy]=xf(f.dot[0],f.dot[1]);S.push({t:'circle',x:dx,y:dy,r:0.25});}}
-    if(kind==='led')S.push({t:'seg',a:xf(1.5,-0.6),b:xf(1.5,0.6),w:0.22});
+    // polarity: a cathode bar beside the cathode pad (pin function K from pinNames, otherwise pad 1 — the KiCad/datasheet convention)
+    if(f&&(kind==='diode'||kind==='led')&&f.pads.length===2){const kn=(c.pn&&Object.keys(c.pn).find(k=>/^(K|C|KA|CATHODE|-)$/i.test(String(c.pn[k]))))||'1';
+      const bidir=c.pn&&Object.values(c.pn).some(v=>/^A[12]$/i.test(String(v)));
+      if(!bidir){const lp=f.pads.find(p=>''+p.n===''+kn)||f.pads[0],sg=lp.x<0?-1:1,bx=lp.x+sg*(lp.w/2+0.3),hh=Math.max(lp.h,f.body[1])/2+0.15;S.push({t:'seg',a:xf(bx,-hh),b:xf(bx,hh),w:kind==='led'?0.22:0.3,pol:'K'});}}
     const big=kind==='ic'||kind==='usb'||kind==='btn';const size=big?0.85:0.65;
     let lp=c.lab;if(!lp){const ys=c.pads.map(p=>p.y+Math.max(p.w,p.h)/2).concat([c.y+Math.max(c.body.w,c.body.h)/2]);lp=[c.x,Math.max(...ys)+0.35+size/2];}
     S.push({t:'text',s:c.ref,x:lp[0],y:lp[1],size,ang:0,mir,align:'center',bold:true});

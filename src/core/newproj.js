@@ -41,13 +41,13 @@ const LIB={
       if(Im>2){const big=bigTerm(Im,Impk);termFp(2,big?7.62:5.08);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
         if(combo)termFp(3,big?7.62:5.08);inJ(termName(2,big?99:Im),{mpn:big?'':combo?'1729131':'1729128',desc:`${vin} V 전원 입력 (${big?`7.62 mm 단자 — 상시 ${Im} A · 피크 ${Impk} A 정격 품번 지정 필요`:'5.08 mm 단자'} · 상시 ${Im} A${Impk>Im?` · 피크 ${Impk} A ${tpkIn} s`:''})`,pinNames:{1:'+',2:'GND'}});
         for(let i=0;i<n;i++)ctx.part('Q','SQD50P04-09L','TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:'SQD50P04-09L_GE3',desc:`역전압 보호 P-MOSFET (−40 V · 9 mΩ · AEC-Q101)${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((Im/n)**2)*0.009+0.02).toFixed(2),lk:'batt'});
-        ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:'VIN_PG',2:rail},{mpn:'BZT52C12',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'A',2:'K'}});
+        ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:rail,2:'VIN_PG'},{mpn:'BZT52C12',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'K',2:'A'}});
         ctx.curr('VIN_RAW',Im);ctx.curr(rail,Im);ctx.peak('VIN_RAW',Impk,tpkIn);ctx.peak(rail,Impk,tpkIn);ctx.curr('GND',Im);ctx.peak('GND',Impk,tpkIn);}
       else{if(combo&&typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'HDR-1x3',3);inJ('HDR-1x2',{mpn:combo?'61300311121':'61300211121',desc:`${vin} V 전원 입력`,pinNames:{1:'+',2:'GND'}});
-      ctx.part('D','SS14','SMA',{1:'VIN_RAW',2:rail},{mpn:'SS14',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'A',2:'K'}});}
+      ctx.part('D','SS14','SMA',{1:rail,2:'VIN_RAW'},{mpn:'SS14',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'K',2:'A'}});}
       if(String(p.tvs)==='loaddump'){const t=vin<=16?'SMBJ26CA':vin<=32?'SMBJ36CA':'SMBJ58CA';if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'SMB');
         ctx.part('D',t,'SMB',{1:'GND',2:'VIN_RAW'},{mpn:t,desc:`로드덤프 TVS ${t} (양방향 600 W · 역전압 보호 앞단이라 역접속에도 안전 · 중앙 억제 로드덤프 전제, 미억제면 SM8S급 필요)`,pinNames:{1:'A1',2:'A2'}});}
-      else if(+p.tvs)ctx.part('D',tvsFor(vin),'SMA',{1:'GND',2:rail},{desc:`입력 서지 TVS (${tvsFor(vin)})`,pinNames:{1:'A',2:'K'}});
+      else if(+p.tvs)ctx.part('D',tvsFor(vin),'SMA',{1:rail,2:'GND'},{desc:`입력 서지 TVS (${tvsFor(vin)})`,pinNames:{1:'K',2:'A'}});
       // IGN (KL15): wake / ignition sense for the MCU — 33 k / 10 k divider (12 V → 2.8 V), RC 10 nF, clamp to the logic rail, TVS on the pin
       if(+p.ign){const vl='+3V3';ctx.use(vl);
         if(!combo)ctx.part('J','IGN','HDR-1x2',{1:'IGN_IN',2:'GND'},{mpn:'61300211121',desc:'IGN (KL15) 점화 신호 입력',pinNames:{1:'IGN',2:'GND'}});
@@ -81,7 +81,7 @@ const LIB={
       ctx.part('U','TPS54331','SOIC-8',{1:'BUCK_BOOT',2:src,3:'BUCK_EN',4:'BUCK_SS',5:'BUCK_FB',6:'BUCK_COMP',7:'GND',8:'BUCK_SW'},{mpn:'TPS54331DR',desc:`${vout} V 벅 컨버터 (입력 ${src})`,pinNames:{1:'BOOT',2:'VIN',3:'EN',4:'SS',5:'VSENSE',6:'COMP',7:'GND',8:'PH'},buck:{src,out,vout}});
       ctx.part('C','100nF','0603',{1:'BUCK_BOOT',2:'BUCK_SW'},{desc:'부트스트랩 캡 (BOOT–PH)'});
       ctx.part('L','10µH','IND-5x5',{1:'BUCK_SW',2:out},{mpn:'SRN5040-100M',desc:'출력 인덕터 10 µH (Bourns SRN5040)',P:0.12});
-      ctx.part('D','MBRA340T3G','SMA',{1:'GND',2:'BUCK_SW'},{mpn:'MBRA340T3G',desc:'캐치 쇼트키 3 A 40 V (SMA)',pinNames:{1:'A',2:'K'},P:0.15});
+      ctx.part('D','MBRA340T3G','SMA',{1:'BUCK_SW',2:'GND'},{mpn:'MBRA340T3G',desc:'캐치 쇼트키 3 A 40 V (SMA)',pinNames:{1:'K',2:'A'},P:0.15});
       ctx.cap(src,'22µF','벅 입력 커패시터');ctx.cap(src,'100nF','벅 입력 고주파 바이패스 (VIN 핀 옆)');ctx.cap(out,'22µF','벅 출력 커패시터');ctx.cap(out,'22µF','벅 출력 커패시터');
       ctx.part('R',fb[0],'0603',{1:out,2:'BUCK_FB'},{desc:`피드백 상단 (VOUT = 0.8 V × (1 + R상/R하) ≈ ${vout} V)`});ctx.part('R',fb[1],'0603',{1:'BUCK_FB',2:'GND'},{desc:'피드백 하단'});
       ctx.part('C','10nF','0603',{1:'BUCK_SS',2:'GND'},{desc:'소프트 스타트'});
@@ -135,7 +135,7 @@ const LIB={
       if(!drv)['A','B'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO');
         ctx.part('U','IR2104S','SOIC-8',{1:vm,2:N('IN'+h),3:N('EN'),4:'GND',5:lo,6:ph,7:ho,8:vb},{mpn:'IR2104STRPBF',desc:`하프브리지 게이트 드라이버 (${h} 레그 · 데드타임 520 ns)`,pinNames:{1:'VCC',2:'IN',3:'nSD',4:'COM',5:'LO',6:'VS',7:'HO',8:'VB'},P:0.05});
         ctx.cap(vm,'1µF',`IR2104 VCC 디커플링 (${h})`);
-        ctx.part('D','ES1D','SMA',{1:vm,2:vb},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'A',2:'K'}});
+        ctx.part('D','ES1D','SMA',{1:vb,2:vm},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'K',2:'A'}});
         ctx.part('C','1µF','0805',{1:vb,2:ph},{desc:`부트스트랩 캡 VB–VS (${h})`});
         fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);ctx.peak(ph,Ipk,tpk);});
       bulk(ctx,vm,I,'H-브리지');ctx.peak(vm,Ipk,tpk);if(sn&&!drv)ctx.peak(ret,Ipk,tpk);
@@ -154,7 +154,7 @@ const LIB={
       if(!drv)['U','V','W'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
         ctx.part('U','IR2104S','SOIC-8',{1:vm,2:N('IN_'+h),3:N('EN'),4:'GND',5:lo,6:ph,7:ho,8:vb},{mpn:'IR2104STRPBF',desc:`하프브리지 게이트 드라이버 (${h}상)`,pinNames:{1:'VCC',2:'IN',3:'nSD',4:'COM',5:'LO',6:'VS',7:'HO',8:'VB'},P:0.05});
         ctx.cap(vm,'1µF',`IR2104 VCC 디커플링 (${h})`);
-        ctx.part('D','ES1D','SMA',{1:vm,2:vb},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'A',2:'K'}});
+        ctx.part('D','ES1D','SMA',{1:vb,2:vm},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'K',2:'A'}});
         ctx.part('C','1µF','0805',{1:vb,2:ph},{desc:`부트스트랩 캡 VB–VS (${h})`});
         fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);shuntAmp(ctx,ret,N('ISNS_'+h),I,h+'상',Ipk,tpk);
         ctx.curr(ph,I);ctx.curr(ret,I);ctx.peak(ph,Ipk,tpk);ctx.peak(ret,Ipk,tpk);ctx.sig(N('IN_'+h),'pwm','pwm3');});
@@ -171,7 +171,7 @@ const LIB={
       ctx.part('J','모터','HDR-1x2',{1:vm,2:'MOT_N'},{mpn:'61300211121',desc:'DC 모터 커넥터',pinNames:{1:'+',2:'−'}});
       ctx.part('Q','AO3400A','SOT-23',{1:'GATE',2:s?'I_SENSE':'GND',3:'MOT_N'},{mpn:'AO3400A',desc:'N채널 MOSFET 로우사이드 스위치',pinNames:{1:'G',2:'S',3:'D'},P:0.15,lk:'phase'});
       ctx.part('R','100Ω','0603',{1:'MOT_PWM',2:'GATE'},{desc:'게이트 직렬 저항'});ctx.part('R','10kΩ','0603',{1:'GND',2:'GATE'},{desc:'게이트 풀다운'});
-      ctx.part('D','SS14','SMA',{1:'MOT_N',2:vm},{mpn:'SS14',desc:'플라이백 쇼트키',pinNames:{1:'A',2:'K'}});ctx.cap(vm,'100nF','모터 전원 바이패스');
+      ctx.part('D','SS14','SMA',{1:vm,2:'MOT_N'},{mpn:'SS14',desc:'플라이백 쇼트키',pinNames:{1:'K',2:'A'}});ctx.cap(vm,'100nF','모터 전원 바이패스');
       ctx.sig('MOT_PWM','pwm');
       if(s){ctx.part('R','0.1Ω','1206',{1:'GND',2:'I_SENSE'},{mpn:'RL1206FR-070R1L',desc:'전류 검출 션트',P:0.05});ctx.part('R','10kΩ','0603',{1:'ISNS_ADC',2:'I_SENSE'},{desc:'RC 필터 저항'});ctx.part('C','1µF','0603',{1:'ISNS_ADC',2:'GND'},{desc:'RC 필터 캡'});ctx.sig('ISNS_ADC','adc');}}},
   led:{label:'상태 LED',desc:'LED + 330 Ω (MCU GPIO 구동)',params:{n:{def:1,desc:'개수'},color:{def:'녹색',desc:'녹색 · 빨강 · 파랑'}},
