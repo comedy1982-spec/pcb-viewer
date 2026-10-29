@@ -364,8 +364,12 @@ async function npSetPart(b,p){const prev=JSON.parse(JSON.stringify(b.impl||[]));
   {const L0=b.impl||[];const g=L0.find(i=>i.type==='gdrv3'||i.type==='hbridge');const m=String(p.mpn||'').toUpperCase().match(/A491[18]|IR2104/);
     if(g&&m){g.params=Object.assign({},g.params,{driver:m[0]});const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;
       NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — ${g.type==='hbridge'?'H-브리지(hbridge)':'3상 인버터(gdrv3)'} 구동 IC를 ${m[0]}로 (FET·션트·부트스트랩·센스 앰프·SPI 자동 연결)${rec&&rec.pins&&rec.pins.length?'':' · 핀 표가 없어 지금은 IR2104로 생성 — datasheet '+p.mpn+' 로 핀 표를 넣으면 반영'}`;}}
+  // the library buck block takes its pin-compatible parts directly (inductor · catch diode · compensation stay)
+  {const L0=b.impl||[];const bk=L0.find(i=>i.type==='buck');if(bk&&/^TPS54331/i.test(p.mpn||'')){bk.params=Object.assign({},bk.params,{part:p.mpn});NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn} — 벅 회로(TPS54331)와 핀 호환이라 그대로 교체 (인덕터 · 캐치 쇼트키 · 보상 유지)`;}}
+  const ext=(p.ext&&p.ext.length?p.ext:(typeof PARTRANK!=='undefined'&&PARTRANK.extOf?PARTRANK.extOf(p.note):[]));
   const L=b.impl||[];const single=!L.length||(L.length===1&&NP_SWAP.test(L[0].type))||L.some(i=>i.type==='part');let how='기록 (회로는 라이브러리 블록 구성 유지 · 2단계에서 add part로 교체 가능)';
-  if(single){const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;const pins=r=>!!(r&&r.pins&&r.pins.length);
+  if(single&&ext.length){how=`기록만 — ${p.mpn}은 외부 ${ext.join(' · ')}가 필요한 전원 IC라 부품 하나만 넣으면 회로가 불완전합니다 (라이브러리 블록 유지 · 2단계 회로도에서 주변 부품과 함께 설계)`;}
+  else if(single){const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;const pins=r=>!!(r&&r.pins&&r.pins.length);
     if(pins(rec)||(AIM.mode==='ai'&&CLI.sample)){try{await npRun(`impl ${b.id} part ${p.mpn}`);const r2=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;if(pins(r2))how=`회로 구현 → part ${p.mpn}${r2.src==='ai'?' (Claude 추정 핀)':''}`;else{b.impl=prev;how='핀 정보를 얻지 못해 기록만 (라이브러리 블록 유지)';}}catch(e){b.impl=prev;how='회로 구현 실패: '+(e.message||e)+' → 기록만';}}
     else{const c=await copAsk({q:`${p.mpn}: 라이브러리에 핀 정보가 없습니다. 데이터시트 PDF를 올려 핀 표를 읽을까요?`,why:'AI 모드에서는 Claude가 핀을 추정할 수도 있습니다. 지금은 기록만 하고 나중에 datasheet '+p.mpn+' 으로도 할 수 있습니다.',opts:['데이터시트 PDF 올리기','기록만']});
       if(c==='데이터시트 PDF 올리기'){const r=await dsPdfFlow(p.mpn,'np',{});if(r){try{await npRun(`impl ${b.id} part ${p.mpn}`);how=`회로 구현 → part ${p.mpn} (데이터시트 핀 ${r.pins.length}개)`;}catch(e){b.impl=prev;how='회로 구현 실패: '+(e.message||e)+' → 기록만';}}else how='핀 정보 없음 → 기록만';}

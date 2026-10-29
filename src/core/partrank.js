@@ -19,7 +19,8 @@ const C={
     {mpn:'TPS7B86-Q1',mfr:'TI',note:'가변 LDO 1.2–18 V · 500 mA · 40 V 입력 · 드롭아웃 0.5 V · HSOIC-8/TO-252',spec:{i:0.5,vin:[3,40],adj:1,pkg:'HSOIC-8'},grade:'Q100',price:0.9,why:'배터리 직결 가변 레일 (9 V 센서 전원)'},
     {mpn:'LM317DCYR',mfr:'TI',note:'가변 LDO 1.25–37 V · 1.5 A · 40 V 입력 · SOT-223 (드롭아웃 ~2 V)',spec:{i:1.5,vin:[3,40],adj:1,pkg:'SOT-223'},grade:'',price:0.3,why:'가장 흔한 가변 레귤레이터 (회로 생성 기본)'},
     {mpn:'LM111733QDCYRQ1',mfr:'TI',note:'1 A LDO 3.3 V · 18 V 입력(절대 20 V) · SOT-223 · AMS1117 핀 호환',spec:{i:1,vin:[4.75,18],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.62,why:'저가·핀 호환, 5 V/12 V → 3.3 V'},
-    {mpn:'TPS7B8133QDRVRQ1',mfr:'TI',note:'300 mA LDO 3.3 V · 40 V 입력 · 저 Iq 2.4 µA · WSON-6',spec:{i:0.3,vin:[4,40],vout:3.3,pkg:'WSON-6'},grade:'Q100',price:0.95,why:'배터리 직결 · 상시 전원(저 대기 전류)'},
+    {mpn:'TPS7B8133QDRVRQ1',mfr:'TI',note:'150 mA LDO 3.3 V · 3–40 V 입력 · 저 Iq 1.9 µA · WSON-6',spec:{i:0.15,vin:[3,40],vout:3.3,pkg:'WSON-6'},grade:'Q100',price:0.95,why:'배터리 직결 · 상시 전원(저 대기 전류)'},
+    {mpn:'TLF4277-2LD',mfr:'Infineon',note:'300 mA 가변 LDO 5–12 V · 40 V 입력 · 부하 전류 모니터(CSO) · 전류 제한 설정 · TSON-10',spec:{i:0.3,vin:[5.5,40],adj:1,pkg:'TSON-10'},grade:'Q100',price:2.2,why:'부하 전류 모니터 · 단선/단락 진단 (센서·안테나 전원)'},
     {mpn:'UA78M33QDCYRQ1',mfr:'TI',note:'500 mA LDO 3.3 V · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[5.3,25],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'가장 싼 차량용 3.3 V'},
     {mpn:'UA78M05QDCYRQ1',mfr:'TI',note:'500 mA LDO 5 V · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[7,25],vout:5,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'12 V → 5 V 저가 차량용'},
     {mpn:'TLV76733QWDRBRQ1',mfr:'TI',note:'1 A LDO 3.3 V · 16 V 입력 · EN · VSON-8',spec:{i:1,vin:[2.5,16],vout:3.3,pkg:'VSON-8'},grade:'Q100',price:0.55,why:'1 A 차량용 · 5 V → 3.3 V'},
@@ -30,12 +31,11 @@ const C={
     {mpn:'MIC5219-3.3YM5',mfr:'Microchip',note:'500 mA LDO 3.3 V · SOT-23-5',spec:{i:0.5,vin:[2.5,12],vout:3.3,pkg:'SOT-23-5'},grade:'',price:0.5,why:'상용 소형·저가'},
     {mpn:'AMS1117-3.3',mfr:'AMS',note:'1 A LDO 3.3 V · SOT-223 (상용)',spec:{i:1,vin:[4.5,15],vout:3.3,pkg:'SOT-223'},grade:'',price:0.12,why:'가장 싼 범용 LDO'}],
   buck:[
-    {mpn:'TPS54331QDRQ1',mfr:'TI',note:'3 A 동기 벅 · 3.5–28 V · 570 kHz',spec:{i:3,vin:[3.5,28],pkg:'SOIC-8'},grade:'Q100',price:1.4,why:'12 V → 5/3.3 V 범용 차량용 벅'},
-    {mpn:'LMR33630AQRNXRQ1',mfr:'TI',note:'3 A 동기 벅 · 3.8–36 V · 400 kHz · 소형',spec:{i:3,vin:[3.8,36],pkg:'VQFN-12'},grade:'Q100',price:1.9,why:'36 V 입력(로드덤프 여유)·고효율'},
-    {mpn:'TLF4277-2LD',mfr:'Infineon',note:'400 mA LDO+벅 복합 · 전류 센스',spec:{i:0.4,vin:[3,40],pkg:'VQFN-24'},grade:'Q100',price:2.2,why:'전류 센스 내장 진단'},
-    {mpn:'A4403GEUTR-T',mfr:'Allegro',note:'3 A 벅 · 46 V 입력 · 최대 2 MHz · QFN-16',spec:{i:3,vin:[4.5,46],pkg:'QFN-16'},grade:'',price:1.7,why:'46 V 입력(로드덤프 여유)'},
-    {mpn:'MP2451DJ-LF-Z',mfr:'MPS',note:'600 mA 벅 · 4.5–36 V',spec:{i:0.6,vin:[4.5,36],pkg:'TSOT-23-6'},grade:'',price:0.6,why:'상용 소형 저가'},
-    {mpn:'MP1584EN',mfr:'MPS',note:'3 A 벅 · 4.5–28 V (상용)',spec:{i:3,vin:[4.5,28],pkg:'SOIC-8'},grade:'',price:0.5,why:'가장 싼 3 A 벅'}],
+    {mpn:'TPS54331QDRQ1',mfr:'TI',note:'3 A 비동기 벅 · 3.5–28 V · 570 kHz · 외부 캐치 다이오드',spec:{i:3,vin:[3.5,28],pkg:'SOIC-8',sync:0},ext:['인덕터','캐치 쇼트키'],compat:'TPS54331',grade:'Q100',price:1.4,why:'12 V → 5/3.3 V 범용 차량용 벅'},
+    {mpn:'LMR33630AQRNXRQ1',mfr:'TI',note:'3 A 동기 벅 · 3.8–36 V · 400 kHz · 소형',spec:{i:3,vin:[3.8,36],pkg:'VQFN-12',sync:1},ext:['인덕터'],grade:'Q100',price:1.9,why:'36 V 입력(로드덤프 여유)·고효율'},
+    {mpn:'A4403GEUTR-T',mfr:'Allegro',note:'3 A 비동기 벅 · 46 V 입력 · 최대 2 MHz · QFN-16 · 외부 환류 다이오드',spec:{i:3,vin:[4.5,46],pkg:'QFN-16',sync:0},ext:['인덕터','캐치 쇼트키'],grade:'',price:1.7,why:'46 V 입력(로드덤프 여유)'},
+    {mpn:'MP2451DJ-LF-Z',mfr:'MPS',note:'600 mA 비동기 벅 · 4.5–36 V · 외부 쇼트키',spec:{i:0.6,vin:[4.5,36],pkg:'TSOT-23-6',sync:0},ext:['인덕터','캐치 쇼트키'],grade:'',price:0.6,why:'상용 소형 저가'},
+    {mpn:'MP1584EN',mfr:'MPS',note:'3 A 비동기 벅 · 4.5–28 V (상용) · 외부 쇼트키',spec:{i:3,vin:[4.5,28],pkg:'SOIC-8',sync:0},ext:['인덕터','캐치 쇼트키'],grade:'',price:0.5,why:'가장 싼 3 A 벅'}],
   supervisor:[
     {mpn:'TLF35584QVVS2',mfr:'Infineon',note:'안전 PMIC · Q&A 워치독 · FS0B · ASIL D',spec:{pkg:'VQFN-48'},grade:'Q100',asil:'D',price:7.5,why:'AURIX와 짝을 이루는 안전 SBC'},
     {mpn:'TPS65381A-Q1',mfr:'TI',note:'안전 PMIC · 워치독 · 진단 · ASIL D',spec:{pkg:'HTSSOP-32'},grade:'Q100',asil:'D',price:6.8,why:'TI MCU와 짝, 자기 진단'},
@@ -167,7 +167,9 @@ function needs(b,ctx){const n={i:null,v:null,fd:false,vouts:[]};(b.impl||[]).for
 /* candidates of a block: profile list first, then by implementation type (deduplicated by MPN) */
 const IDX=(()=>{const m={};Object.values(C).forEach(L=>L.forEach(p=>{m[p.mpn.toUpperCase()]=p;}));return m;})();
 const enrich=p=>{const k=p.mpn.toUpperCase();const base=IDX[k]||Object.values(IDX).find(x=>k.startsWith(x.mpn.toUpperCase().replace(/[-\/].*$/,''))&&x.mpn.length>=6)||null;const o=Object.assign({},base||{});Object.keys(p).forEach(k=>{if(p[k]!=null&&p[k]!=='')o[k]=p[k];});
-  if(!o.asil){const m=(o.note||'').match(/ASIL\s*([A-D])/i);if(m)o.asil=m[1].toUpperCase();}if(!o.grade&&/Q100|Q101|AEC|차량용|automotive/i.test(o.note||''))o.grade='Q100';if(!o.spec)o.spec={};return o;};
+  if(!o.asil){const m=(o.note||'').match(/ASIL\s*([A-D])/i);if(m)o.asil=m[1].toUpperCase();}if(!o.grade&&/Q100|Q101|AEC|차량용|automotive/i.test(o.note||''))o.grade='Q100';if(!o.spec)o.spec={};if(!o.ext)o.ext=extOf(o.note);return o;};
+/* external power-stage parts a candidate needs (inductor for a switcher, catch diode for a non-synchronous buck) — from its note */
+function extOf(note){const t=String(note||''),e=[];if(/벅|buck|DC-?DC|부스트|boost/i.test(t)&&!/^[^·]*LDO[^·]*$/.test(t))e.push('인덕터');if(/비동기|non-?sync|캐치|환류|외부 쇼트키/i.test(t))e.push('캐치 쇼트키');return e;}
 function candidates(b,prof){const out=[];const seen=new Set();const push=(p,src)=>{p=norm(p);if(!p||!p.mpn||seen.has(p.mpn.toUpperCase()))return;seen.add(p.mpn.toUpperCase());out.push(Object.assign({src},enrich(p)));};
   if(prof&&typeof PRODUCTS!=='undefined'){try{(PRODUCTS.candidates(prof,b.id)||[]).forEach(p=>push(p,'profile'));}catch(e){}}
   (b.impl||[]).forEach(im=>{(C[im.type]||[]).forEach(p=>push(p,'lib'));});
@@ -195,12 +197,15 @@ function rank(b,ctx){ctx=ctx||{};const N=needs(b,ctx);const pref=ctx.pref||{pric
     const price=priceOf(p.mpn)!=null?priceOf(p.mpn):p.price;if(price!=null){s+=pref.price*Math.max(-1.5,1-Math.log10(Math.max(0.05,price))*0.9);}
     if(pref.feat>1||pref.ext>1){if(/진단|센스|SPI|FOC|보호|내장/.test(p.note||'')){s+=0.6*Math.max(pref.feat,pref.ext);why.push('기능 풍부');}}
     if(p.src==='profile'){s+=0.8;why.push('제품 표준 후보');}
+    // what the board needs around the IC: a library block that already builds it (pin-compatible swap) vs. extra parts to design in
+    const lib=(b.impl||[]).map(im=>im.type);if(p.compat&&lib.includes('buck')&&p.compat==='TPS54331'){s+=0.5;why.push('현재 벅 회로(TPS54331)와 핀 호환 — 바로 교체');}
+    else if(p.ext&&p.ext.length){s-=0.15*p.ext.length*(pref.price||1);why.push(`외부 ${p.ext.join(' · ')} 필요`);}
     if(p.why)why.push(p.why);
     return Object.assign({},p,{pinNote,score:+s.toFixed(2),ok:!bad.some(x=>/</.test(x)||/미지원|≠/.test(x)),why,bad,pins,price});});
   rows.sort((a,b)=>(b.ok-a.ok)||(b.score-a.score));rows.forEach((r,i)=>{r.rank=i+1;});return{needs:N,rows};}
 function text(b,R){const L=[`${b.label} (${b.id}) 주요 소자 후보 ${R.rows.length}개${R.needs.i?` · 요구 전류 ${R.needs.i} A`:''}${R.needs.v?` · 전압 ${R.needs.v} V`:''}`];
   R.rows.forEach(r=>L.push(`  ${r.rank}. ${r.mpn} · ${r.mfr}${r.price!=null?' · $'+r.price:''}${r.grade?' · '+r.grade:''}${r.asil?' · ASIL '+r.asil:''} — ${r.note}${r.bad.length?' ✕ '+r.bad.join(', '):''}${r.why.length?' ✓ '+r.why.slice(0,3).join(' · '):''}`));
   return L.join('\n');}
-return{C,candidates,rank,needs,text,norm};
+return{C,candidates,rank,needs,text,norm,extOf};
 })();
 if(typeof module!=='undefined')module.exports=PARTRANK;
