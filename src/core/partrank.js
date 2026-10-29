@@ -21,7 +21,7 @@ const C={
     {mpn:'LM111733QDCYRQ1',mfr:'TI',note:'1 A LDO 3.3 V · 18 V 입력(절대 20 V) · SOT-223 · AMS1117 핀 호환',spec:{i:1,vin:[4.75,18],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.62,why:'저가·핀 호환, 5 V/12 V → 3.3 V'},
     {mpn:'TPS7B8133QDRVRQ1',mfr:'TI',note:'150 mA LDO 3.3 V · 3–40 V 입력 · 저 Iq 1.9 µA · WSON-6',spec:{i:0.15,vin:[3,40],vout:3.3,pkg:'WSON-6'},grade:'Q100',price:0.95,why:'배터리 직결 · 상시 전원(저 대기 전류)'},
     {mpn:'TLF4277-2LD',mfr:'Infineon',note:'300 mA 가변 LDO 5–12 V · 40 V 입력 · 부하 전류 모니터(CSO) · 전류 제한 설정 · TSON-10',spec:{i:0.3,vin:[5.5,40],adj:1,pkg:'TSON-10'},grade:'Q100',price:2.2,why:'부하 전류 모니터 · 단선/단락 진단 (센서·안테나 전원)'},
-    {mpn:'UA78M33QDCYRQ1',mfr:'TI',note:'500 mA LDO 3.3 V · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[5.3,25],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'가장 싼 차량용 3.3 V'},
+    {mpn:'UA78M33QDCYRG4Q1',family:'UA78M33QDCYRQ1',mfr:'TI',note:'500 mA 3.3 V 선형 레귤레이터 (78M, 드롭아웃 2 V — LDO 아님) · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[5.3,25],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'가장 싼 차량용 3.3 V'},
     {mpn:'UA78M05QDCYRQ1',mfr:'TI',note:'500 mA LDO 5 V · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[7,25],vout:5,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'12 V → 5 V 저가 차량용'},
     {mpn:'TLV76733QWDRBRQ1',mfr:'TI',note:'1 A LDO 3.3 V · 16 V 입력 · EN · VSON-8',spec:{i:1,vin:[2.5,16],vout:3.3,pkg:'VSON-8'},grade:'Q100',price:0.55,why:'1 A 차량용 · 5 V → 3.3 V'},
     {mpn:'TLV76750QWDRBRQ1',mfr:'TI',note:'1 A LDO 5 V · 16 V 입력 · EN · VSON-8',spec:{i:1,vin:[6,16],vout:5,pkg:'VSON-8'},grade:'Q100',price:0.55,why:'1 A 차량용 5 V'},
@@ -39,7 +39,7 @@ const C={
   supervisor:[
     {mpn:'TLF35584QVVS2',mfr:'Infineon',note:'안전 PMIC · Q&A 워치독 · FS0B · ASIL D',spec:{pkg:'VQFN-48'},grade:'Q100',asil:'D',price:7.5,why:'AURIX와 짝을 이루는 안전 SBC'},
     {mpn:'TPS65381A-Q1',mfr:'TI',note:'안전 PMIC · 워치독 · 진단 · ASIL D',spec:{pkg:'HTSSOP-32'},grade:'Q100',asil:'D',price:6.8,why:'TI MCU와 짝, 자기 진단'},
-    {mpn:'FS2600',mfr:'NXP',note:'FS26 안전 SBC · 다중 레일 · ASIL D',spec:{pkg:'QFN-48'},grade:'Q100',asil:'D',price:7.2,why:'S32K와 짝'},
+    {mpn:'MFS2601AMDA0ADR2',family:'FS2600',mfr:'NXP',note:'FS26 안전 SBC · 다중 레일 · ASIL D (CAN 트랜시버 없음)',spec:{pkg:'LQFP-48'},grade:'Q100',asil:'D',price:7.2,why:'S32K와 짝'},
     {mpn:'TPS3823-33QDBVRQ1',mfr:'TI',note:'전원 감시 + 윈도우 없는 워치독 · SOT-23-5',spec:{pkg:'SOT-23-5'},grade:'Q100',asil:'B',price:0.95,why:'ASIL B까지 저가 외부 워치독'},
     {mpn:'MAX6369KA+T',mfr:'ADI',note:'윈도우 워치독 · 핀 선택 타임아웃',spec:{pkg:'SOT-23-8'},grade:'',asil:'B',price:1.8,why:'윈도우 워치독(상용)'}],
   can:[
@@ -74,24 +74,24 @@ const C={
     {mpn:'S32K142',mfr:'NXP',note:'S32K1 · Cortex-M4F 80 MHz · 256 KB · CAN-FD · ASIL B',spec:{pkg:'LQFP-64',feat:['fd','motor']},grade:'Q100',asil:'B',price:3.5,why:'저가 ASIL B'},
     {mpn:'S32K146',mfr:'NXP',note:'S32K1 · Cortex-M4F 112 MHz · 1 MB · CAN-FD ×3 · ASIL B',spec:{pkg:'LQFP-144',feat:['fd','motor']},grade:'Q100',asil:'B',price:7.5,why:'S32K1 대용량'},
     {mpn:'S32K148',mfr:'NXP',note:'S32K1 · Cortex-M4F 112 MHz · 2 MB · 이더넷 · CAN-FD ×3 · ASIL B',spec:{pkg:'LQFP-176',feat:['fd','motor','eth']},grade:'Q100',asil:'B',price:9,why:'S32K1 중 유일한 이더넷'},
-    {mpn:'MPC5744P',mfr:'NXP',note:'MPC57xx · Power Architecture e200z4 락스텝 200 MHz · 2.5 MB · FlexRay · 이더넷 · ASIL D',spec:{pkg:'LQFP-144',feat:['motor','eth','flexray']},grade:'Q100',asil:'D',price:15,why:'섀시·EPS·브레이크 검증 이력(클래식 CAN)'},
+    {mpn:'SP5744PFK1AMLQ9R',family:'MPC5744P',mfr:'NXP',note:'MPC57xx · Power Architecture e200z4 락스텝 200 MHz · 2.5 MB · FlexRay · 이더넷 · ASIL D',spec:{pkg:'LQFP-144',feat:['motor','eth','flexray']},grade:'Q100',asil:'D',price:15,why:'섀시·EPS·브레이크 검증 이력(클래식 CAN)'},
     // ── TI ──
     {mpn:'TMS570LC4357',mfr:'TI',note:'Hercules · Cortex-R5F 락스텝 300 MHz · 4 MB · 이더넷 · ASIL D',spec:{pkg:'nFBGA-337',feat:['motor','eth','flexray']},grade:'Q100',asil:'D',price:22,why:'Hercules 최상위 안전 MCU'},
     {mpn:'TMS570LS1224',mfr:'TI',note:'Hercules · Cortex-R4F 락스텝 160 MHz · 1.25 MB · CAN ×3 · ASIL D',spec:{pkg:'LQFP-144',feat:['motor']},grade:'Q100',asil:'D',price:10,why:'EPS·브레이크 안전 MCU(클래식 CAN)'},
     {mpn:'TMS570LS0432',mfr:'TI',note:'Hercules · Cortex-R4 락스텝 80 MHz · 384 KB · ASIL D',spec:{pkg:'LQFP-100',feat:['motor']},grade:'Q100',asil:'D',price:5,why:'가장 저렴한 락스텝 ASIL D'},
     {mpn:'TMS570LS3137',mfr:'TI',note:'Hercules · Cortex-R4F 락스텝 180 MHz · 3 MB · 이더넷 · FlexRay · ASIL D',spec:{pkg:'LQFP-144',feat:['motor','eth','flexray']},grade:'Q100',asil:'D',price:18,why:'이더넷·FlexRay 안전 MCU'},
     {mpn:'AM2634-Q1',mfr:'TI',note:'Sitara AM263x · Cortex-R5F ×4 400 MHz · CAN-FD · 실시간 제어 · ASIL D',spec:{pkg:'nFBGA-324',feat:['fd','motor','eth']},grade:'Q100',asil:'D',price:14,why:'고성능 모터·인버터 제어(R5F 4코어)'},
-    {mpn:'TMS320F280039C-Q1',mfr:'TI',note:'C2000 · C28x 120 MHz + CLA · 384 KB · CAN-FD · 고분해능 PWM · ASIL B',spec:{pkg:'LQFP-100',feat:['fd','motor']},grade:'Q100',asil:'B',price:6,why:'모터·DC-DC 실시간 제어 표준'},
+    {mpn:'F280039CPZRQ1',family:'TMS320F280039C-Q1',mfr:'TI',note:'C2000 · C28x 120 MHz + CLA · 384 KB · CAN-FD · 고분해능 PWM · ASIL B',spec:{pkg:'LQFP-100',feat:['fd','motor']},grade:'Q100',asil:'B',price:6,why:'모터·DC-DC 실시간 제어 표준'},
     {mpn:'TMS320F280049C-Q1',mfr:'TI',note:'C2000 · C28x 100 MHz + CLA · 256 KB · 고분해능 PWM · ASIL B',spec:{pkg:'LQFP-100',feat:['motor']},grade:'Q100',asil:'B',price:7,why:'OBC·DC-DC 전원 제어(클래식 CAN)'},
-    {mpn:'MSPM0G3507-Q1',mfr:'TI',note:'MSPM0 · Cortex-M0+ 80 MHz · 128 KB · CAN-FD · 저가 차량용',spec:{pkg:'LQFP-64',feat:['fd','motor']},grade:'Q100',asil:'',price:1.5,why:'가장 싼 차량용 CAN-FD MCU'},
+    {mpn:'M0G3507QPMRQ1',family:'MSPM0G3507-Q1',mfr:'TI',note:'MSPM0 · Cortex-M0+ 80 MHz · 128 KB · CAN-FD · 저가 차량용',spec:{pkg:'LQFP-64',feat:['fd','motor']},grade:'Q100',asil:'',price:1.5,why:'가장 싼 차량용 CAN-FD MCU'},
     // ── ST ──
     {mpn:'STM32G474RET6',mfr:'ST',note:'Cortex-M4 170 MHz · 고분해능 PWM · 상용',spec:{pkg:'LQFP-64',feat:['fd','motor']},grade:'',asil:'',price:5.5,why:'모터 제어 상용(HRTIM)'},
     {mpn:'STM32F042K6U6',mfr:'ST',note:'Cortex-M0 48 MHz · CAN · USB · 저가',spec:{pkg:'QFN-32'},grade:'',asil:'',price:2.2,why:'가장 싼 CAN MCU'}],
   gdrv3:[
     {mpn:'TLE9180D-31QK',mfr:'Infineon',note:'3상 게이트 드라이버 · 진단 · 세이프티 FET 출력 · ASIL D',spec:{v:60,pkg:'TQFP-64'},grade:'Q100',asil:'D',price:9,why:'EPS·브레이크급 안전 드라이버'},
     {mpn:'L9908',mfr:'ST',note:'3상 게이트 드라이버 · 안전 기능 · 전류 센스 앰프 ×3',spec:{v:75,pkg:'TQFP-64'},grade:'Q100',asil:'D',price:8,why:'48 V 시스템까지'},
-    {mpn:'DRV8353RS-Q1',mfr:'TI',note:'3상 게이트 드라이버 · 벅 · 전류 센스 앰프 ×3 · SPI',spec:{v:100,pkg:'VQFN-56'},grade:'Q100',asil:'',price:6.5,why:'센스 앰프·벅 내장으로 부품 절감'},
-    {mpn:'GD3000',mfr:'NXP',note:'3상 프리드라이버 · 진단 · SPI',spec:{v:40,pkg:'LQFP-32'},grade:'Q100',asil:'',price:4.5,why:'저가 차량용 프리드라이버'},
+    {mpn:'DRV8343SPHPRQ1',family:'DRV8353RS-Q1',mfr:'TI',note:'차량용 3상 스마트 게이트 드라이버 · 전류 센스 앰프 ×3 · SPI (5.5–60 V, 벅 없음)',spec:{v:60,pkg:'HTQFP-48'},grade:'Q100',asil:'',price:6.5,why:'센스 앰프 ×3 · SPI 진단 (DRV8353은 차량용 없음 → DRV8343S-Q1)'},
+    {mpn:'MC33GD3000EPR2',family:'GD3000',mfr:'NXP',note:'3상 프리드라이버 · 진단 · SPI',spec:{v:40,pkg:'QFN-56'},grade:'Q100',asil:'',price:4.5,why:'저가 차량용 프리드라이버'},
     {mpn:'A4911KJPTR-T-1',mfr:'Allegro',note:'3상 게이트 드라이버 · SPI 진단 · 전류 센스 앰프 ×3 · 부트스트랩+차지펌프 · 5.5~50 V · ASIL D · LQFP-48',spec:{v:50,pkg:'LQFP-48'},grade:'Q100',asil:'D',price:6,why:'ASIL D 안전 드라이버(센스 앰프 내장)'},
     {mpn:'A4918KJPTR-1A-3-T',mfr:'Allegro',note:'3상 게이트 드라이버 · SPI 진단 · 전류 센스 앰프 ×3 · 4.5~50 V · 100% PWM · 3.3 V 로직(-5-T는 5 V) · ASIL D · LQFP-48',spec:{v:50,pkg:'LQFP-48'},grade:'Q100',asil:'D',price:6,why:'A4911 후속 · 저전압(4.5 V) 크랭킹 대응'},
     {mpn:'A4919',mfr:'Allegro',note:'3상 게이트 드라이버 · 진단',spec:{v:50,pkg:'QFN-28'},grade:'Q100',asil:'',price:5,why:'소형'},
@@ -100,7 +100,7 @@ const C={
   hbridge:[
     {mpn:'IR2104S',mfr:'Infineon',note:'하프브리지 드라이버 ×2 · 600 V · 부트스트랩',spec:{v:600,pkg:'SOIC-8'},grade:'',price:1.2,why:'외부 FET H-브리지 기본 드라이버(저가)'},
     {mpn:'DRV8701ERGER',mfr:'TI',note:'H-브리지 게이트 드라이버 · 전류 레귤레이션 · 진단',spec:{v:45,pkg:'VQFN-24'},grade:'',price:2.6,why:'전류 제한·보호 내장'},
-    {mpn:'DRV8706S-Q1',mfr:'TI',note:'H-브리지 게이트 드라이버 · 40 V · SPI 진단 · 전류 센스 앰프',spec:{v:40,pkg:'VQFN-32'},grade:'Q100',price:3.4,why:'차량용 DC 모터·솔레노이드'},
+    {mpn:'DRV8706SQRHBRQ1',family:'DRV8706S-Q1',mfr:'TI',note:'H-브리지 게이트 드라이버 · 40 V · SPI 진단 · 전류 센스 앰프',spec:{v:40,pkg:'VQFN-32'},grade:'Q100',price:3.4,why:'차량용 DC 모터·솔레노이드'},
     {mpn:'TLE9201SG',mfr:'Infineon',note:'H-브리지 내장 6 A · 진단',spec:{v:40,i:6,pkg:'DSO-12'},grade:'Q100',price:2.9,why:'6 A까지 FET 내장(부품 수 최소)'},
     {mpn:'A4950KLJTR-T',mfr:'Allegro',note:'풀브리지 DMOS 내장 3.5 A · 40 V · PWM 입력 · -40~125 °C · SOIC-8 EP',spec:{v:40,i:3.5,pkg:'SOIC-8'},grade:'',price:1.3,why:'3.5 A까지 부품 1개 H-브리지(저가)'},
     {mpn:'A4953ELJTR-T',mfr:'Allegro',note:'풀브리지 DMOS 내장 2 A · 40 V · 전류 제한 · SOIC-8 EP',spec:{v:40,i:2,pkg:'SOIC-8'},grade:'',price:1.0,why:'소형 브러시 DC 모터·솔레노이드'},
@@ -110,7 +110,7 @@ const C={
     {mpn:'DRV8313PWPR',mfr:'TI',note:'3상 드라이버 FET 내장 2.5 A · 60 V',spec:{v:60,i:2.5,pkg:'HTSSOP-28'},grade:'',price:2.6,why:'소형 BLDC 팬·펌프'},
     {mpn:'TLE9879QXA40',mfr:'Infineon',note:'BLDC 드라이버 + MCU(Cortex-M3) SoC · 40 V',spec:{v:40,pkg:'VQFN-48'},grade:'Q100',price:3.8,why:'모터 제어 단일 칩(차량용)'},
     {mpn:'MCF8316A',mfr:'TI',note:'센서리스 FOC 내장 · 8 A 피크',spec:{v:35,i:8,pkg:'VQFN-40'},grade:'',price:5,why:'코드 없는 FOC'},
-    {mpn:'A4964',mfr:'Allegro',note:'센서리스 BLDC 컨트롤러 + 프리드라이버 · 50 V',spec:{v:50,pkg:'TSSOP-28'},grade:'Q100',price:4.5,why:'차량용 펌프·팬'}],
+    {mpn:'A4964KJPTR-T',family:'A4964',mfr:'Allegro',note:'센서리스 BLDC 컨트롤러 + 프리드라이버 · 50 V',spec:{v:50,pkg:'LQFP-32'},grade:'Q100',price:4.5,why:'차량용 펌프·팬'}],
   dcmotor:[
     {mpn:'IPD90N04S4-04',mfr:'Infineon',note:'N-MOSFET 40 V · 90 A · 4 mΩ',spec:{v:40,i:90,pkg:'TO-252'},grade:'Q101',price:1.1,why:'로우사이드 스위치 기본'},
     {mpn:'BTS3011TE',mfr:'Infineon',note:'보호형 로우사이드 스위치 · 진단',spec:{v:40,i:5,pkg:'PG-SOT223'},grade:'Q100',price:1.4,why:'단락·과온 보호 내장'},
@@ -119,7 +119,7 @@ const C={
   hs_switch:[
     {mpn:'BTS7008-2EPA',mfr:'Infineon',note:'PROFET+2 하이사이드 ×2 · 전류 센스 · 진단',spec:{v:28,i:5,pkg:'TSDSO-14'},grade:'Q100',price:2.1,why:'바디 부하 표준'},
     {mpn:'VN7050AJ',mfr:'ST',note:'VIPower 하이사이드 · 전류 센스',spec:{v:41,i:7,pkg:'PowerSSO-16'},grade:'Q100',price:1.9,why:'전류 센스 진단'},
-    {mpn:'TPS1H100-Q1',mfr:'TI',note:'스마트 하이사이드 · 전류 센스 · 40 V',spec:{v:40,i:2,pkg:'HTSSOP-14'},grade:'Q100',price:1.7,why:'소형 부하'},
+    {mpn:'TPS1H100BQPWPRQ1',family:'TPS1H100-Q1',mfr:'TI',note:'스마트 하이사이드 · 전류 센스 · 40 V',spec:{v:40,i:2,pkg:'HTSSOP-14'},grade:'Q100',price:1.7,why:'소형 부하'},
     {mpn:'BTS50010-1TAD',mfr:'Infineon',note:'PROFET 10 mΩ 하이사이드 · 고전류',spec:{v:28,i:40,pkg:'TO-263-7'},grade:'Q100',price:3.5,why:'40 A급 상 차단·메인 스위치'}],
   ntc:[
     {mpn:'NCU18XH103F60RB',mfr:'Murata',note:'NTC 10 kΩ ±1 % · B 3380 K · 0603 · 차량용',spec:{pkg:'0603'},grade:'Q200',price:0.06,why:'차량용 보드 온도 표준'},
@@ -134,10 +134,10 @@ const C={
     {mpn:'ACS725LLCTR-20AB-T',mfr:'Allegro',note:'홀 전류 센서 ±20 A · 절연 · 3.3 V · 66 mV/A · SOIC-8',spec:{i:20,pkg:'SOIC-8'},grade:'Q100',price:2.6,why:'3.3 V MCU ADC 직결'},
     {mpn:'ACS711KLCTR-25AB-T',mfr:'Allegro',note:'홀 전류 센서 ±25 A · 3.3 V · 과전류 FAULT 출력 · SOIC-8',spec:{i:25,pkg:'SOIC-8'},grade:'',price:1.6,why:'과전류 고장 핀 내장'},
     {mpn:'ACS712ELCTR-20A-T',mfr:'Allegro',note:'홀 전류 센서 ±20 A · 5 V · 100 mV/A (상용)',spec:{i:20,pkg:'SOIC-8'},grade:'',price:1.5,why:'가장 흔한 범용 홀 전류 센서'},
-    {mpn:'MAX40056FAUA+',mfr:'ADI',note:'양방향 전류 센스 앰프 · 65 V · PWM 제거',spec:{pkg:'µMAX-8'},grade:'',price:2.3,why:'상용 고전압 센싱'}],
+    {mpn:'MAX40056FAUA/V+T',family:'MAX40056FAUA+',mfr:'ADI',note:'양방향 전류 센스 앰프 · 65 V · PWM 제거',spec:{pkg:'µMAX-8'},grade:'',price:2.3,why:'상용 고전압 센싱'}],
   flash:[
     {mpn:'W25Q64JVSSIQ',mfr:'Winbond',note:'64 Mbit SPI NOR · 133 MHz',spec:{pkg:'SOIC-8'},grade:'',price:0.9,why:'범용 로그·설정 저장'},
-    {mpn:'MX25L6433F',mfr:'Macronix',note:'64 Mbit SPI NOR',spec:{pkg:'SOIC-8'},grade:'',price:0.85,why:'핀 호환 대체'},
+    {mpn:'MX25L6433FM2I-08GTR',family:'MX25L6433F',mfr:'Macronix',note:'64 Mbit SPI NOR (8-SOP 200 mil)',spec:{pkg:'SOP-8-208mil'},grade:'',price:0.85,why:'핀 호환 대체'},
     {mpn:'IS25LP064A-JBLA3',mfr:'ISSI',note:'64 Mbit SPI NOR · 차량용 등급',spec:{pkg:'SOIC-8'},grade:'Q100',price:1.3,why:'AEC-Q100'},
     {mpn:'AT25SF641B-SHB-T',mfr:'Renesas',note:'64 Mbit SPI NOR · 차량용',spec:{pkg:'SOIC-8'},grade:'Q100',price:1.4,why:'AEC-Q100'}],
   uart:[

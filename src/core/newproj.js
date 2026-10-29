@@ -41,10 +41,10 @@ const LIB={
       if(Im>2){const big=bigTerm(Im,Impk);termFp(2,big?7.62:5.08);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
         if(combo)termFp(3,big?7.62:5.08);inJ(termName(2,big?99:Im),{mpn:big?'':combo?'1729131':'1729128',desc:`${vin} V 전원 입력 (${big?`7.62 mm 단자 — 상시 ${Im} A · 피크 ${Impk} A 정격 품번 지정 필요`:'5.08 mm 단자'} · 상시 ${Im} A${Impk>Im?` · 피크 ${Impk} A ${tpkIn} s`:''})`,pinNames:{1:'+',2:'GND'}});
         for(let i=0;i<n;i++)ctx.part('Q','SQD50P04-09L','TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:'SQD50P04-09L_GE3',desc:`역전압 보호 P-MOSFET (−40 V · 9 mΩ · AEC-Q101)${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((Im/n)**2)*0.009+0.02).toFixed(2),lk:'batt'});
-        ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:rail,2:'VIN_PG'},{mpn:'BZT52C12',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'K',2:'A'}});
+        ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:rail,2:'VIN_PG'},{mpn:'BZT52C12Q-7-F',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'K',2:'A'}});
         ctx.curr('VIN_RAW',Im);ctx.curr(rail,Im);ctx.peak('VIN_RAW',Impk,tpkIn);ctx.peak(rail,Impk,tpkIn);ctx.curr('GND',Im);ctx.peak('GND',Impk,tpkIn);}
       else{if(combo&&typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'HDR-1x3',3);inJ('HDR-1x2',{mpn:combo?'61300311121':'61300211121',desc:`${vin} V 전원 입력`,pinNames:{1:'+',2:'GND'}});
-      ctx.part('D','SS14','SMA',{1:rail,2:'VIN_RAW'},{mpn:'SS14',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'K',2:'A'}});}
+      ctx.part('D','SS14','SMA',{1:rail,2:'VIN_RAW'},{mpn:'SS14HE3_A/H',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'K',2:'A'}});}
       if(String(p.tvs)==='loaddump'){const t=vin<=16?'SMBJ26CA':vin<=32?'SMBJ36CA':'SMBJ58CA';if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'SMB');
         ctx.part('D',t,'SMB',{1:'GND',2:'VIN_RAW'},{mpn:t,desc:`로드덤프 TVS ${t} (양방향 600 W · 역전압 보호 앞단이라 역접속에도 안전 · 중앙 억제 로드덤프 전제, 미억제면 SM8S급 필요)`,pinNames:{1:'A1',2:'A2'}});}
       else if(+p.tvs)ctx.part('D',tvsFor(vin),'SMA',{1:rail,2:'GND'},{desc:`입력 서지 TVS (${tvsFor(vin)})`,pinNames:{1:'K',2:'A'}});
@@ -171,7 +171,7 @@ const LIB={
       ctx.part('J','모터','HDR-1x2',{1:vm,2:'MOT_N'},{mpn:'61300211121',desc:'DC 모터 커넥터',pinNames:{1:'+',2:'−'}});
       ctx.part('Q','AO3400A','SOT-23',{1:'GATE',2:s?'I_SENSE':'GND',3:'MOT_N'},{mpn:'AO3400A',desc:'N채널 MOSFET 로우사이드 스위치',pinNames:{1:'G',2:'S',3:'D'},P:0.15,lk:'phase'});
       ctx.part('R','100Ω','0603',{1:'MOT_PWM',2:'GATE'},{desc:'게이트 직렬 저항'});ctx.part('R','10kΩ','0603',{1:'GND',2:'GATE'},{desc:'게이트 풀다운'});
-      ctx.part('D','SS14','SMA',{1:vm,2:'MOT_N'},{mpn:'SS14',desc:'플라이백 쇼트키',pinNames:{1:'K',2:'A'}});ctx.cap(vm,'100nF','모터 전원 바이패스');
+      ctx.part('D','SS14','SMA',{1:vm,2:'MOT_N'},{mpn:'SS14HE3_A/H',desc:'플라이백 쇼트키',pinNames:{1:'K',2:'A'}});ctx.cap(vm,'100nF','모터 전원 바이패스');
       ctx.sig('MOT_PWM','pwm');
       if(s){ctx.part('R','0.1Ω','1206',{1:'GND',2:'I_SENSE'},{mpn:'RL1206FR-070R1L',desc:'전류 검출 션트',P:0.05});ctx.part('R','10kΩ','0603',{1:'ISNS_ADC',2:'I_SENSE'},{desc:'RC 필터 저항'});ctx.part('C','1µF','0603',{1:'ISNS_ADC',2:'GND'},{desc:'RC 필터 캡'});ctx.sig('ISNS_ADC','adc');}}},
   led:{label:'상태 LED',desc:'LED + 330 Ω (MCU GPIO 구동)',params:{n:{def:1,desc:'개수'},color:{def:'녹색',desc:'녹색 · 빨강 · 파랑'}},
@@ -191,7 +191,7 @@ const LIB={
       ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:'I2C_SDA'},{desc:'SDA 풀업'});ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:'I2C_SCL'},{desc:'SCL 풀업'});ctx.sig('I2C_SCL','i2c_scl','i2c');ctx.sig('I2C_SDA','i2c_sda','i2c');}},
   supervisor:{label:'전원 감시 + 외부 워치독',desc:'TPS3823 (SOT-23-5): VDD 감시 리셋 + WDI 윈도우 워치독 → MCU 리셋 · WDI는 MCU GPIO',params:{rail:{def:'+3V3',desc:'감시할 코어 레일'},wdt:{def:1,desc:'WDI 워치독 연결 (1/0)'}},
     build(ctx,p){const rail=p.rail||'+3V3';ctx.use(rail);const rst=ctx.mcu()==='tc364'?'PORST':'NRST';
-      ctx.part('U','TPS3823-33','SOT-23-5',{1:rst,2:rail,3:'GND',4:rail,5:+p.wdt?'WDI':''},{mpn:'TPS3823DBVR',desc:'전원 감시 리셋 + 윈도우 워치독 (1.6 s)',pinNames:{1:'RESET',2:'VDD',3:'GND',4:'MR',5:'WDI'}});
+      ctx.part('U','TPS3823-33','SOT-23-5',{1:rst,2:rail,3:'GND',4:rail,5:+p.wdt?'WDI':''},{mpn:'TPS3823-33DBVR',desc:'전원 감시 리셋 + 윈도우 워치독 (1.6 s)',pinNames:{1:'RESET',2:'VDD',3:'GND',4:'MR',5:'WDI'}});
       ctx.cap(rail,'100nF','감시 IC 디커플링');if(+p.wdt)ctx.sig('WDI','gpio_out');}},
   hs_switch:{label:'하이사이드 전원 스위치 (세이프 스테이트)',desc:'P-MOSFET 하이사이드 + N-MOSFET 레벨시프트 · MCU SAFE_EN이 High일 때만 부하 전원 공급 (이중 차단)',params:{rail:{def:'auto',desc:'끊을 전원 레일 (auto = 입력)'}},
     build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);const out=r+'_SW';ctx.provide(out,ctx.railV?ctx.railV(r):12,'스위치');
@@ -412,7 +412,7 @@ function shuntAmp(ctx,net,out,I,what,Ipk,tpk){Ipk=Math.max(I,+Ipk||0);const R=sh
   const vs=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vs);const amp=out+'_AMP';
   ctx.part('U','INA181A2-Q1','SOT-23-6',{1:amp,2:'GND',3:net,4:'GND',5:'GND',6:vs},{mpn:'INA181A2QDBVRQ1',desc:`${what} 전류 앰프 ×50 (${(R*Ipk*50).toFixed(2)} V @ 피크 ${Ipk} A)`,pinNames:{1:'OUT',2:'GND',3:'IN+',4:'IN−',5:'REF',6:'VS'},P:0.002});
   ctx.cap(vs,'100nF','전류 앰프 디커플링');ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');}
-function bulk(ctx,vm,I,what){const n=Math.max(1,Math.min(4,Math.ceil(I/20)));for(let i=0;i<n;i++)ctx.part('CP','470µF','CP-SMD-10x10',{1:vm,2:'GND'},{mpn:'EEE-FK1V471P',desc:`${what} VM 벌크 (35 V 470 µF · 리플 전류)`});
+function bulk(ctx,vm,I,what){const n=Math.max(1,Math.min(4,Math.ceil(I/20)));for(let i=0;i<n;i++)ctx.part('CP','470µF','CP-SMD-10x10',{1:vm,2:'GND'},{mpn:'EEE-FK1V471SP',desc:`${what} VM 벌크 (35 V 470 µF · 리플 전류)`});
   ctx.part('C','2.2µF','1210',{1:vm,2:'GND'},{desc:`${what} VM 세라믹 (50 V)`});ctx.part('C','2.2µF','1210',{1:vm,2:'GND'},{desc:`${what} VM 세라믹 (50 V)`});ctx.cap(vm,'100nF',`${what} VM 고주파 바이패스`);}
 /* ---------- build: plan → parts, nets, MCU pin assignment, board spec ---------- */
 /* motor currents written in a sentence: continuous ("상시 · 연속 · 정격 10 A"), peak ("피크 · 최대 · 기동 · 구속 40 A") and its

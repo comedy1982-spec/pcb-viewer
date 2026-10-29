@@ -135,6 +135,7 @@
       "cat": "모터 드라이버",
       "price": 4.5,
       "status": "done",
+      "alias": "A4964* A4964KJPTR-T",
       "title": "A4964 · Sensorless Sinusoidal BLDC Controller"
     },
     "ABM8-20.000MHZ-B2-T": {
@@ -151,6 +152,7 @@
       "cat": "절연",
       "price": null,
       "status": "done",
+      "alias": "ACPL-C87A* ACPL-C87B* ACPL-C87BT-500E",
       "title": "ACPL-C87B · Optically Isolated Voltage Sensor"
     },
     "ACS37002": {
@@ -159,6 +161,7 @@
       "cat": "전류 센서",
       "price": null,
       "status": "done",
+      "alias": "ACS37002* ACS37002LMABTR-066B5",
       "title": "ACS37002 · 400 kHz Isolated Hall Current Sensor"
     },
     "ACS711KLCTR-25AB-T": {
@@ -199,6 +202,7 @@
       "cat": "센서",
       "price": null,
       "status": "done",
+      "alias": "AD2S1210* AD2S1210WDSTZRL7",
       "title": "AD2S1210 · 10- to 16-bit resolver-to-digital converter with reference oscillator"
     },
     "AD8418A": {
@@ -215,6 +219,7 @@
       "cat": "센서",
       "price": null,
       "status": "done",
+      "alias": "ADA4571* ADA4571WHRZ-R7",
       "title": "ADA4571 · Integrated AMR angle sensor and signal conditioner"
     },
     "ADuM4135": {
@@ -319,6 +324,7 @@
       "cat": "센서",
       "price": null,
       "status": "done",
+      "alias": "AS5147P* AS5147P-HTS* AS5147P-HTST",
       "title": "AS5147P · 14-bit on-axis Hall magnetic rotary position sensor"
     },
     "AT25SF641B-SHB-T": {
@@ -415,6 +421,7 @@
       "cat": "다이오드",
       "price": null,
       "status": "done",
+      "alias": "BZT52C12* BZT52C12Q-7-F",
       "title": "BZT52C12 · 12 V Zener diode, SOD-123"
     },
     "C3225X7R1H225K200AE": {
@@ -607,6 +614,7 @@
       "cat": "게이트 드라이버",
       "price": 3.4,
       "status": "done",
+      "alias": "DRV8706S* DRV8706SQRHBRQ1",
       "title": "DRV8706S-Q1 · Automotive H-bridge smart gate driver with SPI and current-sense amplifier"
     },
     "DRV8912-Q1": {
@@ -615,6 +623,7 @@
       "cat": "모터 드라이버",
       "price": null,
       "status": "done",
+      "alias": "DRV8912*Q1 DRV8912QPWPRQ1",
       "title": "DRV8912-Q1 · 12-channel half-bridge driver with SPI, automotive"
     },
     "EEE-FK1E471P": {
@@ -631,6 +640,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "stub",
+      "alias": "EEE-FK1V471* EEE-FK1V471SP EEEFK1V471*",
       "title": "EEE-FK1V471P · SMD aluminum electrolytic capacitor 470 µF 35 V, FK series"
     },
     "FA-130RA": {
@@ -647,6 +657,7 @@
       "cat": "전원",
       "price": 7.2,
       "status": "done",
+      "alias": "FS26* MFS26* MFS2601AMDA0ADR2 SFS26*",
       "title": "FS2600 · FS26 safety system basis chip, ASIL B/D"
     },
     "FS600R10A6P2": {
@@ -719,6 +730,7 @@
       "cat": "게이트 드라이버",
       "price": 4.5,
       "status": "done",
+      "alias": "GD3000* MC33GD3000* MC33GD3000EPR2 MC34GD3000*",
       "title": "GD3000 · 3-phase brushless motor FET pre-driver"
     },
     "GRM188R71C474KA88D": {
@@ -839,6 +851,7 @@
       "cat": "절연",
       "price": null,
       "status": "done",
+      "alias": "ISO224* ISO224BDWVR",
       "title": "ISO224 · Reinforced isolated amplifier, ±12 V single-ended input"
     },
     "L9396": {
@@ -855,6 +868,7 @@
       "cat": "스마트 스위치",
       "price": null,
       "status": "done",
+      "alias": "L9733* L9733XPTR",
       "title": "L9733 · Octal self-configuring low/high-side driver"
     },
     "L9788": {
@@ -896,6 +910,7 @@
       "cat": "전원",
       "price": null,
       "status": "done",
+      "alias": "LM5176*Q1 LM5176QPWPRQ1",
       "title": "LM5176-Q1 · 55-V Synchronous 4-Switch Buck-Boost Controller"
     },
     "LM74700-Q1": {
@@ -936,6 +951,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
+      "alias": "LTC6820* LTC6820HMS#3ZZTRPBF",
       "title": "LTC6820 · isoSPI isolated communications interface"
     },
     "MAX22531": {
@@ -944,6 +960,7 @@
       "cat": "절연",
       "price": null,
       "status": "done",
+      "alias": "MAX22531* MAX22531AAP+T",
       "title": "MAX22531 · Isolated 4-channel 12-bit ADC with integrated DC-DC"
     },
     "MAX3232EIDR": {
@@ -960,6 +977,7 @@
       "cat": "전류 센서",
       "price": 2.3,
       "status": "done",
+      "alias": "MAX40056FAUA* MAX40056FAUA/V+T",
       "title": "MAX40056FAUA+ · Bidirectional Current-Sense Amplifier with PWM Rejection"
     },
     "MAX6369KA+T": {
@@ -985,6 +1003,7 @@
       "cat": "스마트 스위치",
       "price": null,
       "status": "done",
+      "alias": "MC08XS6421* MC08XS6421DEKR2 MC12XS6*",
       "title": "MC12XS6 · 12XS6 eXtreme Switch high-side family"
     },
     "MC33664": {
@@ -993,6 +1012,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
+      "alias": "MC33664* MC33664ATL1EGR2",
       "title": "MC33664 · Isolated network high-speed transceiver (TPL)"
     },
     "MC33879A": {
@@ -1001,6 +1021,7 @@
       "cat": "스마트 스위치",
       "price": null,
       "status": "done",
+      "alias": "MC33879* MC33879A* MC33879APEKR2",
       "title": "MC33879A · Configurable octal serial switch with open load detect"
     },
     "MC33FS4500": {
@@ -1009,6 +1030,7 @@
       "cat": "전원",
       "price": null,
       "status": "done",
+      "alias": "MC33FS450* MC33FS4500* MC33FS4500LAER2",
       "title": "MC33FS4500 · FS4500 safety power SBC with linear VCORE, CAN FD/LIN"
     },
     "MCF8316A": {
@@ -1041,6 +1063,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
+      "alias": "MCP2003B* MCP2003BT-E/SN",
       "title": "MCP2003B · LIN transceiver (LIN 2.2 / SAE J2602 / ISO 17987)"
     },
     "MCP2542FD": {
@@ -1073,6 +1096,7 @@
       "cat": "센서",
       "price": null,
       "status": "done",
+      "alias": "MLX90372* MLX90372GGO-ACE-100-RE",
       "title": "MLX90372 · Triaxis position processor, SENT/PWM, single or dual die"
     },
     "MLX90380": {
@@ -1105,6 +1129,7 @@
       "cat": "MCU",
       "price": 15,
       "status": "stub",
+      "alias": "MPC5744P* SP5744P* SP5744PFK1AMLQ9R SPC5744P*",
       "title": "MPC5744P · Power Architecture e200z4 lockstep ASIL D MCU"
     },
     "MSPM0G3507-Q1": {
@@ -1113,6 +1138,7 @@
       "cat": "MCU",
       "price": 1.5,
       "status": "done",
+      "alias": "M0G3505*Q1 M0G3506*Q1 M0G3507*Q1 M0G3507QPMRQ1 MSPM0G3507*Q1",
       "title": "MSPM0G3507-Q1 · Automotive 80-MHz Cortex-M0+ MCU"
     },
     "MX25L6433F": {
@@ -1121,6 +1147,7 @@
       "cat": "메모리",
       "price": 0.85,
       "status": "stub",
+      "alias": "MX25L6433F* MX25L6433FM2I-08GTR",
       "title": "MX25L6433F · 3 V 64 Mbit serial multi-I/O NOR flash"
     },
     "NCD57000": {
@@ -1129,6 +1156,7 @@
       "cat": "게이트 드라이버",
       "price": null,
       "status": "stub",
+      "alias": "NCD57000* NCV57000* NCV57000DWR2G",
       "title": "NCD57000 · Isolated high-current IGBT gate driver with DESAT"
     },
     "NCP18XH103F03RB": {
@@ -1145,6 +1173,7 @@
       "cat": "전류 센서",
       "price": null,
       "status": "stub",
+      "alias": "NCS21671* NCV21671* NCV21671SQ050T2G",
       "title": "NCS21671 · Zero-drift 40 V bidirectional current-shunt monitor"
     },
     "NCU18XH103F60RB": {
@@ -1202,6 +1231,7 @@
       "cat": "전력 모듈",
       "price": null,
       "status": "done",
+      "alias": "NXH006P120MNF2* NXH006P120MNF2PTG",
       "title": "NXH006P120MNF2 · 1200 V 6 mΩ SiC MOSFET half-bridge F2 module"
     },
     "PCA9306DCUR": {
@@ -1226,6 +1256,7 @@
       "cat": "센서",
       "price": null,
       "status": "done",
+      "alias": "PGA411* PGA411QPAPRQ1",
       "title": "PGA411-Q1 · Resolver-to-Digital Converter with Exciter"
     },
     "RC0402 (Yageo RC_L)": {
@@ -1243,6 +1274,7 @@
       "cat": "MCU",
       "price": null,
       "status": "stub",
+      "alias": "R7F70166* R7F70167* R7F70168* R7F7016874AFP-C#AA1",
       "title": "RH850/F1KM-S1 · 32-bit automotive MCU, G3KH 120 MHz"
     },
     "RH850/U2A8": {
@@ -1251,6 +1283,7 @@
       "cat": "MCU",
       "price": null,
       "status": "stub",
+      "alias": "R7F702301* R7F702301BEBBA-C#BC6 RH850/U2A8*",
       "title": "RH850/U2A8 · Automotive 32-bit dual-core lockstep MCU, 8 MB flash, ASIL D"
     },
     "RL1206FR-070R1L": {
@@ -1379,6 +1412,7 @@
       "cat": "MCU",
       "price": null,
       "status": "done",
+      "alias": "SPC560P50* SPC560P50L5CEFAR",
       "title": "SPC560P50 · Power Architecture automotive MCU"
     },
     "SPC58EC80E5": {
@@ -1411,6 +1445,7 @@
       "cat": "다이오드",
       "price": 0.09,
       "status": "done",
+      "alias": "SS14* SS14HE3_A/H",
       "title": "SS14 · 1 A 40 V surface-mount Schottky rectifier"
     },
     "SS34": {
@@ -1427,6 +1462,7 @@
       "cat": "게이트 드라이버",
       "price": null,
       "status": "done",
+      "alias": "STGAP3S* STGAP3SXSTR",
       "title": "STGAP3S · Isolated single gate driver for IGBT/SiC"
     },
     "STL325N4LF8AG": {
@@ -1483,6 +1519,7 @@
       "cat": "MCU",
       "price": null,
       "status": "stub",
+      "alias": "SAK-TC334LP* TC334LP* TC334LP32F300FAAKXUMA1",
       "title": "TC334LP · AURIX TC33x TC334LP family (TriCore lockstep, TQFP-144)"
     },
     "TC364DP-64F300F": {
@@ -1531,6 +1568,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
+      "alias": "TCAN1043* TCAN1043GDRQ1",
       "title": "TCAN1043-Q1 · Automotive fault-protected CAN FD transceiver with inhibit and wake"
     },
     "TCAN1043HDRQ1": {
@@ -1579,6 +1617,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
+      "alias": "TJA1021T* TJA1021T/20/C,118",
       "title": "TJA1021T · LIN 2.x / SAE J2602 transceiver, SO8"
     },
     "TJA1021T/20": {
@@ -1667,6 +1706,7 @@
       "cat": "센서",
       "price": null,
       "status": "done",
+      "alias": "TLE5012B* TLE5012BE9000XUMA1",
       "title": "TLE5012B · GMR-based angle sensor, SSC (SPI) + IIF/PWM/HSM/SPC, DSO-8"
     },
     "TLE6240GP": {
@@ -1763,6 +1803,7 @@
       "cat": "전류 센서",
       "price": null,
       "status": "done",
+      "alias": "TLI4971-A120T5* TLI4971A120T5* TLI4971A120T5E0001XUMA1",
       "title": "TLI4971-A120T5 · Coreless magnetic current sensor ±120 A, TISON-8"
     },
     "TLIN1029-Q1": {
@@ -1771,6 +1812,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
+      "alias": "TLIN1029* TLIN1029DRQ1",
       "title": "TLIN1029-Q1 · LIN transceiver with dominant state timeout"
     },
     "TLV1117LV33QDCYRQ1": {
@@ -1835,6 +1877,7 @@
       "cat": "MCU",
       "price": 6,
       "status": "stub",
+      "alias": "F280039C* F280039CPZRQ1 TMS320F280039C*",
       "title": "TMS320F280039C-Q1 · Automotive C2000 real-time MCU, 120 MHz C28x + CLA, 384 KB flash"
     },
     "TMS320F280049C-Q1": {
@@ -1899,6 +1942,7 @@
       "cat": "스마트 스위치",
       "price": 1.7,
       "status": "done",
+      "alias": "TPS1H100*Q1 TPS1H100BQPWPRQ1",
       "title": "TPS1H100-Q1 · 40-V 100-mΩ single-channel smart high-side switch"
     },
     "TPS1HB16-Q1": {
@@ -1907,6 +1951,7 @@
       "cat": "스마트 스위치",
       "price": null,
       "status": "stub",
+      "alias": "TPS1HB16* TPS1HB16AQPWPRQ1",
       "title": "TPS1HB16-Q1 · 40-V 16-mΩ single-channel smart high-side switch"
     },
     "TPS2553DBVR": {
@@ -1931,6 +1976,7 @@
       "cat": "전원",
       "price": null,
       "status": "done",
+      "alias": "TPS3823* TPS3823*DBVR TPS3823-33DBVR",
       "title": "TPS3823DBVR · Voltage supervisor with watchdog timer, SOT-23-5"
     },
     "TPS54331DR": {
@@ -1987,6 +2033,7 @@
       "cat": "전원",
       "price": 0.35,
       "status": "done",
+      "alias": "UA78M33QDCYR* UA78M33QDCYRG4Q1",
       "title": "UA78M33QDCYRQ1 · Automotive 500 mA 3.3 V positive linear regulator (78M)"
     },
     "UCC5870-Q1": {
@@ -2043,6 +2090,7 @@
       "cat": "메모리",
       "price": 0.9,
       "status": "stub",
+      "alias": "W25Q64JV* W25Q64JVSS* W25Q64JVSSIQ TR",
       "title": "W25Q64JVSSIQ · 3 V 64 Mbit serial NOR flash (Dual/Quad SPI)"
     },
     "WSLP12062L000FEA": {

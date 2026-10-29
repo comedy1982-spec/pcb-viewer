@@ -61,7 +61,7 @@ T.bms={key:'bms',name:'BMS (배터리 관리 시스템) 마스터',re:/\bbms\b|�
     {id:'mcu',group:'ctrl',label:'Main MCU (Lockstep)',feats:['Core: AURIX TC3xx (TriCore)','SPI (AFE 체인) · ADC','Watchdog & Safety (ASIL C)'],impl:[{type:'mcu',params:{part:'TC364DP-64F300F'}},{type:'xtal',params:{}}]},
     {id:'canbus',group:'comm',label:'CAN-FD Bus (H / L)',ext:true,feats:['차량 네트워크 · UDS']},
     {id:'canx',group:'comm',label:'CAN-FD Transceiver',feats:['물리 계층 (5 V)','스플릿 종단 · ESD'],impl:[{type:'can',params:{}}]},
-    {id:'iso',group:'comm',label:'Isolated Daisy-Chain IF (AFE)',feats:['절연 SPI/isoSPI 트랜시버','셀 모니터 IC 체인 (12–18 셀/IC)','1500 V 절연 · CMTI'],parts:['LTC6820','MC33664'],why:'고전압 팩 측 AFE와 통신'},
+    {id:'iso',group:'comm',label:'Isolated Daisy-Chain IF (AFE)',feats:['절연 SPI/isoSPI 트랜시버','셀 모니터 IC 체인 (12–18 셀/IC)','1500 V 절연 · CMTI'],parts:['LTC6820HMS#3ZZTRPBF','MC33664ATL1EGR2'],why:'고전압 팩 측 AFE와 통신'},
     {id:'cur',group:'io',label:'Pack Current Sensing',feats:['션트 + 절연 ADC 또는 홀 센서','이중화 (션트 + 홀)','HW Diagnostics'],impl:[{type:'vmon',params:{}}]},
     {id:'hvm',group:'io',label:'HV Measurement / Insulation Monitor',feats:['팩 전압 · 링크 전압 (절연 분압)','절연 저항 감시 (IMD)']},
     {id:'ctr',group:'io',label:'Contactor / Pre-charge Driver',feats:['메인 컨택터 ×2 · 프리차지 릴레이','코일 전류 진단 · 용착 감지','독립 차단 경로'],impl:[{type:'hs_switch',params:{}}]},
@@ -84,7 +84,7 @@ T.bcm={key:'bcm',name:'BCM (바디 컨트롤 모듈)',re:/\bbcm\b|바디\s*컨�
   req:'12 V 차량 배터리, STM32, CAN-FD, LIN, LED 4개, 버튼 2개, 릴레이, ASIL B',
   blocks:[
     {id:'pin',group:'power',label:'Battery Input KL30 (12 V)',feats:['역전압 보호','서지 보호 (TVS)','입력 필터'],impl:[{type:'pwr_in',params:{vin:12}}]},
-    {id:'sbc',group:'power',label:'SBC (PMIC + CAN/LIN + WDT)',feats:['VCC_5V · VCC_MCU 3.3 V','슬립 · 웨이크 관리 (< 500 µA)','윈도우 워치독 · 리셋 감시','CAN-FD · LIN 트랜시버 통합'],impl:[{type:'ldo',params:{vout:5}},{type:'ldo',params:{vout:3.3,vin:'+5V'}},{type:'supervisor',params:{}}],parts:['TLE9471','MC33FS4500']},
+    {id:'sbc',group:'power',label:'SBC (PMIC + CAN/LIN + WDT)',feats:['VCC_5V · VCC_MCU 3.3 V','슬립 · 웨이크 관리 (< 500 µA)','윈도우 워치독 · 리셋 감시','CAN-FD · LIN 트랜시버 통합'],impl:[{type:'ldo',params:{vout:5}},{type:'ldo',params:{vout:3.3,vin:'+5V'}},{type:'supervisor',params:{}}],parts:['TLE9471','MC33FS4500LAER2']},
     {id:'mcu',group:'ctrl',label:'Main MCU',feats:['Core: Cortex-M (Automotive)','GPIO ×많음 · PWM · ADC','Watchdog & Safety (ASIL B)'],impl:[{type:'mcu',params:{part:'STM32F042K6U6'}},{type:'xtal',params:{}}]},
     {id:'canbus',group:'comm',label:'CAN-FD Bus (H / L)',ext:true,feats:['차량 네트워크']},
     {id:'canx',group:'comm',label:'CAN-FD Transceiver',feats:['물리 계층 (5 V)','ESD'],impl:[{type:'can',params:{}}]},
@@ -226,28 +226,28 @@ T.eld={key:'eld',name:'ELD only (12 V 솔레노이드 H-브리지)',re:/\beld\b|
                {label:'듀얼 IPG20N04S4L-07 ×2',effect:{impl:{id:'gate',type:'hbridge',params:{fet:'IPG20N04S4L-07'}},feats:{inv:['듀얼 IPG20N04S4L-07 ×2 (40 V · 7.2 mΩ)']}}}]},
     T.dadu.questions.find(q=>q.key==='canfd'),T.dadu.questions.find(q=>q.key==='asil')]};
 /* ---- part candidates per block (several makers each): [mpn, maker, note] ---- */
-const SBC=[['TLF35584QVVS2','Infineon','안전 PMIC · Q&A 워치독 · FS0B · ASIL D'],['TPS65381A-Q1','TI','안전 PMIC · 워치독 · 진단 · ASIL D'],['FS2600','NXP','FS26 안전 SBC · 다중 레일 · ASIL D'],['L9396','ST','차량용 안전 PMIC · 워치독']];
-const MCU_D=[['TC364DP-64F300F','Infineon','AURIX TC36x 락스텝 · GTM · SENT · ASIL D'],['S32K344','NXP','Cortex-M7 락스텝 · ASIL D'],['SPC58EC80E5','ST','Power Architecture 락스텝 · ASIL D'],['RH850/U2A8','Renesas','락스텝 · ASIL D'],['TMS570LC4357','TI','Cortex-R5F 락스텝 · ASIL D']];
-const MCU_B=[['S32K144','NXP','Cortex-M4F · ASIL B'],['SPC560P50','ST','Power Architecture · ASIL B'],['TC334LP','Infineon','AURIX 저가 · ASIL B'],['RH850/F1KM-S1','Renesas','ASIL B'],['STM32F042K6U6','ST','범용 (시제품)']];
-const CANX=[['TJA1443AT','NXP','CAN-FD 5 Mbps · 슬립/웨이크'],['TLE9251VSJ','Infineon','CAN-FD 5 Mbps'],['TCAN1043-Q1','TI','CAN-FD · 웨이크 · 인히빗'],['MCP2542FD','Microchip','CAN-FD 8 Mbps'],['ATA6563','Microchip','CAN-FD 5 Mbps']];
-const GATE3=[['TLE9180D-31QK','Infineon','3상 게이트 드라이버 · 진단 · 세이프티 FET 출력 · ASIL D'],['L9908','ST','3상 게이트 드라이버 · 안전 기능'],['DRV8353RS-Q1','TI','3상 게이트 드라이버 · 전류 센스 앰프 내장'],['GD3000','NXP','3상 프리드라이버 · 진단'],['A4919','Allegro','3상 게이트 드라이버 · 진단'],['A4911KJPTR-T-1','Allegro','3상 게이트 드라이버 · SPI 진단 · 센스 앰프 ×3 · ASIL D'],['A4918KJPTR-1A-3-T','Allegro','3상 게이트 드라이버 · 4.5 V 동작 · ASIL D']];
+const SBC=[['TLF35584QVVS2','Infineon','안전 PMIC · Q&A 워치독 · FS0B · ASIL D'],['TPS65381A-Q1','TI','안전 PMIC · 워치독 · 진단 · ASIL D'],['MFS2601AMDA0ADR2','NXP','FS26 안전 SBC · 다중 레일 · ASIL D (CAN 트랜시버 없음)'],['L9396','ST','차량용 안전 PMIC · 워치독']];
+const MCU_D=[['TC364DP-64F300F','Infineon','AURIX TC36x 락스텝 · GTM · SENT · ASIL D'],['S32K344','NXP','Cortex-M7 락스텝 · ASIL D'],['SPC58EC80E5','ST','Power Architecture 락스텝 · ASIL D'],['R7F702301BEBBA-C#BC6','Renesas','락스텝 · ASIL D'],['TMS570LC4357','TI','Cortex-R5F 락스텝 · ASIL D']];
+const MCU_B=[['S32K144','NXP','Cortex-M4F · ASIL B'],['SPC560P50L5CEFAR','ST','Power Architecture e200z0h 64 MHz · 512 KB 플래시 · 차량용 섀시/세이프티 MCU'],['TC334LP32F300FAAKXUMA1','Infineon','AURIX TC33x 단일 코어 락스텝 300 MHz · 2 MB · ASIL D'],['R7F7016874AFP-C#AA1','Renesas','ASIL B'],['STM32F042K6U6','ST','범용 (시제품)']];
+const CANX=[['TJA1443AT','NXP','CAN-FD 5 Mbps · 슬립/웨이크'],['TLE9251VSJ','Infineon','CAN-FD 5 Mbps'],['TCAN1043GDRQ1','TI','CAN-FD 5 Mbps · 웨이크 · 인히빗'],['MCP2542FD','Microchip','CAN-FD 8 Mbps'],['ATA6563','Microchip','CAN-FD 5 Mbps']];
+const GATE3=[['TLE9180D-31QK','Infineon','3상 게이트 드라이버 · 진단 · 세이프티 FET 출력 · ASIL D'],['L9908','ST','3상 게이트 드라이버 · 안전 기능'],['DRV8343SPHPRQ1','TI','차량용 3상 스마트 게이트 드라이버 · 전류 센스 앰프 ×3 · SPI (5.5–60 V, 벅 없음)'],['MC33GD3000EPR2','NXP','3상 프리드라이버 · 진단'],['A4919','Allegro','3상 게이트 드라이버 · 진단'],['A4911KJPTR-T-1','Allegro','3상 게이트 드라이버 · SPI 진단 · 센스 앰프 ×3 · ASIL D'],['A4918KJPTR-1A-3-T','Allegro','3상 게이트 드라이버 · 4.5 V 동작 · ASIL D']];
 const FET40=[['IAUC60N04S6N050H','Infineon','하프브리지 OptiMOS 6 (상·하 2개 내장) · 40 V · 60 A · RDS(on) 5.0 mΩ max @10 V · Qg 13 nC · Vth 2.6 V · PG-TDSON-8-57 · AEC-Q101 — 6-브리지를 3개로'],['IPG20N04S4L-07','Infineon','듀얼 OptiMOS-T2 (독립 2개, 로직 레벨) · 40 V · 20 A · 7.2 mΩ @10 V / 9.2 mΩ @4.5 V · Qg 39 nC · Vth 1.7 V · PG-TDSON-8 · AEC-Q101 — 6개를 3개로'],['IAUC120N04S6N008','Infineon','40 V 0.8 mΩ OptiMOS'],['STL325N4LF8AG','ST','40 V 0.9 mΩ STripFET'],['BUK7S0R5-40H','Nexperia','40 V 0.5 mΩ LFPAK'],['NVMFS5C404N','onsemi','40 V 0.7 mΩ']];
-const HALL9=[['TPS7B86-Q1','TI','가변 LDO 1.2–18 V · 500 mA · 40 V 입력 · 드롭아웃 0.5 V'],['LM317DCYR','TI','가변 LDO · 1.5 A · 40 V (상용 · 드롭아웃 ~2 V)'],['LM5176-Q1','TI','벅부스트 컨트롤러 (크랭킹 유지)']];
+const HALL9=[['TPS7B86-Q1','TI','가변 LDO 1.2–18 V · 500 mA · 40 V 입력 · 드롭아웃 0.5 V'],['LM317DCYR','TI','가변 LDO · 1.5 A · 40 V (상용 · 드롭아웃 ~2 V)'],['LM5176QPWPRQ1','TI','벅부스트 컨트롤러 (크랭킹 유지)']];
 const NTC=[['NCU18XH103F60RB','Murata','NTC 10 kΩ 0603 · 차량용'],['NCP18XH103F03RB','Murata','NTC 10 kΩ 0603'],['TMP235-Q1','TI','아날로그 온도 IC · 10 mV/°C · SOT-23'],['B57861S0103F040','TDK','NTC 10 kΩ (리드)']];
-const ISENSE=[['INA240A2-Q1','TI','션트 앰프 · PWM 제거 · 50 V/V'],['AD8418A','ADI','션트 앰프 · 양방향'],['TLE4972-AE35D5','Infineon','코어리스 전류 센서 · 과전류 핀'],['NCS21671','onsemi','션트 앰프 · 저오프셋']];
+const ISENSE=[['INA240A2-Q1','TI','션트 앰프 · PWM 제거 · 50 V/V'],['AD8418A','ADI','션트 앰프 · 양방향'],['TLE4972-AE35D5','Infineon','코어리스 전류 센서 · 과전류 핀'],['NCV21671SQ050T2G','onsemi','션트 앰프 · 저오프셋']];
 const PIN12=[['LM74700-Q1','TI','이상 다이오드 컨트롤러 (역접속)'],['LTC4359','ADI','이상 다이오드 컨트롤러'],['IPD90P04P4L-04','Infineon','P-FET 역접속 보호'],['SM8S33A','Littelfuse','로드덤프 TVS 6.6 kW']];
-const HSD=[['BTS7008-2EPA','Infineon','PROFET+2 2ch 8 mΩ · 전류 센스'],['VND7050AJ','ST','VIPower 2ch 50 mΩ · 진단'],['TPS1HB16-Q1','TI','1ch 16 mΩ · 진단'],['MC12XS6','NXP','6ch HSD · SPI']];
-const LSD=[['TLE6240GP','Infineon','16ch LSD · SPI 진단'],['L9733','ST','8ch LSD · SPI'],['DRV8912-Q1','TI','12ch 하프브리지 · 릴레이/모터'],['MC33879A','NXP','8ch LSD · 진단']];
-const LINX=[['TJA1021T','NXP','LIN 2.2'],['TLE7259-3GE','Infineon','LIN 2.2A'],['TLIN1029-Q1','TI','LIN · 웨이크'],['MCP2003B','Microchip','LIN 2.2']];
-const SBC_B=[['TLE9471ES','Infineon','SBC · VCC1 5 V 500 mA 벅(외부 인덕터) + VCC2 100 mA LDO · CAN-FD · 워치독'],['MC33FS4500','NXP','FS45 SBC · CAN/LIN · 워치독'],['L9788','ST','엔진 제어 멀티 IC · 인젝터/점화 드라이버 · 벅+LDO · CAN-FD · K-Line (LQFP100)'],['TCAN4550-Q1','TI','SPI CAN-FD 컨트롤러+트랜시버 · 5 V LDO 출력(VCCOUT) · MCU 전원용 아님']];
-const ISO_AFE=[['LTC6820','ADI','isoSPI 트랜시버'],['MC33664','NXP','TPL 절연 통신'],['TLE9015DQU','Infineon','isoUART 트랜시버'],['BQ79600-Q1','TI','절연 데이지체인 브리지']];
-const ISOADC=[['AMC1306M05','TI','절연 ΔΣ 변조기 (션트)'],['ACS37002','Allegro','홀 전류 센서 · 400 kHz'],['TLI4971-A120T5','Infineon','코어리스 전류 센서'],['MAX22531','ADI','절연 4ch ADC']];
-const HVM=[['AMC1311-Q1','TI','절연 전압 앰프'],['ACPL-C87B','Broadcom','절연 전압 센서'],['ISO224','TI','절연 앰프 ±12 V'],['ADuM4190','ADI','절연 오차 앰프']];
-const GATEISO=[['1ED3491MC12M','Infineon','절연 게이트 드라이버 · DESAT · ASC'],['UCC5870-Q1','TI','절연 게이트 드라이버 · 진단 · SPI'],['STGAP3S','ST','갈바닉 절연 게이트 드라이버'],['ADuM4135','ADI','절연 게이트 드라이버 · 미러 클램프'],['NCD57000','onsemi','절연 게이트 드라이버 · DESAT']];
-const PM=[['FS820R08A6P2','Infineon','HybridPACK Drive 750 V IGBT'],['CAB450M12XM3','Wolfspeed','1200 V SiC 모듈'],['NXH006P120MNF2','onsemi','1200 V SiC 모듈'],['FS600R10A6P2','Infineon','HybridPACK 1 IGBT']];
-const RDC=[['AD2S1210','ADI','RDC 16비트 · 여자 출력'],['PGA411-Q1','TI','리졸버 IF · 여자 앰프 · 진단'],['TLE5012B','Infineon','GMR 각도 센서 (대체)']];
-const ANG=[['TLE5012B','Infineon','GMR 각도 · SPI/SENT'],['AS5147P-Q1','ams OSRAM','AMR 각도 · SPI'],['ADA4571','ADI','AMR 각도 (아날로그)'],['MLX90380','Melexis','각도 센서 · SENT']];
-const TORQ=[['MLX90372','Melexis','토크/각도 · SENT 이중'],['TLE4998S8','Infineon','선형 홀 · SENT'],['A1346','Allegro','선형 홀 · SENT'],['ADA4571','ADI','AMR (아날로그)']];
+const HSD=[['BTS7008-2EPA','Infineon','PROFET+2 2ch 8 mΩ · 전류 센스'],['VND7050AJ','ST','VIPower 2ch 50 mΩ · 진단'],['TPS1HB16AQPWPRQ1','TI','1ch 16 mΩ · 진단'],['MC08XS6421DEKR2','NXP','4ch HSD (8 mΩ×2 + 21 mΩ×2) · SPI · 전류 센스']];
+const LSD=[['TLE6240GP','Infineon','16ch LSD · SPI 진단'],['L9733XPTR','ST','8ch LSD · SPI'],['DRV8912QPWPRQ1','TI','12ch 하프브리지 · 릴레이/모터'],['MC33879APEKR2','NXP','8ch LSD · 진단']];
+const LINX=[['TJA1021T/20/C,118','NXP','LIN 2.2'],['TLE7259-3GE','Infineon','LIN 2.2A'],['TLIN1029DRQ1','TI','LIN · 웨이크'],['MCP2003BT-E/SN','Microchip','LIN 2.2']];
+const SBC_B=[['TLE9471ES','Infineon','SBC · VCC1 5 V 500 mA 벅(외부 인덕터) + VCC2 100 mA LDO · CAN-FD · 워치독'],['MC33FS4500LAER2','NXP','FS45 SBC · CAN/LIN · 워치독'],['L9788','ST','엔진 제어 멀티 IC · 인젝터/점화 드라이버 · 벅+LDO · CAN-FD · K-Line (LQFP100)'],['TCAN4550-Q1','TI','SPI CAN-FD 컨트롤러+트랜시버 · 5 V LDO 출력(VCCOUT) · MCU 전원용 아님']];
+const ISO_AFE=[['LTC6820HMS#3ZZTRPBF','ADI','isoSPI 트랜시버'],['MC33664ATL1EGR2','NXP','TPL 절연 통신'],['TLE9015DQU','Infineon','isoUART 트랜시버'],['BQ79600-Q1','TI','절연 데이지체인 브리지']];
+const ISOADC=[['AMC1306M05','TI','절연 ΔΣ 변조기 (션트)'],['ACS37002LMABTR-066B5','Allegro','홀 전류 센서 · 400 kHz'],['TLI4971A120T5E0001XUMA1','Infineon','코어리스 전류 센서'],['MAX22531AAP+T','ADI','절연 4ch ADC']];
+const HVM=[['AMC1311-Q1','TI','절연 전압 앰프'],['ACPL-C87BT-500E','Broadcom','절연 전압 센서'],['ISO224BDWVR','TI','절연 앰프 ±12 V'],['ADuM4190','ADI','절연 오차 앰프']];
+const GATEISO=[['1ED3491MC12M','Infineon','절연 게이트 드라이버 · DESAT · ASC'],['UCC5870-Q1','TI','절연 게이트 드라이버 · 진단 · SPI'],['STGAP3SXSTR','ST','갈바닉 절연 게이트 드라이버'],['ADuM4135','ADI','절연 게이트 드라이버 · 미러 클램프'],['NCV57000DWR2G','onsemi','절연 게이트 드라이버 · DESAT']];
+const PM=[['FS820R08A6P2','Infineon','HybridPACK Drive 750 V IGBT'],['CAB450M12XM3','Wolfspeed','1200 V SiC 모듈'],['NXH006P120MNF2PTG','onsemi','1200 V SiC 모듈'],['FS400R07A1E3BOSA1','Infineon','HybridPACK 1 650 V / 400 A 3상 6-팩 IGBT 모듈 (NTC 내장)']];
+const RDC=[['AD2S1210WDSTZRL7','ADI','RDC 16비트 · 여자 출력'],['PGA411QPAPRQ1','TI','리졸버 IF · 여자 앰프 · 진단'],['TLE5012BE9000XUMA1','Infineon','GMR 각도 · SSC(SPI) + SPC(SENT 기반)']];
+const ANG=[['TLE5012BE9000XUMA1','Infineon','GMR 각도 · SSC(SPI) + SPC(SENT 기반)'],['AS5147P-HTST','ams OSRAM','Hall 14비트 온축 각도 · SPI/ABI/UVW/PWM'],['ADA4571WHRZ-R7','ADI','AMR 각도 (아날로그)'],['MLX90380','Melexis','각도 센서 · SENT']];
+const TORQ=[['MLX90372GGO-ACE-100-RE','Melexis','토크/각도 · SENT 이중'],['TLE4998S8','Infineon','선형 홀 · SENT'],['A1346','Allegro','선형 홀 · SENT'],['ADA4571WHRZ-R7','ADI','AMR (아날로그)']];
 const GATEH=[['A4911KJPTR-T-1','Allegro','3상 드라이버를 A·B 레그로 H-브리지 · SPI 진단 · 센스 앰프 ×3 (생성 회로 기본)'],['IR2104S','Infineon','하프브리지 드라이버 ×2 · 데드타임 내장'],['DRV8702-Q1','TI','H-브리지 게이트 드라이버 · 전류 센스 앰프 · 진단'],['DRV8703-Q1','TI','H-브리지 게이트 드라이버 · SPI 진단'],['A3941','Allegro','풀브리지 MOSFET 드라이버 · 차량용'],['TLE7182EM','Infineon','H-브리지 MOSFET 드라이버 · 차량용']];
 const PARTS={
   eps:{pin:PIN12,sbc:SBC,mcu:MCU_D,canx:CANX,gate:GATE3,inv:FET40,pcut:FET40,isense:ISENSE,tsens:TORQ,asens:ANG},
