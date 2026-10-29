@@ -17,7 +17,7 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
   <h1>AT25SF641B-SHB-T</h1>
   <p class="meta">Renesas · 메모리 · 64-Mbit SPI serial NOR flash (dual/quad I/O) · 참고 단가 약 $1.4 (추정)</p>
   <p class="meta">원본: <a href="https://www.renesas.com/en/document/dst/at25sf641b-datasheet?r=1608816" target="_blank" rel="noopener">데이터시트 PDF (미확인 링크)</a> · <a href="https://www.renesas.com/en/products/at25sf641b/part-details/at25sf641b-shb-b" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=AT25SF641B-SHB-T" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS-AT25SF641B-191 Rev. G (2023-10-04)</p>
-  <p class="todo">데이터시트 표지·특징 목록과 Renesas 제품 페이지만 읽음. 절대 최대 정격, DC 특성(동작 전류), 페이지 프로그램 시간, 8핀 SOIC 핀 배치는 원본 PDF에서 확인 필요.</p>
+  <p class="todo">데이터시트 표지·특징 목록과 Renesas 제품 페이지만 읽음. 2차 시도: jiepei(1/61쪽만), eeworld(봇 차단), qdatasheet(소개만), Renesas 문서 링크(접근 승인 안 됨) — 절대 최대 정격, DC 특성(동작 전류), 페이지 프로그램 시간, 8핀 SOIC 핀 배치는 여전히 원본 PDF에서 확인 필요.</p>
   <h2>핵심 사양</h2>
   <dl>
     <dt>기능</dt><dd>64 Mbit (8 MB) SPI 시리얼 NOR 플래시, SPI 모드 0/3</dd>
@@ -26,7 +26,7 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
     <dt>최대 클럭</dt><dd>133 MHz (명령별 구분은 원본 확인)</dd>
     <dt>소거 시간 (일반)</dt><dd>4 KB 65 ms · 32 KB 150 ms · 64 KB 240 ms · 칩 전체 30 s</dd>
     <dt>프로그램</dt><dd>1회 최대 256 바이트</dd>
-    <dt>전류 (일반)</dt><dd>Standby 14 µA · Deep power-down 1 µA</dd>
+    <dt>전류</dt><dd>Standby 14 µA 일반 · Deep power-down 1 µA 일반 · 읽기 3.3 mA (Renesas 제품 페이지 표기)</dd>
     <dt>내구성 / 보존</dt><dd>100,000 P/E 사이클 / 20년</dd>
     <dt>보안</dt><dd>OTP 보안 레지스터 256 B × 3 · 64비트 UID · WP 핀 하드웨어 보호 · 비휘발 레지스터 소프트웨어 보호 · SFDP (JESD216B)</dd>
     <dt>온도</dt><dd>−40 ~ +85 °C (산업용)</dd>

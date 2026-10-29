@@ -17,7 +17,7 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
   <h1>STM32F042K6U6</h1>
   <p class="meta">STMicroelectronics · MCU · STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN · 참고 단가 약 $2.2 (추정)</p>
   <p class="meta">원본: <a href="https://www.st.com/resource/en/datasheet/stm32f042k6.pdf" target="_blank" rel="noopener">데이터시트 PDF (미확인 링크)</a> · <a href="https://pdf.elecfans.com/STMICROELECTRONICS/STM32F042K6T6.html" target="_blank" rel="noopener">데이터시트 사본</a> · <a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f042k6.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=STM32F042K6U6" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DocID025832 Rev 5, 2017-01</p>
-  <p class="todo">읽은 사본에 UFQFPN32 핀 정의표, θJA, 전원 디커플링 그림이 빠져 있음 — 핀 배치 표·열저항·디커플링 값은 ST 원본 PDF에서 확인 필요. (부품 생성기에는 이미 33핀 표가 있음)</p>
+  <p class="todo">2차 시도: direnc.net 사본(Rev 4)에서 UFQFPN32 핀 정의표를 읽었으나 31번(PF11-BOOT0 / PB8-BOOT0) 행이 추출에서 모호. θJA(표 74)와 전원 디커플링 그림(그림 13)은 어느 사본(elecfans, direnc)에도 없음 — ST 원본 PDF 확인 필요. (부품 생성기에는 이미 33핀 표가 있음)</p>
   <h2>핵심 사양</h2>
   <dl>
     <dt>코어</dt><dd>Arm Cortex-M0, fHCLK 0–48 MHz</dd>
@@ -52,7 +52,30 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
     <tr><td>Ta (접미사 6)</td><td>−40</td><td></td><td>85</td><td>°C</td></tr>
   </tbody></table>
   <h2>핀 배치</h2>
-  <p>UFQFPN32 5 × 5 mm, 노출 패드 — 핀 번호표는 원본 데이터시트 Table "pin definitions" 확인 필요. 알려진 그룹: USB PA11 (DM) / PA12 (DP), SWD PA13/PA14, BOOT0, ADC_IN0–9 (PA0–PA7, PB0, PB1).</p>
+  <p>UFQFPN32 5 × 5 mm, 노출 패드 (VSS/VSSA가 UFQFPN32 열에 "0"으로 표기 — 노출 패드로 해석). 표 13 (DocID025832 Rev 4 사본):</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>VDD</td><td>디지털 전원</td></tr>
+    <tr><td>2</td><td>PF0-OSC_IN</td><td>HSE 입력, I2C1_SDA, CRS_SYNC (FTf)</td></tr>
+    <tr><td>3</td><td>PF1-OSC_OUT</td><td>HSE 출력, I2C1_SCL (FTf)</td></tr>
+    <tr><td>4</td><td>NRST</td><td>리셋 (액티브 로우)</td></tr>
+    <tr><td>5</td><td>VDDA</td><td>아날로그 전원</td></tr>
+    <tr><td>6–13</td><td>PA0–PA7</td><td>ADC_IN0–7, USART2, TIM2/3, SPI1 (TTa)</td></tr>
+    <tr><td>14, 15</td><td>PB0, PB1</td><td>ADC_IN8, ADC_IN9 (TTa)</td></tr>
+    <tr><td>16</td><td>PB2</td><td>GPIO (FT)</td></tr>
+    <tr><td>17</td><td>VDDIO2</td><td>PA8–PA15 I/O 전원</td></tr>
+    <tr><td>18</td><td>PA8</td><td>MCO, TIM1_CH1, USART1_CK (FT)</td></tr>
+    <tr><td>19, 20</td><td>PA9, PA10</td><td>USART1_TX/RX, I2C1 (FTf)</td></tr>
+    <tr><td>21</td><td>PA11</td><td>USB_DM, CAN_RX (FTf)</td></tr>
+    <tr><td>22</td><td>PA12</td><td>USB_DP, CAN_TX (FTf)</td></tr>
+    <tr><td>23</td><td>PA13</td><td>SWDIO (FT)</td></tr>
+    <tr><td>24</td><td>PA14</td><td>SWCLK, USART2_TX (FT)</td></tr>
+    <tr><td>25</td><td>PA15</td><td>SPI1_NSS, USART2_RX (FT)</td></tr>
+    <tr><td>26–28</td><td>PB3–PB5</td><td>SPI1 SCK/MISO/MOSI, TIM3 (FT)</td></tr>
+    <tr><td>29, 30</td><td>PB6, PB7</td><td>I2C1 SCL/SDA, USART1 TX/RX (FTf)</td></tr>
+    <tr><td>31</td><td>PF11-BOOT0 (확인 필요)</td><td>부트 메모리 선택 — 사본 추출이 모호</td></tr>
+    <tr><td>32</td><td>PB8</td><td>I2C1_SCL, CAN_RX, TIM16_CH1 (FTf)</td></tr>
+    <tr><td>EP</td><td>VSS / VSSA</td><td>그라운드</td></tr>
+  </tbody></table>
   <h2>응용 회로 · 주변 부품</h2>
   <ul>
     <li>전원 디커플링(VDD, VDDA, VDDIO2) 값은 데이터시트 "Power supply scheme" 그림 확인 필요.</li>

@@ -17,7 +17,7 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
   <h1>VN7050AJ</h1>
   <p class="meta">ST · 스마트 스위치 · 단채널 50 mΩ 하이사이드 드라이버, MultiSense 아날로그 피드백 · 참고 단가 약 $1.9 (추정)</p>
   <p class="meta">원본: <a href="https://pdf.elecfans.com/STMICROELECTRONICS/VN7050AJTR.html" target="_blank" rel="noopener">데이터시트 (DS10826 사본)</a> · <a href="https://www.st.com/ja/automotive-analog-and-power/vn7050aj.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=VN7050AJ" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS10826 Rev 5, 2019-04</p>
-  <p class="todo">핀 번호 미확정: 읽은 PDF 텍스트에서 PowerSSO-16 배치도의 번호–이름 대응이 깨져 있어 핀 번호를 싣지 않았습니다. ST 원본 PDF(Figure 2)로 확인 후 핀 표를 채우세요.</p>
+  <p class="todo">핀 번호 미확정: elecfans·dtsheet(DocID022403 Rev 8)·bychips 사본 모두 PowerSSO-16 배치도(Figure 2)의 번호–이름 대응이 텍스트 추출에서 깨져 있어 핀 번호를 싣지 않았습니다 (2차 시도 포함). ST 원본 PDF로 확인 후 핀 표·핀 JSON을 채우세요.</p>
 
   <h2>핵심 사양</h2>
   <dl>
@@ -88,7 +88,8 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
   <h2>설계 메모</h2>
   <ul>
     <li>탭(VCC)에 넓은 동박과 비아를 둬 방열 — Rthj-amb가 보드 조건에 따라 58.5 → 24.5 °C/W로 크게 달라짐.</li>
-    <li>MCU I/O 보호 직렬 저항(Rprot) 값은 이 문서 사본에서 읽지 못함 — 원본 응용 정보 장 확인 필요.</li>
+    <li>MCU I/O 보호 직렬 저항 Rprot: 권장 15 kΩ (예시 조건 계산 범위 7.5–140 kΩ, dtsheet 사본 응용 정보).</li>
+    <li>GND 역배터리 보호: 소신호 다이오드 DGND + 병렬 RGND 일반 4.7 kΩ (유도성 부하 구동 시).</li>
     <li>2채널 동일 계열: VND7050AJ. SO-8 단채널: VN7050AS (FaultRST·SEL 핀 없음).</li>
   </ul>
 </article>
