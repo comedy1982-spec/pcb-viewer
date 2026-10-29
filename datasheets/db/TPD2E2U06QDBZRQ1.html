@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPD2E2U06QDBZRQ1 · 2-channel ESD protection diode, SOT-23</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TPD2E2U06QDBZRQ1" data-mfr="Texas Instruments" data-cat="보호" data-price="0.2" data-status="done" data-src="https://www.ti.com.cn/cn/lit/gpn/TPD2E2U06-Q1">
+  <h1>TPD2E2U06QDBZRQ1</h1>
+  <p class="meta">Texas Instruments · 보호 · 2채널 저용량 ESD 보호 다이오드 (USB 2.0 D+/D−용) · 참고 단가 약 $0.2 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com.cn/cn/lit/gpn/TPD2E2U06-Q1" target="_blank" rel="noopener">데이터시트 PDF (TPD2E2U06-Q1, DBZ)</a> · <a href="https://ti.com/lit/gpn/TPD2E2U06" target="_blank" rel="noopener">데이터시트 PDF (TPD2E2U06 상용, DRL/DCK)</a> · <a href="https://www.ti.com/product/tpd2e2u06" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TPD2E2U06QDBZRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 ZHCSD47E (SLLSEJ9 중문판, 2022-10) / SLLSEG9C (2019-12)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>2채널 단방향 TVS ESD 보호 (IO→GND 클램프)</dd>
+    <dt>IEC 61000-4-2</dt><dd>접촉 ±25 kV, 기중 ±30 kV</dd>
+    <dt>ISO 10605 (Q1)</dt><dd>330 pF/330 Ω: 접촉 ±20 kV, 기중 ±25 kV</dd>
+    <dt>서지 (8/20 µs)</dt><dd>IPP 5.5 A</dd>
+    <dt>VRWM / VBR</dt><dd>5.5 V (IIO &lt; 10 µA) / 6.5 ~ 8.5 V (1 mA)</dd>
+    <dt>클램프 전압</dt><dd>IO→GND 9.7 V @1 A, 12.4 V @5 A (TLP); GND→IO 1.9 V @1 A, 4 V @5 A</dd>
+    <dt>라인 용량</dt><dd>1.5 pF 일반, 1.9 pF 최대 (1 MHz, 2.5 V 바이어스), 채널 간 0.02 pF</dd>
+    <dt>누설 전류</dt><dd>1 nA 일반, 10 nA 최대 (VIO = 2.5 V)</dd>
+    <dt>등급 / 온도</dt><dd>-Q1 버전 AEC-Q101, -40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>DBZ = SOT-23 3핀 (-Q1 전용), 상용 버전은 DRL(SOT-5) / DCK(SC70-3)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>피크 펄스 전류 IPP (8/20 µs)</td><td></td><td>5.5</td><td>A</td><td></td></tr>
+      <tr><td>피크 펄스 전력 PPP (8/20 µs)</td><td></td><td>75</td><td>W</td><td>-Q1 (DBZ/DCK). 상용 DRL 85 W, DCK 75 W</td></tr>
+      <tr><td>접합 온도 TJ</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도 Tstg</td><td>-65</td><td>150</td><td>°C</td><td>상용 문서는 155 °C</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>IO 핀 전압 VIO</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>동작 온도 TA</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT-23 3핀 (DBZ), 상면도 — TPD2E2U06-Q1 데이터시트 기준</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>IO1</td><td>ESD 보호 채널 1, 커넥터 가까이 데이터 라인에 연결</td></tr>
+      <tr><td>2</td><td>IO2</td><td>ESD 보호 채널 2</td></tr>
+      <tr><td>3</td><td>GND</td><td>접지</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>전원이 필요 없는 수동 소자입니다. USB 2.0 D+/D− 라인(예: 0~3.3 V, 240 MHz 신호)을 커넥터 쪽에서 보호합니다.</li>
+    <li>각 라인의 최대 전압(5.5 V)을 넘지 않게 사용합니다. VBUS 보호용이 아닙니다.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>DBZ (SOT-23-3): RθJA 439.5 °C/W, RθJC(top) 194.9 °C/W, RθJB 173.9 °C/W, ψJT 53.7 °C/W, ψJB 172 °C/W.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li><b>주문 번호 문제:</b> TPD2E2U06DBZR은 TI 주문 목록에 없습니다. DBZ(SOT-23) 패키지는 차량용 TPD2E2U06QDBZRQ1(마킹 22U6Q)로만 나오고, 상용 TPD2E2U06은 DCKR/DRLR만 있습니다. 차량용 설계이므로 TPD2E2U06QDBZRQ1로 바꾸는 것을 권합니다.</li>
+    <li>커넥터에 최대한 가깝게 배치하고, TVS와 커넥터 사이의 비보호 배선을 보호 배선에서 떨어뜨립니다.</li>
+    <li>보호 배선은 직선으로, 꺾임은 큰 반경으로 배선합니다. GND 핀은 비아로 바로 접지면에 연결합니다.</li>
+    <li>-Q1 문서는 HBM 등급을 7.3.1절에서 ±8 kV(H3B), 표 6.2에서 ±10000 V로 다르게 적고 있어 확인이 필요합니다.</li>
+  </ul>
+</article>
+</body>
+</html>

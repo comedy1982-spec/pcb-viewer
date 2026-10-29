@@ -753,6 +753,14 @@
       "status": "stub",
       "title": "IAUC100N04S6N008 · 40 V 0.8 mΩ OptiMOS 6 MOSFET"
     },
+    "IAUC120N04S6N008": {
+      "file": "datasheets/db/IAUC120N04S6N008.html",
+      "mfr": "Infineon",
+      "cat": "트랜지스터",
+      "price": null,
+      "status": "stub",
+      "title": "IAUC120N04S6N008 · 40 V 0.8 mΩ OptiMOS 6 MOSFET"
+    },
     "IAUC60N04S6N050H": {
       "file": "datasheets/db/IAUC60N04S6N050H.html",
       "mfr": "Infineon",
@@ -1876,6 +1884,14 @@
       "price": 0.2,
       "status": "done",
       "title": "TPD2E2U06DBZR · 2-channel ESD protection diode, SOT-23"
+    },
+    "TPD2E2U06QDBZRQ1": {
+      "file": "datasheets/db/TPD2E2U06QDBZRQ1.html",
+      "mfr": "Texas Instruments",
+      "cat": "보호",
+      "price": 0.2,
+      "status": "done",
+      "title": "TPD2E2U06QDBZRQ1 · 2-channel ESD protection diode, SOT-23"
     },
     "TPS1H100-Q1": {
       "file": "datasheets/db/TPS1H100-Q1.html",
