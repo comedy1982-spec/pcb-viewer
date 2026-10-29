@@ -24,7 +24,7 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
     <dt>입력 전압</dt><dd>3.5 ~ 28 V (VIN 절대 최대 30 V)</dd>
     <dt>출력 전류</dt><dd>3 A</dd>
     <dt>기준 전압</dt><dd>0.772 / 0.8 / 0.828 V</dd>
-    <dt>스위칭 주파수</dt><dd>400 / 570 / 740 kHz (VIN = 12 V)</dd>
+    <dt>스위칭 주파수</dt><dd>456 / 570 / 684 kHz (VIN = 12 V, SLVS839F 기준 · 초판은 400 / 740 kHz)</dd>
     <dt>하이사이드 RDS(on)</dt><dd>일반 80 mΩ, 최대 150 mΩ (BOOT-PH = 6 V, VIN = 12 V)</dd>
     <dt>전류 제한</dt><dd>3.5 ~ 5.8 A (사이클별)</dd>
     <dt>정지 / 셧다운 전류</dt><dd>비스위칭 110 µA (최대 190 µA) / 1 µA (최대 10 µA)</dd>
@@ -36,7 +36,7 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
   <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
     <tbody>
       <tr><td>VIN</td><td>-0.3</td><td>30</td><td>V</td><td></td></tr>
-      <tr><td>EN</td><td>-0.3</td><td>5</td><td>V</td><td></td></tr>
+      <tr><td>EN</td><td>-0.3</td><td>6</td><td>V</td><td>SLVS839F (초판 5 V)</td></tr>
       <tr><td>BOOT</td><td></td><td>38</td><td>V</td><td></td></tr>
       <tr><td>BOOT-PH</td><td></td><td>8</td><td>V</td><td></td></tr>
       <tr><td>PH</td><td>-0.6</td><td>30</td><td>V</td><td>10 ns 과도 -5 V</td></tr>
@@ -80,7 +80,7 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
   </ul>
 
   <h2>패키지 · 열</h2>
-  <p>SOIC-8 (D). 접합-주변 열저항 100 °C/W, 접합-상면 5 °C/W (2 in × 1.5 in, 2층, 2 oz 구리, 열 비아 6개 시험 보드 기준, 초판 문서 값). 열 차단 165 °C. 최신판 Thermal Information 표는 데이터시트 확인 필요.</p>
+  <p>SOIC-8 (D). 접합-주변 열저항 116.3 °C/W (SLVS839F Thermal Information; 초판 시험 보드 값 100 °C/W), 접합-상면 5 °C/W (2 in × 1.5 in, 2층, 2 oz 구리, 열 비아 6개 시험 보드 기준, 초판 문서 값). 열 차단 165 °C. 최신판 Thermal Information 표는 데이터시트 확인 필요.</p>
 
   <h2>설계 메모</h2>
   <ul>
