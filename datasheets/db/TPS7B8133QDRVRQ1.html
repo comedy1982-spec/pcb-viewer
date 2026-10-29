@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPS7B8133QDRVRQ1 · Automotive 150 mA 3.3 V ultra-low-IQ off-battery LDO</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TPS7B8133QDRVRQ1" data-mfr="TI" data-cat="전원" data-price="0.95" data-status="done" data-src="https://www.ti.com/document-viewer/TPS7B81-Q1/datasheet/GUID-BC585858-C858-4063-8A19-77F546990105">
+  <h1>TPS7B8133QDRVRQ1</h1>
+  <p class="meta">TI · 전원 · 차량용 150 mA, 3.3 V 고정, 배터리 직결형 초저 IQ LDO (TPS7B81-Q1) · 참고 단가 약 $0.95 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/TPS7B81-Q1/datasheet/GUID-BC585858-C858-4063-8A19-77F546990105" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/lit/ds/symlink/tps7b81.pdf" target="_blank" rel="noopener">데이터시트 PDF (미확인 링크)</a> · <a href="https://www.ti.com/product/TPS7B81-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TPS7B8133QDRVRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SBVS370F (2019년 5월 – 2025년 9월 개정)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>배터리 직결 저드롭아웃 선형 레귤레이터, EN 입력, 고정 3.3 V 출력</dd>
+    <dt>입력 전압</dt><dd>3–40 V 동작 (권장), 절대 최대 45 V (200 ms)</dd>
+    <dt>출력 전류</dt><dd>0–150 mA (전류 제한 180 / 510 / 690 mA 최소/일반/최대)</dd>
+    <dt>정지 전류 IQ</dt><dd>1.9 µA 일반 / 3.5 µA 최대 (IOUT = 0 mA); 2.7 µA 일반 / 4.5 µA 최대 (IOUT = 0.2 mA, DRV)</dd>
+    <dt>셧다운 전류</dt><dd>0.3 µA 일반 / 1 µA 최대 (EN = 0 V)</dd>
+    <dt>출력 정확도</dt><dd>±1.5 % (VIN = VOUT+VDO ~ 40 V, IOUT = 1–150 mA)</dd>
+    <dt>드롭아웃 (3.3 V)</dt><dd>150 mA: 345 mV 일반 / 675 mV 최대 (DRV); 100 mA: 255 mV 일반 / 450 mV 최대</dd>
+    <dt>PSRR</dt><dd>60 dB 일반 (100 Hz, IOUT = 10 mA, COUT = 2.2 µF)</dd>
+    <dt>보호</dt><dd>전류 제한, 열 차단 175 °C (히스테리시스 20 °C), UVLO 최대 2.7 V (히스테리시스 200 mV)</dd>
+    <dt>온도 / 등급</dt><dd>TA −40 ~ 125 °C, TJ −40 ~ 150 °C · 차량용 Q1 부품 (AEC-Q100 등급은 데이터시트 확인 필요)</dd>
+    <dt>패키지</dt><dd>DRV 6핀 WSON (써멀 패드 포함)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VIN 입력</td><td>−0.3</td><td>45</td><td>V</td><td>45 V는 200 ms까지 견딤</td></tr>
+      <tr><td>VEN 인에이블</td><td>−0.3</td><td>VIN</td><td>V</td><td></td></tr>
+      <tr><td>VOUT 출력</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+      <tr><td>TJ 접합 온도</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>Tstg 보관 온도</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VIN 입력 전압</td><td>3</td><td></td><td>40</td><td>V</td></tr>
+      <tr><td>VEN 인에이블 전압</td><td>0</td><td></td><td>VIN</td><td>V</td></tr>
+      <tr><td>COUT 출력 커패시터 (실효값)</td><td>1</td><td></td><td>200</td><td>µF</td></tr>
+      <tr><td>COUT ESR (10 kHz)</td><td>0.001</td><td></td><td>5</td><td>Ω</td></tr>
+      <tr><td>TA 주위 온도</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+      <tr><td>TJ 접합 온도</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+      <tr><td>EN VIH / VIL</td><td>2 (VIH)</td><td></td><td>0.7 (VIL)</td><td>V</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>DRV 6핀 WSON + 써멀 패드</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>IN</td><td>입력 전원. 권장 용량 이상의 세라믹 커패시터를 GND 가까이에</td></tr>
+      <tr><td>2</td><td>EN</td><td>인에이블. VIH 이상 → 동작, VIL 이하 → 셧다운</td></tr>
+      <tr><td>3</td><td>GND</td><td>그라운드</td></tr>
+      <tr><td>4</td><td>GND</td><td>그라운드</td></tr>
+      <tr><td>5</td><td>DNC</td><td>바이어스 전압 연결 금지. GND에 묶거나 개방</td></tr>
+      <tr><td>6</td><td>OUT</td><td>레귤레이트 출력. 안정도를 위해 GND로 커패시터 필요</td></tr>
+      <tr><td>PAD</td><td>Thermal pad</td><td>넓은 GND 플레인에 연결 (방열)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>입력: IN–GND 10–22 µF 권장 (안정도 필수 조건은 아님, 과도 응답·PSRR 개선). 정격 전압은 최대 입력보다 높게.</li>
+    <li>출력: 실효 1–200 µF, ESR 0.001–5 Ω, 저 ESR 세라믹 권장. 전기적 특성 측정 조건은 10 µF 세라믹.</li>
+    <li>EN을 항상 켜려면 IN에 직접 연결 가능 (VEN 최대 = VIN).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>DRV (WSON-6): RθJA 72.8 °C/W, RθJC(top) 85.8, RθJB 37.4, ψJT 2.7, ψJB 37.3, RθJC(bot) 13.8 °C/W. TJ 최대 150 °C, 열 차단 175 °C. 참고: DGN(HVSSOP-8) RθJA 63.9, KVU(TO-252-5) RθJA 31.1 °C/W.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>손실 PD = (VIN − VOUT) × IOUT. 14 V → 3.3 V, 150 mA 에서 약 1.6 W → WSON(72.8 °C/W)으로는 연속 불가. 이 패키지는 상시 대기 전원(수 mA~수십 mA)용으로 쓰고, 큰 전류는 KVU(TO-252) 선택.</li>
+    <li>PD 5번 핀(DNC)은 GND 또는 개방. 써멀 패드는 비아로 내층 GND에 연결.</li>
+    <li>주문 변형: TPS7B8133QWDRVRQ1 은 같은 DRV 패키지의 wettable-flank(W) 버전.</li>
+    <li>주의: 부품 DB 설명의 "300 mA / 2.4 µA"는 데이터시트와 다름. 데이터시트 기준 최대 150 mA, IQ 3 µA급(1.9 µA 일반).</li>
+  </ul>
+</article>
+</body>
+</html>

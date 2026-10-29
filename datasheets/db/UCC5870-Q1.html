@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UCC5870-Q1 · 30 A isolated IGBT/SiC gate driver with SPI and advanced protection</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="UCC5870-Q1" data-mfr="TI" data-cat="게이트 드라이버" data-price="" data-status="done" data-src="https://ti.com/lit/pdf/SLUSD86">
+  <h1>UCC5870-Q1</h1>
+  <p class="meta">TI · 게이트 드라이버 · 차량용 30 A 절연형 IGBT/SiC MOSFET 게이트 드라이버, SPI 설정·진단, 보호 기능</p>
+  <p class="meta">원본: <a href="https://ti.com/lit/pdf/SLUSD86" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/UCC5870-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=UCC5870-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLUSD86C (2021년 9월 개정)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>트랙션 인버터용 단채널 절연 게이트 드라이버, 분리 출력 OUTH/OUTL, 능동 밀러 클램프(내부 또는 외부 구동)</dd>
+    <dt>구동 전류</dt><dd>피크 30 A 소스/싱크 (일반), 구동 세기 16.7 / 33 / 100 % 선택. 외부 게이트 저항으로 15 A 이하로 제한</dd>
+    <dt>전원</dt><dd>VCC1 3–5.5 V, VCC2 15–30 V, VEE2 −12–0 V</dd>
+    <dt>절연</dt><dd>VISO 3750 VRMS 1분 (UL 1577, 인증 예정 표기), CMTI 최소 100 kV/µs, 연면·공간거리 8 mm</dd>
+    <dt>보호</dt><dd>DESAT (2.25–11 V, 16단계), 션트 OC (170–998 mV) / SC (460–1312 mV), NTC 과온, 소프트 턴오프·2단 턴오프, 1차/2차 ASC, 데드타임 관통 방지, VCC1/VCC2/VEE2 UVLO·OVLO</dd>
+    <dt>진단</dt><dd>BIST, 게이트 경로 감시, nFLT1(고장) / nFLT2(경고), 10비트 ADC 6채널 (AI1–AI6, 0–3.6 V), ISO 26262 ASIL D 지원 문서</dd>
+    <dt>인터페이스</dt><dd>SPI 최대 4 MHz, PWM IN+/IN− 최대 50 kHz, 최소 펄스 250 ns</dd>
+    <dt>타이밍</dt><dd>전파 지연 최대 150 ns (0.1 nF, 글리치 필터 off), 상승/하강 150 ns (10 nF)</dd>
+    <dt>등급 / 온도</dt><dd>AEC-Q100 Grade 0 (TA −40 ~ 125 °C), TJ −40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>DWJ 36핀 SSOP/SOIC, 12.8 × 7.5 mm</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VCC1</td><td>−0.3</td><td>6</td><td>V</td><td>GND1 기준</td></tr>
+      <tr><td>VCC2</td><td>−0.3</td><td>33</td><td>V</td><td>GND2 기준</td></tr>
+      <tr><td>VEE2</td><td>−15</td><td>0.3</td><td>V</td><td>GND2 기준</td></tr>
+      <tr><td>VCC2 − VEE2</td><td>−0.3</td><td>33</td><td>V</td><td></td></tr>
+      <tr><td>OUTH, OUTL, CLAMP, VCECLP</td><td>VEE2 − 0.3</td><td>VCC2 + 0.3</td><td>V</td><td>GND2 기준</td></tr>
+      <tr><td>DESAT</td><td>−0.3</td><td>VCC2 + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>1차측 IO</td><td>−0.3</td><td>VCC1 + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>VREG1 / VREG2</td><td>−0.3</td><td>2</td><td>V</td><td>GND1 / VEE2 기준</td></tr>
+      <tr><td>VREF, AIx</td><td>−0.3</td><td>5.5</td><td>V</td><td>GND2 기준</td></tr>
+      <tr><td>VBST − OUTH</td><td>−0.3</td><td>5.3</td><td>V</td><td></td></tr>
+      <tr><td>TJ</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>Tstg</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM / CDM</td><td></td><td>±2000 / ±500 (코너 핀 ±750)</td><td>V</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VCC1</td><td>3</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>VCC2 (GND2 기준)</td><td>15</td><td></td><td>30</td><td>V</td></tr>
+      <tr><td>VEE2 (GND2 기준)</td><td>−12</td><td></td><td>0</td><td>V</td></tr>
+      <tr><td>VCC2 − VEE2</td><td>15</td><td></td><td>30</td><td>V</td></tr>
+      <tr><td>VIH / VIL (1차 IO)</td><td>0.7 × VCC1</td><td></td><td>0.3 × VCC1 (VIL)</td><td>V</td></tr>
+      <tr><td>1차 출력 전류</td><td></td><td></td><td>5</td><td>mA</td></tr>
+      <tr><td>드라이버 출력 IOH/IOL</td><td></td><td></td><td>15</td><td>A</td></tr>
+      <tr><td>VAI</td><td>0</td><td></td><td>VREF + 0.1</td><td>V</td></tr>
+      <tr><td>VREF</td><td>4</td><td>4.1</td><td></td><td>V</td></tr>
+      <tr><td>fPWM / fSPI</td><td></td><td></td><td>50 kHz / 4 MHz</td><td></td></tr>
+      <tr><td>TJ</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>DWJ 36핀 (1–18 1차측, 19–36 2차측)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>GND1</td><td>1차측 그라운드</td></tr>
+      <tr><td>2–5</td><td>NC</td><td>내부 미연결, GND1에 연결</td></tr>
+      <tr><td>6</td><td>ASC_EN</td><td>ASC 인에이블, ASC 핀이 정한 출력 상태로 강제</td></tr>
+      <tr><td>7</td><td>nFLT1</td><td>고장 출력 (액티브 로우, 오픈드레인)</td></tr>
+      <tr><td>8</td><td>nFLT2/DOUT</td><td>경고 출력 또는 PWM 피드백 출력</td></tr>
+      <tr><td>9</td><td>VCC1</td><td>1차 전원 3–5.5 V</td></tr>
+      <tr><td>10</td><td>ASC</td><td>ASC_EN 시 출력 상태 지정</td></tr>
+      <tr><td>11</td><td>IN−</td><td>반전 PWM 입력 (반대 암의 IN+에 연결해 인터록)</td></tr>
+      <tr><td>12</td><td>IN+</td><td>비반전 PWM 입력</td></tr>
+      <tr><td>13</td><td>CLK</td><td>SPI 클록</td></tr>
+      <tr><td>14</td><td>nCS</td><td>SPI 칩 선택 (액티브 로우)</td></tr>
+      <tr><td>15</td><td>SDI</td><td>SPI 데이터 입력</td></tr>
+      <tr><td>16</td><td>SDO</td><td>SPI 데이터 출력</td></tr>
+      <tr><td>17</td><td>VREG1</td><td>1.8 V 1차 내부 레귤레이터 출력 (디커플링만)</td></tr>
+      <tr><td>18</td><td>GND1</td><td>1차측 그라운드</td></tr>
+      <tr><td>19</td><td>VEE2</td><td>2차 음전원</td></tr>
+      <tr><td>20</td><td>VREG2</td><td>1.8 V 2차 내부 레귤레이터 출력 (VEE2 기준)</td></tr>
+      <tr><td>21</td><td>AI6</td><td>ADC / 전류 감지 비교기 / 2차 ASC 입력</td></tr>
+      <tr><td>22</td><td>AI5</td><td>ADC / 과온 비교기 / 2차 ASC_EN 입력</td></tr>
+      <tr><td>23</td><td>AI4</td><td>ADC / 전류 감지 비교기</td></tr>
+      <tr><td>24</td><td>AI3</td><td>ADC / 과온 비교기</td></tr>
+      <tr><td>25</td><td>AI2</td><td>ADC / 전류 감지 비교기</td></tr>
+      <tr><td>26</td><td>AI1</td><td>ADC / 과온 비교기</td></tr>
+      <tr><td>27</td><td>VREF</td><td>4 V ADC 기준 출력(내부) 또는 외부 기준 입력</td></tr>
+      <tr><td>28</td><td>GND2</td><td>게이트 구동 공통 — 파워 소자 소스/이미터</td></tr>
+      <tr><td>29</td><td>CLAMP</td><td>밀러 클램프 (내부 또는 외부 클램프 구동)</td></tr>
+      <tr><td>30</td><td>VEE2</td><td>2차 음전원</td></tr>
+      <tr><td>31</td><td>OUTL</td><td>게이트 풀다운 출력 (게이트 저항 경유)</td></tr>
+      <tr><td>32</td><td>OUTH</td><td>게이트 풀업 출력 (게이트 저항 경유)</td></tr>
+      <tr><td>33</td><td>VBST</td><td>OUTH용 부트스트랩 전원</td></tr>
+      <tr><td>34</td><td>VCECLP</td><td>VCE 클램프 입력 및 VCE 고장 감지</td></tr>
+      <tr><td>35</td><td>VCC2</td><td>2차 양전원 15–30 V</td></tr>
+      <tr><td>36</td><td>DESAT</td><td>불포화 감지 입력</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VCC1: 세라믹 벌크 커패시터를 핀 가까이. VCC2: GND2와 VEE2 양쪽으로 세라믹 벌크.</li>
+    <li>VEE2: GND2로 최소 1 µF 세라믹. 구동 전류에 따라 증설.</li>
+    <li>VREG1 → GND1, VREG2 → VEE2: 각각 최소 4.7 µF (0.1 µF + 4.7 µF 권장). 외부 전원 연결 금지.</li>
+    <li>VREF: 내부 기준 사용 시 GND2로 최소 1 µF. VBST–OUTH: 0.1 µF 세라믹.</li>
+    <li>DESAT: GND2로 블랭킹 커패시터 + 병렬 쇼트키, 저항·고압 다이오드로 콜렉터/드레인에 연결.</li>
+    <li>VCECLP: VEE2로 커패시터·저항 병렬, 콜렉터 쪽으로 제너 다이오드.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>DWJ 36핀: RθJA 50.6 °C/W, RθJC(top) 17.5, RθJB 21.3, ψJT 5.3, ψJB 20.2 °C/W. TA 125 °C에서 허용 손실 총 500 mW (1차 50 mW, 2차 450 mW). 절연: CLR/CPG 8 mm, DTI &gt; 17 µm, CTI 600 V, CIO 2 pF.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>2차 손실 한도 450 mW — 고 Qg SiC 모듈을 높은 주파수로 구동하면 VCC2 공급 전력과 패키지 손실을 함께 계산할 것. 피크 전류는 게이트 저항으로 15 A 이하.</li>
+    <li>DESAT/SC/과온 고장 후 입력 뮤트 10 ms (PWM_MUTE_EN = 1), 시스템 기동 시간 5 ms.</li>
+    <li>1차/2차 경계 아래로 동박·비아 금지 (연면 8 mm 유지). GND2는 파워 소자 켈빈 소스/이미터에 직결.</li>
+    <li>데이터시트 내에서 패키지 명칭이 SOIC(핀 도면)과 SSOP(장치 정보표)로 혼용됨 — 풋프린트는 TI DWJ 기구 도면 기준으로 작성. 파생품 UCC5871-Q1 존재.</li>
+  </ul>
+</article>
+</body>
+</html>

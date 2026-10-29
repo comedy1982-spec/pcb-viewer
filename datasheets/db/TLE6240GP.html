@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLE6240GP · Smart 16-channel low-side switch with SPI diagnostics</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLE6240GP" data-mfr="Infineon" data-cat="스마트 스위치" data-price="" data-status="done" data-src="https://www.farnell.com/datasheets/1932612.pdf">
+  <h1>TLE6240GP</h1>
+  <p class="meta">Infineon · 스마트 스위치 · Smart 16-channel low-side switch with SPI diagnostics, PG-DSO-36</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/1932612.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=TLE6240GP" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Automotive Power Data Sheet Rev. 3.3, 2010-02-15</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>16채널 open-drain DMOS 로우사이드 스위치, SPI 제어 + 병렬 입력 8개</dd>
+    <dt>전원</dt><dd>VS 4.5 – 5.5 V, IS 5 mA typ / 10 mA max, 스탠바이 10 µA typ / 50 µA max</dd>
+    <dt>RDS(on)</dt><dd>ch1–8: 1 Ω typ @25 °C, 2.2 Ω max @150 °C · ch10/11/14/15: 0.35 Ω typ, 0.7 Ω max · ch9/12/13/16: 0.30 Ω typ, 0.6 Ω max</dd>
+    <dt>정격 전류</dt><dd>ch1–8 0.5 A, ch9–16 1 A (공칭)</dd>
+    <dt>전류 제한</dt><dd>ch1–8: 1 / 1.5 / 2 A · ch9–16: 3 / 4.5 / 6 A (min/typ/max)</dd>
+    <dt>클램프</dt><dd>VDS(AZ) 45 – 60 V (typ 50 V ch1–8, 52.5 V ch9–16)</dd>
+    <dt>스위칭</dt><dd>턴온/오프 6 µs typ, 12 µs max (0.5 A 저항 부하)</dd>
+    <dt>SPI</dt><dd>DC – 5 MHz, 채널당 2-bit 진단 (과부하/SCB/과열, 개방부하, GND 단락), FAULT 핀</dd>
+    <dt>병렬 입력</dt><dd>ch1–4, ch9–12 (IN1–4, IN9–12), PRG 핀으로 high/low active 선택, SPI 데이터와 OR/AND</dd>
+    <dt>보호</dt><dd>과열 차단 170 – 200 °C (히스테리시스 10 K), 단락, 과전압 제너 클램프. TJ −40 – 150 °C</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>전원 VS</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+      <tr><td>연속 드레인-소스 전압 OUT1–16</td><td></td><td>45</td><td>V</td><td></td></tr>
+      <tr><td>입력/데이터 라인 전압</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+      <tr><td>출력 전류 (전 채널 ON, PCB) ch1–8</td><td></td><td>0.3</td><td>A</td><td>TA = 25 °C</td></tr>
+      <tr><td>출력 전류 (전 채널 ON, PCB) ch9–16</td><td></td><td>0.5</td><td>A</td><td>TA = 25 °C</td></tr>
+      <tr><td>총 출력 전류</td><td></td><td>14</td><td>A</td><td>히트싱크 필요</td></tr>
+      <tr><td>단일 펄스 유도 에너지 EAS</td><td></td><td>50</td><td>mJ</td><td>TJ = 25 °C, ID1-8 = 0.5 A, ID9-16 = 1 A</td></tr>
+      <tr><td>ESD HBM</td><td></td><td>2000</td><td>V</td><td></td></tr>
+      <tr><td>소비 전력 Ptot</td><td></td><td>3.3</td><td>W</td><td>PCB, TA = 25 °C, 전 채널 ON</td></tr>
+      <tr><td>접합 온도 Tj</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도 Tstg</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VS</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+      <tr><td>Tj</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+  <p>VS 4.5 V 미만에서는 출력이 입력을 따르거나 꺼짐. 저전압 리셋 약 3 V typ.</p>
+
+  <h2>핀 배치</h2>
+  <p>PG-DSO-36 (히트 슬러그는 내부적으로 GND 핀에 연결)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>GND</td><td>접지</td></tr>
+      <tr><td>2</td><td>OUT9</td><td>출력 ch9</td></tr>
+      <tr><td>3</td><td>OUT10</td><td>출력 ch10</td></tr>
+      <tr><td>4</td><td>OUT1</td><td>출력 ch1</td></tr>
+      <tr><td>5</td><td>OUT2</td><td>출력 ch2</td></tr>
+      <tr><td>6</td><td>IN1</td><td>입력 ch1</td></tr>
+      <tr><td>7</td><td>IN2</td><td>입력 ch2</td></tr>
+      <tr><td>8</td><td>VS</td><td>전원</td></tr>
+      <tr><td>9</td><td>RESET</td><td>리셋 (low active)</td></tr>
+      <tr><td>10</td><td>CS</td><td>SPI 칩 셀렉트 (low active)</td></tr>
+      <tr><td>11</td><td>PRG</td><td>병렬 입력 극성 선택</td></tr>
+      <tr><td>12</td><td>IN3</td><td>입력 ch3</td></tr>
+      <tr><td>13</td><td>IN4</td><td>입력 ch4</td></tr>
+      <tr><td>14</td><td>OUT3</td><td>출력 ch3</td></tr>
+      <tr><td>15</td><td>OUT4</td><td>출력 ch4</td></tr>
+      <tr><td>16</td><td>OUT11</td><td>출력 ch11</td></tr>
+      <tr><td>17</td><td>OUT12</td><td>출력 ch12</td></tr>
+      <tr><td>18</td><td>GND</td><td>접지</td></tr>
+      <tr><td>19</td><td>GND</td><td>접지</td></tr>
+      <tr><td>20</td><td>OUT13</td><td>출력 ch13</td></tr>
+      <tr><td>21</td><td>OUT14</td><td>출력 ch14</td></tr>
+      <tr><td>22</td><td>OUT5</td><td>출력 ch5</td></tr>
+      <tr><td>23</td><td>OUT6</td><td>출력 ch6</td></tr>
+      <tr><td>24</td><td>IN9</td><td>입력 ch9</td></tr>
+      <tr><td>25</td><td>IN10</td><td>입력 ch10</td></tr>
+      <tr><td>26</td><td>FAULT</td><td>공통 폴트 플래그 (open drain)</td></tr>
+      <tr><td>27</td><td>SO</td><td>SPI 데이터 출력</td></tr>
+      <tr><td>28</td><td>SCLK</td><td>SPI 클럭</td></tr>
+      <tr><td>29</td><td>SI</td><td>SPI 데이터 입력</td></tr>
+      <tr><td>30</td><td>IN11</td><td>입력 ch11</td></tr>
+      <tr><td>31</td><td>IN12</td><td>입력 ch12</td></tr>
+      <tr><td>32</td><td>OUT7</td><td>출력 ch7</td></tr>
+      <tr><td>33</td><td>OUT8</td><td>출력 ch8</td></tr>
+      <tr><td>34</td><td>OUT15</td><td>출력 ch15</td></tr>
+      <tr><td>35</td><td>OUT16</td><td>출력 ch16</td></tr>
+      <tr><td>36</td><td>GND</td><td>접지</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VS: 47 nF 세라믹을 IC 가까이 (데이터시트 응용 회로 표기).</li>
+    <li>응용 회로에 10 kΩ 저항 1개 표기 (연결 핀은 본문에 명시 없음 — FAULT open-drain 풀업 용도로 보이나 원문 그림 확인 필요).</li>
+    <li>유도성 부하는 내부 제너 클램프(45–60 V)로 소거 가능하나 단일 펄스 50 mJ 한계 내에서 사용. 반복 클램프 에너지는 열 설계로 확인.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-DSO-36, 다이가 히트 슬러그 위에 실장. RthJC 0.5 K/W typ / 1 K/W max, RthJA 12 K/W typ (Pv = 3 W, 전 채널 동작). Tj max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>보호 기능은 고장 상황 대비용이며 연속 반복 동작용이 아님 (데이터시트 주의 문구).</li>
+    <li>고전류 채널(ch9–16)과 저전류 채널(ch1–8)의 RDS(on)·전류 제한이 다르므로 릴레이/솔레노이드 배치 시 구분.</li>
+    <li>2010년 문서의 오래된 부품 — 신규 설계는 수명 상태(Infineon 제품 페이지) 확인 권장.</li>
+  </ul>
+</article>
+</body>
+</html>

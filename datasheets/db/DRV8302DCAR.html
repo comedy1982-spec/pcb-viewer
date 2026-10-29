@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRV8302DCAR · Three-phase gate driver with buck regulator and dual current-shunt amplifiers</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="DRV8302DCAR" data-mfr="Texas Instruments" data-cat="게이트 드라이버" data-price="5.8" data-status="done" data-src="https://www.ti.com/document-viewer/ja-jp/DRV8302/datasheet/specifications">
+  <h1>DRV8302DCAR</h1>
+  <p class="meta">Texas Instruments · 게이트 드라이버 · 3상 게이트 드라이버 + 1.5 A 벅 레귤레이터 + 전류 션트 앰프 2채널 · 참고 단가 약 $5.8 (추정)</p>
+  <p class="meta">원본: <a href="https://ti.com/document-viewer/drv8302/datasheet" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/DRV8302" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=DRV8302DCAR" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLES267C (2011-08, 개정 2016-03)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>외부 N-MOSFET 6개용 3상 하프브리지 게이트 드라이버(부트스트랩, 100 % 듀티 지원) + 벅 컨버터 + 전류 션트 앰프 ×2</dd>
+    <dt>PVDD1 (드라이버)</dt><dd>8–60 V (절대 최대 65 V)</dd>
+    <dt>PVDD2 (벅)</dt><dd>3.5–60 V, 출력 최대 1.5 A, 전류 제한 1.8 A min / 2.7 A typ</dd>
+    <dt>게이트 구동</dt><dd>피크 소스 1.7 A / 싱크 2.3 A typ, VGS 9.5–11.5 V</dd>
+    <dt>전류 센스 앰프</dt><dd>이득 10 V/V(GAIN=0 V) 또는 40 V/V, 출력 바이어스 = REF/2, 선형 출력 0.3–5.7 V</dd>
+    <dt>데드타임</dt><dd>DTC 저항(0–150 kΩ)으로 50–500 ns</dd>
+    <dt>보호</dt><dd>VDS 과전류(0.125–2.4 V, OC_ADJ로 설정), PVDD/GVDD UVLO, GVDD OVLO, 과열 경고 130 °C / 차단 150 °C → nFAULT, nOCTW</dd>
+    <dt>스위칭 주파수</dt><dd>최대 200 kHz (Qg 25 nC 기준)</dd>
+    <dt>등급·온도</dt><dd>상용 등급 (AEC-Q100 표기 없음) · TA −40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>HTSSOP-56 (DCA) 14.00 × 6.10 mm, PowerPAD = GND</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>PVDD 전원 전압</td><td>−0.3</td><td>65</td><td>V</td><td>PGND 기준</td></tr>
+    <tr><td>PVDD 상승 슬루</td><td></td><td>1</td><td>V/µs</td><td></td></tr>
+    <tr><td>PGND – GND</td><td>−0.3</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>입력 전류 (nFAULT, nOCTW 제외)</td><td>−1</td><td>1</td><td>mA</td><td></td></tr>
+    <tr><td>오픈 드레인 싱크 전류 (nFAULT, nOCTW)</td><td></td><td>7</td><td>mA</td><td></td></tr>
+    <tr><td>SPx/SNx 전압</td><td>−0.6</td><td>0.6</td><td>V</td><td></td></tr>
+    <tr><td>논리 입력 (INH/INL_x, EN_GATE, M_PWM, M_OC, OC_ADJ, GAIN, DC_CAL)</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>GVDD</td><td></td><td>13.2</td><td>V</td><td></td></tr>
+    <tr><td>AVDD</td><td></td><td>8</td><td>V</td><td></td></tr>
+    <tr><td>DVDD</td><td></td><td>3.6</td><td>V</td><td></td></tr>
+    <tr><td>REF 전압 / 전류</td><td></td><td>7 / 100</td><td>V / µA</td><td></td></tr>
+    <tr><td>접합 온도 TJ</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM / CDM</td><td></td><td>±2000 / ±500</td><td>V</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>PVDD1 (정상 동작)</td><td>8</td><td></td><td>60</td><td>V</td></tr>
+    <tr><td>PVDD2 (벅)</td><td>3.5</td><td></td><td>60</td><td>V</td></tr>
+    <tr><td>REF 외부 기준 전압</td><td>2</td><td></td><td>6</td><td>V</td></tr>
+    <tr><td>션트 앰프 출력 부하 용량</td><td></td><td></td><td>20</td><td>pF</td></tr>
+    <tr><td>RDTC (50–500 ns)</td><td>0</td><td></td><td>150</td><td>kΩ</td></tr>
+    <tr><td>nFAULT / nOCTW 싱크 (0.4 V)</td><td></td><td></td><td>2</td><td>mA</td></tr>
+    <tr><td>게이트 스위칭 주파수</td><td></td><td></td><td>200</td><td>kHz</td></tr>
+    <tr><td>주위 온도 TA</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>HTSSOP-56 (DCA), 0.5 mm 피치, 노출 패드(57) = GND</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>RT_CLK</td><td>벅 타이밍 저항 / 외부 클럭</td></tr>
+    <tr><td>2</td><td>COMP</td><td>벅 오차 증폭기 출력(보상)</td></tr>
+    <tr><td>3</td><td>VSENSE</td><td>벅 출력 전압 피드백</td></tr>
+    <tr><td>4</td><td>PWRGD</td><td>벅 파워굿, 오픈 드레인(풀업 필요)</td></tr>
+    <tr><td>5</td><td>nOCTW</td><td>과전류·과열 경고, 오픈 드레인</td></tr>
+    <tr><td>6</td><td>nFAULT</td><td>고장 출력, 오픈 드레인</td></tr>
+    <tr><td>7</td><td>DTC</td><td>데드타임 설정 저항 → GND</td></tr>
+    <tr><td>8</td><td>M_PWM</td><td>PWM 모드 (6입력 / 3입력)</td></tr>
+    <tr><td>9</td><td>M_OC</td><td>과전류 모드 (사이클별 제한 / 래치 차단)</td></tr>
+    <tr><td>10</td><td>GAIN</td><td>센스 앰프 이득 선택 10 / 40 V/V</td></tr>
+    <tr><td>11</td><td>OC_ADJ</td><td>과전류 VDS 임계 설정 (DVDD 분압)</td></tr>
+    <tr><td>12</td><td>DC_CAL</td><td>앰프 오프셋 보정(입력 단락)</td></tr>
+    <tr><td>13</td><td>GVDD</td><td>게이트 드라이브 내부 레귤레이터, 커패시터 → GND</td></tr>
+    <tr><td>14, 15</td><td>CP1, CP2</td><td>차지 펌프 플라잉 커패시터</td></tr>
+    <tr><td>16</td><td>EN_GATE</td><td>게이트 드라이버·앰프 인에이블</td></tr>
+    <tr><td>17–22</td><td>INH_A, INL_A, INH_B, INL_B, INH_C, INL_C</td><td>PWM 입력 (상단/하단, 상 A–C)</td></tr>
+    <tr><td>23</td><td>DVDD</td><td>내부 3.3 V, 커패시터 → AGND (외부 부하 금지)</td></tr>
+    <tr><td>24</td><td>REF</td><td>앰프 기준 입력 (출력 바이어스 = REF/2)</td></tr>
+    <tr><td>25, 26</td><td>SO1, SO2</td><td>전류 앰프 1/2 출력</td></tr>
+    <tr><td>27</td><td>AVDD</td><td>내부 6 V, 커패시터 → AGND (외부 부하 금지)</td></tr>
+    <tr><td>28</td><td>AGND</td><td>아날로그 GND</td></tr>
+    <tr><td>29</td><td>PVDD1</td><td>게이트 드라이버·앰프 전원</td></tr>
+    <tr><td>30, 31</td><td>SP2, SN2</td><td>앰프 2 입력 (+는 션트 GND 측 권장)</td></tr>
+    <tr><td>32, 33</td><td>SP1, SN1</td><td>앰프 1 입력</td></tr>
+    <tr><td>34–38</td><td>SL_C, GL_C, SH_C, GH_C, BST_C</td><td>C상: 하단 소스, 하단 게이트, 상단 소스, 상단 게이트, 부트스트랩</td></tr>
+    <tr><td>39–43</td><td>SL_B, GL_B, SH_B, GH_B, BST_B</td><td>B상 (같은 순서)</td></tr>
+    <tr><td>44–48</td><td>SL_A, GL_A, SH_A, GH_A, BST_A</td><td>A상 (같은 순서)</td></tr>
+    <tr><td>49</td><td>BIAS</td><td>1 MΩ 또는 0.1 µF → GND</td></tr>
+    <tr><td>50, 51</td><td>PH</td><td>벅 스위치 노드</td></tr>
+    <tr><td>52</td><td>BST_BK</td><td>벅 부트스트랩 커패시터</td></tr>
+    <tr><td>53, 54</td><td>PVDD2</td><td>벅 전원</td></tr>
+    <tr><td>55</td><td>EN_BUCK</td><td>벅 인에이블 (1.2 V 미만 = 정지, 개방 = 동작), 저항 2개로 UVLO 설정</td></tr>
+    <tr><td>56</td><td>SS_TR</td><td>벅 소프트스타트/트래킹 커패시터</td></tr>
+    <tr><td>57</td><td>GND (PowerPAD)</td><td>GND·방열 패드, 비아로 GND 플레인 연결</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>초판(SLES267, 2011) 권장 동작 조건 기준: GVDD 2.2 µF, CP1–CP2 22 nF, DVDD 1 µF, AVDD 1 µF(→AGND), BST_x 100 nF (모두 세라믹 ±20 %). 개정 C 권장 표에는 이 행이 없으므로 최신 데이터시트 8.2절에서 재확인.</li>
+    <li>BIAS: 1 MΩ 또는 0.1 µF → GND.</li>
+    <li>과전류: V<sub>OC_ADJ</sub> = DVDD × R2/(R1+R2) (R1+R2 ≥ 100 kΩ, DVDD 3.3 V), I<sub>OC</sub> = V<sub>DS_OC</sub>/R<sub>DS(on)</sub>. OC_ADJ를 DVDD에 묶으면 OC 비활성.</li>
+    <li>전류 앰프 출력: V<sub>O</sub> = G × (SP − SN) + REF/2. REF는 MCU ADC 기준 전압에 연결. DC_CAL로 오프셋 보정.</li>
+    <li>벅: 기준 약 0.8 V, RT = 200 kΩ에서 581 kHz typ (450–720 kHz). PWRGD 저전압 92 %/과전압 109 %.</li>
+    <li>nFAULT/nOCTW: 3–5.5 V로 47 kΩ 풀업 (데이터시트 시험 조건).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>HTSSOP-56 (DCA) 14.00 × 6.10 mm 본체, PowerPAD는 GND. RθJA 30.3 °C/W · RθJC(top) 33.5 · RθJB 17.5 · ψJT 0.9 · ψJB 7.2 · RθJC(bot) 0.9 °C/W. TJ 최대 150 °C, 과열 경고 130 °C / 해제 115 °C / 차단 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>상용 등급 부품이며 AEC-Q100 표기가 없음 — 차량 ECU 양산용으로는 DRV8301/DRV8303 계열이 아니라 DRV835x-Q1 등 -Q1 부품 검토.</li>
+    <li>PVDD 상승 슬루 1 V/µs 이하로 제한 (절대 최대). 벌크 커패시터는 모터 회생 전압을 고려해 정격 여유.</li>
+    <li>PVDD·GVDD 커패시터는 핀 가까이, PowerPAD GND로 저임피던스 경로. AVDD/DVDD 커패시터는 AGND 핀으로 같은 층에서 연결. AGND는 PowerPAD에 저임피던스로 결합.</li>
+    <li>SPx/SNx 입력 범위 ±0.6 V(절대) / 공통 모드 ±0.15 V — 하단 션트 전용.</li>
+    <li>개정 C 핀 표에 PWRGD가 "I", GAIN이 "O"로 표기되어 있으나 기능 설명상 PWRGD = 오픈 드레인 출력, GAIN = 입력.</li>
+  </ul>
+</article>
+</body>
+</html>

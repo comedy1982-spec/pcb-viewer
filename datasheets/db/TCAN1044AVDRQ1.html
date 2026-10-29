@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TCAN1044AVDRQ1 · Automotive fault-protected CAN FD transceiver with standby and VIO</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TCAN1044AVDRQ1" data-mfr="TI" data-cat="통신" data-price="0.9" data-status="done" data-src="https://www.ti.com/document-viewer/lit/html/SLLSFJ3D/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000209932">
+  <h1>TCAN1044AVDRQ1</h1>
+  <p class="meta">TI · 통신 · Automotive fault-protected CAN FD transceiver with standby mode and VIO · 참고 단가 약 $0.9 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/lit/html/SLLSFJ3D/GUID-1E00ADFE-29F6-4F59-8BC4-F7463D69B4D9" target="_blank" rel="noopener">데이터시트 (TI HTML 뷰어)</a> · <a href="https://www.ti.com/product/TCAN1044A-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TCAN1044AVDRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLLSFJ3D (2023-08, 개정 2024-10)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>ISO 11898-2:2016 고속 CAN / CAN FD 트랜시버, 저전력 Standby 모드 + 버스 원격 웨이크(WUP). 'V' 접미사 = VIO 레벨 시프트 핀</dd>
+    <dt>데이터율</dt><dd>최대 8 Mbps (2/5/8 Mbps에서 CAN FD 최적화)</dd>
+    <dt>전원</dt><dd>VCC 4.5 ~ 5.5 V, VIO 1.7 ~ 5.5 V (6.4절 권장 동작 조건; 9.4절 본문은 1.8 V로 표기)</dd>
+    <dt>버스 보호</dt><dd>버스 폴트 ±58 V, 수신 공통 모드 ±12 V (제품 페이지)</dd>
+    <dt>공급 전류</dt><dd>ICC 우세 45 mA typ / 70 mA max (RL 60 Ω), 열성 4.5 / 7.5 mA, Standby ICC ≤ 1.5 µA (VIO 디바이스), IIO Standby 8.5 / 14 µA</dd>
+    <dt>루프 지연</dt><dd>tPROP(LOOP1) 125 typ / 210 max ns, LOOP2 150 / 210 ns (VIO 2.8 ~ 5.5 V)</dd>
+    <dt>보호</dt><dd>TXD 우세 타임아웃 1.2 ~ 4.0 ms, UVLO (VCC 하강 3.5 ~ 4.25 V, VIO 하강 1.4 ~ 1.59 V), 과열 차단</dd>
+    <dt>등급 · 온도</dt><dd>AEC-Q100 Grade 1, 전기 특성 조건 TJ -40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>SOIC-8 (D) 4.9 × 6 mm — 이 MPN(…VDRQ1). 패밀리에 VSON-8 (DRB), SOT-23-THN-8 (DDF)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VCC 전원</td><td>-0.3</td><td>6</td><td>V</td><td>6.1절</td></tr>
+    <tr><td>VIO 전원</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>VBUS (CANH, CANL)</td><td>-58</td><td>58</td><td>V</td><td></td></tr>
+    <tr><td>VDIFF (CANH–CANL)</td><td>-45</td><td>45</td><td>V</td><td></td></tr>
+    <tr><td>로직 입력 (TXD, STB)</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>RXD 출력 전압</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>IO(RXD)</td><td>-8</td><td>8</td><td>mA</td><td></td></tr>
+    <tr><td>TJ</td><td>-40</td><td>165</td><td>°C</td><td></td></tr>
+    <tr><td>TSTG</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM 전체 핀</td><td></td><td>±4000</td><td>V</td><td>AEC-Q100-002, 6.2절</td></tr>
+    <tr><td>ESD HBM CANH/CANL–GND</td><td></td><td>±10000</td><td>V</td><td></td></tr>
+    <tr><td>ESD CDM 전체 핀</td><td></td><td>±750</td><td>V</td><td>AEC-Q100-011</td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>VIO (V 디바이스)</td><td>1.7</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>IOH(RXD), VIO 디바이스</td><td>-1.5</td><td></td><td></td><td>mA</td></tr>
+    <tr><td>IOL(RXD), VIO 디바이스</td><td></td><td></td><td>1.5</td><td>mA</td></tr>
+    <tr><td>IOH / IOL(RXD), 비-VIO 디바이스</td><td>-2</td><td></td><td>2</td><td>mA</td></tr>
+    <tr><td>TJ 동작</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SOIC-8 (D), 표 5-1</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>TXD</td><td>CAN 송신 데이터 입력 (내부 풀업)</td></tr>
+    <tr><td>2</td><td>GND</td><td>그라운드</td></tr>
+    <tr><td>3</td><td>VCC</td><td>5 V 전원</td></tr>
+    <tr><td>4</td><td>RXD</td><td>CAN 수신 데이터 출력 (무전원 시 고임피던스)</td></tr>
+    <tr><td>5</td><td>VIO</td><td>I/O 전원 (V 디바이스; 비-V 디바이스에서는 NC)</td></tr>
+    <tr><td>6</td><td>CANL</td><td>CAN 버스 로우</td></tr>
+    <tr><td>7</td><td>CANH</td><td>CAN 버스 하이</td></tr>
+    <tr><td>8</td><td>STB</td><td>Standby 모드 제어 입력 (내부 풀업, High = Standby)</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VCC, VIO 핀 가까이 각각 100 nF 디커플링 (9.4절 "typically 100nF").</li>
+    <li>버스 종단은 양 끝 120 Ω(또는 60 Ω+60 Ω 스플릿) — 데이터시트 그림은 "예시용"으로 표기.</li>
+    <li>수신 임계값 (Normal): VID ≥ 0.9 V 우세, ≤ 0.5 V 열성. Standby: ≥ 1.15 V 우세, ≤ 0.4 V 열성.</li>
+    <li>STB를 Low로 구동해야 Normal 모드(풀업으로 미연결 시 Standby). 모드 전환 tMODE ≤ 20 µs, 웨이크 필터 0.5 ~ 1.8 µs.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SOIC-8 (D): RθJA 127.5, RθJC(top) 67.6, RθJB 70.9, ΨJT 19.3, ΨJB 70.2 °C/W (6.5절, 열 순서를 D/DDF/DRB로 해석). DRB(VSON) RθJA 55.2 °C/W, 열 패드는 GND 플레인에 다수 비아.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>배치 설명의 '5 Mbit/s'는 보수적 표기 — 데이터시트는 최대 8 Mbps.</li>
+    <li>VIO로 3.3 V/1.8 V MCU 직결 가능, 레벨 시프터 불필요.</li>
+    <li>TI 제품 페이지 대체품: TCAN844-Q1 (드롭인), TCAN1057A-Q1 (Silent 모드).</li>
+    <li>TXD 우세 타임아웃으로 최저 데이터율 약 9.2 kbps 제한.</li>
+  </ul>
+</article>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLV1117LV50QDCYRQ1 · Invalid part number (no 5 V TLV1117LV-Q1)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLV1117LV50QDCYRQ1" data-mfr="Texas Instruments" data-cat="전원" data-price="" data-status="stub" data-src="https://www.ti.com/product/TLV1117LV">
+  <h1>TLV1117LV50QDCYRQ1</h1>
+  <p class="meta">Texas Instruments · 전원 · 존재하지 않는 품번 — 5 V 출력의 TLV1117LV(-Q1)는 없음</p>
+  <p class="meta">원본: <a href="https://www.ti.com/product/TLV1117LV" target="_blank" rel="noopener">TLV1117LV 제품 페이지</a> · <a href="https://www.ti.com/product/es-mx/LM1117-Q1" target="_blank" rel="noopener">LM1117-Q1 제품 페이지</a> · <a href="https://octopart.com/search?q=TLV1117LV50QDCYRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
+  <p class="todo">이 품번은 TI 제품 페이지에서 확인되지 않습니다. 대체 품번을 정한 뒤 그 데이터시트로 페이지를 다시 작성하세요. 절대 최대 정격·권장 동작 조건·핀 표는 의도적으로 비워 둠.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>문제</dt><dd>TLV1117LV는 고정 1.2 / 1.5 / 1.8 / 2.5 / 2.8 / 3 / 3.3 V 출력만 있고 (5 V 없음), 입력 2–5.5 V (절대 최대 6 V) 라서 5 V 출력이 원리적으로 불가. 제품 페이지에 -Q1 차량용 버전도 없음.</dd>
+    <dt>TLV1117LV 참고</dt><dd>1 A, 드롭아웃 455 mV (1 A, VOUT 3.3 V), IQ 최대 100 µA, SOT-223 (DCY) RθJA 63 °C/W, −40 ~ 125 °C — 데이터시트 "TLV1117LV 1-A, Positive Fixed-Voltage, Low-Dropout Regulator" Rev. C (2023-01)</dd>
+    <dt>차량용 5 V 대안</dt><dd>LM1117-Q1 (5 V 고정 옵션, 입력 2.5–18 V / 절대 최대 20 V, 1 A, 드롭아웃 900 mV 일반, AEC-Q100 Grade 1, SOT-223 DCY RθJA 95.4 °C/W) — 정확한 주문 품번은 데이터시트 확인 필요</dd>
+    <dt>비차량용 대안</dt><dd>TLV1117-50IDCYR (TLV1117, SOT-223, 산업용 온도) — 부품 DB가 가리키던 tlv1117.pdf 의 부품. 사양은 해당 데이터시트 확인 필요</dd>
+  </dl>
+
+  <h2>핀 배치</h2>
+  <p>대체품 확정 후 해당 데이터시트로 작성 (데이터시트 확인 필요).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>부품 DB의 설명 "TLV1117LV-Q1 — 1 A LDO 5.0 V"와 PDF 링크(tlv1117.pdf, LV가 아닌 TLV1117)가 서로 맞지 않음. 품번 수정 필요.</li>
+    <li>차량용 12 V 계통에서 5 V를 만들려면 TLV1117LV처럼 5.5 V 입력 한계의 LDO는 쓸 수 없음 — 18 V급 입력의 LM1117-Q1 또는 40 V급 TPS7B8x-Q1 계열 검토.</li>
+  </ul>
+</article>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VN7050AJ · 50 mΩ high-side driver with MultiSense</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="VN7050AJ" data-mfr="ST" data-cat="스마트 스위치" data-price="1.9" data-status="stub" data-src="https://pdf.elecfans.com/STMICROELECTRONICS/VN7050AJTR.html">
+  <h1>VN7050AJ</h1>
+  <p class="meta">ST · 스마트 스위치 · 단채널 50 mΩ 하이사이드 드라이버, MultiSense 아날로그 피드백 · 참고 단가 약 $1.9 (추정)</p>
+  <p class="meta">원본: <a href="https://pdf.elecfans.com/STMICROELECTRONICS/VN7050AJTR.html" target="_blank" rel="noopener">데이터시트 (DS10826 사본)</a> · <a href="https://www.st.com/ja/automotive-analog-and-power/vn7050aj.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=VN7050AJ" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS10826 Rev 5, 2019-04</p>
+  <p class="todo">핀 번호 미확정: 읽은 PDF 텍스트에서 PowerSSO-16 배치도의 번호–이름 대응이 깨져 있어 핀 번호를 싣지 않았습니다. ST 원본 PDF(Figure 2)로 확인 후 핀 표를 채우세요.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>12 V 차량 접지 부하용 단채널 하이사이드 스위치, MultiSense(부하 전류·VCC·칩 온도 다중화 아날로그 출력)</dd>
+    <dt>동작 전압</dt><dd>VCC 4–28 V (일반 13 V), 과도 최대 40 V</dd>
+    <dt>RON</dt><dd>일반 50 mΩ (25 °C, 2 A), 일반 100 mΩ (150 °C), 일반 75 mΩ (VCC = 4 V)</dd>
+    <dt>전류 제한 ILIMH</dt><dd>21 / 30 / 42 A (최소/일반/최대, VCC = 13 V)</dd>
+    <dt>대기 전류</dt><dd>최대 0.5 µA (25 °C·85 °C), 최대 3 µA (125 °C)</dd>
+    <dt>전류 센스비 K</dt><dd>4.5 A에서 1050 / 1190 / 1290; 1.5 A에서 980 / 1200 / 1470; 0.2 A에서 830 / 1330 / 1935</dd>
+    <dt>출력 클램프</dt><dd>41 / 46 / 52 V (IS = 20 mA)</dd>
+    <dt>열 차단</dt><dd>TTSD 150–175 °C</dd>
+    <dt>등급</dt><dd>AEC-Q100, Tj -40–150 °C</dd>
+    <dt>패키지</dt><dd>PowerSSO-16 (탭 = VCC). SO-8 버전은 VN7050AS</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>DC 전원 전압 VCC</td><td></td><td>38</td><td>V</td><td></td></tr>
+    <tr><td>역 DC 전원 전압 −VCC</td><td></td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>과도 전원 전압 VCCPK</td><td></td><td>40</td><td>V</td><td>ISO 16750-2 Test B, 40 V 클램프, RL = 4 Ω</td></tr>
+    <tr><td>점프 스타트 VCCJS</td><td></td><td>28</td><td>V</td><td>단일 펄스 단락 보호</td></tr>
+    <tr><td>역 GND 핀 전류 −IGND</td><td></td><td>200</td><td>mA</td><td></td></tr>
+    <tr><td>출력 전류 IOUT</td><td></td><td>내부 제한</td><td></td><td></td></tr>
+    <tr><td>역 출력 전류 −IOUT</td><td></td><td>10</td><td>A</td><td></td></tr>
+    <tr><td>INPUT / SEn / SEL0,1 / FaultRST 전류</td><td>-1</td><td>10</td><td>mA</td><td></td></tr>
+    <tr><td>FaultRST 전압</td><td></td><td>7.5</td><td>V</td><td></td></tr>
+    <tr><td>MultiSense 출력 전류</td><td>-20</td><td>10</td><td>mA</td><td>-20 mA는 VCC &lt; 0 V 역방향</td></tr>
+    <tr><td>단일 펄스 스위칭 에너지 EMAX</td><td></td><td>30</td><td>mJ</td><td>TDEMAG = 0.4 ms, Tjstart = 150 °C</td></tr>
+    <tr><td>ESD HBM (MultiSense 외 핀)</td><td></td><td>4000</td><td>V</td><td>JEDEC 22A-114F</td></tr>
+    <tr><td>ESD HBM (MultiSense)</td><td></td><td>2000</td><td>V</td><td></td></tr>
+    <tr><td>ESD CDM</td><td></td><td>750</td><td>V</td><td>AEC-Q100-011</td></tr>
+    <tr><td>접합 온도 Tj</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도 Tstg</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>동작 전원 전압 VCC</td><td>4</td><td>13</td><td>28</td><td>V</td></tr>
+    <tr><td>저전압 차단 VUSD</td><td></td><td>4</td><td></td><td>V</td></tr>
+    <tr><td>저전압 차단 해제 VUSDReset</td><td></td><td>5</td><td></td><td>V</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PowerSSO-16 + 노출 탭(VCC). 핀 번호는 원본 확인 필요.</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>탭</td><td>VCC</td><td>배터리 연결</td></tr>
+    <tr><td>(4핀)</td><td>OUTPUT</td><td>전력 출력</td></tr>
+    <tr><td>확인 필요</td><td>GND</td><td>접지 — 외부 다이오드/저항 네트워크로 역배터리 보호 필요</td></tr>
+    <tr><td>확인 필요</td><td>INPUT</td><td>출력 제어 입력 (히스테리시스, 3 V/5 V CMOS 호환)</td></tr>
+    <tr><td>확인 필요</td><td>MultiSense</td><td>다중화 아날로그 센스 전류 출력</td></tr>
+    <tr><td>확인 필요</td><td>SEn</td><td>MultiSense 활성화 (액티브 하이)</td></tr>
+    <tr><td>확인 필요</td><td>SEL0, SEL1</td><td>MultiSense 다중화 선택</td></tr>
+    <tr><td>확인 필요</td><td>FaultRST</td><td>래치 해제 (액티브 로우, 계속 로우면 자동 재시작 모드)</td></tr>
+    <tr><td>(5핀)</td><td>N.C.</td><td>미연결</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>MultiSense 저항: 데이터시트 시험 조건은 대부분 RSENSE = 1 kΩ (일부 2.7 kΩ). VSENSE = RSENSE × IOUT / K.</li>
+    <li>MultiSense VCC 피드백 = VCC/4 (13 V에서 3.16–3.3 V), 온도 피드백 25 °C 2.07 V, 계수 −5.5 mV/K.</li>
+    <li>미사용 핀: MultiSense는 1 kΩ로 GND, INPUT·SEn·SEL0,1·FaultRST는 15 kΩ로 GND.</li>
+    <li>GND는 외부 다이오드/저항 네트워크로 역배터리 보호 (값은 원본 4장 참조).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PowerSSO-16, 탭 = VCC. Rthj-board 6.8 °C/W (JESD51-8, 2s2p), Rthj-amb 58.5 °C/W (2s0p + 2 cm² 동박), 24.5 °C/W (4층). Tj 최대 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>탭(VCC)에 넓은 동박과 비아를 둬 방열 — Rthj-amb가 보드 조건에 따라 58.5 → 24.5 °C/W로 크게 달라짐.</li>
+    <li>MCU I/O 보호 직렬 저항(Rprot) 값은 이 문서 사본에서 읽지 못함 — 원본 응용 정보 장 확인 필요.</li>
+    <li>2채널 동일 계열: VND7050AJ. SO-8 단채널: VN7050AS (FaultRST·SEL 핀 없음).</li>
+  </ul>
+</article>
+</body>
+</html>

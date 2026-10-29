@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLE9201SG · 6 A H-bridge with SPI, DSO-12</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLE9201SG" data-mfr="Infineon" data-cat="모터 드라이버" data-price="1.75" data-status="done" data-src="https://www.infineon.com/assets/row/public/documents/10/49/infineon-tle9201sg-ds-en.pdf">
+  <h1>TLE9201SG</h1>
+  <p class="meta">Infineon · 모터 드라이버 · 6 A H-bridge with SPI, PG-DSO-12-17 · 참고 단가 약 $1.75 (LCSC 1k 기준)</p>
+  <p class="meta">원본: <a href="https://www.infineon.com/assets/row/public/documents/10/49/infineon-tle9201sg-ds-en.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.infineon.com/cms/de/product/power/motor-control-ics/brushed-dc-motor-control-ics/integrated-full-bridge-ics/tle9201sg/" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TLE9201SG" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Automotive Power Data Sheet Rev. 1.0, 2014-02-25</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>범용 6 A H-브리지 (DC 모터·유도성 부하), PWM + DIR 제어, DIS로 출력 트라이스테이트</dd>
+    <dt>공급 전압</dt><dd>VS 기능 범위 VUV_OFF(3.5 – 5.0 V) … 28 V, 사양 보증 8 – 28 V, 절대 최대 40 V</dd>
+    <dt>RDS(on)</dt><dd>스위치당 100 mΩ typ (2 A, 25 °C), 200 mΩ max (150 °C)</dd>
+    <dt>전류 제한</dt><dd>초퍼 전류 제한 IL 6.0 / 8.0 / 10.0 A (min/typ/max), 단락 검출 8.0 / 11.5 / 14.5 A (래치)</dd>
+    <dt>PWM</dt><dd>0 – 20 kHz</dd>
+    <dt>로직</dt><dd>3.3 V / 5 V TTL/CMOS 호환 (VIH ≥ 2.0 V, VIL ≤ 0.8 V), SPI 진단 또는 단순 에러 플래그</dd>
+    <dt>보호·진단</dt><dd>단락·과열 차단(래치), VS 저전압 차단, ON/OFF 상태 개방부하 검출</dd>
+    <dt>대기 전류</dt><dd>19 µA typ / 30 µA max (25 °C), 50 µA max (150 °C), VS 13.5 V·VSO 0 V</dd>
+    <dt>등급·온도</dt><dd>AEC qualified, Tj −40 – 150 °C, TA −40 – 125 °C</dd>
+    <dt>패키지</dt><dd>PG-DSO-12-17, 히트 슬러그(GND)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>공급 전압 VVS</td><td>−0.3</td><td>40</td><td>V</td><td>역극성 보호 없음</td></tr>
+      <tr><td>SO 출력 버퍼 전원 VVSO</td><td>−0.3</td><td>5.5</td><td>V</td><td></td></tr>
+      <tr><td>로직 입력 VIN</td><td>−0.3</td><td>5.5</td><td>V</td><td></td></tr>
+      <tr><td>로직 출력 VSO</td><td>−0.3</td><td>5.5 / VVSO + 0.3</td><td>V</td><td>두 조건 모두 지킬 것</td></tr>
+      <tr><td>접합 온도 Tj</td><td>−40</td><td>150</td><td>°C</td><td>누적 100 h까지 175 °C 허용</td></tr>
+      <tr><td>보관 온도 Ts</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>주위 온도 Ta</td><td>−40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM</td><td>−2</td><td>2</td><td>kV</td><td>EIA/JESD22-A114-B</td></tr>
+      <tr><td>ESD CDM</td><td>−500</td><td>500</td><td>V</td><td>코너 핀 ±750 V</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VS 기능 범위</td><td>VUV_OFF (3.5 – 5.0)</td><td></td><td>28</td><td>V</td></tr>
+      <tr><td>VS 사양 보증 범위</td><td>8</td><td>13.5</td><td>28</td><td>V</td></tr>
+      <tr><td>VS 슬루율 dVS/dt</td><td>−10</td><td></td><td>10</td><td>V/µs</td></tr>
+      <tr><td>SO 버퍼 전원 VSO</td><td>2.9</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>Tj</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+      <tr><td>PWM 주파수</td><td>0</td><td></td><td>20</td><td>kHz</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-DSO-12-17 (12핀 + 히트 슬러그)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>DIR</td><td>모터 전류 방향 입력</td></tr>
+      <tr><td>2</td><td>VSO</td><td>SO 출력 전원 (3.3 V/5 V 레벨), GND로 내리면 슬립 모드</td></tr>
+      <tr><td>3</td><td>SO</td><td>SPI 직렬 출력</td></tr>
+      <tr><td>4</td><td>VS</td><td>공급 전압</td></tr>
+      <tr><td>5</td><td>OUT1</td><td>H-브리지 출력 1</td></tr>
+      <tr><td>6</td><td>GND</td><td>접지</td></tr>
+      <tr><td>7</td><td>OUT2</td><td>H-브리지 출력 2</td></tr>
+      <tr><td>8</td><td>SI</td><td>SPI 직렬 입력</td></tr>
+      <tr><td>9</td><td>CSN</td><td>SPI 칩 선택 (액티브 로우)</td></tr>
+      <tr><td>10</td><td>SCK</td><td>SPI 클럭</td></tr>
+      <tr><td>11</td><td>DIS</td><td>출력 디스에이블 (모든 FET 오프, 트라이스테이트)</td></tr>
+      <tr><td>12</td><td>PWM</td><td>PWM 입력</td></tr>
+      <tr><td>Slug</td><td>GND</td><td>히트 슬러그, GND에 연결</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VS: 응용 그림 기준 벌크 100 µF + 세라믹 100 nF.</li>
+    <li>출력 EMC 커패시터는 응용 그림상 33 nF 미만. 개방부하 검출 전에 방전되어야 정상 동작.</li>
+    <li>내부 풀다운(약 38 µA): PWM, DIR, SCK, SI. 내부 풀업(약 38 µA): DIS, CSN.</li>
+    <li>VSO를 인에이블로 쓸 때는 동적 전류용 버퍼 커패시터 권장 (그림에 1 nF 표기, 본문 값 없음).</li>
+    <li>역극성 보호 없음 — 메인 릴레이 또는 P-채널 FET 회로(그림의 10 V 제너·10 kΩ 구성) 필요.</li>
+    <li>SPI 최소 사이클 490 ns (마스터 기준, 약 2 MHz 상당).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-DSO-12-17, 히트 슬러그 = GND. R<sub>thJC</sub> 2 K/W max, R<sub>thJA</sub> 30 K/W typ (JESD51 2s2p FR4 76.2 × 114.3 × 1.5 mm, 패드 아래 열 비아를 1번 내층에 연결). 과열 차단 TjSD 150 °C min / 175 °C typ, 재가동 TjSO 125 °C min. Tj max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>공급 하한 불일치 해소: 제품 페이지 "5.0 V"는 저전압 차단 상한(VUV_OFF max 5.0 V)에 해당, 전기 사양 보증은 8 – 28 V.</li>
+    <li>SO 전압은 VSO보다 0.3 V 이상 높으면 안 됨 — VSO와 MCU I/O 전원을 같은 레일에서 공급.</li>
+    <li>보호 기능은 반복 연속 동작용이 아님(래치 동작) — 에러 시 SPI/DIS로 재시작 시퀀스 구현.</li>
+    <li>유사 부품: IFX9201SG (산업용, 같은 "6 A H-Bridge with SPI" 제목의 별도 데이터시트 Rev. 1.1) — 핀 호환 여부는 원문 대조 필요.</li>
+  </ul>
+</article>
+</body>
+</html>

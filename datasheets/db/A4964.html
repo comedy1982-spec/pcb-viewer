@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A4964 · Sensorless Sinusoidal BLDC Controller</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="A4964" data-mfr="Allegro" data-cat="모터 드라이버" data-price="4.5" data-status="done" data-src="https://www.farnell.com/datasheets/2605713.pdf">
+  <h1>A4964</h1>
+  <p class="meta">Allegro · 모터 드라이버 · 센서리스 사인파 구동 3상 BLDC 컨트롤러 (외부 N-MOSFET 6개용 프리드라이버) · 참고 단가 약 $4.5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/2605713.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.allegromicro.com/en/products/motor-drivers/brushless-dc-motor-drivers/a4964" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=A4964" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 A4964-DS Rev. 2 (MCO-0000214), 2017-12-04</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>3상 센서리스 BLDC 컨트롤러, 역기전력 기반 기동·정류, 사인파 구동 + 소프트 스타트, 윈드밀(선회) 검출·동기</dd>
+    <dt>제어 모드</dt><dd>속도(폐루프) / 전압(개루프) / 전류(토크 제한) — SPI 또는 PWM으로 선택</dd>
+    <dt>공급 전압 VBB</dt><dd>5.5 ~ 50 V 동작 (5.5 V 미만에서 게이트 출력 비활성 가능, 직렬 통신은 3.5 V까지 유지)</dd>
+    <dt>게이트 드라이브</dt><dd>부트스트랩 방식, N-MOSFET 6개, 슬루율 프로그래머블, VREG 8 V 또는 11 V 선택</dd>
+    <dt>인터페이스</dt><dd>SPI 호환 직렬, LIN 2.2A 물리계층(LIN/PWM, 웨이크), 점화(IG) 입력, DIAG 출력</dd>
+    <dt>시스템 기능</dt><dd>로직 레귤레이터(VLR, 전류 제한), MCU 워치독(WDOG) 및 리셋 출력(MRSTn)</dd>
+    <dt>보호</dt><dd>피크 전류 제한(전류 감지 증폭기 1개), 저전압·과온·브리지 고장 진단</dd>
+    <dt>온도</dt><dd>TA −40 ~ 150 °C, TJ(max) 165 °C</dd>
+    <dt>품질 등급</dt><dd>AEC-Q100 등급은 읽은 데이터시트 본문에 명시되지 않음 (데이터시트 확인 필요)</dd>
+    <dt>패키지</dt><dd>A4964KJPTR-T: 32-LQFP 7×7 mm EP (JP) · A4964KEVTR-J: 36-QFN 6×6 mm EP, wettable flank (EV)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VBB 공급</td><td>−0.3</td><td>50</td><td>V</td><td></td></tr>
+    <tr><td>VREG</td><td>−0.3</td><td>16</td><td>V</td><td></td></tr>
+    <tr><td>CP1</td><td>−0.3</td><td>16</td><td>V</td><td></td></tr>
+    <tr><td>CP2</td><td>VCP1 − 0.3</td><td>VREG + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>VLR</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>IG (점화 입력)</td><td>−0.3</td><td>50</td><td>V</td><td>배터리 직결 가능</td></tr>
+    <tr><td>LIN</td><td>−40</td><td>50</td><td>V</td><td></td></tr>
+    <tr><td>로직 입력 STRn, SCK, SDI, WDOG, LTX</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>로직 출력 SDO, MRSTn, LRX</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>DIAG</td><td>−0.3</td><td>50</td><td>V</td><td></td></tr>
+    <tr><td>VBRG</td><td>−5</td><td>55</td><td>V</td><td></td></tr>
+    <tr><td>CA, CB, CC</td><td>−0.3</td><td>VREG + 50</td><td>V</td><td></td></tr>
+    <tr><td>GHx</td><td>VCx − 16</td><td>VCx + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>SA, SB, SC</td><td>VCx − 16</td><td>VCx + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>GLx</td><td>VREG − 16</td><td>18</td><td>V</td><td></td></tr>
+    <tr><td>CSP, CSM</td><td>−4</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>TA</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>TJ(max)</td><td></td><td>165</td><td>°C</td><td>연속</td></tr>
+    <tr><td>Tstg</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VBB (출력 동작)</td><td>5.5</td><td></td><td>50</td><td>V</td></tr>
+    <tr><td>VBB (불안전 상태 없음)</td><td>0</td><td></td><td>50</td><td>V</td></tr>
+    <tr><td>VBB UVLO 상승</td><td>4.0</td><td></td><td>4.5</td><td>V</td></tr>
+    <tr><td>VBB UVLO 하강</td><td>3.8</td><td></td><td>4.2</td><td>V</td></tr>
+    <tr><td>VBB POR (하강)</td><td>3.2</td><td></td><td>3.5</td><td>V</td></tr>
+    <tr><td>TJ (전기적 특성 보증)</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>32-LQFP (JP, A4964KJPTR-T) 및 36-QFN (EV, A4964KEVTR-J). 두 패키지 모두 노출 패드 → GND.</p>
+  <table><thead><tr><th>JP 핀</th><th>EV 핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>36</td><td>DIAG</td><td>프로그래머블 진단 출력</td></tr>
+    <tr><td>2</td><td>2</td><td>VLR</td><td>로직 레귤레이터 출력</td></tr>
+    <tr><td>3</td><td>4</td><td>STRn</td><td>SPI 스트로브(칩 선택) 입력</td></tr>
+    <tr><td>4</td><td>5</td><td>SCK</td><td>SPI 클록 입력</td></tr>
+    <tr><td>5</td><td>6</td><td>SDI</td><td>SPI 데이터 입력</td></tr>
+    <tr><td>6</td><td>7</td><td>WDOG</td><td>MCU 워치독 입력</td></tr>
+    <tr><td>7</td><td>8</td><td>SDO</td><td>SPI 데이터 출력</td></tr>
+    <tr><td>8</td><td>9</td><td>MRSTn</td><td>MCU 리셋 출력</td></tr>
+    <tr><td>9</td><td>11</td><td>CSM</td><td>전류 감지 증폭기 (−) 입력</td></tr>
+    <tr><td>10</td><td>12</td><td>CSP</td><td>전류 감지 증폭기 (+) 입력</td></tr>
+    <tr><td>11</td><td>13</td><td>LRX</td><td>LIN/PWM 수신 로직 출력</td></tr>
+    <tr><td>12</td><td>14</td><td>LTX</td><td>LIN/고장 송신 로직 입력</td></tr>
+    <tr><td>13</td><td>15</td><td>LIN</td><td>LIN 버스</td></tr>
+    <tr><td>14</td><td>16, 17</td><td>GND</td><td>접지 (QFN은 두 핀 연결)</td></tr>
+    <tr><td>15</td><td>18</td><td>GLC</td><td>C상 로우사이드 게이트</td></tr>
+    <tr><td>16</td><td>19</td><td>GHC</td><td>C상 하이사이드 게이트</td></tr>
+    <tr><td>17</td><td>20</td><td>SC</td><td>C상 모터 단자</td></tr>
+    <tr><td>18</td><td>21</td><td>CC</td><td>C상 부트스트랩 커패시터</td></tr>
+    <tr><td>19</td><td>22</td><td>GLB</td><td>B상 로우사이드 게이트</td></tr>
+    <tr><td>20</td><td>23</td><td>GHB</td><td>B상 하이사이드 게이트</td></tr>
+    <tr><td>21</td><td>24</td><td>SB</td><td>B상 모터 단자</td></tr>
+    <tr><td>22</td><td>25</td><td>CB</td><td>B상 부트스트랩 커패시터</td></tr>
+    <tr><td>23</td><td>26</td><td>GLA</td><td>A상 로우사이드 게이트</td></tr>
+    <tr><td>24</td><td>27</td><td>GHA</td><td>A상 하이사이드 게이트</td></tr>
+    <tr><td>25</td><td>28</td><td>SA</td><td>A상 모터 단자</td></tr>
+    <tr><td>26</td><td>29</td><td>CA</td><td>A상 부트스트랩 커패시터</td></tr>
+    <tr><td>27</td><td>30</td><td>VREG</td><td>게이트 구동 전원 커패시터</td></tr>
+    <tr><td>28</td><td>31</td><td>CP2</td><td>차지펌프 커패시터</td></tr>
+    <tr><td>29</td><td>32</td><td>CP1</td><td>차지펌프 커패시터</td></tr>
+    <tr><td>30</td><td>33</td><td>VBB</td><td>주 전원</td></tr>
+    <tr><td>31</td><td>34</td><td>IG</td><td>점화 스위치 입력</td></tr>
+    <tr><td>32</td><td>35</td><td>VBRG</td><td>하이사이드 드레인 전압 감지</td></tr>
+    <tr><td>—</td><td>1, 3, 10</td><td>NC</td><td>무접속 (QFN만)</td></tr>
+    <tr><td>PAD</td><td>PAD</td><td>EP</td><td>방열 패드, GND 연결</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>차지펌프 CP1–CP2: 470 nF 세라믹 (typ).</li>
+    <li>VBB 디커플링: 100 nF 세라믹을 공급·접지 핀 가까이.</li>
+    <li>VLR: 최소 1 µF, ESR ≤ 250 mΩ.</li>
+    <li>VREG 저장 커패시터·부트스트랩 커패시터 값은 데이터시트 Applications 절 참조 (이번에 읽은 범위에 수치 없음 — 데이터시트 확인 필요).</li>
+    <li>전류 제한: 최대 임계 VMIT 200 / 100 / 50 / 25 mV 중 선택, ILIM = VILIM / RSENSE.</li>
+    <li>데드타임 tDEAD = n × 50 ns (최소 100 ns), 기본 1.6 µs.</li>
+    <li>부트스트랩 저전압: VREG의 60 ~ 71 % (하강).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>JP: 32-리드 QFP 7×7 mm, 높이 최대 1.6 mm, 노출 패드. EV: 36-리드 QFN 6×6 mm, 높이 최대 1.0 mm, wettable flank, 노출 패드. RθJA: EV 27 °C/W (4층 JEDEC), JP 23 °C/W (4층 JEDEC), JP 44 °C/W (2층, 양면 3 in² 구리). TJ(max) 165 °C. RθJP는 읽은 범위에 없음.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN "A4964"는 기본 품번이며 주문 품번은 A4964KJPTR-T (LQFP-32) / A4964KEVTR-J (QFN-36) — 풋프린트 선택 시 패키지를 확정할 것. 생성기 핀 테이블은 JP(LQFP-32) 기준.</li>
+    <li>VBB가 3.5 V까지 떨어져도 SPI 통신이 유지되므로 크랭킹 중 진단 레지스터 판독 가능.</li>
+    <li>QFN(EV)은 GND 핀이 2개(16, 17) — 반드시 서로 연결.</li>
+    <li>데이터시트 본문에서 게이트 수동 풀다운 값이 텍스트(950 kΩ)와 특성표(RGHPD/RGLPD 5 kΩ typ)로 다르게 표기됨 — 원문 확인 필요.</li>
+    <li>LIN 핀은 −40 ~ 50 V 내성, DIAG/IG는 50 V까지 — 차량 배터리 라인 직결 가능.</li>
+  </ul>
+</article>
+</body>
+</html>

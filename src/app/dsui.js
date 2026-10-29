@@ -4,7 +4,11 @@ var DS={q:'',sel:null,view:'list'};
 const dsDB=()=>typeof DSDB!=='undefined'?DSDB:{built:'',items:{}};
 const dsStrip=html=>String(html||'').replace(/<script[\s\S]*?<\/script>/gi,'').replace(/\son[a-z]+="[^"]*"/gi,'').replace(/javascript:/gi,'');
 function dsFind(mpn){if(!mpn)return null;const I=dsDB().items;const k=String(mpn).trim();if(I[k])return Object.assign({mpn:k},I[k]);if(typeof plDsPage==='function'){const g=plDsPage(k);if(g)return g;}const base=k.replace(/\s*\(.*\)$/,'');if(I[base])return Object.assign({mpn:base},I[base]);
-  const hit=Object.keys(I).find(x=>x.replace(/\s*\(.*\)$/,'')===base);return hit?Object.assign({mpn:hit},I[hit]):null;}
+  const hit=Object.keys(I).find(x=>x.replace(/\s*\(.*\)$/,'')===base);if(hit)return Object.assign({mpn:hit},I[hit]);
+  // family pages: data-alias="RC0402FR-07*L RC0402JR-07*L" (space-separated globs, * = any characters)
+  const fam=Object.keys(I).find(x=>I[x].alias&&dsAliasRe(I[x].alias).test(base));return fam?Object.assign({mpn:fam,family:true},I[fam]):null;}
+const dsAliasMemo=new Map();
+function dsAliasRe(a){if(!dsAliasMemo.has(a))dsAliasMemo.set(a,new RegExp('^(?:'+a.trim().split(/\s+/).map(g=>g.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*')).join('|')+')$','i'));return dsAliasMemo.get(a);}
 // parts of the current circuit grouped by part number
 function dsParts(){if(!BD||BD.blank)return[];const m=new Map();BD.comps.forEach(c=>{const key=(c.mpn||'').trim()||('~'+c.val+'|'+c.fp);const it=m.get(key)||{mpn:(c.mpn||'').trim(),val:c.val,fp:c.fp,refs:[],desc:c.desc||''};it.refs.push(c.ref);m.set(key,it);});
   const P=typeof PARTS!=='undefined'?PARTS:null;const out=[...m.values()].map(it=>{it.ds=dsFind(it.mpn);it.info=P&&(P.find(it.mpn)||P.find(it.val));it.price=P?P.price(it.mpn,it.info&&it.info.cat):null;it.sub=it.price!=null?it.price*it.refs.length:null;return it;});

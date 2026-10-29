@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPS65381A-Q1 · Multirail power supply for safety-relevant MCUs</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TPS65381A-Q1" data-mfr="TI" data-cat="전원" data-price="6.8" data-status="done" data-src="https://www.ti.com/document-viewer/ja-jp/TPS65381A-Q1/datasheet/4-JAJSD95A">
+  <h1>TPS65381A-Q1</h1>
+  <p class="meta">Texas Instruments · 전원 · 안전 MCU용 다중 레일 전원 (벅 프리레귤레이터 + LDO 4종 + 워치독 · 진단) · 참고 단가 약 $6.8 (추정)</p>
+  <p class="meta">원본: <a href="https://ti.com/document-viewer/TPS65381A-Q1/datasheet" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/TPS65381A-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TPS65381A-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLVSDJ1A (일어판 JAJSD95A), 2016-07 – 2017-05</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>안전 관련 MCU(락스텝 듀얼코어 등)용 다중 레일 PMIC: VDD6 비동기 벅 프리레귤레이터, VDD5(CAN) LDO, VDD3/5(MCU I/O) LDO, VDD1 코어 LDO 컨트롤러(외부 FET), VSOUT1 트래킹 센서 전원, 차지펌프, 워치독, MCU 에러 핀 감시(ESM), 전압 감시, ABIST/LBIST, SPI, 진단 MUX</dd>
+    <dt>입력 범위</dt><dd>VBATP 5.8–36 V (CAN·I/O·코어·센서 레일), 초기 기동 후 4.5–5.8 V까지 3.3 V I/O·코어 유지. 권장 최대 34 V</dd>
+    <dt>VDD6 벅</dt><dd>6 V(5.4–6.6 V), 1.3 A, 내부 FET, f<sub>SW</sub> 440 kHz(396–484), 드롭아웃 0.6 V @1.3 A, 100 % 듀티 가능</dd>
+    <dt>VDD5 / VDD3/5</dt><dd>각 300 mA LDO(전류 제한 350–650 mA). VDD5 = 4.9–5.1 V. VDD3/5 = 3.234–3.366 V(SEL_VDD3/5 개방) 또는 4.9–5.1 V(GND)</dd>
+    <dt>VDD1</dt><dd>0.8–3.3 V 가변, 외부 N-FET 구동, 10–600 mA, 기준 0.8 V ±1 %(0.792–0.808 V)</dd>
+    <dt>VSOUT1</dt><dd>3.3–9.5 V 가변 센서 전원, 100 mA(제한 120–500 mA), 트래킹 오차 ±35 mV, 비트래킹 기준 2.5 V; 배터리/접지 단락 보호</dd>
+    <dt>차지펌프</dt><dd>VCP = VBATP + 4 V … VBATP + 15 V, 250 kHz</dd>
+    <dt>워치독</dt><dd>트리거(개방/폐쇄 윈도) 모드 또는 질문-응답(Q&amp;A) 모드, 시스템 클럭 4 MHz(3.8–4.2)</dd>
+    <dt>대기 전류</dt><dd>최대 75 µA (전 레귤레이터 OFF, IGN = CANWU = 0 V, 5.8–20 V, T<sub>J</sub> &lt; 85 °C)</dd>
+    <dt>등급 · 온도</dt><dd>차량용 -Q1 (ESD 시험 AEC-Q100-002/-011 기준), T<sub>A</sub> −40…125 °C</dd>
+    <dt>패키지</dt><dd>HTSSOP-32 PowerPAD (DAP), 11.00 × 6.20 mm</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VBATP, VBAT_SAFING, VSIN</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VCP, CP1</td><td>−0.3</td><td>VBATP+16 또는 52 중 작은 값</td><td>V</td><td></td></tr>
+    <tr><td>CP2</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VCP − VBATP</td><td>−0.3</td><td>16</td><td>V</td><td></td></tr>
+    <tr><td>SDN6, VDD6</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VDD5, VDD3/5, VDD1_SENSE, DIAG_OUT</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>VDD1_G</td><td>−0.3</td><td>15</td><td>V</td><td></td></tr>
+    <tr><td>VTRACK1</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VSOUT1, VSFB1</td><td>−2</td><td>18</td><td>V</td><td></td></tr>
+    <tr><td>로직 I/O (VDDIO, ERROR/WDI, ENDRV, NRES, NCS, SDI, SDO, SCLK, RSTEXT)</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>SEL_VDD3/5, CANWU</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>IGN</td><td>−7</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>T<sub>J</sub></td><td></td><td>150</td><td>°C</td><td>동작</td></tr>
+    <tr><td>T<sub>stg</sub></td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>±2000 (VSOUT1·VSFB1 ±4000)</td><td>V</td><td>AEC-Q100-002</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>±500 (코너 핀 1·16·17·32 ±750)</td><td>V</td><td>AEC-Q100-011</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VBATP 동작 (5.8–7 V에서는 일부 레일 드롭아웃)</td><td>5.8</td><td></td><td>34</td><td>V</td></tr>
+    <tr><td>VBATP 초기 기동 최소 (UVon)</td><td></td><td></td><td>5.8</td><td>V</td></tr>
+    <tr><td>VBATP 기동 후 유지 (UVoff)</td><td>4.5</td><td></td><td>5.8</td><td>V</td></tr>
+    <tr><td>VDDIO</td><td>3.3</td><td></td><td>5</td><td>V</td></tr>
+    <tr><td>T<sub>A</sub></td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>HTSSOP-32 (DAP) PowerPAD</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>VBAT_SAFING</td><td>VMON·BG2용 배터리 입력 (역접속 보호 필요, VBATP와 저임피던스 연결)</td></tr>
+    <tr><td>2</td><td>VCP</td><td>차지펌프 출력</td></tr>
+    <tr><td>3</td><td>CP1</td><td>차지펌프 커패시터 (고압측)</td></tr>
+    <tr><td>4</td><td>CP2</td><td>차지펌프 커패시터 (저압측)</td></tr>
+    <tr><td>5</td><td>PGND</td><td>파워 GND</td></tr>
+    <tr><td>6</td><td>NRES</td><td>MCU 리셋 출력, 액티브 로, 오픈드레인(내부 풀업)</td></tr>
+    <tr><td>7</td><td>DIAG_OUT</td><td>진단 MUX 출력 (AMUX/DMUX → MCU ADC·GPIO)</td></tr>
+    <tr><td>8</td><td>NCS</td><td>SPI 칩 셀렉트 (액티브 로, 내부 풀업)</td></tr>
+    <tr><td>9</td><td>SDI</td><td>SPI 데이터 입력 (내부 풀다운)</td></tr>
+    <tr><td>10</td><td>SDO</td><td>SPI 데이터 출력</td></tr>
+    <tr><td>11</td><td>SCLK</td><td>SPI 클럭 (내부 풀다운)</td></tr>
+    <tr><td>12</td><td>RSTEXT</td><td>리셋 연장 시간 설정 저항 → GND</td></tr>
+    <tr><td>13</td><td>ERROR/WDI</td><td>MCU 에러 입력(Q&amp;A 모드 시) 또는 워치독 트리거 입력, 엣지 트리거</td></tr>
+    <tr><td>14</td><td>CANWU</td><td>CAN 트랜시버 등 웨이크업 입력 (래치, 내부 풀다운)</td></tr>
+    <tr><td>15</td><td>VSFB1</td><td>VSOUT1 피드백</td></tr>
+    <tr><td>16</td><td>VSIN</td><td>VSOUT1 레귤레이터 입력</td></tr>
+    <tr><td>17</td><td>VSOUT1</td><td>센서 전원 출력</td></tr>
+    <tr><td>18</td><td>VTRACK1</td><td>VSOUT1 트래킹 기준 입력 (내부 풀다운)</td></tr>
+    <tr><td>19</td><td>GND</td><td>아날로그 GND</td></tr>
+    <tr><td>20</td><td>VDD5</td><td>5 V LDO 출력</td></tr>
+    <tr><td>21</td><td>VDD3/5</td><td>3.3/5 V LDO 출력</td></tr>
+    <tr><td>22</td><td>VDDIO</td><td>MCU 인터페이스 핀 I/O 전원</td></tr>
+    <tr><td>23</td><td>GND</td><td>아날로그 GND</td></tr>
+    <tr><td>24</td><td>VDD1_SENSE</td><td>VDD1 피드백 및 UV/OV 감시 입력</td></tr>
+    <tr><td>25</td><td>PGND</td><td>파워 GND</td></tr>
+    <tr><td>26</td><td>VDD1_G</td><td>VDD1 외부 FET 게이트 구동</td></tr>
+    <tr><td>27</td><td>VDD6</td><td>VDD6 벅 피드백 / VDD5·VDD3/5 입력</td></tr>
+    <tr><td>28</td><td>SDN6</td><td>VDD6 벅 스위칭 노드</td></tr>
+    <tr><td>29</td><td>VBATP</td><td>메인 배터리 입력 (역접속 보호 필요)</td></tr>
+    <tr><td>30</td><td>IGN</td><td>이그니션 웨이크업 입력 (내부 풀다운)</td></tr>
+    <tr><td>31</td><td>SEL_VDD3/5</td><td>개방 = 3.3 V, GND = 5 V</td></tr>
+    <tr><td>32</td><td>ENDRV</td><td>주변 IC(모터 드라이버 등) 인에이블 / 세이핑 경로 출력, 오픈드레인(내부 풀업)</td></tr>
+    <tr><td>PAD</td><td>Thermal pad</td><td>비아로 넓은 GND 플레인 및 GND·PGND 핀에 연결</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD6 인덕터: 최소 22 µH, 설계 예 33 µH (TDK CLF10060NIT-330M-D, Coilcraft MSS1246T-333ML).</li>
+    <li>VDD6 출력 커패시터: 6 V에서 실효 22 µF (허용 22–47 µF) + 10 nF·0.1 µF 병렬. 총 ESR 100–300 mΩ 필요 — 세라믹만으로 부족하면 직렬 저항 추가(예: 90 mΩ). 최소 ESR = L / (15 × C).</li>
+    <li>SDN6 캐치 다이오드: 고전압 쇼트키 (예: Vishay SS3H9/SS3H10, onsemi MBRS340T3).</li>
+    <li>VDD1: 외부 FET 예 BUK9213-30A, 게이트 → VDD1_G, 게이트–소스 100 kΩ, 드레인 → VDD6. 출력 저ESR 세라믹 실효 22 µF (최대 40 µF). 분압: R2 = (VDD1 × R1 / 0.8 V) − R1 (예: 1.23 V → R1 80.6 Ω, R2 43.2 Ω, 0.1 % 저항).</li>
+    <li>VSOUT1: VSIN에 100 nF; VSOUT1 ≤ 5 V면 VSIN = VDD6, 5–9.5 V면 VSIN = VBATP. 출력 4.7 µF 저ESR 세라믹(최대 10 µF). R<sub>VSFB2</sub> = (VSOUT1 × R<sub>VSFB1</sub> / V<sub>REF</sub>) − R<sub>VSFB1</sub>, R<sub>VSFB1</sub> = 3.3 kΩ. 1:1 트래킹이면 VSFB1을 VSOUT1에 직결.</li>
+    <li>RSTEXT: 22 kΩ → 리셋 연장 4.5 ms(4.05–4.95), 0 Ω → 1.4 ms.</li>
+    <li>VBATP 입력, 차지펌프, VDD5·VDD3/5 출력 커패시터 값: 데이터시트 확인 필요 (읽은 범위에 없음).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>HTSSOP-32 PowerPAD (DAP), 11.00 × 6.20 mm. R<sub>θJA</sub> 26.3 °C/W, R<sub>θJC(top)</sub> 14.1 °C/W, R<sub>θJB</sub> 6 °C/W, ψ<sub>JT</sub> 0.2 °C/W, ψ<sub>JB</sub> 6.2 °C/W, R<sub>θJC(bot)</sub> 0.5 °C/W. T<sub>J</sub> 최대 150 °C. VDD6 열 차단 175 °C(최소).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>전압 감시 임계값: VDD6 UV 5.2–5.4 V / OV 7.8–8.2 V, VDD5 UV 4.5–4.85 V / OV 5.2–5.45 V, VDD3/5(3.3 V) UV 3–3.17 V / OV 3.43–3.6 V, VDD1_SENSE UV 752–784 mV / OV 816–848 mV, VBATP OV 34.7–36.7 V(상승).</li>
+    <li>VBATP·VBAT_SAFING는 둘 다 역접속 보호 및 과도 필터가 필요하며 서로 저임피던스로 연결. IGN은 −7 V까지만 견디므로 그 이하 역전압은 외부 보호.</li>
+    <li>VDD6 피크 전류 제한 최대 2.5 A (최소값은 데이터시트 확인).</li>
+    <li>VDD6 ESR 요구(100 mΩ 이상)를 놓치면 벅이 불안정 — MLCC만 쓸 때 직렬 저항 필수.</li>
+    <li>VDD1·VSOUT1 분압 저항은 0.1 % 권장.</li>
+    <li>배치 파일의 분류 "supervisor"는 실제로 다중 레일 PMIC(전원)임. ASIL 등급 표기는 읽은 범위의 데이터시트 본문에서 확인하지 못함.</li>
+    <li>TPS65381-Q1(무접미사)과의 차이는 읽은 범위에 기술 없음 — 교체 시 두 데이터시트 비교 필요.</li>
+  </ul>
+</article>
+</body>
+</html>

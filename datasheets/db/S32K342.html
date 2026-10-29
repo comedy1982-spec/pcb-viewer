@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S32K342 · S32K3 Cortex-M7 lockstep 160 MHz 2 MB automotive MCU</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="S32K342" data-mfr="NXP" data-cat="MCU" data-price="9" data-status="done" data-src="https://www.mouser.com/datasheet/3/118/1/S32K3xx.pdf">
+  <h1>S32K342</h1>
+  <p class="meta">NXP · MCU · S32K3 Cortex-M7 lockstep 160 MHz 2 MB automotive MCU · 참고 단가 약 $9 (추정)</p>
+  <p class="meta">원본: <a href="https://www.mouser.com/datasheet/3/118/1/S32K3xx.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=S32K342" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 S32K3xx Data Sheet Rev. 12 (2025-07-10)</p>
+  <p class="todo">열저항과 핀 번호별 핀 배치는 읽은 발췌에 없음 — 패키지 장·IO Signal Description 확인 필요.</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>코어</dt><dd>Arm Cortex-M7 락스텝 1개, 160 MHz, ASIL D, HSE_B</dd>
+    <dt>메모리</dt><dd>프로그램 플래시 2 MB (ECC), 데이터 플래시 128 KB, RAM 256 KB (ECC, TCM 192 KB 포함)</dd>
+    <dt>통신</dt><dd>FlexCAN ×4 (전 채널 CAN FD), LPUART ×4, LPSPI ×4, LPI2C ×2, Ethernet 100 Mbps (AVB/TSN) ×1, QuadSPI 4-bit ×1</dd>
+    <dt>아날로그·타이머</dt><dd>12-bit ADC ×2 (각 24ch), LPCMP ×2, eMIOS ×2 (각 24ch 16-bit), DMA 32ch</dd>
+    <dt>전원</dt><dd>VDD_HV_A / VDD_HV_B 2.97–5.5 V, V15 확장 범위 1.425–5.5 V, 내부 V11 1.14 V / V25 2.5 V</dd>
+    <dt>온도 등급</dt><dd>V: -40~105 °C, M: -40~125 °C, Tj -40~150 °C</dd>
+    <dt>패키지</dt><dd>100 HDQFP (데이터시트 디커플링 도면) — 그 외 패키지는 주문 정보 확인</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VDD_HV_A, VDD_HV_B, VREFH</td><td>-0.3</td><td>6.0</td><td>V</td><td>수명 중 10 h; 7.0 V는 60 s 허용</td></tr>
+    <tr><td>V15</td><td>-0.3</td><td>6.0</td><td>V</td><td></td></tr>
+    <tr><td>V11</td><td>-0.3</td><td>1.26</td><td>V</td><td></td></tr>
+    <tr><td>V25</td><td></td><td>2.9</td><td>V</td><td></td></tr>
+    <tr><td>I/O 주입 전류 (핀당 / 합계)</td><td></td><td>±3 / 30</td><td>mA</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>±2000</td><td>V</td><td></td></tr>
+    <tr><td>ESD CDM</td><td></td><td>±500 (코너 핀 ±750)</td><td>V</td><td></td></tr>
+    <tr><td>래치업</td><td></td><td>±100</td><td>mA</td><td>125 °C</td></tr>
+    <tr><td>저장 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VDD_HV_A / VDD_HV_B</td><td>2.97</td><td>3.3 / 5.0</td><td>5.5</td><td>V</td></tr>
+    <tr><td>VREFH</td><td>2.97</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>VREFL</td><td>-0.1</td><td></td><td>0.1</td><td>V</td></tr>
+    <tr><td>V15 (확장 범위)</td><td>1.425</td><td>3.3 / 5.0</td><td>5.5</td><td>V</td></tr>
+    <tr><td>V11 (내부 코어)</td><td></td><td>1.14</td><td></td><td>V</td></tr>
+    <tr><td>주위 온도 (V / M 등급)</td><td>-40</td><td></td><td>105 / 125</td><td>°C</td></tr>
+    <tr><td>접합 온도</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    <tr><td>전원 상승률</td><td>0.5 V/min</td><td></td><td>100 V/ms</td><td></td></tr>
+    <tr><td>I/O 주입 전류 (VDD ≥ 2.97 V, 핀당 / 합계)</td><td>-2 / -20</td><td></td><td>+3 / +30</td><td>mA</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>100 HDQFP 등 — 핀 그룹 요약 (≥100핀)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>—</td><td>VDD_HV_A / VDD_HV_B</td><td>고전압 I/O·아날로그 전원 (핀당 100–220 nF + 벌크)</td></tr>
+    <tr><td>—</td><td>V15 / V11 / V25</td><td>코어·플래시 내부 레일 디커플링 핀 (V15는 외부 NPN 밸러스트 사용 시)</td></tr>
+    <tr><td>—</td><td>VREFH / VREFL</td><td>ADC 기준 전압</td></tr>
+    <tr><td>—</td><td>VSS</td><td>접지</td></tr>
+    <tr><td>—</td><td>GPIO (PTA…PTx)</td><td>FlexCAN·LPUART·LPSPI·LPI2C·eMIOS·ADC 등 다중화 — 핀 맵은 IO Signal Description 첨부 엑셀 확인</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>CDEC: 전원 핀당 100 nF 또는 220 nF (선택적으로 1 nF 병렬), CBULK 4.7 µF 또는 10 µF — VDD_HV_B를 별도 전원으로 쓰면 별도 벌크</li>
+    <li>COUT_V11 2.2 µF (S32K342/S32K358)</li>
+    <li>COUT_V25 최소 140 nF, 일반 220 nF</li>
+    <li>NPN 밸러스트(또는 외부 레귤레이터)로 V15 공급 시 COUT_V15_NPN 2.2 µF</li>
+    <li>모든 커패시터는 저 ESR 세라믹(X7R 등), 전원 핀 가까이 배치 (BGA는 PCB 반대면)</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>열저항(RθJA/RθJC)은 읽은 데이터시트 발췌에서 확인되지 않음 — 패키지별 Thermal 장 확인 필요. Tj 최대 150 °C. HDQFP 노출 패드 연결은 패키지 도면 확인.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>부품 DB 설명 '락스텝 160 MHz · 2 MB · CAN-FD · ASIL D'와 일치. CAN FD는 4채널.</li>
+    <li>V15 확장 범위(최대 5.5 V)로 V15를 VDD_HV에 직결하는 구성이 가능한지 레퍼런스 매뉴얼의 전원 구성 확인.</li>
+    <li>S32K344(4 MB, CAN ×6)와 같은 계열 — 핀 호환 여부는 패키지별 IO 엑셀로 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

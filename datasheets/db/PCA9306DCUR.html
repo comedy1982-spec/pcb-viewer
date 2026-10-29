@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCA9306DCUR · Dual Bidirectional I2C Level Translator</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="PCA9306DCUR" data-mfr="TI" data-cat="통신" data-price="0.5" data-status="done" data-src="https://www.ti.com/jp/lit/gpn/PCA9306">
+  <h1>PCA9306DCUR</h1>
+  <p class="meta">TI · 통신 · 2비트 양방향 I²C/SMBus 전압 레벨 변환기 (패스 게이트형) · 참고 단가 약 $0.5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/jp/lit/gpn/PCA9306" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/es-mx/PCA9306" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=PCA9306DCUR" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SCPS113O (2004-10, rev. 2023-09; 일본어판 JAJSH62O 열람)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>SDA/SCL 2채널 양방향 레벨 변환, 방향 핀 불필요, EN 으로 스위치 on/off</dd>
+    <dt>전압</dt><dd>VREF1 1.2 V ~ (VREF2 − 0.6 V), VREF2 (VREF1 + 0.6 V) ~ 5.5 V. 예: 1.2→1.8/2.5/3.3/5 V, 1.8→2.5/3.3/5 V, 2.5→3.3/5 V, 3.3→5 V</dd>
+    <dt>RON</dt><dd>3.5 Ω typ (EN = 4.5 V, IO = 64 mA), 4.7 Ω (EN = 3 V), 6.3 Ω (EN = 2.3 V)</dd>
+    <dt>속도</dt><dd>표준/고속 모드 I²C, fSCL 400 kHz, 전파 지연 &lt; 1.5 ns</dd>
+    <dt>정전 용량</dt><dd>Cio(on) 10.5 pF typ (12.5 pF max), Cio(off) 4 pF typ</dd>
+    <dt>ESD</dt><dd>HBM ±2000 V, CDM ±1000 V</dd>
+    <dt>온도</dt><dd>TA −40 ~ 85 °C (AEC-Q100 아님)</dd>
+    <dt>패키지</dt><dd>VSSOP-8 (DCU, US8) 2.0 × 2.3 mm, 0.5 mm 피치, 3000개 릴</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VREF1</td><td>−0.5</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>VREF2</td><td>−0.5</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>입력 전압 VI</td><td>−0.5</td><td>7</td><td>V</td><td>전류 정격 준수 시 음전압 초과 가능</td></tr>
+    <tr><td>입출력 전압 VI/O</td><td>−0.5</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>연속 채널 전류</td><td></td><td>128</td><td>mA</td><td></td></tr>
+    <tr><td>입력 클램프 전류 IIK (VI &lt; 0)</td><td>−50</td><td></td><td>mA</td><td></td></tr>
+    <tr><td>Tj(max)</td><td></td><td>125</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VI/O (SCL1, SDA1, SCL2, SDA2)</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>VREF1 (변환 시 1.2 ~ VREF2 − 0.6)</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>VREF2 (변환 시 VREF1 + 0.6 ~ 5.5)</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>EN</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>패스 스위치 전류 IPASS</td><td></td><td></td><td>64</td><td>mA</td></tr>
+    <tr><td>TA</td><td>−40</td><td></td><td>85</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>VSSOP-8 (DCU) — DCT/DQE 동일 번호</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>GND</td><td>그라운드</td></tr>
+    <tr><td>2</td><td>VREF1</td><td>저전압측 기준 전원 (SCL1/SDA1)</td></tr>
+    <tr><td>3</td><td>SCL1</td><td>저전압측 클럭</td></tr>
+    <tr><td>4</td><td>SDA1</td><td>저전압측 데이터</td></tr>
+    <tr><td>5</td><td>SDA2</td><td>고전압측 데이터</td></tr>
+    <tr><td>6</td><td>SCL2</td><td>고전압측 클럭</td></tr>
+    <tr><td>7</td><td>VREF2</td><td>고전압측 기준 바이어스 (SCL2/SDA2)</td></tr>
+    <tr><td>8</td><td>EN</td><td>스위치 인에이블</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>EN 과 VREF2 를 함께 묶어 200 kΩ 으로 VDPU(고전압측)에 풀업, VREF2 에 100 pF 필터 커패시터를 가까이 배치</li>
+    <li>200 kΩ 축소 가능: RCC(min) ≥ (VCC2 − Ven)/0.128, Ven = VREF1 + Vth (Vth ≈ 0.6 V), Ibias = (VCC2 − Ven)/RCC</li>
+    <li>양쪽 버스에 각각 풀업 저항 필요. Rp(min) 기준: VDPU ≤ 2 V → VOL = 0.2·VDPU @ 2 mA, VDPU &gt; 2 V → VOL 0.4 V @ 3 mA. 양측 버스 용량 합 &lt; 400 pF (SLVA689 참조)</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>VSSOP-8 (DCU) 2.0 × 2.3 mm, 두께 0.85 mm (최대 0.9 mm), 마킹 7Y. RθJA 275.5 °C/W, RθJC(top) 127.1 °C/W, RθJB 186.9 °C/W, ψJT 65.7 °C/W, ψJB 185.9 °C/W. Tj 최대 125 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>TA 최대 85 °C 상업/산업 등급 — 차량 ECU 에는 PCA9306-Q1 (TI 문서 SCPS178) 검토.</li>
+    <li>도구 데이터의 데이터시트 링크가 NXP PCA9306 문서로 되어 있음 — PCA9306DCUR 은 TI 주문 코드이므로 TI SCPS113 사용.</li>
+    <li>패스 게이트 방식이므로 변환 방향 자동, 다만 저전압측 VREF1 은 VREF2 보다 최소 0.6 V 낮아야 함.</li>
+  </ul>
+</article>
+</body>
+</html>

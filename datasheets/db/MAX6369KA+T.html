@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAX6369KA+T · Pin-selectable watchdog timer</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MAX6369KA+T" data-mfr="Analog Devices (Maxim)" data-cat="전원" data-price="1.8" data-status="done" data-src="https://pdf.direnc.net/upload/max6373-datasheet.pdf">
+  <h1>MAX6369KA+T</h1>
+  <p class="meta">Analog Devices (Maxim) · 전원 · 핀 선택형 워치독 타이머 (오픈 드레인 WDO) · 참고 단가 약 $1.8 (추정)</p>
+  <p class="meta">원본: <a href="https://pdf.direnc.net/upload/max6373-datasheet.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://www.analog.com/en/technical-articles/different-ways-to-use-a-max6369-series-watchdog-timer.html" target="_blank" rel="noopener">ADI 응용 기사</a> · <a href="https://octopart.com/search?q=MAX6369KA%2BT" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 19-1676 Rev 8 (7/17)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>워치독 타이머 (일반 타임아웃형, 윈도우 워치독 아님) — WDI 에지가 tWD 안에 없으면 WDO 펄스 출력</dd>
+    <dt>전원</dt><dd>VCC 2.5~5.5 V</dd>
+    <dt>소비 전류</dt><dd>8 µA typ / 20 µA max (−40~85 °C), 10 µA typ / 22 µA max (−40~125 °C)</dd>
+    <dt>출력</dt><dd>WDO 오픈 드레인, 액티브 로우 펄스 tWDO 100~300 ms (MAX6369/71/73)</dd>
+    <dt>타임아웃</dt><dd>SET2/1/0 핀으로 선택: 1 ms, 10 ms, 30 ms, 100 ms, 1 s, 10 s, 60 s, 또는 비활성 (MAX6369는 tDELAY = tWD)</dd>
+    <dt>WDI 펄스폭</dt><dd>최소 100 ns</dd>
+    <dt>온도</dt><dd>−40~+125 °C</dd>
+    <dt>등급</dt><dd>MAX6369KA+T 일반; 차량용 AEC-Q100은 MAX6369KA/V+T (탑마크 AEQV)</dd>
+    <dt>패키지</dt><dd>8-pin SOT23, 탑마크 AADC, 테이프·릴 2,500개 단위</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VCC</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>WDI</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>WDO (오픈 드레인)</td><td>-0.3</td><td>6</td><td>V</td><td>MAX6369/71/73</td></tr>
+      <tr><td>SET0, SET1, SET2</td><td>-0.3</td><td>VCC+0.3</td><td>V</td><td></td></tr>
+      <tr><td>핀 전류</td><td></td><td>20</td><td>mA</td><td>모든 핀</td></tr>
+      <tr><td>연속 소비 전력</td><td></td><td>700</td><td>mW</td><td>TA = +70 °C, 이후 8.75 mW/°C 감쇄</td></tr>
+      <tr><td>VCC 상승/하강률</td><td></td><td>0.05</td><td>V/µs</td><td></td></tr>
+      <tr><td>동작 온도</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>접합 온도</td><td></td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>리플로</td><td></td><td>260</td><td>°C</td><td>무연</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VCC</td><td>2.5</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>WDI/SET VIH</td><td>0.8×VCC</td><td></td><td></td><td>V</td></tr>
+      <tr><td>WDI/SET VIL (VCC ≥ 3.3 V, −40~85 °C)</td><td></td><td></td><td>0.8</td><td>V</td></tr>
+      <tr><td>WDI/SET VIL (VCC ≥ 2.5 V, −40~85 °C)</td><td></td><td></td><td>0.6</td><td>V</td></tr>
+      <tr><td>WDO VOL (ISINK 1.2 mA, VCC &gt; 2.7 V)</td><td></td><td></td><td>0.3</td><td>V</td></tr>
+      <tr><td>WDO VOL (ISINK 6 mA, VCC &gt; 4.5 V)</td><td></td><td></td><td>0.4</td><td>V</td></tr>
+      <tr><td>WDO 누설 (해제 상태)</td><td></td><td></td><td>1</td><td>µA</td></tr>
+      <tr><td>내부 셋업 시간 tSETUP</td><td></td><td></td><td>300</td><td>µs</td></tr>
+      <tr><td>동작 온도</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>8-pin SOT23 (KA)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>WDI</td><td>워치독 입력 (유효 에지로 타이머 클리어)</td></tr>
+      <tr><td>2</td><td>GND</td><td>접지</td></tr>
+      <tr><td>3</td><td>N.C.</td><td>미접속 (연결하지 말 것)</td></tr>
+      <tr><td>4</td><td>SET0</td><td>타임아웃/시작 지연 선택 입력</td></tr>
+      <tr><td>5</td><td>SET1</td><td>타임아웃/시작 지연 선택 입력</td></tr>
+      <tr><td>6</td><td>SET2</td><td>타임아웃/시작 지연 선택 입력</td></tr>
+      <tr><td>7</td><td>WDO</td><td>워치독 출력, 액티브 로우 펄스 (MAX6369은 오픈 드레인)</td></tr>
+      <tr><td>8</td><td>VCC</td><td>전원 2.5~5.5 V</td></tr>
+    </tbody></table>
+  <table style="margin-top:8px"><thead><tr><th>SET2</th><th>SET1</th><th>SET0</th><th>tDELAY = tWD (최소, MAX6369/70)</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>0</td><td>0</td><td>1 ms</td></tr>
+      <tr><td>0</td><td>0</td><td>1</td><td>10 ms</td></tr>
+      <tr><td>0</td><td>1</td><td>0</td><td>30 ms</td></tr>
+      <tr><td>0</td><td>1</td><td>1</td><td>비활성 (WDO high 유지)</td></tr>
+      <tr><td>1</td><td>0</td><td>0</td><td>100 ms</td></tr>
+      <tr><td>1</td><td>0</td><td>1</td><td>1 s</td></tr>
+      <tr><td>1</td><td>1</td><td>0</td><td>10 s</td></tr>
+      <tr><td>1</td><td>1</td><td>1</td><td>60 s</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>외부 부품 불필요. 노이즈 환경에서는 VCC–GND 사이 0.1 µF를 소자에서 0.2 inch 이내에 배치.</li>
+    <li>WDO 오픈 드레인 풀업: 5.5 V 이하 임의 전원으로, 대부분 10 kΩ이면 충분.</li>
+    <li>동작 중 타임아웃 변경: SET 변경 직전에 WDI를 한 번 토글. WDO 어서트 중 변경 시 이전 설정이 끝난 뒤 적용, 새 시작 구간은 300 µs 셋업 후 시작.</li>
+    <li>SET2=0, SET1=1, SET0=1 → 워치독 비활성. 전원 재투입 없이 SET 변경으로 재활성.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>8-pin SOT23, 노출 패드 없음. 700 mW (TA = +70 °C), +70 °C 이상 8.75 mW/°C 감쇄. TJ max +150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>배치 파일 설명의 "윈도우 워치독"은 틀림 — 데이터시트상 일반 타임아웃 워치독이며 너무 이른 킥을 잡는 윈도우 기능이 없음.</li>
+    <li>리셋 출력이 아니라 WDO 펄스 출력임. MCU 리셋에 쓰려면 WDO를 리셋 라인(와이어드 OR)에 연결.</li>
+    <li>푸시풀·1 ms 펄스가 필요하면 MAX6370 (같은 타이밍 표). 첫 에지 모드가 필요하면 MAX6373/74.</li>
+    <li>차량용이면 AEC-Q100 버전 MAX6369KA/V+T 사용 검토.</li>
+    <li>느린 부팅 데드락 회피: SET1을 WDO에 연결하는 기법 (ADI AN7341).</li>
+  </ul>
+</article>
+</body>
+</html>

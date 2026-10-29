@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BTS3011TE · HITFET+ Smart Low-Side Switch</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="BTS3011TE" data-mfr="Infineon" data-cat="스마트 스위치" data-price="1.4" data-status="done" data-src="https://static.chipdip.ru/lib/752/DOC028752740.pdf">
+  <h1>BTS3011TE</h1>
+  <p class="meta">Infineon · 스마트 스위치 · HITFET+ 보호형 단채널 로우사이드 스위치, 10.7 mΩ, 래칭 STATUS 진단 · 참고 단가 약 $1.4 (추정)</p>
+  <p class="meta">원본: <a href="https://static.chipdip.ru/lib/752/DOC028752740.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://infineon.com/cms/en/product/power/smart-power-switches/low-side-switches/hitfet-plus-12v/bts3011te" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=BTS3011TE" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 BTS3011TE datasheet Rev 1.0, 2018-07-19</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>12 V 계통용 보호형 N채널 로우사이드 스위치 (HITFET+), 마킹 S3011TE</dd>
+    <dt>RDS(on)</dt><dd>10.7 mΩ typ (25 °C), 19 mΩ typ / 22 mΩ max (150 °C), VDD 5 V</dd>
+    <dt>정격 부하 전류</dt><dd>IL(NOM) 10 A</dd>
+    <dt>전류 제한</dt><dd>트리거 70–140 A, 제한 레벨 35–70 A</dd>
+    <dt>출력 클램프</dt><dd>VOUT(CLAMP) 40 V min</dd>
+    <dt>로직 전원</dt><dd>VDD 3.0–5.5 V, 3.3 V/5 V 로직 입력 호환</dd>
+    <dt>대기 전류</dt><dd>IDD(OFF) 1.5 µA typ, 6 µA max (Tj ≤ 85 °C)</dd>
+    <dt>진단</dt><dd>배터리 단락, 과열 — 래칭 STATUS (오픈 드레인, L 액티브)</dd>
+    <dt>등급</dt><dd>"AEC qualified" 표기, Tj -40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>PG-TO252-5 (DPAK-5)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VDD</td><td>-0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>VOUT</td><td></td><td>40</td><td>V</td><td>내부 클램프</td></tr>
+    <tr><td>VBAT(SC) 단락 보호 보장</td><td></td><td>32</td><td>V</td><td></td></tr>
+    <tr><td>VBAT(LD) 로드 덤프</td><td></td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VIN, VSTATUS</td><td>-0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>IL</td><td></td><td></td><td></td><td>IL(LIM)_TRIGGER로 제한</td></tr>
+    <tr><td>EAS 단일 펄스</td><td></td><td>390</td><td>mJ</td><td>IL(NOM), 13.5 V, Tj(0) 150 °C</td></tr>
+    <tr><td>EAR 반복 (100k 회)</td><td></td><td>290</td><td>mJ</td><td>Tj(0) 105 °C</td></tr>
+    <tr><td>Tj</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>±2 / ±4</td><td>kV</td><td>전 핀 / OUT 대 GND</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>±750</td><td>V</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VDD</td><td>3.0</td><td>5.0</td><td>5.5</td><td>V</td></tr>
+    <tr><td>VBAT (정상)</td><td>6</td><td>13.5</td><td>18</td><td>V</td></tr>
+    <tr><td>VBAT (확장, 편차 가능)</td><td>0</td><td></td><td>32</td><td>V</td></tr>
+    <tr><td>IDD(ON)</td><td></td><td></td><td>1</td><td>mA</td></tr>
+    <tr><td>Tj</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-TO252-5, 탭 = OUT</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>IN</td><td>입력</td></tr>
+    <tr><td>2</td><td>VDD</td><td>5 V 로직 전원</td></tr>
+    <tr><td>3</td><td>OUT</td><td>드레인 / 부하 연결</td></tr>
+    <tr><td>4</td><td>STATUS</td><td>오픈 드레인 상태 출력 (L 액티브, 래칭)</td></tr>
+    <tr><td>5</td><td>GND</td><td>접지, 파워 DMOS 소스</td></tr>
+    <tr><td>6 (탭)</td><td>OUT</td><td>드레인 / 부하 연결 (탭)</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>STATUS: VDD로 10 kΩ 풀업.</li>
+    <li>VDD: 100 nF (급격한 공급 전류 변화 대비, 그림상 선택 사항).</li>
+    <li>IN 직렬 저항 값은 데이터시트에 지정 없음.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-TO252-5, 탭은 OUT(드레인). RthJSP 2 K/W typ, RthJA 25 K/W (JEDEC 2s2p), 38 K/W (1s0p + 600 mm² Cu). Tj max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>파워 소스가 GND 핀(5)이므로 GND 경로가 부하 전류 귀환로 — 굵고 짧게.</li>
+    <li>STATUS는 래칭 — 폴트 후 해제 조건은 데이터시트 진단 절 참조.</li>
+    <li>유도성 부하는 EAS 390 mJ(단일)/290 mJ(반복) 이내에서 내부 클램프 사용 가능, 초과 시 프리휠 다이오드 추가.</li>
+    <li>KiCad TO-252-5 풋프린트는 탭 패드 번호가 다를 수 있음 — 탭(6)=OUT, 3과 동일 네트로 연결.</li>
+  </ul>
+</article>
+</body>
+</html>

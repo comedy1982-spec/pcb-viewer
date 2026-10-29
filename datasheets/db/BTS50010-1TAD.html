@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BTS50010-1TAD · 1 mΩ single-channel PROFET high-side switch</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="BTS50010-1TAD" data-mfr="Infineon" data-cat="스마트 스위치" data-price="3.5" data-status="done" data-src="https://www.infineon.com/assets/row/public/documents/10/49/infineon-bts50010-1tad-datasheet-en.pdf">
+  <h1>BTS50010-1TAD</h1>
+  <p class="meta">Infineon · 스마트 스위치 · 1채널 Power PROFET 하이사이드 스위치, RDS(on) 1.0 mΩ typ, 전류 센스 · 참고 단가 약 $3.5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.infineon.com/assets/row/public/documents/10/49/infineon-bts50010-1tad-datasheet-en.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.infineon.com/cms/jp/product/power/smart-low-side-high-side-switches/automotive-smart-high-side-switch-profet/power-profet/bts50010-1tad/" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=BTS50010-1TAD" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Data Sheet Rev. 1.2, 2017-12-05</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>1채널 스마트 하이사이드 파워 스위치 (Power PROFET), 비례 전류 센스(IS), ReverSave 역접속 시 MOSFET ON</dd>
+    <dt>동작 전압</dt><dd>VS(NOM) 8~18 V · 확장 5.3/5.5~28 V · 동적 저전압 3.2 V까지 (크랭킹)</dd>
+    <dt>RDS(on)</dt><dd>1.0 mΩ typ (Tj 25 °C) · 1.6 typ / 2.0 mΩ max (Tj 150 °C, IL 150 A)</dd>
+    <dt>정격 부하 전류</dt><dd>IL(NOM) 40 A min / 48 A typ (TA 85 °C)</dd>
+    <dt>과전류 트립</dt><dd>ICL(0) min 150 A (Tj 150 °C), 160 A (−40~25 °C), ICL(1) max 270 A · 트립 지연 tOFF(TRIP) typ 16 µs · 래치형 (IN Low &gt; 250~1500 µs로 해제)</dd>
+    <dt>전류 센스</dt><dd>dkILIS 44500 / 52100 / 59100 (min/typ/max) · 고장 시 IIS(FAULT) 3.5~8 mA</dd>
+    <dt>대기 전류</dt><dd>IVS(OFF) 8 µA typ / 18 µA max (Tj ≤ 85 °C, VS 18 V) · 130 µA max (150 °C)</dd>
+    <dt>입력 레벨</dt><dd>VIN(L) max 0.8 V · VIN(H) min 2.2 V · 히스테리시스 typ 200 mV</dd>
+    <dt>등급</dt><dd>AEC Qualified, Green (RoHS) · Tj −40~150 °C</dd>
+    <dt>패키지</dt><dd>PG-TO263-7-10 (D²PAK 7핀), 마킹 S50010D</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VS</td><td>-0.3</td><td>28</td><td>V</td><td></td></tr>
+      <tr><td>역접속 −VS(REV)</td><td>0</td><td>16</td><td>V</td><td>t &lt; 2 min, TA 25 °C, RL ≥ 0.5 Ω</td></tr>
+      <tr><td>로드 덤프 VBAT(LD)</td><td></td><td>45</td><td>V</td><td>RI 2 Ω, RL 2.2 Ω, RIS 1 kΩ, RIN 4.7 kΩ</td></tr>
+      <tr><td>단락 보호 공급 VS(SC)</td><td>5</td><td>20</td><td>V</td><td>AEC-Q100-012 시험 회로</td></tr>
+      <tr><td>단락 사이클 nRSC1</td><td></td><td>1 million</td><td>회</td><td>Grade A</td></tr>
+      <tr><td>IGND</td><td>-15</td><td>15</td><td>mA</td><td>TC ≤ 125 °C에서 10 mA, 15 mA는 t ≤ 2 min</td></tr>
+      <tr><td>VIN</td><td>-0.3</td><td>VS</td><td>V</td><td></td></tr>
+      <tr><td>IIN</td><td>-5</td><td>5</td><td>mA</td><td>t ≤ 2 min에서 50 mA까지</td></tr>
+      <tr><td>VIS</td><td>-0.3</td><td>VS</td><td>V</td><td></td></tr>
+      <tr><td>IIS</td><td>-15</td><td>15</td><td>mA</td><td>TC ≤ 125 °C에서 10 mA</td></tr>
+      <tr><td>고장 시 재시도 빈도</td><td></td><td>1</td><td>Hz</td><td></td></tr>
+      <tr><td>EAS (유도성 단일 펄스, 수명)</td><td></td><td>3000</td><td>mJ</td><td>VS 13.5 V, IL 40 A, Tj(0) ≤ 150 °C</td></tr>
+      <tr><td>EAR (반복)</td><td></td><td>460 / 235</td><td>mJ</td><td>IL 40 A / 80 A, Tj(0) ≤ 105 °C</td></tr>
+      <tr><td>PTOT</td><td></td><td>200</td><td>W</td><td>TC −40~150 °C</td></tr>
+      <tr><td>VOUT</td><td>-64</td><td></td><td>V</td><td></td></tr>
+      <tr><td>Tj</td><td>-40</td><td>150</td><td>°C</td><td>스위칭 중 ΔTj max 60 K</td></tr>
+      <tr><td>Tstg</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM</td><td>-2</td><td>2</td><td>kV</td><td>OUT 대 GND/VS ±4 kV</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VS(NOM)</td><td>8</td><td></td><td>18</td><td>V</td></tr>
+      <tr><td>VS(EXT) (VIN ≥ 2.2 V, IL ≤ IL(NOM), Tj ≤ 25 °C / 150 °C)</td><td>5.3 / 5.5</td><td></td><td>28</td><td>V</td></tr>
+      <tr><td>동적 저전압 VS(EXT,DYN) (6 ms 펄스)</td><td>3.2</td><td></td><td></td><td>V</td></tr>
+      <tr><td>저전압 차단 VS(UV) (하강)</td><td></td><td></td><td>4.5</td><td>V</td></tr>
+      <tr><td>OUT 슬루율 |dVDS/dt| (|VDS| &lt; 3 V)</td><td></td><td></td><td>10</td><td>V/µs</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-TO263-7-10</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>GND</td><td>신호 GND</td></tr>
+      <tr><td>2</td><td>IN</td><td>채널 ON 디지털 입력 (High 액티브)</td></tr>
+      <tr><td>3</td><td>IS</td><td>센스 출력 (아날로그 전류 / 고장 신호). 미사용 시 개방</td></tr>
+      <tr><td>4, 탭</td><td>VS</td><td>배터리 공급</td></tr>
+      <tr><td>5, 6, 7</td><td>OUT</td><td>보호된 하이사이드 출력 — PCB에서 모두 연결</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>데이터시트 응용 회로 값: RIN 4.7 kΩ (MCU 보호, GND 손실 시 OFF 보장) · RIS 1 kΩ (센스 저항) · RIS_PROT 4.7 kΩ · CSENSE 10 nF · CVS 100 nF · COUT 10 nF (EMC, 핀 가까이) · CIN 150 nF (VS 음 과도 후 리셋용).</li>
+    <li>VS 진동 감쇠 RC 스너버: 옵션 A RS 3.9 Ω + CS 4.7 µF, 옵션 B RGND 4 Ω.</li>
+    <li>부하·배터리 손실 대비 제너 Za, Zb (값은 데이터시트에 없음 — 배선 인덕턴스에 맞춰 선정).</li>
+    <li>부하 전류 ≈ IIS × kILIS → IS 전압 = IL / 52100 × RIS (typ). 1 kΩ에서 40 A ≈ 0.77 V.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-TO263-7-10 (D²PAK-7, 탭 = VS). RthJC max 0.5 K/W · RthJA typ 20 K/W (2s2p JEDEC) / 70 K/W (1s0p). Tj max 150 °C, 과온 차단 Tj(TRIP) 150~200 °C (히스테리시스 typ 10 K, 래치).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>배치 파일 설명의 "10 mΩ"은 오기입니다. BTS50010의 "10"은 1.0 mΩ을 뜻하며, 데이터시트 RDS(on)은 1.0 mΩ typ / 2.0 mΩ max(150 °C)입니다.</li>
+    <li>과전압 스마트 클램프: VS(AZ) 64~80 V, VDS(CL) 28~46 V. 역접속 시 RDS(REV) max 2.2 mΩ (150 °C).</li>
+    <li>과전류·과온 차단은 래치형이므로 MCU가 IN을 tIN(RESETDELAY) 이상 Low로 내려 재시작해야 합니다. 재시도는 1 Hz 이하.</li>
+    <li>탭이 VS이므로 넓은 배터리 구리 면적에 붙여 방열하세요. OUT 핀 3개는 모두 굵은 패턴으로 연결.</li>
+  </ul>
+</article>
+</body>
+</html>

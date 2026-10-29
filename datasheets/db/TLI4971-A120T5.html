@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLI4971-A120T5 · Coreless magnetic current sensor ±120 A, TISON-8</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLI4971-A120T5" data-mfr="Infineon" data-cat="전류 센서" data-price="" data-status="done" data-src="https://cdn.sparkfun.com/assets/2/f/c/b/1/TLI4971_Datasheet.pdf">
+  <h1>TLI4971-A120T5</h1>
+  <p class="meta">Infineon · 전류 센서 · Coreless magnetic current sensor ±120 A, analog + 2× OCD, PG-TISON-8</p>
+  <p class="meta">원본: <a href="https://cdn.sparkfun.com/assets/2/f/c/b/1/TLI4971_Datasheet.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.lcsc.com/product-detail/C540236.html" target="_blank" rel="noopener">LCSC (-U-E0001)</a> · <a href="https://octopart.com/search?q=TLI4971-A120T5" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TLI4971 Data Sheet Rev. 1.20, 2021-02-12</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>코어리스 홀 전류 센서, 내장 전류 레일, 차동 홀(외부 자계 억제 BSR 40 dB typ), 아날로그 출력 + 고속 과전류 출력 2개</dd>
+    <dt>주문 코드</dt><dd>TLI4971-A120T5-E0001 (UL 없음) / TLI4971-A120T5-U-E0001 (UL 인증)</dd>
+    <dt>측정 범위</dt><dd>±120 A (S1), 감도 10 mV/A typ, VREF 1.65 V 기본 (반차동, 비비율 출력)</dd>
+    <dt>정확도</dt><dd>총 오차 ±2.25 % FS (25 °C, 0 h), ±2.95 % FS (온도), ±3.45 % FS (온도+수명)</dd>
+    <dt>대역폭</dt><dd>−3 dB 240 kHz typ (120 kHz min, CO = 6.8 nF)</dd>
+    <dt>OCD</dt><dd>OCD1 1.25 × IFS / OCD2 0.82 × IFS 기본, 응답 0.7 µs typ (1 / 1.2 µs max)</dd>
+    <dt>전원</dt><dd>VDD 3.1 – 3.5 V (3.3 V), IDD 15 mA typ / 25 mA max</dd>
+    <dt>1차 저항</dt><dd>RPN 220 µΩ typ (25 °C)</dd>
+    <dt>절연</dt><dd>VISO 3500 Vrms 60 s (UL 1577), VIORM 1150 Vpk, 작업 전압 690 Vrms, 연면/공간 거리 4 mm min</dd>
+    <dt>등급·온도</dt><dd>AEC-Q100 grade 2, TS −40 – 105 °C (산업용 TLI 계열)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDD</td><td>−0.3</td><td>3.6</td><td>V</td><td></td></tr>
+      <tr><td>VREF, OCD1, AOUT</td><td>−0.3</td><td>VDD + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>OCD2</td><td>−0.3</td><td>21</td><td>V</td><td>EEPROM 프로그래밍 겸용</td></tr>
+      <tr><td>1차 정격 전류 (LF &lt; 10 Hz)</td><td>−70</td><td>70</td><td>A peak</td><td></td></tr>
+      <tr><td>1차 정격 전류 (HF ≥ 10 Hz)</td><td>−70</td><td>70</td><td>A RMS</td><td></td></tr>
+      <tr><td>1차 단일 피크 전류</td><td>−250</td><td>250</td><td>A</td><td>10 µs, 수명 중 10회</td></tr>
+      <tr><td>전류 레일 전압 슬루율</td><td></td><td>10</td><td>V/ns</td><td></td></tr>
+      <tr><td>ESD HBM</td><td>−2</td><td>2</td><td>kV</td><td>AEC-Q100-002</td></tr>
+      <tr><td>ESD 시스템 (IEC 61000-4-2)</td><td>−16</td><td>16</td><td>kV</td><td>응용 회로 상태</td></tr>
+      <tr><td>Tj</td><td></td><td>130</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>−40</td><td>130</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VDD</td><td>3.1</td><td>3.3</td><td>3.5</td><td>V</td></tr>
+      <tr><td>납땜점 온도 TS</td><td>−40</td><td></td><td>105</td><td>°C</td></tr>
+      <tr><td>AOUT 출력 커패시턴스 CO</td><td>4.7</td><td>6.8</td><td>8</td><td>nF</td></tr>
+      <tr><td>CVDD</td><td></td><td>220</td><td></td><td>nF</td></tr>
+      <tr><td>OCD 풀업 (VDD로)</td><td>4.7</td><td></td><td>10</td><td>kΩ</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-TISON-8 (8 × 8 mm SMD, 높이 1.1 mm max)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>VDD</td><td>전원</td></tr>
+      <tr><td>2</td><td>GND</td><td>접지</td></tr>
+      <tr><td>3</td><td>VREF</td><td>기준 전압 입력/출력</td></tr>
+      <tr><td>4</td><td>AOUT</td><td>아날로그 출력</td></tr>
+      <tr><td>5</td><td>OCD1</td><td>과전류 검출 1 (open drain, active low)</td></tr>
+      <tr><td>6</td><td>OCD2</td><td>과전류 검출 2 (open drain, active low)</td></tr>
+      <tr><td>7</td><td>IP−</td><td>1차 전류 출구</td></tr>
+      <tr><td>8</td><td>IP+</td><td>1차 전류 입구 (IP+ → IP− 방향이 양)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD 220 nF (25 V) 디커플링, AOUT 6.8 nF (4.7 – 8 nF), 차동 사용 시 VREF에도 6.8 nF.</li>
+    <li>OCD1/OCD2 풀업 4.7 kΩ (4.7 – 10 kΩ), 부하 커패시턴스 1 nF 이하, 싱크 전류 1 mA 이하.</li>
+    <li>출력 직렬 220 Ω, 선택 RC 필터로 fc ≈ 48.2 kHz 예시 (원문 그림 확인 권장).</li>
+    <li>파워온 지연 tPOR 1.5 ms max.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-TISON-8 리드리스, 8 × 8 mm, 높이 1.1 mm max. RTHJS 0.25 K/W typ (미시험). Tj max 130 °C. 수명 15 년 min (TS 70 °C, 30 A RMS 연속).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN "TLI4971-A120T5"는 접미사가 빠진 형태 — 주문 코드는 -E0001 또는 -U-E0001(UL).</li>
+    <li>연속 전류는 ±70 A RMS까지가 절대 최대 정격. ±120 A는 측정 범위이지 연속 통전 정격이 아님 — 열 설계(레일 동박 두께, 납땜점 온도 105 °C)로 확인.</li>
+    <li>TLI는 산업용(AEC-Q100 grade 2, 105 °C). 차량용 고온/기능안전이 필요하면 TLE4971 계열 검토.</li>
+    <li>OCD 출력끼리 직접 연결 금지(TLE/TLI4971 문서 공통 주의).</li>
+  </ul>
+</article>
+</body>
+</html>

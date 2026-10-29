@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACS711KLCTR-25AB-T · Hall Current Sensor with Fault</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="ACS711KLCTR-25AB-T" data-mfr="Allegro" data-cat="전류 센서" data-price="1.6" data-status="done" data-src="https://cdn.sparkfun.com/assets/8/1/c/3/a/ACS711-Datasheet.pdf">
+  <h1>ACS711KLCTR-25AB-T</h1>
+  <p class="meta">Allegro · 전류 센서 · ±25 A 홀 전류 센서, 과전류 FAULT 출력, &lt;100 V 절연 용도 · 참고 단가 약 $1.6 (추정)</p>
+  <p class="meta">원본: <a href="https://cdn.sparkfun.com/assets/8/1/c/3/a/ACS711-Datasheet.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="http://www.allegromicro.com/~/Media/Files/Datasheets/ACS711-Datasheet.ashx" target="_blank" rel="noopener">제조사 PDF (미확인 링크)</a> · <a href="https://octopart.com/search?q=ACS711KLCTR-25AB-T" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 ACS711A-DS Rev. 4, 2017-06-23</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>내장 도체형 선형 홀 전류 센서, 레이쇼메트릭 출력, 래치형 과전류 FAULT (풀스케일 100 %에서 트립)</dd>
+    <dt>측정 범위</dt><dd>±25 A (양방향)</dd>
+    <dt>감도</dt><dd>55 mV/A typ (VCC = 3.3 V)</dd>
+    <dt>공급 전압</dt><dd>3 ~ 5.5 V (typ 3.3 V), ICC 4 mA typ / 5.5 mA max</dd>
+    <dt>대역폭 · 응답</dt><dd>100 kHz (−3 dB), 상승 3.5 µs, 응답 4.6 µs, FAULT 응답 1.3 µs typ</dd>
+    <dt>총 출력 오차</dt><dd>±4 % (±25 A, LC, K 온도 범위)</dd>
+    <dt>1차 도체 저항</dt><dd>1.2 mΩ (25 °C)</dd>
+    <dt>절연</dt><dd>기본 절연 작업 전압 100 VAC peak 또는 VDC (1–4핀 ↔ 5–8핀)</dd>
+    <dt>품질 등급</dt><dd>데이터시트에 AEC-Q100 언급 없음</dd>
+    <dt>온도</dt><dd>K: −40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>8-핀 SOICN (LC), 릴 3000개</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>−0.1</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>VIOUT</td><td>−0.1</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>FAULT</td><td></td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>기본 절연 작업 전압</td><td></td><td>100</td><td>VAC pk / VDC</td><td>1–4 ↔ 5–8핀</td></tr>
+    <tr><td>과전류 과도 내량</td><td></td><td>100</td><td>A</td><td>1 펄스, 100 ms</td></tr>
+    <tr><td>TA (K)</td><td>−40</td><td>125</td><td>°C</td><td></td></tr>
+    <tr><td>TJ(max)</td><td></td><td>165</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−65</td><td>170</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>3</td><td>3.3</td><td>5.5</td><td>V</td></tr>
+    <tr><td>영전류 출력 VIOUT(Q)</td><td></td><td>VCC/2</td><td></td><td>V</td></tr>
+    <tr><td>FAULT 풀업 RPU</td><td>1</td><td></td><td></td><td>kΩ</td></tr>
+    <tr><td>출력 부하 CLOAD</td><td></td><td></td><td>1</td><td>nF</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>8-핀 SOICN (LC)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1, 2</td><td>IP+</td><td>전류 감지 단자 (내부 퓨즈)</td></tr>
+    <tr><td>3, 4</td><td>IP−</td><td>전류 감지 단자 (내부 퓨즈)</td></tr>
+    <tr><td>5</td><td>GND</td><td>신호 접지</td></tr>
+    <tr><td>6</td><td>FAULT</td><td>과전류 FAULT 출력, Active Low</td></tr>
+    <tr><td>7</td><td>VIOUT</td><td>아날로그 출력</td></tr>
+    <tr><td>8</td><td>VCC</td><td>전원</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VCC 바이패스 CBYP 0.1 µF.</li>
+    <li>VIOUT 부하 용량 최대 1 nF (별도 필터 핀 없음).</li>
+    <li>FAULT 풀업 RPU ≥ 1 kΩ (VOL 0.3 V typ @ 1 kΩ).</li>
+    <li>노이즈 ±3σ 8 mV (±25 A LC, 외부 필터 없음), 비선형성 ±1 %, 파워온 35 µs.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOIC-8 (SOICN). RθJL 5 °C/W, RθJA 23 °C/W (Allegro 85-0404 평가보드). TJ(max) 165 °C. 1차 도체 1.2 mΩ.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>FAULT는 래치형 — 해제는 VCC 전원 재투입뿐 (VCC &lt; 200 mV, ≥ 100 µs 유지 필요). MCU로 센서 전원을 스위칭할 수 있게 설계하면 재시도 가능.</li>
+    <li>절연 작업 전압이 100 V로 낮음 — 고전압(HV 배터리, 인버터) 측정에는 부적합, 12/48 V 계통용.</li>
+    <li>AEC-Q100 언급이 없는 부품 — 차량 ECU 적용 시 자동차 등급 대안(예: ACS724/ACS725 계열) 검토.</li>
+    <li>데이터시트 사본(Rev. 4, 2017)을 읽음 — 최신 개정판은 제조사 사이트에서 확인 권장.</li>
+  </ul>
+</article>
+</body>
+</html>

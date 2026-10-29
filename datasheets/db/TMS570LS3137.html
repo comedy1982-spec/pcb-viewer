@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TMS570LS3137 · Hercules Cortex-R4F lockstep MCU with Ethernet and FlexRay</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TMS570LS3137" data-mfr="Texas Instruments" data-cat="MCU" data-price="18" data-status="done" data-src="https://www.ti.com/document-viewer/lit/html/SPNS162C/specifications">
+  <h1>TMS570LS3137</h1>
+  <p class="meta">Texas Instruments · MCU · Hercules 안전 MCU, Cortex-R4F 락스텝 최대 180 MHz, 3 MB 플래시, 이더넷·FlexRay · 참고 단가 약 $18 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/lit/html/SPNS162C/specifications" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/TMS570LS3137" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TMS570LS3137" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SPNS162C (2012-04, 개정 2015-04)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>CPU</dt><dd>ARM Cortex-R4F 듀얼 락스텝, 단·배정밀 FPU, 12영역 MPU, 1.66 DMIPS/MHz</dd>
+    <dt>클럭</dt><dd>HCLK 최대: ZWT 180 MHz / PGE 160 MHz (플래시 파이프라인 모드), 파이프라인 해제 시 50 MHz. VCLK 최대 100 MHz</dd>
+    <dt>메모리</dt><dd>플래시 3 MB (ECC), RAM 256 KB (ECC), 데이터 플래시(EEPROM 에뮬레이션) 64 KB (ECC)</dd>
+    <dt>네트워크</dt><dd>EMAC 10/100 (MII/RMII/MDIO, 3.3 V I/O), FlexRay 2채널 10 Mbps (8 KB 메시지 RAM), DCAN ×3 (64 메일박스)</dd>
+    <dt>기타 통신</dt><dd>MibSPI ×3, SPI ×2, SCI ×1 + LIN ×1, I2C ×1, 16비트 EMIF</dd>
+    <dt>아날로그·타이머</dt><dd>12비트 MibADC ×2 (ADC1 24채널, ADC2 16채널 공유), N2HET ×2 (32 + 18채널)</dd>
+    <dt>안전</dt><dd>락스텝 CPU, CPU·RAM BIST, 플래시·RAM ECC, 주변 메모리 패리티, ESM(ERROR 핀), 전압·클럭 감시, 듀얼 클럭 비교기</dd>
+    <dt>전원</dt><dd>코어 1.2 V, I/O 3.3 V, ADC 3.0 ~ 5.25 V</dd>
+    <dt>온도</dt><dd>TA -40 ~ 125 °C, TJ -40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>144핀 LQFP (PGE, 20 × 20 mm), 337볼 NFBGA (ZWT, 16 × 16 mm)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VCC (코어)</td><td>-0.3</td><td>1.43</td><td>V</td><td></td></tr>
+      <tr><td>VCCIO, VCCP</td><td>-0.3</td><td>4.6</td><td>V</td><td></td></tr>
+      <tr><td>VCCAD</td><td>-0.3</td><td>6.25</td><td>V</td><td></td></tr>
+      <tr><td>입력 전압 (전 입력)</td><td>-0.3</td><td>4.6</td><td>V</td><td></td></tr>
+      <tr><td>입력 전압 (ADC 입력)</td><td>-0.3</td><td>6.25</td><td>V</td><td></td></tr>
+      <tr><td>입력 클램프 전류 (일반 핀)</td><td>-20</td><td>20</td><td>mA</td><td></td></tr>
+      <tr><td>입력 클램프 전류 (AD1IN, AD2IN)</td><td>-10</td><td>10</td><td>mA</td><td></td></tr>
+      <tr><td>입력 클램프 전류 합계</td><td>-40</td><td>40</td><td>mA</td><td></td></tr>
+      <tr><td>동작 주위 온도 TA</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>접합 온도 TJ</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VCC (코어) / VCCPLL</td><td>1.14</td><td>1.2</td><td>1.32</td><td>V</td></tr>
+      <tr><td>VCCIO</td><td>3</td><td>3.3</td><td>3.6</td><td>V</td></tr>
+      <tr><td>VCCAD</td><td>3</td><td>3.3 / 5.0</td><td>5.25</td><td>V</td></tr>
+      <tr><td>VCCP (플래시 펌프)</td><td>3</td><td>3.3</td><td>3.6</td><td>V</td></tr>
+      <tr><td>VSSAD</td><td>-0.1</td><td></td><td>0.1</td><td>V</td></tr>
+      <tr><td>VADREFHI / VADREFLO</td><td>VSSAD</td><td></td><td>VCCAD</td><td>V</td></tr>
+      <tr><td>VCCIO/VCCAD/VCCP 상승 슬루율</td><td></td><td></td><td>1</td><td>V/µs</td></tr>
+      <tr><td>TA</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+      <tr><td>TJ</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>144핀 LQFP (PGE) / 337볼 NFBGA (ZWT). 대형 MCU라 핀 그룹만 요약합니다.</p>
+  <table><thead><tr><th>그룹</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>전원</td><td>VCC, VCCPLL, VCCIO, VCCAD, VCCP, VSS, VSSAD</td><td>1.2 V 코어·PLL, 3.3 V I/O·플래시 펌프, 3.0 ~ 5.25 V ADC</td></tr>
+      <tr><td>아날로그</td><td>AD1IN[23:0], AD2IN[15:0], VADREFHI/LO</td><td>MibADC 입력(일부 공유), 기준 전압</td></tr>
+      <tr><td>네트워크</td><td>EMAC (MII/RMII/MDIO), FlexRay ×2, DCAN ×3</td><td>이더넷·FlexRay·CAN</td></tr>
+      <tr><td>외부 메모리</td><td>EMIF 16비트</td><td>ZWT 패키지에서만 핀 제공</td></tr>
+      <tr><td>GPIO</td><td>인터럽트 가능 GPIO</td><td>ZWT 16개, PGE 4개</td></tr>
+      <tr><td>디버그·추적</td><td>JTAG, ETM-R4, RTP, DMM</td><td>추적 포트</td></tr>
+    </tbody></table>
+  <p class="todo">핀 번호·정확한 핀 이름은 데이터시트 4장(Terminal Configuration and Functions) 확인 필요(이번에 읽지 않음).</p>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>CPU 클럭 180/160 MHz에서는 플래시를 파이프라인 모드(주소 대기 1, 데이터 대기 3)로 설정해야 합니다. 리셋 직후는 비파이프라인 모드입니다.</li>
+    <li>외부 클럭 입력 EXTCLK 최대 80 MHz, PLL VCO 150 ~ 550 MHz, CPU 자기 진단(STC) 클럭 최대 90 MHz.</li>
+    <li>3.3 V 계열 전원 상승 슬루율은 1 V/µs 이하로 제한합니다.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PGE: RθJA 39 °C/W (JEDEC 2s2p, 정지 공기), RθJB 26.3, RθJC 6.7, ψJT 0.10 °C/W. ZWT: RθJA 18.8 °C/W (2s2p + 5×5 열 비아), RθJB 14.1, RθJC 7.1, ψJT 0.33 °C/W. 수명: VCC 1.2 V, TJ 105 °C에서 100K 전원 인가 시간.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>배치 설명의 180 MHz는 ZWT(BGA) 기준입니다. PGE(LQFP-144)는 최대 160 MHz입니다.</li>
+    <li>EMIF 핀은 ZWT에서만 나오고, PGE는 인터럽트 GPIO가 4개뿐입니다. 패키지 선택 시 주변 기능 가용성을 확인하세요.</li>
+    <li>배치 설명의 'ASIL D'는 읽은 문서 범위에서 등급 표기를 확인하지 못했습니다. 안전 매뉴얼·인증서로 확인하세요.</li>
+    <li>문서 설명부와 특징 목록의 LIN 버전 표기(2.0 / 2.1)가 다릅니다.</li>
+  </ul>
+</article>
+</body>
+</html>

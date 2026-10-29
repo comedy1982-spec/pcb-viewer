@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IR2104S · 600 V half-bridge gate driver, SOIC-8</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="IR2104S" data-mfr="Infineon" data-cat="게이트 드라이버" data-price="1.2" data-status="done" data-src="https://datasheet.chipsmall.com/IR2104/472827.pdf">
+  <h1>IR2104S</h1>
+  <p class="meta">Infineon (구 International Rectifier) · 게이트 드라이버 · 600 V half-bridge gate driver, SOIC-8 · 참고 단가 약 $1.2 (추정)</p>
+  <p class="meta">원본: <a href="https://datasheet.chipsmall.com/IR2104/472827.pdf" target="_blank" rel="noopener">데이터시트 PDF (IR 원문 사본)</a> · <a href="https://www.infineon.com/dgdl/ir2104.pdf?fileId=5546d462533600a4015355c7c1c31671" target="_blank" rel="noopener">Infineon PDF (미확인 링크)</a> · <a href="https://octopart.com/search?q=IR2104S" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 PD60046-S (2004-04-02)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>하프브리지 1채널 게이트 드라이버 (하이사이드 부트스트랩 + 로우사이드), 단일 IN 입력 + SD</dd>
+    <dt>V<sub>OFFSET</sub></dt><dd>600 V max</dd>
+    <dt>출력 전류</dt><dd>I<sub>O+</sub> 130 mA min (210 typ) / I<sub>O−</sub> 270 mA min (360 typ)</dd>
+    <dt>게이트 전원</dt><dd>V<sub>CC</sub> 10–20 V, UVLO 8.9 V↑ / 8.2 V↓ typ</dd>
+    <dt>입력</dt><dd>3.3 V / 5 V / 15 V 로직 호환 (V<sub>IH</sub> 3 V min, V<sub>IL</sub> 0.8 V max)</dd>
+    <dt>타이밍</dt><dd>t<sub>on</sub> 680 ns / t<sub>off</sub> 150 ns typ · 데드타임 520 ns typ (400–650) 내부 고정</dd>
+    <dt>동작 온도</dt><dd>T<sub>A</sub> −40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>8-lead SOIC (IR2104S), PDIP는 IR2104</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>V<sub>B</sub></td><td>-0.3</td><td>625</td><td>V</td><td>COM 기준</td></tr>
+    <tr><td>V<sub>S</sub></td><td>V<sub>B</sub>−25</td><td>V<sub>B</sub>+0.3</td><td>V</td><td></td></tr>
+    <tr><td>V<sub>HO</sub></td><td>V<sub>S</sub>−0.3</td><td>V<sub>B</sub>+0.3</td><td>V</td><td></td></tr>
+    <tr><td>V<sub>CC</sub></td><td>-0.3</td><td>25</td><td>V</td><td></td></tr>
+    <tr><td>V<sub>LO</sub>, V<sub>IN</sub> (IN, SD)</td><td>-0.3</td><td>V<sub>CC</sub>+0.3</td><td>V</td><td></td></tr>
+    <tr><td>dV<sub>S</sub>/dt</td><td></td><td>50</td><td>V/ns</td><td></td></tr>
+    <tr><td>P<sub>D</sub> (SOIC)</td><td></td><td>0.625</td><td>W</td><td>T<sub>A</sub> ≤ 25 °C</td></tr>
+    <tr><td>T<sub>J</sub></td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>T<sub>S</sub></td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+  <tbody>
+    <tr><td>V<sub>B</sub></td><td>V<sub>S</sub>+10</td><td></td><td>V<sub>S</sub>+20</td><td>V</td></tr>
+    <tr><td>V<sub>S</sub></td><td></td><td></td><td>600</td><td>V</td></tr>
+    <tr><td>V<sub>CC</sub></td><td>10</td><td></td><td>20</td><td>V</td></tr>
+    <tr><td>V<sub>IN</sub></td><td>0</td><td></td><td>V<sub>CC</sub></td><td>V</td></tr>
+    <tr><td>T<sub>A</sub></td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>8-lead SOIC (IR2104S)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>VCC</td><td>로우사이드·로직 고정 전원</td></tr>
+    <tr><td>2</td><td>IN</td><td>HO/LO 로직 입력 (HO와 동상)</td></tr>
+    <tr><td>3</td><td>SD</td><td>셧다운 로직 입력 (양 채널 차단)</td></tr>
+    <tr><td>4</td><td>COM</td><td>로우사이드 리턴</td></tr>
+    <tr><td>5</td><td>LO</td><td>로우사이드 게이트 출력</td></tr>
+    <tr><td>6</td><td>VS</td><td>하이사이드 플로팅 전원 리턴 (스위치 노드)</td></tr>
+    <tr><td>7</td><td>HO</td><td>하이사이드 게이트 출력</td></tr>
+    <tr><td>8</td><td>VB</td><td>하이사이드 플로팅 전원 (부트스트랩 +)</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>부트스트랩: VCC→다이오드→VB, VB–VS 사이 부트스트랩 커패시터. 값은 데이터시트에 없음 — Infineon 설계 팁(DT98-2 등) 참고, 데이터시트 확인 필요.</li>
+    <li>I<sub>QBS</sub> 30 µA typ / 55 µA max — 하이사이드 장시간 ON 시 부트스트랩 전압 강하 고려 (100% 듀티 불가).</li>
+    <li>V<sub>CC</sub> 가까이 디커플링 커패시터 배치 (데이터시트는 연결도만 제시, 레이아웃은 앱노트 참조).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>8-lead SOIC. R<sub>thJA</sub> 200 °C/W, P<sub>D</sub> 0.625 W (T<sub>A</sub> ≤ 25 °C). T<sub>J</sub> max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>한 IC가 하프브리지 1개만 구동 — H-브리지에는 2개 필요. 부품 DB 설명의 "×2"는 보드당 수량으로 해석해야 함.</li>
+    <li>출력 130/270 mA로 약함 — 대형 MOSFET(Q<sub>g</sub> 수십 nC)에서는 스위칭이 느려짐. 데드타임 520 ns 고정.</li>
+    <li>읽은 문서(IR PD60046-S)에 AEC-Q100 언급 없음 — 차량용 ECU에는 자격 부품(예: AUIRS 계열) 검토.</li>
+  </ul>
+</article>
+</body>
+</html>

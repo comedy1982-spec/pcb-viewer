@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TMP235-Q1 · Automotive analog output temperature sensor, 10 mV/°C</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TMP235-Q1" data-mfr="TI" data-cat="센서" data-price="0.35" data-status="done" data-src="https://static.chipdip.ru/lib/082/DOC012082530.pdf">
+  <h1>TMP235-Q1</h1>
+  <p class="meta">TI · 센서 · Automotive analog output temperature sensor, 10 mV/°C · 참고 단가 약 $0.35 (추정)</p>
+  <p class="meta">원본: <a href="https://static.chipdip.ru/lib/082/DOC012082530.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://www.ti.com/product/es-mx/TMP235-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TMP235-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SBOS939C (2019-04, 개정 2019-11)</p>
+  <h2>핵심 사양</h2>
+  <dl><dt>기능</dt><dd>아날로그 출력 온도 센서 (양의 기울기)</dd><dt>기울기 · 오프셋</dt><dd>10 mV/°C, 0 °C에서 500 mV</dd><dt>정확도</dt><dd>±2.5 °C max (-40 ~ 150 °C), ±0.5 °C typ (0 ~ 70 °C)</dd><dt>전원</dt><dd>2.3 ~ 5.5 V, IQ 9 µA typ</dd><dt>출력 구동</dt><dd>최대 500 µA, 부하 용량 1000 pF까지</dd><dt>등급 · 온도</dt><dd>AEC-Q100 Grade 0 (-40 ~ 150 °C) — AE 버전; AQ 버전은 -40 ~ 125 °C</dd><dt>패키지</dt><dd>SOT-23-3 (DBZ), SC70-5 (DCK)</dd></dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>전원 VDD</td><td></td><td>6</td><td>V</td><td></td></tr><tr><td>출력 VOUT</td><td>-0.3</td><td>VDD + 0.3</td><td>V</td><td></td></tr><tr><td>출력 전류</td><td>-30</td><td>30</td><td>mA</td><td></td></tr><tr><td>래치업 전류 (핀당)</td><td>-200</td><td>200</td><td>mA</td><td></td></tr><tr><td>접합 온도</td><td></td><td>150</td><td>°C</td><td></td></tr><tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr><tr><td>ESD HBM / CDM</td><td></td><td>±2000 / ±500 (코너 ±750)</td><td>V</td><td></td></tr></tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>VDD</td><td>2.3</td><td></td><td>5.5</td><td>V</td></tr><tr><td>동작 주위 온도 TA</td><td>-40</td><td></td><td>150</td><td>°C</td></tr><tr><td>부하 용량 CLOAD</td><td></td><td>1000</td><td></td><td>pF</td></tr></tbody></table>
+  <h2>핀 배치</h2>
+  <p>SOT-23-3 (DBZ) — (SC70-5 DCK: 1 NC, 2 GND, 3 VOUT, 4 VDD, 5 NC)</p><table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1</td><td>VDD</td><td>양의 전원</td></tr><tr><td>2</td><td>VOUT</td><td>온도 비례 전압 출력</td></tr><tr><td>3</td><td>GND</td><td>전원 그라운드</td></tr></tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul><li>전달 함수: VOUT = (TA − TINFL) × TC + VOFFS. -40 ~ 100 °C: TINFL 0 °C, TC 10 mV/°C, VOFFS 500 mV; 100 ~ 125 °C: 100 °C, 10.1 mV/°C, 1500 mV; 125 ~ 150 °C: 125 °C, 10.6 mV/°C, 1752.5 mV.</li><li>VDD 바이패스 0.1 µF. 노이즈 환경에서는 외부 전원–VDD 사이 100 Ω + 0.1 µF 필터.</li><li>총 CLOAD(CFILTER + CMUX + CSAMPLE) ≤ 1000 pF — 대부분 CFILTER 680 pF 권장, ADC 입력 가까이 배치.</li><li>출력 임피던스 20 Ω (100 Hz), 50 Ω (500 Hz) @ IOUT 100 µA.</li></ul>
+  <h2>패키지 · 열</h2>
+  <p>SOT-23-3 (DBZ): RθJA 167, RθJC(top) 90, RθJB 146, ΨJT 35, ΨJB 146 °C/W. SC70-5 (DCK): RθJA 275, RθJC(top) 84, RθJB 56, ΨJT 1.2, ΨJB 55 °C/W. TJ 최대 150 °C.</p>
+  <h2>설계 메모</h2>
+  <ul><li>주문형: TMP235AEDBZRQ1 (SOT-23, -40 ~ 150 °C, 마킹 235E), TMP235AQDBZRQ1 (SOT-23, -40 ~ 125 °C, 235Q). 핀 JSON은 SOT-23-3 (DBZ).</li><li>배치 설명 &#x27;±2.5 °C · SOT-23&#x27; 일치. 분류는 NTC가 아니라 IC 온도 센서.</li><li>측정 대상과 열 결합을 위해 GND 패드/동박을 대상 부품 쪽으로 연결.</li><li>TMP236-Q1은 19.5 mV/°C, 3.1 V 이상 전원 — 혼동 주의.</li></ul>
+</article>
+</body>
+</html>

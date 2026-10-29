@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STL325N4LF8AG · Automotive N-channel 40 V 0.75 mOhm STripFET F8 MOSFET, PowerFLAT 5x6</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="STL325N4LF8AG" data-mfr="STMicroelectronics" data-cat="트랜지스터" data-price="" data-status="done" data-src="https://novapart.co/datasheet/farnell:4067501RL/">
+  <h1>STL325N4LF8AG</h1>
+  <p class="meta">STMicroelectronics · 트랜지스터 · Automotive-grade N-channel 40 V, 0.75 mΩ max, logic level STripFET F8 MOSFET, PowerFLAT 5x6 WF</p>
+  <p class="meta">원본: <a href="https://www.st.com/resource/en/datasheet/stl325n4lf8ag.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> (미확인 링크 — 본문은 <a href="https://novapart.co/datasheet/farnell:4067501RL/" target="_blank" rel="noopener">DS13900 발췌본</a>과 제품 페이지에서 읽음) · <a href="https://www.st.com/en/power-transistors/stl325n4lf8ag.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=STL325N4LF8AG" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS13900 Rev 1, 2022-04</p>
+  <p class="todo">읽은 발췌본에 열저항(Rthj-case/pcb), VGS(th), 게이트 전하·커패시턴스·스위칭 시간, 바디 다이오드 특성, RDS(on) 측정 조건이 없었습니다 — 원본 PDF에서 보완 필요.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>N-채널 인핸스먼트, 로직 레벨, STripFET F8 (트렌치 게이트), 100% 애벌런치 시험</dd>
+    <dt>VDS</dt><dd>40 V</dd>
+    <dt>ID</dt><dd>373 A (TC 25 °C), 264 A (TC 100 °C)</dd>
+    <dt>RDS(on)</dt><dd>최대 0.75 mΩ (측정 VGS 조건은 데이터시트 확인 필요)</dd>
+    <dt>PTOT</dt><dd>188 W (TC 25 °C)</dd>
+    <dt>등급</dt><dd>AEC-Q101, MSL1, 175 °C 동작</dd>
+    <dt>패키지</dt><dd>PowerFLAT 5x6 WF (wettable flank), 마킹 325N4LF8</dd>
+    <dt>상태</dt><dd>양산 중, ST 장기 공급 약속 2035-02까지</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDS</td><td></td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>VGS</td><td>−16</td><td>16</td><td>V</td><td></td></tr>
+      <tr><td>ID</td><td></td><td>373</td><td>A</td><td>TC 25 °C</td></tr>
+      <tr><td>ID</td><td></td><td>264</td><td>A</td><td>TC 100 °C</td></tr>
+      <tr><td>IDM</td><td></td><td>1492</td><td>A</td><td>펄스 tP 10 µs</td></tr>
+      <tr><td>PTOT</td><td></td><td>188</td><td>W</td><td>TC 25 °C</td></tr>
+      <tr><td>IAS</td><td></td><td>60</td><td>A</td><td></td></tr>
+      <tr><td>EAS</td><td></td><td>590</td><td>mJ</td><td>Tj 25 °C, ID 60 A, RG 25 Ω</td></tr>
+      <tr><td>Tj (동작)</td><td></td><td>175</td><td>°C</td><td>Tstg는 데이터시트 확인 필요</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <p>디스크리트 MOSFET — 별도 권장 동작 표 없음. 동적 특성은 데이터시트 확인 필요.</p>
+
+  <h2>핀 배치</h2>
+  <p>PowerFLAT 5x6 (8리드, 상면 기준)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1, 2, 3</td><td>S</td><td>소스</td></tr>
+      <tr><td>4</td><td>G</td><td>게이트</td></tr>
+      <tr><td>5, 6, 7, 8</td><td>D</td><td>드레인 (하면 노출 패드 연결은 도면 확인 필요)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VGS 최대 ±16 V — 12 V 게이트 드라이버 출력에 오버슈트가 겹치지 않도록 게이트 클램프 권장 (20 V 정격 MOSFET과 다름).</li>
+    <li>로직 레벨 소자이므로 낮은 게이트 전압에서도 켜짐 — 하이 dv/dt 브리지에서 밀러 턴온 대비 게이트 풀다운/음 바이어스 검토.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PowerFLAT 5x6 WF, 웨터블 플랭크(AOI 납땜 검사 가능). 열저항은 읽은 자료에 없음 — 데이터시트 확인 필요. Tj 최대 175 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>부품 DB 설명의 "0.9 mΩ"은 ST 기재값(RDS(on) 최대 0.75 mΩ)과 다름 — DB 수정 권장.</li>
+    <li>같은 계열의 스탠더드 레벨 버전 STL325N4F8AG가 별도로 존재(사양 미확인) — 게이트 구동 전압에 맞춰 선택.</li>
+  </ul>
+</article>
+</body>
+</html>

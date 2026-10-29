@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACS37002 · 400 kHz Isolated Hall Current Sensor</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="ACS37002" data-mfr="Allegro" data-cat="전류 센서" data-price="" data-status="done" data-src="https://www.allegromicro.com/-/media/files/datasheets/acs37002-datasheet.pdf">
+  <h1>ACS37002</h1>
+  <p class="meta">Allegro · 전류 센서 · 400 kHz 고정밀 홀 전류 센서, 핀 선택 게인, 가변 과전류 고속 FAULT, SOICW-16</p>
+  <p class="meta">원본: <a href="https://www.allegromicro.com/-/media/files/datasheets/acs37002-datasheet.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.allegromicro.com/en/products/sense/current-sensor-ics/zero-to-fifty-amp-integrated-conductor-sensor-ics/acs37002" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=ACS37002" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 ACS37002-DS Rev. 11 (MCO-0000900), 2025-08-14</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>내장 1차 도체형 차동 홀 전류 센서, 비레이쇼메트릭 출력 + VREF 출력, 과전류 FAULT(OCF, 오픈드레인)</dd>
+    <dt>대역폭 · 응답</dt><dd>400 kHz, 응답 시간 1.1 µs typ · OCF 응답 1 µs typ</dd>
+    <dt>정확도</dt><dd>감도 오차 최대 ±1 % (K 시리즈, 온도 전 범위), 오프셋 최대 ±8 mV</dd>
+    <dt>측정 범위</dt><dd>10 ~ 133 A (품번·게인 설정에 따라), 단방향(U)/양방향(B)</dd>
+    <dt>게인 선택</dt><dd>GAIN_SEL_1/0 두 핀으로 4단 게인 선택</dd>
+    <dt>공급 전압</dt><dd>5 V 품번 4.5 ~ 5.5 V · 3.3 V 품번 3.15 ~ 3.6 V</dd>
+    <dt>1차 도체 저항</dt><dd>MA 0.85 mΩ · LA 1 mΩ (25 °C)</dd>
+    <dt>절연</dt><dd>MA 5000 VRMS / LA 4242 VRMS (60 s, UL 62368-1)</dd>
+    <dt>품질 등급</dt><dd>AEC-Q100 Grade 0</dd>
+    <dt>온도</dt><dd>L: −40 ~ 150 °C · K: −40 ~ 125 °C 최적화</dd>
+    <dt>패키지</dt><dd>SOICW-16 (MA, LA)</dd>
+  </dl>
+
+  <h2>품번 · 게인 (선택 가이드 요약, 최대 전류 A / 감도 mV/A)</h2>
+  <table><thead><tr><th>품번</th><th>패키지</th><th>VCC</th><th>00</th><th>01</th><th>10</th><th>11</th></tr></thead><tbody>
+    <tr><td>LMABTR-050B5-M</td><td>MA</td><td>5</td><td>50/40</td><td>40/50</td><td>33.3/60</td><td>66.7/30</td></tr>
+    <tr><td>LMABTR-066B5-M</td><td>MA</td><td>5</td><td>66.7/30</td><td>80/25</td><td>100/20</td><td>133.3/15</td></tr>
+    <tr><td>LMABTR-050U5-M</td><td>MA</td><td>5</td><td>50/80</td><td>40/100</td><td>33.3/120</td><td>66.7/60</td></tr>
+    <tr><td>LMABTR-066U5-M</td><td>MA</td><td>5</td><td>66.7/60</td><td>80/50</td><td>100/40</td><td>133.3/30</td></tr>
+    <tr><td>LMABTR-050B3</td><td>MA</td><td>3.3</td><td>50/26.4</td><td>40/33</td><td>33.3/39.6</td><td>66.7/19.8</td></tr>
+    <tr><td>LMABTR-066B3</td><td>MA</td><td>3.3</td><td>66.7/19.8</td><td>80/16.5</td><td>100/13.2</td><td>133.3/9.9</td></tr>
+    <tr><td>LMABTR-050U3</td><td>MA</td><td>3.3</td><td>50/52.8</td><td>40/66</td><td>33.3/79.2</td><td>66.7/39.6</td></tr>
+    <tr><td>LMABTR-066U3</td><td>MA</td><td>3.3</td><td>66.7/39.6</td><td>80/33</td><td>100/26.4</td><td>133.3/19.8</td></tr>
+    <tr><td>KMABTR-050B5-M</td><td>MA</td><td>5</td><td>50/40</td><td>40/50</td><td>33.3/60</td><td>66.7/30</td></tr>
+    <tr><td>KMABTR-050B3</td><td>MA</td><td>3.3</td><td>50/26.4</td><td>40/33</td><td>33.3/39.6</td><td>66.7/19.8</td></tr>
+    <tr><td>LLAATR-015B5</td><td>LA</td><td>5</td><td>15/133.3</td><td>12/166.6</td><td>10/200</td><td>20/100</td></tr>
+    <tr><td>LLAATR-025B5</td><td>LA</td><td>5</td><td>25/80</td><td>30/66.6</td><td>37.5/53.3</td><td>50/40</td></tr>
+    <tr><td>LLAATR-015B3</td><td>LA</td><td>3.3</td><td>15/88</td><td>12/110</td><td>10/132</td><td>20/66</td></tr>
+    <tr><td>LLAATR-025U3</td><td>LA</td><td>3.3</td><td>25/105.6</td><td>30/88</td><td>37.5/70.4</td><td>50/52.8</td></tr>
+  </tbody></table>
+  <p class="meta">"-M" 접미사 = UVD 비활성. 모든 품번 13인치 릴 1000개.</p>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>−0.5</td><td>6.5</td><td>V</td><td>역전압 −0.5 V</td></tr>
+    <tr><td>출력 VIOUT, OCF, VREF</td><td>−0.5</td><td>VCC + 0.7 (≤ 6.5)</td><td>V</td><td></td></tr>
+    <tr><td>입력 GAIN_SEL_0/1, VOC</td><td>−0.5</td><td>VCC + 0.7 (≤ 6.5)</td><td>V</td><td></td></tr>
+    <tr><td>TA</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>TJ(max)</td><td></td><td>165</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−65</td><td>165</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC (5 V 품번)</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>VCC (3.3 V 품번)</td><td>3.15</td><td>3.3</td><td>3.6</td><td>V</td></tr>
+    <tr><td>ICC (5 V, 무부하)</td><td></td><td>13</td><td>18</td><td>mA</td></tr>
+    <tr><td>ICC (3.3 V, 무부하)</td><td></td><td>12</td><td>15</td><td>mA</td></tr>
+    <tr><td>VOC (5 V 품번)</td><td>0.5</td><td></td><td>2</td><td>V</td></tr>
+    <tr><td>VOC (3.3 V 품번)</td><td>0.33</td><td></td><td>1.32</td><td>V</td></tr>
+    <tr><td>VIOUT 부하 RL</td><td>10</td><td></td><td></td><td>kΩ</td></tr>
+    <tr><td>VIOUT 부하 CL</td><td></td><td>1</td><td>6</td><td>nF</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOICW-16 (MA / LA 공통)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1–4</td><td>IP+</td><td>전류 입력 단자 (내부 퓨즈)</td></tr>
+    <tr><td>5–8</td><td>IP−</td><td>전류 귀환 단자 (내부 퓨즈)</td></tr>
+    <tr><td>9</td><td>OCF</td><td>과전류 FAULT 출력 (오픈드레인)</td></tr>
+    <tr><td>10</td><td>VCC</td><td>전원</td></tr>
+    <tr><td>11</td><td>VOC</td><td>과전류 동작점 설정 입력</td></tr>
+    <tr><td>12</td><td>VIOUT</td><td>전류 비례 아날로그 출력</td></tr>
+    <tr><td>13</td><td>VREF</td><td>영전류 기준 전압 출력</td></tr>
+    <tr><td>14</td><td>GAIN_SEL_1</td><td>게인 선택 비트 1</td></tr>
+    <tr><td>15</td><td>GND</td><td>접지</td></tr>
+    <tr><td>16</td><td>GAIN_SEL_0</td><td>게인 선택 비트 0</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VCC 바이패스 0.1 µF (VCC–GND).</li>
+    <li>VIOUT: RL ≥ 10 kΩ (GND 또는 VCC), CL 1 nF typ / 6 nF max.</li>
+    <li>VREF: RVREF ≥ 10 kΩ, CVREF ≤ 6 nF — VOC 분압 전원으로 VREF 사용 권장.</li>
+    <li>OCF 풀업 4.7 kΩ ~ 500 kΩ.</li>
+    <li>GAIN_SEL: 내부 풀다운 1 MΩ typ, High ≥ 3.75 V (5 V) / ≥ 2.25 V (3.3 V), Low ≤ 0.5 V.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOICW-16. RθJA MA 20 / LA 16 °C/W, RθJC MA 14 / LA 10 °C/W, RθJB MA 14 / LA 8 °C/W, ψJT MA 2.4 / LA −1.7 °C/W. TJ(max) 165 °C. 절연: 연면·공간거리 MA 8 mm / LA 7.9 mm, 기본 절연 작업 전압 MA 1550 Vpk (1097 VRMS) / LA 1414 Vpk (1000 VRMS), 강화 절연 MA 800 Vpk / LA 707 Vpk, CTI 400 ~ 599 V (Group II), MSL 3.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN "ACS37002"는 패밀리명 — 주문 품번(패키지 MA/LA, 3.3/5 V, B/U, 전류 범위)을 위 표에서 선택해야 함. 생성기 핀 테이블은 공통 SOICW-16 핀아웃.</li>
+    <li>출력은 비레이쇼메트릭 — ADC 기준과 무관하게 VREF를 차동 기준으로 함께 샘플링하는 것이 유리.</li>
+    <li>1차측(1–8핀)과 신호측(9–16핀) 사이 연면거리를 PCB에서도 유지 (패키지 하부 동박 금지).</li>
+    <li>3.3 V 공급 품번과 5 V 공급 품번은 VCC 범위가 다르므로 혼용 금지.</li>
+  </ul>
+</article>
+</body>
+</html>

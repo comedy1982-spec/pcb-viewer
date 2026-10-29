@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>USBLC6-2SC6 · Very low capacitance ESD protection for USB 2.0</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="USBLC6-2SC6" data-mfr="ST" data-cat="보호" data-price="0.25" data-status="done" data-src="https://www.st.com/content/st_com/en/technical-documents/DS4260.html">
+  <h1>USBLC6-2SC6</h1>
+  <p class="meta">ST · 보호 · 2채널 저용량 ESD 보호 (USB 2.0 데이터 라인 + VBUS) · 참고 단가 약 $0.25 (추정)</p>
+  <p class="meta">원본: <a href="https://www.st.com/content/st_com/en/technical-documents/DS4260.html" target="_blank" rel="noopener">데이터시트 (DS4260)</a> · <a href="https://www.st.com/ja/protection-devices/usblc6-2.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=USBLC6-2SC6" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS4260, 2021-12-07 개정</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>데이터 라인 2채널 + VBUS 보호용 TVS 다이오드 어레이 (레일-투-레일 구조)</dd>
+    <dt>I/O–GND 용량</dt><dd>2.5–3.5 pF (VR = 1.65 V), 매칭 ΔC 최대 0.015 pF</dd>
+    <dt>I/O–I/O 용량</dt><dd>일반 1.2 pF, 최대 1.7 pF</dd>
+    <dt>누설 전류</dt><dd>IRM 일반 10 nA, 최대 150 nA (VRM = 5.25 V)</dd>
+    <dt>ESD</dt><dd>IEC 61000-4-2 레벨 4: 접촉 8 kV / 기중 15 kV (특징 항목)</dd>
+    <dt>클램프 전압</dt><dd>최대 12 V @ 1 A, 최대 17 V @ 5 A (8/20 µs, I/O→GND)</dd>
+    <dt>용도</dt><dd>USB 2.0 HS (480 Mb/s), USB 1.1, 10/100 이더넷, SIM, 비디오 라인</dd>
+    <dt>패키지</dt><dd>SOT23-6L (USBLC6-2SC6), SOT-666 (USBLC6-2P6)</dd>
+    <dt>차량 등급</dt><dd>읽은 문서에 AEC-Q101 표기 없음</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VPP (IEC 61000-4-2 기중)</td><td></td><td>15</td><td>kV</td><td>Tamb = 25 °C</td></tr>
+    <tr><td>VPP (IEC 61000-4-2 접촉)</td><td></td><td>15</td><td>kV</td><td>추출 텍스트 기준</td></tr>
+    <tr><td>VPP (MIL-STD-883G 3015-7)</td><td></td><td>25</td><td>kV</td><td></td></tr>
+    <tr><td>저장 온도 Tstg</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>동작 접합 온도 Tj</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>리드 납땜 온도 TL</td><td></td><td>260</td><td>°C</td><td>10 s, 5 mm</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>역방향 동작 전압 VRM (IRM 측정 조건)</td><td></td><td></td><td>5.25</td><td>V</td></tr>
+    <tr><td>항복 전압 VBR (IR = 1 mA, VBUS–GND)</td><td>6</td><td></td><td></td><td>V</td></tr>
+    <tr><td>순방향 전압 VF (IF = 10 mA)</td><td></td><td></td><td>1.1</td><td>V</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT23-6L (상면도)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>I/O1</td><td>데이터 라인 1 (핀 6과 내부 연결)</td></tr>
+    <tr><td>2</td><td>GND</td><td>접지</td></tr>
+    <tr><td>3</td><td>I/O2</td><td>데이터 라인 2 (핀 4와 내부 연결)</td></tr>
+    <tr><td>4</td><td>I/O2</td><td>데이터 라인 2</td></tr>
+    <tr><td>5</td><td>VBUS</td><td>전원 라인 (내부 제너 클램프)</td></tr>
+    <tr><td>6</td><td>I/O1</td><td>데이터 라인 1</td></tr>
+  </tbody></table>
+  <p class="meta">핀 번호는 데이터시트 기능도의 추출 텍스트에서 읽은 것으로, 그림 배치가 일부 깨져 있었음 — 배치 전 원본 그림으로 한 번 더 확인 권장.</p>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>USB 커넥터 쪽에 두고 D+/D−를 I/O1·I/O2에 통과 배선, VBUS 핀은 커넥터 VBUS에 연결.</li>
+    <li>I/O 간 용량 매칭(0.015 pF)이 작아 USB 2.0 HS 신호 무결성 요구를 만족한다고 명시.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOT23-6L, 실장 면적 최대 9 mm² (SOT-666은 2.9 mm²). 읽은 문서에 열저항 값 없음.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>ESD 전류가 GND로 짧게 빠지도록 GND 핀을 접지면에 바로 비아로 연결하고, 커넥터–보호소자–IC 순서로 배치.</li>
+    <li>읽은 데이터시트에 AEC-Q101 언급이 없음 — 차량용이면 ST의 차량 등급 대체품 검토 필요.</li>
+  </ul>
+</article>
+</body>
+</html>

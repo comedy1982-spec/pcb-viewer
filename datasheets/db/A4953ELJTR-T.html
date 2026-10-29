@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A4953ELJTR-T · Full-bridge DMOS PWM motor driver, 2 A 40 V</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="A4953ELJTR-T" data-mfr="Allegro MicroSystems" data-cat="모터 드라이버" data-price="1" data-status="done" data-src="https://www.digikey.es/es/htmldatasheets/production/870250/0/0/1/a4952elytr-t">
+  <h1>A4953ELJTR-T</h1>
+  <p class="meta">Allegro MicroSystems · 모터 드라이버 · 풀브리지 DMOS PWM 모터 드라이버, 2 A, 40 V, 전류 제한 · 참고 단가 약 $1 (추정)</p>
+  <p class="meta">원본: <a href="https://www.digikey.es/es/htmldatasheets/production/870250/0/0/1/a4952elytr-t" target="_blank" rel="noopener">데이터시트 (Digi-Key HTML)</a> · <a href="https://allegromicro.com/en/products/motor-drivers/brush-dc-motor-drivers/a4952-3" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=A4953ELJTR-T" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 A4952-DS Rev. 4 (2020-03-24)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>DMOS 풀브리지 1채널, IN1/IN2 PWM, 동기 정류, 교차 전류 보호</dd>
+    <dt>전원</dt><dd>VBB 8~40 V</dd>
+    <dt>출력 전류</dt><dd>2 A (100 % 듀티), 과도 6 A (&lt; 500 ns)</dd>
+    <dt>RDS(on)</dt><dd>소스+싱크 0.8 typ / 1.0 max Ω (1.5 A, 25 °C); 1.3 / 1.6 Ω (125 °C)</dd>
+    <dt>전류 제한</dt><dd>ITripMAX = VREF / (AV × RS), AV ≈ 10 V/V; 블랭크 3 µs, 고정 오프타임 25 µs</dd>
+    <dt>보호</dt><dd>OCP 2.5~6.5 A (래치), UVLO 7.5 V typ (히스 500 mV), TSD 160 °C (히스 20 °C)</dd>
+    <dt>대기</dt><dd>저전력 대기 10 µA (IN1=IN2=0, 1~1.5 ms 후)</dd>
+    <dt>온도</dt><dd>E 범위 TA −40~85 °C</dd>
+    <dt>패키지</dt><dd>8-pin SOICN 노출 패드 (LJ), 13인치 릴 3,000개</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VBB</td><td></td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>로직 I/O VIN</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>VREF</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>감지 전압 VS (LSS)</td><td>-0.5</td><td>0.5</td><td>V</td><td></td></tr>
+      <tr><td>모터 출력 VOUT</td><td>-2</td><td>42</td><td>V</td><td></td></tr>
+      <tr><td>출력 전류 IOUT</td><td></td><td>2</td><td>A</td><td>듀티 100 %</td></tr>
+      <tr><td>과도 출력 전류</td><td></td><td>6</td><td>A</td><td>tW &lt; 500 ns</td></tr>
+      <tr><td>동작 온도 TA (E)</td><td>-40</td><td>85</td><td>°C</td><td></td></tr>
+      <tr><td>접합 온도 TJ(max)</td><td></td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VBB</td><td>8</td><td></td><td>40</td><td>V</td></tr>
+      <tr><td>IBB (fPWM &lt; 30 kHz)</td><td></td><td></td><td>10</td><td>mA</td></tr>
+      <tr><td>VIN(1) / VIN(0)</td><td>2.0</td><td></td><td>0.8</td><td>V</td></tr>
+      <tr><td>VIN(STANDBY)</td><td></td><td></td><td>0.4</td><td>V</td></tr>
+      <tr><td>입력 히스테리시스</td><td>250</td><td></td><td>550</td><td>mV</td></tr>
+      <tr><td>VREF</td><td>0</td><td></td><td>5</td><td>V</td></tr>
+      <tr><td>AV (VREF 5 V)</td><td>9.5</td><td>10.5</td><td></td><td>V/V</td></tr>
+      <tr><td>크로스오버 지연 tCOD</td><td>50</td><td>400</td><td>500</td><td>ns</td></tr>
+      <tr><td>블랭크 시간</td><td>2</td><td>3</td><td>4</td><td>µs</td></tr>
+      <tr><td>고정 오프타임</td><td>16</td><td>25</td><td>34</td><td>µs</td></tr>
+      <tr><td>UVLO (VBB 상승)</td><td>7.0</td><td>7.5</td><td>7.95</td><td>V</td></tr>
+    </tbody></table>
+  <table style="margin-top:8px"><thead><tr><th>IN1</th><th>IN2</th><th>OUT1</th><th>OUT2</th><th>동작</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>1</td><td>L</td><td>H</td><td>역방향 (트립 시 혼합 감쇠 초핑)</td></tr>
+      <tr><td>1</td><td>0</td><td>H</td><td>L</td><td>정방향 (트립 시 혼합 감쇠 초핑)</td></tr>
+      <tr><td>1</td><td>1</td><td>L</td><td>L</td><td>브레이크 (저속 감쇠)</td></tr>
+      <tr><td>0</td><td>0</td><td>Z</td><td>Z</td><td>코스트, 1 ms 후 저전력 대기</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>8-pin SOICN + 노출 패드 (LJ)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>GND</td><td>접지</td></tr>
+      <tr><td>2</td><td>IN2</td><td>로직 입력 2</td></tr>
+      <tr><td>3</td><td>IN1</td><td>로직 입력 1</td></tr>
+      <tr><td>4</td><td>VREF</td><td>전류 제한 설정 아날로그 입력</td></tr>
+      <tr><td>5</td><td>VBB</td><td>부하 전원</td></tr>
+      <tr><td>6</td><td>OUT1</td><td>풀브리지 출력 1</td></tr>
+      <tr><td>7</td><td>LSS</td><td>전력 리턴 / 감지 저항</td></tr>
+      <tr><td>8</td><td>OUT2</td><td>풀브리지 출력 2</td></tr>
+      <tr><td>PAD</td><td>PAD</td><td>노출 패드 (GND 플레인 연결)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>RS: 0.25 Ω, 2512, 1 W, 1 % (VREF 5 V, IOUT 2 A 예).</li>
+    <li>C1: 0.22 µF X5R 이상, 50 V 이상, 소자 근접. C2: 100 µF 전해 50 V 이상 (VBB 벌크).</li>
+    <li>LSS 감지 트레이스 짧게, 별도 GND 리턴, 스타 접지는 소자 근처.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOICN-8 EP. RθJA 35 °C/W (4층 JEDEC), 62 °C/W (2층, 0.8 in² 2 oz 양면). TJ max 150 °C. 패드 아래 열 비아.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>A4953은 FLTn 출력·RTRY 입력이 없음 — 과전류는 래치되며 대기 진입 또는 VBB 재투입으로만 해제. 폴트 출력/자동 재시도가 필요하면 A4952 (MSOP-10 EP).</li>
+    <li>LSS 전압은 최대 부하에서 ±500 mV 이내 유지.</li>
+    <li>E 범위(−40~85 °C) — 차량 ECU 주위 온도 요구에는 부족할 수 있음.</li>
+    <li>A4950 (3.5 A)과 핀 호환 SOICN-8 EP.</li>
+  </ul>
+</article>
+</body>
+</html>

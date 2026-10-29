@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FS2600 · FS26 safety system basis chip, ASIL B/D</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="FS2600" data-mfr="NXP" data-cat="전원" data-price="7.2" data-status="done" data-src="https://www.farnell.com/datasheets/4802138.pdf">
+  <h1>FS2600</h1>
+  <p class="meta">NXP · 전원 · FS26 safety system basis chip, ASIL B/D · 참고 단가 약 $7.2 (추정)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/4802138.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://nxp.com/products/FS26" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=FS2600" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 FS26_SDS Product Short Data Sheet Rev. 6.1 (2026-07-30) — 전체 데이터시트는 NDA</p>
+  <p class="todo">읽은 문서는 요약 데이터시트(SDS)입니다. 외부 부품 값(인덕터·커패시터), 상세 전기 특성은 NDA 전체 데이터시트 확인 필요.</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>S32K3 등 안전 MCU용 안전 SBC (ASIL B/D), 다중 레일 전원 + 워치독 + 안전 출력</dd>
+    <dt>VPRE</dt><dd>동기 벅 3.7–6.35 V, 최대 1.5 A, 스탠바이 시 PFM</dd>
+    <dt>VCORE</dt><dd>동기 벅 0.8–3.35 V, 0.8 A (FS260x/261x) 또는 1.65 A (FS262x/263x/264x)</dd>
+    <dt>LDO1 / LDO2</dt><dd>3.3 V 또는 5.0 V, 각 최대 400 mA</dd>
+    <dt>VREF / 트래커</dt><dd>VREF 3.3/5.0 V ±0.75 % 30 mA, TRK1/TRK2 각 최대 150 mA</dd>
+    <dt>VBST</dt><dd>외부 스위치·다이오드·센스 저항 비동기 부스트 컨트롤러 (크랭킹 대응, 배터리 3.2 V까지)</dd>
+    <dt>안전 기능</dt><dd>ASIL D: 챌린저 워치독, FCCU 모니터링, ABIST/LBIST, VMON / ASIL B: 단순 워치독, FCCU·LBIST 없음. 출력 RSTB, FS0B, FS1B</dd>
+    <dt>저전력</dt><dd>스탠바이 29 µA 일반, LPOFF 30 µA 일반</dd>
+    <dt>인터페이스</dt><dd>32-bit SPI (CRC), WAKE ×2, GPIO ×2, AMUX, LDT, OTP 설정. CAN 트랜시버 없음</dd>
+    <dt>패키지 · 온도</dt><dd>LQFP48 노출 패드, Ta -40~125 °C, Tj -40~150 °C</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VSUP, VSUP_PWR, TRK1/TRK2</td><td>-1.2</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VPRE_BT</td><td>-0.3</td><td>45.5</td><td>V</td><td></td></tr>
+    <tr><td>GPIO, FS, VMON, WAKE, VPRE_SW, VBST_FB</td><td>-0.3</td><td>40</td><td>V</td><td>WAKE/GPIO 역전류 최대 -5 mA</td></tr>
+    <tr><td>BATSENSE</td><td>-18</td><td>40</td><td>V</td><td>역전류 최대 -10 mA, 5.1 kΩ 직렬 권장</td></tr>
+    <tr><td>CORE_BT</td><td>-0.3</td><td>12.5</td><td>V</td><td></td></tr>
+    <tr><td>DEBUG</td><td>-0.3</td><td>10</td><td>V</td><td></td></tr>
+    <tr><td>TRKIN, LDOIN, CORE_IN, VPRE_FB, CORE_SW</td><td>-0.3</td><td>8.5</td><td>V</td><td></td></tr>
+    <tr><td>VBOS</td><td>-0.3</td><td>5.6</td><td>V</td><td></td></tr>
+    <tr><td>로직·레귤레이터 출력 핀 대부분</td><td>-0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>VDIG</td><td>-0.3</td><td>2</td><td>V</td><td></td></tr>
+    <tr><td>ESD HBM / CDM</td><td></td><td>±2 kV / ±500 V (코너 ±750 V)</td><td></td><td>AEC-Q100 Rev H</td></tr>
+    <tr><td>ESD 건 시험 (ISO 10605, IEC 61000-4-2)</td><td></td><td>±8</td><td>kV</td><td>글로벌 핀</td></tr>
+    <tr><td>저장 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VSUP (12 V 시스템, 정상 상태)</td><td>12</td><td></td><td>18</td><td>V</td></tr>
+    <tr><td>VSUP (24 V 시스템)</td><td>24</td><td></td><td>30</td><td>V</td></tr>
+    <tr><td>VSUP 과도 (노멀 모드)</td><td></td><td></td><td>36</td><td>V</td></tr>
+    <tr><td>주위 온도 Ta</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    <tr><td>접합 온도 Tj</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>LQFP48 + 노출 패드 (49)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>VBST_PG</td><td>부스트 파워 굿</td></tr>
+    <tr><td>2</td><td>WAKE2</td><td>웨이크 입력 2</td></tr>
+    <tr><td>3</td><td>GPIO1</td><td>GPIO</td></tr>
+    <tr><td>4</td><td>TRK1</td><td>트래커 1 출력</td></tr>
+    <tr><td>5</td><td>TRK2</td><td>트래커 2 출력</td></tr>
+    <tr><td>6</td><td>GPIO2</td><td>GPIO</td></tr>
+    <tr><td>7</td><td>TRKIN</td><td>트래커 입력</td></tr>
+    <tr><td>8</td><td>VREF</td><td>기준 전압 출력 (3.3/5.0 V, 30 mA)</td></tr>
+    <tr><td>9</td><td>LDO2OUT</td><td>LDO2 출력</td></tr>
+    <tr><td>10</td><td>LDOIN</td><td>LDO 입력</td></tr>
+    <tr><td>11</td><td>LDO1OUT</td><td>LDO1 출력</td></tr>
+    <tr><td>12</td><td>FS1B</td><td>안전 출력 1 (active low)</td></tr>
+    <tr><td>13</td><td>FS0B</td><td>안전 출력 0 (active low)</td></tr>
+    <tr><td>14</td><td>VMONEXT</td><td>외부 전압 모니터 입력</td></tr>
+    <tr><td>15</td><td>VMONCORE</td><td>VCORE 모니터 입력</td></tr>
+    <tr><td>16</td><td>RSTB</td><td>MCU 리셋 출력</td></tr>
+    <tr><td>17</td><td>FCCU1</td><td>FCCU 입력 1</td></tr>
+    <tr><td>18</td><td>FCCU2</td><td>FCCU 입력 2</td></tr>
+    <tr><td>19</td><td>GNDFS</td><td>안전 회로 접지</td></tr>
+    <tr><td>20</td><td>GND</td><td>접지</td></tr>
+    <tr><td>21</td><td>VDIG</td><td>내부 디지털 전원 1.6 V (디커플링)</td></tr>
+    <tr><td>22</td><td>GNDSUB</td><td>기판 접지</td></tr>
+    <tr><td>23</td><td>VDDIO</td><td>SPI/디지털 I/O 전원</td></tr>
+    <tr><td>24</td><td>INTB</td><td>인터럽트 출력</td></tr>
+    <tr><td>25</td><td>MISO</td><td>SPI 데이터 출력</td></tr>
+    <tr><td>26</td><td>MOSI</td><td>SPI 데이터 입력</td></tr>
+    <tr><td>27</td><td>SCLK</td><td>SPI 클럭</td></tr>
+    <tr><td>28</td><td>CSB</td><td>SPI 칩 선택</td></tr>
+    <tr><td>29</td><td>AMUX</td><td>아날로그 MUX 출력</td></tr>
+    <tr><td>30</td><td>CORE_FB</td><td>VCORE 피드백</td></tr>
+    <tr><td>31</td><td>DEBUG</td><td>디버그 모드 입력</td></tr>
+    <tr><td>32</td><td>CORE_SW</td><td>VCORE 벅 스위치 노드</td></tr>
+    <tr><td>33</td><td>CORE_BT</td><td>VCORE 부트스트랩</td></tr>
+    <tr><td>34</td><td>CORE_IN</td><td>VCORE 벅 입력</td></tr>
+    <tr><td>35</td><td>VBOS</td><td>내부 바이어스 전원 (디커플링)</td></tr>
+    <tr><td>36</td><td>VMONPRE</td><td>VPRE 모니터 입력</td></tr>
+    <tr><td>37</td><td>VPRE_FB</td><td>VPRE 피드백/출력 감지</td></tr>
+    <tr><td>38</td><td>NC</td><td>미연결</td></tr>
+    <tr><td>39</td><td>VPRE_BT</td><td>VPRE 부트스트랩</td></tr>
+    <tr><td>40</td><td>VPRE_SW</td><td>VPRE 벅 스위치 노드</td></tr>
+    <tr><td>41</td><td>VSUP_PWR</td><td>전원 입력 (파워)</td></tr>
+    <tr><td>42</td><td>VSUP</td><td>전원 입력</td></tr>
+    <tr><td>43</td><td>VBST_FB</td><td>부스트 피드백</td></tr>
+    <tr><td>44</td><td>VBST_ISL</td><td>부스트 전류 감지 Low</td></tr>
+    <tr><td>45</td><td>VBST_G</td><td>부스트 외부 스위치 게이트</td></tr>
+    <tr><td>46</td><td>VBST_ISH</td><td>부스트 전류 감지 High</td></tr>
+    <tr><td>47</td><td>WAKE1</td><td>웨이크 입력 1</td></tr>
+    <tr><td>48</td><td>BATSENSE</td><td>배터리 전압 감지 (5.1 kΩ 직렬 권장)</td></tr>
+    <tr><td>49</td><td>EP</td><td>노출 패드 — 접지</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>SDS에는 권장 부품 값 없음 — 전류 측정 조건으로 LPRE = 10 µH만 표기.</li>
+    <li>BATSENSE 직렬 5.1 kΩ 권장.</li>
+    <li>VSUP 저전압 문턱은 OTP로 선택: 상승 4.6/4.8/5.0 V 또는 5.95/6.1/6.25 V, 하강 4.1/4.3/4.5 V 또는 5.5/5.65/5.8 V.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>LQFP48 노출 패드(49번 = 접지). RθJA 25 °C/W, RθJC(bottom) 1.7 °C/W, RθJC(top) 13.5 °C/W, ΨJT 0.8 °C/W (JESD51-2). 열 경고 TWARN 145/155/170 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>품번 구조 FS26XYZ: X = 전원 구성(0 = VCORE 0.8 A, 트래커 1개), Y = 기능(0 = 기본), Z = ASIL(B 또는 D). 'FS2600'에는 ASIL 접미사가 없음 — 부품 DB 설명(ASIL D)에 맞추려면 FS2600D로 지정 필요.</li>
+    <li>노출 패드는 다수의 서멀 비아로 GND 평면에 연결 (RθJC bottom 1.7 °C/W).</li>
+    <li>VPRE·VCORE 스위칭 루프(VSUP_PWR–VPRE_SW–인덕터–출력 커패시터)를 최소 면적으로 배치.</li>
+  </ul>
+</article>
+</body>
+</html>

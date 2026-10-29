@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP1799T-3302H/TT · 80 mA 45 V automotive LDO, 3.3 V fixed, SOT-23-3</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MCP1799T-3302H/TT" data-mfr="Microchip" data-cat="전원" data-price="0.4" data-status="done" data-src="https://www.hestore.eu/prod_getfile.php?id=19328">
+  <h1>MCP1799T-3302H/TT</h1>
+  <p class="meta">Microchip · 전원 · 80 mA 45 V automotive LDO, 3.3 V fixed, SOT-23-3 · 참고 단가 약 $0.4 (추정)</p>
+  <p class="meta">원본: <a href="https://ww1.microchip.com/downloads/en/DeviceDoc/MCP1799-Data-Sheet-20006248A.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.microchip.com/en-us/product/mcp1799" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=MCP1799T-3302H%2FTT" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS20006248A (Rev A, 09/2019; 최신 Rev B 존재)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>고전압 저드롭아웃 선형 레귤레이터, 고정 출력 3.3 V (±2 %)</dd>
+    <dt>입력 전압</dt><dd>4.5 ~ 45 V (3.3 V 버전 최소 4.5 V, 5.0 V 버전 최소 6.2 V)</dd>
+    <dt>출력 전류</dt><dd>80 mA</dd>
+    <dt>드롭아웃</dt><dd>일반 300 mV, 최대 1100 mV @ 80 mA</dd>
+    <dt>정지 전류</dt><dd>일반 25 µA, 최대 45 µA (무부하); 접지 전류 일반 45 µA / 최대 110 µA @ 80 mA</dd>
+    <dt>보호</dt><dd>전류 제한 일반 150 mA / 최대 215 mA, 과열 차단 일반 180 °C (히스테리시스 22 °C), UVLO 2.8 V 상승 / 2.6 V 하강 (일반)</dd>
+    <dt>차량 등급</dt><dd>AEC-Q100 Grade 0, PPAP 가능</dd>
+    <dt>온도</dt><dd>동작 접합 -40 ~ +150 °C (H 온도 코드)</dd>
+    <dt>패키지</dt><dd>3-lead SOT-23 (TT), T = 테이프 앤 릴</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>입력 전압 VIN</td><td></td><td>66.0</td><td>V</td><td></td></tr>
+    <tr><td>VOUT</td><td>GND − 0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>최대 접합 온도</td><td></td><td>185</td><td>°C</td><td></td></tr>
+    <tr><td>동작 접합 온도</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>-55</td><td>175</td><td>°C</td><td></td></tr>
+    <tr><td>ESD</td><td></td><td></td><td></td><td>HBM ≥ 4 kV, CDM ≥ 750 V, MM ≥ 400 V</td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>입력 전압 (3.3 V 버전)</td><td>4.5</td><td></td><td>45</td><td>V</td></tr>
+    <tr><td>출력 전류</td><td>0</td><td></td><td>80</td><td>mA</td></tr>
+    <tr><td>접합 온도</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    <tr><td>출력 전압 정확도</td><td>-2</td><td></td><td>+2</td><td>%</td></tr>
+    <tr><td>라인 레귤레이션</td><td>-0.05</td><td>±0.02</td><td>+0.05</td><td>%/V</td></tr>
+    <tr><td>부하 레귤레이션 (1–80 mA)</td><td>-0.8</td><td>±0.4</td><td>+0.8</td><td>%</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>3-lead SOT-23 (TT)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>GND</td><td>그라운드</td></tr>
+    <tr><td>2</td><td>VOUT</td><td>레귤레이터 출력</td></tr>
+    <tr><td>3</td><td>VIN</td><td>입력 전원</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>출력: 안정도를 위해 세라믹 최소 1 µF. 전체 온도 범위 과도 특성 개선을 위해 2.2 µF 권장 (예: 1 µF X7R 0805 ESR 50 mΩ 언급).</li>
+    <li>입력: 배터리 구동 또는 긴 배선(&gt; 10 inch) 시 1 ~ 10 µF 세라믹 권장.</li>
+    <li>유전체: X7R(-40 ~ +125 °C) 또는 150 °C 환경은 X8R/L(-55 ~ +150 °C), 전압 디레이팅 고려.</li>
+    <li>PSRR 일반 70 dB (100 Hz / 1 kHz), 35 dB (100 kHz); 출력 잡음 일반 500 µVrms (100 Hz–100 kHz).</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SOT-23-3: θJA 212 °C/W, θJC 139 °C/W (참고: SOT-223-3 θJA 70 °C/W, θJC 60 °C/W). 동작 Tj 최대 150 °C, 과열 차단 일반 180 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>SOT-23 θJA 212 °C/W — 예: 14 V 입력에서 3.3 V 출력 시 손실 = (VIN − VOUT) × IOUT; 고입력·고부하에서는 SOT-223(DB) 패키지 검토.</li>
+    <li>품번 해석: 33 = 출력 전압, 0 = 고정 출력, 2 = 표준 정확도, H = -40 ~ +150 °C, TT = SOT-23, T = 릴.</li>
+    <li>입력 66 V 절대 최대 — 12 V 배터리 직결 시 부하 덤프 수준에 따라 앞단 보호(TVS 등) 검토.</li>
+    <li>배치 설명 "45 V 입력"은 데이터시트(4.5 ~ 45 V)와 일치.</li>
+  </ul>
+</article>
+</body>
+</html>

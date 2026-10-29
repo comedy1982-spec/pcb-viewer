@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TCAN4551RGYRQ1 · Automotive SPI CAN FD controller with integrated transceiver</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TCAN4551RGYRQ1" data-mfr="TI" data-cat="통신" data-price="3.2" data-status="done" data-src="https://www.ti.com/document-viewer/ja-jp/TCAN4551-Q1/datasheet/8-JAJSHT0">
+  <h1>TCAN4551RGYRQ1</h1>
+  <p class="meta">TI · 통신 · Automotive SPI CAN FD controller with integrated transceiver · 참고 단가 약 $3.2 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/lit/ds/symlink/tcan4551-q1.pdf" target="_blank" rel="noopener">데이터시트 PDF (미확인 링크)</a> · <a href="https://www.ti.com/document-viewer/ja-jp/TCAN4551-Q1/datasheet/8-JAJSHT0" target="_blank" rel="noopener">데이터시트 (TI HTML 뷰어, 일본어판)</a> · <a href="https://www.ti.com/product/TCAN4551-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TCAN4551RGYRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 JAJSHT0 (2019-08)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>SPI 접속 CAN FD 컨트롤러(Bosch M_CAN rev 3.2.1.1, ISO 11898-1:2015) + ISO 11898-2:2016 트랜시버 통합. INH, WAKE 포함</dd>
+    <dt>데이터율 · SPI</dt><dd>CAN FD 최대 8 Mbps, SPI 클록 최대 18 MHz, Classic CAN 호환</dd>
+    <dt>전원</dt><dd>VSUP 5.5 ~ 30 V (권장), VIO 1.71 ~ 5.25 V (1.8 V 및 3.3 ~ 5 V 로직)</dd>
+    <dt>내부 레귤레이터</dt><dd>VCCFLTR = 내부 5 V 트랜시버 레귤레이터 필터 핀 (10 µF), 외부 부하용 출력 아님</dd>
+    <dt>모드</dt><dd>Normal, Standby, Sleep, Failsafe</dd>
+    <dt>버스 보호</dt><dd>±58 V 버스 폴트, ±12 V 공통 모드, 무전원 시 버스·로직 고임피던스</dd>
+    <dt>등급 · 온도</dt><dd>AEC-Q100 Grade 1, TA -40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>VQFN-20 (RGY), 열 패드</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VSUP</td><td>-0.3</td><td>42</td><td>V</td><td></td></tr>
+    <tr><td>VIO</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>CANH, CANL</td><td>-58</td><td>58</td><td>V</td><td></td></tr>
+    <tr><td>WAKE</td><td>-0.3</td><td>42</td><td>V</td><td></td></tr>
+    <tr><td>INH</td><td>-0.3</td><td>42</td><td>V</td><td></td></tr>
+    <tr><td>로직 입력</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>디지털 출력</td><td>-0.5</td><td>6</td><td>V</td><td>출력 전류 8 mA max</td></tr>
+    <tr><td>INH 출력 전류</td><td></td><td>4</td><td>mA</td><td></td></tr>
+    <tr><td>WAKE 전류 (V(WAKE) ≤ GND − 0.3 V)</td><td></td><td>3</td><td>mA</td><td>그라운드 시프트</td></tr>
+    <tr><td>접합 온도 TJ</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도 Tstg</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VSUP</td><td>5.5</td><td></td><td>30</td><td>V</td></tr>
+    <tr><td>VIO</td><td>1.71</td><td></td><td>5.25</td><td>V</td></tr>
+    <tr><td>디지털 출력 IOH / IOL</td><td>-2</td><td></td><td>2</td><td>mA</td></tr>
+    <tr><td>INH 출력 전류</td><td></td><td></td><td>1</td><td>mA</td></tr>
+    <tr><td>C(FLTR)</td><td>300</td><td></td><td></td><td>nF</td></tr>
+    <tr><td>C(VCCFLTR)</td><td>10</td><td></td><td></td><td>µF</td></tr>
+    <tr><td>C(WAKE) 외부</td><td>10</td><td></td><td></td><td>nF</td></tr>
+    <tr><td>과열 차단 상승 / 하강 / 히스테리시스</td><td>160</td><td>10 (hys)</td><td>150 (하강)</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>VQFN-20 (RGY)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>OSC1</td><td>크리스털 또는 외부 클록 입력</td></tr>
+    <tr><td>2</td><td>nWKRQ</td><td>웨이크 요청 출력 (액티브 로우)</td></tr>
+    <tr><td>3</td><td>GPO1</td><td>SPI로 설정하는 범용 출력</td></tr>
+    <tr><td>4</td><td>SCLK</td><td>SPI 클록 입력</td></tr>
+    <tr><td>5</td><td>SDI</td><td>SPI 데이터 입력</td></tr>
+    <tr><td>6</td><td>SDO</td><td>SPI 데이터 출력</td></tr>
+    <tr><td>7</td><td>nCS</td><td>SPI 칩 셀렉트 (액티브 로우)</td></tr>
+    <tr><td>8</td><td>nINT</td><td>MCU 인터럽트 출력 (액티브 로우)</td></tr>
+    <tr><td>9</td><td>GPO2</td><td>SPI로 설정하는 범용 출력</td></tr>
+    <tr><td>10</td><td>CANL</td><td>CAN 버스 로우</td></tr>
+    <tr><td>11</td><td>CANH</td><td>CAN 버스 하이</td></tr>
+    <tr><td>12</td><td>WAKE</td><td>고전압 웨이크 입력</td></tr>
+    <tr><td>13</td><td>GND</td><td>그라운드</td></tr>
+    <tr><td>14</td><td>VSUP</td><td>배터리 전원 입력</td></tr>
+    <tr><td>15</td><td>INH</td><td>인히빗 출력 (시스템 레귤레이터 제어, 오픈드레인)</td></tr>
+    <tr><td>16</td><td>VCCFLTR</td><td>내부 5 V 레귤레이터 필터 — 10 µF를 GND로</td></tr>
+    <tr><td>17</td><td>VIO</td><td>디지털 I/O 전원</td></tr>
+    <tr><td>18</td><td>FLTR</td><td>내부 레귤레이터 필터 — 외부 커패시터를 GND로</td></tr>
+    <tr><td>19</td><td>RST</td><td>디바이스 리셋 입력</td></tr>
+    <tr><td>20</td><td>OSC2</td><td>크리스털 출력 (OSC1을 단일 클록으로 구동 시 GND)</td></tr>
+    <tr><td>PAD</td><td>Thermal pad</td><td>GND에 납땜 필수</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VCCFLTR: 10 µF 이상을 GND로 (8.3.7절, ROC).</li>
+    <li>FLTR: 300 nF 이상을 GND로.</li>
+    <li>WAKE: 외부 10 nF 이상을 GND로.</li>
+    <li>VSUP/VIO 디커플링, 크리스털 부하 용량 값은 읽은 섹션에 없음 — 데이터시트 확인 필요.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>VQFN-20 (RGY), 열 패드 GND 납땜. RθJA 35.2, RθJC(top) 28.1, RθJB 12.8, ΨJT 0.3, ΨJB 12.7, RθJC(bot) 1.1 °C/W. TSD 상승 160 °C 이상 / 하강 150 °C 이하, TJ max 150 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>TCAN4550-Q1과 핀 호환이나 16번 핀이 VCCOUT(5 V 70 mA 출력) 대신 VCCFLTR(내부 전용)이고, 3번 핀은 GPIO1 대신 GPO1. VIO 하한이 1.71 V로 낮아 1.8 V MCU 직결 가능.</li>
+    <li>배치 설명의 '5 Mbit/s'는 보수적 표기 — Features는 최대 8 Mbps.</li>
+    <li>읽은 문서는 일본어판 JAJSHT0 (2019-08) — 최신 영문판 개정 여부 확인 권장.</li>
+  </ul>
+</article>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INA181A1QDBVRQ1 · Automotive bidirectional current-sense amplifier, gain 20</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="INA181A1QDBVRQ1" data-mfr="Texas Instruments" data-cat="전류 센서" data-price="0.75" data-status="done" data-src="https://ti.com/document-viewer/INA2181-Q1/datasheet/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000372028">
+  <h1>INA181A1QDBVRQ1</h1>
+  <p class="meta">Texas Instruments · 전류 센서 · 차량용 양방향 전류 센스 앰프, 이득 20 V/V, −0.2 ~ 26 V 공통 모드 · 참고 단가 약 $0.75 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/INA181-Q1/datasheet/GUID-EB19E8CE-89BD-47D1-9E92-919028DEF07D" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://ti.com/product/INA181-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=INA181A1QDBVRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLYS018F (2024-10); 절대 최대·권장 조건·열은 SLYS018C (2020-04) 사본에서 확인</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>전압 출력형 전류 션트 앰프, 하이사이드/로우사이드, REF 핀으로 양방향</dd>
+    <dt>이득 (A1)</dt><dd>20 V/V · 이득 오차 ±0.1 % typ / ±1 % max · 온도 드리프트 1.5 typ / 20 ppm/°C max</dd>
+    <dt>공통 모드</dt><dd>−0.2 ~ 26 V (전원과 무관), CMRR 84 dB min / 100 dB typ</dd>
+    <dt>오프셋</dt><dd>±100 µV typ / ±500 µV max (VIN+ 12 V) · ±25 / ±150 µV (VIN+ 0 V) · 드리프트 0.2 / 1 µV/°C</dd>
+    <dt>대역폭</dt><dd>350 kHz (A1, CLOAD 10 pF) · 슬루 2 V/µs · 잡음 40 nV/√Hz</dd>
+    <dt>전원</dt><dd>VS 2.7–5.5 V, IQ 195 µA typ / 260 µA max (25 °C), 300 µA max (−40 ~ 125 °C)</dd>
+    <dt>입력 바이어스</dt><dd>75 µA typ (VIN+ 12 V), −6 µA (VIN+ 0 V)</dd>
+    <dt>등급·온도</dt><dd>AEC-Q100 Grade 1, TA −40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>SOT-23-6 (DBV) 2.90 × 2.80 mm</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>전원 전압 VS</td><td></td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>차동 입력 (VIN+) − (VIN−)</td><td>−28</td><td>28</td><td>V</td><td></td></tr>
+    <tr><td>공통 모드 입력</td><td>GND − 0.3</td><td>28</td><td>V</td><td></td></tr>
+    <tr><td>REF 입력 전압</td><td>GND − 0.3</td><td>VS + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>출력 전압</td><td>GND − 0.3</td><td>VS + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>최대 출력 전류</td><td></td><td>8</td><td>mA</td><td></td></tr>
+    <tr><td>동작 주위 온도 TA</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>접합 온도 TJ</td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM / CDM</td><td></td><td>±3000 / ±1000</td><td>V</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>공통 모드 입력 VCM</td><td>−0.2</td><td>12</td><td>26</td><td>V</td></tr>
+    <tr><td>전원 VS</td><td>2.7</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>TA</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT-23-6 (DBV). SC70-6 (DCK) 버전은 핀 번호가 다름(OUT 6, GND 2, IN+ 4, IN− 5, REF 1, VS 3).</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>OUT</td><td>출력 전압</td></tr>
+    <tr><td>2</td><td>GND</td><td>GND</td></tr>
+    <tr><td>3</td><td>IN+</td><td>+ 감지 입력 (하이사이드: 버스 측 / 로우사이드: 부하 측)</td></tr>
+    <tr><td>4</td><td>IN−</td><td>− 감지 입력 (하이사이드: 부하 측 / 로우사이드: GND 측)</td></tr>
+    <tr><td>5</td><td>REF</td><td>기준 전압 입력</td></tr>
+    <tr><td>6</td><td>VS</td><td>전원 2.7–5.5 V</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VS 바이패스 ≥0.1 µF, 핀 가까이.</li>
+    <li>출력 V<sub>OUT</sub> = 20 × (V<sub>IN+</sub> − V<sub>IN−</sub>) + V<sub>REF</sub>. 양방향: REF = 0 ~ VS (대칭은 VS/2), REF 소스는 버퍼 권장. 단방향: REF = GND (미소 전류에선 REF를 50 mV 이상으로 바이어스).</li>
+    <li>입력 필터 직렬 저항은 가능하면 10 Ω 이하 (바이어스 전류로 인한 이득 오차 증가).</li>
+    <li>출력 부하 용량 1 nF 이하 (발진 없음 기준), 출력 스윙 GND + 5 mV ~ VS − 0.03 V (max, RL 10 kΩ).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOT-23-6 (DBV) 2.90 × 2.80 mm. RθJA 198.7 °C/W · RθJC(top) 120.9 · RθJB 52.3 · ψJT 30.3 · ψJB 52.0 °C/W. TJ 최대 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>공통 모드 26 V 권장 / 28 V 절대 — 12 V 차량 배터리 직결 하이사이드 감지에는 부하 덤프 보호가 필요 (24 V 계통 부적합).</li>
+    <li>이득 변형: A2 50, A3 100, A4 200 V/V (대역폭 210/150/105 kHz). 2채널 INA2181-Q1, 4채널 INA4181-Q1.</li>
+    <li>PWM 동상 전압이 큰 인라인 모터 전류 감지에는 INA240-Q1 계열이 적합.</li>
+  </ul>
+</article>
+</body>
+</html>

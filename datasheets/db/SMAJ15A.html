@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SMAJ15A · 15 V 400 W unidirectional TVS diode, SMA</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="SMAJ15A" data-mfr="Littelfuse" data-cat="다이오드" data-price="" data-status="done" data-src="https://ew.lens.unifi.it/datasheets/Littelfuse_TVS_diode_SMAJ-Series[3][19].pdf">
+  <h1>SMAJ15A</h1>
+  <p class="meta">Littelfuse · 다이오드 · 15 V 400 W unidirectional TVS diode, SMA</p>
+  <p class="meta">원본: <a href="https://ew.lens.unifi.it/datasheets/Littelfuse_TVS_diode_SMAJ-Series%5B3%5D%5B19%5D.pdf" target="_blank" rel="noopener">데이터시트 PDF (SMAJ Series 사본)</a> · <a href="https://www.lcsc.com/product-detail/C148216.html" target="_blank" rel="noopener">제품 페이지 (LCSC)</a> · <a href="https://octopart.com/search?q=SMAJ15A" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Revised 10/09/14</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>단방향 TVS 다이오드 (마킹 BM, 양방향 SMAJ15CA는 XM)</dd>
+    <dt>V<sub>R</sub></dt><dd>15.0 V</dd>
+    <dt>V<sub>BR</sub></dt><dd>16.70 V min / 18.50 V max @ I<sub>T</sub> 1 mA</dd>
+    <dt>V<sub>C</sub> @ I<sub>PP</sub></dt><dd>24.4 V max @ 16.4 A (10/1000 µs)</dd>
+    <dt>피크 펄스 전력</dt><dd>400 W (10/1000 µs, 0.01% 듀티)</dd>
+    <dt>누설 I<sub>R</sub></dt><dd>1 µA max @ V<sub>R</sub></dd>
+    <dt>ESD</dt><dd>IEC 61000-4-2 15 kV 기중 / 8 kV 접촉, IEC 61000-4-4 EFT</dd>
+    <dt>온도</dt><dd>T<sub>J</sub>, T<sub>STG</sub> −55 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>DO-214AC (SMA), MSL1, UL94V-0, UL 인증 (E230531)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>P<sub>PPM</sub></td><td></td><td>400</td><td>W</td><td>10/1000 µs</td></tr>
+    <tr><td>P<sub>M(AV)</sub></td><td></td><td>3.3</td><td>W</td><td>무한 방열판, T<sub>A</sub>=50 °C</td></tr>
+    <tr><td>I<sub>FSM</sub></td><td></td><td>40</td><td>A</td><td>8.3 ms 반파, 단방향</td></tr>
+    <tr><td>V<sub>F</sub> @ 25 A</td><td></td><td>3.5</td><td>V</td><td>V<sub>BR</sub> ≤ 200 V</td></tr>
+    <tr><td>T<sub>J</sub>, T<sub>STG</sub></td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>DO-214AC (SMA) 2단자</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+  <tbody>
+    <tr><td>—</td><td>K</td><td>캐소드 (컬러 밴드 쪽)</td></tr>
+    <tr><td>—</td><td>A</td><td>애노드</td></tr>
+  </tbody></table>
+
+  <h2>패키지 · 열</h2>
+  <p>DO-214AC: 바디 B 3.99–4.50 mm, 폭 C 2.54–2.79 mm, 높이 D 1.98–2.29 mm, 전장 G 4.93–5.28 mm. R<sub>θJL</sub> 30 °C/W · R<sub>θJA</sub> 120 °C/W (단자마다 5×5 mm 구리 패드).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>읽은 시트(2014판)에 AEC-Q101 언급 없음 — 차량 ECU 보드면 AEC-Q101 자격 품번 여부를 확인.</li>
+    <li>V<sub>C</sub> 24.4 V @ 16.4 A — 보호 대상 IC 절대 최대 정격이 이보다 높아야 함. 12 V 배터리 직결 로드덤프 보호로는 부족(400 W급).</li>
+    <li>펄스 전력은 주변 온도가 오르면 감소 — 디레이팅 곡선 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

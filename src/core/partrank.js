@@ -18,7 +18,7 @@ const C={
     // adjustable (no spec.vout): any rail, e.g. a 9 V hall-sensor supply — the divider sets the voltage
     {mpn:'TPS7B86-Q1',mfr:'TI',note:'가변 LDO 1.2–18 V · 500 mA · 40 V 입력 · 드롭아웃 0.5 V · HSOIC-8/TO-252',spec:{i:0.5,vin:[3,40],adj:1,pkg:'HSOIC-8'},grade:'Q100',price:0.9,why:'배터리 직결 가변 레일 (9 V 센서 전원)'},
     {mpn:'LM317DCYR',mfr:'TI',note:'가변 LDO 1.25–37 V · 1.5 A · 40 V 입력 · SOT-223 (드롭아웃 ~2 V)',spec:{i:1.5,vin:[3,40],adj:1,pkg:'SOT-223'},grade:'',price:0.3,why:'가장 흔한 가변 레귤레이터 (회로 생성 기본)'},
-    {mpn:'TLV1117LV33QDCYRQ1',mfr:'TI',note:'1 A LDO 3.3 V · SOT-223 · AMS1117 핀 호환',spec:{i:1,vin:[2.5,5.5],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.62,why:'저가·핀 호환, 5 V → 3.3 V'},
+    {mpn:'LM111733QDCYRQ1',mfr:'TI',note:'1 A LDO 3.3 V · 18 V 입력(절대 20 V) · SOT-223 · AMS1117 핀 호환',spec:{i:1,vin:[4.75,18],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.62,why:'저가·핀 호환, 5 V/12 V → 3.3 V'},
     {mpn:'TPS7B8133QDRVRQ1',mfr:'TI',note:'300 mA LDO 3.3 V · 40 V 입력 · 저 Iq 2.4 µA · WSON-6',spec:{i:0.3,vin:[4,40],vout:3.3,pkg:'WSON-6'},grade:'Q100',price:0.95,why:'배터리 직결 · 상시 전원(저 대기 전류)'},
     {mpn:'UA78M33QDCYRQ1',mfr:'TI',note:'500 mA LDO 3.3 V · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[5.3,25],vout:3.3,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'가장 싼 차량용 3.3 V'},
     {mpn:'UA78M05QDCYRQ1',mfr:'TI',note:'500 mA LDO 5 V · 25 V 입력 · SOT-223',spec:{i:0.5,vin:[7,25],vout:5,pkg:'SOT-223'},grade:'Q100',price:0.35,why:'12 V → 5 V 저가 차량용'},
@@ -151,7 +151,7 @@ const C={
     {mpn:'PCA9306DCUR',mfr:'TI',note:'I²C 레벨 변환',spec:{pkg:'VSSOP-8'},grade:'',price:0.5,why:'3.3/5 V 혼용'},
     {mpn:'24LC256T-I/SN',mfr:'Microchip',note:'I²C EEPROM 256 Kbit',spec:{pkg:'SOIC-8'},grade:'',price:0.5,why:'설정 저장'}],
   usb_in:[
-    {mpn:'TPD2E2U06DBZR',mfr:'TI',note:'USB ESD ×2 채널',spec:{pkg:'SOT-23-3'},grade:'',price:0.2,why:'D+/D- ESD'},
+    {mpn:'TPD2E2U06QDBZRQ1',mfr:'TI',note:'USB ESD ×2 채널',spec:{pkg:'SOT-23-3'},grade:'',price:0.2,why:'D+/D- ESD'},
     {mpn:'USBLC6-2SC6',mfr:'ST',note:'USB ESD 저용량',spec:{pkg:'SOT-23-6'},grade:'',price:0.25,why:'표준 USB ESD'},
     {mpn:'TPS2553DBVR',mfr:'TI',note:'USB 전류 제한 스위치 1.5 A',spec:{pkg:'SOT-23-6'},grade:'',price:0.9,why:'VBUS 과전류 보호'}],
 };

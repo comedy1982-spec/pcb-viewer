@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BTN9970LV · High-Current PN Half-Bridge NovalithIC+</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="BTN9970LV" data-mfr="Infineon" data-cat="모터 드라이버" data-price="4.2" data-status="done" data-src="https://www.farnell.com/datasheets/3629099.pdf">
+  <h1>BTN9970LV</h1>
+  <p class="meta">Infineon · 모터 드라이버 · NovalithIC+ 고전류 PN 하프브리지 (드라이버 내장, 전류 센스) · 참고 단가 약 $4.2 (추정)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/3629099.pdf" target="_blank" rel="noopener">데이터시트 PDF (Farnell 사본)</a> · <a href="https://infineon.com/cms/cn/product/power/motor-control-ics/brushed-dc-motor-control-ics/single-half-bridge-ics/btn9970lv" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=BTN9970LV" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 BTN9970LV datasheet Rev 1.0, 2021-10-12</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>하프브리지 1개 (P채널 하이사이드 + N채널 로우사이드) + 드라이버 · 진단. H-브리지는 2개 사용</dd>
+    <dt>전원</dt><dd>VS 8–18 V (정상), 확장 4.5–40 V</dd>
+    <dt>RDS(on)</dt><dd>HS 6.3 mΩ typ (25 °C) / 11.8 mΩ max (150 °C), LS 3.4 / 6.3 mΩ; 경로 합계 9.7 mΩ typ / 18.1 mΩ max</dd>
+    <dt>과전류 검출</dt><dd>IOCH0/IOCL0 60 / 80 / 98 A (min/typ/max)</dd>
+    <dt>전류 센스</dt><dd>dkILIS 40 typ (32.8–47.2), 폴트 시 IIS 2.75 mA typ</dd>
+    <dt>슬루율</dt><dd>8단계 (SR0–SR7), IN/INH 시퀀스로 선택</dd>
+    <dt>대기 전류</dt><dd>3.3 µA max (Tj ≤ 85 °C, VS 13.5 V)</dd>
+    <dt>보호</dt><dd>과전류, 저전압, 과열 차단 (175 °C typ)</dd>
+    <dt>등급</dt><dd>AEC-Q100/Q006 Grade 1, Tj -40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>PG-HSOF-7-1 (sTOLL)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VS</td><td>-0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VDS(HS)</td><td>-40</td><td></td><td>V</td><td>Tj ≥ 25 °C (Tj &lt; 25 °C: -38 V)</td></tr>
+    <tr><td>VDS(LS)</td><td></td><td>40</td><td>V</td><td>Tj ≥ 25 °C (Tj &lt; 25 °C: 38 V)</td></tr>
+    <tr><td>VIN, VINH</td><td>-0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>VSIS / VIS</td><td>-0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>출력 전류</td><td></td><td></td><td></td><td>연속 정격 없음, 과전류 검출(max 98 A)로 제한</td></tr>
+    <tr><td>Tj</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>2 / 6</td><td>kV</td><td>전 핀 / OUT 대 GND·VS</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>500 / 750</td><td>V</td><td>전 핀 / 코너 핀</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VS (정상)</td><td>8</td><td>13.5</td><td>18</td><td>V</td></tr>
+    <tr><td>VS (확장, 파라미터 편차 가능)</td><td>4.5</td><td></td><td>40</td><td>V</td></tr>
+    <tr><td>Tj</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-HSOF-7-1 (sTOLL), 탭 = OUT</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1, 2</td><td>GND</td><td>접지</td></tr>
+    <tr><td>3</td><td>IN</td><td>입력: HS/LS 선택 (내부 풀다운)</td></tr>
+    <tr><td>4</td><td>INH</td><td>인히빗: L이면 트라이스테이트 (내부 풀다운)</td></tr>
+    <tr><td>5</td><td>IS</td><td>전류·온도 센스, 슬루율 레벨, 진단 출력</td></tr>
+    <tr><td>6, 7</td><td>VS</td><td>전원</td></tr>
+    <tr><td>8 (탭)</td><td>OUT</td><td>하프브리지 출력</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VS: 100 nF 세라믹을 VS/GND 핀 가까이, DC 링크 저ESR 전해 약 1000 µF. VS 리플 1 Vpp 미만 유지.</li>
+    <li>IS: RIS 2 kΩ, CIS 1 nF.</li>
+    <li>IN/INH: 직렬 저항 1 kΩ (typ).</li>
+    <li>데이터시트 응용 회로의 R3 10 kΩ, DZ1 10 V 제너 (용도는 원문 그림 참조). 선택적 EMC 커패시터 약 10 nF (OUT).</li>
+    <li>데이터시트 그림 간 C11 값이 10 µF / 10 mF로 불일치 — 확인 후 사용.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-HSOF-7-1 (sTOLL), 노출 탭 = OUT (GND가 아님 — 탭 구리는 출력 네트). RthJC HS 0.5 K/W typ (0.7 max), LS 0.8 K/W typ (1.1 max), RthJA 19 K/W (JEDEC 2s2p FR4). 과열 차단 155/175/200 °C (min/typ/max), 히스테리시스 7 K.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>저전압 차단 3.8–4.5 V, 재기동 5.5 V max. 크랭킹 시 동작 확인.</li>
+    <li>과전류 후 차단 시간 115 µs typ (210 µs max).</li>
+    <li>탭이 OUT이므로 탭 구리 면적이 스위칭 노드가 됨 — EMI를 고려해 면적과 방열을 절충.</li>
+    <li>동일 계열 BTN99x0LV 와 패키지 호환 여부는 각 데이터시트로 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NCS21671 · Zero-drift 40 V bidirectional current-shunt monitor</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="NCS21671" data-mfr="onsemi" data-cat="전류 센서" data-price="" data-status="stub" data-src="https://www.mouser.com/pdfDocs/NCS21671-D-2.pdf">
+  <h1>NCS21671</h1>
+  <p class="meta">onsemi · 전류 센서 · 제로 드리프트, 공통모드 40 V, 양방향, 셧다운 지원 전류 션트 모니터</p>
+  <p class="meta">원본: <a href="https://www.mouser.com/pdfDocs/NCS21671-D-2.pdf" target="_blank" rel="noopener">데이터시트 PDF (Mouser 사본)</a> · <a href="https://www.onsemi.com/products/standard-products/amplifiers-comparators/current-sense-amplifiers/ncs21671" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=NCS21671" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 NCS21671/D Rev. 0 (2023-05)</p>
+  <p class="todo">핀 번호 미확인: 읽은 PDF 텍스트에서 Figure 2(핀 배치도)의 번호가 깨져 핀 이름만 확보. Micro10·SC70-6 핀 번호는 원본 PDF 그림으로 확인 필요. 2차 시도: mouser NCS21671-D-2.pdf를 다시 읽었으나 Figure 2 텍스트가 여전히 번호·이름이 섞여 나옴("SC70−6 1 4 3 2 8 5 6 IN− 7 IN+ NC Micro−10 …") — 핀 번호 확정 불가, 다른 사본은 검색되지 않음.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>하이/로우사이드 전류 션트 앰프, 양방향(REF), 내부 비율 정합 이득 저항</dd>
+    <dt>이득</dt><dd>25 / 50 / 100 / 200 V/V (품번 접미사 025 / 050 / 100 / 200)</dd>
+    <dt>공통모드</dt><dd>−0.1 … 40 V (전원과 무관)</dd>
+    <dt>전원</dt><dd>1.8 … 5.5 V, I<sub>Q</sub> 45 µA typ / 80 µA max, 셧다운 0.2 µA typ / 0.5 µA max</dd>
+    <dt>오프셋</dt><dd>±10–19 µV max (이득별, V<sub>SENSE</sub> = 0), 드리프트 ±0.5 µV/°C max</dd>
+    <dt>이득 오차</dt><dd>±0.3–0.5 % max (이득별)</dd>
+    <dt>대역폭</dt><dd>40 / 40 / 35 / 20 kHz (G25/50/100/200), 슬루 0.3 V/µs</dd>
+    <dt>CMRR</dt><dd>109 dB min</dd>
+    <dt>등급</dt><dd>NCS = 산업용, NCV21671 = AEC-Q100, PPAP 대응</dd>
+    <dt>동작 온도</dt><dd>−40 … 125 °C</dd>
+    <dt>패키지</dt><dd>Micro10 (DM, EN·필터 핀 포함) / SC70-6 (SQ)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>V<sub>S</sub></td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>IN+, IN−, CIN± 공통모드</td><td>−0.3</td><td>44</td><td>V</td><td>차동 44 V</td></tr>
+    <tr><td>REF, EN, OUT</td><td>GND−0.3</td><td>V<sub>S</sub>+0.3</td><td>V</td><td></td></tr>
+    <tr><td>입력 전류 (임의 핀)</td><td></td><td>±10</td><td>mA</td><td></td></tr>
+    <tr><td>T<sub>J</sub></td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>T<sub>stg</sub></td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM / CDM</td><td></td><td>±2000 / ±1000</td><td>V</td><td>래치업 ±100 mA</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>V<sub>S</sub></td><td>1.8</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>V<sub>CM</sub></td><td>−0.1</td><td></td><td>40</td><td>V</td></tr>
+    <tr><td>T<sub>A</sub></td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>Micro10 (DM): IN+, IN−, CIN+, CIN−, VS, GND, REF, EN, OUT, NC · SC70-6 (SQ): IN+, IN−, VS, GND, REF, OUT — <b>핀 번호는 데이터시트 Figure 2 확인 필요</b></p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>?</td><td>IN+ / IN−</td><td>션트 양단 입력 (셧다운 시 고임피던스)</td></tr>
+    <tr><td>?</td><td>CIN+ / CIN−</td><td>(Micro10) 선택적 입력 필터 커패시터 단자, 미사용 시 개방</td></tr>
+    <tr><td>?</td><td>VS</td><td>전원 (0.1 µF 바이패스)</td></tr>
+    <tr><td>?</td><td>GND</td><td>접지</td></tr>
+    <tr><td>?</td><td>REF</td><td>출력 기준: GND = 단방향, VS/2 등 = 양방향</td></tr>
+    <tr><td>?</td><td>EN</td><td>(Micro10) 개방 = 동작, 로 = 셧다운</td></tr>
+    <tr><td>?</td><td>OUT</td><td>출력 (셧다운 시 고임피던스)</td></tr>
+    <tr><td>?</td><td>NC</td><td>(Micro10) 무연결 — 외부 회로에 연결 금지</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>전달식: V<sub>OUT</sub> = I<sub>LOAD</sub> × R<sub>SHUNT</sub> × GAIN + V<sub>REF</sub>.</li>
+    <li>VS 바이패스 0.1 µF를 핀 가까이.</li>
+    <li>입력 필터(Micro10 CIN 핀): 이득별 내부 R<sub>filt</sub> 20 kΩ(G25) / 10 kΩ(G50) / 5 kΩ(G100) / 2.5 kΩ(G200), ±25 %. f<sub>c</sub> = 1 / (2π · 2R<sub>filt</sub> · C<sub>filt</sub>). 션트 L/R ≤ R<sub>filt</sub> · C<sub>filt</sub>가 되게 선정(1 mΩ 미만 션트에서 중요).</li>
+    <li>외부 저항으로 이득을 바꾸지 말 것(내부 비율 정합 저항). 켈빈(4단자) 션트 권장.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>θ<sub>JA</sub>: Micro10 180 °C/W, SC70-6 188 °C/W · θ<sub>JC(top)</sub> 71 / 128 °C/W · ψ<sub>JT</sub> 1.6 / 21 °C/W · ψ<sub>JB</sub> 98 / 91 °C/W (1 in² 1 oz Cu, JESD51).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>차량용은 NCV21671 접두사 사용 (예: NCV21671DM050R2G, NCV21671SQ100T2G). 배치 파일의 "NCS21671"은 기본 품번이라 이득·패키지 미지정 — 주문 품번 확정 필요.</li>
+    <li>주문 품번: SC70-6 = NCS21671SQ025/050/100/200T2G (3000/릴), Micro10 = NCS21671DM025/050/100/200R2G (4000/릴). 제품 상태 Active.</li>
+    <li>출력 스윙 V<sub>S</sub>−35 mV / 2.5 mV(max, 10 kΩ) — ADC 풀스케일 여유 확보. 최대 용량성 부하 1 nF.</li>
+  </ul>
+</article>
+</body>
+</html>

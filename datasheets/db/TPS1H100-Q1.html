@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPS1H100-Q1 · 40-V 100-mΩ single-channel smart high-side switch</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TPS1H100-Q1" data-mfr="Texas Instruments" data-cat="스마트 스위치" data-price="1.7" data-status="done" data-src="https://www.ti.com/document-viewer/lit/html/SLVSCM2D/overview-slvscm28967">
+  <h1>TPS1H100-Q1</h1>
+  <p class="meta">Texas Instruments · 스마트 스위치 · 40 V, 100 mΩ 1채널 스마트 하이사이드 스위치 (전류 센스/상태 출력) · 참고 단가 약 $1.7 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/lit/html/SLVSCM2D/overview-slvscm28967" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/TPS1H100-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TPS1H100-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLVSCM2D (2014-10, 개정 2019-12)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>NMOS 하이사이드 스위치 + 차지펌프, 능동 드레인-소스 클램프, 전체 보호·진단</dd>
+    <dt>버전</dt><dd>A: 오픈드레인 상태 출력(ST) / B: 아날로그 전류 센스 출력(CS)</dd>
+    <dt>동작 전압</dt><dd>공칭 5 ~ 40 V, 확장 3.5 ~ 5 V (RDS(on) 최대 20% 증가)</dd>
+    <dt>RDS(on)</dt><dd>25 °C 일반 80 mΩ / 최대 100 mΩ, 150 °C 최대 166 mΩ, VS = 3.5 V에서 최대 120 mΩ</dd>
+    <dt>부하 전류</dt><dd>공칭 DC 0 ~ 4 A</dd>
+    <dt>전류 제한</dt><dd>내부 7 ~ 13 A, 외부 저항으로 낮게 설정 가능(KCL = 2000, VCL,th 1.233 V, 0.5 A 이상에서 ±20%)</dd>
+    <dt>전류 센스 (B)</dt><dd>K = 500, 정확도 1 A 이상 ±3%, 0.1 A 이상 ±5%, CS 선형 범위 0 ~ 4 V</dd>
+    <dt>대기 전류</dt><dd>최대 0.5 µA (25 °C, VS = 13.5 V)</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1 (TA -40 ~ 125 °C), AEC-Q100-012 Grade A (100만 회 단락 시험), TJ -40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>HTSSOP-14 (PWP), 열 패드</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>전원 전압 VS (t &lt; 400 ms)</td><td></td><td>48</td><td>V</td><td>로드 덤프 내량</td></tr>
+      <tr><td>역극성 전압</td><td>-18</td><td></td><td>V</td><td>t &lt; 60 s, GND에 1 kΩ ∥ 다이오드</td></tr>
+      <tr><td>GND 역전류</td><td>-50</td><td>20</td><td>mA</td><td>t &lt; 120 s: -250 mA</td></tr>
+      <tr><td>IN / DIAG_EN 전압</td><td>-0.3</td><td>7</td><td>V</td><td>전류 -30 ~ 2 mA</td></tr>
+      <tr><td>ST 전압</td><td>-0.3</td><td>7</td><td>V</td><td>전류 -30 ~ 10 mA</td></tr>
+      <tr><td>CL 전압</td><td>-0.3</td><td>7</td><td>V</td><td>전류 -2 ~ 30 mA</td></tr>
+      <tr><td>CS 전압</td><td>-2.7</td><td>6.5</td><td>V</td><td>전류 -2 ~ 30 mA</td></tr>
+      <tr><td>IN PWM 주파수</td><td></td><td>2</td><td>kHz</td><td></td></tr>
+      <tr><td>유도성 부하 차단 에너지 (단일 펄스)</td><td></td><td>70</td><td>mJ</td><td>VS 13.5 V, 8 mH, TJ 150 °C</td></tr>
+      <tr><td>동작 주위 온도</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>동작 접합 온도</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>동작 전압 VS</td><td>5</td><td></td><td>40</td><td>V</td></tr>
+      <tr><td>IN / DIAG_EN 전압</td><td>0</td><td></td><td>5</td><td>V</td></tr>
+      <tr><td>ST 전압</td><td>0</td><td></td><td>5</td><td>V</td></tr>
+      <tr><td>공칭 DC 부하 전류</td><td>0</td><td></td><td>4</td><td>A</td></tr>
+      <tr><td>접합 온도 TJ</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>HTSSOP-14 (PWP). 버전 A와 B는 14번 핀만 다릅니다.</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1, 4, 11</td><td>NC</td><td>미연결, 개방</td></tr>
+      <tr><td>2</td><td>GND</td><td>접지 (GND 보호 네트워크 경유)</td></tr>
+      <tr><td>3</td><td>IN</td><td>채널 온/오프 제어 입력</td></tr>
+      <tr><td>5, 6, 7</td><td>OUT</td><td>부하 출력 (NMOS 소스)</td></tr>
+      <tr><td>8, 9, 10</td><td>VS</td><td>전원 입력 (배터리)</td></tr>
+      <tr><td>12</td><td>DIAG_EN</td><td>진단 기능 enable. 미사용 시 GND</td></tr>
+      <tr><td>13</td><td>CL</td><td>외부 전류 제한 설정 저항. 미사용 시 GND</td></tr>
+      <tr><td>14</td><td>ST (A) / CS (B)</td><td>A: 오픈드레인 상태 출력 / B: 전류 센스 출력. 미사용 시 개방</td></tr>
+      <tr><td>패드</td><td>—</td><td>열 패드, 핀 번호 없음. GND에 연결하거나 개방</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>GND 보호 네트워크: 1 kΩ 저항 ∥ 200 V / 0.2 A 다이오드 (역극성 시 GND 전류 제한).</li>
+    <li>MCU 인터페이스 직렬 저항 RSER = 10 kΩ (5 V MCU 예시).</li>
+    <li>RCS(센스 저항)는 1% 이하 정밀 저항 권장. 예제는 2 A 공칭 전류가 0 ~ 3 V 범위에 들도록 선정합니다.</li>
+    <li>외부 전류 제한은 500 mA 이상 설정을 권장하며, 설정값의 1.5배 이상 과부하에서 정확도가 적용됩니다.</li>
+    <li>버전 A의 ST는 3.3 V 또는 5 V로 외부 풀업이 필요합니다.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>HTSSOP-14 (PWP). RθJA 41 °C/W, RθJC(top) 29.7 °C/W, RθJB 25.1 °C/W, ψJT 0.9 °C/W, ψJB 24.8 °C/W, RθJC(bot) 2.7 °C/W. 열차단 175 °C(일반), 리셋 155 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN 'TPS1H100-Q1'은 제품군 이름입니다. 주문 번호는 TPS1H100AQPWPRQ1(상태 출력) / TPS1H100BQPWPRQ1(전류 센스)입니다. 설명의 '전류 센스'에 맞추려면 B 버전을 지정하세요. 핀 표 JSON은 B 버전 기준입니다.</li>
+    <li>UVLO: 상승 3.5 ~ 4.0 V, 하강 3.0 ~ 3.5 V (히스테리시스 0.5 V 일반).</li>
+    <li>클램프 VDS 50 ~ 70 V로 유도성 부하는 대부분 외부 환류 다이오드 없이 차단됩니다. 70 mJ 단일 펄스 한도를 넘는 큰 인덕턴스는 외부 환류 경로를 추가하세요.</li>
+    <li>IN/DIAG_EN 로직: VIH 최소 2 V, VIL 최대 0.8 V로 3.3 V/5 V MCU 직결 가능.</li>
+    <li>열 패드는 큰 구리 면적에 연결해야 RθJA 41 °C/W 수준이 나옵니다.</li>
+  </ul>
+</article>
+</body>
+</html>

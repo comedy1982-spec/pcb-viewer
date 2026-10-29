@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TC364DP-64F300F · AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz</title>
+<title>TC364DP-64F300F · AURIX TC36x dual-core TriCore MCU, 300 MHz</title>
 <style>
 body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
@@ -13,43 +13,66 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="TC364DP-64F300F" data-mfr="Infineon" data-cat="MCU" data-price="17.5" data-status="stub">
+<article data-mpn="TC364DP-64F300F" data-mfr="Infineon" data-cat="MCU" data-price="18" data-status="stub" data-src="https://www.farnell.com/datasheets/3166329.pdf">
   <h1>TC364DP-64F300F</h1>
-  <p class="meta">Infineon · MCU · AURIX TC36x — 32-bit TriCore automotive MCU, 300 MHz · 참고 단가 약 $17.5 (추정)</p>
-  <p class="meta">원본: <a href="https://www.infineon.com/dgdl/Infineon-SAK-TC36xDP-DataSheet-v01_01-EN.pdf?fileId=5546d46274dd77260174e8c7c7bf34b1" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.infineon.com/assets/row/public/documents/10/49/infineon-aurix-tc36x-addendum-datasheet-en.pdf" target="_blank" rel="noopener">관련 페이지</a> · <a href="https://octopart.com/search?q=TC364DP-64F300F" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
+  <p class="meta">Infineon · MCU · AURIX TC36x dual-core TriCore MCU, 300 MHz · 참고 단가 약 $18 (추정)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/3177163.pdf" target="_blank" rel="noopener">TC36x 데이터시트 PDF</a> · <a href="https://www.farnell.com/datasheets/3166329.pdf" target="_blank" rel="noopener">TC36x 변형 Addendum v1.3</a> · <a href="https://sg.element14.com/infineon/tc364dp64f300faakxuma1/mcu-32bit-300mhz-tqfp-144/dp/3625289" target="_blank" rel="noopener">제품 페이지 (element14)</a> · <a href="https://octopart.com/search?q=TC364DP-64F300F" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TC36x AA-Step Data Sheet V1.0 (2020-04), Addendum v1.3 (2020-01)</p>
+  <p class="todo">읽은 데이터시트 사본이 앞부분만 추출되어 절대 최대 정격·권장 동작 조건(VEXT/VDD/VDDM 범위, Tj), EVR 외부 커패시터, 열저항, 패키지 치수, 핀 번호를 확인하지 못했습니다. TC36x Data Sheet 3장(Electrical Specification)과 패키지 도면으로 채우세요. (2차 확인 2026-10: Farnell 3177163 사본은 약 69,000자, 469쪽 중 50쪽 부근(LFBGA-292 핀 표)에서 끊겨 3.2절(p.368)·3.4절(p.372)·3.30절(p.465)에 닿지 않음. Infineon dgdl 원본은 접근 승인되지 않음.)</p>
 
   <h2>핵심 사양</h2>
   <dl>
-      <dt>코어</dt><dd>TriCore, 최대 300 MHz (TC36x)</dd>
-      <dt>ADC</dt><dd>EVADC 주 그룹 4개/32채널 + 보조 그룹 2개/32채널, EDSADC</dd>
-      <dt>타이머</dt><dd>GTM (TOUT 출력, TIM 입력 캡처), CCU6, GPT12</dd>
-      <dt>통신</dt><dd>MCMCAN (CAN FD) CAN0x·CAN1x, QSPI0–3, ASCLIN0–11, I2C0, E-Ray, GETH</dd>
-      <dt>포트 출력</dt><dd>핀마다 ALT1–ALT7 출력 선택 (Pn_IOCR.PCx), 입력은 주변장치 쪽 입력 선택(A/B/…)</dd>
-      <dt>패키지</dt><dd>TQFP-144 (SAK-TC364DP-64F300F) · 노출 패드 VSS</dd>
-      <dt>디버그</dt><dd>JTAG/DAP: TMS 89, TCK 92, TRST 91, P21.6 TDI, P21.7 TDO</dd>
+    <dt>품번</dt><dd>SAK-TC364DP-64F300F AA (OPN TC364DP64F300FAAKXUMA1), Chip ID 0x87006480</dd>
+    <dt>코어</dt><dd>TriCore TC1.6.2P ×2 + 락스텝 체커 코어 ×2, 최대 300 MHz</dd>
+    <dt>메모리</dt><dd>PFlash 4 MB (2×2 MB) · DFlash0 128 KB · SRAM 576 KB (DSPR 192 KB/CPU, DLMU 64 KB/CPU, PSPR 32 KB) · EMEM 없음</dd>
+    <dt>ADC</dt><dd>EVADC 주 그룹 4개/16채널 · 보조 그룹 2개/21채널 · 고속 비교 2채널 · EDSADC 4채널</dd>
+    <dt>통신</dt><dd>MCMCAN 2모듈/2×4 노드 · FlexRay 1/2채널 · ASCLIN 12 · QSPI 4 (LVDS 1) · SENT 10 · PSI5 2 + PSI5-S · MSC 1 · HSSL 1 · Ethernet 100 Mbit/s (RMII)</dd>
+    <dt>보안·기타</dt><dd>HSM 있음 · MCDS 없음 · SDMMC 없음 · DMA 64채널 · GTM, CCU6, GPT12</dd>
+    <dt>전원</dt><dd>단일 5 V 또는 3.3 V 공급, 내장 레귤레이터(EVR) — 세부 범위 데이터시트 확인 필요</dd>
+    <dt>온도·등급</dt><dd>SAK: 주변 −40 ~ +125 °C · AEC-Q100 (distributor 표기)</dd>
+    <dt>패키지</dt><dd>PG-QFP-144 (TQFP-144, 0.4 mm 핀아웃 표기) · 101 I/O (distributor 표기)</dd>
   </dl>
 
   <h2>절대 최대 정격</h2>
   <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
+    <tbody><tr><td colspan="5">데이터시트 확인 필요 (TC36x Data Sheet 3장)</td></tr></tbody></table>
 
   <h2>권장 동작 조건</h2>
   <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
+    <tbody>
+      <tr><td>CPU 클럭</td><td></td><td></td><td>300</td><td>MHz</td></tr>
+      <tr><td>주변 온도 (SAK)</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+      <tr><td>V<sub>EXT</sub> / V<sub>DD</sub> / V<sub>DDM</sub></td><td colspan="4">데이터시트 확인 필요</td></tr>
+    </tbody></table>
 
   <h2>핀 배치</h2>
-  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
+  <p>TQFP-144 — 대형 MCU라 핀 그룹만 요약 (핀 번호는 데이터시트 핀 표 참조)</p>
+  <table><thead><tr><th>그룹</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>전원</td><td>VDD, VEXT, VDDM, VDDP3, VFLEX, VEVRSB</td><td>코어 / 외부 I/O / ADC / 3.3 V / 플렉스 포트 / 스탠바이 전원</td></tr>
+      <tr><td>그라운드</td><td>VSS, VSSM, VAGND1</td><td>디지털 / ADC / 아날로그 기준 GND</td></tr>
+      <tr><td>ADC 기준</td><td>VAREF1</td><td>ADC 기준 전압</td></tr>
+      <tr><td>클럭</td><td>XTAL1, XTAL2</td><td>외부 크리스털</td></tr>
+      <tr><td>리셋·상태</td><td>PORST, ESR0, ESR1</td><td>파워온 리셋, 외부 서비스 요청</td></tr>
+      <tr><td>디버그</td><td>TMS, TCK, TRST, P21.6/TDI, P21.7/TDO</td><td>JTAG / DAP</td></tr>
+      <tr><td>EVR 게이트</td><td>P32.0/VGATE1N, P32.1/VGATE1P</td><td>외부 SMPS 트랜지스터 게이트 (EVRC SMPS 모드)</td></tr>
+      <tr><td>포트</td><td>P00–P02, P10–P11, P13–P15, P20–P23, P32–P33, AN/P40</td><td>GPIO·주변장치 (ALT 기능 다중화), 아날로그 입력</td></tr>
+    </tbody></table>
 
   <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
+  <ul>
+    <li>EVR 외부 커패시터·SMPS 인덕터 값: 데이터시트 확인 필요.</li>
+    <li>보조 전원 관리: TLF35584 같은 안전 PMIC와 조합 (QUC → VEXT, ROT → PORST, SS1/SS2 → 안전 경로)이 일반적 — 실제 연결은 각 데이터시트 확인.</li>
+  </ul>
 
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
+  <p>PG-QFP-144 (TQFP-144). 바디 치수·노출 패드 여부·R<sub>thJA</sub>: 데이터시트 확인 필요.</p>
 
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>이전 초안의 ADC 채널 수(주 그룹 32채널)와 GETH 표기는 TC36x 패밀리 최대치였음 — TC364DP는 주 그룹 16채널, 보조 21채널, Ethernet 100 Mbit RMII (Addendum v1.3 기준).</li>
+    <li>이전 초안의 JTAG 핀 번호(TMS 89 등)는 문서에서 확인하지 못해 삭제함.</li>
+    <li>같은 다이의 다른 패키지/메모리 변형은 TC36x Addendum의 변형 표 참조.</li>
+  </ul>
 </article>
 </body>
 </html>

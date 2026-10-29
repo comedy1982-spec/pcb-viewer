@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TCAN4550-Q1 · Automotive CAN FD controller with integrated transceiver (SPI)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TCAN4550-Q1" data-mfr="TI" data-cat="통신" data-price="" data-status="done" data-src="https://cdn.elektroniknet.de/media_uploads/documents/1559825764-291-tcan4550-q1.pdf">
+  <h1>TCAN4550-Q1</h1>
+  <p class="meta">TI · 통신 · Automotive CAN FD controller with integrated transceiver (SPI)</p>
+  <p class="meta">원본: <a href="https://cdn.elektroniknet.de/media_uploads/documents/1559825764-291-tcan4550-q1.pdf" target="_blank" rel="noopener">데이터시트 PDF (Rev A 사본)</a> · <a href="https://ti.com/product/es-mx/TCAN4550-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TCAN4550-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLLSEZ5A (2018-01, 개정 2019-04)</p>
+  <h2>핵심 사양</h2>
+  <dl><dt>기능</dt><dd>SPI 인터페이스 CAN FD 컨트롤러(M_CAN) + 트랜시버 통합, 5 V LDO, INH, WAKE</dd><dt>전원</dt><dd>VSUP 5.5 ~ 30 V (권장), VIO 3.135 ~ 5.25 V (3.3/5 V 로직)</dd><dt>LDO VCCOUT</dt><dd>5 V (4.75 ~ 5.25 V), 외부 부하 최대 70 mA (트랜시버 포함 총 125 mA — 8.3.3절)</dd><dt>SPI</dt><dd>최대 18 MHz</dd><dt>CAN FD</dt><dd>최대 8 Mbps (Features), 개요는 5 Mbps (40 MHz 클록에서)</dd><dt>버스 보호</dt><dd>±58 V 버스 폴트, ±12 V 공통 모드</dd><dt>클록</dt><dd>20 MHz 또는 40 MHz 크리스털/클록 (±0.5 %), 40 MHz 권장</dd><dt>전류</dt><dd>Sleep ISUP 25 µA typ / 42 µA max, Standby 약 3.5 mA, Normal 우세 80 mA typ</dd><dt>등급 · 온도</dt><dd>AEC-Q100 Grade 1, TA -40 ~ 125 °C</dd><dt>패키지</dt><dd>VQFN-20 (RGY) 4.50 × 3.50 mm, 열 패드</dd></dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>VSUP</td><td>-0.3</td><td>42</td><td>V</td><td></td></tr><tr><td>VIO</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr><tr><td>VCCOUT</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr><tr><td>CANH, CANL</td><td>-58</td><td>58</td><td>V</td><td></td></tr><tr><td>WAKE</td><td>-0.3</td><td>42</td><td>V</td><td></td></tr><tr><td>INH</td><td>-0.3</td><td>42</td><td>V</td><td></td></tr><tr><td>로직 입력</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr><tr><td>디지털 출력</td><td>-0.5</td><td>6</td><td>V</td><td>SDO 출력 전류 8 mA max</td></tr><tr><td>INH 전류</td><td></td><td>4</td><td>mA</td><td></td></tr><tr><td>WAKE 전류 (V(WAKE) ≤ GND − 0.3 V)</td><td></td><td>3</td><td>mA</td><td></td></tr><tr><td>접합 온도 TJ</td><td>-40</td><td>150</td><td>°C</td><td></td></tr><tr><td>보관 온도 Tstg</td><td>-65</td><td>150</td><td>°C</td><td></td></tr><tr><td>ESD HBM (CANH/CANL) / 기타 / CDM</td><td></td><td>±15000 / ±4000 / ±750</td><td>V</td><td></td></tr></tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>VSUP</td><td>5.5</td><td></td><td>30</td><td>V</td></tr><tr><td>VIO</td><td>3.135</td><td></td><td>5.25</td><td>V</td></tr><tr><td>디지털 출력 IOH / IOL</td><td></td><td></td><td>-2 / 2</td><td>mA</td></tr><tr><td>INH 출력 전류</td><td></td><td></td><td>1</td><td>mA</td></tr><tr><td>FLTR 커패시터</td><td></td><td></td><td>300</td><td>nF</td></tr><tr><td>VCCOUT 커패시터</td><td></td><td>10</td><td></td><td>µF</td></tr><tr><td>WAKE 커패시터</td><td></td><td>10</td><td></td><td>nF</td></tr></tbody></table>
+  <h2>핀 배치</h2>
+  <p>VQFN-20 (RGY) 4.50 × 3.50 mm</p><table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1</td><td>OSC1</td><td>크리스털 또는 외부 클록 입력</td></tr><tr><td>2</td><td>nWKRQ</td><td>웨이크 요청 출력 (액티브 로우)</td></tr><tr><td>3</td><td>GPIO1</td><td>SPI로 설정 가능한 I/O</td></tr><tr><td>4</td><td>SCLK</td><td>SPI 클록 입력</td></tr><tr><td>5</td><td>SDI</td><td>SPI 데이터 입력</td></tr><tr><td>6</td><td>SDO</td><td>SPI 데이터 출력</td></tr><tr><td>7</td><td>nCS</td><td>SPI 칩 셀렉트</td></tr><tr><td>8</td><td>nINT</td><td>MCU 인터럽트 출력 (액티브 로우)</td></tr><tr><td>9</td><td>GPO2</td><td>SPI로 설정 가능한 출력</td></tr><tr><td>10</td><td>CANL</td><td>CAN 버스 로우</td></tr><tr><td>11</td><td>CANH</td><td>CAN 버스 하이</td></tr><tr><td>12</td><td>WAKE</td><td>고전압 웨이크 입력</td></tr><tr><td>13</td><td>GND</td><td>그라운드</td></tr><tr><td>14</td><td>VSUP</td><td>배터리 전원 입력</td></tr><tr><td>15</td><td>INH</td><td>인히빗 출력 (시스템 레귤레이터 제어, 오픈드레인)</td></tr><tr><td>16</td><td>VCCOUT</td><td>5 V 레귤레이터 출력</td></tr><tr><td>17</td><td>VIO</td><td>디지털 I/O 전원 입력</td></tr><tr><td>18</td><td>FLTR</td><td>내부 레귤레이터 필터 — 외부 커패시터를 GND로</td></tr><tr><td>19</td><td>RST</td><td>디바이스 리셋 입력</td></tr><tr><td>20</td><td>OSC2</td><td>크리스털 출력 (OSC1을 클록으로 구동 시 GND에 연결)</td></tr><tr><td>PAD</td><td>Thermal pad</td><td>반드시 GND에 납땜</td></tr></tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul><li>VSUP 100 nF, VIO 100 nF 핀 가까이. VCCOUT 10 µF 최대한 핀 가까이.</li><li>FLTR: 300 nF을 GND로 (전기적 특성 표 300 ~ 330 nF).</li><li>WAKE: 외부 배선 시 10 nF을 GND로(과도 내성), 미사용 시 VSUP 또는 GND에 연결.</li><li>nINT, GPO2: VIO로 풀업 필요. nWKRQ는 VIO 전원 구성 시에만 풀업.</li><li>크리스털 ESR 최대 60 Ω (부하 용량에서), 외부 클록 입력 듀티 45 ~ 55 %, VIH 0.85 × VIO 이상. 부하 커패시터 값은 읽은 문서에 없음.</li><li>INH는 시스템 웨이크업이 필요 없으면 개방 가능.</li></ul>
+  <h2>패키지 · 열</h2>
+  <p>VQFN-20 (RGY) 4.50 × 3.50 mm, 열 패드 GND 납땜 필수. RθJA 35.2, RθJC(top) 28.1, RθJB 12.8, ΨJT 0.3, ΨJB 12.7, RθJC(bot) 1.1 °C/W. TSD 상승 160 °C / 하강 150 °C.</p>
+  <h2>설계 메모</h2>
+  <ul><li>배치 설명 &#x27;CAN-FD SBC · LDO&#x27;: SBC라기보다 SPI CAN FD 컨트롤러+트랜시버(5 V LDO 70 mA 외부 공급 가능). MCU 전원용 SBC가 아님.</li><li>읽은 문서는 Rev A (2019-04) 제3자 사본 — TI 현행판에서 데이터율(5/8 Mbps) 표기와 수치 재확인 권장.</li><li>VCCOUT 외부 부하는 70 mA 이내, 드롭아웃 300 mV typ / 500 mV max (70 mA).</li><li>UVSUP 상승 5.5 ~ 5.9 V / 하강 4.5 ~ 4.7 V — 크랭킹 시 리셋 동작 고려.</li></ul>
+</article>
+</body>
+</html>

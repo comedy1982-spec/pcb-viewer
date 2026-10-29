@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMC1306M05 · ±50 mV reinforced isolated delta-sigma modulator</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="AMC1306M05" data-mfr="TI" data-cat="절연" data-price="" data-status="done" data-src="https://www.ti.com/lit/pdf/SBAS734">
+  <h1>AMC1306M05</h1>
+  <p class="meta">TI · 절연 · ±50 mV 입력 강화 절연 ΔΣ 변조기 (션트 전류 측정, CMOS 출력)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/lit/pdf/SBAS734" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/AMC1306M05" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=AMC1306M05" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SBAS734D (AMC1306E05/E25/M05/M25 공용)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>션트 전압을 1비트 ΔΣ 비트스트림으로 변환해 절연 경계를 넘겨 전달 (외부 클럭 입력, M = 비부호화 CMOS 출력)</dd>
+    <dt>입력 범위</dt><dd>선형 ±50 mV, 클리핑 ±64 mV</dd>
+    <dt>정확도</dt><dd>오프셋 최대 ±50 µV (드리프트 최대 1 µV/°C), 이득 오차 최대 ±0.2 % (드리프트 최대 ±40 ppm/°C)</dd>
+    <dt>클럭</dt><dd>CLKIN 5–21 MHz (AVDD 4.5–5.5 V), 5–20 MHz (AVDD 3.0–5.5 V)</dd>
+    <dt>CMTI</dt><dd>최소 50 kV/µs, 일반 100 kV/µs</dd>
+    <dt>절연</dt><dd>강화 절연: VIOTM 7000 VPK, VIORM 2120 VPK, VIOWM 1500 VRMS / 2120 VDC, VISO 5000 VRMS (60 s), VIOSM 12800 VPK</dd>
+    <dt>전원</dt><dd>AVDD 3.0–5.5 V (고압측), DVDD 2.7–5.5 V (저압측)</dd>
+    <dt>온도</dt><dd>TA -40 – 125 °C</dd>
+    <dt>패키지</dt><dd>DWV 8핀 광폭 SOIC (AMC1306M05DWV / DWVR)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>AVDD – AGND</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>DVDD – DGND</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>아날로그 입력 AINP, AINN</td><td>AGND − 6</td><td>AVDD + 0.5</td><td>V</td><td></td></tr>
+    <tr><td>디지털 입력 CLKIN</td><td>DGND − 0.5</td><td>DVDD + 0.5</td><td>V</td><td></td></tr>
+    <tr><td>디지털 출력 DOUT</td><td>DGND − 0.5</td><td>DVDD + 0.5</td><td>V</td><td></td></tr>
+    <tr><td>입력 전류 (전원 핀 제외, 연속)</td><td>-10</td><td>10</td><td>mA</td><td></td></tr>
+    <tr><td>접합 온도 TJ</td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도 Tstg</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>AVDD (고압측)</td><td>3.0</td><td>5.0</td><td>5.5</td><td>V</td></tr>
+    <tr><td>DVDD (저압측)</td><td>2.7</td><td>3.3</td><td>5.5</td><td>V</td></tr>
+    <tr><td>차동 입력 선형 범위 VFSR</td><td>-50</td><td></td><td>50</td><td>mV</td></tr>
+    <tr><td>클리핑 입력 VClipping</td><td></td><td></td><td>±64</td><td>mV</td></tr>
+    <tr><td>입력 공통모드 VCM</td><td>-0.1</td><td></td><td>AVDD − 2.1</td><td>V</td></tr>
+    <tr><td>CLKIN (4.5 V ≤ AVDD ≤ 5.5 V)</td><td>5</td><td>20</td><td>21</td><td>MHz</td></tr>
+    <tr><td>CLKIN (3.0 V ≤ AVDD ≤ 5.5 V)</td><td>5</td><td>20</td><td>20</td><td>MHz</td></tr>
+    <tr><td>주위 온도 TA</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>DWV 8핀 SOIC (광폭)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>AVDD</td><td>고압측 아날로그 전원 3.0–5.5 V</td></tr>
+    <tr><td>2</td><td>AINP</td><td>비반전 아날로그 입력</td></tr>
+    <tr><td>3</td><td>AINN</td><td>반전 아날로그 입력</td></tr>
+    <tr><td>4</td><td>AGND</td><td>고압측 아날로그 접지</td></tr>
+    <tr><td>5</td><td>DGND</td><td>저압측(컨트롤러측) 디지털 접지</td></tr>
+    <tr><td>6</td><td>DOUT</td><td>변조기 비트스트림 출력 (M형: 비부호화)</td></tr>
+    <tr><td>7</td><td>CLKIN</td><td>변조기 클럭 입력 5–21 MHz, 내부 풀다운 1.5 MΩ 일반</td></tr>
+    <tr><td>8</td><td>DVDD</td><td>저압측 디지털 전원 2.7–5.5 V</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>AVDD: 저 ESR 0.1 µF를 핀에 최대한 가깝게, 필요 시 10 µF 추가.</li>
+    <li>DVDD: 0.1 µF를 핀 가까이, 그 뒤에 1–10 µF 추가.</li>
+    <li>데이터시트 예시 회로: C1 = 10 µF, C2 = 0.1 µF, C4 = 0.1 µF, C5 = 2.2 µF; 고압측 전원 제한용 5.1 V 제너(1N751A) + R1 800 Ω.</li>
+    <li>션트 선정: 정격 전류에서 션트 전압 ±50 mV 이내, 과전류 시에도 클리핑 전압(±64 mV)을 넘지 않게.</li>
+    <li>입력 RC 필터는 필수 아님(데이터시트 명시). 고임피던스 소스로 전압 측정 시 AINN에 소스 저항과 같은 값의 직렬 저항 권장.</li>
+    <li>DOUT 비트스트림은 MCU의 SDFM 등 디지털 필터로 데시메이션.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>DWV 8핀 SOIC: RθJA 112.2 °C/W, RθJC(top) 47.6 °C/W, RθJB 60.0 °C/W, ψJT 23.1 °C/W, ψJB 60.0 °C/W. 연면·공간 거리 CLR/CPG ≥ 8.5 mm, DTI ≥ 21 µm, CTI ≥ 600 V, 절연 용량 약 1 pF. TJ 최대 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>션트를 AINP/AINN 가까이 두고 두 입력 배선을 대칭으로 — 켈빈 연결.</li>
+    <li>전원이 들어간 상태에서 입력을 개방(floating)하지 말 것.</li>
+    <li>8.5 mm 연면거리를 살리도록 패키지 아래 고압측–저압측 사이에 동박·부품을 두지 말 것.</li>
+    <li>이 MPN은 산업용(비 -Q1) 버전. 차량 ECU에는 AEC-Q100 판 AMC1306M05-Q1 (SBASAI0) 권장. TI 제품 페이지에 '새 버전 제공' 안내가 표시됨(검색 결과 제목 기준).</li>
+    <li>±250 mV 입력이 필요하면 AMC1306M25, Manchester 부호화 출력은 E05/E25.</li>
+  </ul>
+</article>
+</body>
+</html>

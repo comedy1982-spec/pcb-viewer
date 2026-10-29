@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THVD1450DR · 3.3-V to 5-V RS-485 transceiver, 50 Mbps, ±18-kV IEC ESD</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="THVD1450DR" data-mfr="TI" data-cat="통신" data-price="1.4" data-status="done" data-src="https://www.ti.com/document-viewer/THVD1450/datasheet/specifications-x2279">
+  <h1>THVD1450DR</h1>
+  <p class="meta">TI · 통신 · 3.3-V to 5-V half-duplex RS-485 transceiver, 50 Mbps, ±18-kV IEC ESD · 참고 단가 약 $1.4 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/THVD1450/datasheet/specifications-x2279" target="_blank" rel="noopener">데이터시트 (TI HTML 뷰어)</a> · <a href="https://www.ti.com/product/THVD1450" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=THVD1450DR" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLLSEY3E (2018-05, 개정 2019-05)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>반이중 RS-485 / TIA/EIA-485A 트랜시버, 오픈·단락·아이들 버스 페일세이프, 핫플러그 글리치 없음</dd>
+    <dt>데이터율</dt><dd>최대 50 Mbps (THVD1410은 500 kbps)</dd>
+    <dt>전원</dt><dd>VCC 3 ~ 5.5 V</dd>
+    <dt>드라이버 출력</dt><dd>VOD ≥ 2.1 V (RL 60 Ω, VCC 4.5 ~ 5.5 V, PROFIBUS 호환), ≥ 1.5 V (RL 54 Ω)</dd>
+    <dt>ESD (버스)</dt><dd>±30 kV HBM, ±18 kV IEC 61000-4-2 접촉, ±25 kV 공기, ±4 kV IEC 61000-4-4 EFT</dd>
+    <dt>공통 모드</dt><dd>±15 V, 1/8 유닛 로드 (최대 256 노드)</dd>
+    <dt>공급 전류</dt><dd>드라이버+리시버 동작 2.4 typ / 3 mA max (무부하, 5 V), 둘 다 비활성 0.1 / 1 µA</dd>
+    <dt>온도</dt><dd>TA -40 ~ 125 °C (AEC-Q100 표기 없음 — 산업용)</dd>
+    <dt>패키지</dt><dd>SOIC-8 (D) — 이 MPN. 패밀리에 VSSOP-8 (DGK), VSON-8 (DRB)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>-0.5</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>버스 전압 (A, B)</td><td>-18</td><td>18</td><td>V</td><td>차동 또는 공통 모드, GND 기준</td></tr>
+    <tr><td>로직 입력 (D, DE, RE)</td><td>-0.3</td><td>5.7</td><td>V</td><td></td></tr>
+    <tr><td>리시버 출력 전류</td><td>-24</td><td>24</td><td>mA</td><td></td></tr>
+    <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>3</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>버스 입력 전압 / 차동 입력 VID</td><td>-15</td><td></td><td>15</td><td>V</td></tr>
+    <tr><td>VIH (D, DE, RE)</td><td>2</td><td></td><td>VCC</td><td>V</td></tr>
+    <tr><td>VIL (D, DE, RE)</td><td>0</td><td></td><td>0.8</td><td>V</td></tr>
+    <tr><td>드라이버 출력 전류</td><td>-60</td><td></td><td>60</td><td>mA</td></tr>
+    <tr><td>리시버 출력 전류</td><td>-8</td><td></td><td>8</td><td>mA</td></tr>
+    <tr><td>차동 부하 RL</td><td>54</td><td></td><td></td><td>Ω</td></tr>
+    <tr><td>신호 속도 (THVD1450)</td><td></td><td></td><td>50</td><td>Mbps</td></tr>
+    <tr><td>TA / TJ</td><td>-40</td><td></td><td>125 / 150</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SOIC-8 (D)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>R</td><td>리시버 데이터 출력</td></tr>
+    <tr><td>2</td><td>RE (바)</td><td>리시버 인에이블, 액티브 로우 (내부 2 MΩ 풀업)</td></tr>
+    <tr><td>3</td><td>DE</td><td>드라이버 인에이블, 액티브 하이 (내부 2 MΩ 풀다운)</td></tr>
+    <tr><td>4</td><td>D</td><td>드라이버 데이터 입력</td></tr>
+    <tr><td>5</td><td>GND</td><td>그라운드</td></tr>
+    <tr><td>6</td><td>A</td><td>버스 I/O A (B와 상보)</td></tr>
+    <tr><td>7</td><td>B</td><td>버스 I/O B (A와 상보)</td></tr>
+    <tr><td>8</td><td>VCC</td><td>3.3 ~ 5 V 전원</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>리시버 임계값: VTH+ -100 typ / -20 mV max, VTH- -200 min / -130 mV typ, 히스테리시스 30 mV → 버스 개방·단락·아이들 시 R = High (외부 바이어스 저항 불필요).</li>
+    <li>최소 차동 부하 54 Ω (양 끝 120 Ω 종단 기준). 리시버 출력 VOL 0.4 V max @ 8 mA.</li>
+    <li>VCC 디커플링 값은 읽은 섹션에 없음 — 데이터시트 Power Supply 절 확인 필요.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SOIC-8 (D): RθJA 114.3, RθJC(top) 56.7, RθJB 57.7, ΨJT 12.8, ΨJB 57 °C/W. TJ max 150 °C, 열 차단 170 °C typ.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>자동차 등급(AEC-Q100) 아님 — 차량 ECU에는 Q1 버전(THVD1450-Q1 등, 미확인) 검토.</li>
+    <li>버스 절대 최대 ±18 V: 24 V 계통 단락 보호가 필요하면 외부 TVS 또는 ±70 V급 트랜시버 고려.</li>
+    <li>DE와 RE(바)를 묶어 1핀 방향 제어 가능. 미연결 시 내부 풀다운(DE)/풀업(RE)으로 드라이버·리시버 모두 비활성.</li>
+  </ul>
+</article>
+</body>
+</html>

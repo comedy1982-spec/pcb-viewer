@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>APT1608EC · APT1608EC — 0603 high-efficiency red LED</title>
+<title>APT1608EC · 0603 High Efficiency Red Chip LED</title>
 <style>
 body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
@@ -13,40 +13,52 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="APT1608EC" data-mfr="Kingbright" data-cat="LED" data-price="0.07" data-status="stub">
+<article data-mpn="APT1608EC" data-mfr="Kingbright" data-cat="LED" data-price="0.05" data-status="done" data-src="https://www.integrated-circuit.com/pdf/174/751/5.pdf">
   <h1>APT1608EC</h1>
-  <p class="meta">Kingbright · LED · APT1608EC — 0603 high-efficiency red LED · 참고 단가 약 $0.07 (추정)</p>
-  <p class="meta">원본: <a href="https://www.kingbrightusa.com/images/catalog/SPEC/APT1608EC.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=APT1608EC" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
+  <p class="meta">Kingbright · LED · 0603 high-efficiency red chip LED · 참고 단가 약 $0.05 (Future Electronics 2k 기준)</p>
+  <p class="meta">원본: <a href="https://www.integrated-circuit.com/pdf/174/751/5.pdf" target="_blank" rel="noopener">데이터시트 PDF (Kingbright 원문 재배포본)</a> · <a href="https://www.kingbrightusa.com/images/catalog/SPEC/APT1608EC.pdf" target="_blank" rel="noopener">Kingbright PDF (미확인 링크)</a> · <a href="https://www.compel.ru/infosheet/KGB/APT1608EC" target="_blank" rel="noopener">사양 요약 (Compel)</a> · <a href="https://octopart.com/search?q=APT1608EC" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Spec No. DSAD0924, Rev. V.15A (2015-04-28). 최신판은 Ver. 18A (2022-02-19, 미열람)</p>
 
   <h2>핵심 사양</h2>
   <dl>
-      <dt>색</dt><dd>적색 617 nm (dominant)</dd>
-      <dt>VF</dt><dd>2.0 V typ @ 20 mA</dd>
-      <dt>IF</dt><dd>최대 30 mA DC</dd>
-      <dt>패키지</dt><dd>0603</dd>
+    <dt>색·재료</dt><dd>High Efficiency Red, GaAsP on GaP, 워터 클리어 렌즈</dd>
+    <dt>파장</dt><dd>λpeak 627 nm typ, λD 617 nm typ, Δλ½ 45 nm typ (IF = 20 mA)</dd>
+    <dt>광도</dt><dd>Iv 8 mcd min / 15 mcd typ @ 20 mA</dd>
+    <dt>시야각</dt><dd>2θ½ = 120°</dd>
+    <dt>VF</dt><dd>2.0 V typ / 2.5 V max @ 20 mA</dd>
+    <dt>IR</dt><dd>10 µA max @ VR = 5 V</dd>
+    <dt>정전용량</dt><dd>15 pF typ (VF = 0 V, 1 MHz)</dd>
+    <dt>크기</dt><dd>1.6 × 0.8 × 0.75 mm (0603 / 1608 metric), 공차 ±0.1 mm</dd>
+    <dt>기타</dt><dd>MSL 3, 2000 pcs/릴, 리플로 납땜 권장. AEC-Q101 표기 없음</dd>
   </dl>
 
   <h2>절대 최대 정격</h2>
   <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
-
-  <h2>권장 동작 조건</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
+    <tbody>
+      <tr><td>소비 전력 PD</td><td></td><td>75</td><td>mW</td><td>TA = 25 °C</td></tr>
+      <tr><td>DC 순방향 전류 IF</td><td></td><td>30</td><td>mA</td><td></td></tr>
+      <tr><td>피크 순방향 전류</td><td></td><td>160</td><td>mA</td><td>듀티 1/10, 펄스 폭 0.1 ms</td></tr>
+      <tr><td>역전압 VR</td><td></td><td>5</td><td>V</td><td></td></tr>
+      <tr><td>동작 온도</td><td>−40</td><td>85</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>−40</td><td>85</td><td>°C</td><td></td></tr>
+    </tbody></table>
 
   <h2>핀 배치</h2>
+  <p>0603 칩 LED 2단자. 핀 번호는 KiCad LED 관례(1 = K, 2 = A). 캐소드 마크 위치는 원문 외형도로 확인.</p>
   <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
-
-  <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
+    <tbody>
+      <tr><td>1</td><td>K</td><td>캐소드</td></tr>
+      <tr><td>2</td><td>A</td><td>애노드</td></tr>
+    </tbody></table>
 
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
+  <p>1608 칩 LED, 1.6 × 0.8 mm, 두께 0.75 mm (±0.1 mm). 권장 납땜 패턴 수치는 외형도 그림에 있음(읽은 텍스트에 수치 없음).</p>
 
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>배포처 값 불일치 정리: 원문 기준 시야각 120°, 617 nm는 도미넌트·627 nm는 피크 파장, MSL 3.</li>
+    <li>동작 온도 상한 85 °C — 차량 실내 고온부(> 85 °C)에는 부적합. 차량용은 AEC-Q101 LED로 교체 검토.</li>
+    <li>전류 제한 저항: R = (VCC − VF) / IF. 20 mA는 시험 조건이며 지시등은 수 mA로 충분. 역전압 5 V를 넘지 않게 할 것.</li>
+  </ul>
 </article>
 </body>
 </html>

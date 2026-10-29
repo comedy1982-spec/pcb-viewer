@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AO3400A · AO3400A — 30 V N-channel MOSFET</title>
+<title>AO3400A · 30 V N-channel MOSFET, SOT-23</title>
 <style>
 body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
@@ -13,41 +13,79 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="AO3400A" data-mfr="Alpha &amp; Omega Semiconductor" data-cat="트랜지스터" data-price="0.12" data-status="stub">
+<article data-mpn="AO3400A" data-mfr="Alpha &amp; Omega Semiconductor" data-cat="트랜지스터" data-price="0.08" data-status="done" data-src="https://www.aosmd.com/res/datasheets/AO3400A.pdf">
   <h1>AO3400A</h1>
-  <p class="meta">Alpha &amp; Omega Semiconductor · 트랜지스터 · AO3400A — 30 V N-channel MOSFET · 참고 단가 약 $0.12 (추정)</p>
-  <p class="meta">원본: <a href="https://www.aosmd.com/res/datasheets/AO3400A.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.aosmd.com/products/mosfets/low-voltage-mosfets/AO3400A" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=AO3400A" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
+  <p class="meta">Alpha &amp; Omega Semiconductor · 트랜지스터 · 30 V N-채널 MOSFET, SOT-23 (상용) · 참고 단가 약 $0.08 (추정)</p>
+  <p class="meta">원본: <a href="https://www.aosmd.com/res/datasheets/AO3400A.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.aosmd.com/products/mosfets/low-voltage-mosfets/AO3400A" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=AO3400A" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev 3.1 (2023-07)</p>
 
   <h2>핵심 사양</h2>
   <dl>
-      <dt>VDS</dt><dd>30 V</dd>
-      <dt>ID</dt><dd>5.7 A (VGS 10 V)</dd>
-      <dt>RDS(on)</dt><dd>19 mΩ typ @ 4.5 V · 24 mΩ typ @ 2.5 V</dd>
-      <dt>VGS(th)</dt><dd>1.05 V typ (0.65–1.45 V)</dd>
-      <dt>패키지</dt><dd>SOT-23: 1 G · 2 S · 3 D</dd>
+    <dt>VDS</dt><dd>30 V</dd>
+    <dt>VGS</dt><dd>±12 V</dd>
+    <dt>ID</dt><dd>5.7 A (TA 25 °C) / 4.7 A (TA 70 °C), IDM 30 A</dd>
+    <dt>RDS(on)</dt><dd>18 / 26.5 mΩ (10 V, 5.7 A) · 19 / 32 mΩ (4.5 V, 5 A) · 24 / 48 mΩ (2.5 V, 3 A) — typ / max</dd>
+    <dt>VGS(th)</dt><dd>0.65 / 1.05 / 1.45 V (250 µA)</dd>
+    <dt>게이트 전하</dt><dd>Qg 6 nC typ / 7 nC max (4.5 V, 15 V, 5.7 A) · Qgs 1.3 nC · Qgd 1.8 nC</dd>
+    <dt>용량</dt><dd>Ciss 630 pF · Coss 75 pF · Crss 50 pF (VDS 15 V)</dd>
+    <dt>온도</dt><dd>TJ −55~150 °C</dd>
+    <dt>등급</dt><dd>상용 (AEC-Q101 표기 없음)</dd>
+    <dt>패키지</dt><dd>SOT-23 (1 G · 2 S · 3 D)</dd>
   </dl>
 
   <h2>절대 최대 정격</h2>
   <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
+    <tbody>
+      <tr><td>VDS</td><td></td><td>30</td><td>V</td><td></td></tr>
+      <tr><td>VGS</td><td>-12</td><td>12</td><td>V</td><td></td></tr>
+      <tr><td>ID (TA 25 °C)</td><td></td><td>5.7</td><td>A</td><td>VGS 10 V</td></tr>
+      <tr><td>ID (TA 70 °C)</td><td></td><td>4.7</td><td>A</td><td></td></tr>
+      <tr><td>IDM</td><td></td><td>30</td><td>A</td><td>펄스</td></tr>
+      <tr><td>PD (TA 25 °C)</td><td></td><td>1.4</td><td>W</td><td>1 in² FR-4, 2 oz, t ≤ 10 s 기준</td></tr>
+      <tr><td>PD (TA 70 °C)</td><td></td><td>0.9</td><td>W</td><td></td></tr>
+      <tr><td>TJ, TSTG</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
 
   <h2>권장 동작 조건</h2>
+  <p>데이터시트에 별도 권장 동작 조건 표 없음. 주요 전기 특성:</p>
   <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
+    <tbody>
+      <tr><td>BVDSS (250 µA)</td><td>30</td><td></td><td></td><td>V</td></tr>
+      <tr><td>IGSS (±12 V)</td><td></td><td></td><td>100</td><td>nA</td></tr>
+      <tr><td>RDS(on) 10 V, TJ 125 °C</td><td></td><td>28</td><td>38</td><td>mΩ</td></tr>
+      <tr><td>gFS (5 V, 5.7 A)</td><td></td><td>33</td><td></td><td>S</td></tr>
+      <tr><td>VSD (IS 1 A)</td><td></td><td>0.7</td><td>1</td><td>V</td></tr>
+      <tr><td>IS (바디 다이오드 연속)</td><td></td><td></td><td>2</td><td>A</td></tr>
+      <tr><td>td(on) / tr / td(off) / tf</td><td></td><td>3 / 2.5 / 25 / 4</td><td></td><td>ns</td></tr>
+      <tr><td>trr / Qrr (5.7 A, 100 A/µs)</td><td></td><td>8.5 / 2.6</td><td></td><td>ns / nC</td></tr>
+    </tbody></table>
 
   <h2>핀 배치</h2>
+  <p>SOT-23-3</p>
   <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
+    <tbody>
+      <tr><td>1</td><td>G</td><td>게이트</td></tr>
+      <tr><td>2</td><td>S</td><td>소스</td></tr>
+      <tr><td>3</td><td>D</td><td>드레인</td></tr>
+    </tbody></table>
+  <p class="meta">AOS 데이터시트는 G/D/S 그림만 표시하고 번호는 명시하지 않음; 번호는 components101 핀아웃과 교차 확인.</p>
 
   <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
+  <ul>
+    <li>VGS(th)가 낮아(최대 1.45 V) 2.5 V 구동 가능, 단 2.5 V에서 RDS(on) 최대 48 mΩ로 커짐.</li>
+    <li>VGS 절대 최대 ±12 V — 12 V 게이트 드라이버로 직접 구동 금지, 5 V/10 V 이하로 클램프.</li>
+    <li>게이트 직렬 저항(수 Ω~수십 Ω)과 G–S 풀다운으로 오동작 방지 (데이터시트 스위칭 측정 조건 RGEN 3 Ω).</li>
+  </ul>
 
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
+  <p>SOT-23. RθJA: t ≤ 10 s 63 typ / 80 max °C/W, 정상상태 90 typ / 125 max °C/W; RθJL 정상상태 70 typ / 100 max °C/W (1 in² FR-4, 2 oz 구리, 정지 공기). TJ max 150 °C.</p>
 
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>상용 등급 — 차량 ECU에는 AEC-Q101 MOSFET로 대체 필요.</li>
+    <li>바디 다이오드 연속 전류 최대 2 A로 ID보다 훨씬 작음 — 유도성 부하 프리휠 경로 확인.</li>
+    <li>정격 PD는 1 in² 구리 기준. 최소 패드에서는 RθJA가 훨씬 커지므로 드레인 패드 구리 확보.</li>
+    <li>시장에 같은 이름의 타사(HS-semi, UMW 등) 호환품이 많고 사양이 다름(예: IDM 20 A, RDS(on) 상이) — BOM에 제조사 명시.</li>
+  </ul>
 </article>
 </body>
 </html>

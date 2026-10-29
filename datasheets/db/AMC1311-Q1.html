@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMC1311-Q1 · 2 V input reinforced isolated amplifier</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="AMC1311-Q1" data-mfr="TI" data-cat="절연" data-price="" data-status="done" data-src="https://ti.com/lit/pdf/SBAS897">
+  <h1>AMC1311-Q1</h1>
+  <p class="meta">TI · 절연 · 고임피던스 2 V 입력 강화 절연 앰프 (전압 측정용, 차동 출력)</p>
+  <p class="meta">원본: <a href="https://ti.com/lit/pdf/SBAS897" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/ko-kr/AMC1311-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=AMC1311-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SBAS897C (2022-06)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>고압 DC 버스·절연 전압을 분압 저항으로 받아 절연 경계 너머 차동 아날로그(OUTP/OUTN)로 출력, 이득 1 V/V 고정</dd>
+    <dt>입력</dt><dd>선형 -0.1 – 2 V, 클리핑 2.516 V, 입력 저항 1 GΩ (25 °C), 입력 용량 7 pF</dd>
+    <dt>정확도 (AMC1311-Q1)</dt><dd>오프셋 최대 ±9.9 mV (드리프트 일반 ±20 µV/°C), 이득 오차 최대 ±1 % (드리프트 일반 ±30 ppm/°C), 비선형성 최대 0.04 %</dd>
+    <dt>정확도 (AMC1311B-Q1)</dt><dd>오프셋 최대 ±1.5 mV, 이득 오차 최대 ±0.2 %, 고압측 3.3 V 동작 지원</dd>
+    <dt>CMTI</dt><dd>AMC1311-Q1 최소 15 kV/µs (일반 30); B형 최소 100 kV/µs</dd>
+    <dt>절연</dt><dd>강화: VIOTM 7000 VPK, VIORM 2120 VPK, VIOWM 1500 VRMS / 2120 VDC, VISO 5000 VRMS 1분 (UL1577)</dd>
+    <dt>기타</dt><dd>고압측 전원 누락 검출, SHTDN 핀, 기능 안전 대응(Functional Safety-Capable)</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1, TA -40 – 125 °C</dd>
+    <dt>패키지</dt><dd>DWV 8핀 SOIC, 5.85 × 7.50 mm</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VDD1 – GND1 (고압측)</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>VDD2 – GND2 (저압측)</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>IN 전압</td><td>GND1 − 6</td><td>VDD1 + 0.5</td><td>V</td><td></td></tr>
+    <tr><td>SHTDN 전압</td><td>GND1 − 0.5</td><td>VDD1 + 0.5</td><td>V</td><td></td></tr>
+    <tr><td>OUTP, OUTN 전압</td><td>GND2 − 0.5</td><td>VDD2 + 0.5</td><td>V</td><td></td></tr>
+    <tr><td>입력 전류 (전원 핀 제외, 연속)</td><td>-10</td><td>10</td><td>mA</td><td></td></tr>
+    <tr><td>접합 온도 TJ</td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도 Tstg</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VDD1 (AMC1311-Q1)</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>VDD1 (AMC1311B-Q1)</td><td>3</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>VDD2</td><td>3</td><td>3.3</td><td>5.5</td><td>V</td></tr>
+    <tr><td>입력 선형 범위 VFSR (IN – GND1)</td><td>-0.1</td><td></td><td>2</td><td>V</td></tr>
+    <tr><td>SHTDN</td><td>0</td><td></td><td>VDD1</td><td>V</td></tr>
+    <tr><td>출력 부하 용량 (OUTP 또는 OUTN – GND2)</td><td></td><td></td><td>500</td><td>pF</td></tr>
+    <tr><td>출력 부하 용량 (OUTP – OUTN)</td><td></td><td></td><td>250</td><td>pF</td></tr>
+    <tr><td>주위 온도 TA</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>DWV 8핀 SOIC (광폭)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>VDD1</td><td>고압측 전원</td></tr>
+    <tr><td>2</td><td>IN</td><td>아날로그 입력</td></tr>
+    <tr><td>3</td><td>SHTDN</td><td>셧다운 (액티브 하이, 내부 풀업 약 100 kΩ)</td></tr>
+    <tr><td>4</td><td>GND1</td><td>고압측 아날로그 접지</td></tr>
+    <tr><td>5</td><td>GND2</td><td>저압측 아날로그 접지</td></tr>
+    <tr><td>6</td><td>OUTN</td><td>반전 아날로그 출력</td></tr>
+    <tr><td>7</td><td>OUTP</td><td>비반전 아날로그 출력</td></tr>
+    <tr><td>8</td><td>VDD2</td><td>저압측 전원</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD1·VDD2 각각 100 nF ∥ 1 µF를 핀에 최대한 가깝게.</li>
+    <li>입력: 고임피던스 분압기와 함께 100 pF 하나면 충분; 필터 차단 주파수는 변조 샘플링 20 MHz보다 한 디케이드 이상 낮게.</li>
+    <li>600 V DC 버스 예: 상단 1 MΩ × 6 (저항당 최대 100 V), RSNS 20 kΩ (E96), 분압 전류 약 99.7 µA, 풀스케일 1.993 V, 분압기 소비 59.8 mW.</li>
+    <li>단일 종단 ADC 변환 예: R1–R4 = 3.3 kΩ, C1 = C2 = 330 pF (NP0), 연산증폭기 TLV9001-Q1.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>DWV 8핀: RθJA 84.6 °C/W, RθJC(top) 28.3 °C/W, RθJB 41.1 °C/W, ψJT 4.9 °C/W, ψJB 39.1 °C/W. CLR/CPG ≥ 8.5 mm, DTI ≥ 0.021 mm, CTI ≥ 600 V. TJ 최대 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>RSNS(감지 저항)를 IN 핀 가까이 배치.</li>
+    <li>고압측 전원 인가 중 IN 개방 금지, IN에 보호 다이오드 연결 금지(데이터시트 '하지 말 것').</li>
+    <li>분압 상단은 저항당 전압 정격·연면거리를 고려해 여러 개 직렬로 분할.</li>
+    <li>더 높은 정확도가 필요하면 같은 데이터시트의 AMC1311B-Q1. TI 제품 페이지에 '새 버전 제공' 안내가 표시됨(검색 결과 제목 기준) — 신규 설계 시 후속품 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

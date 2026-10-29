@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MC12XS6 · 12XS6 eXtreme Switch high-side family</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MC12XS6" data-mfr="NXP" data-cat="스마트 스위치" data-price="" data-status="done" data-src="https://docs.ampnuts.ru/nxp.com.datasheet/MC12XS6D4.pdf">
+  <h1>MC12XS6</h1>
+  <p class="meta">NXP · 스마트 스위치 · 12XS6 eXtreme Switch 계열 SPI 하이사이드 스위치 (대표: MC08XS6421, 듀얼 8.0 mΩ + 듀얼 21 mΩ)</p>
+  <p class="meta">원본: <a href="https://docs.ampnuts.ru/nxp.com.datasheet/MC12XS6D4.pdf" target="_blank" rel="noopener">데이터시트 PDF MC12XS6D4 (사본)</a> · <a href="https://docs.ampnuts.ru/nxp.com.datasheet/MC12XS6D2.pdf" target="_blank" rel="noopener">MC12XS6D2 (2/3채널 변형, 사본)</a> · <a href="https://octopart.com/search?q=MC08XS6421" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 MC12XS6D4 Rev. 6.0 (1/2021), MC12XS6D2 Rev. 4.0 (9/2020)</p>
+  <p class="todo">"MC12XS6"는 주문 가능한 품번이 아니라 계열(12XS6) 이름입니다. 아래 수치·핀은 MC08XS6421B/C/DEK (MC12XS6D4) 기준입니다. 2/3채널 변형(MC10XS6200/6225/6325, MC25XS6300)은 MC12XS6D2 문서를 따로 확인하세요.</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>SPI 제어 하이사이드 스위치 4채널 (OUT1–OUT4) + 외부 스마트 스위치 구동용 로직 출력 OUT6, 전류 감지(CSNS), 림프홈(fail) 모드</dd>
+    <dt>RDS(on)</dt><dd>8.0 mΩ 채널 (OUT3, OUT4): 7.5 mΩ typ @25 °C / 14.8 mΩ typ @150 °C; 21 mΩ 채널 (OUT1, OUT2): 19 mΩ typ @25 °C / 35.7 mΩ typ @150 °C</dd>
+    <dt>전원</dt><dd>VBAT 7.0–18 V 완전 동작, 점프 스타트 28 V, 로드 덤프 40 V, 역전압 -16 V; VCC 4.5–5.5 V</dd>
+    <dt>전류</dt><dd>연속 11 A (8.0 mΩ) / 5.5 A (21 mΩ); 과전류 IOCHI1 111 A / 48 A typ</dd>
+    <dt>SPI</dt><dd>16-bit, 5.0 MHz, 데이지 체인</dd>
+    <dt>대기 전류</dt><dd>슬립 VBAT 1.2 µA typ / 5.0 µA max (25 °C)</dd>
+    <dt>등급·온도</dt><dd>AEC-Q100 Grade 1, TA -40~125 °C, TJ -40~150 °C</dd>
+    <dt>패키지</dt><dd>32-pin SOICW-EP (EP = VBAT, 33번), 케이스 98ASA00368D (B/DEK), 98ASA00894D (CEK)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VBAT</td><td>-16</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VCC</td><td>-0.3</td><td>7.0</td><td>V</td><td></td></tr>
+    <tr><td>IN1–IN4, LIMP</td><td>-0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>CLK, SI, SCLK, CSB, RSTB</td><td>-0.3</td><td>20</td><td>V</td><td></td></tr>
+    <tr><td>SO, CSNS, SYNC, OUT6, CLK 출력</td><td>-0.3</td><td>20</td><td>V</td><td></td></tr>
+    <tr><td>출력 전류 8.0 mΩ / 21 mΩ</td><td></td><td>11 / 5.5</td><td>A</td><td></td></tr>
+    <tr><td>클램프 에너지 8.0 mΩ</td><td></td><td>200 / 100</td><td>mJ</td><td>TJ 25 / 150 °C</td></tr>
+    <tr><td>클램프 에너지 21 mΩ</td><td></td><td>75 / 50</td><td>mJ</td><td>TJ 25 / 150 °C</td></tr>
+    <tr><td>ESD HBM</td><td></td><td>±8000</td><td>V</td><td>VBAT, 출력, GND; 기타 ±2000 V</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>±500</td><td>V</td><td>코너 핀 ±750 V</td></tr>
+    <tr><td>저장 온도</td><td>-55</td><td>150</td><td>°C</td><td>리플로 피크 260 °C</td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VBAT 완전 동작</td><td>7.0</td><td></td><td>18</td><td>V</td></tr>
+    <tr><td>VBAT 점프 스타트 / 로드 덤프</td><td></td><td></td><td>28 / 40</td><td>V</td></tr>
+    <tr><td>VCC</td><td>4.5</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>주위 온도</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>32-pin SOICW-EP (MC08XS6421, MC12XS6D4 Table 2)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>CP</td><td>차지 펌프 커패시터</td></tr>
+    <tr><td>2</td><td>RSTB</td><td>리셋 / 슬립 (풀다운)</td></tr>
+    <tr><td>3</td><td>CSB</td><td>SPI 칩 셀렉트 (풀업)</td></tr>
+    <tr><td>4</td><td>SCLK</td><td>SPI 클록</td></tr>
+    <tr><td>5</td><td>SI</td><td>SPI 입력</td></tr>
+    <tr><td>6</td><td>VCC</td><td>로직 전원 5 V</td></tr>
+    <tr><td>7</td><td>SO</td><td>SPI 출력</td></tr>
+    <tr><td>8</td><td>OUT6</td><td>외부 스마트 스위치 제어 로직 출력</td></tr>
+    <tr><td>9, 24</td><td>GND</td><td>GND (기판에서 단락)</td></tr>
+    <tr><td>10, 11</td><td>OUT2</td><td>출력 2 (21 mΩ)</td></tr>
+    <tr><td>12, 13, 14</td><td>OUT4</td><td>출력 4 (8.0 mΩ)</td></tr>
+    <tr><td>15–18</td><td>NC</td><td>미연결 (GND 권장)</td></tr>
+    <tr><td>19, 20, 21</td><td>OUT3</td><td>출력 3 (8.0 mΩ)</td></tr>
+    <tr><td>22, 23</td><td>OUT1</td><td>출력 1 (21 mΩ)</td></tr>
+    <tr><td>25</td><td>CSNS</td><td>전류/온도/배터리 전압 감지 아날로그 출력</td></tr>
+    <tr><td>26</td><td>CSNS SYNCB</td><td>감지 동기 오픈 드레인 (외부 풀업)</td></tr>
+    <tr><td>27–30</td><td>IN1–IN4</td><td>직접 입력 / 웨이크업 / fail 모드 제어</td></tr>
+    <tr><td>31</td><td>LIMP</td><td>림프홈 입력</td></tr>
+    <tr><td>32</td><td>CLK</td><td>모드 피드백 / PWM 기준 클록</td></tr>
+    <tr><td>33 (EP)</td><td>VBAT</td><td>배터리 전원 (노출 패드)</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>CP: 47–220 nF 세라믹 X7R (VCP 최대 16 V).</li>
+    <li>IN1–IN4: 역전압 대비 1.0–10 kΩ 직렬 저항. OUT6에도 직렬 저항.</li>
+    <li>CSNS SYNCB: VCC로 풀업 필요. NC(15–18)는 GND, GND(9, 24)는 기판에서 단락.</li>
+    <li>VCC는 5 V 레귤레이터에서 공급, 역전압·고전압 외란에 대해 외부 보호 필요.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>32-pin SOICW-EP, 노출 패드 = VBAT (GND 아님). RθJA 21 °C/W (2s2p), RθJB 8.0 °C/W, RθJC(상면) 17 °C/W. TJ 최대 150 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>부품 DB 설명 "6ch HSD"는 데이터시트와 맞지 않음: 12XS6 계열은 2/3/4개 전력 채널 + OUT6(외부 스위치 구동) 구성. 실제 주문 품번(MC08XS6421 등)으로 교체 필요.</li>
+    <li>노출 패드가 VBAT이므로 방열 동판을 GND 플레인에 연결하면 안 됨.</li>
+    <li>데이터시트 내 VBAT 하한 표기 불일치 (Features 7.08 V vs Table 5 7.0 V).</li>
+    <li>2/3채널 변형: MC10XS6200/6225/6325, MC25XS6300 (10 mΩ / 25 mΩ 채널, 동일 32-pin SOICW-EP) — MC12XS6D2 문서.</li>
+  </ul>
+</article>
+</body>
+</html>

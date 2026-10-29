@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AD2S1210 · 10- to 16-bit resolver-to-digital converter with reference oscillator</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="AD2S1210" data-mfr="Analog Devices" data-cat="센서" data-price="" data-status="done" data-src="https://www.analog.com/media/en/technical-documentation/data-sheets/ad2s1210.pdf">
+  <h1>AD2S1210</h1>
+  <p class="meta">Analog Devices · 센서 · 10~16비트 가변 분해능 레졸버-디지털 변환기(RDC), 여자 발진기 내장</p>
+  <p class="meta">원본: <a href="https://www.analog.com/media/en/technical-documentation/data-sheets/ad2s1210.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.analog.com/AD2S1210" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=AD2S1210" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev. B</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>레졸버 사인/코사인 → 각도·속도 디지털 변환, 프로그래머블 정현파 여자 출력, 병렬/직렬(SPI형) 인터페이스, 엔코더 A/B/NM 에뮬레이션, LOT/DOS 고장 검출</dd>
+    <dt>분해능</dt><dd>10 / 12 / 14 / 16 비트 선택 (속도 9 / 11 / 13 / 15 비트)</dd>
+    <dt>각도 정확도</dt><dd>B/D 등급 ±2.5 arc min + 1 LSB (특징 항목). A/C 등급은 표 1의 ±5 / ±10 arc min + 1 LSB 확인</dd>
+    <dt>추종 속도</dt><dd>10비트 3125 rps, 12비트 1250 rps, 14비트 625 rps, 16비트 156.25 rps (CLKIN 10.24 MHz)</dd>
+    <dt>여자 출력</dt><dd>2 ~ 20 kHz, 250 Hz 단위. 진폭 3.2~4.0 V p-p (일반 3.6 V p-p), 중심 일반 2.47 V</dd>
+    <dt>사인/코사인 입력</dt><dd>차동 2.3 ~ 4.0 V p-p (일반 3.15 V p-p), 핀 전압 0.15 V ~ AVDD − 0.2 V</dd>
+    <dt>전원</dt><dd>AVDD/DVDD 4.75 ~ 5.25 V, VDRIVE 2.3 ~ 5.25 V. IAVDD 12 mA, IDVDD 35 mA</dd>
+    <dt>온도 · 등급</dt><dd>A/B -40 ~ +85 °C, C/D/W -40 ~ +125 °C. 제품 페이지에 AEC-Q100 및 ASIL B 안전 평가 인증서 표기</dd>
+    <dt>패키지</dt><dd>48-lead (ST 접미사, LQFP)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>AVDD, DVDD → AGND/DGND</td><td>-0.3</td><td>7.0</td><td>V</td><td></td></tr>
+      <tr><td>VDRIVE → AGND/DGND</td><td>-0.3</td><td>AVDD</td><td>V</td><td></td></tr>
+      <tr><td>AVDD − DVDD</td><td>-0.3</td><td>0.3</td><td>V</td><td></td></tr>
+      <tr><td>AGND − DGND</td><td>-0.3</td><td>0.3</td><td>V</td><td></td></tr>
+      <tr><td>아날로그 입력 → AGND</td><td>-0.3</td><td>AVDD + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>디지털 입·출력 → DGND</td><td>-0.3</td><td>VDRIVE + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>핀 입력 전류 (전원 제외)</td><td></td><td>±10</td><td>mA</td><td>100 mA 과도까지 래치업 없음</td></tr>
+      <tr><td>동작 온도</td><td>-40</td><td>85 / 125</td><td>°C</td><td>A/B / C/D</td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>리플로</td><td></td><td>260</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM</td><td></td><td>2</td><td>kV</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>AVDD, DVDD</td><td>4.75</td><td>5</td><td>5.25</td><td>V</td></tr>
+      <tr><td>VDRIVE</td><td>2.3</td><td></td><td>5.25</td><td>V</td></tr>
+      <tr><td>CLKIN</td><td>6.144</td><td>8.192</td><td>10.24</td><td>MHz</td></tr>
+      <tr><td>여자 주파수</td><td>2</td><td></td><td>20</td><td>kHz</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>48-lead LQFP (ST), 상면도</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>RES1</td><td>분해능 선택 1 (RES0과 함께)</td></tr>
+      <tr><td>2</td><td>CS</td><td>칩 선택, 액티브 로우</td></tr>
+      <tr><td>3</td><td>RD</td><td>병렬 데이터 출력 인에이블/프레임 동기 (에지 트리거)</td></tr>
+      <tr><td>4</td><td>WR/FSYNC</td><td>쓰기 인에이블(병렬) 또는 프레임 동기(직렬)</td></tr>
+      <tr><td>5</td><td>DGND</td><td>디지털 접지</td></tr>
+      <tr><td>6</td><td>DVDD</td><td>디지털 전원 4.75~5.25 V</td></tr>
+      <tr><td>7</td><td>CLKIN</td><td>클록 입력 6.144~10.24 MHz</td></tr>
+      <tr><td>8</td><td>XTALOUT</td><td>크리스털 출력 (단일 클록 입력 시 미연결)</td></tr>
+      <tr><td>9</td><td>SOE</td><td>직렬 출력 인에이블: H = 병렬, L = 직렬</td></tr>
+      <tr><td>10</td><td>SAMPLE</td><td>하강 에지에서 위치/속도/폴트 레지스터 갱신</td></tr>
+      <tr><td>11</td><td>DB15/SDO</td><td>데이터 비트 15 / 직렬 데이터 출력</td></tr>
+      <tr><td>12</td><td>DB14/SDI</td><td>데이터 비트 14 / 직렬 데이터 입력</td></tr>
+      <tr><td>13</td><td>DB13/SCLK</td><td>데이터 비트 13 / 직렬 클록</td></tr>
+      <tr><td>14</td><td>DB12</td><td>데이터 비트 12 (3상태 출력)</td></tr>
+      <tr><td>15</td><td>DB11</td><td>데이터 비트 11</td></tr>
+      <tr><td>16</td><td>DB10</td><td>데이터 비트 10</td></tr>
+      <tr><td>17</td><td>DB9</td><td>데이터 비트 9</td></tr>
+      <tr><td>18</td><td>VDRIVE</td><td>로직 인터페이스 전원 2.3~5.25 V</td></tr>
+      <tr><td>19</td><td>DGND</td><td>디지털 접지</td></tr>
+      <tr><td>20</td><td>DB8</td><td>데이터 비트 8</td></tr>
+      <tr><td>21</td><td>DB7</td><td>데이터 비트 7 (3상태 I/O)</td></tr>
+      <tr><td>22</td><td>DB6</td><td>데이터 비트 6</td></tr>
+      <tr><td>23</td><td>DB5</td><td>데이터 비트 5</td></tr>
+      <tr><td>24</td><td>DB4</td><td>데이터 비트 4</td></tr>
+      <tr><td>25</td><td>DB3</td><td>데이터 비트 3</td></tr>
+      <tr><td>26</td><td>DB2</td><td>데이터 비트 2</td></tr>
+      <tr><td>27</td><td>DB1</td><td>데이터 비트 1</td></tr>
+      <tr><td>28</td><td>DB0</td><td>데이터 비트 0</td></tr>
+      <tr><td>29</td><td>A</td><td>인크리멘털 엔코더 출력 A</td></tr>
+      <tr><td>30</td><td>B</td><td>인크리멘털 엔코더 출력 B</td></tr>
+      <tr><td>31</td><td>NM</td><td>노스 마커 출력</td></tr>
+      <tr><td>32</td><td>DIR</td><td>방향 출력 (각도 증가 시 H)</td></tr>
+      <tr><td>33</td><td>RESET</td><td>리셋 입력, 전원 안정 전까지 L 유지</td></tr>
+      <tr><td>34</td><td>LOT</td><td>추종 상실(Loss of Tracking), 액티브 로우, 비래치</td></tr>
+      <tr><td>35</td><td>DOS</td><td>신호 열화(Degradation of Signal), 액티브 로우</td></tr>
+      <tr><td>36</td><td>A1</td><td>모드 선택 1</td></tr>
+      <tr><td>37</td><td>A0</td><td>모드 선택 0</td></tr>
+      <tr><td>38</td><td>EXC</td><td>여자 출력</td></tr>
+      <tr><td>39</td><td>/EXC</td><td>여자 반전 출력</td></tr>
+      <tr><td>40</td><td>AGND</td><td>아날로그 접지</td></tr>
+      <tr><td>41</td><td>SIN</td><td>사인 + 입력</td></tr>
+      <tr><td>42</td><td>SINLO</td><td>사인 − 입력</td></tr>
+      <tr><td>43</td><td>AVDD</td><td>아날로그 전원 4.75~5.25 V</td></tr>
+      <tr><td>44</td><td>COSLO</td><td>코사인 − 입력</td></tr>
+      <tr><td>45</td><td>COS</td><td>코사인 + 입력</td></tr>
+      <tr><td>46</td><td>REFBYP</td><td>기준 바이패스 (디커플링)</td></tr>
+      <tr><td>47</td><td>REFOUT</td><td>기준 전압 출력</td></tr>
+      <tr><td>48</td><td>RES0</td><td>분해능 선택 0</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>AVDD, DVDD, VDRIVE 각각 10 nF + 4.7 µF 디커플링을 핀 가까이에 둡니다.</li>
+    <li>REFBYP: 10 µF + 10 nF (0.01 µF) 디커플링.</li>
+    <li>클록: CLKIN-XTALOUT 사이 8.192 MHz 크리스털, 각 다리에 20 pF 부하 커패시터.</li>
+    <li>여자 출력은 외부 버퍼로 이득·구동 전류를 보강해야 합니다(데이터시트 예: AD8662, 5 V/12 V 전원). 버퍼 필터의 위상 지연은 위상 잠금 범위 ±44° 안에 있어야 합니다.</li>
+    <li>SIN/SINLO, COS/COSLO는 각각 차폐 트위스트 페어로 배선하고 차폐는 REFOUT 또는 AGND에 연결합니다.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>48-lead LQFP. θJA 54 °C/W, θJC 15 °C/W (JEDEC 2S2P). 패키지 치수는 데이터시트 Outline Dimensions 확인 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>RESET은 전원이 정격에 들어올 때까지 L로 유지해야 합니다.</li>
+    <li>AVDD와 DVDD는 ±0.3 V 이내로 함께 올라가야 합니다(절대 최대 정격).</li>
+    <li>LOT/DOS 출력을 MCU 인터럽트에 연결하면 레졸버 단선·신호 열화를 바로 감지할 수 있습니다.</li>
+    <li>확장 온도 버전 AD2S1210-EP(-55 ~ +125 °C)도 있습니다.</li>
+  </ul>
+</article>
+</body>
+</html>

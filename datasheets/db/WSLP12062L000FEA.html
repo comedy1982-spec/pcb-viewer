@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WSLP12062L000FEA · 2 mΩ 1206 Power Metal Strip resistor</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="WSLP12062L000FEA" data-mfr="Vishay Dale" data-cat="저항" data-price="" data-status="done" data-src="https://www.farnell.com/datasheets/2244185.pdf">
+  <h1>WSLP12062L000FEA</h1>
+  <p class="meta">Vishay Dale · 저항 · 2 mΩ ±1 % 1206 Power Metal Strip 전류 검출 저항 (1.0 W)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/2244185.pdf" target="_blank" rel="noopener">데이터시트 PDF (Farnell 사본)</a> · <a href="https://octopart.com/search?q=WSLP12062L000FEA" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Vishay 30122, Rev. 07-Oct-16</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>저항값</dt><dd>0.002 Ω (2 mΩ) — 품번 "2L000" (L = mΩ 소수점)</dd>
+    <dt>허용차</dt><dd>±1.0 % (F). 1206의 ±0.5 %(D)는 5–50 mΩ만 있음</dd>
+    <dt>정격 전력</dt><dd>1.0 W @ 70 °C (WSLP1206 모델 고정, 품번에 전력 코드 없음)</dd>
+    <dt>TCR (부품, 단자 포함)</dt><dd>±275 ppm/°C (1–2.9 mΩ 구간). 저항체 자체 &lt; 20 ppm/°C</dd>
+    <dt>최대 사용 전압</dt><dd>√(P × R) — 전압이 아닌 전력으로 제한 (2 mΩ·1 W → 약 0.045 V, 약 22 A 상당)</dd>
+    <dt>구조</dt><dd>전용접 일체형 금속 저항체 (NiCr 또는 MnCu)</dd>
+    <dt>인덕턴스 · 열기전력</dt><dd>0.5–5 nH, &lt; 3 µV/°C</dd>
+    <dt>등급</dt><dd>AEC-Q200 qualified (주석: 일부 저항 기술에는 난연성 시험 비적용)</dd>
+    <dt>동작 온도</dt><dd>−65 … +170 °C</dd>
+    <dt>품번 구성</dt><dd>WSLP1206 · 2L000(저항) · F(±1 %) · EA(무연 테이프·릴, 1206은 4000개/릴)</dd>
+  </dl>
+
+  <h2>패키지 · 열</h2>
+  <p>1206: L 3.20 ± 0.254 mm, W 1.60 ± 0.254 mm. 두께는 0.002–0.0059 Ω 구간에 0.635 ± 0.254 mm 값이 표기됨(표 해석 모호 — 도면 확인). 권장 랜드(1206): a = 1.57 mm, b = 1.78 mm, l = 0.76 mm (첫 1206 구간 값, 2 mΩ 적용 여부는 도면 확인). 무게 16.2 g/1000개(2010년판 기준).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>전력 디레이팅: 70 °C에서 100 %, 170 °C까지 감소하는 곡선 — 정확한 꺾임점은 데이터시트 그래프 확인.</li>
+    <li>2 mΩ 구간 TCR이 ±275 ppm/°C로 큼 — 정밀 전류 측정 시 온도 보정 또는 켈빈(4단자) 패턴 사용 권장. 2단자 부품이므로 감지 트레이스는 패드 안쪽에서 분리 인출.</li>
+    <li>1 W 연속 시 약 22 A(√(P/R)); 실제 연속 전류는 PCB 동박·디레이팅으로 더 낮게 잡을 것. 펄스 전력 한계는 읽은 문서에 없음.</li>
+    <li>환경 시험(열충격 −55/+150 °C 1000 사이클, 부하 수명 1000 h @70 °C 등) ΔR 한계 ±(0.5–1.0 % + 0.0005 Ω).</li>
+  </ul>
+</article>
+</body>
+</html>

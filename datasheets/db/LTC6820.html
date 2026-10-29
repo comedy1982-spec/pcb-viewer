@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LTC6820 · isoSPI isolated communications interface</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="LTC6820" data-mfr="Analog Devices" data-cat="통신" data-price="" data-status="done" data-src="https://static.chipdip.ru/lib/690/DOC011690564.pdf">
+  <h1>LTC6820</h1>
+  <p class="meta">Analog Devices · 통신 · isoSPI 트랜시버 (SPI ↔ 트랜스포머 절연 2선 차동 링크)</p>
+  <p class="meta">원본: <a href="https://static.chipdip.ru/lib/690/DOC011690564.pdf" target="_blank" rel="noopener">읽은 사본</a> · <a href="https://www.mouser.in/new/analog-devices/adi-ltc6820-isospi-interface/" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=LTC6820" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev. C (05/19)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>표준 SPI를 트랜스포머 절연 2선 차동 isoSPI 신호로 변환 (마스터/슬레이브 선택 가능), BMS 셀 모니터(LTC68xx) 데이지 체인 연결용</dd>
+    <dt>속도 · 거리</dt><dd>1 Mbps (Rev. C 타이밍은 2 Mbps까지), 케이블 최대 100 m</dd>
+    <dt>전원</dt><dd>VDD 2.7 ~ 5.5 V, VDDS(I/O) 1.7 ~ 5.5 V</dd>
+    <dt>소비 전류</dt><dd>IDLE 슬레이브 일반 2 µA / 마스터 일반 1 µA. 동작 전류는 RBIAS(IB)에 따라 수 mA</dd>
+    <dt>송신 구동</dt><dd>IP/IM 전류 = 20 × IB, IB = 0.1 ~ 1 mA (RBIAS 20 kΩ ~ 2 kΩ)</dd>
+    <dt>수신 임계</dt><dd>VTCMP = 0.5 × VICMP</dd>
+    <dt>IDLE 타임아웃</dt><dd>4 ~ 7.5 ms (일반 5.7 ms), 웨이크업 tREADY 최대 8 µs</dd>
+    <dt>온도 · 등급</dt><dd>I -40 ~ +85 °C, H -40 ~ +125 °C. AEC-Q100 (자동차용은 #3ZZ 접미사)</dd>
+    <dt>패키지</dt><dd>16-lead MSOP (MS), 16-lead 3 × 3 mm QFN (UD)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDD, VDDS → GND</td><td></td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>SCK, CS, EN</td><td>-0.3</td><td>VDDS + 0.3</td><td>V</td><td>6 V 이하</td></tr>
+      <tr><td>IBIAS, SLOW, IP, IM</td><td>-0.3</td><td>VDD + 0.3</td><td>V</td><td>6 V 이하</td></tr>
+      <tr><td>기타 핀</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>IP, IM 소스/싱크 전류</td><td></td><td>30</td><td>mA</td><td></td></tr>
+      <tr><td>MOSI, MISO, SCK, CS 전류</td><td></td><td>20</td><td>mA</td><td></td></tr>
+      <tr><td>최대 접합 온도</td><td></td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>리드 온도 (MSOP, 10 s)</td><td></td><td>300</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VDD</td><td>2.7</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>VDDS</td><td>1.7</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>IB (= VBIAS / RBIAS)</td><td>0.1</td><td></td><td>1</td><td>mA</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>16-lead MSOP (MS), 상면도. QFN-16 (UD)은 핀 번호가 다릅니다(EN = 16, MOSI = 1 … IBIAS = 15, 노출 패드 17은 개방 또는 GND).</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>EN</td><td>인에이블. H = 항상 동작, L = 무활동 시 IDLE 허용</td></tr>
+      <tr><td>2</td><td>MOSI</td><td>SPI 데이터. 슬레이브측 오픈 드레인 출력(VDDS 풀업), 마스터측 입력</td></tr>
+      <tr><td>3</td><td>MISO</td><td>SPI 데이터. 마스터측 오픈 드레인 출력(VDDS 풀업), 슬레이브측 입력</td></tr>
+      <tr><td>4</td><td>SCK</td><td>SPI 클록. 마스터측 입력, 슬레이브측 푸시풀 출력</td></tr>
+      <tr><td>5</td><td>CS</td><td>칩 선택. 마스터측 입력, 슬레이브측 푸시풀 출력</td></tr>
+      <tr><td>6</td><td>VDDS</td><td>I/O 전원 (SPI 입력 임계 설정)</td></tr>
+      <tr><td>7</td><td>POL</td><td>SPI 클록 극성 (VDD/GND 고정)</td></tr>
+      <tr><td>8</td><td>PHA</td><td>SPI 클록 위상 (VDD/GND 고정)</td></tr>
+      <tr><td>9</td><td>VDD</td><td>전원</td></tr>
+      <tr><td>10</td><td>IM</td><td>isoSPI −</td></tr>
+      <tr><td>11</td><td>IP</td><td>isoSPI +</td></tr>
+      <tr><td>12</td><td>MSTR</td><td>VDD = 마스터, GND = 슬레이브</td></tr>
+      <tr><td>13</td><td>SLOW</td><td>GND = 고속(클록 200 kHz 초과), VDD = 저속</td></tr>
+      <tr><td>14</td><td>GND</td><td>접지</td></tr>
+      <tr><td>15</td><td>ICMP</td><td>수신 비교기 임계 설정 (IBIAS-GND 분압 중점)</td></tr>
+      <tr><td>16</td><td>IBIAS</td><td>송신 전류 설정 저항 (커패시턴스 50 pF 미만)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>바이어스 저항 (RM = 120 Ω, 1:1 트랜스포머): 케이블 50 m 이하 IB = 0.5 mA, RB1 = 2.8 kΩ, RB2 = 1.2 kΩ. 50 m 초과 IB = 1 mA, RB1 = 1.4 kΩ, RB2 = 600 Ω.</li>
+    <li>설계식: VA = (20 × IB) × (RM / 2), VTCMP = 0.5 × VA (≤ 50 m) 또는 0.25 × VA (> 50 m), VICMP = 2 × VTCMP, RB2 = VICMP / IB, RB1 = 2 V / IB − RB2.</li>
+    <li>트랜스포머: 1:1 또는 2:1, 자화 인덕턴스 50 ~ 350 µH, 삽입 손실 −1.5 dB보다 양호, 센터탭 또는 공통 모드 초크 포함. 센터탭 바이패스 27 pF 이하.</li>
+    <li>짧은 배선(약 1 m 이하)은 100 nF 커패시터 결합도 가능(공통 모드 제거 없음).</li>
+    <li>디커플링: VDD, VDDS 각각 최소 0.01 µF (응용 회로는 100 nF).</li>
+    <li>고속 모드 풀업: RPU &lt; 50 ns / CLOAD, 저속 모드는 최대 5 kΩ.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>MSOP-16: θJA 120 °C/W. QFN-16 (3 × 3 mm): θJA 58.7 °C/W. TJMAX 150 °C. θJC는 읽은 문서에서 확인하지 못함.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN이 패키지·온도 접미사 없는 기본 번호입니다. 풋프린트(MSOP vs QFN)가 핀 번호까지 다르므로 주문 번호(LTC6820IMS, HMS, IUD, HUD 등)를 확정하세요. 핀 표는 MSOP 기준입니다.</li>
+    <li>트랜스포머는 커넥터 2 cm 이내, LTC6820은 트랜스포머에서 1 ~ 2 cm 떨어뜨립니다. 자기 부품·커넥터 아래 상면 그라운드 플레인을 두지 않습니다.</li>
+    <li>케이블 지연을 고려해 tCLK, t6, t7 ≥ 0.9 µs + 2 × tCABLE.</li>
+    <li>마스터측은 SLOW를 GND로 둡니다(효과 없음).</li>
+  </ul>
+</article>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NCD57000 · Isolated high-current IGBT gate driver with DESAT</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="NCD57000" data-mfr="onsemi" data-cat="게이트 드라이버" data-price="" data-status="stub" data-src="https://www.farnell.com/datasheets/2815756.pdf">
+  <h1>NCD57000</h1>
+  <p class="meta">onsemi · 게이트 드라이버 · 5 kVrms 절연 단일 채널 IGBT/MOSFET 게이트 드라이버 (DESAT, 액티브 밀러 클램프, OUTH/OUTL 분리)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/2815756.pdf" target="_blank" rel="noopener">NCV57000 데이터시트 PDF (자동차 등급 동일 계열)</a> · <a href="https://www.onsemi.com/products/power-management/gate-drivers/ncd57000" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://www.mouser.sg/onsemi-ncd57000-ncd57001-igbt-drivers" target="_blank" rel="noopener">Mouser 소개</a> · <a href="https://octopart.com/search?q=NCD57000DWR2G" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 NCV57000/D Rev. 0, 2019-03</p>
+  <p class="todo">NCD57000/D 원문 PDF는 열람이 막혀(Mouser robots 차단, LCSC 승인 시간 초과) 자동차 등급 쌍둥이 NCV57000/D의 수치로 작성. 주요 사양(7.8/7.1 A, 60/66 ns, 5 kVrms, 1200 V VIORM, −40…125 °C, SOIC-16 WB)은 NCD57000 유통사 페이지(LCSC, chipdip)와 일치. 표 수치는 NCD57000/D로 최종 확인 필요.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>단일 채널 절연 게이트 드라이버, DESAT 보호(소프트 턴오프), 액티브 밀러 클램프, UVLO, /FLT·RDY 출력</dd>
+    <dt>출력 전류</dt><dd>피크 소스 7.8 A / 싱크 7.1 A (typ), 밀러 평탄 전압에서 +4 / −6 A</dd>
+    <dt>전원</dt><dd>입력측 VDD1 3.3–5 V (UVLO1…5.5 V), 출력측 VDD2 UVLO2…24 V, VEE2 −10…0 V</dd>
+    <dt>UVLO2</dt><dd>ON 13.2 / 13.5 / 13.8 V, OFF 12.2 / 12.5 / 12.8 V (min/typ/max)</dd>
+    <dt>전파 지연</dt><dd>tPD-ON 60 ns, tPD-OFF 66 ns typ (40–90 ns)</dd>
+    <dt>DESAT</dt><dd>임계 9 V typ (8.5–9.5 V), 블랭킹 충전 전류 0.5 mA typ</dd>
+    <dt>CMTI</dt><dd>최소 100 kV/µs</dd>
+    <dt>절연</dt><dd>5 kVrms (UL1577), 작동 전압 1200 V (VDE0884-11), 연면거리 8 mm</dd>
+    <dt>온도</dt><dd>TA −40 … 125 °C</dd>
+    <dt>패키지</dt><dd>SOIC-16 와이드 바디 (주문 NCD57000DWR2G, 1000개/릴)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <p>NCV57000/D 기준.</p>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDD1−GND1</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>VDD2−GND2</td><td>−0.3</td><td>25</td><td>V</td><td></td></tr>
+      <tr><td>VEE2−GND2</td><td>−10</td><td>0.3</td><td>V</td><td></td></tr>
+      <tr><td>VDD2−VEE2</td><td>0</td><td>25</td><td>V</td><td></td></tr>
+      <tr><td>OUTH / OUTL</td><td>VEE2−0.3</td><td>VDD2+0.3</td><td>V</td><td></td></tr>
+      <tr><td>피크 소스 / 싱크 전류</td><td></td><td>7.8 / 7.1</td><td>A</td><td>10 µs, 0.2 % 듀티</td></tr>
+      <tr><td>클램프 싱크 전류</td><td></td><td>2.5</td><td>A</td><td>10 µs 펄스, VCLAMP=2.5 V</td></tr>
+      <tr><td>IN+, IN−, /RST, /FLT, RDY</td><td>−0.3</td><td>VDD1+0.3</td><td>V</td><td></td></tr>
+      <tr><td>/FLT, RDY 출력 전류</td><td></td><td>10</td><td>mA</td><td></td></tr>
+      <tr><td>DESAT−GND2</td><td>−9</td><td>VDD2+0.3</td><td>V</td><td></td></tr>
+      <tr><td>CLAMP−GND2</td><td>VEE2−0.3</td><td>VDD2+0.3</td><td>V</td><td></td></tr>
+      <tr><td>전력 소모 PD</td><td></td><td>1400</td><td>mW</td><td>추정치</td></tr>
+      <tr><td>VISO (입출력 간)</td><td>−1200</td><td>1200</td><td>V</td><td></td></tr>
+      <tr><td>TJ</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>TSTG</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM / CDM</td><td></td><td>±2 / ±2</td><td>kV</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VDD1−GND1</td><td>UVLO1</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>VDD2−GND2</td><td>UVLO2</td><td></td><td>24</td><td>V</td></tr>
+      <tr><td>VEE2−GND2</td><td>−10</td><td></td><td>0</td><td>V</td></tr>
+      <tr><td>VDD2−VEE2</td><td>0</td><td></td><td>24</td><td>V</td></tr>
+      <tr><td>VIH / VIL</td><td>0.7×VDD1</td><td></td><td>0.3×VDD1</td><td>V</td></tr>
+      <tr><td>TA</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOIC-16 WB (NCV57000/D 핀 표; Mouser 자료상 OUTH/OUTL 분리는 NCD57000 고유 — NCD57001은 단일 출력)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>VEE2A</td><td>출력측 음전원 — GND2로 근접 바이패스, 단전원 시 GND2에 연결</td></tr>
+      <tr><td>2</td><td>DESAT</td><td>불포화 검출 입력, 내부 0.5 mA 전류원이 블랭킹 커패시터 충전</td></tr>
+      <tr><td>3</td><td>GND2</td><td>출력측 기준 (IGBT 이미터/FET 소스)</td></tr>
+      <tr><td>4</td><td>OUTH</td><td>게이트 소스 출력</td></tr>
+      <tr><td>5</td><td>VDD2</td><td>출력측 양전원 — GND2로 근접 바이패스</td></tr>
+      <tr><td>6</td><td>OUTL</td><td>게이트 싱크 출력 (기동·고장 시 능동 로우)</td></tr>
+      <tr><td>7</td><td>CLAMP</td><td>액티브 밀러 클램프 — 게이트에 짧게 직결</td></tr>
+      <tr><td>8</td><td>VEE2</td><td>출력측 음전원</td></tr>
+      <tr><td>9</td><td>GND1A</td><td>입력측 접지</td></tr>
+      <tr><td>10</td><td>IN+</td><td>비반전 입력 (50 kΩ 풀다운)</td></tr>
+      <tr><td>11</td><td>IN−</td><td>반전 입력 (50 kΩ 풀업)</td></tr>
+      <tr><td>12</td><td>RDY</td><td>전원 정상 출력 (50 kΩ 풀업, 와이어드 OR 가능)</td></tr>
+      <tr><td>13</td><td>/FLT</td><td>DESAT 고장 출력, 액티브 로우 (50 kΩ 풀업)</td></tr>
+      <tr><td>14</td><td>/RST</td><td>고장 래치 리셋, 액티브 로우 (50 kΩ 풀업)</td></tr>
+      <tr><td>15</td><td>VDD1</td><td>입력측 전원 3.3–5 V</td></tr>
+      <tr><td>16</td><td>GND1</td><td>입력측 접지</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD2·VEE2→GND2 고품질 바이패스를 핀 가까이(데이터시트는 값 미지정).</li>
+    <li>DESAT 블랭킹 시간 ≈ C_BLANK × V_DESAT-THR / I_CHG (9 V, 0.5 mA typ) — 예: 100 pF → 약 1.8 µs.</li>
+    <li>평가보드(SECO-NCD57000-GEVB) 예: 게이트 저항 RGH/RGL 4.7 Ω, DESAT 직렬 저항 1 kΩ + 고압 다이오드 BYG23T-M3, 전원 디커플링 1 µF/50 V + 100 nF/50 V, 시험 부하 4.7 nF.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOIC-16 WB (CASE 751G-03). RθJA 150 °C/W (100 mm² 1 oz Cu, 1층) / 84 °C/W (650 mm², 2층+내층 2). TJ max 150 °C. MSL 2 (NCV57000/D).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>NCD57000은 산업용(AEC-Q100 "설계 목표"). 인버터 ECU 양산에는 AEC-Q100 인증품 <b>NCV57000DWR2G</b>(동일 핀아웃) 사용 권장.</li>
+    <li>CLAMP 핀은 게이트까지 최단 배선, 밀러 클램프 임계 VEE2+2 V typ.</li>
+    <li>SiC MOSFET 구동 시 UVLO2 13.5 V typ — VDD2 15–20 V 바이어스 확인.</li>
+    <li>단일 출력 버전: NCD57001 / NCV57001.</li>
+  </ul>
+</article>
+</body>
+</html>

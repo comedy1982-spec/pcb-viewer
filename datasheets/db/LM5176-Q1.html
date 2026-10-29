@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LM5176-Q1 · 55-V Synchronous 4-Switch Buck-Boost Controller</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="LM5176-Q1" data-mfr="TI" data-cat="전원" data-price="" data-status="done" data-src="https://www.ti.com/document-viewer/LM5176-Q1/datasheet/GUID-6EA04595-BD6D-407E-8902-5D6A29C60B7E">
+  <h1>LM5176-Q1</h1>
+  <p class="meta">TI · 전원 · 55-V wide-VIN 동기 4-스위치 벅부스트 컨트롤러 (외부 FET)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/LM5176-Q1/datasheet/GUID-6EA04595-BD6D-407E-8902-5D6A29C60B7E" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://ti.com/product/de-de/LM5176-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=LM5176-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SNVSB46B (2018-09, rev. 2021-08)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>단일 인덕터 4-스위치 동기 벅부스트 컨트롤러, 고정 주파수 밸리(벅)/피크(부스트) 전류 모드 + 슬로프 보상. 2 A급 게이트 드라이버 내장</dd>
+    <dt>입력 전압</dt><dd>4.2 V ~ 55 V (BIAS 사용 시 파워 스테이지 2.5 V부터), 절대 최대 60 V — 크랭킹 중 출력 유지 용도</dd>
+    <dt>출력 전압</dt><dd>0.8 V ~ 55 V, VREF 0.800 V (0.788–0.812 V)</dd>
+    <dt>스위칭 주파수</dt><dd>100 ~ 600 kHz (RT 설정, 40 kΩ → 200 kHz typ, 20 kΩ → 390 kHz typ), 외부 SYNC 및 주파수 디더링 옵션</dd>
+    <dt>보호</dt><dd>사이클별 전류 제한 (+선택적 hiccup), 입력/출력 평균 전류 제한 옵션, 출력 단락 보호, 출력 OVP(+10 %), PGOOD, 프로그래머블 UVLO·소프트스타트, 열차단 165 °C</dd>
+    <dt>대기 전류</dt><dd>셧다운 2.6 µA typ (10 µA max), 동작 2 mA typ</dd>
+    <dt>등급</dt><dd>AEC-Q100, 온도 등급 1 (TA −40 ~ 125 °C), 기능안전 대응 자료 제공</dd>
+    <dt>패키지</dt><dd>HTSSOP-28 (PWP) PowerPAD — LM5176QPWPRQ1 / LM5176QPWPTQ1</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VIN, EN/UVLO, VISNS, VOSNS, ISNS(+), ISNS(−)</td><td>−0.3</td><td>60</td><td>V</td><td></td></tr>
+    <tr><td>BIAS</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>FB, SS, DITH, RT/SYNC, SLOPE, COMP</td><td>−0.3</td><td>3.6</td><td>V</td><td></td></tr>
+    <tr><td>SW1, SW2</td><td>−1</td><td>60</td><td>V</td><td>20 ns 과도: −5.0 ~ 65 V</td></tr>
+    <tr><td>VCC, MODE, PGOOD, LDRV1, LDRV2</td><td>−0.3</td><td>8.5</td><td>V</td><td></td></tr>
+    <tr><td>BOOT1/HDRV1 (SW1 기준), BOOT2/HDRV2 (SW2 기준)</td><td>−0.3</td><td>8.5</td><td>V</td><td></td></tr>
+    <tr><td>BOOT1, BOOT2</td><td>−0.3</td><td>68</td><td>V</td><td></td></tr>
+    <tr><td>ISNS(+) − ISNS(−)</td><td>−0.3</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>CS, CSG</td><td>−0.3</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>동작 접합 온도 TJ</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도 Tstg</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM / CDM</td><td></td><td>±2000 / ±500</td><td>V</td><td>CDM 코너 핀 ±750 V</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VIN (바이어스 입력)</td><td>4.2</td><td></td><td>55</td><td>V</td></tr>
+    <tr><td>VISNS (BIAS ≥ 5 V 또는 VIN ≥ 4.5 V 시)</td><td>2.5</td><td></td><td>55</td><td>V</td></tr>
+    <tr><td>BIAS (VCC 레귤레이션 시)</td><td>8</td><td></td><td>36</td><td>V</td></tr>
+    <tr><td>VOSNS (출력)</td><td>0.8</td><td></td><td>55</td><td>V</td></tr>
+    <tr><td>EN/UVLO</td><td>0</td><td></td><td>55</td><td>V</td></tr>
+    <tr><td>ISNS(+), ISNS(−) 공통모드</td><td>0</td><td></td><td>55</td><td>V</td></tr>
+    <tr><td>TJ</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+    <tr><td>스위칭 주파수 Fsw</td><td>100</td><td></td><td>600</td><td>kHz</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>HTSSOP-28 (PWP), 노출 패드</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>EN/UVLO</td><td>인에이블/입력 UVLO (저 → 셧다운)</td></tr>
+    <tr><td>2</td><td>VIN</td><td>바이어스 전원 입력 4.2–55 V</td></tr>
+    <tr><td>3</td><td>VISNS</td><td>파워 스테이지 입력 전압 감지</td></tr>
+    <tr><td>4</td><td>MODE</td><td>CCM/DCM 및 hiccup 설정 (AGND 저항 또는 VCC)</td></tr>
+    <tr><td>5</td><td>DITH</td><td>디더 커패시터 (GND 연결 시 디더 off)</td></tr>
+    <tr><td>6</td><td>RT/SYNC</td><td>주파수 설정 저항 / 외부 동기 입력</td></tr>
+    <tr><td>7</td><td>SLOPE</td><td>슬로프 보상 커패시터 → AGND</td></tr>
+    <tr><td>8</td><td>SS</td><td>소프트스타트 커패시터 → AGND</td></tr>
+    <tr><td>9</td><td>COMP</td><td>에러앰프 출력, RC 보상망</td></tr>
+    <tr><td>10</td><td>AGND</td><td>아날로그 그라운드</td></tr>
+    <tr><td>11</td><td>FB</td><td>출력 분압 피드백</td></tr>
+    <tr><td>12</td><td>VOSNS</td><td>출력 전압 감지</td></tr>
+    <tr><td>13</td><td>ISNS(−)</td><td>평균 전류 감지 앰프 −입력</td></tr>
+    <tr><td>14</td><td>ISNS(+)</td><td>평균 전류 감지 앰프 +입력 (ISNS(−)와 단락 시 기능 off)</td></tr>
+    <tr><td>15</td><td>CSG</td><td>PWM 전류 감지 −입력 (RSENSE 하단)</td></tr>
+    <tr><td>16</td><td>CS</td><td>PWM 전류 감지 +입력</td></tr>
+    <tr><td>17</td><td>PGOOD</td><td>파워굿 오픈드레인 출력</td></tr>
+    <tr><td>18</td><td>SW2</td><td>부스트측 스위치 노드</td></tr>
+    <tr><td>19</td><td>HDRV2</td><td>부스트측 하이사이드 게이트</td></tr>
+    <tr><td>20</td><td>BOOT2</td><td>부스트측 부트스트랩 (→ SW2)</td></tr>
+    <tr><td>21</td><td>LDRV2</td><td>부스트측 로우사이드 게이트</td></tr>
+    <tr><td>22</td><td>PGND</td><td>파워 그라운드</td></tr>
+    <tr><td>23</td><td>VCC</td><td>내부 바이어스 레귤레이터 출력 (커패시터 필수)</td></tr>
+    <tr><td>24</td><td>BIAS</td><td>VCC 레귤레이터 보조 바이어스 입력 (선택)</td></tr>
+    <tr><td>25</td><td>LDRV1</td><td>벅측 로우사이드 게이트</td></tr>
+    <tr><td>26</td><td>BOOT1</td><td>벅측 부트스트랩 (→ SW1)</td></tr>
+    <tr><td>27</td><td>HDRV1</td><td>벅측 하이사이드 게이트</td></tr>
+    <tr><td>28</td><td>SW1</td><td>벅측 스위치 노드</td></tr>
+    <tr><td>EP</td><td>PowerPAD</td><td>AGND에 납땜, 서멀 비아로 GND 평면 연결</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VCC: 7.35 V typ 레귤레이터(전류 제한 ≥ 65 mA), 그라운드로 커패시터 필수. BIAS에 8–36 V 공급 시(전환 8 V typ) 고입력 손실 감소 — 출력이 8 V 이상이면 출력에서 BIAS 공급이 일반적</li>
+    <li>전류 감지: RSENSE 양단(CS–CSG) 기준 벅 밸리 제한 80 mV typ (66–94 mV), 부스트 피크 제한 120 mV typ (100–140 mV) → RSENSE는 이 임계값과 인덕터 전류로 결정</li>
+    <li>EN/UVLO 분압: 대기 문턱 0.82 V, 동작 문턱 1.22 V, 히스테리시스 전류 3.15 µA typ로 UVLO 히스테리시스 설정</li>
+    <li>소프트스타트: SS 소스 전류 5 µA typ → t<sub>SS</sub> ≈ C<sub>SS</sub>·0.8 V / 5 µA</li>
+    <li>게이트 드라이버: HDRV 소스/싱크 피크 1.8/2.2 A, 데드타임 45 ns typ, BOOT–SW UVLO 3.4 V</li>
+    <li>인덕터·출력/입력 커패시터·슬로프/보상 계산식은 데이터시트 8.2.2절 참조 (데이터시트 확인 필요)</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>HTSSOP-28 (PWP) PowerPAD. RθJA 32.6 °C/W, RθJC(top) 21.4 °C/W, RθJC(bot) 1.0 °C/W, RθJB 8.2 °C/W, ψJT 0.3 °C/W, ψJB 8.3 °C/W. TJ 최대 150 °C (125 °C 초과 시 수명 디레이팅). 열차단 165 °C, 히스테리시스 15 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>CS/CSG, ISNS± 는 켈빈 배선으로 RSENSE에 직접 연결. SW1/SW2 루프(입력·출력 커패시터-FET-RSENSE)는 최소 면적으로.</li>
+    <li>SW 노드 절대 최대 60 V (20 ns 65 V) — 55 V 입력 + 링잉 마진 고려, 12 V 차량 부하 덤프는 외부 TVS/클램프 필요.</li>
+    <li>MODE 핀으로 hiccup 설정 시 지속 과부하에서 열 스트레스 감소.</li>
+    <li>VIN 4.2 V(BIAS 사용 시 파워 스테이지 2.5 V)까지 동작하므로 콜드 크랭킹 시 5 V/12 V 레일 유지에 적합.</li>
+  </ul>
+</article>
+</body>
+</html>

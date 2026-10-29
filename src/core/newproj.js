@@ -75,13 +75,13 @@ const LIB={
       const src=p.vin==='auto'?ctx.highest(vout+1.1):p.vin;ctx.provide(out,vout,'LDO');ctx.use(src);
       ctx.part('U',mpn,'SOT-223',{1:'GND',2:out,3:src,4:out},{mpn,desc:`${vout} V LDO (입력 ${src})`,pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'VOUT'},ldo:{src,out,vout}});
       ctx.cap(src,'10µF','LDO 입력 커패시터');ctx.cap(out,'10µF','LDO 출력 커패시터');}},
-  buck:{label:'벅 컨버터 (DC-DC)',desc:'TPS54331 (3.5–28 V 입력, 3 A, 570 kHz) · 10 µH 인덕터 · SS34 캐치 다이오드 · 22 µF 출력 · 피드백 분압 · 보상',params:{vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},vout:{def:5,desc:'출력 전압 (5 · 3.3)'}},
+  buck:{label:'벅 컨버터 (DC-DC)',desc:'TPS54331 (3.5–28 V 입력, 3 A, 570 kHz) · 10 µH 인덕터 · MBRA340T3G(SMA) 캐치 다이오드 · 22 µF 출력 · 피드백 분압 · 보상',params:{vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},vout:{def:5,desc:'출력 전압 (5 · 3.3)'}},
     build(ctx,p){const vout=+p.vout;const out=railOf(vout);const src=p.vin==='auto'?ctx.highest(vout+2):p.vin;ctx.provide(out,vout,'벅');ctx.use(src);
       const fb=vout===5?['52.3kΩ','10kΩ']:vout===3.3?['31.6kΩ','10kΩ']:[String(Math.round((vout/0.8-1)*100)/10)+'kΩ','10kΩ'];
       ctx.part('U','TPS54331','SOIC-8',{1:'BUCK_BOOT',2:src,3:'BUCK_EN',4:'BUCK_SS',5:'BUCK_FB',6:'BUCK_COMP',7:'GND',8:'BUCK_SW'},{mpn:'TPS54331DR',desc:`${vout} V 벅 컨버터 (입력 ${src})`,pinNames:{1:'BOOT',2:'VIN',3:'EN',4:'SS',5:'VSENSE',6:'COMP',7:'GND',8:'PH'},buck:{src,out,vout}});
       ctx.part('C','100nF','0603',{1:'BUCK_BOOT',2:'BUCK_SW'},{desc:'부트스트랩 캡 (BOOT–PH)'});
       ctx.part('L','10µH','IND-5x5',{1:'BUCK_SW',2:out},{mpn:'SRN5040-100M',desc:'출력 인덕터 10 µH (Bourns SRN5040)',P:0.12});
-      ctx.part('D','SS34','SMA',{1:'GND',2:'BUCK_SW'},{desc:'캐치 쇼트키 3 A 40 V',pinNames:{1:'A',2:'K'},P:0.15});
+      ctx.part('D','MBRA340T3G','SMA',{1:'GND',2:'BUCK_SW'},{mpn:'MBRA340T3G',desc:'캐치 쇼트키 3 A 40 V (SMA)',pinNames:{1:'A',2:'K'},P:0.15});
       ctx.cap(src,'22µF','벅 입력 커패시터');ctx.cap(src,'100nF','벅 입력 고주파 바이패스 (VIN 핀 옆)');ctx.cap(out,'22µF','벅 출력 커패시터');ctx.cap(out,'22µF','벅 출력 커패시터');
       ctx.part('R',fb[0],'0603',{1:out,2:'BUCK_FB'},{desc:`피드백 상단 (VOUT = 0.8 V × (1 + R상/R하) ≈ ${vout} V)`});ctx.part('R',fb[1],'0603',{1:'BUCK_FB',2:'GND'},{desc:'피드백 하단'});
       ctx.part('C','10nF','0603',{1:'BUCK_SS',2:'GND'},{desc:'소프트 스타트'});
@@ -497,6 +497,8 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
   // board size from the part area
   let area=0;parts.forEach(c=>{const f=PCB.FP[c.fp];const b=f?f.lbb:[-1,-1,1,1];area+=(b[2]-b[0]+1.6)*(b[3]-b[1]+1.6);});
   let W,H;if(plan.board){W=plan.board.w;H=plan.board.h;}else{const A=Math.max(1200,area*4.2);W=Math.ceil(Math.sqrt(A*1.6)/5)*5;H=Math.ceil(A/W/5)*5;}
+  // value-only parts get an orderable default MPN so BOM, datasheet tab and HSIS can link them
+  parts.forEach(c=>{if(!(c.mpn||'').trim()){const m=defaultMpn(c);if(m)c.mpn=m;}});
   // functional-safety part policy: an ASIL plan swaps commercial parts for automotive drop-ins (same package & pinout)
   if(asil&&typeof PARTLIB!=='undefined'){let n=0;parts.forEach(c=>{const alt=PARTLIB.autoAlt(c.mpn||c.val);if(alt&&alt.mpn&&alt.dropIn){const rec=alt.rec;if(/^U|^Q|^D/.test(c.ref)&&rec&&rec.mpn!==c.val)c.val=rec.mpn;c.mpn=alt.mpn;c.desc=(c.desc||'')+` (ASIL ${asil}: ${rec&&rec.grade?rec.grade:'AEC'} 대체)`;n++;}else if(alt&&alt.hint&&/^U/.test(c.ref))warn.push(`${c.ref} ${c.val}: ${alt.hint}`);});if(n)warn.push(`ASIL ${asil} 부품 정책: 상용 부품 ${n}개를 차량용(AEC) 핀 호환 부품으로 바꿨습니다 (safety parts 로 확인)`);}
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
@@ -510,6 +512,20 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
       dissipation · bridge MOSFETs DPAK → half-bridge 5 × 6 (fetChoice)          2: also chip R/C 0603 → 0402 */
 const C0402={'100nF':['CL05B104KO5NNNC',16],'10nF':['CL05B103KB5NNNC',50],'1nF':['CL05B102KB5NNNC',50],'4.7nF':['CL05B472KB5NNNC',50],'3.3nF':['CL05B332KB5NNNC',50],'47pF':['CL05C470JB5NNNC',50],'12pF':['CL05C120JB5NNNC',50],'1µF':['CL05A105KA5NNNC',25]};
 const C0603={'10µF':['CL10A106KP8NNNC',10],'1µF':['CL10A105KB8NNNC',50],'2.2µF':['CL10A225KO8NNNC',16]};
+/* default orderable part numbers for value-only parts (chip R/C, shunts, discrete diodes named by their part number) */
+const C1210={'2.2µF':'CGA6M3X7R1H225K200AB','22µF':'GRM32ER61E226KE15'};
+const C0603D={'68nF':'CL10B683KB8NNNC','100nF':'CL10B104KB8NNNC','10nF':'CL10B103KB8NNNC','470nF':'GRM188R71C474KA88D','1µF':'CL10A105KB8NNNC','10µF':'CL10A106KP8NNNC','2.2µF':'CL10A225KO8NNNC'};
+const SHUNT={'1206':v=>v===2?'WSLP12062L000FEA':v===1?'WSLP12061L000FEA':null,'2512':v=>({1:'WSL25121L000FEA',2:'WSL25122L000FEA',5:'WSL25125L000FEA'})[v]||null};
+const yageoCode=ohm=>{const f=(x,u)=>{const t=(+x.toPrecision(3)).toString();return t.includes('.')?t.replace('.',u):t+u;};return ohm<1e3?f(ohm,'R'):ohm<1e6?f(ohm/1e3,'K'):f(ohm/1e6,'M');};
+const ohmOf=v=>{const m=String(v).replace(/\s/g,'').match(/^([\d.]+)(m|k|M)?Ω$/);if(!m)return null;return+m[1]*({m:1e-3,k:1e3,M:1e6}[m[2]]||1);};
+function defaultMpn(c){const fp=String(c.fp||'');
+  if(/^R/.test(c.ref)){const r=ohmOf(c.val);if(r==null)return null;
+    if(r===0&&/^(0402|0603|0805|1206)$/.test(fp))return`RC${fp}JR-070RL`;
+    if(r<0.1){const g=SHUNT[fp];return g?g(Math.round(r*1e3)):null;}
+    if(/^(0402|0603|0805|1206)$/.test(fp))return`RC${fp}FR-07${yageoCode(r)}L`;return null;}
+  if(/^C/.test(c.ref)){if(fp==='1210')return C1210[c.val]||null;if(fp==='0603')return C0603D[c.val]||null;if(fp==='0402')return(C0402[c.val]||[])[0]||null;return null;}
+  if(/^D/.test(c.ref)&&/^[A-Z][A-Z0-9\-]{3,}$/.test(String(c.val||'')))return c.val;
+  return null;}
 /* small LDOs with the KiCad 10 pinout (Regulator_Linear): [mpn, fp, vinMax, iMax, vout, pins{IN,GND,EN,OUT,…}, θJA °C/W, note] */
 const LDO_S=[
   ['TLV75533PDBVR','SOT-23-5',5.5,0.5,3.3,{1:'IN',2:'GND',3:'EN',4:'NC',5:'OUT'},180,'500 mA · 5.5 V 입력 (KiCad TLV75533PDBV)'],

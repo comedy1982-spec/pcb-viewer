@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPS2553DBVR · Adjustable current-limited power-distribution switch</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TPS2553DBVR" data-mfr="Texas Instruments" data-cat="스마트 스위치" data-price="0.9" data-status="done" data-src="https://www.ti.com/document-viewer/lit/html/SLVS841F/specifications">
+  <h1>TPS2553DBVR</h1>
+  <p class="meta">Texas Instruments · 스마트 스위치 · 가변 전류 제한 전원 분배 스위치 (USB 포트 전원, 액티브 하이 EN) · 참고 단가 약 $0.9 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/lit/html/SLVS841F/specifications" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://ti.com/product/zh-tw/TPS2553" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TPS2553DBVR" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLVS841F (2008-11, 개정 2016-08), 핀 표는 SLVS841C</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>N채널 하이사이드 전원 스위치, 외부 RILIM으로 정전류 제한, 역전압 보호, FAULT 플래그</dd>
+    <dt>입력 전압</dt><dd>2.5 ~ 6.5 V</dd>
+    <dt>연속 출력 전류</dt><dd>최대 1.5 A (TJ ≤ 105 °C), 1.2 A (TJ ≤ 125 °C)</dd>
+    <dt>전류 제한</dt><dd>75 mA ~ 1.7 A 설정, RILIM 15 ~ 232 kΩ (20 kΩ → 1295 mA, 49.9 kΩ → 520 mA 일반)</dd>
+    <dt>rDS(on) (DBV)</dt><dd>일반 85 mΩ, 최대 95 mΩ (25 °C), 최대 135 mΩ (-40 ~ 125 °C)</dd>
+    <dt>소비 전류</dt><dd>동작 120 µA (RILIM 20 kΩ), 차단 0.1 µA 일반 / 1 µA 최대</dd>
+    <dt>FAULT 디글리치</dt><dd>과전류 5 / 7.5 / 10 ms, 역전압 2 / 4 / 6 ms</dd>
+    <dt>ESD</dt><dd>HBM ±2 kV, CDM ±500 V, IEC 61000-4-2 접촉 ±8 kV / 기중 ±15 kV</dd>
+    <dt>온도</dt><dd>TJ -40 ~ 125 °C (상용 등급, AEC-Q100 아님)</dd>
+    <dt>패키지</dt><dd>SOT-23-6 (DBV), 마킹 2553</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>IN, OUT, EN, ILIM, FAULT 전압</td><td>-0.3</td><td>7</td><td>V</td><td></td></tr>
+      <tr><td>IN–OUT 간 전압</td><td>-7</td><td>7</td><td>V</td><td></td></tr>
+      <tr><td>연속 출력 전류</td><td colspan="3">내부 제한</td><td></td></tr>
+      <tr><td>FAULT 연속 싱크 전류</td><td>0</td><td>25</td><td>mA</td><td></td></tr>
+      <tr><td>ILIM 소스 전류</td><td>0</td><td>1</td><td>mA</td><td></td></tr>
+      <tr><td>접합 온도 TJ</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도 Tstg</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>입력 전압 VIN</td><td>2.5</td><td></td><td>6.5</td><td>V</td></tr>
+      <tr><td>EN 전압</td><td>0</td><td></td><td>6.5</td><td>V</td></tr>
+      <tr><td>VIH / VIL (EN)</td><td>1.1 (VIH)</td><td></td><td>0.66 (VIL)</td><td>V</td></tr>
+      <tr><td>연속 출력 전류 (TJ ≤ 125 °C / ≤ 105 °C)</td><td>0</td><td></td><td>1.2 / 1.5</td><td>A</td></tr>
+      <tr><td>RILIM (1%)</td><td>15</td><td></td><td>232</td><td>kΩ</td></tr>
+      <tr><td>FAULT 싱크 전류</td><td>0</td><td></td><td>10</td><td>mA</td></tr>
+      <tr><td>입력 디커플링 IN–GND</td><td>0.1</td><td></td><td></td><td>µF</td></tr>
+      <tr><td>접합 온도 TJ</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT-23-6 (DBV), 상면도</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>IN</td><td>입력 전압. 0.1 µF 이상 세라믹을 IC 가까이 IN–GND에</td></tr>
+      <tr><td>2</td><td>GND</td><td>접지</td></tr>
+      <tr><td>3</td><td>EN</td><td>액티브 하이 enable (TPS2552는 액티브 로우)</td></tr>
+      <tr><td>4</td><td>FAULT</td><td>액티브 로우 오픈드레인 플래그 (과전류·과온·역전압)</td></tr>
+      <tr><td>5</td><td>ILIM</td><td>전류 제한 설정 저항 (15 ~ 232 kΩ)을 GND로</td></tr>
+      <tr><td>6</td><td>OUT</td><td>스위치 출력</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>IN에 0.1 µF 이상 세라믹 디커플링, FAULT에는 풀업 저항(데이터시트 시험 조건 10 kΩ).</li>
+    <li>ILIM을 IN에 묶으면 전류 제한 50 ~ 100 mA(일반 75 mA)로 고정됩니다.</li>
+    <li>RILIM 계산식은 데이터시트 9.5.1절(Programming the Current-Limit Threshold) 확인 필요. 대표값: 15 kΩ → 1610~1800 mA, 210 kΩ → 110~150 mA.</li>
+    <li>UVLO 상승 임계 일반 2.35 V(최대 2.45 V), 히스테리시스 25 mV.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOT-23-6 (DBV), 노출 패드 없음. RθJA 182.6 °C/W, RθJC(top) 122.2 °C/W, RθJB 29.4 °C/W, ψJT 20.8 °C/W, ψJB 28.9 °C/W. 열차단 최소 155 °C (전류 제한 중 최소 135 °C), 히스테리시스 10 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>TPS2553은 전류 제한 시 정전류로 동작하고, TPS2553-1은 래치 오프 버전입니다. EN 극성이 반대인 TPS2552와 혼동하지 마세요.</li>
+    <li>상용 등급 부품입니다. 차량용 ECU에는 같은 계열의 TPS2553-Q1(SLVSBD0B)을 검토하세요.</li>
+    <li>SOT-23-6은 RθJA가 커서 1.5 A 연속은 TJ 105 °C 조건에서만 허용됩니다. 손실 = I² × rDS(on)로 온도를 확인하세요.</li>
+    <li>역전압 비교기(VOUT − VIN 95 ~ 190 mV)가 동작하면 3 ~ 7 ms 후 스위치를 끕니다.</li>
+  </ul>
+</article>
+</body>
+</html>

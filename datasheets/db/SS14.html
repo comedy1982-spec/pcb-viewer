@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SS14 · SS12–SS16 — 1 A surface-mount Schottky rectifier</title>
+<title>SS14 · 1 A 40 V surface-mount Schottky rectifier</title>
 <style>
 body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
@@ -13,39 +13,55 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="SS14" data-mfr="Vishay" data-cat="다이오드" data-price="0.09" data-status="stub">
+<article data-mpn="SS14" data-mfr="Vishay" data-cat="다이오드" data-price="0.09" data-status="done" data-src="https://datasheet.chipsmall.com/SS14-M3-61T/414361.pdf">
   <h1>SS14</h1>
-  <p class="meta">Vishay · 다이오드 · SS12–SS16 — 1 A surface-mount Schottky rectifier · 참고 단가 약 $0.09 (추정)</p>
-  <p class="meta">원본: <a href="https://www.vishay.com/docs/88746/ss12.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=SS14" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
+  <p class="meta">Vishay · 다이오드 · SS12–SS16 계열 1 A 표면실장 쇼트키 정류 다이오드 (SS14 = 40 V) · 참고 단가 약 $0.09 (추정)</p>
+  <p class="meta">원본: <a href="https://www.vishay.com/docs/88746/ss12.pdf" target="_blank" rel="noopener">데이터시트 PDF (Vishay, 미확인 링크)</a> · <a href="https://datasheet.chipsmall.com/SS14-M3-61T/414361.pdf" target="_blank" rel="noopener">읽은 사본 (Doc. 88746)</a> · <a href="https://octopart.com/search?q=SS14" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Vishay 88746, Rev. 22-Jan-08</p>
 
   <h2>핵심 사양</h2>
   <dl>
-      <dt>VRRM</dt><dd>40 V (SS14)</dd>
-      <dt>IF(AV)</dt><dd>1.0 A</dd>
-      <dt>패키지</dt><dd>SMA (DO-214AC), 띠 = 캐소드</dd>
+    <dt>기능</dt><dd>쇼트키 배리어 정류 다이오드 (단일)</dd>
+    <dt>VRRM / VDC</dt><dd>40 V / 40 V (VRMS 28 V)</dd>
+    <dt>IF(AV)</dt><dd>1.0 A (리드 온도 기준, Fig. 1 디레이팅)</dd>
+    <dt>IFSM</dt><dd>40 A (8.3 ms 반정현파)</dd>
+    <dt>VF</dt><dd>0.50 V 최대 @ 1.0 A, 25 °C (펄스 300 µs, 듀티 1 %)</dd>
+    <dt>IR</dt><dd>0.2 mA @ 정격 VDC, 25 °C (100 °C 값은 데이터시트 확인 필요)</dd>
+    <dt>dV/dt</dt><dd>10 000 V/µs</dd>
+    <dt>등급</dt><dd>E3 = 일반 등급, HE3 = 고신뢰 등급 (AEC-Q101 인증)</dd>
+    <dt>온도</dt><dd>TJ −65 ~ 125 °C (SS12–SS14), Tstg −65 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>DO-214AC (SMA), 색 띠 = 캐소드, 마킹 S4</dd>
   </dl>
 
   <h2>절대 최대 정격</h2>
   <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
-
-  <h2>권장 동작 조건</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
+    <tbody>
+      <tr><td>VRRM 반복 역전압</td><td></td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>VRMS</td><td></td><td>28</td><td>V</td><td></td></tr>
+      <tr><td>VDC 직류 역전압</td><td></td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>IF(AV)</td><td></td><td>1.0</td><td>A</td><td>리드 온도 기준</td></tr>
+      <tr><td>IFSM</td><td></td><td>40</td><td>A</td><td>8.3 ms 반정현파</td></tr>
+      <tr><td>dV/dt</td><td></td><td>10 000</td><td>V/µs</td><td></td></tr>
+      <tr><td>TJ</td><td>−65</td><td>125</td><td>°C</td><td>SS12–SS14 (SS15/16은 150 °C)</td></tr>
+      <tr><td>Tstg</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
 
   <h2>핀 배치</h2>
+  <p>DO-214AC (SMA), 2단자. 데이터시트는 핀 번호를 정하지 않음 — 아래 번호는 KiCad 다이오드 관례(1 = 캐소드).</p>
   <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
-
-  <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
+    <tbody>
+      <tr><td>1</td><td>K</td><td>캐소드 (색 띠 쪽)</td></tr>
+      <tr><td>2</td><td>A</td><td>애노드</td></tr>
+    </tbody></table>
 
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
+  <p>DO-214AC: 길이 4.93–5.28 mm, 높이 1.25–1.65 mm, 무게 0.064 g. 권장 패드: 패드 1.68–1.88 mm, 패드 간 최소 1.52 mm, 전체 5.28 mm 기준. RθJA 88 °C/W, RθJL 28 °C/W (5.0 × 5.0 mm 동박 패드 실장). 포장: -E3/61T 7" 릴 1 800개, -E3/5AT 13" 릴 7 500개.</p>
 
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>TJ 최대가 125 °C로 낮고 고온 누설 전류가 크므로 엔진룸·고온 ECU에서는 열 폭주 여유를 확인. 차량용은 HE3 (또는 현행 -M3/HM3 계열) 품번으로 주문.</li>
+    <li>"SS14"는 접미사 없는 일반 품번이라 주문 시 SS14-E3/61T, SS14HE3/61T 등 정확한 품번 필요. 읽은 문서는 2008년판이며 Vishay 현행 개정판에서는 접미사가 -M3 계열로 바뀌었을 수 있음 (데이터시트 확인 필요).</li>
+    <li>1 A 연속 정격은 리드 온도 기준 — 실제 PCB 동박 면적에 따라 디레이팅 (Fig. 1).</li>
+  </ul>
 </article>
 </body>
 </html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MP1584EN · 3 A 1.5 MHz 28 V step-down converter</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MP1584EN" data-mfr="MPS" data-cat="전원" data-price="0.5" data-status="done" data-src="https://www.monolithicpower.com/pub/media/document/MP1584_r1.1.pdf">
+  <h1>MP1584EN</h1>
+  <p class="meta">MPS · 전원 · 3 A, 1.5 MHz, 28 V step-down (buck) converter, SOIC-8E · 참고 단가 약 $0.5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.monolithicpower.com/pub/media/document/MP1584_r1.1.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=MP1584EN" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 MP1584 Rev. 1.0, 2011-08-08 (파일명 r1.1) · <b>NOT RECOMMENDED FOR NEW DESIGNS</b></p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>비동기 벅 컨버터 (하이사이드 MOSFET 내장, 외부 쇼트키 필요), 전류 모드, 외부 보상</dd>
+    <dt>입력</dt><dd>4.5 ~ 28 V</dd>
+    <dt>출력</dt><dd>0.8 ~ 25 V, 3 A</dd>
+    <dt>스위칭</dt><dd>100 kHz ~ 1.5 MHz (FREQ 저항으로 설정)</dd>
+    <dt>RDS(on)</dt><dd>하이사이드 150 mΩ</dd>
+    <dt>VFB</dt><dd>0.8 V typ (0.776 ~ 0.824 V)</dd>
+    <dt>전류</dt><dd>대기 100 µA typ (125 µA max), 셧다운 12 µA typ (20 µA max)</dd>
+    <dt>전류 제한</dt><dd>4.0 ~ 4.7 A (사이클 단위)</dd>
+    <dt>소프트스타트</dt><dd>1.5 ms 내부</dd>
+    <dt>온도</dt><dd>주위 −20 ~ +85 °C (주문 정보), TJ −20 ~ +125 °C — 상용 등급, AEC-Q100 아님</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VIN</td><td>−0.3</td><td>30</td><td>V</td><td></td></tr>
+    <tr><td>VSW</td><td>−0.3</td><td>VIN + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>BST − SW</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>기타 핀</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>연속 소비 전력</td><td></td><td>2.5</td><td>W</td><td>TA = 25 °C</td></tr>
+    <tr><td>접합 온도</td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>리드 온도</td><td></td><td>260</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VIN</td><td>4.5</td><td>12</td><td>28</td><td>V</td></tr>
+    <tr><td>VOUT</td><td>0.8</td><td></td><td>25</td><td>V</td></tr>
+    <tr><td>동작 접합 온도 TJ</td><td>−20</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SOIC-8E (노출 패드 = GND)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>SW</td><td>스위치 노드. 저 VF 쇼트키를 SW 가까이 GND로</td></tr>
+    <tr><td>2</td><td>EN</td><td>인에이블. 플로팅 시 내부 1 µA로 약 3.0 V 풀업 → 동작</td></tr>
+    <tr><td>3</td><td>COMP</td><td>에러 앰프 출력, 보상 회로 연결</td></tr>
+    <tr><td>4</td><td>FB</td><td>피드백 (0.8 V 기준), VOUT 분압</td></tr>
+    <tr><td>5</td><td>GND</td><td>GND (노출 패드와 함께 GND 플레인)</td></tr>
+    <tr><td>6</td><td>FREQ</td><td>스위칭 주파수 설정 저항 → GND</td></tr>
+    <tr><td>7</td><td>VIN</td><td>입력 전원, 가까이 디커플링</td></tr>
+    <tr><td>8</td><td>BST</td><td>부트스트랩 커패시터 BST–SW</td></tr>
+    <tr><td>EP</td><td>GND</td><td>노출 패드</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>출력 분압: VOUT = 0.8 V × (R1 + R2) / R2, R2 &lt; 40 kΩ 권장 (일반 R2 = 40.2 kΩ). 3.3 V 예: R1 127 kΩ / R2 40.2 kΩ.</li>
+    <li>주파수: RFREQ(kΩ) = 180000 / fS(kHz)<sup>1.1</sup>. 예: 100 kΩ → 약 900 kHz.</li>
+    <li>인덕터: 리플 ≈ 최소 전류 제한의 30 %. L = VOUT / (fS·ΔIL) × (1 − VOUT/VIN). 예시 10 µH (Würth 744066100, TDK SLF10145T-100 등).</li>
+    <li>보상 (Table 3): 1.8 V — 4.7 µH, 47 µF, R3 105 kΩ, C3 100 pF · 2.5 V — 4.7–6.8 µH, 22 µF, 54.9 kΩ, 220 pF · 3.3 V — 6.8–10 µH, 22 µF, 68.1 kΩ, 220 pF · 5 V — 15–22 µH, 22 µF, 100 kΩ, 150 pF · 12 V — 22–33 µH, 22 µF, 147 kΩ, 150 pF. 크로스오버 ≈ fSW/10 목표.</li>
+    <li>입력 C1: 저 ESR 세라믹 (시험 10 µF), RMS 전류 정격 &gt; 최대 부하의 1/2. 전해/탄탈이면 0.1 µF 세라믹 추가.</li>
+    <li>부트스트랩: BST–SW 100 nF. VIN ≤ 5 V, 5 V 레일 존재, VOUT/VIN &gt; 65 % 중 하나면 외부 부트 다이오드(IN4148/BAT54) 권장. 경부하에서 VIN − VOUT &gt; 3 V 유지.</li>
+    <li>캐치 다이오드: 쇼트키, 역전압 &gt; VIN max, 전류 &gt; 부하 max (예: B340A-13-F, CMSH3-40MA — 40 V 3 A).</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SOIC-8E (노출 패드, GND 연결). θJA 50 °C/W, θJC 10 °C/W (JESD51-7 4층 기판). TJ max 150 °C, 열 차단 150 °C (히스테리시스 15 °C).</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li><b>NRND:</b> 데이터시트에 "Not Recommended for New Designs" 표기, 후속으로 MP2338 안내. 신규 설계는 대체품 검토.</li>
+    <li>UVLO 상승 3.0 V typ (2.7–3.3 V), 히스테리시스 0.35 V. EN 상승 1.5 V typ (1.35–1.65 V), 히스테리시스 300 mV.</li>
+    <li>최소 on/off 시간 각 100 ns — 고 VIN·저 VOUT·고 fSW 조합에서 듀티 한계 확인.</li>
+    <li>상용 온도(−20 ~ +85 °C) — 차량 ECU 양산용 아님.</li>
+  </ul>
+</article>
+</body>
+</html>

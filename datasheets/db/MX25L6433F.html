@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MX25L6433F · 3 V 64 Mbit serial multi-I/O NOR flash</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MX25L6433F" data-mfr="Macronix" data-cat="메모리" data-price="0.85" data-status="stub" data-src="https://pdf.elecfans.com/MCNIX/MX25L6433FM2I-08Q.html">
+  <h1>MX25L6433F</h1>
+  <p class="meta">Macronix · 메모리 · 3 V 64 Mbit SPI / Dual / Quad NOR flash (MXSMIO) · 참고 단가 약 $0.85 (추정)</p>
+  <p class="meta">원본: <a href="https://pdf.elecfans.com/MCNIX/MX25L6433FM2I-08Q.html" target="_blank" rel="noopener">J/K 등급 데이터시트 (사본)</a> · <a href="https://dtsheet.com/doc/1273226/mx25l6433f" target="_blank" rel="noopener">I 등급 데이터시트 (일부)</a> · <a href="https://www.futureelectronics.com/p/memory--flash--norflash/mx25l6433fmi-08gtr-macronix-7080086" target="_blank" rel="noopener">Future Electronics</a> · <a href="https://octopart.com/search?q=MX25L6433F" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 PM2399 Rev. 1.1 (2019-07-30, J/K grade) / PM2130 Rev. 1.3 (2015-03-17)</p>
+  <p class="todo">절대 최대 정격 표, 정전 용량, 프로그램/소거 시간(tPP·tSE·tBE·tCE) 값은 읽은 텍스트에서 확인하지 못함 — Macronix 원본 PDF 확인 필요. 2차 시도: dtsheet.com 사본(PM2130 Rev. 1.3, 2015-03-17)도 텍스트가 SFDP 표 11에서 끊겨 12장 전기 사양 미도달, eeworld는 봇 차단. 데이터시트 1장 기준 VCC 2.65 – 3.6 V는 확인.</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>용량</dt><dd>64 Mbit (8,388,608 × 8), 256 B 페이지, 4 KB 섹터 × 2048, 32 KB 블록 × 256, 64 KB 블록 × 128</dd>
+    <dt>VCC</dt><dd>2.65 ~ 3.6 V (읽기·소거·프로그램)</dd>
+    <dt>클록</dt><dd>일반 READ 50 MHz, FAST READ 133 MHz (105 °C) / 120 MHz (125 °C), 2READ/4READ 80 ~ 133 MHz (더미 사이클 설정에 따라)</dd>
+    <dt>인터페이스</dt><dd>SPI 모드 0/3, 단일·듀얼·쿼드 I/O, 8 Kbit 보안 OTP</dd>
+    <dt>내구성</dt><dd>100,000 회 소거/프로그램, 데이터 보존 20년</dd>
+    <dt>전류 (J/K)</dt><dd>대기 ISB1 10 µA typ, 딥 파워다운 3 µA typ, 읽기 ICC1 (50 MHz) 10 mA typ, 프로그램/소거 10 mA typ / 15 mA max</dd>
+    <dt>온도 등급</dt><dd>I: −40 ~ +85 °C (Future 표기) · J: −40 ~ +105 °C · K: −40 ~ +125 °C</dd>
+    <dt>패키지</dt><dd>M = 16-SOP 300 mil · M2 = 8-SOP 200 mil · ZN = 8-WSON 6×5 mm · Z2 = 8-WSON 8×6 mm (그 외 TFBGA-24, WLCSP)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>저장 온도</td><td>−65</td><td>150</td><td>°C</td><td>Future Electronics 표기</td></tr>
+    <tr><td>VCC·I/O 전압</td><td></td><td></td><td>V</td><td>데이터시트 확인 필요</td></tr>
+    <tr><td>래치업</td><td></td><td>100</td><td>mA</td><td>−1 V ~ VCC + 1 V</td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>2.65</td><td>3.0</td><td>3.6</td><td>V</td></tr>
+    <tr><td>VIL</td><td></td><td></td><td>0.8</td><td>V</td></tr>
+    <tr><td>VIH</td><td>0.7 VCC</td><td></td><td></td><td>V</td></tr>
+    <tr><td>동작 온도 (I 등급)</td><td>−40</td><td></td><td>85</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>8-SOP 200 mil (M2) / 8-WSON (ZN, Z2) 공통</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>CS#</td><td>칩 선택 (액티브 로우)</td></tr>
+    <tr><td>2</td><td>SO/SIO1</td><td>직렬 데이터 출력 / I/O1</td></tr>
+    <tr><td>3</td><td>WP#/SIO2</td><td>쓰기 보호 (액티브 로우) / I/O2 (쿼드)</td></tr>
+    <tr><td>4</td><td>GND</td><td>GND</td></tr>
+    <tr><td>5</td><td>SI/SIO0</td><td>직렬 데이터 입력 / I/O0</td></tr>
+    <tr><td>6</td><td>SCLK</td><td>클록 입력</td></tr>
+    <tr><td>7</td><td>HOLD#/SIO3</td><td>홀드 / I/O3 (쿼드)</td></tr>
+    <tr><td>8</td><td>VCC</td><td>전원 (+3.0 V 공칭)</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>WP#/SIO2, HOLD#/SIO3: 핀이 외부에 연결되지 않았을 때만 내부 풀업 활성 — 연결 시 내부 풀업이 꺼지므로 단일 SPI로 쓸 때 외부 풀업 저항 권장.</li>
+    <li>VCC 디커플링 값은 읽은 문서에 없음 — 데이터시트 확인 필요 (일반적으로 VCC 핀 근처 세라믹 배치).</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>8-SOP 200 mil, 16-SOP 300 mil, 8-WSON 6×5 / 8×6 mm. WSON 노출 패드 처리·열저항은 데이터시트 확인 필요.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN에 패키지·등급 접미사가 없음 — 주문 시 예: MX25L6433FM2I-08G (8-SOP, I 등급), MX25L6433FM2J-08G (105 °C), K 등급은 125 °C 고온용. 속도 코드 08 = 133 MHz, 09 = 120 MHz; G/Q = RoHS·할로겐 프리.</li>
+    <li>참고 가격: Future Electronics MX25L6433FMI-08GTR (16-SOP) 1,000개 $1.95.</li>
+    <li>쓰기·소거 중단(suspend) 지연 20 µs, 바이트 프로그램 tBP max 100 µs (J/K 문서).</li>
+  </ul>
+</article>
+</body>
+</html>

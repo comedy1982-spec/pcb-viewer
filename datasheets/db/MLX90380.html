@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MLX90380 · Triaxis resolver, ratiometric analog SIN/COS outputs</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MLX90380" data-mfr="Melexis" data-cat="센서" data-price="" data-status="done" data-src="https://static.chipdip.ru/lib/540/DOC011540145.pdf">
+  <h1>MLX90380</h1>
+  <p class="meta">Melexis · 센서 · Triaxis® Hall resolver, ratiometric analog SIN/COS outputs, SOIC-8 / TSSOP-16 dual die</p>
+  <p class="meta">원본: <a href="https://static.chipdip.ru/lib/540/DOC011540145.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://melexis.com/en/documents/documentation/datasheets/datasheet-mlx90380" target="_blank" rel="noopener">Melexis 데이터시트 페이지</a> · <a href="https://octopart.com/search?q=MLX90380" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Revision 11, 2021-06</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>무접점 Hall 레졸버: OUT1 = COS, OUT2 = SIN 아날로그 출력 (VDD 비례). <b>SENT 출력 없음</b></dd>
+    <dt>전원</dt><dd>3.3 V 옵션 3.135 ~ 3.6 V · 5 V 옵션 4.5 ~ 5.5 V</dd>
+    <dt>소비 전류</dt><dd>5 mA typ / 9 mA max (3.3 V), 6 mA typ / 10 mA max (5 V), 출력 부하 제외</dd>
+    <dt>감도</dt><dd>프로그래머블 풀스케일 10 ~ 70 mT, 출력 오프셋 50 % VDD (47.5 ~ 52.5 %)</dd>
+    <dt>속도</dt><dd>출력 갱신 4 µs typ, 초핑 1 MHz, 추종 지연 12 / 29.5 / 74 µs (고·중·저 대역)</dd>
+    <dt>각도 오차</dt><dd>보정 없이 약 ±10° (25 °C) / ±15° (전 온도) — 원문 표 판독 불확실, 동적 보정 시 ±1°</dd>
+    <dt>온도</dt><dd>−40 ~ +150 °C</dd>
+    <dt>패키지</dt><dd>SOIC-8 (LDC, 단일) · TSSOP-16 (LGO, 이중 리던던트)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VDD5V</td><td>−16</td><td>24</td><td>V</td><td>5 V 전원 핀</td></tr>
+    <tr><td>VDD3V3</td><td>−0.3</td><td>7</td><td>V</td><td>3.3 V 전원 핀</td></tr>
+    <tr><td>전원 전류</td><td>−10</td><td>10</td><td>mA</td><td>출력 부하 제외</td></tr>
+    <tr><td>출력 전압</td><td>−0.3</td><td>18 (5 V) / 17 (3.3 V)</td><td>V</td><td></td></tr>
+    <tr><td>출력 전류</td><td>−20</td><td>20</td><td>mA</td><td></td></tr>
+    <tr><td>접합 온도</td><td></td><td>165</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도</td><td>−55</td><td>165</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>2</td><td>kV</td><td>SOIC-8 (TSSOP-16 다이 간 1.5 kV)</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>500</td><td>V</td><td></td></tr>
+    <tr><td>자속 밀도</td><td>−1</td><td>1</td><td>T</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VDD (3.3 V 옵션)</td><td>3.135</td><td>3.3</td><td>3.6</td><td>V</td></tr>
+    <tr><td>VDD (5 V 옵션)</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>동작 온도</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+    <tr><td>출력 부하 저항 (GND로)</td><td>10 (3.3 V) / 5 (5 V)</td><td></td><td></td><td>kΩ</td></tr>
+    <tr><td>출력 부하 용량</td><td>1.5</td><td></td><td>10</td><td>nF</td></tr>
+    <tr><td>풀스케일 자장</td><td>10</td><td></td><td>70</td><td>mT</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SOIC-8 (MLX90380LDC-…)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>VSS</td><td>GND</td></tr>
+    <tr><td>2</td><td>NC</td><td>미사용</td></tr>
+    <tr><td>3</td><td>TEST</td><td>테스트 (GND 연결)</td></tr>
+    <tr><td>4</td><td>NC</td><td>미사용</td></tr>
+    <tr><td>5</td><td>OUT2</td><td>아날로그 출력 SIN</td></tr>
+    <tr><td>6</td><td>VDD5V</td><td>5 V 전원</td></tr>
+    <tr><td>7</td><td>VDD3V3</td><td>3.3 V 전원 (5 V 모드에서는 플로팅)</td></tr>
+    <tr><td>8</td><td>OUT1</td><td>아날로그 출력 COS</td></tr>
+  </tbody></table>
+  <p>TSSOP-16 (LGO, 이중): 1 VSS_A · 2 NC · 3 NC · 4 TEST_A · 5 OUT2_B · 6 VDD5V_B · 7 VDD3V3_B · 8 OUT1_B · 9 VSS_B · 10 NC · 11 TEST_B · 12 NC · 13 OUT2_A · 14 VDD5V_A · 15 VDD3V3_A · 16 OUT1_A.</p>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>SOIC-8: 전원 디커플링 C1 100 nF, 출력 C2·C3 각 2.2 nF → GND.</li>
+    <li>TSSOP-16: 다이별 전원 100 nF (C1, C4), 출력 2.2 nF × 4 (C2, C3, C5, C6).</li>
+    <li>TEST 및 미사용 핀은 GND 연결 (EMC). 5 V 모드는 VDD3V3 플로팅.</li>
+    <li>출력은 MCU ADC 두 채널로 읽고 atan2(SIN, COS)로 각도 계산 — 오프셋 50 % VDD 기준.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SOIC-8, TSSOP-16. TJ max 165 °C. 열저항은 읽은 텍스트에 없음.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li><b>부품 DB 설명 정정:</b> "각도 센서 · SENT"로 되어 있으나 MLX90380은 아날로그 SIN/COS 출력 레졸버 — SENT 출력 없음. SENT가 필요하면 MLX90372 등 디지털 출력 Triaxis 제품.</li>
+    <li>AEC-Q100은 ESD 시험 방법으로만 인용됨, ISO 26262 언급 없음 (읽은 문서 기준).</li>
+    <li>주문 코드: MLX90380LDC-BAx-xxx-RE (SOIC-8), MLX90380LGO-BAx-xxx-RE (TSSOP-16) — 옵션 코드는 자석 종류·감도·자장 축·전원/대역폭.</li>
+  </ul>
+</article>
+</body>
+</html>

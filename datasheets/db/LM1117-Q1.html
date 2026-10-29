@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LM1117-Q1 · 18 V 1 A Automotive Fixed-Output LDO</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="LM1117-Q1" data-mfr="Texas Instruments" data-cat="전원" data-price="0.62" data-status="done" data-src="https://edgeworker.ti.com/lit/gpn/lm1117-q1" data-alias="LM111733QDCYRQ1 LM111750QDCYRQ1 LM1117*QDCYRQ1 LM1117*QKVURQ1">
+  <h1>LM1117-Q1</h1>
+  <p class="meta">Texas Instruments · 전원 · 18 V, 1 A 차량용 고정 출력 LDO (3.3 V / 5.0 V 버전 공통 페이지) · 참고 단가 약 $0.62 (추정)</p>
+  <p class="meta">원본: <a href="https://edgeworker.ti.com/lit/gpn/lm1117-q1" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/LM1117-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=LM1117-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SBVS468B (2024년 12월 – 2026년 4월)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>고정 출력 CMOS 선형 레귤레이터 (LDO), 최대 1 A. 소프트스타트 500 µs (typ), 폴드백 전류 제한, 과열 보호, UVLO, 출력 풀다운</dd>
+    <dt>입력 전압</dt><dd>2.5 V ~ 18 V 동작 (절대 최대 20 V)</dd>
+    <dt>출력 전압</dt><dd>고정 1.2 V / 3.3 V / 5.0 V / 12 V (0.8 ~ 13.0 V, 100 mV 단위는 요청 시)</dd>
+    <dt>정밀도</dt><dd>±1 % (TJ = 25 °C), ±1.75 % (전 온도, VIN ≥ 3.0 V, 1 mA ~ 1 A)</dd>
+    <dt>드롭아웃</dt><dd>0.9 V typ / 1.7 V max @ 1 A (VIN ≥ 3.0 V)</dd>
+    <dt>IQ</dt><dd>65 µA typ / 110 µA max (IOUT = 0)</dd>
+    <dt>PSRR · 잡음</dt><dd>60 dB @ 1 kHz, 40 dB @ 1 MHz (특장점 표기); 70 dB @ 120 Hz (EC 조건); 60 µVRMS (10 Hz ~ 100 kHz)</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1: TA −40 ~ +125 °C, TJ −40 ~ +150 °C</dd>
+    <dt>패키지</dt><dd>SOT-223 4핀 (DCY), TO-252 3핀 (KVU)</dd>
+    <dt>주문 코드</dt><dd>3.3 V: <b>LM111733QDCYRQ1</b> (SOT-223, 마킹 111733) / LM111733QKVURQ1 (TO-252)<br>5.0 V: <b>LM111750QDCYRQ1</b> (SOT-223, 마킹 111750) / LM111750QKVURQ1 (TO-252)<br>그 외 1.2 V: LM111712Q…, 12 V: LM111712V0Q… · 모두 Active, 2500개 릴</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VIN</td><td>−0.3</td><td>20</td><td>V</td><td>GND 기준</td></tr>
+    <tr><td>VOUT</td><td>−0.3</td><td>VIN + 0.3 또는 20 중 작은 값</td><td>V</td><td></td></tr>
+    <tr><td>출력 전류</td><td></td><td>내부 제한</td><td></td><td></td></tr>
+    <tr><td>TJ (동작)</td><td>−50</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>±3000</td><td>V</td><td>AEC Q100-002</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>±1000</td><td>V</td><td>AEC Q100-011, 전 핀</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VIN</td><td>2.5</td><td></td><td>18</td><td>V</td></tr>
+    <tr><td>IOUT (2.5 V ≤ VIN &lt; 3 V)</td><td>0</td><td></td><td>0.8</td><td>A</td></tr>
+    <tr><td>IOUT (VIN ≥ 3 V)</td><td>0</td><td></td><td>1</td><td>A</td></tr>
+    <tr><td>COUT</td><td>1</td><td>2.2</td><td>220</td><td>µF</td></tr>
+    <tr><td>COUT ESR</td><td>2</td><td></td><td>500</td><td>mΩ</td></tr>
+    <tr><td>TJ</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT-223 (DCY, 4핀 = 3 리드 + 탭). TO-252 (KVU)도 동일 번호.</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>GND</td><td>접지 (ADJ 아님 — 가변형 없음)</td></tr>
+    <tr><td>2</td><td>OUT</td><td>출력. COUT을 OUT–GND 가까이</td></tr>
+    <tr><td>3</td><td>IN</td><td>입력. CIN을 IN–GND 가까이</td></tr>
+    <tr><td>탭</td><td>OUT</td><td>핀 2와 동일 (출력). KiCad SOT-223-3_TabPin2</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>COUT: 1 ~ 220 µF (일반 2.2 µF), ESR 2 ~ 500 mΩ, 실효 용량 0.47 µF 이상. X7R/X5R/C0G 세라믹 권장, Y5V 비권장 (DC 바이어스로 최대 약 50 % 감소 고려).</li>
+    <li>CIN: 안정성에 필수는 아니나 실효 0.47 µF 이상 권장, 소스 임피던스 &gt; 0.5 Ω이면 필요.</li>
+    <li>전류 제한 1.1 ~ 1.6 A (VOUT = 0.9 × 공칭), 단락 전류 150 / 250 / 350 mA (min/typ/max, 폴드백).</li>
+    <li>UVLO 상승 2.2 V min / 2.4 V typ, 하강 1.9 V typ. TSD 180 °C, 복귀 160 °C (typ).</li>
+    <li>손실 PD = (VIN − VOUT) × IOUT, TJ = TA + RθJA × PD.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <table><thead><tr><th>항목 (°C/W)</th><th>SOT-223 (DCY)</th><th>TO-252 (KVU)</th></tr></thead><tbody>
+    <tr><td>RθJA</td><td>112.4</td><td>67.2</td></tr>
+    <tr><td>RθJC(top)</td><td>71.0</td><td>71.8</td></tr>
+    <tr><td>RθJB</td><td>48.4</td><td>45.5</td></tr>
+    <tr><td>ψJT</td><td>18.6</td><td>31.6</td></tr>
+    <tr><td>ψJB</td><td>48.2</td><td>45.4</td></tr>
+    <tr><td>RθJC(bot)</td><td>N/A</td><td>40.5</td></tr>
+  </tbody></table>
+  <p>패키지 크기: SOT-223 6.5 × 7 mm, TO-252 6.6 × 10.11 mm (제품 페이지). MSL: DCY Level-2-260C-1 YEAR, KVU Level-3-260C-168 HR. TJ max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>"LM1117-Q1"은 제품군 이름이며 주문 코드가 아님 — BOM에는 3.3 V = LM111733QDCYRQ1, 5.0 V = LM111750QDCYRQ1 (SOT-223) 사용.</li>
+    <li>기존 바이폴라 LM1117과 핀 배치(1 GND, 2/탭 OUT, 3 IN)는 같지만 신규 CMOS 설계: 1 µF 세라믹 출력으로 안정, IQ 65 µA. 가변(ADJ) 버전은 없음.</li>
+    <li>데이터시트 내 불일치: 특장점의 SOT-223 RθJA 95.4 °C/W vs 열 정보 표 112.4 °C/W — 보수적으로 112.4 °C/W로 계산. 레이아웃 최적화 시 RθJA 35 ~ 55 % 개선 가능 (데이터시트 기재).</li>
+    <li>5.0 V 출력은 드롭아웃 최대 1.7 V @ 1 A → 최악 VIN ≥ 약 6.7 V 필요. 12 V 배터리 직결 시 (VIN − VOUT) × I 손실이 커서 SOT-223에서는 수백 mA 이하로 제한 필요.</li>
+    <li>VIN 절대 최대 20 V — 차량 배터리 직결 시 로드덤프/역접속 보호 전단 필수.</li>
+  </ul>
+</article>
+</body>
+</html>

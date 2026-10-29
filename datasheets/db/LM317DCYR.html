@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LM317DCYR · 3-terminal adjustable positive regulator, 1.5 A, SOT-223</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="LM317DCYR" data-mfr="Texas Instruments" data-cat="전원" data-price="0.3" data-status="done" data-src="https://www.ti.com/document-viewer/lit/html/SLVS044Z/GUID-2F7357D9-EB02-4F38-98F0-EC0E075A5A0A">
+  <h1>LM317DCYR</h1>
+  <p class="meta">Texas Instruments · 전원 · 3단자 가변 양전압 리니어 레귤레이터 1.25–37 V, 1.5 A, SOT-223 · 참고 단가 약 $0.3 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/lit/html/SLVS044Z/GUID-2F7357D9-EB02-4F38-98F0-EC0E075A5A0A" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어, SLVS044Z)</a> · <a href="https://www.ti.com/product/LM317" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=LM317DCYR" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLVS044Z (1997-09, 개정 2025-04); 정격·전기적 특성 수치는 SLVS044U (2008-04) 사본 기준</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>3단자 가변 양전압 리니어 레귤레이터 (LDO 아님), 단락 전류 제한·과열 보호·SOA 보상</dd>
+    <dt>출력</dt><dd>1.25–37 V 가변, 1.5 A 이상 (최대 출력 전류 1.5 A typ / 2.2 A max @ VI−VO ≤ 15 V; 0.15 A typ @ VI−VO = 40 V)</dd>
+    <dt>기준 전압</dt><dd>VREF 1.20 / 1.25 / 1.30 V (min/typ/max)</dd>
+    <dt>입출력 전압차</dt><dd>VI − VO 3–40 V 권장 (구판) · 신판 비교표상 입력 4.25–40 V</dd>
+    <dt>레귤레이션</dt><dd>라인 0.01 %/V typ (0.04 max, 25 °C) · 부하 0.1 % typ / 0.5 % max (VO ≥ 5 V, 25 °C)</dd>
+    <dt>리플 제거</dt><dd>120 Hz: CADJ 10 µF에서 64 dB typ (구 칩) · 신 칩 80 dB (비교표)</dd>
+    <dt>최소 부하 전류</dt><dd>3.5 mA typ / 10 mA max</dd>
+    <dt>등급·온도</dt><dd>상용, TJ 0 ~ 125 °C (권장)</dd>
+    <dt>패키지</dt><dd>SOT-223 (DCY), 탭 = OUTPUT</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>입출력 전압차 VI − VO</td><td></td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>동작 접합 온도 TJ</td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>리드 온도 (1/16 in, 10 s)</td><td></td><td>260</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <p class="meta">SLVS044U (2008) 기준. 최신판 SLVS044Z 6.1절 값으로 재확인 권장.</p>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VI − VO</td><td>3</td><td></td><td>40</td><td>V</td></tr>
+    <tr><td>출력 전류 IO</td><td></td><td></td><td>1.5</td><td>A</td></tr>
+    <tr><td>동작 접합 온도 TJ</td><td>0</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT-223 (DCY), 4핀(탭 포함)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>ADJUST</td><td>출력 전압 조정 (분압 저항 연결)</td></tr>
+    <tr><td>2, TAB</td><td>OUTPUT</td><td>출력 (탭은 출력에 연결됨)</td></tr>
+    <tr><td>3</td><td>INPUT</td><td>입력</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>V<sub>O</sub> = 1.25 V × (1 + R2/R1) + I<sub>ADJ</sub> × R2, R1 = 240 Ω (I<sub>ADJ</sub> 50 µA typ / 100 µA max).</li>
+    <li>CI 0.1 µF (입력), CO 1.0 µF (과도 응답 개선, 안정성에는 불필요), CADJ 10 µF (리플 제거 개선).</li>
+    <li>CADJ·CO 사용 시 역방향 방전 보호 다이오드 1N4002 (D1: 출력→입력, D2: ADJ→출력).</li>
+    <li>최소 부하 10 mA (max) 확보 — R1 240 Ω이면 약 5 mA가 R1에 흐르므로 경부하 시 확인.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOT-223 (DCY, 신 칩): RθJA 59.6 °C/W · RθJC(top) 39.3 · RθJB 8.4 · ψJT 1.8 · ψJB 8.3 °C/W. 구 칩 SOT-223 RθJA 66.8 °C/W (비교표), 구판 θJA 53 / θJC 30.6 °C/W (JESD51-7). 탭 = OUTPUT이므로 방열 동박은 출력 넷.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>동일 주문 번호라도 생산 시기에 따라 구 칩/신 칩이 섞일 수 있음 (데이터시트에 두 열 존재) — PSRR·열저항이 다름.</li>
+    <li>LDO가 아님: 구판 권장 VI − VO 최소 3 V. 배치 파일 설명의 "드롭아웃 ~2 V"는 이 문서에서 확인되지 않음.</li>
+    <li>권장 TJ 0 ~ 125 °C (상용) — 차량 −40 °C 요구에는 LM317A (−40 ~ 125 °C) 또는 차량용 레귤레이터 검토.</li>
+    <li>VI − VO가 크면 출력 전류가 크게 줄고(40 V에서 0.15 A typ) 손실 P = (VI − VO) × IO — SOT-223 59.6 °C/W 기준 열 계산 필수.</li>
+  </ul>
+</article>
+</body>
+</html>

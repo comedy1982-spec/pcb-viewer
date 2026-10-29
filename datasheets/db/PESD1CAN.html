@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PESD1CAN · CAN bus ESD protection diode (SOT23)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="PESD1CAN" data-mfr="Nexperia" data-cat="다이오드" data-price="" data-status="done" data-src="https://store.comet.bg/download-file.php?id=7598">
+  <h1>PESD1CAN</h1>
+  <p class="meta">Nexperia · 다이오드 · CAN bus ESD protection diode, SOT23</p>
+  <p class="meta">원본: <a href="https://store.comet.bg/download-file.php?id=7598" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.nexperia.com/product/PESD1CAN" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=PESD1CAN" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Product data sheet Rev. 04, 2008-02-15</p>
+  <p class="todo">Nexperia 제품 페이지에 "Not for Design In" (신규 설계 비권장)으로 표시되어 있습니다. 아래 설계 메모 참조.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>CANH·CANL 2라인용 양방향 ESD/서지 보호 다이오드 (공통 캐소드 구조)</dd>
+    <dt>VRWM</dt><dd>24 V (최대)</dd>
+    <dt>VBR</dt><dd>25.4 / 27.8 / 30.3 V (IR 5 mA)</dd>
+    <dt>Cd</dt><dd>일반 11 pF / 최대 17 pF (f 1 MHz, VR 0 V), 매칭 ΔCd/Cd 일반 0.1 %</dd>
+    <dt>VCL</dt><dd>최대 40 V (IPP 1 A), 최대 70 V (IPP 3 A), 8/20 µs</dd>
+    <dt>PPP / IPP</dt><dd>200 W / 3 A (8/20 µs, 다이오드당)</dd>
+    <dt>ESD</dt><dd>IEC 61000-4-2 접촉 23 kV, HBM (MIL-STD-883) 10 kV</dd>
+    <dt>누설</dt><dd>IRM 일반 &lt;1 nA, 최대 50 nA (VRWM 24 V)</dd>
+    <dt>등급</dt><dd>데이터시트(2008)에는 AEC-Q101 언급 없음, Nexperia 제품 페이지에는 AEC-Q101 표기</dd>
+    <dt>패키지</dt><dd>SOT23 (TO-236AB), 마킹 *AN</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>PPP</td><td></td><td>200</td><td>W</td><td>8/20 µs, 다이오드당</td></tr>
+      <tr><td>IPP</td><td></td><td>3</td><td>A</td><td>8/20 µs, 다이오드당</td></tr>
+      <tr><td>VESD (IEC 61000-4-2 접촉)</td><td></td><td>23</td><td>kV</td><td></td></tr>
+      <tr><td>VESD (HBM, MIL-STD-883)</td><td></td><td>10</td><td>kV</td><td></td></tr>
+      <tr><td>Tj</td><td></td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>Tamb</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>Tstg</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>라인 동작 전압 (VRWM)</td><td></td><td></td><td>24</td><td>V</td></tr>
+      <tr><td>rdif (IR 1 mA)</td><td></td><td></td><td>300</td><td>Ω</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT23</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>K1</td><td>캐소드 1 (CANH 또는 CANL)</td></tr>
+      <tr><td>2</td><td>K2</td><td>캐소드 2 (CANL 또는 CANH)</td></tr>
+      <tr><td>3</td><td>K(common)</td><td>공통 캐소드 → GND</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>CAN 트랜시버와 커넥터 사이에서 CANH·CANL을 핀 1·2에, 핀 3을 GND에 연결. 공통 모드 초크(선택)는 트랜시버 쪽에 둠.</li>
+    <li>VRWM 24 V로 24 V 계통 버스 단락(±24 V 이내)을 견딤. 라인 커패시턴스 최대 17 pF가 CAN FD 고속 비트레이트에서 문제가 되는지 확인.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOT23 3리드, 테이프 3000개(-215) / 10000개(-235) 릴. 열저항 값은 읽은 문서에 없음. Tj 최대 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>Nexperia 제품 페이지 상태 "Not for Design In" — 신규 설계에서는 Nexperia의 현행 CAN ESD 제품으로 교체 검토 필요(대체 품번은 확인 필요).</li>
+    <li>커넥터에 최대한 가깝게, 보호 대상 라인과 GND 복귀 경로를 짧게, 보호/비보호 배선을 평행하게 두지 않을 것 (데이터시트 배치 지침).</li>
+    <li>SOT323 버전 PESD1CAN-U는 Cd 최대 12 pF, PPP 150 W로 사양이 다름 — 혼용 시 주의.</li>
+  </ul>
+</article>
+</body>
+</html>

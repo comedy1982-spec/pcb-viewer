@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A4911KJPTR-T-1 · Automotive three-phase MOSFET driver</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="A4911KJPTR-T-1" data-mfr="Allegro MicroSystems" data-cat="게이트 드라이버" data-price="6" data-status="done" data-src="https://www.allegromicro.com/-/media/files/datasheets/a4911-datasheet.pdf?sc_lang=en">
+  <h1>A4911KJPTR-T-1</h1>
+  <p class="meta">Allegro MicroSystems · 게이트 드라이버 · 3상 BLDC MOSFET 드라이버, SPI 진단, 전류 센스 앰프 ×3, ASIL D · 참고 단가 약 $6 (추정)</p>
+  <p class="meta">원본: <a href="https://www.allegromicro.com/-/media/files/datasheets/a4911-datasheet.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.allegromicro.com/en/products/motor-drivers/bldc-drivers/a4911" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=A4911KJPTR-T-1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 A4911-1-DS Rev. 11, MCO-0000220 (2025-06-13)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>N-MOSFET 3상 브리지 게이트 드라이버, 부트스트랩 하이사이드 + 톱오프 차지펌프</dd>
+    <dt>전원 VBB</dt><dd>5.5~50 V (3.4 V까지 리셋 없이 출력만 off, 차지펌프는 7 V까지 완전 구동)</dd>
+    <dt>게이트 전압</dt><dd>VREG 8 V 또는 11 V 선택 (VRG 비트), 구동 세기 프로그램 가능. 10 nF에서 턴온 190 ns / 턴오프 120 ns 일반, 풀업 8 Ω / 풀다운 2.4 Ω</dd>
+    <dt>데드타임</dt><dd>tDEAD = n × 50 ns (DT[5:0]), 100 ns ~ 3.15 µs</dd>
+    <dt>전류 센스</dt><dd>로우사이드 앰프 3개, 이득 10~50 V/V (기본 20), 출력 오프셋 0~2.5 V (기본 2.5 V), 입력 오프셋 최대 ±1 mV, 대역 최소 2 MHz (이득 20)</dd>
+    <dt>인터페이스</dt><dd>직접 로직 입력 (HA/LA/HB/LB/HC/LC) 또는 SPI, DIAG 출력</dd>
+    <dt>진단</dt><dd>VDS/VGS 모니터, 과전류, 개방 부하, VBB 과/저전압, 과온 경고 135 °C / 차단 175 °C, ENABLE 워치독 100 ms</dd>
+    <dt>등급</dt><dd>AEC-Q100, ISO 26262 ASIL D SEooC (안전 매뉴얼 조건)</dd>
+    <dt>전류 소모</dt><dd>12 V에서 25 mA 일반 / 32 mA 최대, 슬립 최대 10 µA (VBB &lt; 35 V)</dd>
+    <dt>패키지</dt><dd>48-lead LQFP 7×7 mm, 높이 1.6 mm, 노출 열패드 (JP), 릴당 1500개</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VBB</td><td>-0.3</td><td>50</td><td>V</td><td>GND 기준</td></tr>
+      <tr><td>GND 단자 간</td><td>-0.1</td><td>0.1</td><td>V</td><td></td></tr>
+      <tr><td>VREG, CP1</td><td>-0.3</td><td>16</td><td>V</td><td></td></tr>
+      <tr><td>CP2</td><td>VCP1 - 0.3</td><td>VREG + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>배터리 내성 로직 입력 (HA..LC, RESETn, ENABLE)</td><td>-0.3</td><td>50</td><td>V</td><td></td></tr>
+      <tr><td>로직 입력 STRn, SCK, SDI</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>로직 출력 SDO, SAL, SBL, SCL</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>DIAG</td><td>-0.3</td><td>50</td><td>V</td><td></td></tr>
+      <tr><td>센스 입력 CSxP, CSxM</td><td>-4</td><td>6.5</td><td>V</td><td></td></tr>
+      <tr><td>센스 출력 CSxO, OOS</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>VBRG</td><td>-5</td><td>55</td><td>V</td><td></td></tr>
+      <tr><td>CA, CB, CC</td><td>-0.3</td><td>VREG + 50</td><td>V</td><td></td></tr>
+      <tr><td>GHx, Sx</td><td>VCx - 16</td><td>VCx + 0.3</td><td>V</td><td>과도 최소 -18 V</td></tr>
+      <tr><td>GLx, LSSx</td><td>VREG - 16</td><td>18</td><td>V</td><td>과도 최소 -8 V</td></tr>
+      <tr><td>동작 온도 TA</td><td>-40</td><td>150</td><td>°C</td><td>손실에 따라 제한</td></tr>
+      <tr><td>접합 온도 TJ(max)</td><td></td><td>165</td><td>°C</td><td>과도 180 °C (≤10 s/회, 수명 ≤10 h)</td></tr>
+      <tr><td>보관 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VBB</td><td>5.5</td><td>12</td><td>50</td><td>V</td></tr>
+      <tr><td>전기 특성 보증 TJ</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+      <tr><td>VREG (VRG = 0)</td><td>7.5</td><td>8</td><td>8.5</td><td>V</td></tr>
+      <tr><td>VREG (VRG = 1)</td><td>9</td><td>11</td><td>11.7</td><td>V</td></tr>
+      <tr><td>센스 앰프 출력 범위</td><td>0.3</td><td></td><td>4.8</td><td>V</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>48-lead LQFP (JP), 노출 패드 = GND</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>SA</td><td>모터 위상 A</td></tr>
+      <tr><td>2</td><td>CA</td><td>부트스트랩 커패시터 A</td></tr>
+      <tr><td>3</td><td>VREG</td><td>게이트 구동 전원 출력</td></tr>
+      <tr><td>4</td><td>CP1</td><td>차지펌프 커패시터</td></tr>
+      <tr><td>5</td><td>CP2</td><td>차지펌프 커패시터</td></tr>
+      <tr><td>6</td><td>GND</td><td>접지</td></tr>
+      <tr><td>7</td><td>VBB</td><td>주 전원</td></tr>
+      <tr><td>8</td><td>VBRG</td><td>하이사이드 드레인 전압 감지</td></tr>
+      <tr><td>9</td><td>GND</td><td>접지</td></tr>
+      <tr><td>10</td><td>OOS</td><td>센스 앰프 오프셋 출력</td></tr>
+      <tr><td>11</td><td>ENABLE</td><td>출력 활성 제어</td></tr>
+      <tr><td>12</td><td>RESETn</td><td>슬립(대기) 제어</td></tr>
+      <tr><td>13</td><td>STRn</td><td>SPI 스트로브 (CS)</td></tr>
+      <tr><td>14</td><td>SCK</td><td>SPI 클록</td></tr>
+      <tr><td>15</td><td>SDI</td><td>SPI 데이터 입력</td></tr>
+      <tr><td>16</td><td>SDO</td><td>SPI 데이터 출력</td></tr>
+      <tr><td>17</td><td>DIAG</td><td>프로그램 가능 진단 출력</td></tr>
+      <tr><td>18</td><td>HA</td><td>A상 하이사이드 입력</td></tr>
+      <tr><td>19</td><td>LA</td><td>A상 로우사이드 입력</td></tr>
+      <tr><td>20</td><td>HB</td><td>B상 하이사이드 입력</td></tr>
+      <tr><td>21</td><td>LB</td><td>B상 로우사이드 입력</td></tr>
+      <tr><td>22</td><td>HC</td><td>C상 하이사이드 입력</td></tr>
+      <tr><td>23</td><td>LC</td><td>C상 로우사이드 입력</td></tr>
+      <tr><td>24</td><td>SAL</td><td>A상 로직 출력</td></tr>
+      <tr><td>25</td><td>SBL</td><td>B상 로직 출력</td></tr>
+      <tr><td>26</td><td>SCL</td><td>C상 로직 출력</td></tr>
+      <tr><td>27</td><td>CS3P</td><td>센스 앰프 3 + 입력</td></tr>
+      <tr><td>28</td><td>CS3M</td><td>센스 앰프 3 − 입력</td></tr>
+      <tr><td>29</td><td>CS3O</td><td>센스 앰프 3 출력</td></tr>
+      <tr><td>30</td><td>CS2P</td><td>센스 앰프 2 + 입력</td></tr>
+      <tr><td>31</td><td>CS2M</td><td>센스 앰프 2 − 입력</td></tr>
+      <tr><td>32</td><td>CS2O</td><td>센스 앰프 2 출력</td></tr>
+      <tr><td>33</td><td>CS1P</td><td>센스 앰프 1 + 입력</td></tr>
+      <tr><td>34</td><td>CS1M</td><td>센스 앰프 1 − 입력</td></tr>
+      <tr><td>35</td><td>CS1O</td><td>센스 앰프 1 출력</td></tr>
+      <tr><td>36</td><td>LSSC</td><td>C상 로우사이드 소스</td></tr>
+      <tr><td>37</td><td>GLC</td><td>C상 로우사이드 게이트</td></tr>
+      <tr><td>38</td><td>GHC</td><td>C상 하이사이드 게이트</td></tr>
+      <tr><td>39</td><td>SC</td><td>모터 위상 C</td></tr>
+      <tr><td>40</td><td>CC</td><td>부트스트랩 커패시터 C</td></tr>
+      <tr><td>41</td><td>LSSB</td><td>B상 로우사이드 소스</td></tr>
+      <tr><td>42</td><td>GLB</td><td>B상 로우사이드 게이트</td></tr>
+      <tr><td>43</td><td>GHB</td><td>B상 하이사이드 게이트</td></tr>
+      <tr><td>44</td><td>SB</td><td>모터 위상 B</td></tr>
+      <tr><td>45</td><td>CB</td><td>부트스트랩 커패시터 B</td></tr>
+      <tr><td>46</td><td>LSSA</td><td>A상 로우사이드 소스</td></tr>
+      <tr><td>47</td><td>GLA</td><td>A상 로우사이드 게이트</td></tr>
+      <tr><td>48</td><td>GHA</td><td>A상 하이사이드 게이트</td></tr>
+      <tr><td>PAD</td><td>—</td><td>노출 패드, GND에 연결</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VBB: 100 nF 세라믹을 전원·GND 단자 가까이.</li>
+    <li>차지펌프 CP1–CP2: 470 nF 이상 세라믹.</li>
+    <li>VREG: "충분히 큰" 저장 커패시터 필요. 문서의 시험 조건 값은 CREG = 22 µF (기동 시간 tEN ≤ 5 ms).</li>
+    <li>부트스트랩 커패시터 선정식은 원본의 "Bootstrap Capacitor Selection" 절 참고 (읽은 범위에 수치 없음). 부트스트랩 저전압 임계 VREG의 55~66%.</li>
+    <li>하이사이드 게이트–소스 저항 RGSH 최소 300 kΩ.</li>
+    <li>과전류: VOCT = (n+1) × 300 mV (기본 0.9 V), IOCT = VOCT / (RS × AV). 자격 시간 tOCQ = n × 500 ns (기본 7.5 µs).</li>
+    <li>VDS 임계 기본 1.2 V (최대 3.15 V), 자격 시간 tVDQ = n × 100 ns (기본 1.6 µs).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>48-lead LQFP 7×7 mm, 노출 패드 GND. RθJA 23 °C/W (4층 JEDEC), 44 °C/W (2층, 양면 3.8 in²), RθJP 2 °C/W. TJ(max) 165 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>같은 다이의 QFN-48 버전: A4911KEVTR-J-1 (7×7×0.9 mm, 웨터블 플랭크).</li>
+    <li>"-1" 접미사의 기능 차이는 문서에 정의되어 있지 않습니다.</li>
+    <li>센스 입력 CSxP/CSxM은 -4~6.5 V 정격입니다. 션트 위치와 음 과도를 확인하세요.</li>
+    <li>ASIL D로 쓰려면 Allegro 안전 매뉴얼의 사용 조건을 따라야 합니다.</li>
+  </ul>
+</article>
+</body>
+</html>

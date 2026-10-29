@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLF35584QVVS2 · Functional safety PMIC, 3.3 V µC LDO, VQFN-48</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLF35584QVVS2" data-mfr="Infineon" data-cat="전원" data-price="7.5" data-status="done" data-src="https://www.farnell.com/datasheets/2820311.pdf">
+  <h1>TLF35584QVVS2</h1>
+  <p class="meta">Infineon · 전원 · Functional safety PMIC, 3.3 V µC LDO, VQFN-48 · 참고 단가 약 $7.5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/2820311.pdf" target="_blank" rel="noopener">데이터시트 PDF (Rev. 2.0)</a> · <a href="https://www.mouser.com/datasheet/2/196/Infineon_TLF35584QV_ProductOverview_DataSheet_v01_-3167808.pdf" target="_blank" rel="noopener">OPTIREG PMIC TLF35584 개요 (Rev 1.0)</a> · <a href="https://octopart.com/search?q=TLF35584QVVS2" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TLF35584 Data Sheet Rev. 2.0 (2017-03-16), 개요 Rev 1.0 (2019-03-25)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>멀티 출력 안전 µP 전원 (프리레귤레이터 + LDO + 트래커 + 워치독 + 안전 상태 출력)</dd>
+    <dt>프리레귤레이터</dt><dd>직렬 스텝업/스텝다운, 입력 3.0–40 V (스텝업 사용 시), 스텝다운 400 kHz 또는 2.2 MHz typ (FRE 핀)</dd>
+    <dt>LDO_µC (QUC)</dt><dd><b>3.3 V / 600 mA</b> (QVVS2) — QVVS1은 5.0 V</dd>
+    <dt>기타 출력</dt><dd>LDO_Com QCO 5.0 V/200 mA · 기준 QVR 5.0 V ±1%/150 mA · 트래커 QT1·QT2 각 150 mA · 스탠바이 QST 3.3 V/10 mA</dd>
+    <dt>안전</dt><dd>ISO 26262 ASIL-D까지, 윈도·기능 워치독, 안전 상태 SS1/SS2 (SS2 지연 SPI 설정), ERR 핀 감시, 독립 전압 감시</dd>
+    <dt>인터페이스</dt><dd>16비트 SPI, INT, ROT(리셋), 외부 코어 레귤레이터용 EVC/SYN/VCI</dd>
+    <dt>등급·온도</dt><dd>AEC-Q100/101, T<sub>j</sub> −40 ~ +150 °C</dd>
+    <dt>패키지</dt><dd>PG-VQFN-48, 7×7 mm, 0.5 mm 피치, 노출 패드 5.2×5.2 mm</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>VS1, VST, ENA, WAK</td><td>-0.3</td><td>40</td><td>V</td><td>60 V (0→60 V 상승 &gt; 10 ms), 40–49 V 수명 합계 10 s</td></tr>
+    <tr><td>DRG, RSH, SW1</td><td>-0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>RSL</td><td>-0.3</td><td>6.0</td><td>V</td><td></td></tr>
+    <tr><td>QT1, QT2</td><td>-1.0</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>FB1, FB2</td><td>-0.3</td><td>7.0</td><td>V</td><td></td></tr>
+    <tr><td>PG1, PG2</td><td>-0.3</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>QVR, QCO, QUC, QST</td><td>-0.3</td><td>6.0</td><td>V</td><td></td></tr>
+    <tr><td>로직 (ROT, SCS, SCL, SDI, SDO, INT, WDI, ERR, SS1, SS2)</td><td>-0.3</td><td>6.0</td><td>V</td><td></td></tr>
+    <tr><td>I<sub>ENA</sub>, I<sub>WAK</sub></td><td>-5</td><td></td><td>mA</td><td></td></tr>
+    <tr><td>T<sub>j</sub> / T<sub>stg</sub></td><td>-40 / -55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM / CDM</td><td></td><td>±2 kV / ±500 V</td><td></td><td>코너 핀 CDM ±750 V</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+  <tbody>
+    <tr><td>VS1 (스텝업 미사용)</td><td>6</td><td></td><td>40</td><td>V</td></tr>
+    <tr><td>배터리 입력 (스텝업 사용)</td><td>3</td><td></td><td>40</td><td>V</td></tr>
+    <tr><td>기동 시 VSx</td><td>6.0</td><td></td><td></td><td>V</td></tr>
+    <tr><td>T<sub>j</sub></td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    <tr><td>스텝다운 주파수 (FRE=GND / 오픈)</td><td>300 / 2000</td><td>400 / 2200</td><td>500 / 2500</td><td>kHz</td></tr>
+    <tr><td>스텝업 주파수</td><td>400</td><td></td><td>600</td><td>kHz</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-VQFN-48 (7×7 mm) + 쿨링 탭</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>BSG</td><td>부스트 드라이버 GND (센스 저항 하단), 스텝업 미사용 시 GND</td></tr>
+    <tr><td>2</td><td>VST</td><td>스탠바이 레귤레이터 입력 (역극성 다이오드 + C)</td></tr>
+    <tr><td>3</td><td>ENA</td><td>인에이블 (상승 에지로 웨이크), 미사용 시 GND</td></tr>
+    <tr><td>4</td><td>WAK</td><td>웨이크/인히빗 입력, 미사용 시 GND</td></tr>
+    <tr><td>5</td><td>QST</td><td>스탠바이 LDO 출력</td></tr>
+    <tr><td>6</td><td>AG1</td><td>아날로그 GND 1</td></tr>
+    <tr><td>7</td><td>AG2</td><td>아날로그 GND 2</td></tr>
+    <tr><td>8</td><td>AGS1</td><td>안전 아날로그 GND 1 (GND 또는 안전 스위치 NMOS 소스)</td></tr>
+    <tr><td>9</td><td>AGS2</td><td>안전 아날로그 GND 2</td></tr>
+    <tr><td>10</td><td>SS2</td><td>안전 상태 신호 2 (SS1 대비 지연)</td></tr>
+    <tr><td>11</td><td>SS1</td><td>안전 상태 신호 1</td></tr>
+    <tr><td>12</td><td>SDI</td><td>SPI 데이터 입력</td></tr>
+    <tr><td>13</td><td>SDO</td><td>SPI 데이터 출력</td></tr>
+    <tr><td>14</td><td>SCL</td><td>SPI 클럭</td></tr>
+    <tr><td>15</td><td>SCS</td><td>SPI 칩 셀렉트</td></tr>
+    <tr><td>16</td><td>WDI</td><td>워치독 트리거 입력 (내부 풀다운)</td></tr>
+    <tr><td>17</td><td>ROT</td><td>리셋 출력 (오픈드레인 + 내부 풀업, Low = 리셋)</td></tr>
+    <tr><td>18</td><td>INT</td><td>인터럽트 출력 (push-pull, Low 펄스) → MCU NMI</td></tr>
+    <tr><td>19</td><td>SYN</td><td>외부 포스트 레귤레이터 동기 출력</td></tr>
+    <tr><td>20</td><td>ERR</td><td>MCU SMU 에러 입력</td></tr>
+    <tr><td>21</td><td>EVC</td><td>외부 코어 레귤레이터 인에이블 출력</td></tr>
+    <tr><td>22</td><td>MPS</td><td>MCU 프로그래밍 지원, 정상 동작 시 GND</td></tr>
+    <tr><td>23</td><td>SEC</td><td>외부 코어 레귤레이터 구성 (미사용 GND / 사용 오픈)</td></tr>
+    <tr><td>24</td><td>FRE</td><td>주파수 범위 (GND = 저, 오픈 = 고)</td></tr>
+    <tr><td>25</td><td>STU</td><td>스텝업 인에이블 (미사용 GND / 사용 오픈)</td></tr>
+    <tr><td>26</td><td>VCI</td><td>외부 코어 레귤레이터 출력 감시 (분압)</td></tr>
+    <tr><td>27</td><td>GST</td><td>게이트 스트레스 (고객 사용 불가, GND)</td></tr>
+    <tr><td>28</td><td>AG3</td><td>아날로그 GND 3</td></tr>
+    <tr><td>29</td><td>QVR</td><td>기준 전압 출력</td></tr>
+    <tr><td>30</td><td>QUC</td><td>µC LDO 출력 (3.3 V)</td></tr>
+    <tr><td>31</td><td>QCO</td><td>통신 LDO 출력 (5 V)</td></tr>
+    <tr><td>32</td><td>QT2</td><td>트래커 2 출력</td></tr>
+    <tr><td>33</td><td>QT1</td><td>트래커 1 출력</td></tr>
+    <tr><td>34–36</td><td>N.C.</td><td>내부 미연결</td></tr>
+    <tr><td>37</td><td>FB1</td><td>스텝다운 피드백·LDO 공급 (FB2와 병렬)</td></tr>
+    <tr><td>38</td><td>FB2</td><td>FB1과 동일</td></tr>
+    <tr><td>39</td><td>N.C.</td><td>내부 미연결</td></tr>
+    <tr><td>40</td><td>PG2</td><td>스텝다운 전력 GND 2</td></tr>
+    <tr><td>41</td><td>PG1</td><td>스텝다운 전력 GND 1</td></tr>
+    <tr><td>42</td><td>SW1</td><td>스텝다운 스위치 출력 (출력 필터 연결)</td></tr>
+    <tr><td>43–44</td><td>N.C.</td><td>내부 미연결</td></tr>
+    <tr><td>45</td><td>VS1</td><td>스텝다운 입력 (스텝업 출력 또는 배터리)</td></tr>
+    <tr><td>46</td><td>DRG</td><td>외부 스텝업 로우사이드 MOSFET 게이트</td></tr>
+    <tr><td>47</td><td>RSH</td><td>스텝업 센스 저항 하이, 미사용 시 GND</td></tr>
+    <tr><td>48</td><td>RSL</td><td>스텝업 센스 저항 로우, 미사용 시 GND</td></tr>
+    <tr><td>EP1–EP4</td><td>—</td><td>모서리 핀: 납땜·GND·신호 연결 금지</td></tr>
+    <tr><td>탭</td><td>GND</td><td>쿨링 탭, GND·방열</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>QUC 출력 C 2.2–47 µF (ESR 0–200 mΩ), QCO 출력 C 1–47 µF (ESR 0–200 mΩ), 각 출력 C는 핀 가까이.</li>
+    <li>스텝다운 출력 리플 ≤ 100 mV로 설계.</li>
+    <li>스텝업 과전류 임계 V<sub>RSH−RSL</sub> 190–230 mV (210 typ) → 센스 저항 = 0.21 V / 원하는 피크 전류.</li>
+    <li>프리레귤레이터 인덕터·QVR/QT/QST 커패시터 값: 데이터시트 응용 장 확인 필요 (읽은 사본에 없음).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-VQFN-48, 7×7×0.9 mm max, 0.5 mm 피치, 노출 패드 5.2×5.2 mm (GND). R<sub>thJC</sub> 12.2 K/W max · R<sub>thJA</sub> 37 K/W typ (JEDEC 2s2p) · R<sub>thJSP</sub>(패드, 2s2p) 11.0–14.7 K/W. T<sub>j</sub> max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>부품 DB 설명의 "FS0B"는 이 칩의 신호명이 아님 — TLF35584의 안전 출력은 SS1/SS2, 리셋은 ROT.</li>
+    <li>QVVS2 = QUC 3.3 V (VQFN-48). 5 V MCU는 QVVS1, LQFP-64 패키지는 QKVS1/QKVS2.</li>
+    <li>FAILSAFE 진입 시 ROT Low + 전 출력 차단, 과온 차단 후 최소 1 s 오프. QUC 과전압도 FAILSAFE.</li>
+    <li>모서리 EP1–EP4 패드는 풋프린트에서 비워 둘 것.</li>
+  </ul>
+</article>
+</body>
+</html>

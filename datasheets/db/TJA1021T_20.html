@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TJA1021T/20 · LIN 2.x / SAE J2602 transceiver, 20 kBd, SO8</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TJA1021T/20" data-mfr="NXP" data-cat="통신" data-price="0.8" data-status="done" data-src="https://NXP.com/docs/en/data-sheet/TJA1021.pdf">
+  <h1>TJA1021T/20</h1>
+  <p class="meta">NXP · 통신 · LIN 2.x / SAE J2602 transceiver, 20 kBd, SO8 · 참고 단가 약 $0.8 (추정)</p>
+  <p class="meta">원본: <a href="https://NXP.com/docs/en/data-sheet/TJA1021.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://nxp.com/products/TJA1021" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TJA1021T%2F20" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TJA1021 Product data sheet Rev. 9 (2023-02-10)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>ISO 17987 / LIN 2.0~2.2A / SAE J2602 LIN 트랜시버 (12 V)</dd>
+    <dt>보드레이트</dt><dd>최대 20 kBd (normal slope 버전)</dd>
+    <dt>VBAT</dt><dd>동작 5.5–27 V (동적 특성 5.5–18 V), 절대 최대 40 V</dd>
+    <dt>소비 전류</dt><dd>Sleep 7 µA 일반 / 10 µA 최대, Normal 열성 0.8 mA 일반, 우성 2 mA 일반</dd>
+    <dt>타이밍</dt><dd>송/수신 전파 지연 최대 6 µs, TXD 우성 타임아웃 27/55/90 ms</dd>
+    <dt>보호</dt><dd>ESD IEC 61000-4-2 ±6 kV (LIN, VBAT, WAKE_N), 단락 보호, 열 보호</dd>
+    <dt>등급</dt><dd>AEC-Q100 Rev-G, Tvj -40~150 °C</dd>
+    <dt>패키지</dt><dd>SO8 (SOT96-1)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VBAT</td><td>-0.3</td><td>+40</td><td>V</td><td></td></tr>
+    <tr><td>TXD, RXD, SLP_N</td><td>-0.3</td><td>+6</td><td>V</td><td>전류 제한 없음; 500 µA 미만 시 +7 V</td></tr>
+    <tr><td>LIN (GND, VBAT, WAKE_N 기준)</td><td>-40</td><td>+40</td><td>V</td><td></td></tr>
+    <tr><td>WAKE_N</td><td>-0.3</td><td>+40</td><td>V</td><td>VWAKE_N &lt; GND-0.3 V 시 IWAKE_N ≥ -15 mA</td></tr>
+    <tr><td>INH</td><td>-0.3</td><td>VBAT+0.3</td><td>V</td><td>IO(INH) -50 ~ +15 mA</td></tr>
+    <tr><td>ISO 7637 펄스 (VBAT, LIN via 1 nF)</td><td>-150 (3a)</td><td>+100 (3b)</td><td>V</td><td>펄스1 -100 V, 2a +75 V</td></tr>
+    <tr><td>ESD IEC 61000-4-2 (WAKE_N, LIN, VBAT)</td><td>-6</td><td>+6</td><td>kV</td><td></td></tr>
+    <tr><td>ESD HBM (전 핀)</td><td>-2</td><td>+2</td><td>kV</td><td>AEC-Q100-002</td></tr>
+    <tr><td>ESD MM / CDM (전 핀)</td><td></td><td>±200 V / ±750 V</td><td></td><td></td></tr>
+    <tr><td>Tvj</td><td>-40</td><td>+150</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>-55</td><td>+150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VBAT (정적 특성 보증)</td><td>5.5</td><td>12</td><td>27</td><td>V</td></tr>
+    <tr><td>VBAT (동적 특성 보증)</td><td>5.5</td><td></td><td>18</td><td>V</td></tr>
+    <tr><td>Tvj</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    <tr><td>TXD / SLP_N VIH</td><td>2</td><td></td><td>7</td><td>V</td></tr>
+    <tr><td>TXD / SLP_N VIL</td><td>-0.3</td><td></td><td>0.8</td><td>V</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SO8 (SOT96-1)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>RXD</td><td>수신 데이터 출력 (오픈 드레인), 웨이크업 후 LOW</td></tr>
+    <tr><td>2</td><td>SLP_N</td><td>슬립 제어 입력 (액티브 LOW), 내부 풀다운</td></tr>
+    <tr><td>3</td><td>WAKE_N</td><td>로컬 웨이크업 입력 (액티브 LOW, 하강 에지)</td></tr>
+    <tr><td>4</td><td>TXD</td><td>송신 데이터 입력, 로컬 웨이크업 후 LOW 출력, 내부 풀다운</td></tr>
+    <tr><td>5</td><td>GND</td><td>접지</td></tr>
+    <tr><td>6</td><td>LIN</td><td>LIN 버스 입출력</td></tr>
+    <tr><td>7</td><td>VBAT</td><td>배터리 전원</td></tr>
+    <tr><td>8</td><td>INH</td><td>외부 레귤레이터 인히빗 출력 (웨이크업 후 HIGH)</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>커맨더(마스터) 노드: LIN–VBAT(또는 INH) 사이에 직렬 다이오드 + 외부 풀업 저항 (데이터시트 그림 7은 1 kΩ로 보이나 본문에 값 명시 없음 — AH1103 확인)</li>
+    <li>LIN 커패시터: 차량 제조사 규정 — 일반적으로 커맨더 1 nF, 리스폰더 220 pF</li>
+    <li>리스폰더 내부 풀업 Rres 20/30/47 kΩ (최소/일반/최대) + 직렬 다이오드 내장</li>
+    <li>WAKE_N 미사용 시 VBAT에 연결 (EMI)</li>
+    <li>RXD는 오픈 드레인 — MCU 측 풀업 필요</li>
+    <li>VBAT 디커플링 값은 데이터시트에 명시 없음 — 응용 노트 AH1103 확인</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SO8 (SOT96-1, 3.9 mm 바디). Rth(j-a) 93 K/W, Ψj-top 13 K/W (JEDEC 2S2P). HVSON8 버전(TK)은 54 K/W. 열 차단 Tj(sd) 150/175/200 °C (최소/일반/최대).</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>/20 = normal slope 20 kBd 버전, /10 = low slope 10.4 kBd (SAE J2602 저속). 같은 데이터시트의 20 kBd 등급 품번 TJA1021BT도 있음.</li>
+    <li>듀티 사이클 δ1/δ2 (tbit 50 µs) 보증은 VBAT 7–18 V / 6.1–18 V 조건.</li>
+    <li>부품 DB 분류 'uart'는 '통신'으로 표시.</li>
+    <li>공급 VBAT 18 V 초과 시 LIN 송신이 억제될 수 있음.</li>
+  </ul>
+</article>
+</body>
+</html>

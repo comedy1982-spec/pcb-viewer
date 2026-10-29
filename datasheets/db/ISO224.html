@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISO224 · Reinforced isolated amplifier, ±12 V single-ended input</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="ISO224" data-mfr="Texas Instruments" data-cat="절연" data-price="" data-status="done" data-src="https://www.ti.com/lit/gpn/iso224">
+  <h1>ISO224</h1>
+  <p class="meta">Texas Instruments · 절연 · 강화 절연 앰프, 단일 종단 ±12 V 입력 → 차동 ±4 V 출력</p>
+  <p class="meta">원본: <a href="https://www.ti.com/lit/gpn/iso224" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/ISO224" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=ISO224" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SBAS738A (2018-06, 개정 2018-10)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>고전압 측 단일 종단 ±12 V 신호(예: 분압한 DC 링크·상전압)를 강화 절연 너머 차동 출력으로 전달</dd>
+    <dt>이득</dt><dd>1/3 V/V (±12 V → ±4 V 차동), 출력 공통 모드 VDD2/2 (0.48–0.52 × VDD2)</dd>
+    <dt>입력 범위</dt><dd>선형 ±12 V, 클리핑 ±13.8 V</dd>
+    <dt>정밀도 (B / A)</dt><dd>오프셋 ±5 / ±50 mV max · 이득 오차 ±0.3 / ±1 % max · 비선형 ±0.01 / ±0.02 %</dd>
+    <dt>대역폭 (B / A)</dt><dd>275 / 185 kHz typ · 지연 2.2 / 2.8 µs · CMTI 55 / 15 kV/µs min</dd>
+    <dt>전원</dt><dd>VDD1 4.5–18 V (고전압 측), VDD2 4.5–5.5 V (저전압 측)</dd>
+    <dt>절연</dt><dd>VISO 5000 VRMS (UL1577 60 s), VIORM 2121 VPK, VIOWM 1500 VRMS / 2121 VDC, VIOTM 7071 VPK, VIOSM 8000 VPK · DIN VDE V 0884-11 강화 절연 · 연면·공간 거리 ≥8.5 mm</dd>
+    <dt>등급·온도</dt><dd>산업용 (데이터시트에 -Q1/AEC-Q100 언급 없음) · TA −55 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>SOIC-8 와이드 (DWV) 5.85 × 7.5 mm</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VDD1 – GND1</td><td>−0.3</td><td>26</td><td>V</td><td></td></tr>
+    <tr><td>VDD2 – GND2</td><td>−0.3</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>IN – GND1</td><td>−15</td><td>15</td><td>V</td><td></td></tr>
+    <tr><td>IN 연속 입력 전류</td><td>−10</td><td>10</td><td>mA</td><td></td></tr>
+    <tr><td>OUTP, OUTN – GND2</td><td>GND2 − 0.3</td><td>VDD2 + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>TJ</td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM (IN / 기타) · CDM</td><td></td><td>±9000 / ±3000 · ±1000</td><td>V</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VDD1</td><td>4.5</td><td>5</td><td>18</td><td>V</td></tr>
+    <tr><td>VDD2</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>선형 풀스케일 입력 VFSR</td><td>−12</td><td></td><td>12</td><td>V</td></tr>
+    <tr><td>클리핑 전 입력</td><td></td><td></td><td>±13.8</td><td>V</td></tr>
+    <tr><td>TA</td><td>−55</td><td>25</td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOIC-8 와이드 (DWV). 1–4번 = 고전압 측, 5–8번 = 저전압 측.</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>VCAP</td><td>내부 전원 디커플링, 0.22 µF → GND1</td></tr>
+    <tr><td>2</td><td>IN</td><td>아날로그 입력</td></tr>
+    <tr><td>3</td><td>VDD1</td><td>고전압 측 전원 4.5–18 V</td></tr>
+    <tr><td>4</td><td>GND1</td><td>고전압 측 GND</td></tr>
+    <tr><td>5</td><td>GND2</td><td>저전압 측 GND</td></tr>
+    <tr><td>6</td><td>OUTN</td><td>반전 출력</td></tr>
+    <tr><td>7</td><td>OUTP</td><td>비반전 출력</td></tr>
+    <tr><td>8</td><td>VDD2</td><td>저전압 측 전원 4.5–5.5 V</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD1, VDD2 각각 저ESR 0.1 µF 세라믹(핀 가까이) + ≥1 µF. VCAP 0.22 µF → GND1.</li>
+    <li>입력: 직렬 저항 + RC 저역 필터로 전류 제한. 예) 120 VAC 측정 시 분압 R1 115 kΩ / R2 12.7 kΩ → IN ±11.93 V, 분압 전류 약 0.93 mA.</li>
+    <li>출력은 차동 — 단일 종단 ADC는 차동→단일 변환·필터(데이터시트 예: TLV6001) 사용.</li>
+    <li>전원 순서 제약 없음. VDD1 인가 후 아날로그 기동 시간 tAS 250 µs max (0.1 % 정착).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOIC-8 와이드 (DWV) 5.85 × 7.5 mm. RθJA 96.3 °C/W · RθJC(top) 36.9 · RθJB 60.1 · ψJT 16.9 · ψJB 58.2 °C/W. 최대 소비 전력 194.9 mW (VDD1 18 V, VDD2 5.5 V). TJ 최대 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN 주의: "ISO224"는 제품군 이름. 주문 번호는 ISO224BDWVR / ISO224BDWV (고정밀 B), ISO224ADWVR / ISO224ADWV (A) — 모두 Active. BOM에는 등급·포장 포함 번호 사용.</li>
+    <li>차량용 AEC-Q100 등급이 아님 — 차량 인버터/BMS에는 -Q1 절연 앰프(예: AMC 계열 -Q1) 검토.</li>
+    <li>전원 인가 중 IN 개방 금지 (출력이 공통 모드 레벨로 고정). VDD1 없으면 두 출력이 GND2 부근으로 → 고장 검출 가능.</li>
+    <li>절연 거리 유지: 패키지 아래 고전압/저전압 측 사이 동박·비아 금지, 연면 ≥8.5 mm 확보.</li>
+  </ul>
+</article>
+</body>
+</html>

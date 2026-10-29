@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAX40056FAUA+ · Bidirectional Current-Sense Amplifier with PWM Rejection</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MAX40056FAUA+" data-mfr="Analog Devices" data-cat="전류 센서" data-price="2.3" data-status="done" data-src="https://wcm-cce.cldnet.analog.com/media/en/technical-documentation/data-sheets/MAX40056F-MAX40056U.pdf">
+  <h1>MAX40056FAUA+</h1>
+  <p class="meta">Analog Devices (Maxim) · 전류 센서 · 양방향 전류 센스 앰프, 65 V 공통 모드, PWM 에지 제거, 이득 50 V/V · 참고 단가 약 $2.3 (추정)</p>
+  <p class="meta">원본: <a href="https://wcm-cce.cldnet.analog.com/media/en/technical-documentation/data-sheets/MAX40056F-MAX40056U.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.digikey.ca/en/products/detail/analog-devices-inc-maxim-integrated/MAX40056FAUA/9838623" target="_blank" rel="noopener">제품 페이지 (Digi-Key)</a> · <a href="https://octopart.com/search?q=MAX40056FAUA%2B" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 19-100394 Rev 8 (2/21)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>양방향 하이/로우 사이드 전류 센스 앰프 + 과전류 비교기(COP), PWM 에지 복구 500 ns (500 V/µs 에지)</dd>
+    <dt>이득</dt><dd>50 V/V (F 접미사). T = 20 V/V, U = 10 V/V</dd>
+    <dt>전원 V<sub>DD</sub></dt><dd>2.7 … 5.5 V, 공급 전류 6 mA typ / 9 mA max</dd>
+    <dt>공통 모드</dt><dd>−0.1 … +65 V (−40 … +125 °C), −0.3 … +65 V (−40 … +85 °C). 입력 보호 −5 … +70 V</dd>
+    <dt>오프셋</dt><dd>5 µV typ, 20 µV max (25 °C), 전 온도 300 µV max; 드리프트 0.5 µV/°C typ</dd>
+    <dt>이득 오차</dt><dd>0.05 % typ; max 0.5 % (VCM = 48 V, −40 … +125 °C)</dd>
+    <dt>대역폭</dt><dd>300 kHz (−3 dB), 슬루율 1.5 V/µs typ</dd>
+    <dt>CMRR</dt><dd>DC 140 dB typ, AC 70 dB min @ 100 kHz</dd>
+    <dt>기준 전압</dt><dd>내부 REF 1.485 … 1.515 V; REF 핀에 1.5 V보다 높은 외부 전압을 걸면 외부 기준 사용 (전환 임계 1.65 … 1.75 V)</dd>
+    <dt>온도 · 패키지</dt><dd>−40 … +125 °C, 8-pin µMAX (마킹 +FAUA). 차량용은 /V 접미사 품번</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>RS+, RS− → GND</td><td>−5</td><td>+70</td><td>V</td><td></td></tr>
+    <tr><td>RS+ → RS−</td><td>−2</td><td>+2</td><td>V</td><td>차동</td></tr>
+    <tr><td>V<sub>DD</sub> → GND</td><td>−0.3</td><td>+6</td><td>V</td><td></td></tr>
+    <tr><td>REF, CIP, OUT, COP → GND</td><td>−0.3</td><td>V<sub>DD</sub> + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>연속 전류 REF, CIP</td><td></td><td>5</td><td>mA</td><td></td></tr>
+    <tr><td>연속 전류 OUT, COP, RS+, RS−</td><td></td><td>10</td><td>mA</td><td></td></tr>
+    <tr><td>연속 소비 전력</td><td></td><td>390</td><td>mW</td><td>T<sub>A</sub> = 70 °C, 이후 4.8 mW/°C 감쇄 (다층 기판)</td></tr>
+    <tr><td>동작 온도</td><td>−40</td><td>+125</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>−65</td><td>+150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>V<sub>DD</sub></td><td>2.7</td><td>3.3</td><td>5.5</td><td>V</td></tr>
+    <tr><td>입력 공통 모드 (−40 … +125 °C)</td><td>−0.1</td><td>48</td><td>65</td><td>V</td></tr>
+    <tr><td>감지 범위 (VREF 1.5 V, VDD 3.3 V, F 버전)</td><td>−30</td><td></td><td>+36</td><td>mV</td></tr>
+    <tr><td>동작 온도</td><td>−40</td><td></td><td>+125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>8-pin µMAX (핀 설명 표 기준)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>RS+</td><td>센스 저항 전원 측 입력</td></tr>
+    <tr><td>2</td><td>COP</td><td>비교기 푸시풀 출력, 액티브 로우 (Low = 과전류 고장)</td></tr>
+    <tr><td>3</td><td>VDD</td><td>전원 2.7 … 5.5 V</td></tr>
+    <tr><td>4</td><td>OUT</td><td>전류 센스 출력 (0 A 점 = VREF)</td></tr>
+    <tr><td>5</td><td>REF</td><td>내부 1.5 V 기준 출력 / 외부 기준 입력 (1.5 V 초과 시 우선)</td></tr>
+    <tr><td>6</td><td>GND</td><td>그라운드</td></tr>
+    <tr><td>7</td><td>CIP</td><td>비교기 입력, 과전류 임계 설정</td></tr>
+    <tr><td>8</td><td>RS−</td><td>센스 저항 부하 측 입력</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>출력: V<sub>OUT</sub> = I<sub>SENSE</sub> × R<sub>SENSE</sub> × 50 + V<sub>REF</sub>.</li>
+    <li>VDD 바이패스: 10 nF C0G + 1 µF X5R를 GND로.</li>
+    <li>REF 바이패스: 10 nF + 1 µF. REF 커패시터는 1 µF를 넘기지 말 것 (지속 발진 방지).</li>
+    <li>최대 범위가 필요하면 VREF ≈ VDD/2 (예: VDD 5 V에서 외부 2.5 V). 내부 1.5 V 기준은 3.3 V 전원용.</li>
+    <li>OUT 시험 부하 10 kΩ ∥ 20 pF, COP 5 kΩ ∥ 10 pF (전기 특성 조건).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>8-pin µMAX (3 × 3 mm 계열, 0.65 mm 피치). θ<sub>JA</sub> 206 °C/W, θ<sub>JC</sub> 42 °C/W (4층 기판). 노출 패드 없음.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>4단자(켈빈) 센스 저항 또는 켈빈 배선 사용; 센스 배선은 저항 패드 가까이에서 분기.</li>
+    <li>권선형 저항은 인덕턴스가 커서 PWM 환경에서 오차 — 금속 스트립 저인덕턴스 션트 권장.</li>
+    <li>F 버전(50 V/V)은 VDD 3.3 V·VREF 1.5 V에서 감지 범위가 −30 … +36 mV로 좁음 — 션트 값을 이에 맞춰 선정.</li>
+    <li>AEC-Q100이 필요하면 /V 접미사 차량용 품번 사용 (MAX40056FAUA+는 일반 등급).</li>
+    <li>데이터시트 PDF 추출본의 핀 그림 텍스트가 깨져 있어 핀 설명 표를 기준으로 작성; 풋프린트 출도 전 원본 그림으로 한 번 더 대조 권장.</li>
+  </ul>
+</article>
+</body>
+</html>

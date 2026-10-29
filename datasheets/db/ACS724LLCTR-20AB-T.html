@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACS724LLCTR-20AB-T · Isolated Hall Current Sensor</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="ACS724LLCTR-20AB-T" data-mfr="Allegro" data-cat="전류 센서" data-price="2.6" data-status="done" data-src="https://pdf.direnc.net/upload/acs724-datasheet.pdf">
+  <h1>ACS724LLCTR-20AB-T</h1>
+  <p class="meta">Allegro · 전류 센서 · ±20 A 절연 홀 전류 센서, 5 V, 100 mV/A, AEC-Q100 · 참고 단가 약 $2.6 (추정)</p>
+  <p class="meta">원본: <a href="https://pdf.direnc.net/upload/acs724-datasheet.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="http://www.allegromicro.com/~/media/Files/Datasheets/ACS724-Datasheet.ashx?la=en" target="_blank" rel="noopener">제조사 PDF (미확인 링크)</a> · <a href="https://octopart.com/search?q=ACS724LLCTR-20AB-T" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 ACS724-DS Rev. 15 (MCO-0000227), 2019-06-03</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>내장 도체형 차동 홀 전류 센서 (CMFRR 40 dB typ), 레이쇼메트릭 아날로그 출력, FILTER 핀</dd>
+    <dt>측정 범위</dt><dd>±20 A (양방향)</dd>
+    <dt>감도</dt><dd>100 mV/A typ (VCC = 5 V), 영점 VCC × 0.5</dd>
+    <dt>공급 전압</dt><dd>4.5 ~ 5.5 V, ICC 10 mA typ / 14 mA max</dd>
+    <dt>대역폭 · 응답</dt><dd>120 kHz (CL = 1 nF), 응답 4 µs, 상승 3 µs, 전파지연 2 µs</dd>
+    <dt>정확도</dt><dd>ETOT ±2 % (25 ~ 150 °C), ±6 % (−40 ~ 25 °C); 오프셋 ±10 mV / ±30 mV; 수명 드리프트 ±3 % max</dd>
+    <dt>1차 도체 저항</dt><dd>1.2 mΩ typ</dd>
+    <dt>절연</dt><dd>2400 VRMS (60 s), 기본 절연 420 Vpk / 297 VRMS, 서지 6000 V</dd>
+    <dt>품질 등급</dt><dd>AEC-Q100</dd>
+    <dt>온도</dt><dd>L: −40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>SOIC-8 (LC), 릴 3000개</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>−0.1</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>VIOUT</td><td>−0.1</td><td>VCC + 0.5</td><td>V</td><td></td></tr>
+    <tr><td>TA (L)</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>TJ(max)</td><td></td><td>165</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−65</td><td>165</td><td>°C</td><td></td></tr>
+    <tr><td>절연 내전압 VISO</td><td></td><td>2400</td><td>VRMS</td><td>60 s 형식 / 1 s 양산</td></tr>
+    <tr><td>서지 내량</td><td></td><td>6000</td><td>V</td><td>IEC 61000-4-5, ±5 펄스</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>출력 부하 CL</td><td></td><td></td><td>10</td><td>nF</td></tr>
+    <tr><td>출력 부하 RL</td><td>4.7</td><td></td><td></td><td>kΩ</td></tr>
+    <tr><td>TA</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOIC-8 (LC)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1, 2</td><td>IP+</td><td>전류 입력 단자 (내부 퓨즈)</td></tr>
+    <tr><td>3, 4</td><td>IP−</td><td>전류 출력 단자 (내부 퓨즈)</td></tr>
+    <tr><td>5</td><td>GND</td><td>신호 접지</td></tr>
+    <tr><td>6</td><td>FILTER</td><td>대역 설정용 외부 커패시터</td></tr>
+    <tr><td>7</td><td>VIOUT</td><td>아날로그 출력</td></tr>
+    <tr><td>8</td><td>VCC</td><td>전원</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>CBYPASS 0.1 µF.</li>
+    <li>CF (FILTER): 대표 회로 1 nF, 내부 RF(int) 1.8 kΩ typ. 노이즈 사양은 CF = 4.7 nF 기준 (20 mARMS, BW 18 kHz).</li>
+    <li>VIOUT 부하: CL ≤ 10 nF, RL ≥ 4.7 kΩ. 출력 포화 VOH ≈ VCC − 0.3 V, VOL ≈ 0.3 V.</li>
+    <li>파워온 시간 80 µs typ.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOIC-8. RθJA 23 °C/W (Allegro 85-0740 보드, 양면 800 mm² 4 oz), RθJL 5 °C/W. TJ(max) 165 °C. 연면·공간거리 4.2 mm (IP 리드 ↔ 신호 리드).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>ACS712와 핀 호환(동일 SOIC-8 배치, FILTER 핀) — 차량용 대체 후보.</li>
+    <li>기본 절연 작업 전압 420 Vpk — 400 V급 HV 계통에선 강화 절연 요구 여부 확인.</li>
+    <li>−40 ~ 25 °C 구간 오차가 커지므로(ETOT ±6 %) 저온 정확도가 필요하면 보정 필요.</li>
+    <li>읽은 문서는 Rev. 15 (2019) 사본 — 최신 개정판은 제조사 사이트 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

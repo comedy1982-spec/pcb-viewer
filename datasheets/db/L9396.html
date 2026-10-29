@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L9396 · Automotive multiple power supply IC (System Basis Chip) for chassis and safety</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="L9396" data-mfr="STMicroelectronics" data-cat="전원" data-price="" data-status="done" data-src="https://manualmachine.com/stmicroelectronics/l9396/17916031-datasheet">
+  <h1>L9396</h1>
+  <p class="meta">STMicroelectronics · 전원 · Automotive multiple power supply IC (SBC): 부스트/벅 프리레귤레이터, VCORE, 5 V/3.3 V LDO, 이중 워치독, WSS 인터페이스</p>
+  <p class="meta">원본: <a href="https://manualmachine.com/stmicroelectronics/l9396/17916031-datasheet" target="_blank" rel="noopener">데이터시트 (DS12539 사본)</a> · <a href="https://www.st.com/content/st_com/en/products/automotive-analog-and-power/chassis-and-safety-ics/steering-ics/l9396.html" target="_blank" rel="noopener">제품 페이지</a> (미확인 링크) · <a href="https://octopart.com/search?q=L9396" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS12539 Rev 3, 2020-11 (production data)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>섀시·안전(브레이크/EPS) ECU용 다중 전원 SBC, ISO 26262 ASIL-D 시스템 대응</dd>
+    <dt>배터리 입력</dt><dd>VBATP 4.5 ~ 19 V (부스트 사용), 6 ~ 19 V (부스트 미사용)</dd>
+    <dt>부스트</dt><dd>9 V, 300 mA, 2 MHz (크랭킹·Stop&amp;Start·약전지 대응, 외부 다이오드·인덕터)</dd>
+    <dt>벅 프리레귤레이터</dt><dd>6.5 V 또는 7.2 V, 1 A, 465 kHz</dd>
+    <dt>LDO</dt><dd>VCC5 5 V 250 mA (µC I/O·ADC) · VCC 3.3 V/5 V 선택 100 mA</dd>
+    <dt>VCORE</dt><dd>0.8 ~ 5 V, 외부 FET 사용, 벅 모드 최대 1 A / 리니어 모드 최대 750 mA</dd>
+    <dt>감시·안전</dt><dd>Q&amp;A + 윈도우 이중 워치독, 이중 기준 전압, 모든 레일 UV/OV, FSN·RESET·FAULT 출력, 10비트 ADC, 열 차단</dd>
+    <dt>기타</dt><dd>4채널 WSS/트래킹 레귤레이터 인터페이스, 페일세이프·모터 펌프 하이사이드 프리드라이버, SPI, PWM GPO, IGN 웨이크업, 스펙트럼 확산</dd>
+    <dt>등급</dt><dd>AEC-Q100, Ta −40 ~ 135 °C</dd>
+    <dt>패키지</dt><dd>TQFP64EP (노출 패드 하면), 10 × 10 × 1 mm, 튜브 포장</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VB, VBST, VBM, BSTSW, VPREREG, I_CORE_SH/SL</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>BCKSW, SCORE</td><td>−1</td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>VB_SW</td><td>−18</td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>VC2, VC4, CP</td><td>VBST−0.6 / VBST−0.3</td><td>VBST+13 (≤ 51)</td><td>V</td><td>차지 펌프</td></tr>
+      <tr><td>VC1, VC3, VCC5, VCC, VCOREFDBK, VCORE, VCCSEL, IGN</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>VDBATT, PDBATT, RSUH/RSUL, GPOD0</td><td>−18</td><td>40</td><td>V</td><td>역배터리 대응 핀</td></tr>
+      <tr><td>NU</td><td>−0.3</td><td>4.6</td><td>V</td><td></td></tr>
+      <tr><td>WDTDIS</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+      <tr><td>GNDA, GNDD, GNDBST</td><td>−0.3</td><td>0.3</td><td>V</td><td>접지 간</td></tr>
+      <tr><td>기타 로직·인터페이스 핀</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>Tj</td><td>−40</td><td>175</td><td>°C</td><td></td></tr>
+      <tr><td>Tstg</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM</td><td></td><td>±4000 / ±2000</td><td>V</td><td>글로벌 핀 / 기타 핀</td></tr>
+      <tr><td>ESD CDM</td><td></td><td>±750 / ±500</td><td>V</td><td>코너 핀 / 기타 핀</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VB, VBST, VBM</td><td>−0.1</td><td></td><td>19</td><td>V</td></tr>
+      <tr><td>VB_SW, BCKSW, SCORE</td><td>−1</td><td></td><td>19</td><td>V</td></tr>
+      <tr><td>VCC5, VCC, VCOREFDBK, VCORE</td><td>−0.1</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>VCCSEL, IGN, AI[0..4]</td><td>−0.1</td><td></td><td>19</td><td>V</td></tr>
+      <tr><td>WDTDIS, FSN, FAULT, PRN, RESET, WSO[0..3]</td><td>−0.1</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>RSUH/L[0..3], GPOD0</td><td>−0.1</td><td></td><td>19</td><td>V</td></tr>
+      <tr><td>주위 온도 Ta</td><td>−40</td><td></td><td>135</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>TQFP64EP 10 × 10 mm</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>AI4</td><td>ADC 아날로그 입력</td></tr>
+      <tr><td>2</td><td>AI3</td><td>ADC 아날로그 입력</td></tr>
+      <tr><td>3</td><td>AI2</td><td>ADC 아날로그 입력</td></tr>
+      <tr><td>4</td><td>AI1</td><td>VCORE 기능 선택 입력 1</td></tr>
+      <tr><td>5</td><td>AI0</td><td>VCORE 기능 선택 입력 0</td></tr>
+      <tr><td>6</td><td>RSUL0</td><td>WSS 접지 복귀</td></tr>
+      <tr><td>7</td><td>RSUH0</td><td>WSS / 트래킹 레귤레이터 출력</td></tr>
+      <tr><td>8</td><td>RSUL1</td><td>WSS 접지 복귀</td></tr>
+      <tr><td>9</td><td>RSUH1</td><td>WSS / 트래킹 레귤레이터 출력</td></tr>
+      <tr><td>10</td><td>RSUL2</td><td>WSS 접지 복귀</td></tr>
+      <tr><td>11</td><td>RSUH2</td><td>WSS 출력</td></tr>
+      <tr><td>12</td><td>RSUL3</td><td>WSS 접지 복귀</td></tr>
+      <tr><td>13</td><td>RSUH3</td><td>WSS 출력</td></tr>
+      <tr><td>14</td><td>GNDA</td><td>아날로그 접지</td></tr>
+      <tr><td>15</td><td>GPOD0</td><td>GPO 드라이버 드레인</td></tr>
+      <tr><td>16</td><td>PDI</td><td>모터 펌프 HS FET 제어 입력</td></tr>
+      <tr><td>17</td><td>PRI</td><td>모터 펌프 환류 FET 제어 입력</td></tr>
+      <tr><td>18</td><td>PRG</td><td>모터 펌프 환류 FET 게이트</td></tr>
+      <tr><td>19</td><td>PRS</td><td>모터 펌프 환류 FET 소스</td></tr>
+      <tr><td>20</td><td>PDG</td><td>모터 펌프 HS FET 게이트</td></tr>
+      <tr><td>21</td><td>PDS</td><td>모터 펌프 HS FET 소스</td></tr>
+      <tr><td>22</td><td>PDBATT</td><td>모터 펌프 프리드라이버 배터리 감지</td></tr>
+      <tr><td>23</td><td>VB_SW</td><td>보호된 배터리 출력</td></tr>
+      <tr><td>24</td><td>VB</td><td>배터리 입력</td></tr>
+      <tr><td>25</td><td>VDBATT</td><td>페일세이프 프리드라이버 배터리 감지</td></tr>
+      <tr><td>26</td><td>VDG</td><td>페일세이프 FET 게이트</td></tr>
+      <tr><td>27</td><td>VDS</td><td>페일세이프 FET 소스</td></tr>
+      <tr><td>28</td><td>WDTDIS</td><td>워치독 비활성</td></tr>
+      <tr><td>29</td><td>VBM</td><td>배터리 감지</td></tr>
+      <tr><td>30</td><td>IGN</td><td>웨이크업 입력</td></tr>
+      <tr><td>31</td><td>VCOREFDBK</td><td>VCORE 전압 피드백</td></tr>
+      <tr><td>32</td><td>VCORE</td><td>µC 코어 전압 (감지)</td></tr>
+      <tr><td>33</td><td>SCORE</td><td>VCORE 외부 FET 소스</td></tr>
+      <tr><td>34</td><td>GCORE</td><td>VCORE 외부 FET 게이트</td></tr>
+      <tr><td>35</td><td>CBS</td><td>VCORE 부트스트랩 커패시터</td></tr>
+      <tr><td>36</td><td>I_CORE_SL</td><td>VCORE 전류 감지 션트 입력</td></tr>
+      <tr><td>37</td><td>I_CORE_SH</td><td>VCORE 전류 감지 션트 입력</td></tr>
+      <tr><td>38</td><td>VCC</td><td>3.3 V / 5 V µC I/O 전원 출력</td></tr>
+      <tr><td>39</td><td>VCC5</td><td>5 V µC I/O·ADC 전원 출력</td></tr>
+      <tr><td>40</td><td>VPREREG</td><td>프리레귤레이터 출력</td></tr>
+      <tr><td>41</td><td>VCCSEL</td><td>VCC 전압 선택</td></tr>
+      <tr><td>42</td><td>BCKSW</td><td>벅 프리레귤레이터 스위치 노드</td></tr>
+      <tr><td>43</td><td>VBST</td><td>배터리 입력 또는 부스트 출력</td></tr>
+      <tr><td>44</td><td>CP</td><td>차지 펌프 출력</td></tr>
+      <tr><td>45</td><td>VC4</td><td>차지 펌프 2번 커패시터 (+)</td></tr>
+      <tr><td>46</td><td>VC3</td><td>차지 펌프 2번 커패시터 (−)</td></tr>
+      <tr><td>47</td><td>VC2</td><td>차지 펌프 1번 커패시터 (+)</td></tr>
+      <tr><td>48</td><td>VC1</td><td>차지 펌프 1번 커패시터 (−)</td></tr>
+      <tr><td>49</td><td>RESET</td><td>리셋 출력</td></tr>
+      <tr><td>50</td><td>FSN</td><td>페일세이프 (부논리) 출력</td></tr>
+      <tr><td>51</td><td>BSTSW</td><td>부스트 스위치 노드</td></tr>
+      <tr><td>52</td><td>GNDBST</td><td>부스트 레귤레이터 접지</td></tr>
+      <tr><td>53</td><td>NU</td><td>미사용 — GND 연결</td></tr>
+      <tr><td>54</td><td>GNDD</td><td>디지털 접지</td></tr>
+      <tr><td>55</td><td>SDO</td><td>SPI 데이터 출력</td></tr>
+      <tr><td>56</td><td>SDI</td><td>SPI 데이터 입력</td></tr>
+      <tr><td>57</td><td>CLK</td><td>SPI 클록</td></tr>
+      <tr><td>58</td><td>PRN</td><td>MCU 클록 신호</td></tr>
+      <tr><td>59</td><td>CS</td><td>SPI 칩 셀렉트</td></tr>
+      <tr><td>60</td><td>WSO0</td><td>WSS 패스스루 출력</td></tr>
+      <tr><td>61</td><td>WSO1</td><td>WSS 패스스루 출력</td></tr>
+      <tr><td>62</td><td>WSO2</td><td>WSS 패스스루 출력</td></tr>
+      <tr><td>63</td><td>WSO3</td><td>WSS 패스스루 출력</td></tr>
+      <tr><td>64</td><td>FAULT</td><td>일반 고장 출력</td></tr>
+      <tr><td>EP</td><td>EP</td><td>노출 패드 (연결 네트는 데이터시트 확인 필요)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>부스트는 외부 인덕터·다이오드를 붙일 때만 동작(선택). 미사용 시 VBST에 배터리를 직접 공급하고 동작 하한은 6 V.</li>
+    <li>VCORE는 외부 FET(GCORE/SCORE)와 부트스트랩 커패시터(CBS), 전류 감지 션트(I_CORE_SH/SL)로 구성. 벅/리니어 모드는 AI0/AI1로 선택.</li>
+    <li>차지 펌프: VC1–VC2, VC3–VC4에 플라잉 커패시터 2개, CP에 탱크 커패시터. 값은 데이터시트 응용 회로 확인 필요.</li>
+    <li>VCCSEL로 VCC 3.3 V/5 V 선택, NU 핀은 GND에 연결, WDTDIS는 개발 중 워치독 비활성용.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>TQFP64EP 10 × 10 × 1 mm, 노출 패드 하면. Rth j-a 26 °C/W (2s2p JEDEC, 자연 대류), Rth j-c 2.9 °C/W (노출 패드 측 냉판). Tj 최대 175 °C. 노출 패드 연결 네트는 데이터시트 확인 필요(통상 GND).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>WSS(휠 속도 센서) 인터페이스와 모터 펌프 프리드라이버가 있는 ABS/ESC·브레이크 지향 SBC — EPS 등 다른 응용에서는 해당 핀을 데이터시트 지침대로 미사용 처리.</li>
+    <li>부스트(2 MHz)·벅(465 kHz) 스위치 노드(BSTSW, BCKSW)는 루프 면적 최소화, GNDBST는 GNDA/GNDD와 한 점 접속.</li>
+    <li>FSN(페일세이프)은 MCU와 독립적인 차단 경로이므로 안전 차단 FET/릴레이 구동에 직접 연결.</li>
+  </ul>
+</article>
+</body>
+</html>

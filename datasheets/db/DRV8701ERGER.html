@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRV8701ERGER · Brushed DC H-bridge gate driver, PH/EN interface</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="DRV8701ERGER" data-mfr="Texas Instruments" data-cat="게이트 드라이버" data-price="2.6" data-status="done" data-src="https://ti.com/lit/gpn/drv8701">
+  <h1>DRV8701ERGER</h1>
+  <p class="meta">Texas Instruments · 게이트 드라이버 · 브러시 DC용 H-브리지 게이트 드라이버 (PH/EN), 전류 레귤레이션·션트 앰프 내장 · 참고 단가 약 $2.6 (추정)</p>
+  <p class="meta">원본: <a href="https://ti.com/lit/gpn/drv8701" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/DRV8701" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=DRV8701ERGER" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLVSCX5B (2015-07)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>외부 N-MOSFET 4개 H-브리지 게이트 드라이버, 100 % 듀티 지원. E = PH/EN 인터페이스 (P = IN1/IN2)</dd>
+    <dt>VM</dt><dd>5.9–45 V (절대 최대 47 V)</dd>
+    <dt>게이트 구동</dt><dd>IDRIVE 핀으로 5단계: 소스/싱크 6/12.5 ~ 150/300 mA · VGS 8.5–10.5 V (VM &gt; 12 V)</dd>
+    <dt>전류 레귤레이션</dt><dd>고정 오프 타임 PWM 초핑, tOFF 25 µs, tBLANK 2 µs, I<sub>TRIP</sub> = (VREF − VOFF)/(AV × R<sub>SENSE</sub>)</dd>
+    <dt>션트 앰프</dt><dd>AV 20 V/V (18–22 V/V @ 50–200 mV), 출력 오프셋 50–250 mV</dd>
+    <dt>LDO</dt><dd>AVDD 4.8 V, DVDD 3.3 V, 각 외부 부하 30 mA까지</dd>
+    <dt>보호</dt><dd>VM UVLO (하강 5.4–5.8 V), 차지 펌프 UV, VDS·SP 과전류 (0.8–1 V, 데글리치 4.5 µs, 재시도 3 ms), 프리드라이버 고장, TSD 150 °C → nFAULT</dd>
+    <dt>슬립 전류</dt><dd>9 µA typ (25 °C, VM 24 V)</dd>
+    <dt>등급·온도</dt><dd>상용 (-Q1 없음) · TA −40 ~ 125 °C · 주문 상태 Active</dd>
+    <dt>패키지</dt><dd>VQFN-24 (RGE) 4.0 × 4.0 × 0.9 mm, PowerPAD = GND</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VM</td><td>−0.3</td><td>47</td><td>V</td><td>상승 슬루 0–2 V/µs</td></tr>
+    <tr><td>VCP, CPH</td><td>−0.3</td><td>VM + 12</td><td>V</td><td></td></tr>
+    <tr><td>CPL</td><td>−0.3</td><td>VM</td><td>V</td><td></td></tr>
+    <tr><td>DVDD</td><td>−0.3</td><td>3.8</td><td>V</td><td></td></tr>
+    <tr><td>AVDD</td><td>−0.3</td><td>5.75</td><td>V</td><td></td></tr>
+    <tr><td>제어 핀 (PH, EN, nSLEEP, nFAULT, VREF, IDRIVE, SNSOUT)</td><td>−0.3</td><td>5.75</td><td>V</td><td></td></tr>
+    <tr><td>GH1, GH2</td><td>−0.3</td><td>VM + 12</td><td>V</td><td></td></tr>
+    <tr><td>SH1, SH2 연속 / 10 µs 펄스</td><td>−1.2 / −2.0</td><td>VM + 1.2 / VM + 2</td><td>V</td><td></td></tr>
+    <tr><td>GL1, GL2</td><td>−0.3</td><td>12</td><td>V</td><td></td></tr>
+    <tr><td>SP, SN 연속 / 10 µs 펄스</td><td>−0.5 / −1</td><td>1 / 1</td><td>V</td><td></td></tr>
+    <tr><td>SO</td><td>−0.3</td><td>5.75</td><td>V</td><td>출력 전류 최대 5 mA</td></tr>
+    <tr><td>nFAULT, SNSOUT 싱크 전류</td><td>0</td><td>10</td><td>mA</td><td></td></tr>
+    <tr><td>게이트 소스 / 싱크 전류</td><td>0</td><td>250 / 500</td><td>mA</td><td></td></tr>
+    <tr><td>TJ / 보관 온도</td><td>−40 / −65</td><td>150 / 150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM / CDM</td><td></td><td>±2000 / ±500</td><td>V</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VM</td><td>5.9</td><td></td><td>45</td><td>V</td></tr>
+    <tr><td>논리 입력 전압</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>VREF</td><td>0.3</td><td></td><td>AVDD</td><td>V</td></tr>
+    <tr><td>PWM 주파수</td><td></td><td></td><td>100</td><td>kHz</td></tr>
+    <tr><td>AVDD / DVDD 외부 부하</td><td></td><td></td><td>30 / 30</td><td>mA</td></tr>
+    <tr><td>SO 부하 전류</td><td></td><td></td><td>5</td><td>mA</td></tr>
+    <tr><td>TA</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>VQFN-24 (RGE) 4 × 4 mm, 노출 패드 = GND</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>VM</td><td>모터 전원, 0.1 µF + ≥10 µF (VM 정격)</td></tr>
+    <tr><td>2</td><td>VCP</td><td>차지 펌프 출력, 1 µF 16 V → VM</td></tr>
+    <tr><td>3, 4</td><td>CPH, CPL</td><td>차지 펌프 플라잉 0.1 µF X7R (VM 정격)</td></tr>
+    <tr><td>5</td><td>GND</td><td>GND</td></tr>
+    <tr><td>6</td><td>VREF</td><td>전류 레귤레이션 기준 (0.3 V ~ AVDD)</td></tr>
+    <tr><td>7</td><td>AVDD</td><td>4.8 V LDO, 1 µF 6.3 V</td></tr>
+    <tr><td>8</td><td>DVDD</td><td>3.3 V LDO, 1 µF 6.3 V</td></tr>
+    <tr><td>9</td><td>nFAULT</td><td>고장 출력, 오픈 드레인 (≥10 kΩ 풀업)</td></tr>
+    <tr><td>10</td><td>SNSOUT</td><td>초핑 중 L, 오픈 드레인 (≥10 kΩ 풀업)</td></tr>
+    <tr><td>11</td><td>SO</td><td>션트 앰프 출력, 부하 ≤1 nF</td></tr>
+    <tr><td>12</td><td>IDRIVE</td><td>게이트 전류 설정 (저항/전압)</td></tr>
+    <tr><td>13</td><td>nSLEEP</td><td>L = 슬립, 내부 풀다운</td></tr>
+    <tr><td>14</td><td>EN</td><td>브리지 인에이블/PWM</td></tr>
+    <tr><td>15</td><td>PH</td><td>방향</td></tr>
+    <tr><td>16</td><td>GND</td><td>GND</td></tr>
+    <tr><td>17, 18, 19</td><td>GH1, SH1, GL1</td><td>하프브리지 1 상단 게이트, 위상 노드, 하단 게이트</td></tr>
+    <tr><td>20</td><td>SN</td><td>션트 앰프 − (GND 또는 션트)</td></tr>
+    <tr><td>21</td><td>SP</td><td>션트 앰프 + (션트·하단 FET 소스)</td></tr>
+    <tr><td>22, 23, 24</td><td>GL2, SH2, GH2</td><td>하프브리지 2 하단 게이트, 위상 노드, 상단 게이트</td></tr>
+    <tr><td>25 (PAD)</td><td>GND</td><td>방열 패드, GND</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VM 0.1 µF + ≥10 µF, VCP–VM 1 µF 16 V, CPH–CPL 0.1 µF X7R, AVDD·DVDD 각 1 µF 6.3 V, nFAULT·SNSOUT 풀업 ≥10 kΩ.</li>
+    <li>IDRIVE: &lt;1 kΩ→GND 6/12.5 mA · 33 kΩ→GND 12.5/25 · 200 kΩ→GND 25/50 · &gt;500 kΩ/개방 100/200 · 68 kΩ→AVDD 150/300 · &lt;1 kΩ→AVDD 25/50 mA (상단 OCP 꺼짐).</li>
+    <li>전류 초핑: I<sub>TRIP</sub> = (VREF − VOFF)/(AV × R<sub>SENSE</sub>). 예) R<sub>SENSE</sub> 50 mΩ, 3 A → VREF ≈ 3.05 V (AVDD 분압 R1 2 kΩ / R2 3.3 kΩ).</li>
+    <li>예제 설계: VM 7 V에서 40 kHz, QG &lt; 200 nC까지 지원 (VCP 8 mA).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>VQFN-24 (RGE) 4.0 × 4.0 × 0.9 mm. RθJA 34.8 °C/W · RθJC(top) 37.1 · RθJB 12.2 · ψJT 0.6 · ψJB 12.2 · RθJC(bot) 3.7 °C/W. TJ 최대 150 °C, TSD 150 °C (히스테리시스 20 °C).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>VM 상승 슬루 2 V/µs 이하 (절대 최대).</li>
+    <li>SP/SN 연속 −0.5 ~ 1 V — 션트 전압 강하와 OCP(0.8–1 V) 고려해 R<sub>SENSE</sub> 선정.</li>
+    <li>데드타임 380 ns는 IDRIVE 설정에 따라 달라짐. tDRIVE 2.5 µs 내에 게이트 충전이 끝나도록 IDRIVE·QG 확인.</li>
+    <li>DRV8701P = IN1/IN2 PWM 인터페이스 (핀 14 = IN2, 15 = IN1), 나머지 핀 동일. 상용 등급이며 -Q1 없음 — 차량용은 DRV8706-Q1 등 검토.</li>
+    <li>핀 표 추출본에서 GND는 16번만 명확, 핀아웃 그림상 5번도 GND — 두 핀 모두 GND로 연결.</li>
+  </ul>
+</article>
+</body>
+</html>

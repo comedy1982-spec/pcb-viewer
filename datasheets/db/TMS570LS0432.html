@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TMS570LS0432 · Hercules Cortex-R4 lockstep safety MCU</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TMS570LS0432" data-mfr="Texas Instruments" data-cat="MCU" data-price="5" data-status="done" data-src="https://www.ti.com/document-viewer/TMS570LS0432/datasheet/absolute-maximum-ratings-spns1577909">
+  <h1>TMS570LS0432</h1>
+  <p class="meta">Texas Instruments · MCU · Hercules 안전 MCU, Cortex-R4 락스텝 80 MHz, 384 KB 플래시 · 참고 단가 약 $5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/TMS570LS0432/datasheet/features-spns1602178" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/TMS570LS0432" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TMS570LS0432" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SPNS186C (2012-10, 개정 2018-05, TMS570LS0332/0432 공용)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>CPU</dt><dd>ARM Cortex-R4 (FPU 없음) 듀얼 락스텝, 80 MHz, 1.66 DMIPS/MHz, 8영역 MPU</dd>
+    <dt>메모리</dt><dd>플래시 384 KB (ECC), RAM 32 KB (ECC), EEPROM 에뮬레이션 플래시 16 KB (ECC)</dd>
+    <dt>안전 기능</dt><dd>플래시·RAM ECC, CPU·RAM BIST, 에러 신호 모듈(ERROR 핀), 전압·클럭 감시</dd>
+    <dt>통신</dt><dd>DCAN ×2 (32/16 메일박스), MibSPI ×1 (128 워드), SPI ×2, SCI/LIN ×1 (LIN 2.1)</dd>
+    <dt>타이머·아날로그</dt><dd>N2HET (최대 19핀, HTU), eQEP ×1, 12비트 MibADC 16채널</dd>
+    <dt>GPIO</dt><dd>최대 45 (인터럽트 가능 8)</dd>
+    <dt>전원</dt><dd>코어 1.2 V, I/O·ADC·플래시 펌프 3.3 V</dd>
+    <dt>온도</dt><dd>TA -40 ~ 125 °C, TJ -40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>100핀 QFP (PZ)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VCC (코어)</td><td>-0.3</td><td>1.43</td><td>V</td><td></td></tr>
+      <tr><td>VCCIO, VCCP</td><td>-0.3</td><td>4.6</td><td>V</td><td>표 열 정렬 불확실 — PDF 확인 권장</td></tr>
+      <tr><td>VCCAD</td><td>-0.3</td><td>4.6</td><td>V</td><td>동일</td></tr>
+      <tr><td>입력 전압 (전 입력 / ADC 입력)</td><td>-0.3</td><td>4.6</td><td>V</td><td></td></tr>
+      <tr><td>입력 클램프 전류 (일반 핀)</td><td>-20</td><td>20</td><td>mA</td><td></td></tr>
+      <tr><td>입력 클램프 전류 (ADIN)</td><td>-10</td><td>10</td><td>mA</td><td></td></tr>
+      <tr><td>입력 클램프 전류 합계</td><td>-40</td><td>40</td><td>mA</td><td></td></tr>
+      <tr><td>래치업 (I-test)</td><td>-100</td><td>100</td><td>mA</td><td></td></tr>
+      <tr><td>동작 주위 온도 TA</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>접합 온도 TJ</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VCC (코어)</td><td>1.14</td><td>1.2</td><td>1.32</td><td>V</td></tr>
+      <tr><td>VCCIO</td><td>3</td><td>3.3</td><td>3.6</td><td>V</td></tr>
+      <tr><td>VCCAD / VADREFHI</td><td>3</td><td>3.3</td><td>3.6</td><td>V</td></tr>
+      <tr><td>VCCP (플래시 펌프)</td><td>3</td><td>3.3</td><td>3.6</td><td>V</td></tr>
+      <tr><td>VSSAD / VADREFLO</td><td>-0.1</td><td></td><td>0.1</td><td>V</td></tr>
+      <tr><td>VCCIO/VCCAD/VCCP 상승 슬루율</td><td></td><td></td><td>1</td><td>V/µs</td></tr>
+      <tr><td>TA</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+      <tr><td>TJ</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>100핀 QFP (PZ). 핀 그룹 요약 — 전체 핀 표는 데이터시트 PZ QFP Package Pinout 절 참조.</p>
+  <table><thead><tr><th>그룹</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>전원</td><td>VCC, VCCIO, VCCAD, VCCP, VSS, VSSAD</td><td>1.2 V 코어, 3.3 V I/O·ADC·플래시 펌프, 접지</td></tr>
+      <tr><td>아날로그</td><td>ADIN, VADREFHI/VADREFLO</td><td>MibADC 16채널 입력, 기준 전압</td></tr>
+      <tr><td>타이머</td><td>N2HET (최대 19핀), eQEP</td><td>PWM/캡처, 엔코더</td></tr>
+      <tr><td>통신</td><td>DCAN1/DCAN2, MibSPI, SPI ×2, SCI/LIN</td><td>다른 기능과 다중화</td></tr>
+      <tr><td>GPIO</td><td>최대 45</td><td>인터럽트 가능 8</td></tr>
+      <tr><td>시스템·안전</td><td>ERROR 핀, 리셋, 크리스털</td><td>에러 신호 모듈 출력 등</td></tr>
+      <tr><td>디버그</td><td>JTAG (IEEE 1149.1)</td><td>바운더리 스캔, CoreSight</td></tr>
+    </tbody></table>
+  <p class="todo">핀 번호와 정확한 핀 이름은 데이터시트 PZ QFP Package Pinout (100-Pin) 절에서 확인하세요(이번에 읽지 않음).</p>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>3.3 V 공급(VCCIO, VCCAD, VCCP)의 상승 슬루율은 1 V/µs 이하로 제한합니다.</li>
+    <li>코어 1.2 V(1.14 ~ 1.32 V)와 3.3 V 두 레일이 필요합니다. 디커플링 값은 데이터시트 확인 필요.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PZ (100핀 S-PQFP): RθJA 48 °C/W, RθJC 5 °C/W. 신뢰성 데이터는 TJ 105 °C에서 100,000 전원 인가 시간 기준.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>Cortex-R4 (F 없음): 부동소수점 하드웨어가 없습니다. FPU가 필요하면 TMS570LS0714/1224 등 R4F 계열을 고려하세요.</li>
+    <li>배치 설명의 'ASIL D'는 읽은 문서 범위(특징 목록)에 등급 표기가 없어 확인하지 못했습니다. 안전 매뉴얼·인증서로 확인하세요.</li>
+    <li>MPN 'TMS570LS0432'는 제품군 이름입니다. 실제 주문 품목은 TMS5700432…PZ…Q1 형식(예: TMS5700432BPZQQ1R, 검색 결과에서 확인)이며 정확한 접미사는 데이터시트 주문 정보 확인 필요.</li>
+  </ul>
+</article>
+</body>
+</html>

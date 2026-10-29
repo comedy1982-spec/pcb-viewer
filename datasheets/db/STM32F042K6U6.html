@@ -13,45 +13,60 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="STM32F042K6U6" data-mfr="STMicroelectronics" data-cat="MCU" data-price="2.6" data-status="stub">
+<article data-mpn="STM32F042K6U6" data-mfr="STMicroelectronics" data-cat="MCU" data-price="2.2" data-status="stub" data-src="https://pdf.elecfans.com/STMICROELECTRONICS/STM32F042K6T6.html">
   <h1>STM32F042K6U6</h1>
-  <p class="meta">STMicroelectronics · MCU · STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN · 참고 단가 약 $2.6 (추정)</p>
-  <p class="meta">원본: <a href="https://www.st.com/resource/en/datasheet/stm32f042k6.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f042k6.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=STM32F042K6U6" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
-
+  <p class="meta">STMicroelectronics · MCU · STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN · 참고 단가 약 $2.2 (추정)</p>
+  <p class="meta">원본: <a href="https://www.st.com/resource/en/datasheet/stm32f042k6.pdf" target="_blank" rel="noopener">데이터시트 PDF (미확인 링크)</a> · <a href="https://pdf.elecfans.com/STMICROELECTRONICS/STM32F042K6T6.html" target="_blank" rel="noopener">데이터시트 사본</a> · <a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f042k6.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=STM32F042K6U6" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DocID025832 Rev 5, 2017-01</p>
+  <p class="todo">읽은 사본에 UFQFPN32 핀 정의표, θJA, 전원 디커플링 그림이 빠져 있음 — 핀 배치 표·열저항·디커플링 값은 ST 원본 PDF에서 확인 필요. (부품 생성기에는 이미 33핀 표가 있음)</p>
   <h2>핵심 사양</h2>
   <dl>
-      <dt>코어</dt><dd>Arm Cortex-M0, 최대 48 MHz</dd>
-      <dt>메모리</dt><dd>플래시 32 KB · SRAM 6 KB</dd>
-      <dt>전원</dt><dd>VDD 2.0–3.6 V · VDDA ≤ 3.6 V (ADC 사용 시 ≥ 2.4 V) · VDDIO2 1.65–3.6 V</dd>
-      <dt>USB</dt><dd>USB 2.0 FS, 크리스털리스 (HSI48 + CRS) · PA11 DM / PA12 DP</dd>
-      <dt>타이머</dt><dd>TIM1 고급 제어 (CH1–CH4: PA8–PA11) 외</dd>
-      <dt>ADC</dt><dd>12비트, ADC_IN0–9 (PA0–PA7, PB0, PB1)</dd>
-      <dt>패키지</dt><dd>UFQFPN32 5×5 mm · 노출 패드 = VSS · 31번 BOOT0</dd>
-      <dt>디버그</dt><dd>SWD: PA13 SWDIO / PA14 SWCLK</dd>
-      <dt>열 저항</dt><dd> · Tj,max 105 °C</dd>
+    <dt>코어</dt><dd>Arm Cortex-M0, fHCLK 0–48 MHz</dd>
+    <dt>메모리</dt><dd>플래시 32 KB · SRAM 6 KB (x6)</dd>
+    <dt>전원</dt><dd>VDD 2.0–3.6 V · VDDA VDD–3.6 V (ADC 사용 시 2.4–3.6 V) · VDDIO2 1.65–3.6 V · VBAT 1.65–3.6 V</dd>
+    <dt>USB / CAN</dt><dd>USB 2.0 FS (크리스털리스, HSI48 + CRS) · CAN (부품 DB 설명 기준, 원본 확인)</dd>
+    <dt>동작 전류</dt><dd>Run 48 MHz (플래시 실행, 전 주변장치 on, HSE bypass + PLL) typ 20.3 mA, 최대 23.2 mA (25 °C) — 원본 표로 재확인 권장</dd>
+    <dt>HSE</dt><dd>4–32 MHz (typ 8 MHz), RF typ 200 kΩ, gm 최소 10 mA/V</dd>
+    <dt>온도</dt><dd>접미사 6: Ta −40 ~ 85 °C, Tj −40 ~ 105 °C</dd>
+    <dt>패키지</dt><dd>UFQFPN32 5 × 5 mm (U), 최대 전력 손실 526 mW</dd>
+    <dt>디버그</dt><dd>SWD (PA13 SWDIO / PA14 SWCLK)</dd>
   </dl>
-
   <h2>절대 최대 정격</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
-
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>전원 핀 (VDD 등) − VSS</td><td>−0.3</td><td>4.0</td><td>V</td><td>사본의 표가 일부 깨짐 — 원본 확인</td></tr>
+    <tr><td>VIN FT/FTf 핀</td><td>VSS − 0.3</td><td>VDDIOx + 4.0</td><td>V</td><td>내부 풀업/풀다운 비활성 시 (활성 시 4 V)</td></tr>
+    <tr><td>VIN TTa 및 기타 핀</td><td>VSS − 0.3</td><td>4.0</td><td>V</td><td></td></tr>
+    <tr><td>ΔVDDx, |VSSx − VSS|</td><td></td><td>50</td><td>mV</td><td></td></tr>
+    <tr><td>ΣIVDD / ΣIVSS</td><td></td><td>120 / −120</td><td>mA</td><td>핀당 100 mA</td></tr>
+    <tr><td>IIO 핀당</td><td>−25</td><td>25</td><td>mA</td><td>ΣIIO ±80 mA, VDDIO2 공급 I/O 소스 −40 mA</td></tr>
+    <tr><td>IINJ</td><td>−5</td><td>+5</td><td>mA</td><td>FT/FTf −5/+0 mA · ΣIINJ ±25 mA</td></tr>
+    <tr><td>Tstg</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>Tj</td><td></td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
   <h2>권장 동작 조건</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
-
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>fHCLK, fPCLK</td><td>0</td><td></td><td>48</td><td>MHz</td></tr>
+    <tr><td>VDD</td><td>2.0</td><td></td><td>3.6</td><td>V</td></tr>
+    <tr><td>VDDA (ADC 사용)</td><td>2.4</td><td></td><td>3.6</td><td>V</td></tr>
+    <tr><td>VDDIO2</td><td>1.65</td><td></td><td>3.6</td><td>V</td></tr>
+    <tr><td>VIN FT/FTf</td><td>−0.3</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>Ta (접미사 6)</td><td>−40</td><td></td><td>85</td><td>°C</td></tr>
+  </tbody></table>
   <h2>핀 배치</h2>
-  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
-
+  <p>UFQFPN32 5 × 5 mm, 노출 패드 — 핀 번호표는 원본 데이터시트 Table "pin definitions" 확인 필요. 알려진 그룹: USB PA11 (DM) / PA12 (DP), SWD PA13/PA14, BOOT0, ADC_IN0–9 (PA0–PA7, PB0, PB1).</p>
   <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
-
+  <ul>
+    <li>전원 디커플링(VDD, VDDA, VDDIO2) 값은 데이터시트 "Power supply scheme" 그림 확인 필요.</li>
+    <li>USB 사용 시 크리스털 없이 HSI48 + CRS(USB SOF 동기)로 동작 가능. 외부 HSE는 4–32 MHz.</li>
+    <li>ADC 사용 시 VDDA ≥ 2.4 V.</li>
+  </ul>
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
-
+  <p>UFQFPN32 5 × 5 mm, PD 최대 526 mW (Ta 85 °C). θJA는 원본 Section 7.8 확인 필요. Tj 최대 105 °C (접미사 6 동작).</p>
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>FT 핀은 5 V 톨러런트(VIN 최대 5.5 V)이나 TTa(아날로그) 핀은 VDDA + 0.3 V로 제한.</li>
+    <li>산업용 등급(−40~85 °C) — 차량용 등급이 아님. ECU 부속(진단 툴, 지그)용으로 적합.</li>
+    <li>읽은 사본은 Rev 5 (2017) — ST 최신 개정 확인 권장.</li>
+  </ul>
 </article>
 </body>
 </html>

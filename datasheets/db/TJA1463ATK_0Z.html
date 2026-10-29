@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TJA1463ATK/0Z · CAN SIC transceiver with Sleep mode</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TJA1463ATK/0Z" data-mfr="NXP" data-cat="통신" data-price="1.6" data-status="done" data-src="https://pdf.bomkeyelectronics.com/pdf/1/TJA1463.pdf">
+  <h1>TJA1463ATK/0Z</h1>
+  <p class="meta">NXP · 통신 · CAN SIC transceiver with Sleep mode (CAN FD 8 Mbit/s) · 참고 단가 약 $1.6 (추정)</p>
+  <p class="meta">원본: <a href="https://pdf.bomkeyelectronics.com/pdf/1/TJA1463.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://nxp.com/products/TJA1463" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TJA1463ATK%2F0Z" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TJA1463 Product data sheet Rev. 3.0, 2025-02-12</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>CAN 트랜시버, 신호 개선(SIC, ISO 11898-2:2024 parameter set C), ISO 11898-2:2024 A–C · SAE J2284-1~5 · SAE J1939-14</dd>
+    <dt>데이터 속도</dt><dd>CAN FD 최대 8 Mbit/s (비트 타이밍 대칭)</dd>
+    <dt>동작 모드</dt><dd>Normal, Standby, Sleep, Listen-only, Off · INH로 외부 레귤레이터 제어, WAKE 로컬 웨이크</dd>
+    <dt>전원</dt><dd>VBAT 4.5–28 V · VCC 4.5–5.5 V · VIO 2.95–5.5 V (3.3 V/5 V MCU)</dd>
+    <dt>루프 지연</dt><dd>td(TXD–RXD) 최대 255 ns (Normal) · SIC 조건(VCC 4.75–5.25 V) 최대 190 ns</dd>
+    <dt>웨이크업 필터</dt><dd>0.5–1.8 µs · 버스 웨이크업 타임아웃 0.8–9 ms</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1 (TJR1463는 Grade 0, Ta 150 °C)</dd>
+    <dt>온도</dt><dd>Tvj −40 ~ +150 °C</dd>
+    <dt>패키지</dt><dd>HVSON14 (SOT1086-2), 3 × 4.5 × 0.85 mm, 0.65 mm 피치, 노출 패드</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VCC, VIO, TXD, STB_N, EN</td><td>−0.3</td><td>+6</td><td>V</td><td>6–7 V는 수명 중 누적 20 s 허용</td></tr>
+    <tr><td>VBAT</td><td></td><td>+40</td><td>V</td><td>로드 덤프, 최대 50 h</td></tr>
+    <tr><td>INH</td><td>−0.3</td><td>VBAT + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>CANH, CANL, WAKE</td><td>−36</td><td>+40</td><td>V</td><td></td></tr>
+    <tr><td>V(CANH−CANL)</td><td>−40</td><td>+40</td><td>V</td><td></td></tr>
+    <tr><td>RXD, ERR_N</td><td>−0.3</td><td>VIO + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>IO(INH)</td><td>−2</td><td></td><td>mA</td><td></td></tr>
+    <tr><td>Ir(VBAT) 역전류</td><td>−10</td><td></td><td>mA</td><td></td></tr>
+    <tr><td>과도 펄스 1 / 2a / 3a / 3b</td><td>−100 / – / −150 / –</td><td>– / +75 / – / +100</td><td>V</td><td>VBAT, WAKE, CANH, CANL</td></tr>
+    <tr><td>ESD IEC 61000-4-2 (CANH/CANL)</td><td>−6</td><td>+6</td><td>kV</td><td>VBAT(100 nF)·WAKE(33 kΩ) ±8 kV</td></tr>
+    <tr><td>ESD HBM</td><td>−4</td><td>+4</td><td>kV</td><td>CANH/CANL ±8 kV</td></tr>
+    <tr><td>ESD CDM</td><td>−500</td><td>+500</td><td>V</td><td>코너 핀 ±750 V</td></tr>
+    <tr><td>Tvj</td><td>−40</td><td>+150</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−55</td><td>+150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VBAT</td><td>4.5</td><td></td><td>28</td><td>V</td></tr>
+    <tr><td>VCC</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>VIO</td><td>2.95</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>저전압 검출 VBAT / VCC</td><td>4</td><td></td><td>4.5</td><td>V</td></tr>
+    <tr><td>저전압 검출 VIO</td><td>2.65</td><td></td><td>2.95</td><td>V</td></tr>
+    <tr><td>Tvj</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>HVSON14 (SOT1086-2)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>TXD</td><td>송신 데이터 입력 (CAN 컨트롤러에서)</td></tr>
+    <tr><td>2</td><td>GND</td><td>접지</td></tr>
+    <tr><td>3</td><td>VCC</td><td>5 V 전원 입력</td></tr>
+    <tr><td>4</td><td>RXD</td><td>수신 데이터 출력</td></tr>
+    <tr><td>5</td><td>VIO</td><td>I/O 레벨 전원 (MCU 전원에 연결)</td></tr>
+    <tr><td>6</td><td>EN</td><td>Enable 제어 입력</td></tr>
+    <tr><td>7</td><td>INH</td><td>외부 레귤레이터 제어(Inhibit) 출력</td></tr>
+    <tr><td>8</td><td>ERR_N</td><td>로컬 고장·웨이크업 소스·파워온 표시 출력 (액티브 LOW)</td></tr>
+    <tr><td>9</td><td>WAKE</td><td>로컬 웨이크업 입력</td></tr>
+    <tr><td>10</td><td>VBAT</td><td>배터리 전원 입력</td></tr>
+    <tr><td>11</td><td>n.c.</td><td>미연결</td></tr>
+    <tr><td>12</td><td>CANL</td><td>CAN 버스 LOW 라인</td></tr>
+    <tr><td>13</td><td>CANH</td><td>CAN 버스 HIGH 라인</td></tr>
+    <tr><td>14</td><td>STB_N</td><td>Standby 제어 입력 (액티브 LOW)</td></tr>
+    <tr><td>EP</td><td>—</td><td>노출 패드: 보드 GND에 납땜 권장 (열·전기 성능)</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VIO는 MCU 전원(예: 3.3 V)에 연결. VBAT는 역극성 보호 후 배터리에, INH로 외부 레귤레이터를 켜고 끄는 구성(Figure 10).</li>
+    <li>INH 출력 전류 한계 −2 mA, Off/Sleep 모드에서 고임피던스.</li>
+    <li>로컬 웨이크업 미사용 시 WAKE를 VBAT 또는 GND에 연결 (EMI). 내부 풀업/풀다운 100–400 kΩ.</li>
+    <li>ESD 시험 조건: VBAT 100 nF, WAKE 직렬 33 kΩ. 디커플링 값은 데이터시트에 명시 없음 — NXP 응용 노트 AH2002 (TJx144x/TJx146x Application Hints) 참조.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>HVSON14 3.0 × 4.5 mm, 높이 0.85 mm (최대 1.00 mm), 피치 0.65 mm, 노출 패드 GND. Rth(j-a) 46 K/W, Rth(j-c) 13 K/W, Ψj-top 7 K/W (JEDEC 2S2P, 일반값). Tvj max 150 °C. (SO14: Rth(j-a) 74 K/W)</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>SIC로 링잉을 억제해 다중 노드 스타형 토폴로지에서 CAN FD 고속(최대 8 Mbit/s) 동작에 유리.</li>
+    <li>VCC·VIO 저전압 검출이 있으므로 VIO를 MCU와 같은 레일로 공급해야 레벨 변환·저전압 처리가 정상 동작.</li>
+    <li>Grade 0(Ta 150 °C)가 필요하면 TJR1463 계열 선택.</li>
+    <li>데이터시트 사본(배포 사이트 미러)을 읽었으며 NXP 원본 최신 개정 확인 권장.</li>
+  </ul>
+</article>
+</body>
+</html>

@@ -7,6 +7,16 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+// --merge-only: keep the bundled KiCad matches (built earlier from the KiCad 10 libraries) and only (re)merge datasheets/pins.json
+if (process.argv.includes('--merge-only')) {
+  const cur = readFileSync(join(root, 'src/parts/kicadpins.js'), 'utf8');
+  const K = JSON.parse(cur.match(/const KPINS=(\{.*\});/s)[1]);
+  const X = JSON.parse(readFileSync(join(root, 'datasheets/pins.json'), 'utf8'));
+  let n = 0; Object.keys(K).forEach(m => { if (K[m].l === 'datasheet') delete K[m]; });
+  Object.entries(X).forEach(([m, r]) => { if (m[0] === '_' || K[m]) return; K[m] = { k: m, l: 'datasheet', m: 'exact', fp: r.fp || '', pkg: r.pkg || '', pdf: r.pdf || '', t: r.t || '', p: r.p }; n++; });
+  writeFileSync(join(root, 'src/parts/kicadpins.js'), cur.replace(/const KPINS=\{.*\};/s, () => 'const KPINS=' + JSON.stringify(K) + ';'));
+  console.log(`merge-only: ${Object.keys(K).length} part numbers (${n} from datasheets/pins.json)`); process.exit(0);
+}
 const dirs = process.argv.slice(2), dir = dirs[0]; if (!dir) { console.error('usage: node scripts/kicadpins.mjs <kicad-symbols dir>'); process.exit(1); }
 const ctx = vm.createContext({ console });
 for (const f of ['src/core/pcb-core.js','src/parts/parts.js','src/core/newproj.js','src/core/hwarch.js','src/core/products.js','src/core/partrank.js','src/core/kicadlib.js','src/core/partlib.js'])

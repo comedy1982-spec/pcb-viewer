@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NCV8664CST33T3G · 3.3 V 150 mA 45 V low-Iq automotive LDO, SOT-223</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="NCV8664CST33T3G" data-mfr="onsemi" data-cat="전원" data-price="0.7" data-status="done" data-src="https://pdf.elecfans.com/ONSEMI/NCV8664CST33T3G.html">
+  <h1>NCV8664CST33T3G</h1>
+  <p class="meta">onsemi · 전원 · 3.3 V 고정 150 mA LDO, 입력 45 V, 저 Iq, AEC-Q100, SOT-223 · 참고 단가 약 $0.7 (추정)</p>
+  <p class="meta">원본: <a href="https://pdf.elecfans.com/ONSEMI/NCV8664CST33T3G.html" target="_blank" rel="noopener">데이터시트 (사본)</a> · <a href="https://www.onsemi.com/products/power-management/linear-regulators-ldo/ncv8664c" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=NCV8664CST33T3G" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 NCV8664C/D Rev. 3, 2018-11</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>고정 출력 저 Iq LDO (3.3 V 버전, 5.0 V는 NCV8664CST50T3G)</dd>
+    <dt>출력 전압</dt><dd>3.3 V ±2.0 % (3.234–3.366 V, 온도 전 범위)</dd>
+    <dt>출력 전류</dt><dd>150 mA (전류 제한 150 mA min / 500 mA max)</dd>
+    <dt>드롭아웃</dt><dd>최대 500 mV @100 mA, 600 mV @150 mA</dd>
+    <dt>정지 전류</dt><dd>typ 약 22 µA (원문 추출에서 단위 기호 손상 — 제품명 "21 µA IQ", 데이터시트 표 확인)</dd>
+    <dt>입력 범위</dt><dd>4.5 – 45 V (동작)</dd>
+    <dt>등급</dt><dd>AEC-Q100, PPAP 대응 (NCV 접두)</dd>
+    <dt>TJ</dt><dd>−40 … +150 °C</dd>
+    <dt>패키지</dt><dd>SOT-223 (마킹 664C3, 4000개/릴)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VIN</td><td>−42</td><td>45</td><td>V</td><td>역접속 내성</td></tr>
+      <tr><td>VOUT</td><td>−0.3</td><td>32</td><td>V</td><td></td></tr>
+      <tr><td>접합 온도 (동작)</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM / MM</td><td></td><td>4 / 0.2</td><td>kV</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VIN</td><td>4.5</td><td></td><td>45</td><td>V</td></tr>
+      <tr><td>IOUT</td><td></td><td></td><td>150</td><td>mA</td></tr>
+      <tr><td>TJ</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT-223</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>VIN</td><td>입력</td></tr>
+      <tr><td>2</td><td>GND</td><td>접지</td></tr>
+      <tr><td>3</td><td>VOUT</td><td>출력 3.3 V</td></tr>
+      <tr><td>4 (TAB)</td><td>GND</td><td>방열 탭, 접지</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>COUT: 3.3 V 버전 시험·응용 회로에 22 µF (5.0 V 버전은 10 µF). ESR 안정 영역은 데이터시트 그래프(Fig. 4/13)로만 제공.</li>
+    <li>CIN: 응용 회로 100 nF, 측정 회로 1.0 µF 표시 — 선로 인덕턴스 보상용. 발진 시 약 1 Ω 직렬 저항으로 댐핑 가능(데이터시트 언급).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOT-223: RθJA 109 °C/W, RψJT(접합–탭) 10.9 °C/W (1 oz Cu, 100 mm², FR4). DPAK 버전(NCV8664CDT33RKG): RθJA 87.4 °C/W, RψJT 3.5 °C/W. TJ max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>손실 예: 14 V 입력, 50 mA → (14−3.3)×0.05 ≈ 0.54 W → SOT-223에서 ΔT ≈ 58 °C. 연속 150 mA는 높은 VIN에서 열로 제한되므로 동박 확대 또는 DPAK.</li>
+    <li>VIN −42 V 역전압 내성으로 배터리 직결 상시 전원(KL30)에 사용 가능. 부하 덤프 대비 45 V 초과 시 앞단 TVS 필요.</li>
+    <li>SOT-223 탭과 핀 2는 모두 GND — KiCad SOT-223-3_TabPin2 풋프린트 사용.</li>
+  </ul>
+</article>
+</body>
+</html>

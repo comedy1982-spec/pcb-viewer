@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A4919 · Three-phase MOSFET driver with diagnostics</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="A4919" data-mfr="Allegro MicroSystems" data-cat="게이트 드라이버" data-price="5" data-status="done" data-src="https://pdf.elecfans.com/ALLEGRO/A4919GETTR-T.html">
+  <h1>A4919</h1>
+  <p class="meta">Allegro MicroSystems · 게이트 드라이버 · 3상 N-MOSFET 게이트 드라이버, VDS 단락 진단, 옵션 LDO · 참고 단가 약 $5 (추정)</p>
+  <p class="meta">원본: <a href="https://pdf.elecfans.com/ALLEGRO/A4919GETTR-T.html" target="_blank" rel="noopener">데이터시트 (사본)</a> · <a href="https://www.allegromicro.com/en/about-allegro/news-room/2018/a4919-press-release" target="_blank" rel="noopener">제조사 발표</a> · <a href="https://octopart.com/search?q=A4919" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 A4919-DS Rev. 7 (2021-11-09)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>3상 브리지 N-MOSFET 게이트 드라이버, 6개 MOSFET 각각 로직 입력 (AHI/ALO…), 부트스트랩 하이사이드</dd>
+    <dt>전원</dt><dd>VBB 5.5~50 V 동작, 7~50 V에서 사양 보증 (7 V 미만 게이트 구동 감소)</dd>
+    <dt>VREG</dt><dd>12.5 / 13 / 13.75 V (VBB &gt; 9 V, 0~15 mA), 차지펌프</dd>
+    <dt>게이트 구동</dt><dd>풀업 5 / 8 / 13 Ω, 풀다운 1.5 / 2.4 / 4.6 Ω; tr 35 ns, tf 20 ns (1 nF)</dd>
+    <dt>전파 지연</dt><dd>60 / 90 / 180 ns; 데드타임은 외부 컨트롤러가 생성해야 함</dd>
+    <dt>진단</dt><dd>MOSFET별 VDS 모니터 (내부 1.2 V typ 또는 VDSTH 0.2~2.0 V), 저전압·과온, 단일 오픈 드레인 FAULT</dd>
+    <dt>로직 LDO</dt><dd>-5: 5 V (4.85~5.25 V, &lt; 70 mA) · -3: 3.3 V (3.15~3.53 V, &lt; 70 mA) · 무접미: LDO 없음, 슬립 모드 15 µA max</dd>
+    <dt>온도</dt><dd>TA −40~105 °C (G 범위), TJ 165 °C</dd>
+    <dt>패키지</dt><dd>TSSOP-28 EP (LP) 9.7 × 4.4 × 1.2 mm · QFN-28 EP (ET) 5 × 5 × 0.9 mm</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VBB</td><td>-0.3</td><td>50</td><td>V</td><td></td></tr>
+      <tr><td>VDDM, V3, V5</td><td>-0.3</td><td>7</td><td>V</td><td></td></tr>
+      <tr><td>VREG, CP1, CP2</td><td>-0.3</td><td>16</td><td>V</td><td></td></tr>
+      <tr><td>AHI, ALO, BHI, BLO, CHI, CLO</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+      <tr><td>FAULT, VDSTH</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+      <tr><td>VBRG</td><td>-5</td><td>55</td><td>V</td><td></td></tr>
+      <tr><td>LSS</td><td>-4</td><td>6.5</td><td>V</td><td></td></tr>
+      <tr><td>SA, SB, SC</td><td>-5</td><td>55</td><td>V</td><td></td></tr>
+      <tr><td>GHA, GHB, GHC</td><td>Sx</td><td>Sx+15</td><td>V</td><td></td></tr>
+      <tr><td>GLA, GLB, GLC</td><td>-5</td><td>16</td><td>V</td><td></td></tr>
+      <tr><td>CA, CB, CC</td><td>-0.3</td><td>Sx+15</td><td>V</td><td></td></tr>
+      <tr><td>동작 주위 온도 TA</td><td>-40</td><td>105</td><td>°C</td><td></td></tr>
+      <tr><td>접합 온도 TJ(max)</td><td></td><td>165</td><td>°C</td><td>과도 175 °C (≤10 s, 수명 ≤10 h)</td></tr>
+      <tr><td>보관 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VBB (기능)</td><td>5.5</td><td></td><td>50</td><td>V</td></tr>
+      <tr><td>VBB (사양 보증)</td><td>7</td><td></td><td>50</td><td>V</td></tr>
+      <tr><td>로직 VIL / VIH</td><td>VIH 2.0</td><td></td><td>VIL 0.8</td><td>V</td></tr>
+      <tr><td>외부 VDS 임계 VDSTH</td><td>0.2</td><td></td><td>2.0</td><td>V</td></tr>
+      <tr><td>VDS 블랭킹 tBL</td><td>1.5</td><td>2.3</td><td>4.5</td><td>µs</td></tr>
+      <tr><td>VREG UVLO (켜짐 / 꺼짐)</td><td></td><td>8 / 7.25</td><td></td><td>V</td></tr>
+      <tr><td>동작 전류 (VBB 12 V)</td><td></td><td>10</td><td>14</td><td>mA</td></tr>
+      <tr><td>TA</td><td>-40</td><td></td><td>105</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>TSSOP-28 노출 패드 (LP: A4919GLPTR-T / -3-T / -5-T). QFN-28 (ET)은 같은 순서를 회전: ET 1 = VBRG … ET 11 = CLO, ET 12 = LSS … ET 28 = VBB.</p>
+  <table><thead><tr><th>LP 핀</th><th>ET 핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>12</td><td>LSS</td><td>로우사이드 소스</td></tr>
+      <tr><td>2</td><td>13</td><td>GLC</td><td>로우사이드 게이트 C</td></tr>
+      <tr><td>3</td><td>14</td><td>GHC</td><td>하이사이드 게이트 C</td></tr>
+      <tr><td>4</td><td>15</td><td>SC</td><td>모터 상 C</td></tr>
+      <tr><td>5</td><td>16</td><td>CC</td><td>부트스트랩 C</td></tr>
+      <tr><td>6</td><td>17</td><td>GLB</td><td>로우사이드 게이트 B</td></tr>
+      <tr><td>7</td><td>18</td><td>GHB</td><td>하이사이드 게이트 B</td></tr>
+      <tr><td>8</td><td>19</td><td>SB</td><td>모터 상 B</td></tr>
+      <tr><td>9</td><td>20</td><td>CB</td><td>부트스트랩 B</td></tr>
+      <tr><td>10</td><td>21</td><td>GLA</td><td>로우사이드 게이트 A</td></tr>
+      <tr><td>11</td><td>22</td><td>GHA</td><td>하이사이드 게이트 A</td></tr>
+      <tr><td>12</td><td>23</td><td>SA</td><td>모터 상 A</td></tr>
+      <tr><td>13</td><td>24</td><td>CA</td><td>부트스트랩 A</td></tr>
+      <tr><td>14</td><td>25</td><td>VREG</td><td>게이트 구동 전원 출력</td></tr>
+      <tr><td>15</td><td>26</td><td>CP2</td><td>펌프 커패시터</td></tr>
+      <tr><td>16</td><td>27</td><td>CP1</td><td>펌프 커패시터</td></tr>
+      <tr><td>17</td><td>28</td><td>VBB</td><td>주 전원</td></tr>
+      <tr><td>18</td><td>1</td><td>VBRG</td><td>하이사이드 브리지 전압 감지</td></tr>
+      <tr><td>19</td><td>2</td><td>GND</td><td>접지</td></tr>
+      <tr><td>20</td><td>3</td><td>VDDM / V5 / V3</td><td>무접미: 로직 전원 모니터 입력 · -5: 5 V 출력 · -3: 3.3 V 출력</td></tr>
+      <tr><td>21</td><td>4</td><td>VDSTH</td><td>VDS 모니터 임계 전압</td></tr>
+      <tr><td>22</td><td>5</td><td>FAULT</td><td>진단 출력 (오픈 드레인)</td></tr>
+      <tr><td>23</td><td>6</td><td>AHI</td><td>A상 하이사이드 입력</td></tr>
+      <tr><td>24</td><td>7</td><td>ALO</td><td>A상 로우사이드 입력</td></tr>
+      <tr><td>25</td><td>8</td><td>BHI</td><td>B상 하이사이드 입력</td></tr>
+      <tr><td>26</td><td>9</td><td>BLO</td><td>B상 로우사이드 입력</td></tr>
+      <tr><td>27</td><td>10</td><td>CHI</td><td>C상 하이사이드 입력</td></tr>
+      <tr><td>28</td><td>11</td><td>CLO</td><td>C상 로우사이드 입력</td></tr>
+      <tr><td>PAD</td><td>PAD</td><td>—</td><td>노출 열패드</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VBB: 세라믹 약 220 nF를 VBB–GND 근접 배치 (+ 벌크).</li>
+    <li>부트스트랩: CBOOT = QGATE × 20 / VBOOT.</li>
+    <li>VREG 저장 커패시터: 블록 정류 20 × CBOOT, 정현파/SVM 40 × CBOOT.</li>
+    <li>차지펌프 CP1–CP2: 최소 220 nF, 일반 470 nF.</li>
+    <li>LDO 버전 V3/V5 출력: ≥ 1 µF, ESR ≤ 250 mΩ.</li>
+    <li>GHx/GLx 직렬 게이트 저항으로 슬루율 조정 (옵션).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>RθJA: LP 4층 JEDEC 28 °C/W, LP 2층 3.8 in² 구리 32 °C/W, ET 4층 32 °C/W. RθJP 2 °C/W. TJ max 165 °C. 노출 패드는 GND 플레인에 납땜.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>입력은 6개 독립 로직 입력 — 데드타임은 MCU PWM에서 생성 (드라이버에 데드타임 생성 기능 없음).</li>
+    <li>VDSTH &lt; 100 mV면 단락 폴트 보고 비활성 — VDSTH 분압 저항 고장 시 보호 상실 주의.</li>
+    <li>슬립 모드는 LDO 없는 버전에만 있음. 5 V/3.3 V LDO 버전은 슬립 불가.</li>
+    <li>SPI 없음 — SPI 진단·CSA가 필요하면 A4918 (SPI + CSA 3개) 검토.</li>
+  </ul>
+</article>
+</body>
+</html>

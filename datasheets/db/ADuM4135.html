@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADuM4135 · Single-channel isolated gate driver with DESAT and Miller clamp</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="ADuM4135" data-mfr="Analog Devices" data-cat="게이트 드라이버" data-price="" data-status="done" data-src="https://wcm-cce.cldnet.analog.com/media/en/technical-documentation/data-sheets/adum4135.pdf">
+  <h1>ADuM4135</h1>
+  <p class="meta">Analog Devices · 게이트 드라이버 · 5 kV 절연 단일 채널 IGBT/MOSFET 게이트 드라이버, DESAT·미러 클램프</p>
+  <p class="meta">원본: <a href="https://wcm-cce.cldnet.analog.com/media/en/technical-documentation/data-sheets/adum4135.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=ADuM4135" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev. E (2022-07)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>iCoupler 절연 게이트 드라이버, 분리 출력(VOUT_ON/VOUT_OFF), DESAT 검출 + 소프트 셧다운, 액티브 미러 클램프, FAULT/READY 출력</dd>
+    <dt>절연</dt><dd>UL 1577 5000 V rms 1분, VDE 0884-11 강화 절연 VIORM 849 V peak, CMTI 최소 100 kV/µs</dd>
+    <dt>출력 전류</dt><dd>피크 4.61 A (VDD2 = 12 V, 2 Ω), 단락 소스/싱크 13 A / 14 A</dd>
+    <dt>전파 지연</dt><dd>40 / 55 / 70 ns, 스큐 최대 17.5 ns</dd>
+    <dt>전원</dt><dd>VDD1 2.5 ~ 6 V, VDD2 12.25 ~ 30 V, VSS2 -15 ~ 0 V (VDD2 − VSS2 ≤ 30 V)</dd>
+    <dt>UVLO</dt><dd>VDD2 상승 최대 12.25 V / 하강 최소 10.4 V</dd>
+    <dt>DESAT</dt><dd>임계 8.73 / 9.2 / 9.61 V, 내부 전류원 일반 537 µA, 마스킹 일반 370 ns</dd>
+    <dt>미러 클램프</dt><dd>임계 VSS2 기준 일반 2 V, 클램프 저항 1.1 ~ 2.75 Ω</dd>
+    <dt>온도 · 등급</dt><dd>-40 ~ +125 °C. 자동차용 ADuM4135W ('Qualified for automotive applications')</dd>
+    <dt>패키지</dt><dd>16-lead SOIC 와이드 바디 (RW-16), 연면·공간 거리 7.8 mm</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDD1 → VSS1</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+      <tr><td>VDD2 → GND2</td><td>-0.3</td><td>35</td><td>V</td><td></td></tr>
+      <tr><td>VSS2 → GND2</td><td>-18</td><td>0.3</td><td>V</td><td></td></tr>
+      <tr><td>VDD2 − VSS2</td><td></td><td>35</td><td>V</td><td></td></tr>
+      <tr><td>VI+, VI−, RESET → VSS1</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+      <tr><td>DESAT → GND2</td><td>-0.3</td><td>VDD2 + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>GATE_SENSE, VOUT_ON, VOUT_OFF → VSS2</td><td>-0.3</td><td>VDD2 + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>공통 모드 과도</td><td></td><td>±150</td><td>kV/µs</td><td></td></tr>
+      <tr><td>동작 온도</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VDD1 → VSS1</td><td>2.5</td><td></td><td>6</td><td>V</td></tr>
+      <tr><td>VDD2 → GND2</td><td>12.25</td><td></td><td>30</td><td>V</td></tr>
+      <tr><td>VSS2 → GND2</td><td>-15</td><td></td><td>0</td><td>V</td></tr>
+      <tr><td>VDD2 − VSS2</td><td>12.25</td><td></td><td>30</td><td>V</td></tr>
+      <tr><td>동작 온도</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>16-lead SOIC 와이드 바디 (RW-16), 상면도</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>VSS1</td><td>1차측 접지</td></tr>
+      <tr><td>2</td><td>VI+</td><td>정논리 입력</td></tr>
+      <tr><td>3</td><td>VI−</td><td>부논리 입력</td></tr>
+      <tr><td>4</td><td>READY</td><td>오픈 드레인, H = 동작 준비 (풀업 필요)</td></tr>
+      <tr><td>5</td><td>FAULT</td><td>오픈 드레인, L = DESAT 폴트 (풀업 필요)</td></tr>
+      <tr><td>6</td><td>RESET</td><td>L로 폴트 해제</td></tr>
+      <tr><td>7</td><td>VDD1</td><td>1차 전원 2.5~6 V</td></tr>
+      <tr><td>8</td><td>VSS1</td><td>1차측 접지</td></tr>
+      <tr><td>9</td><td>VSS2</td><td>2차 음전원 -15~0 V</td></tr>
+      <tr><td>10</td><td>DESAT</td><td>탈포화 검출 입력</td></tr>
+      <tr><td>11</td><td>GND2</td><td>2차 접지 (IGBT 이미터/MOSFET 소스)</td></tr>
+      <tr><td>12</td><td>VOUT_OFF</td><td>턴오프 출력 경로</td></tr>
+      <tr><td>13</td><td>VDD2</td><td>2차 전원 12.25~30 V</td></tr>
+      <tr><td>14</td><td>VOUT_ON</td><td>턴온 출력 경로</td></tr>
+      <tr><td>15</td><td>GATE_SENSE</td><td>게이트 전압 감지 + 미러 클램프 출력. 미사용 시 VSS2에 연결</td></tr>
+      <tr><td>16</td><td>VSS2</td><td>2차 음전원</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>입·출력 전원 핀마다 0.01 ~ 0.1 µF 세라믹, VDD2에는 게이트 전하 공급용 10 µF를 추가합니다. 작은 커패시터까지 리드 길이 5 mm 이하.</li>
+    <li>게이트 저항: IPEAK = (VDD2 − VSS2) / (RDSON_N + RGOFF). 예: 18 V 스윙, 4 A 피크 → RGOFF = 3.9 Ω. RGON은 RGOFF보다 약간 크게.</li>
+    <li>DESAT: IGBT 전압보다 높은 정격의 고속 회복 다이오드, 블랭킹 시간 약 2 µs가 일반적. 옵션 RBLANK 100 Ω ~ 2 kΩ.</li>
+    <li>단극성 동작: VSS2 전원을 제거하고 VSS2를 GND2에 연결합니다.</li>
+    <li>손실 추정: PDISS = CEST × (VDD2 − VSS2)² × fS, CEST = 5 × CISS.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>16-lead SOIC_W (RW-16). θJA 75.4 °C/W, θJC 35.4 °C/W (4층 PCB). 열 차단 155 °C (히스테리시스 20 °C). 안전 한계 PS 1.66 W, TS 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>절연 장벽 아래(패키지 하부)에는 구리·비아를 두지 마세요. 연면 거리 7.8 mm를 PCB에서도 확보해야 합니다.</li>
+    <li>VDD2 UVLO가 최대 12.25 V이므로 +15 V 게이트 전원을 권장합니다. SiC처럼 낮은 구동 전압이면 계열 다른 UVLO 옵션을 검토하세요.</li>
+    <li>FAULT 후에는 RESET을 L로 내려야 해제됩니다.</li>
+    <li>유사품: ADuM4136 (단일 출력, DESAT), ADuM4177.</li>
+  </ul>
+</article>
+</body>
+</html>

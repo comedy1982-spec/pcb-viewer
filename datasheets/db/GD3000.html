@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GD3000 · 3-phase brushless motor FET pre-driver</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="GD3000" data-mfr="NXP" data-cat="게이트 드라이버" data-price="4.5" data-status="done" data-src="https://datasheet.chipsmall.com/MC33GD3000EPR2/518861.pdf">
+  <h1>GD3000</h1>
+  <p class="meta">NXP · 게이트 드라이버 · 3상 BLDC 모터용 FET 프리드라이버 (SPI, 전류 감지 앰프, 진단) · 참고 단가 약 $4.5 (추정)</p>
+  <p class="meta">원본: <a href="https://datasheet.chipsmall.com/MC33GD3000EPR2/518861.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://nxp.com/products/GD3000" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=MC33GD3000" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 MC33GD3000 Rev. 6.0 (8/2018, Advance Information)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>3상 하프브리지 6개 N-FET 게이트 드라이버, 전류 감지 앰프, 과전류 비교기, SPI 설정/진단</dd>
+    <dt>전원</dt><dd>VPWR/VSUP 8.0–40 V 완전 규격, 확장 동작 6.0–60 V</dd>
+    <dt>게이트 구동</dt><dd>1.0–2.5 A; 소스 6.0 Ω typ / 8.5 Ω max, 싱크 3.0 Ω max</dd>
+    <dt>VLS 레귤레이터</dt><dd>약 15 V (13.5–17 V), 0–60 mA</dd>
+    <dt>차지 펌프</dt><dd>저전압 배터리에서 완전 FET 구동, fOSC 90/125/190 kHz</dd>
+    <dt>SPI</dt><dd>최대 4.0 MHz (5.2.18절은 5.0 MHz 기재)</dd>
+    <dt>보호</dt><dd>UV 검출, 디새츄레이션 검출 (1.4 V typ), 과전류 비교기, 과열 경고 170 °C typ, 데드타임 SPI 설정</dd>
+    <dt>등급·온도</dt><dd>AEC-Q100 Grade 1, TA -40~125 °C</dd>
+    <dt>패키지</dt><dd>56-pin QFN + EP (MC33GD3000EP, 테이프 릴 R2), 케이스 98ASA00654D</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VSUP 정상</td><td></td><td>60</td><td>V</td><td>과도 -1.5~80 V (ISO 7637 로드 덤프)</td></tr>
+    <tr><td>VPWR 정상</td><td></td><td>58</td><td>V</td><td>과도 -1.5~80 V</td></tr>
+    <tr><td>PUMP, VPUMP</td><td>-0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VLS, VLS_CAP</td><td>-0.3</td><td>18</td><td>V</td><td></td></tr>
+    <tr><td>VDD</td><td>-0.3</td><td>7.0</td><td>V</td><td></td></tr>
+    <tr><td>로직 입출력</td><td>-0.3</td><td>7.0</td><td>V</td><td>입력 10 mA</td></tr>
+    <tr><td>앰프 입력 AMP_P/N</td><td>-7.0</td><td>7.0</td><td>V</td><td>6.0 mA</td></tr>
+    <tr><td>Px_BOOT, Px_HS_G</td><td></td><td>75</td><td>V</td><td>HS_G/HS_S 과도 -7.0~75 V</td></tr>
+    <tr><td>Px_LS_G</td><td></td><td>16</td><td>V</td><td>과도 -7.0~18 V</td></tr>
+    <tr><td>Px_LS_S 과도</td><td>-7.0</td><td>7.0</td><td>V</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>±2000</td><td>V</td><td>BOOT, HS_S, HS_G, VPWR ±1000 V</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>±250</td><td>V</td><td>코너 핀 ±300 V</td></tr>
+    <tr><td>저장 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>접합 온도</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VPWR = VSUP (규격 조건)</td><td>8.0</td><td></td><td>40</td><td>V</td></tr>
+    <tr><td>VPWR/VSUP 확장 동작</td><td>6.0</td><td></td><td>60</td><td>V</td></tr>
+    <tr><td>주위 온도</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>56-pin QFN + 노출 패드 (EP)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>PA_BOOT</td><td>A상 부트스트랩</td></tr>
+    <tr><td>2, 3, 5, 7, 13, 17, 41, 42</td><td>NC</td><td>미연결</td></tr>
+    <tr><td>4</td><td>VLS</td><td>VLS 레귤레이터 출력 (게이트 구동 전원)</td></tr>
+    <tr><td>6</td><td>VPWR</td><td>게이트 구동 전원 입력</td></tr>
+    <tr><td>8</td><td>PHASEA</td><td>A상 비교기 출력</td></tr>
+    <tr><td>9</td><td>PGND</td><td>전력 GND (차지 펌프)</td></tr>
+    <tr><td>10, 11</td><td>EN1, EN2</td><td>인에이블 (AND)</td></tr>
+    <tr><td>12</td><td>RST_B</td><td>리셋 입력</td></tr>
+    <tr><td>14</td><td>PUMP</td><td>차지 펌프 스위칭 노드</td></tr>
+    <tr><td>15</td><td>VPUMP</td><td>차지 펌프 전원</td></tr>
+    <tr><td>16</td><td>VSUP</td><td>하이사이드 FET 공통 드레인 (부하 전원)</td></tr>
+    <tr><td>18, 19</td><td>PHASEB, PHASEC</td><td>B/C상 비교기 출력</td></tr>
+    <tr><td>20, 21</td><td>PA_HS_B, PA_LS</td><td>A상 HS 입력 (액티브 로우) / LS 입력 (액티브 하이)</td></tr>
+    <tr><td>22</td><td>VDD</td><td>5.0 V 로직 레귤레이터 출력</td></tr>
+    <tr><td>23, 24</td><td>PB_HS_B, PB_LS</td><td>B상 HS/LS 입력</td></tr>
+    <tr><td>25</td><td>INT</td><td>인터럽트 출력</td></tr>
+    <tr><td>26–29</td><td>CS_B, SI, SCLK, SO</td><td>SPI (SO는 CS 로우일 때만 구동)</td></tr>
+    <tr><td>30, 31</td><td>PC_LS, PC_HS_B</td><td>C상 LS/HS 입력</td></tr>
+    <tr><td>32–34</td><td>AMP_OUT, AMP_N, AMP_P</td><td>전류 감지 앰프</td></tr>
+    <tr><td>35, 36</td><td>OC_OUT, OC_TH</td><td>과전류 비교기 출력 / 임계 입력</td></tr>
+    <tr><td>37</td><td>VSS</td><td>로직·전력 GND 기준</td></tr>
+    <tr><td>38, 39</td><td>GND</td><td>기판·ESD 기준, VSS에 연결</td></tr>
+    <tr><td>40</td><td>VLS_CAP</td><td>VLS 커패시터 연결</td></tr>
+    <tr><td>43–47</td><td>PC_LS_S, PC_LS_G, PC_HS_S, PC_HS_G, PC_BOOT</td><td>C상 게이트 출력</td></tr>
+    <tr><td>48–52</td><td>PB_LS_S, PB_LS_G, PB_HS_S, PB_HS_G, PB_BOOT</td><td>B상 게이트 출력</td></tr>
+    <tr><td>53–56</td><td>PA_LS_S, PA_LS_G, PA_HS_S, PA_HS_G</td><td>A상 게이트 출력</td></tr>
+    <tr><td>EP</td><td>EP</td><td>방열 패드, VSS(37)·시스템 GND에 연결 권장</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD: 최소 0.47 µF.</li>
+    <li>VLS, VLS_CAP: 각 핀에 저 ESR 2.2 µF 권장.</li>
+    <li>차지 펌프: 1.0 µF MLC 펌프 커패시터 + MUR120 다이오드 (데이터시트 예). 최저 시스템 전압이 14 V 아래로 내려갈 수 있으면 차지 펌프 사용 권장.</li>
+    <li>부트스트랩 커패시터: 외부 FET 게이트 용량의 10–20배 (부트스트랩 전압 약 15 V 제한), 저 ESR.</li>
+    <li>VPWR 약 8.0 V(typ) 이상에서 차지 펌프·VDD 레귤레이터 기동.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>56-pin QFN, EP 하단 노출. RθJC 1.5 °C/W. RθJA 미기재. 과열 경고 150/170/185 °C (min/typ/max), 히스테리시스 약 10 °C. Tj 최대 150 °C. 패키지 외형 치수는 읽은 범위에 없음 — 98ASA00654D 도면 확인 필요.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>주문 품번은 MC33GD3000EP (테이프 릴 MC33GD3000EPR2). 데이터시트 상태가 "Advance Information"으로 표기됨.</li>
+    <li>데이터시트 내부 오기: EP 노트에 "pin 55", "pin 29 (VSS)"로 적혀 있으나 핀 표상 VSS는 37번 — 핀 표(Table 2) 기준으로 설계.</li>
+    <li>HS 입력은 액티브 로우(Px_HS_B), LS 입력은 액티브 하이 — MCU PWM 극성 주의.</li>
+    <li>BOOT/HS 핀 HBM ESD는 ±1000 V로 다른 핀보다 낮음.</li>
+  </ul>
+</article>
+</body>
+</html>

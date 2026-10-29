@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BQ79600-Q1 · SPI/UART to isolated daisy-chain bridge</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="BQ79600-Q1" data-mfr="TI" data-cat="통신" data-price="" data-status="done" data-src="https://ti.com/jp/lit/gpn/bq79600-q1">
+  <h1>BQ79600-Q1</h1>
+  <p class="meta">TI · 통신 · BMS용 SPI/UART ↔ 절연 데이지체인 브리지 (기능 안전)</p>
+  <p class="meta">원본: <a href="https://ti.com/jp/lit/gpn/bq79600-q1" target="_blank" rel="noopener">데이터시트 PDF (일본어판 JAJSP77A)</a> · <a href="https://www.ti.com/product/es-mx/BQ79600-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=BQ79600-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 JAJSP77A (영문 SLUSDS1 번역, 2019-11 발행 / 2020-08 개정)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>MCU의 UART/SPI를 TI 배터리 모니터(BQ7961X-Q1, BQ7965X, BQ7963X 등)용 절연 차동 데이지체인으로 변환·복호</dd>
+    <dt>전원</dt><dd>BAT 4.75–40 V 범위 지원; 일반 동작 전류 2500 µA (제품 페이지)</dd>
+    <dt>호스트 I/F</dt><dd>UART 또는 SPI, VIO 3.3 V/5 V 로직</dd>
+    <dt>데이지체인</dt><dd>변압기 또는 커패시터 절연, 링(ring) 구조 지원 (시스템당 1개)</dd>
+    <dt>웨이크업</dt><dd>링 구조에서 결함 발생 시 INH로 BMS(MCU·PMIC) 자동 기상(reverse wakeup)</dd>
+    <dt>기능 안전</dt><dd>ISO 26262 대응, ASIL-D 가능, 안전 매뉴얼·FMEDA 제공</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1 (TA -40 – 125 °C), HBM 2급, CDM C4B</dd>
+    <dt>패키지</dt><dd>TSSOP-16 (PW), 5.0 × 6.4 mm (제품 페이지 표기)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>BAT – GND</td><td>-0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>INH – GND</td><td>-0.3</td><td>40</td><td>V</td><td>INH &lt; BAT</td></tr>
+    <tr><td>VIO, CVDD – GND</td><td>-0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>DVDD – GND</td><td>-0.3</td><td>1.98</td><td>V</td><td></td></tr>
+    <tr><td>MISO/TX, MOSI/RX, nCS, SCLK, NFAULT, nUART/SPI</td><td>-0.3</td><td>VIO + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>COMHP, COMHN, COMLP, COMLN – GND</td><td>-10</td><td>10</td><td>V</td><td></td></tr>
+    <tr><td>COMHP–COMHN, COMLP–COMLN 차동</td><td>-6.5</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>INH 전류</td><td></td><td>4</td><td>mA</td><td></td></tr>
+    <tr><td>MISO/TX 전류</td><td></td><td>8</td><td>mA</td><td>100 pF, VIO = 5 V, 10 ns 천이</td></tr>
+    <tr><td>접합 온도 TJ</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도 Tstg</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>±2000</td><td>V</td><td>AEC-Q100</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>±750 / ±500</td><td>V</td><td>코너 핀(1, 8, 9, 16) / 그 외</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VBAT, INH (12 V 배터리 직결, reverse wakeup 사용)</td><td>5.5</td><td></td><td>24</td><td>V</td></tr>
+    <tr><td>VBAT (BAT/CVDD를 5 V 레귤레이터로 공급, reverse wakeup 미사용)</td><td>4.75</td><td></td><td>5.25</td><td>V</td></tr>
+    <tr><td>VIO</td><td>3.135</td><td></td><td>5.25</td><td>V</td></tr>
+    <tr><td>MISO/TX 전류</td><td></td><td></td><td>3</td><td>mA</td></tr>
+    <tr><td>INH 출력 전류</td><td></td><td></td><td>2</td><td>mA</td></tr>
+    <tr><td>CVDD 출력 (무부하)</td><td>4.9</td><td>5</td><td>5.1</td><td>V</td></tr>
+    <tr><td>DVDD 출력 (무부하)</td><td>1.75</td><td>1.8</td><td>1.85</td><td>V</td></tr>
+    <tr><td>CVDD·DVDD 부하 용량</td><td>0.1</td><td></td><td>0.8</td><td>µF</td></tr>
+    <tr><td>주위 온도 TA</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PW 16핀 TSSOP</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>DVDD</td><td>내부 디지털 1.8 V LDO 출력 — 0.22 µF(권장) 또는 0.47 µF로 GND</td></tr>
+    <tr><td>2</td><td>NFAULT</td><td>오픈 드레인 결함 출력 (액티브 로우), 100 kΩ로 VIO 풀업; 미사용 시 GND</td></tr>
+    <tr><td>3</td><td>VIO</td><td>UART/SPI I/O 전원, 0.1 µF 디커플링; 다른 I/O 구동 전에 먼저 인가</td></tr>
+    <tr><td>4</td><td>RX/MOSI</td><td>UART RX / SPI MOSI, 10–100 kΩ로 VIO 풀업, 개방 금지</td></tr>
+    <tr><td>5</td><td>TX/MISO</td><td>UART TX / SPI MISO, MCU측에 10–100 kΩ 풀업</td></tr>
+    <tr><td>6</td><td>SCLK</td><td>SPI 클럭, 10–100 kΩ로 GND 풀다운 (미사용 시 GND)</td></tr>
+    <tr><td>7</td><td>nCS</td><td>SPI 칩 선택 (액티브 로우), SPI 모드는 10–100 kΩ 풀업, UART 모드는 GND</td></tr>
+    <tr><td>8</td><td>nUART/SPI (SPI_RDY)</td><td>인터페이스 선택: GND = UART, 10–100 kΩ로 VIO + MCU GPIO = SPI (SPI_RDY 표시)</td></tr>
+    <tr><td>9</td><td>GND</td><td>접지</td></tr>
+    <tr><td>10</td><td>COMLP</td><td>데이지체인 하위측 AC 결합 양방향 I/O (+)</td></tr>
+    <tr><td>11</td><td>COMLN</td><td>데이지체인 하위측 (−)</td></tr>
+    <tr><td>12</td><td>COMHN</td><td>데이지체인 상위측 (−)</td></tr>
+    <tr><td>13</td><td>COMHP</td><td>데이지체인 상위측 (+)</td></tr>
+    <tr><td>14</td><td>CVDD</td><td>데이지체인 전용 5 V 전원 출력 — 0.22 µF(권장) 또는 0.47 µF</td></tr>
+    <tr><td>15</td><td>BAT</td><td>배터리 전원 입력, 10 Ω 직렬 + 0.1 µF 바이패스</td></tr>
+    <tr><td>16</td><td>INH</td><td>PMOS 오픈 드레인 인히비트 출력 (시스템 레귤레이터 기상), 100 kΩ로 GND; reverse wakeup 미사용 시 BAT에 연결, 개방 금지</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>BAT: 10 Ω 직렬 저항 + 0.1 µF; VIO 0.1 µF; DVDD·CVDD 0.22 µF (허용 부하 0.1–0.8 µF).</li>
+    <li>풀업/풀다운: nCS·RX/MOSI·TX/MISO 10–100 kΩ to VIO, SCLK 10–100 kΩ to GND, NFAULT 100 kΩ to VIO.</li>
+    <li>COMH/COML은 AC 결합 전용 — 외부 DC 인가 금지, 링 미사용 시 해당 포트 개방. 절연 커패시터/변압기 부품값은 데이터시트 7.3.2.1.1절 확인 필요.</li>
+    <li>INH: 100 kΩ to GND, 출력 전류 2 mA 이하(권장).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PW TSSOP-16: RθJA 102 °C/W, RθJC(top) 28.9 °C/W, RθJB 49 °C/W, ψJT 14 °C/W, ψJB 48.2 °C/W. TJ 최대 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>SPI 멀티드롭에서는 MISO가 하이로 대기하므로 3상태 버퍼 추가 필요(데이터시트 명시).</li>
+    <li>VIO를 먼저 인가한 뒤 MCU가 통신 핀을 구동하도록 전원 순서 관리.</li>
+    <li>데이지체인 배선은 차동 쌍으로 대칭 배선하고, 절연 부품(커패시터/변압기)은 커넥터 쪽에 배치.</li>
+    <li>패키지 크기 표기가 문서마다 다름 (일본어 데이터시트 6.6 × 5.1 mm 공칭, 제품 페이지 5 × 6.4 mm) — 풋프린트는 TI 기구 도면 기준으로.</li>
+  </ul>
+</article>
+</body>
+</html>

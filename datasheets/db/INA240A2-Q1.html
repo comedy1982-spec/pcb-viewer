@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INA240A2-Q1 · Automotive bidirectional current-sense amplifier, enhanced PWM rejection, 50 V/V</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="INA240A2-Q1" data-mfr="TI" data-cat="전류 센서" data-price="" data-status="done" data-src="https://static.chipdip.ru/lib/977/DOC031977919.pdf">
+  <h1>INA240A2-Q1</h1>
+  <p class="meta">TI · 전류 센서 · Automotive bidirectional current-sense amplifier, enhanced PWM rejection, 50 V/V</p>
+  <p class="meta">원본: <a href="https://www.ti.com/lit/gpn/INA240-Q1" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/INA240-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=INA240A2-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SBOS808 (표 값은 Rev C 2018-11 PDF에서 읽음, 현행 Rev E 2021-12)</p>
+  <h2>핵심 사양</h2>
+  <dl><dt>기능</dt><dd>양방향 제로드리프트 션트 전류 감지 앰프, PWM 제거 강화 (모터·솔레노이드 인라인 감지)</dd><dt>이득</dt><dd>INA240A2: 50 V/V (패밀리 A1 20 / A2 50 / A3 100 / A4 200 V/V)</dd><dt>공통 모드 범위</dt><dd>-4 ~ 80 V (전원과 무관)</dd><dt>정확도</dt><dd>오프셋 ±5 µV typ / ±25 µV max (드리프트 250 nV/°C max), 이득 오차 ±0.20 % max (2.5 ppm/°C max)</dd><dt>CMRR</dt><dd>132 dB (DC), 93 dB (50 kHz AC)</dd><dt>대역폭 · 슬루</dt><dd>400 kHz (-3 dB), 2 V/µs, 정착(0.5 %) 9.6 µs (A1)</dd><dt>전원 VS</dt><dd>2.7 ~ 5.5 V, IQ 1.8 mA typ / 2.4 mA max (온도 전체 2.6 mA)</dd><dt>등급 · 온도</dt><dd>AEC-Q100: Q 버전 Grade 1 (-40 ~ 125 °C), E 버전 Grade 0 (-40 ~ 150 °C)</dd><dt>패키지</dt><dd>SOIC-8 (D), TSSOP-8 (PW)</dd></dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>전원 VS</td><td></td><td>6</td><td>V</td><td></td></tr><tr><td>차동 입력 VIN+ − VIN−</td><td>-80</td><td>80</td><td>V</td><td></td></tr><tr><td>공통 모드 입력</td><td>-6</td><td>90</td><td>V</td><td></td></tr><tr><td>REF1, REF2, NC 입력</td><td>GND − 0.3</td><td>VS + 0.3</td><td>V</td><td></td></tr><tr><td>출력</td><td>GND − 0.3</td><td>VS + 0.3</td><td>V</td><td></td></tr><tr><td>동작 주위 온도 TA</td><td>-55</td><td>150</td><td>°C</td><td></td></tr><tr><td>접합 온도 TJ</td><td></td><td>150</td><td>°C</td><td></td></tr><tr><td>보관 온도 Tstg</td><td>-65</td><td>150</td><td>°C</td><td></td></tr></tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>공통 모드 입력 VCM</td><td>-4</td><td></td><td>80</td><td>V</td></tr><tr><td>전원 VS</td><td>2.7</td><td></td><td>5.5</td><td>V</td></tr><tr><td>동작 온도 TA (Q 등급)</td><td>-40</td><td></td><td>125</td><td>°C</td></tr><tr><td>동작 온도 TA (E 등급)</td><td>-40</td><td></td><td>150</td><td>°C</td></tr></tbody></table>
+  <h2>핀 배치</h2>
+  <p>SOIC-8 (D) 핀 번호 (괄호 안: TSSOP-8 PW 핀 번호 — 두 패키지 핀 배치가 다름)</p><table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1 (PW 3)</td><td>IN−</td><td>션트 부하측 입력</td></tr><tr><td>2 (PW 4)</td><td>GND</td><td>그라운드</td></tr><tr><td>3 (PW 6)</td><td>REF2</td><td>기준 전압 입력 2 (0 V ~ VS)</td></tr><tr><td>4 (PW 1)</td><td>NC</td><td>예약 — GND에 연결</td></tr><tr><td>5 (PW 8)</td><td>OUT</td><td>출력 전압</td></tr><tr><td>6 (PW 5)</td><td>VS</td><td>전원 2.7 ~ 5.5 V</td></tr><tr><td>7 (PW 7)</td><td>REF1</td><td>기준 전압 입력 1 (0 V ~ VS)</td></tr><tr><td>8 (PW 2)</td><td>IN+</td><td>션트 전원측 입력</td></tr></tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul><li>VS 바이패스: 0.1 µF를 VS–GND 핀 가까이. 노이즈 많은 전원은 추가 용량.</li><li>입력 필터는 불필요·비권장. 사용 시 직렬 저항 10 Ω 이하 (10 Ω ≈ 0.33 %, 100 Ω ≈ 3.23 % 이득 오차).</li><li>REF 설정: 양쪽 GND = 단방향(GND 기준), 양쪽 VS = 단방향(VS 기준), 하나 VS·하나 GND = 양방향 VS/2 기준, 양쪽 외부 기준 = 외부 기준값, 하나 GND·하나 외부 기준 = 기준의 1/2.</li><li>REF1/REF2를 GND 미만 또는 VS 초과 전원에 연결 금지. 기준 분압 정확도 0.1 % max.</li><li>출력 스윙: VS − 0.2 V max ~ GND + 10 mV max (RL 10 kΩ), 용량성 부하 1 nF까지 발진 없음.</li><li>션트–IN+/IN− 켈빈(4선) 배선.</li></ul>
+  <h2>패키지 · 열</h2>
+  <p>SOIC-8 (D) 4.9 × 6 mm: RθJA 113.5, RθJC(top) 51.9, RθJB 57.8, ψJT 10.2, ψJB 56.9 °C/W. TSSOP-8 (PW) 3 × 6.4 mm: RθJA 149.1, RθJC(top) 33.2, RθJB 78.4, ψJT 1.5, ψJB 76.4 °C/W. TJ 최대 150 °C.</p>
+  <h2>설계 메모</h2>
+  <ul><li>MPN &#x27;INA240A2-Q1&#x27;은 패키지·등급 미지정: 주문형 INA240A2QDRQ1 (SOIC, Grade 1), INA240A2QPWRQ1 (TSSOP, Grade 1), INA240A2EDRQ1 (SOIC, Grade 0). D와 PW의 핀 번호가 달라 풋프린트 선택 시 주의. 핀 JSON은 SOIC-8 (D) 기준.</li><li>수치는 SBOS808C (Rev C) PDF에서 읽음 — 현행 Rev E에서 값 변경 여부는 확인 필요.</li><li>입력 바이어스 전류 90 µA typ — 소스 임피던스(필터 저항)가 이득 오차를 만듦.</li><li>고dV/dt 인라인(모터 상) 감지에서 PWM 제거 기능 사용 가능; CMV -4 ~ 80 V.</li></ul>
+</article>
+</body>
+</html>

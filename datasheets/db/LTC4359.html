@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LTC4359 · Ideal diode controller with reverse input protection</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="LTC4359" data-mfr="Analog Devices" data-cat="전원" data-price="2.4" data-status="done" data-src="https://wcm-cce.cldnet.analog.com/media/en/technical-documentation/data-sheets/ltc4359.pdf">
+  <h1>LTC4359</h1>
+  <p class="meta">Analog Devices (Linear Technology) · 전원 · 고전압 이상 다이오드 컨트롤러, 역입력 보호 · 참고 단가 약 $2.4 (추정)</p>
+  <p class="meta">원본: <a href="https://www.analog.com/media/en/technical-documentation/data-sheets/ltc4359.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.analog.com/en/products/ltc4359.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=LTC4359" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 LTC4359 Rev. F (2021-12)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>N-채널 MOSFET 이상 다이오드 / 부하 스위치 컨트롤러 (단일 또는 백투백 MOSFET)</dd>
+    <dt>동작 전압</dt><dd>4 V ~ 80 V, 역입력 -40 V까지 보호</dd>
+    <dt>전류 소모</dt><dd>동작 150 µA (일반), 셧다운 9 µA (부하 스위치) / 14 µA (이상 다이오드)</dd>
+    <dt>게이트 구동</dt><dd>IN = 4 V에서 4.5 V 최소 (일반 5.5 V), IN = 8~80 V에서 10 V 최소 (일반 12 V), 내부 클램프 15 V</dd>
+    <dt>순방향 조절 ΔVSD</dt><dd>20 / 30 / 45 mV (최소/일반/최대)</dd>
+    <dt>턴오프</dt><dd>게이트 턴오프 지연 0.3 µs 일반 (최대 0.5 µs), 풀다운 130 mA</dd>
+    <dt>등급</dt><dd>AEC-Q100 (#W 품번)</dd>
+    <dt>온도</dt><dd>C 0~70 °C · I -40~85 °C · H -40~125 °C</dd>
+    <dt>패키지</dt><dd>6-pin 2×3 mm DFN (DCB), 8-lead MSOP (MS8), 8-lead SO (S8)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>IN, SOURCE, SHDN</td><td>-40</td><td>100</td><td>V</td><td>VSS 기준</td></tr>
+      <tr><td>OUT</td><td>-2</td><td>100</td><td>V</td><td></td></tr>
+      <tr><td>IN - OUT</td><td>-100</td><td>100</td><td>V</td><td></td></tr>
+      <tr><td>IN - SOURCE</td><td>-1</td><td>80</td><td>V</td><td></td></tr>
+      <tr><td>GATE - SOURCE</td><td>-0.3</td><td>10</td><td>V</td><td>문서 표기 그대로</td></tr>
+      <tr><td>접합 온도 TJMAX</td><td></td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>리드 온도 (10 s)</td><td></td><td>300</td><td>°C</td><td>MS, SO</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>IN 동작 전압</td><td>4</td><td></td><td>80</td><td>V</td></tr>
+      <tr><td>동작 온도 (H 등급)</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+      <tr><td>SHDN 문턱</td><td>0.6</td><td>1.2</td><td>2</td><td>V</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>MS8 (8-lead MSOP). S8도 같은 핀 이름 배치. DCB (DFN-6)는 핀 번호가 다르므로 원본 그림을 확인하세요(노출 패드 7번: 개방 또는 VSS).</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>GATE</td><td>MOSFET 게이트 구동 출력</td></tr>
+      <tr><td>2</td><td>SOURCE</td><td>고속 풀다운 리턴. MOSFET 소스에 가깝게 연결</td></tr>
+      <tr><td>3</td><td>NC</td><td>연결 없음</td></tr>
+      <tr><td>4</td><td>IN</td><td>애노드, 전원·감지 입력</td></tr>
+      <tr><td>5</td><td>SHDN</td><td>셧다운 제어 (0.6 V 미만이면 셧다운), 내부 풀업 2.6 µA</td></tr>
+      <tr><td>6</td><td>VSS</td><td>전원 리턴, 접지</td></tr>
+      <tr><td>7</td><td>NC</td><td>연결 없음</td></tr>
+      <tr><td>8</td><td>OUT</td><td>캐소드, 감지점</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>MOSFET: RDS(on) &lt; (원하는 순방향 강하) / ILOAD, 시작점으로 약 100 mV 강하. 손실 P = I²·RDS(on). 4.5 V 로직 레벨 FET은 4~80 V 전 범위, 10 V 구동 FET은 8 V 이상에서 사용.</li>
+    <li>BVDSS는 전원 전압보다 커야 하고, 역입력을 견디려면 OUT + |VIN|보다 커야 합니다.</li>
+    <li>24 V 이상 계통: GATE–SOURCE 사이 제너 클램프 추가 (예: DDZ9699T 12 V).</li>
+    <li>입력 과도: IN/SOURCE에 양 스파이크용 TVS (예 SMAT70A), 음 스파이크용 TVS (예 SMAJ24A), 역입력 전류 제한 1 kΩ (R1).</li>
+    <li>출력: COUT ≥ 1.5 µF. OUT을 TVS나 MOSFET 애벌런치로 보호하면 47 nF까지 줄일 수 있음.</li>
+    <li>SHDN은 10 nF로 VSS에 바이패스하고 기판 누설을 100 nA 미만으로 유지.</li>
+    <li>부하 스위치 구성: 게이트 커패시터(예 10 nF)로 돌입 전류 설정(게이트 충전 10 µA), Q2 근처에 10 Ω 직렬 저항으로 기생 발진 방지.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>θJA: DFN (DCB6) 64 °C/W · MSOP (MS8) 163 °C/W · SO (S8) 130 °C/W. θJC는 문서에 없음. TJMAX 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>IN, SOURCE, OUT 배선은 짧고 넓게, MOSFET 단자에 최대한 가깝게 연결합니다.</li>
+    <li>로드 덤프 내성은 컨트롤러 자체 정격(100 V)과 외부 TVS·MOSFET BVDSS로 결정됩니다.</li>
+    <li>MPN 접미사로 패키지·온도 등급을 정합니다 (예: LTC4359HMS8#PBF, 차량용은 #W).</li>
+  </ul>
+</article>
+</body>
+</html>

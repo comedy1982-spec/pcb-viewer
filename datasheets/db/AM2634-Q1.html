@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AM2634-Q1 · Sitara quad Cortex-R5F real-time MCU</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="AM2634-Q1" data-mfr="TI" data-cat="MCU" data-price="14" data-status="stub" data-src="https://docs.ampnuts.ru/ti.com.datasheet/AM2634-Q1/Data_sheet_AM2634-Q1.PDF">
+  <h1>AM2634-Q1</h1>
+  <p class="meta">TI · MCU · Sitara AM263x 4코어 Arm Cortex-R5F 실시간 제어 MCU · 참고 단가 약 $14 (추정)</p>
+  <p class="meta">원본: <a href="https://docs.ampnuts.ru/ti.com.datasheet/AM2634-Q1/Data_sheet_AM2634-Q1.PDF" target="_blank" rel="noopener">데이터시트 PDF (SPRSP74A 사본)</a> · <a href="https://www.ti.com/document-viewer/lit/html/SPRSP74E/GUID-FBCA0180-0D73-4E4F-85C0-36EC732411A8" target="_blank" rel="noopener">최신 데이터시트 (TI 문서 뷰어)</a> · <a href="https://octopart.com/search?q=AM2634-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SPRSP74A (2022-06, Advance Information); TI 최신판은 SPRSP74E/F (Production Data)</p>
+  <p class="todo">초안: 읽은 PDF는 2022년 사전 정보(Advance Information)판이라 6.1 절대 최대 정격, 6.5 권장 동작 조건, 6.10 열저항, XTAL 사양이 빠져 있습니다. 최신 SPRSP74(Production Data)에서 채우고 기능 값도 대조하세요.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>CPU</dt><dd>Arm Cortex-R5F 최대 4코어, 최대 400 MHz (듀얼코어 클러스터 2개, 락스텝 가능)</dd>
+    <dt>메모리</dt><dd>코어당 I-캐시 16 KB / D-캐시 16 KB (ECC), 공유 TCM 256 KB, OCSRAM 2 MB (512 KB × 4뱅크, ECC)</dd>
+    <dt>통신</dt><dd>MCAN 4개 (CAN-FD), 2포트 이더넷 스위치 (RMII 10/100 · RGMII 10/100/1000, IEEE 1588/802.1AS)</dd>
+    <dt>아날로그</dt><dd>12비트 SAR ADC 5개 (각 최대 4 MSPS, 입력 6채널), CMPSS 20개, 12비트 버퍼 DAC 1개</dd>
+    <dt>제어 주변장치</dt><dd>EHRPWM 32, eCAP 10, eQEP 3, SDFM 2 (각 4채널)</dd>
+    <dt>보안</dt><dd>HSM (Auto SHE 1.1 / EVITA), 보안 부트, AES·SHA2·DRBG·PKA</dd>
+    <dt>기능 안전</dt><dd>ISO 26262 ASIL-D 목표 (읽은 판 기준 '인증 예정')</dd>
+    <dt>등급 · 온도</dt><dd>AEC-Q100, 확장 차량용 Tj -40 – 150 °C</dd>
+    <dt>패키지</dt><dd>ZCZ 324볼 nFBGA, 15.0 × 15.0 mm, 0.8 mm 피치</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <p class="todo">데이터시트 확인 필요 (최신 SPRSP74 6.1절).</p>
+
+  <h2>권장 동작 조건</h2>
+  <p class="todo">데이터시트 확인 필요 (6.5절). 읽은 판에서 확인된 것: 디지털 I/O 레일 VDDSHV0 3.3 V, 아날로그 입력 레일 VDDA_CIO 3.3 V, ADC VREF 1.8 V, DAC_VREF 3.3 V.</p>
+
+  <h2>핀 배치</h2>
+  <p>ZCZ 324볼 BGA — 핀 표는 생략하고 그룹만 요약 (정확한 볼 번호는 데이터시트 Pin Attributes 표 참조).</p>
+  <ul>
+    <li>전원: 코어, 3.3 V I/O(VDDSHV0), 아날로그(VDDA_CIO), ADC/DAC 기준전압(ADCx_VREF, DAC_VREF0/1)</li>
+    <li>클럭: XTAL_XI / XTAL_XO (주파수는 데이터시트 확인 필요)</li>
+    <li>아날로그 입력: ADC0–4 각 6입력, CMPSS 입력 공유</li>
+    <li>제어 I/O: EPWM, ECAP, EQEP, SDFM 핀 (멀티플렉싱)</li>
+    <li>통신: MCAN0–3, RMII/RGMII + MDIO, UART/SPI/I2C 등</li>
+  </ul>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul><li>디커플링, 전원 시퀀스(7.11절 참조), XTAL 부하 용량은 데이터시트 확인 필요.</li></ul>
+
+  <h2>패키지 · 열</h2>
+  <p>ZCZ nFBGA 324볼, 15.0 × 15.0 mm, 0.8 mm 피치, 45 nm 공정. RθJA/RθJC는 데이터시트 확인 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>0.8 mm 피치 324볼 → 볼 사이 비아 배선과 다층(통상 6층 이상) 기판 고려.</li>
+    <li>같은 핀 배치 계열: AM2631-Q1, AM2632-Q1 (같은 데이터시트, 코어 수 등 차이는 데이터시트 비교표 확인).</li>
+    <li>읽은 사본은 사전 정보판이므로 값 확정 전 반드시 TI 최신 Production Data판과 대조.</li>
+  </ul>
+</article>
+</body>
+</html>

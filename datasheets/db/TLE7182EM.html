@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLE7182EM · H-bridge / dual half-bridge MOSFET driver, SSOP-24</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLE7182EM" data-mfr="Infineon" data-cat="게이트 드라이버" data-price="" data-status="done" data-src="https://cdn.components.ru/media/PDF/8127181.pdf">
+  <h1>TLE7182EM</h1>
+  <p class="meta">Infineon · 게이트 드라이버 · H-bridge / dual half-bridge MOSFET driver, SSOP-24</p>
+  <p class="meta">원본: <a href="https://cdn.components.ru/media/PDF/8127181.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://jp.farnell.com/en-JP/infineon/tle7182emxuma1/mosfet-driver-aec-q100-ssop-24/dp/2710059" target="_blank" rel="noopener">제품 페이지 (Farnell, 미확인 링크)</a> · <a href="https://octopart.com/search?q=TLE7182EM" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev 1.1 (2010-09-30)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>N-MOSFET 4개 구동 H-브리지 / 듀얼 하프브리지 드라이버, 각 게이트 독립 입력</dd>
+    <dt>전원</dt><dd>V<sub>S</sub> 7.0–34 V 사양 범위 (확장 5.5–45 V), 12 V 전원망용</dd>
+    <dt>듀티</dt><dd>하이사이드 0–95% @20 kHz 및 100% (차지펌프), 로우사이드 0–100%</dd>
+    <dt>출력단</dt><dd>소스 저항 13.5 Ω max / 싱크 9 Ω max</dd>
+    <dt>보호</dt><dd>SCDL 핀으로 단락 검출 레벨 아날로그 설정, 슛스루 방지·최소 데드타임, 과온·과전압·저전압 경고, 저전압 차단, ERR 1비트 진단</dd>
+    <dt>부가 기능</dt><dd>전류 센스 OpAmp(고정 과전류 경고), 역극성 보호 MOSFET 구동 출력 RPP</dd>
+    <dt>대기 전류</dt><dd>8 µA typ (12 V, ENA low, 25 °C), 10 µA max (≤85 °C)</dd>
+    <dt>등급·온도</dt><dd>AEC qualified, T<sub>j</sub> −40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>PG-SSOP-24 (노출 탭 → GND)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>V<sub>S</sub></td><td>-0.3</td><td>45</td><td>V</td><td>역전압 −4.0 V (R<sub>VS</sub> ≥ 10 Ω)</td></tr>
+    <tr><td>VDH, RPP, BHx</td><td>-0.3</td><td>55</td><td>V</td><td>RPP 전류 ±25 mA</td></tr>
+    <tr><td>ENA</td><td>-0.3</td><td>45</td><td>V</td><td></td></tr>
+    <tr><td>IH1/IL1/IH2/IL2, ERR, ISO, SCDL</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>ISP, ISN</td><td>-5.0</td><td>5.0</td><td>V</td><td></td></tr>
+    <tr><td>VREG</td><td>-0.3</td><td>15</td><td>V</td><td></td></tr>
+    <tr><td>GHx</td><td>-0.3</td><td>55</td><td>V</td><td>과도 −7.0 V (t<sub>P</sub> &lt; 1 µs)</td></tr>
+    <tr><td>SHx</td><td>-2.0</td><td>45</td><td>V</td><td>과도 −7.0 V (t<sub>P</sub> &lt; 1 µs)</td></tr>
+    <tr><td>GLx</td><td>-0.3</td><td>18</td><td>V</td><td>과도 −7.0 V (t<sub>P</sub> &lt; 0.5 µs)</td></tr>
+    <tr><td>SL</td><td>-1.0</td><td>5.0</td><td>V</td><td>과도 −7.0 V (C<sub>BS</sub> ≥ 330 nF)</td></tr>
+    <tr><td>Gxx–Sxx, BHx–SHx 차</td><td>-0.3</td><td>15</td><td>V</td><td></td></tr>
+    <tr><td>P<sub>tot</sub> (DC)</td><td></td><td>2</td><td>W</td><td></td></tr>
+    <tr><td>T<sub>j</sub> / T<sub>stg</sub></td><td>-40 / -55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM / CDM</td><td></td><td>2 / 1</td><td>kV</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+  <tbody>
+    <tr><td>V<sub>S</sub> (사양 범위)</td><td>7.0</td><td>12</td><td>34</td><td>V</td></tr>
+    <tr><td>V<sub>S</sub> (확장, 기능 제한)</td><td>5.5</td><td></td><td>45</td><td>V</td></tr>
+    <tr><td>T<sub>j</sub></td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    <tr><td>VREG 출력 (V<sub>S</sub> ≥ 13.5 V, −35 mA)</td><td>11</td><td>12.5</td><td>14</td><td>V</td></tr>
+    <tr><td>동작 전류 (무스위칭 / 4·Q<sub>GS</sub>·f ≤ 20 mA)</td><td></td><td></td><td>22 / 45</td><td>mA</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-SSOP-24 + 노출 탭</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>BH2</td><td>부트스트랩 C (+), 상 2</td></tr>
+    <tr><td>2</td><td>GH2</td><td>하이사이드 2 게이트</td></tr>
+    <tr><td>3</td><td>SH2</td><td>하이사이드 2 소스</td></tr>
+    <tr><td>4</td><td>GL2</td><td>로우사이드 2 게이트</td></tr>
+    <tr><td>5</td><td>VDH</td><td>하이사이드 공통 드레인 감지 (단락 검출)</td></tr>
+    <tr><td>6</td><td>RPP</td><td>역극성 보호 MOSFET 구동 차지펌프 출력</td></tr>
+    <tr><td>7</td><td>VS</td><td>전원</td></tr>
+    <tr><td>8</td><td>VREG</td><td>출력단 전원 (커패시터 연결)</td></tr>
+    <tr><td>9</td><td>ENA</td><td>인에이블 (High=동작), ERR 리셋, 저전류 모드</td></tr>
+    <tr><td>10</td><td>ISN</td><td>OpAmp + 입력</td></tr>
+    <tr><td>11</td><td>ISP</td><td>OpAmp − 입력</td></tr>
+    <tr><td>12</td><td>ISO</td><td>OpAmp 출력</td></tr>
+    <tr><td>13</td><td>IH2</td><td>하이사이드 2 입력 (active low)</td></tr>
+    <tr><td>14</td><td>IL2</td><td>로우사이드 2 입력 (active high)</td></tr>
+    <tr><td>15</td><td>IH1</td><td>하이사이드 1 입력 (active low)</td></tr>
+    <tr><td>16</td><td>IL1</td><td>로우사이드 1 입력 (active high)</td></tr>
+    <tr><td>17</td><td>ERR</td><td>진단 출력 (push-pull)</td></tr>
+    <tr><td>18</td><td>SCDL</td><td>단락 검출 레벨 설정 / SCD 비활성</td></tr>
+    <tr><td>19</td><td>GND</td><td>그라운드</td></tr>
+    <tr><td>20</td><td>SL</td><td>로우사이드 MOSFET 공통 소스</td></tr>
+    <tr><td>21</td><td>GL1</td><td>로우사이드 1 게이트</td></tr>
+    <tr><td>22</td><td>SH1</td><td>하이사이드 1 소스</td></tr>
+    <tr><td>23</td><td>GH1</td><td>하이사이드 1 게이트</td></tr>
+    <tr><td>24</td><td>BH1</td><td>부트스트랩 C (+), 상 1</td></tr>
+    <tr><td>탭</td><td>—</td><td>GND 연결</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>부트스트랩 C<sub>BS1</sub>, C<sub>BS2</sub> ≥ 330 nF (BHx–SHx).</li>
+    <li>VREG: C<sub>REG1</sub> 2.2 µF + C<sub>REG2</sub> 10 nF 세라믹 병렬.</li>
+    <li>VS: C<sub>VS1</sub> 2.2 µF + C<sub>VS2</sub> 10 nF, 응용 회로에 L = 2.2 µH 표기.</li>
+    <li>전류 센스: C<sub>IS</sub> 50 pF 입력 필터, ISO 출력 C<sub>ISO</sub> 100 pF + R<sub>ISO</sub>, 이득 R<sub>FB</sub> = R<sub>REF1</sub> ∥ R<sub>REF2</sub>.</li>
+    <li>RPP 회로 R<sub>RPS</sub> 4.7 kΩ. 레이아웃 가이드: 스너버 RC 수 Ω / 수 nF.</li>
+    <li>웨이크업 50–100 µs (C<sub>REG</sub>=2.2 µF, C<sub>BS</sub>=330 nF). 차지펌프 21 MHz typ.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-SSOP-24, 노출 탭은 GND. R<sub>thJC</sub> 5 K/W max (설계 보증) · R<sub>thJA</sub> 35 K/W typ (JEDEC 2s2p, 패드 아래 써멀 비아). T<sub>j</sub> max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>IHx는 active low, ILx는 active high — MCU PWM 극성 주의. 슛스루 방지는 내장이지만 데드타임은 MCU에서도 확보 권장.</li>
+    <li>내장 100% 차지펌프는 누설 보상용 — 약 99% 듀티 지속 운전에는 부족 (데이터시트 명시).</li>
+    <li>SH/GL/SL의 음전압 과도 정격(−7 V, &lt;0.5–1 µs)을 넘지 않도록 게이트 저항·레이아웃 관리.</li>
+  </ul>
+</article>
+</body>
+</html>

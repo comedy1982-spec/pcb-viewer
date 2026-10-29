@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A4954ELPTR-T · Dual full-bridge DMOS PWM motor driver, 2 A 40 V</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="A4954ELPTR-T" data-mfr="Allegro MicroSystems" data-cat="모터 드라이버" data-price="1.4" data-status="done" data-src="https://dtsheet.com/doc/855928/allegro-a4954">
+  <h1>A4954ELPTR-T</h1>
+  <p class="meta">Allegro MicroSystems · 모터 드라이버 · 듀얼 풀브리지 DMOS PWM 모터 드라이버 (DC 모터 2개), ±2 A, 40 V · 참고 단가 약 $1.4 (추정)</p>
+  <p class="meta">원본: <a href="https://dtsheet.com/doc/855928/allegro-a4954" target="_blank" rel="noopener">데이터시트 (사본)</a> · <a href="https://allegromicro.com/en/Products/Motor-Drivers/Brush-DC-Motor-Drivers/A4954" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=A4954ELPTR-T" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 A4954-DS Rev. 4 (2012-08-06)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>DMOS 풀브리지 2채널 (브러시 DC 모터 2개), INx PWM, 동기 정류</dd>
+    <dt>전원</dt><dd>VBB 8~40 V</dd>
+    <dt>출력 전류</dt><dd>±2 A (100 % 듀티), 과도 5 A (&lt; 500 ns)</dd>
+    <dt>RDS(on)</dt><dd>소스+싱크 0.8 typ / 1.12 max Ω (1.5 A, 25 °C); 1.28 / 1.8 Ω (125 °C)</dd>
+    <dt>전류 제한</dt><dd>브리지별 ITripMAX = VREFxx / (AV × RS), AV ≈ 10 V/V; 블랭크 3 µs, 오프타임 25 µs</dd>
+    <dt>보호</dt><dd>채널별 과전류(래치), UVLO 7.5 V typ (히스 500 mV), TSD 160 °C (히스 15 °C)</dd>
+    <dt>대기</dt><dd>저전력 대기 10 µA max</dd>
+    <dt>온도</dt><dd>E 범위 TA −40~85 °C</dd>
+    <dt>패키지</dt><dd>16-pin TSSOP 노출 패드 (LP), 13인치 릴 4,000개 (A4954ELP-T 튜브 96개)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VBB</td><td></td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>로직 입력 VIN</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>VREF</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>감지 전압 VS (LSSx)</td><td>-0.5</td><td>0.5</td><td>V</td><td></td></tr>
+      <tr><td>모터 출력 VOUT</td><td>-2</td><td>42</td><td>V</td><td></td></tr>
+      <tr><td>출력 전류 IOUT</td><td></td><td>2</td><td>A</td><td>듀티 100 %</td></tr>
+      <tr><td>과도 출력 전류</td><td></td><td>5</td><td>A</td><td>tW &lt; 500 ns</td></tr>
+      <tr><td>동작 온도 TA (E)</td><td>-40</td><td>85</td><td>°C</td><td></td></tr>
+      <tr><td>접합 온도 TJ(max)</td><td></td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VBB</td><td>8</td><td></td><td>40</td><td>V</td></tr>
+      <tr><td>IBB (fPWM &lt; 30 kHz)</td><td></td><td>10</td><td></td><td>mA</td></tr>
+      <tr><td>VIN(1) / VIN(0)</td><td>2.0</td><td></td><td>0.8</td><td>V</td></tr>
+      <tr><td>VIN(STANDBY)</td><td></td><td></td><td>0.4</td><td>V</td></tr>
+      <tr><td>로직 풀다운</td><td></td><td>50</td><td></td><td>kΩ</td></tr>
+      <tr><td>VREF</td><td>0</td><td></td><td>5</td><td>V</td></tr>
+      <tr><td>AV (VREF 5 V)</td><td>9.5</td><td></td><td>10.5</td><td>V/V</td></tr>
+      <tr><td>tCOD</td><td>50</td><td></td><td>500</td><td>ns</td></tr>
+      <tr><td>블랭크 / 오프타임</td><td>2 / 16</td><td>3 / 25</td><td>4 / 34</td><td>µs</td></tr>
+      <tr><td>UVLO (VBB 상승)</td><td>7</td><td>7.5</td><td>7.95</td><td>V</td></tr>
+    </tbody></table>
+  <table style="margin-top:8px"><thead><tr><th>IN1/IN3</th><th>IN2/IN4</th><th>동작</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>1</td><td>역방향 (OUT1/3 = L, OUT2/4 = H)</td></tr>
+      <tr><td>1</td><td>0</td><td>정방향 (OUT1/3 = H, OUT2/4 = L)</td></tr>
+      <tr><td>1</td><td>1</td><td>브레이크 (저속 감쇠)</td></tr>
+      <tr><td>0</td><td>0</td><td>코스트 (Z), 1 ms 후 저전력 대기</td></tr>
+    </tbody></table>
+  <p class="meta">추출 텍스트의 진리표 정렬이 일부 깨져 있어 원문 확인 권장. 트립 시 혼합 감쇠 초핑.</p>
+
+  <h2>핀 배치</h2>
+  <p>16-pin TSSOP + 노출 패드 (LP)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>GND</td><td>접지</td></tr>
+      <tr><td>2</td><td>VREF34</td><td>브리지 3-4 전류 제한 기준</td></tr>
+      <tr><td>3</td><td>IN3</td><td>로직 입력 3</td></tr>
+      <tr><td>4</td><td>IN4</td><td>로직 입력 4</td></tr>
+      <tr><td>5</td><td>IN2</td><td>로직 입력 2</td></tr>
+      <tr><td>6</td><td>IN1</td><td>로직 입력 1</td></tr>
+      <tr><td>7</td><td>VREF12</td><td>브리지 1-2 전류 제한 기준</td></tr>
+      <tr><td>8</td><td>GND</td><td>접지</td></tr>
+      <tr><td>9</td><td>VBB</td><td>부하 전원</td></tr>
+      <tr><td>10</td><td>OUT1</td><td>출력 1</td></tr>
+      <tr><td>11</td><td>LSS12</td><td>브리지 1-2 전력 리턴 / 감지 저항</td></tr>
+      <tr><td>12</td><td>OUT2</td><td>출력 2</td></tr>
+      <tr><td>13</td><td>OUT3</td><td>출력 3</td></tr>
+      <tr><td>14</td><td>LSS34</td><td>브리지 3-4 전력 리턴 / 감지 저항</td></tr>
+      <tr><td>15</td><td>OUT4</td><td>출력 4</td></tr>
+      <tr><td>16</td><td>VBB</td><td>부하 전원</td></tr>
+      <tr><td>PAD</td><td>PAD</td><td>노출 패드 (GND)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>RS12, RS34: 0.25 Ω, 2512, 1 W, 1 % (VREF 5 V, IOUT 2 A 예).</li>
+    <li>C1: 0.22 µF X5R 이상, 50 V 이상, 소자 근접. C2: 100 µF 전해 50 V 이상, C1과 병렬.</li>
+    <li>두 VBB 핀(9, 16) 모두 연결·디커플링. 스타 접지는 소자 근처, 노출 패드는 GND.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>TSSOP-16 EP (LP). RθJA 34 °C/W (4층 JEDEC), 43 °C/W (2층, 3.8 in² 2 oz 양면). TJ max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>배치 파일 설명은 "풀브리지"이지만 실제는 <b>듀얼</b> 풀브리지 (2채널) — 심볼/BOM 설명 수정 필요.</li>
+    <li>과전류 폴트는 채널별 래치, 대기 진입 또는 VBB 재투입으로 해제. 폴트 출력 핀 없음.</li>
+    <li>LSSx 전압은 최대 부하에서 ±500 mV 이내.</li>
+    <li>E 범위(−40~85 °C) — 차량 환경 온도 요구 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

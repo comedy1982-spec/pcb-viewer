@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TC377TX-96F300S · AURIX TC37xEXT 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, dual Ethernet, LFBGA-292</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TC377TX-96F300S" data-mfr="Infineon" data-cat="MCU" data-price="19" data-status="stub" data-src="https://www.mouser.com/datasheet/2/196/Infineon_SAK_TC377TX_96F300S_AB_DataSheet_v01_00_E-3363897.pdf">
+  <h1>TC377TX-96F300S</h1>
+  <p class="meta">Infineon · MCU · AURIX TC37xEXT 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, dual Ethernet, LFBGA-292 · 참고 단가 약 $19 (추정)</p>
+  <p class="meta">원본: <a href="https://www.mouser.com/datasheet/2/196/Infineon_SAK_TC377TX_96F300S_AB_DataSheet_v01_00_E-3363897.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.digikey.ie/en/products/detail/infineon-technologies/TC377TX96F300SABKXUMA1/13563772" target="_blank" rel="noopener">Digi-Key 제품 페이지 (미확인 링크)</a> · <a href="https://documentation.infineon.com/aurixtc3xx/docs/nho1702366509393" target="_blank" rel="noopener">TC3xx 문서 페이지</a> · <a href="https://octopart.com/search?q=TC377TX-96F300S" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TC37xEXT AB-Step Data Sheet V1.0 (2019-10)</p>
+  <p class="todo">미완: 절대 최대 정격(3.2절 p.389), 동작 조건(3.4절 p.393), 전원 전류(3.12절 p.431), 공급 기동(3.13절 p.438), 패키지 파라미터·열저항(3.32.1절 p.496), EVR 외부 부품 값은 원본 PDF에서 채워야 함. 2차 시도(2026-10): Mouser·Farnell·Infineon dgdl/assets 사본 모두 WebFetch 텍스트 추출이 약 68 k자(데이터시트 앞 50여 쪽, 2장 핀 표 중간)에서 끊겨 3장 전기 사양에 도달하지 못함(offset 지정 시 '읽을 내용 없음'). alldatasheet 페이지 분할본은 사이트 차단. 변형 값은 TC37xEXT 계열 표 1-1 기준.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>코어</dt><dd>TriCore TC1.6.2 3개 + 락스텝 체커 3개 (TC37xEXT 계열 표), 최대 300 MHz (전 온도 범위)</dd>
+    <dt>메모리</dt><dd>PFLASH 6 MB (3 MB×2 뱅크), DFLASH 256 KB + 128 KB, DSPR CPU0/1 240 KB·CPU2 96 KB, PSPR 64 KB, DLMU 64 KB, DAM 32 KB, 확장 메모리 TCM 2 MB / XCM 1 MB / XTM 16 KB</dd>
+    <dt>ADC</dt><dd>EVADC 주 그룹 4/32채널 + 보조 그룹 4/64채널, DSADC 6채널</dd>
+    <dt>통신</dt><dd>이더넷 MAC 2개 (10/100/1000 Mbit, RMII/MII/RGMII), MCMCAN 3모듈×4노드, ASCLIN 12, QSPI 5, FlexRay 1/2채널, SENT 15, PSI5 2 + PSI5-S 1</dd>
+    <dt>안전·보안</dt><dd>HSM+ (일부 변형은 선택), ASIL D</dd>
+    <dt>온도</dt><dd>계열 표: T<sub>A</sub> −40 … +150 °C. SAK 접두 = −40 … +125 °C (TC3xx 변형 부록의 접두 규칙)</dd>
+    <dt>패키지</dt><dd>PG-LFBGA-292 (TX 핀아웃)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>V<sub>EXT</sub> / V<sub>DDM</sub> / V<sub>DDP3</sub> / V<sub>DD</sub> 공급 전압</td><td></td><td></td><td>V</td><td>데이터시트 확인 필요 (데이터시트 p.389)</td></tr>
+      <tr><td>입력 전압 · 핀 주입 전류</td><td></td><td></td><td></td><td>데이터시트 확인 필요</td></tr>
+      <tr><td>저장 온도 · 접합 온도</td><td></td><td></td><td>°C</td><td>데이터시트 확인 필요</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>동작 주파수 f<sub>CPU</sub></td><td></td><td></td><td>300</td><td>MHz</td></tr>
+      <tr><td>공급 전압 (p.393 Operating Conditions)</td><td></td><td></td><td></td><td>V – 데이터시트 확인 필요</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-LFBGA-292 (TX 핀아웃, 그림 2-2) · BGA이므로 핀 그룹만 정리합니다.</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>—</td><td>VDD, VEXT, VDDP3, VFLEX, VSS</td><td>전원·접지 볼</td></tr>
+      <tr><td>—</td><td>VDDM, VAREF, VAGND, AN0–AN47</td><td>ADC 공급·기준·아날로그 입력</td></tr>
+      <tr><td>—</td><td>P00–P02, P10, P11, P13–P15, P20–P23, P32–P34</td><td>GPIO 포트 (이더넷 RGMII 등 다중화)</td></tr>
+      <tr><td>—</td><td>XTAL1/XTAL2, PORST, ESR0/ESR1, TMS/TCK/TRST</td><td>클럭·리셋·디버그 (볼 위치 데이터시트 확인 필요)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>EVR·디커플링 외부 부품 값: 데이터시트 확인 필요.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-LFBGA-292. 열저항·T<sub>J</sub> 최대: 데이터시트 확인 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>TX는 TC37xEXT(확장 메모리·이더넷 2개) 칩입니다. TC37x 부록 v1.4에는 TC377TX가 없고 TC377TP(이더넷 1개)만 있습니다. 핀아웃도 TP와 TX가 다르므로 혼용하지 마세요.</li>
+    <li>읽은 데이터시트 발췌에 판매 코드 SAK-TC377TX-96F300S가 직접 나오지 않아 변형별 값(ADC 채널 수 등)은 TC37xEXT 부록으로 확인이 필요합니다.</li>
+  </ul>
+</article>
+</body>
+</html>

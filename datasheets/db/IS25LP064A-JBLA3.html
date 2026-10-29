@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IS25LP064A-JBLA3 · 64Mb Serial NOR Flash</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="IS25LP064A-JBLA3" data-mfr="ISSI" data-cat="메모리" data-price="1.3" data-status="stub" data-src="https://pdf.elecfans.com/ISSI/IS25LP064A-JKLE.html">
+  <h1>IS25LP064A-JBLA3</h1>
+  <p class="meta">ISSI · 메모리 · 64 Mbit 3 V 직렬 NOR 플래시 (SPI/Dual/Quad/QPI, DTR), 차량용 A3 등급 · 참고 단가 약 $1.3 (추정)</p>
+  <p class="meta">원본: <a href="https://pdf.elecfans.com/ISSI/IS25LP064A-JKLE.html" target="_blank" rel="noopener">데이터시트 (Rev A15 사본)</a> · <a href="https://www.lcsc.com/product-detail/C2972290.html" target="_blank" rel="noopener">LCSC 사양 페이지</a> · <a href="https://octopart.com/search?q=IS25LP064A-JBLA3" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 IS25LP064A datasheet Rev. A15, 11/11/2021</p>
+  <p class="todo">남은 항목: 절대 최대 정격(9.1절), 등급별 동작 범위·DC 특성 최대값(9.2–9.3절), 프로그램/소거 시간(9.9절), 주문 코드 전체 해석(11절), SOIC 208mil 외형 치수(10.1절). 열람한 사본에 해당 절이 없어 비워 둠. (2차 시도: elecfans JGLE/JKLE 사본은 86 k자에서 8.25절까지만, datasheetspdf 뷰어는 1쪽만 제공 — 9–11절 여전히 미확인.)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>용량</dt><dd>64 Mbit (8 Mbyte), 256 byte 페이지, 4 KB 섹터 / 32·64 KB 블록 / 칩 소거</dd>
+    <dt>인터페이스</dt><dd>SPI 모드 0/3, Dual/Quad I/O, QPI, DTR</dd>
+    <dt>클록</dt><dd>Fast Read 133 MHz (VCC 2.7–3.6 V), 104 MHz (2.3–3.6 V), Normal Read 50 MHz, DTR 66 MHz</dd>
+    <dt>전원</dt><dd>단일 2.3–3.6 V</dd>
+    <dt>전류 (typ)</dt><dd>읽기 5 mA, 대기 10 µA, 딥 파워다운 5 µA</dd>
+    <dt>내구성 · 보존</dt><dd>100,000 회 이상 / 20 년 이상</dd>
+    <dt>페이지 프로그램</dt><dd>tPP 800 µs (LCSC 표기, 데이터시트 원문 확인 필요)</dd>
+    <dt>온도 등급</dt><dd>A3 = Auto Grade -40 ~ +125 °C (Extended 등급은 -40 ~ +105 °C)</dd>
+    <dt>패키지</dt><dd>패키지 코드 B = 8핀 SOIC 208 mil</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <p class="todo">데이터시트 9.1절 확인 필요.</p>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>2.3</td><td></td><td>3.6</td><td>V</td></tr>
+    <tr><td>VCC (133 MHz Fast Read)</td><td>2.7</td><td></td><td>3.6</td><td>V</td></tr>
+    <tr><td>동작 온도 (A3)</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>8핀 SOIC 208 mil (패키지 코드 B)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>CE#</td><td>칩 선택 (L 액티브)</td></tr>
+    <tr><td>2</td><td>SO (IO1)</td><td>직렬 데이터 출력 / IO1</td></tr>
+    <tr><td>3</td><td>WP# (IO2)</td><td>쓰기 보호 / IO2</td></tr>
+    <tr><td>4</td><td>GND</td><td>접지</td></tr>
+    <tr><td>5</td><td>SI (IO0)</td><td>직렬 데이터 입력 / IO0</td></tr>
+    <tr><td>6</td><td>SCK</td><td>직렬 클록</td></tr>
+    <tr><td>7</td><td>HOLD# (IO3)</td><td>홀드 / IO3 (RESET# 옵션은 공장 문의)</td></tr>
+    <tr><td>8</td><td>VCC</td><td>전원</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>출력 드라이버 세기 기본 50%, 12.5%까지 낮출 수 있음 (SRP 명령) — 긴 배선 링잉 시 조정.</li>
+    <li>VCC 디커플링 값은 데이터시트에서 확인 필요.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>8핀 SOIC 208 mil. 외형 치수와 열 저항은 데이터시트 10.1절 확인 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>SOIC 208 mil은 일반 150 mil SOIC-8과 풋프린트가 다름 — KiCad SOIC-8_5.23x5.23mm_P1.27mm 후보, 치수는 데이터시트 10.1절로 확인.</li>
+    <li>Quad 모드 사용 시 WP#/HOLD#가 IO2/IO3로 쓰이므로 풀업 처리와 QE 비트 설정 확인.</li>
+    <li>주문 코드 "JBLA3"에서 B=SOIC 208mil, A3=Auto Grade(-40~125 °C)만 문서로 확인. J, L 의미는 11절 확인 필요.</li>
+  </ul>
+</article>
+</body>
+</html>

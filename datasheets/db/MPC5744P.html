@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MPC5744P · Power Architecture e200z4 lockstep ASIL D MCU</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MPC5744P" data-mfr="NXP" data-cat="MCU" data-price="15" data-status="stub" data-src="https://nxp.com/docs/en/data-sheet/MPC5744P.pdf?pspll=1">
+  <h1>MPC5744P</h1>
+  <p class="meta">NXP · MCU · MPC574xP Power Architecture e200z4 지연 락스텝 200 MHz, 2.5 MB 플래시, ASIL D · 참고 단가 약 $15 (추정)</p>
+  <p class="meta">원본: <a href="https://nxp.com/docs/en/data-sheet/MPC5744P.pdf?pspll=1" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://nxp.com/products/MPC574xP" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=MPC5744P" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 MPC5744P Data Sheet Rev. 6.1 (11/2017)</p>
+  <p class="todo">읽을 수 있었던 범위는 특징·핀 설명까지입니다. 절대 최대 정격(3.3절), 권장 동작 조건(3.4절), 열 특성(3.5절), 전원 관리 외부 부품 값(3.8절), 주문 정보(5장)는 데이터시트 원본에서 확인 필요.</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>코어</dt><dd>e200z4 2개 지연 락스텝, 0–200 MHz (+2 % FM), ISO 26262 ASIL D (SafeAssure)</dd>
+    <dt>메모리</dt><dd>코드/데이터 플래시 2.5 MB (ECC, RWW), SRAM 384 KB (ECC)</dd>
+    <dt>통신</dt><dd>FlexRay 1 (64 MB, 듀얼 채널), FlexCAN 3 (각 64 MB), LINFlexD 2, DSPI 4, Ethernet 1, SENT 2 (각 2ch)</dd>
+    <dt>아날로그·타이머</dt><dd>12-bit SAR ADC 4개 (각 16ch), CTU 2, FlexPWM 2 (4×(2+1)ch), eTimer 3 (6ch), eDMA 32ch</dd>
+    <dt>클록</dt><dd>16 MHz 내부 RC, 외부 크리스털 8–40 MHz, PLL + FMPLL</dd>
+    <dt>전원</dt><dd>3.3 V 단일 공급 + 외부 NPN 밸러스트 트랜지스터 또는 외부 1.25 V LDO; ADC 기준 3.15–5.5 V</dd>
+    <dt>온도</dt><dd>Tj -40~150 °C (165 °C 옵션, 마킹에 따름), TA -40~125 °C (135 °C 옵션)</dd>
+    <dt>패키지</dt><dd>144 LQFP (20×20 mm, 0.5 mm 피치), 257 MAPBGA (14×14 mm, 0.8 mm 피치)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <p class="todo">데이터시트 3.3절 확인 필요 (이번에 읽은 범위에 수치 없음).</p>
+  <h2>권장 동작 조건</h2>
+  <p class="todo">데이터시트 3.4절 확인 필요. 특징 요약상 공급 3.3 V, ADC 기준 3.15–5.5 V.</p>
+  <h2>핀 배치</h2>
+  <p>144 LQFP / 257 MAPBGA (≥100핀 — 핀 그룹만 요약)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>—</td><td>VDD_HV_IO / VSS_HV_IO</td><td>3.3 V I/O 전원</td></tr>
+    <tr><td>—</td><td>VDD_LV_CORE 등</td><td>1.25 V 코어 전원 (밸러스트 또는 외부 LDO 공급)</td></tr>
+    <tr><td>69 (LQFP) / R13 (BGA)</td><td>BCTRL</td><td>외부 NPN 밸러스트 베이스 제어</td></tr>
+    <tr><td>—</td><td>ADC 기준·아날로그 전원</td><td>3.15–5.5 V 기준</td></tr>
+    <tr><td>—</td><td>GPIO 포트 A–J</td><td>FlexCAN, FlexRay, DSPI, FlexPWM, ADC 등 다중화 — 데이터시트 Table 8 핀 먹스 참조</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>전원 구성: 3.3 V + 외부 NPN 밸러스트(BCTRL) 또는 외부 1.25 V LDO 중 택일. 커패시터 값은 데이터시트 3.8절 확인 필요.</li>  </ul>
+  <h2>패키지 · 열</h2>
+  <p>144 LQFP 20×20 mm / 257 MAPBGA 14×14 mm. 열저항은 데이터시트 3.5절 확인 필요. Tj 상한 150 °C 또는 165 °C (마킹).</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>계열 변형: MPC5743P (2.0 MB/256 KB), MPC5742P (1.5 MB/192 KB), MPC5741P (1.0 MB/128 KB) — 동일 패키지.</li>
+    <li>부품 DB 설명 (e200z4 락스텝 200 MHz · 2.5 MB · FlexRay · 이더넷 · ASIL D)은 데이터시트 특징과 일치.</li>
+    <li>"MPC5744P"는 기본 품번 — 실제 주문 품번(패키지·온도·속도 코드 포함)은 5장 주문 정보 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

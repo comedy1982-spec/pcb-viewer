@@ -13,38 +13,30 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="GRM32ER61E226KE15" data-mfr="Murata" data-cat="커패시터" data-price="0.12" data-status="stub">
+<article data-mpn="GRM32ER61E226KE15" data-mfr="Murata" data-cat="커패시터" data-price="0.12" data-status="done" data-src="https://www.farnell.com/datasheets/2048676.pdf">
   <h1>GRM32ER61E226KE15</h1>
   <p class="meta">Murata · 커패시터 · MLCC 22 µF 25 V X5R 1210 · 참고 단가 약 $0.12 (추정)</p>
-  <p class="meta">원본: <a href="https://www.murata.com/en-us/products/productdetail?partno=GRM32ER61E226KE15L" target="_blank" rel="noopener">제품·데이터시트 페이지</a> · <a href="https://octopart.com/search?q=GRM32ER61E226KE15" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
-
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/2048676.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.murata.com/en-us/products/productdetail?partno=GRM32ER61E226KE15L" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=GRM32ER61E226KE15" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Murata 제품 데이터시트 GRM32ER61E226KE15# (Last updated 2015/12/04)</p>
   <h2>핵심 사양</h2>
   <dl>
-      <dt>값</dt><dd>22 µF ±10 %, 25 V, X5R</dd>
-      <dt>크기</dt><dd>1210</dd>
+    <dt>값</dt><dd>22 µF ±10 % (K)</dd>
+    <dt>정격 전압</dt><dd>25 V DC</dd>
+    <dt>유전체</dt><dd>X5R (EIA), 용량 변화 ±15.0 % (-55 ~ 85 °C)</dd>
+    <dt>동작 온도</dt><dd>-55 ~ +85 °C</dd>
+    <dt>크기</dt><dd>1210 (3225 metric), 3.2 × 2.5 × 2.5 mm</dd>
+    <dt>포장</dt><dd>L = φ180 mm 엠보스 테이프 1000개, K = φ330 mm 4000개</dd>
+    <dt>질량</dt><dd>110 mg (일반)</dd>
+    <dt>AEC-Q200</dt><dd>데이터시트에 언급 없음 — 범용 GRM 시리즈</dd>
   </dl>
-
-  <h2>절대 최대 정격</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
-
-  <h2>권장 동작 조건</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
-
-  <h2>핀 배치</h2>
-  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
-
-  <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
-
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
-
+  <p>L 3.2 ±0.3 mm, W 2.5 ±0.2 mm, T 2.5 ±0.2 mm, 단자 폭 e 0.3 mm 이상, 단자 간격 g 1.0 mm 이상.</p>
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>동작 온도 상한이 85 °C(X5R) — 125 °C 환경의 차량 ECU에는 부적합할 수 있음. X7R/X7S 차량용(GCM 계열) 대체 검토.</li>
+    <li>DC 바이어스·AC 전압·리플 발열 특성은 데이터시트에 그래프로만 제공 — 12 V 입력 벌크용이면 실효 용량이 크게 줄어드는 점 고려.</li>
+    <li>MPN 끝 포장 문자(L/K)가 빠져 있음 — 주문 시 GRM32ER61E226KE15L 또는 …K 지정.</li>
+    <li>1210 대형 MLCC는 보드 굴곡에 의한 크랙에 취약 — 커넥터·나사 근처 배치 회피, 굴곡 방향과 평행 배치.</li>
+  </ul>
 </article>
 </body>
 </html>

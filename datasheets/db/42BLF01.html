@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>42BLF01 (MIKROE-4455) · 42BLF01 — 3-phase BLDC motor with hall sensors</title>
+<title>42BLF01 (MIKROE-4455) · 3-phase BLDC motor with hall sensors</title>
 <style>
 body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
@@ -13,43 +13,61 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="42BLF01 (MIKROE-4455)" data-mfr="MIKROE (42BLF 시리즈)" data-cat="모터" data-price="24" data-status="stub">
+<article data-mpn="42BLF01 (MIKROE-4455)" data-mfr="MIKROE (42BLF 시리즈)" data-cat="모터" data-price="24" data-status="done" data-src="https://mouser.com/datasheet/2/272/BLDC_Motor_BLDC_Motor_with_Hall_sensor_Datasheet-3217747.pdf">
   <h1>42BLF01 (MIKROE-4455)</h1>
-  <p class="meta">MIKROE (42BLF 시리즈) · 모터 · 42BLF01 — 3-phase BLDC motor with hall sensors · 참고 단가 약 $24 (추정)</p>
-  <p class="meta">원본: <a href="https://mouser.com/datasheet/2/272/BLDC_Motor_BLDC_Motor_with_Hall_sensor_Datasheet-3217747.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.mikroe.com/motor-bldc-42blf01-with-hall-sensor" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=42BLF01%20(MIKROE-4455)" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
-
+  <p class="meta">MIKROE (42BLF 시리즈) · 모터 · 24 V 26 W 3-phase BLDC motor with 120° hall sensors · 참고 단가 약 $24 (추정)</p>
+  <p class="meta">원본: <a href="https://mouser.com/datasheet/2/272/BLDC_Motor_BLDC_Motor_with_Hall_sensor_Datasheet-3217747.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.mikroe.com/motor-bldc-42blf01-with-hall-sensor" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=42BLF01%20(MIKROE-4455)" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 42BLF Series datasheet</p>
   <h2>핵심 사양</h2>
   <dl>
-      <dt>정격</dt><dd>24 V, 4000 rpm, 1.9 A</dd>
-      <dt>극수</dt><dd>8극 (4극쌍), Y결선</dd>
-      <dt>토크 상수</dt><dd>0.035 N·m/A</dd>
-      <dt>역기전력 상수</dt><dd>3.7 V/krpm</dd>
-      <dt>회전자 관성</dt><dd>24 g·cm²</dd>
-      <dt>홀 센서</dt><dd>120°, 전원 5–20 V</dd>
-      <dt>시뮬레이션 값</dt><dd>상 저항 0.9 Ω·인덕턴스 1.3 mH는 추정값 (데이터시트에 없음), 예제는 12 V 구동</dd>
+    <dt>형식</dt><dd>3상 BLDC, 8극(4극쌍), 스타(Y) 결선, 홀 센서 120° 전기각</dd>
+    <dt>정격</dt><dd>24 VDC, 4000 rpm (±10 %), 1.9 A, 0.063 N·m, 출력 26 W</dd>
+    <dt>피크</dt><dd>0.18 N·m, 5.7 A (피크 토크는 성능 계산용 값)</dd>
+    <dt>토크 상수</dt><dd>0.035 N·m/A</dd>
+    <dt>역기전력 상수</dt><dd>3.7 V/krpm</dd>
+    <dt>회전자 관성</dt><dd>24 g·cm²</dd>
+    <dt>홀 센서 전원</dt><dd>+5 ~ +20 VDC</dd>
+    <dt>절연</dt><dd>B종, 절연 저항 100 MΩ min @ 500 VDC, 내전압 500 VAC 1분</dd>
+    <dt>기구</dt><dd>본체 길이 47 mm, 질량 0.33 kg (데이터시트 표)</dd>
+    <dt>시뮬레이션 값</dt><dd>상 저항 0.9 Ω·인덕턴스 1.3 mH는 추정값 (데이터시트에 없음), 예제는 12 V 구동</dd>
   </dl>
-
   <h2>절대 최대 정격</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
-
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>피크 전류</td><td></td><td>5.7</td><td>A</td><td></td></tr>
+    <tr><td>피크 토크</td><td></td><td>0.18</td><td>N·m</td><td>계산용</td></tr>
+    <tr><td>내전압</td><td></td><td>500</td><td>VAC</td><td>1분</td></tr>
+  </tbody></table>
   <h2>권장 동작 조건</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
-
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>모터 전압</td><td></td><td>24</td><td></td><td>VDC</td></tr>
+    <tr><td>정격 전류</td><td></td><td>1.9</td><td></td><td>A</td></tr>
+    <tr><td>홀 센서 전원</td><td>5</td><td></td><td>20</td><td>VDC</td></tr>
+    <tr><td>주위 온도</td><td>−20</td><td></td><td>50</td><td>°C</td></tr>
+  </tbody></table>
   <h2>핀 배치</h2>
-  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
-
+  <p>리드선 (MIKROE 제품 페이지 표기). 커넥터 형식은 명시되지 않음.</p>
+  <table><thead><tr><th>선</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>빨강</td><td>+5V</td><td>홀 센서 전원</td></tr>
+    <tr><td>검정</td><td>GND</td><td>홀 센서 GND</td></tr>
+    <tr><td>노랑</td><td>HALL U</td><td>홀 신호 U</td></tr>
+    <tr><td>초록</td><td>HALL V</td><td>홀 신호 V</td></tr>
+    <tr><td>파랑</td><td>HALL W</td><td>홀 신호 W</td></tr>
+    <tr><td>노랑</td><td>PHASE U</td><td>모터 상 U</td></tr>
+    <tr><td>초록</td><td>PHASE V</td><td>모터 상 V</td></tr>
+    <tr><td>파랑</td><td>PHASE W</td><td>모터 상 W</td></tr>
+  </tbody></table>
   <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
-
+  <ul>
+    <li>홀 출력 형식(오픈 컬렉터 여부)은 문서에 없음 — 컨트롤러 쪽 풀업(예: 홀 전원으로)을 두고 실측 확인.</li>
+    <li>홀 신호선과 상 선이 같은 색으로 표기됨 — 구분 방법은 문서에 없으므로 배선 전 실물 확인.</li>
+  </ul>
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
-
+  <p>본체 길이 47 mm, 질량 0.33 kg. 축 지름·플랜지 치수는 읽은 문서 텍스트에 없음 (외형도 그림 참조).</p>
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>MIKROE-4455는 제품 페이지에서 재고 없음 표시. 같은 시리즈 상위 모델: 42BLF02 (0.125 N·m, 3.4 A), 42BLF03 (0.188 N·m, 5.7 A), 모두 24 V 4000 rpm.</li>
+    <li>질량 표기가 문서마다 다름 (307 g / 0.29 kg / 0.33 kg).</li>
+    <li>상간 저항·인덕턴스 미제공 — 전류 제어 루프 설계 전 실측 필요.</li>
+  </ul>
 </article>
 </body>
 </html>

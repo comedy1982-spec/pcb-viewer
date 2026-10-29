@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLE4972 · Coreless Hall current sensor with analog output and dual OCD, PG-TDSO-16</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLE4972" data-mfr="Infineon" data-cat="전류 센서" data-price="2.8" data-status="done" data-src="https://www.mouser.com/datasheet/2/196/Infineon_TLE4972_AE35D5_DataSheet_v01_02_EN-3363724.pdf">
+  <h1>TLE4972</h1>
+  <p class="meta">Infineon · 전류 센서 · Coreless Hall current sensor with analog output and dual OCD, PG-TDSO-16 · 참고 단가 약 $2.8 (추정)</p>
+  <p class="meta">원본: <a href="https://www.mouser.com/datasheet/2/196/Infineon_TLE4972_AE35D5_DataSheet_v01_02_EN-3363724.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=TLE4972" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TLE4972-AE35D5 Data Sheet Rev. 1.02 (2021-12-21)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>코어리스 차동 홀 전류 센서 – 외부 버스바/PCB 도체의 자계를 측정, 아날로그 출력 + 고속 과전류 검출(OCD) 출력 2개</dd>
+    <dt>측정 범위</dt><dd>풀스케일 최대 ±31 mT (데이터시트: 최대 2000 A 전류까지 대응), 감도 범위 S1–S6: 38.75–186 mV/mT</dd>
+    <dt>기본 설정 (AE35D5)</dt><dd>반차동 출력, 감도 S3 = 62 mV/mT (±19.35 mT FS), 비율 출력(ratiometric) 꺼짐</dd>
+    <dt>정확도</dt><dd>초기 감도 오차 ±5 % (25 °C), 온도·수명 총 드리프트 ±1.4 % (최대 ±2 %) FS, 오프셋 초기 ±200 µT</dd>
+    <dt>대역폭·지연</dt><dd>210 kHz 일반 (최소 120 kHz, C<sub>O</sub> = 6.8 nF), 그룹 지연 1 µs 일반 (최대 1.4 µs)</dd>
+    <dt>OCD</dt><dd>응답 0.7 µs 일반 (OCD1 최대 1 µs, OCD2 최대 1.2 µs), 기본 임계 OCD1 1.39×FS / OCD2 0.82×FS, 허용차 ±10 %, 오픈 드레인</dd>
+    <dt>공급</dt><dd>V<sub>DD</sub> 3.3 V (3.1–3.5 V), 소비 전류 18 mA 일반 (최대 25 mA)</dd>
+    <dt>안전·품질</dt><dd>AEC-Q100 언급, ISO 26262 ASIL B까지</dd>
+    <dt>온도</dt><dd>T<sub>A</sub> −40 … +125 °C</dd>
+    <dt>패키지</dt><dd>PG-TDSO-16 (주문 번호 SP004914362, TLE4972AE35D5XUMA1)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>공급 전압 V<sub>DD</sub></td><td>-0.3</td><td>3.6</td><td>V</td><td></td></tr>
+      <tr><td>VREF, OCD1, AOUT 전압</td><td>-0.3</td><td>V<sub>DD</sub> + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>OCD2 전압</td><td>-0.3</td><td>21</td><td>V</td><td>EEPROM 프로그래밍 전압 인가 핀</td></tr>
+      <tr><td>접합 온도 T<sub>J</sub></td><td></td><td>175</td><td>°C</td><td></td></tr>
+      <tr><td>저장 온도</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM / CDM</td><td></td><td>±2 / ±1</td><td>kV</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>공급 전압 V<sub>DD</sub></td><td>3.1</td><td>3.3</td><td>3.5</td><td>V</td></tr>
+      <tr><td>주변 온도 T<sub>A</sub></td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+      <tr><td>동작 접합 온도</td><td>-40</td><td></td><td>160</td><td>°C</td></tr>
+      <tr><td>AOUT 부하 커패시턴스 C<sub>O</sub></td><td>4.7</td><td>6.8</td><td>8</td><td>nF</td></tr>
+      <tr><td>OCD 풀업 저항</td><td></td><td>4.7</td><td>10</td><td>kΩ</td></tr>
+      <tr><td>OCD 부하 커패시턴스</td><td></td><td></td><td>1</td><td>nF</td></tr>
+      <tr><td>OCD 오픈 드레인 전류</td><td></td><td></td><td>1</td><td>mA</td></tr>
+      <tr><td>EEPROM 프로그래밍 전압 (OCD2)</td><td>20.5</td><td></td><td>20.7</td><td>V</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-TDSO-16</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1, 8, 14</td><td>RSVD</td><td>리드프레임에 연결됨 – 이 중 하나만 GND에 연결</td></tr>
+      <tr><td>2</td><td>OCD2</td><td>과전류 검출 출력 2 (오픈 드레인), 프로그래밍 전압 입력</td></tr>
+      <tr><td>3</td><td>OCD1</td><td>과전류 검출 출력 1 (오픈 드레인)</td></tr>
+      <tr><td>4</td><td>AOUT</td><td>아날로그 신호 출력</td></tr>
+      <tr><td>5</td><td>VREF</td><td>기준 전압 입출력 (완전 차동 모드에서는 출력)</td></tr>
+      <tr><td>6</td><td>GND</td><td>접지</td></tr>
+      <tr><td>7</td><td>VDD</td><td>공급 전압</td></tr>
+      <tr><td>9–13, 15, 16</td><td>NC</td><td>미연결</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>V<sub>DD</sub> 디커플링 220 nF (25 V) – 응용 회로 그림 기준.</li>
+    <li>AOUT·VREF에 6.8 nF (25 V) – 대역폭 사양의 C<sub>O</sub> 조건과 같음.</li>
+    <li>선택 RC 저역 필터 예: 220 Ω 직렬 + 15 nF → f<sub>c</sub> = 48.2 kHz.</li>
+    <li>OCD1/OCD2 풀업 4.7 kΩ, OCD 라인 1 nF 이하.</li>
+    <li>그림 텍스트 일부가 깨져 있어 부품 위치는 원본 그림(Figure 5/6, 3상 예시)과 대조하세요.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-TDSO-16. 열저항은 읽은 데이터시트에 없음 (데이터시트 확인 필요). T<sub>J</sub> 최대 175 °C (절대 최대), 동작 160 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>센서 패키지 안에 1차 도체가 없습니다(코어리스, 외부 버스바/PCB 트레이스 자계 측정). 데이터시트에 V<sub>ISO</sub>·연면/공간 거리 같은 절연 정격이 없으므로, 절연은 버스바–PCB 기구 설계로 확보해야 합니다.</li>
+    <li>차동 홀 구조로 외부 균일 자계를 40 dB 일반 (최소 34 dB) 억제합니다. 인접 상 도체의 비균일 자계는 배치로 관리하세요.</li>
+    <li>저전압 잠금: 상승 최대 2.93 V, 하강 최소 2.5 V; 과전압 잠금 상승 최소 3.55 V; 파워온 지연 최대 1.5 ms.</li>
+    <li>"TLE4972"는 계열 이름입니다. 이 페이지 값은 TLE4972-AE35D5 기준입니다.</li>
+  </ul>
+</article>
+</body>
+</html>

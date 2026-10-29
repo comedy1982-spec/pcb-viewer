@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMT49413 · 3-Phase BLDC Controller and Gate Driver</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="AMT49413" data-mfr="Allegro" data-cat="모터 드라이버" data-price="4.8" data-status="done" data-src="https://mouser.com/datasheet/2/1115/AMT49413_Datasheet-3570706.pdf">
+  <h1>AMT49413</h1>
+  <p class="meta">Allegro · 모터 드라이버 · 3상 BLDC 컨트롤러 + N-MOSFET 게이트 드라이버 (홀 센서 정류), QFN-48 · 참고 단가 약 $4.8 (추정)</p>
+  <p class="meta">원본: <a href="https://mouser.com/datasheet/2/1115/AMT49413_Datasheet-3570706.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.allegromicro.com/-/media/Files/Datasheets/AMT49413-Datasheet.ashx" target="_blank" rel="noopener">제조사 PDF (미확인 링크)</a> · <a href="https://octopart.com/search?q=AMT49413" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 AMT49413-DS Rev. 3 (MCO-0000124), 2022-02-28</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>3상 BLDC 컨트롤러 + N-채널 MOSFET 프리드라이버, 홀 센서 정류 디코더 내장 (120° 배치), 동기 정류, 관통 방지</dd>
+    <dt>공급 전압 VBB</dt><dd>5.5 ~ 50 V 동작 (파라미터 보증 7 ~ 45 V)</dd>
+    <dt>게이트 구동 전원</dt><dd>VREG 12.10 ~ 13.75 V (VBB ≥ 7.4 V), 차지펌프 + 톱오프 차지펌프로 100 % 듀티 가능</dd>
+    <dt>전류 감지</dt><dd>내장 전류 감지 증폭기, 게인 19 V/V typ</dd>
+    <dt>입출력</dt><dd>RESET, COAST, MODE, PWM, DIR, BRAKE, ESF 입력 · TACHO, DIRO 출력 · 오픈드레인 고장 플래그 FF1/FF2 · 홀 센서용 5 V 공급</dd>
+    <dt>진단</dt><dd>저전압, 과온, 홀 로직 고장, 지락·천락 단락, 권선 단락, 저부하 전류</dd>
+    <dt>온도</dt><dd>G: TA −40 ~ 105 °C, TJ 150 °C</dd>
+    <dt>품질 등급</dt><dd>AEC-Q100 등급 명시 없음 (ESD 시험만 AEC-Q100-002/011 방법 인용)</dd>
+    <dt>패키지</dt><dd>48-리드 QFN 7×7 mm, 노출 패드 (EV) — AMT49413GEVATR (7인치 릴 1000개)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VBB</td><td>−0.3</td><td>50</td><td>V</td><td></td></tr>
+    <tr><td>RESET</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>기타 로직 핀</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>GHA/GHB/GHC</td><td>VSx</td><td>VSx + 15</td><td>V</td><td></td></tr>
+    <tr><td>GLA/GLB/GLC</td><td>−5</td><td>16</td><td>V</td><td></td></tr>
+    <tr><td>CA/CB/CC</td><td></td><td>VSx + 15</td><td>V</td><td></td></tr>
+    <tr><td>SA/SB/SC</td><td>−5</td><td>55</td><td>V</td><td></td></tr>
+    <tr><td>CSP, CSN, LSS</td><td>−4</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>CSOUT, VDSTH</td><td>−0.3</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>VDRAIN</td><td>−0.3</td><td>55</td><td>V</td><td></td></tr>
+    <tr><td>TA (G)</td><td>−40</td><td>105</td><td>°C</td><td></td></tr>
+    <tr><td>TJ</td><td></td><td>150</td><td>°C</td><td>과도 175 °C (≤ 1 s, 수명 ≤ 10 h)</td></tr>
+    <tr><td>Tstg</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>2000</td><td>V</td><td>CP1 핀은 1000 V</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>1050</td><td>V</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VBB (기능 동작)</td><td>5.5</td><td></td><td>50</td><td>V</td></tr>
+    <tr><td>VBB (파라미터 보증)</td><td>7</td><td></td><td>45</td><td>V</td></tr>
+    <tr><td>VDSTH 입력</td><td>0.3</td><td></td><td>4</td><td>V</td></tr>
+    <tr><td>RREF</td><td>20</td><td></td><td>200</td><td>kΩ</td></tr>
+    <tr><td>RT</td><td>5</td><td></td><td>400</td><td>kΩ</td></tr>
+    <tr><td>RDEAD</td><td>5</td><td></td><td>400</td><td>kΩ</td></tr>
+    <tr><td>RESET 풀업 (사용 시)</td><td>20</td><td></td><td></td><td>kΩ</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>48-QFN 7×7 mm (EV), 노출 패드 → AGND</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>N.C.</td><td>무접속</td></tr>
+    <tr><td>2</td><td>RESET</td><td>슬립 모드 제어</td></tr>
+    <tr><td>3</td><td>V5BD</td><td>5 V 레귤레이터 베이스 드라이브</td></tr>
+    <tr><td>4</td><td>V5</td><td>5 V 레귤레이터 기준</td></tr>
+    <tr><td>5</td><td>FF2</td><td>고장 플래그 2</td></tr>
+    <tr><td>6</td><td>FF1</td><td>고장 플래그 1</td></tr>
+    <tr><td>7</td><td>TACHO</td><td>속도 출력</td></tr>
+    <tr><td>8</td><td>BRAKE</td><td>브레이크 입력</td></tr>
+    <tr><td>9</td><td>DIR</td><td>방향 입력</td></tr>
+    <tr><td>10</td><td>H1</td><td>홀 입력 1</td></tr>
+    <tr><td>11</td><td>H2</td><td>홀 입력 2</td></tr>
+    <tr><td>12</td><td>H3</td><td>홀 입력 3</td></tr>
+    <tr><td>13</td><td>N.C.</td><td>무접속</td></tr>
+    <tr><td>14</td><td>PWM</td><td>제어 입력</td></tr>
+    <tr><td>15</td><td>MODE</td><td>감쇠 모드 입력</td></tr>
+    <tr><td>16</td><td>RC</td><td>PWM 발진 타이밍</td></tr>
+    <tr><td>17</td><td>TEST</td><td>생산 시험 — AGND에 연결</td></tr>
+    <tr><td>18</td><td>RDEAD</td><td>데드타임 설정</td></tr>
+    <tr><td>19</td><td>CSOUT</td><td>전류 감지 출력</td></tr>
+    <tr><td>20</td><td>REF</td><td>전류 제한 기준</td></tr>
+    <tr><td>21</td><td>CSN</td><td>전류 감지 (−)</td></tr>
+    <tr><td>22</td><td>CSP</td><td>전류 감지 (+)</td></tr>
+    <tr><td>23</td><td>VDSTH</td><td>고장 검출 임계 전압</td></tr>
+    <tr><td>24</td><td>VDRAIN</td><td>하이사이드 드레인 전압 감지</td></tr>
+    <tr><td>25</td><td>SC</td><td>C상 모터 단자</td></tr>
+    <tr><td>26</td><td>GHC</td><td>C상 하이사이드 게이트</td></tr>
+    <tr><td>27</td><td>CC</td><td>C상 부트스트랩</td></tr>
+    <tr><td>28</td><td>SB</td><td>B상 모터 단자</td></tr>
+    <tr><td>29</td><td>GHB</td><td>B상 하이사이드 게이트</td></tr>
+    <tr><td>30</td><td>CB</td><td>B상 부트스트랩</td></tr>
+    <tr><td>31</td><td>SA</td><td>A상 모터 단자</td></tr>
+    <tr><td>32</td><td>GHA</td><td>A상 하이사이드 게이트</td></tr>
+    <tr><td>33</td><td>CA</td><td>A상 부트스트랩</td></tr>
+    <tr><td>34</td><td>GLC</td><td>C상 로우사이드 게이트</td></tr>
+    <tr><td>35</td><td>GLB</td><td>B상 로우사이드 게이트</td></tr>
+    <tr><td>36</td><td>GLA</td><td>A상 로우사이드 게이트</td></tr>
+    <tr><td>37</td><td>N.C.</td><td>무접속</td></tr>
+    <tr><td>38</td><td>LSS</td><td>로우사이드 소스 리턴</td></tr>
+    <tr><td>39</td><td>ESF</td><td>고장 시 정지 허용 입력</td></tr>
+    <tr><td>40</td><td>VREG</td><td>게이트 구동 전원 출력</td></tr>
+    <tr><td>41</td><td>AGND</td><td>아날로그 접지</td></tr>
+    <tr><td>42</td><td>CP1</td><td>차지펌프 커패시터</td></tr>
+    <tr><td>43</td><td>CP2</td><td>차지펌프 커패시터</td></tr>
+    <tr><td>44</td><td>DIRO</td><td>방향 출력</td></tr>
+    <tr><td>45</td><td>VBB</td><td>전원</td></tr>
+    <tr><td>46</td><td>COAST</td><td>코스트 입력</td></tr>
+    <tr><td>47, 48</td><td>N.C.</td><td>무접속</td></tr>
+    <tr><td>PAD</td><td>EP</td><td>방열 패드 — AGND</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VBB: 100 nF 이상 세라믹 + 약 10 µF 전해 병렬.</li>
+    <li>차지펌프 CP1–CP2: 470 nF typ.</li>
+    <li>VREG 저장 커패시터: 저 ESR/ESL, 부트스트랩 커패시터의 20배 이상 (전해 사용 시 100 nF 세라믹 병렬).</li>
+    <li>V5: CV5 ≥ 200 nF (V5–V5BD 직결 시 220 nF), C5BD 100 nF; 외부 패스 트랜지스터 사용 시 V5에 10 µF.</li>
+    <li>부트스트랩: CBOOT = QGATE × 20 / VBOOT, 리플 ΔV = QGATE / CBOOT ≤ 400 mV 권장, 충전 시간 tCHARGE(min) ≈ CBOOT × ΔV / 250 mA.</li>
+    <li>전류 트립: ITRIP = (VREF − VOOS) / (RSENSE × AV), AV = 19 typ.</li>
+    <li>발진: fOSC ≈ 1 / (RT·CT + tBLANK + tDEAD), 20 ~ 50 kHz, 예시 CT = 680 pF. tBLANK(µs) = 1260 × CT(µF) (내부 PWM) / 2000 × CT(µF) (외부 PWM).</li>
+    <li>데드타임: RDEAD 10 ~ 100 kΩ에서 정확도 최적, 50 kΩ → 약 960 ns (835 ~ 1090 ns); RDEAD를 V5에 묶으면 약 6 µs.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>48-QFN 7×7 mm, 노출 패드 AGND 연결. RθJA 24 °C/W (JESD51-7 High-K), RθJP 2 °C/W. TJ 150 °C (과도 175 °C).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>읽은 데이터시트 기준 이 부품은 <b>홀 센서 정류</b> 컨트롤러이며 센서리스 동작은 설명되어 있지 않음 — 툴의 부품 설명("센서리스")과 다름.</li>
+    <li>데이터시트(Rev. 3)의 주문 품번은 AMT49413GEVATR (G, −40 ~ 105 °C)만 기재 — 엔진룸 등 125 °C 이상 환경에는 부적합.</li>
+    <li>TEST 핀(17)은 반드시 AGND에 연결.</li>
+    <li>VBB 7 V 미만에서는 게이트 전압이 감소 (5.5 V까지 동작) — 크랭킹 시 MOSFET RDS(on) 증가 고려.</li>
+  </ul>
+</article>
+</body>
+</html>

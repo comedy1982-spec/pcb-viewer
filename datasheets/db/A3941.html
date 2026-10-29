@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A3941 · Automotive full-bridge MOSFET driver</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="A3941" data-mfr="Allegro MicroSystems" data-cat="게이트 드라이버" data-price="" data-status="done" data-src="https://dtsheet.com/doc/855888/allegro-a3941">
+  <h1>A3941</h1>
+  <p class="meta">Allegro MicroSystems · 게이트 드라이버 · 차량용 풀브리지(H-브리지) N-MOSFET 프리드라이버</p>
+  <p class="meta">원본: <a href="https://dtsheet.com/doc/855888/allegro-a3941" target="_blank" rel="noopener">데이터시트 (사본)</a> · <a href="https://octopart.com/search?q=A3941KLPTR-T" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 3941-DS Rev. 5 (2011-08-23); 핀 목록은 Rev. 2 사본(pdf.elecfans.com)과 교차 확인</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>하이사이드 2 + 로우사이드 2 게이트 구동, 브러시 DC 모터 등 유도성 부하용</dd>
+    <dt>전원 VBB</dt><dd>5.5~50 V 단일 비안정 전원 (7 V부터 완전 사양, 5.5 V까지 게이트 구동 감소)</dd>
+    <dt>게이트 구동</dt><dd>배터리 7 V까지 10 V 이상, 차지펌프로 VREG 약 13 V 생성</dd>
+    <dt>하이사이드</dt><dd>부트스트랩 커패시터 + 내부 톱오프 차지펌프로 100% 듀티 가능</dd>
+    <dt>데드타임</dt><dd>RDEAD 저항으로 설정, 교차 도통 보호</dd>
+    <dt>로직 전원</dt><dd>내장 5 V 레귤레이터 (V5)</dd>
+    <dt>진단</dt><dd>FF1/FF2 폴트 플래그: 저전압, 과온, 단락 (VDS 모니터, 임계 VDSTH)</dd>
+    <dt>모드</dt><dd>고속/저속 감쇠, 다이오드 또는 동기 정류, 저전류 슬립</dd>
+    <dt>온도</dt><dd>K 범위 TA -40~150 °C</dd>
+    <dt>패키지</dt><dd>A3941KLPTR-T: 28-pin TSSOP, 노출 열패드 (LP), 릴당 4000개</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VBB</td><td>-0.3</td><td>50</td><td>V</td><td>GND 기준</td></tr>
+      <tr><td>V5</td><td>-0.3</td><td>7</td><td>V</td><td></td></tr>
+      <tr><td>LSS</td><td>-4</td><td>6.5</td><td>V</td><td></td></tr>
+      <tr><td>SA, SB</td><td>-5</td><td>55</td><td>V</td><td></td></tr>
+      <tr><td>VDRAIN</td><td>-5</td><td>55</td><td>V</td><td></td></tr>
+      <tr><td>GHA, GHB</td><td>Sx</td><td>Sx+15</td><td>V</td><td></td></tr>
+      <tr><td>GLA, GLB</td><td>-5</td><td>16</td><td>V</td><td></td></tr>
+      <tr><td>CA, CB</td><td>-0.3</td><td>Sx+15</td><td>V</td><td></td></tr>
+      <tr><td>로직 입출력 (PHASE, PWMH, PWML, SR, RESET, FF1, FF2)</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+      <tr><td>VDSTH</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+      <tr><td>동작 온도 TA (K)</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>접합 온도 TJ(max)</td><td></td><td>150</td><td>°C</td><td>과도 175 °C (≤1 s, 수명 ≤10 h)</td></tr>
+      <tr><td>보관 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM / CDM</td><td></td><td>2000 / 1050</td><td>V</td><td>AEC-Q100-002 / -011</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VBB (완전 사양)</td><td>7</td><td></td><td>50</td><td>V</td></tr>
+      <tr><td>VBB (게이트 구동 감소)</td><td>5.5</td><td></td><td></td><td>V</td></tr>
+      <tr><td>VDSTH 입력</td><td>0.1</td><td></td><td>2</td><td>V</td></tr>
+      <tr><td>RDEAD</td><td>3</td><td></td><td>240</td><td>kΩ</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>28-pin TSSOP, 노출 패드 (LP)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>VDRAIN</td><td>하이사이드 공통 드레인 (VDS 감지)</td></tr>
+      <tr><td>2</td><td>LSS</td><td>로우사이드 공통 소스</td></tr>
+      <tr><td>3</td><td>GLB</td><td>로우사이드 게이트 B</td></tr>
+      <tr><td>4</td><td>SB</td><td>부하 연결 B</td></tr>
+      <tr><td>5</td><td>GHB</td><td>하이사이드 게이트 B</td></tr>
+      <tr><td>6</td><td>CB</td><td>부트스트랩 커패시터 B</td></tr>
+      <tr><td>7</td><td>VREG</td><td>13 V 조정 출력</td></tr>
+      <tr><td>8</td><td>VREG</td><td>13 V 조정 출력</td></tr>
+      <tr><td>9</td><td>CA</td><td>부트스트랩 커패시터 A</td></tr>
+      <tr><td>10</td><td>GHA</td><td>하이사이드 게이트 A</td></tr>
+      <tr><td>11</td><td>SA</td><td>부하 연결 A</td></tr>
+      <tr><td>12</td><td>GLA</td><td>로우사이드 게이트 A</td></tr>
+      <tr><td>13</td><td>VBB</td><td>주 전원</td></tr>
+      <tr><td>14</td><td>VBB</td><td>주 전원</td></tr>
+      <tr><td>15</td><td>CP2</td><td>차지펌프 커패시터</td></tr>
+      <tr><td>16</td><td>CP1</td><td>차지펌프 커패시터</td></tr>
+      <tr><td>17</td><td>GND</td><td>접지</td></tr>
+      <tr><td>18</td><td>GND</td><td>접지</td></tr>
+      <tr><td>19</td><td>PHASE</td><td>방향(위상) 제어 입력</td></tr>
+      <tr><td>20</td><td>V5</td><td>5 V 레귤레이터 출력</td></tr>
+      <tr><td>21</td><td>SR</td><td>동기 정류 제어 입력</td></tr>
+      <tr><td>22</td><td>PWML</td><td>로우사이드 PWM 입력</td></tr>
+      <tr><td>23</td><td>PWMH</td><td>하이사이드 PWM 입력</td></tr>
+      <tr><td>24</td><td>RESET</td><td>리셋 입력</td></tr>
+      <tr><td>25</td><td>FF1</td><td>폴트 플래그 1 출력</td></tr>
+      <tr><td>26</td><td>FF2</td><td>폴트 플래그 2 출력</td></tr>
+      <tr><td>27</td><td>RDEAD</td><td>데드타임 설정</td></tr>
+      <tr><td>28</td><td>VDSTH</td><td>VDS 임계 전압 입력</td></tr>
+      <tr><td>PAD</td><td>PAD</td><td>노출 패드, 방열용 (하면)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>부트스트랩: QBOOT ≈ 20 × QGATE, CBOOT = QBOOT / VBOOT (전압 강하 약 5%). 양질의 세라믹이면 정격 16 V 가능 (내부 제너 클램프 18 V).</li>
+    <li>VREG 저장 커패시터: CBOOT의 20배 이상, 정격 15 V 이상, VREG 핀 가까이.</li>
+    <li>차지펌프 CP1–CP2: 최소 220 nF, 일반 470 nF.</li>
+    <li>디커플링: VBB와 V5에서 GND로 약 100 nF 세라믹, 핀 가까이. V5는 100 nF 이상 필수.</li>
+    <li>데드타임: tDEAD(ns) ≈ 50 + 7200 / (1.2 + 200/RDEAD[kΩ]) (3~240 kΩ, 25 °C, 30 kΩ에서 약 960 ns). RDEAD를 V5에 묶으면 고정 6 µs.</li>
+    <li>VDSTH를 V5(4.95 V 초과)에 묶으면 단락 모니터 비활성.</li>
+    <li>자동 시작이 필요하면 RESET을 20~33 kΩ로 VBB에 풀업. 하이사이드 게이트–소스 저항 RGSH는 250 kΩ 이상 (톱오프 펌프 부하).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>28-pin TSSOP, 노출 패드. RθJA 28 °C/W (4층 JEDEC), 32 °C/W (2층, 양면 3.8 in² 구리), RθJP 2 °C/W. TJ(max) 150 °C. 과온 폴트 약 165~170 °C (히스테리시스 15 °C).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>보호 임계: VREG UVLO 상승 8 V / 하강 7.25 V, V5 저전압 5 V (4.5~5.5 V).</li>
+    <li>ESD 시험은 AEC-Q100 방법으로 되어 있지만 문서에 AEC-Q100 인증 문구는 명시되어 있지 않습니다. 인증 여부는 Allegro에 확인하세요.</li>
+    <li>2011년 문서입니다. 신규 설계 시 단종/NRND 상태를 확인하고, 필요하면 후속 H-브리지 드라이버를 검토하세요.</li>
+    <li>노출 패드는 넓은 구리와 비아로 방열하세요. 연결 전위는 원본 문서 확인 (일반적으로 GND).</li>
+  </ul>
+</article>
+</body>
+</html>

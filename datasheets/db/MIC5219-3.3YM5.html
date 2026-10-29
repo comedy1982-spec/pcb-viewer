@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIC5219-3.3YM5 · 500 mA peak LDO regulator, 3.3 V fixed, SOT-23-5</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MIC5219-3.3YM5" data-mfr="Microchip" data-cat="전원" data-price="0.5" data-status="done" data-src="https://www.microchip.com/content/dam/mchp/documents/OTH/ProductDocuments/DataSheets/MIC5219-500mA-Peak-Output-LDO-Regulator-DS20006021A.pdf">
+  <h1>MIC5219-3.3YM5</h1>
+  <p class="meta">Microchip · 전원 · 500 mA peak LDO regulator, 3.3 V fixed, SOT-23-5 · 참고 단가 약 $0.5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.microchip.com/content/dam/mchp/documents/OTH/ProductDocuments/DataSheets/MIC5219-500mA-Peak-Output-LDO-Regulator-DS20006021A.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.microchip.com/en-us/product/mic5219" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=MIC5219-3.3YM5" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS20006021A (Rev A, 05/2018)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>저잡음 LDO, 고정 3.3 V 출력, Enable·노이즈 바이패스 핀</dd>
+    <dt>정확도</dt><dd>±1 % (25 °C), ±2 % (전체 온도)</dd>
+    <dt>입력 전압</dt><dd>2.5 ~ 12 V (동작)</dd>
+    <dt>출력 전류</dt><dd>피크 500 mA; 연속은 패키지·레이아웃 열 제한 (문서 열 절에서 150 ~ 200 mA 설계 목표 언급)</dd>
+    <dt>드롭아웃</dt><dd>일반 10 mV @ 100 µA, 115 mV @ 50 mA, 175 mV @ 150 mA, 350 mV @ 500 mA (최대 500 mV, 전체 온도 600 mV)</dd>
+    <dt>접지 전류</dt><dd>일반 80 µA @ 100 µA, 1.8 mA @ 150 mA, 12 mA @ 500 mA</dd>
+    <dt>셧다운 전류</dt><dd>일반 0.05 µA, 최대 3 µA (VEN ≤ 0.4 V)</dd>
+    <dt>잡음 · PSRR</dt><dd>500 nV/√Hz (CBYP 없음), 300 nV/√Hz (CBYP 470 pF); PSRR 일반 75 dB @ 120 Hz</dd>
+    <dt>온도</dt><dd>주위 -40 ~ +125 °C</dd>
+    <dt>패키지</dt><dd>SOT-23-5 (M5)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>입력 전압 VIN</td><td>-20</td><td>20</td><td>V</td><td></td></tr>
+    <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>리드 온도</td><td></td><td>260</td><td>°C</td><td>5 s 납땜</td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>입력 전압 VIN</td><td>2.5</td><td></td><td>12</td><td>V</td></tr>
+    <tr><td>Enable 전압 VEN</td><td>0</td><td></td><td>VIN</td><td>V</td></tr>
+    <tr><td>EN Low</td><td></td><td></td><td>0.4 (최저 셧다운 전류 0.18)</td><td>V</td></tr>
+    <tr><td>EN High</td><td>2.0</td><td></td><td></td><td>V</td></tr>
+    <tr><td>주위 온도 TA</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    <tr><td>접합 온도 TJ</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SOT-23-5 (M5)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>IN</td><td>입력 전원</td></tr>
+    <tr><td>2</td><td>GND</td><td>그라운드</td></tr>
+    <tr><td>3</td><td>EN</td><td>Enable — High = 동작, Low 또는 개방 = 셧다운</td></tr>
+    <tr><td>4</td><td>BYP</td><td>기준 전압 바이패스 — 470 pF to GND로 잡음 감소, 개방 가능</td></tr>
+    <tr><td>5</td><td>OUT</td><td>레귤레이터 출력</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>출력 커패시터: CBYP 없으면 최소 1 µF, CBYP 470 pF 사용 시 최소 2.2 µF. ESR 약 1 Ω 이하, 공진 주파수 1 MHz 이상.</li>
+    <li>입력 커패시터: 입력과 AC 필터 커패시터 사이 배선이 10 inch 이상이거나 배터리 입력이면 IN–GND 1 µF.</li>
+    <li>CBYP: BYP–GND 470 pF; 값이 크면 기동이 느려짐.</li>
+    <li>EN은 CMOS/TTL 호환; 셧다운이 필요 없으면 EN을 IN에 연결 (개방 시 셧다운).</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SOT-23-5: θJA 220 °C/W (최소 풋프린트), 170 °C/W (1 inch² 2 oz 구리), θJC 130 °C/W. 25 °C 최소 풋프린트 최대 손실 455 mW. TJ 최대 125 °C. 문서 예: 3.3 V / 150 mA, 25 °C, 최소 풋프린트에서 최대 입력 약 6.2 V.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>SOT-23-5에서 500 mA는 피크 정격 — 12 V 입력 등 고강하 조건에서는 연속 전류가 열로 크게 제한됨 (위 6.2 V 예 참조).</li>
+    <li>동작 입력 최대 12 V, 절대 최대 ±20 V — 12 V 차량 배터리 직결 레귤레이터로는 부적합 (앞단 프리레귤레이터 필요).</li>
+    <li>전류 제한 일반 700 mA, 최대 1000 mA (VOUT = 0 V).</li>
+    <li>읽은 문서에 AEC-Q100 언급 없음 — 차량용이면 차량 등급 LDO 대체 검토.</li>
+  </ul>
+</article>
+</body>
+</html>

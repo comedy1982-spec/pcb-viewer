@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RH850/U2A8 · Automotive 32-bit dual-core lockstep MCU, 8 MB flash, ASIL D</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="RH850/U2A8" data-mfr="Renesas" data-cat="MCU" data-price="" data-status="stub" data-src="https://www.renesas.com/ja/document/dst/rh850u2a-renesas-microcontroller-datasheet?r=1546621">
+  <h1>RH850/U2A8</h1>
+  <p class="meta">Renesas · MCU · RH850/U2A8: G4MH2 2코어 + 락스텝 2코어, 400 MHz, 8 MB 코드 플래시, ASIL D</p>
+  <p class="meta">원본: <a href="https://www.renesas.com/ja/document/dst/rh850u2a-renesas-microcontroller-datasheet?r=1546621" target="_blank" rel="noopener">데이터시트</a> · <a href="https://www.renesas.com/en/products/microcontrollers-microprocessors/rh850-automotive-mcus/rh850u2a-zonedomain-microcontroller-series" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=RH850%2FU2A8" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 R01DS0494ED0100 Rev. 1.00, 2025-06-16</p>
+  <p class="todo">읽은 데이터시트 범위(1–2장)에 전기적 특성이 없어 절대 최대 정격·전원 핀별 전압 범위·열저항을 채우지 못했습니다. 데이터시트 전기적 특성 장 또는 하드웨어 매뉴얼에서 보완 필요. 2차 시도: Renesas 데이터시트 웹 사본은 약 60,000자에서 끝나며(1–2장, 핀 목록까지) 전기적 특성 장이 포함되지 않음.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>코어</dt><dd>RH850G4MH2 메인 코어 2개 (CPU0–CPU1) + 락스텝 체커 코어 2개, FPU 2, 최대 400 MHz</dd>
+    <dt>메모리</dt><dd>코드 플래시 8 MB, 데이터 플래시 320 KB, RAM 1792 KB (로컬 64 KB/코어 + 클러스터 1664 KB, 리텐션 128 KB 포함)</dd>
+    <dt>통신 (373핀/292핀)</dt><dd>RS-CANFD 2유닛×16채널, FlexRay 2유닛, Ethernet 1채널 (100M/1G, MII/RMII·SGMII), RLIN3 24/12, MSPI 9/6, SCI3 3, CXPI 4, RSENT 8, PSI5 4ch, RIIC 2</dd>
+    <dt>아날로그·타이머</dt><dd>ADCJ 3유닛, 입력 94 (373핀) / 79 (292핀), GTM 1, sDMAC 32ch, DTS 128ch</dd>
+    <dt>기타</dt><dd>eMMC, SFMA (시리얼 플래시), 하이퍼바이저, EVITA Full 보안 모듈 (시리즈 기준)</dd>
+    <dt>전원</dt><dd>시리즈 공급 전압 3 ~ 5.5 V (제품 페이지). 전원 핀: VCC, E0VCC, E1VCC, A0VCC–A2VCC, DVCC, VDD, SYSVCC, LVDVCC — 핀별 범위는 데이터시트 확인 필요</dd>
+    <dt>클록</dt><dd>외부 발진기 16/20/24/40 MHz</dd>
+    <dt>안전</dt><dd>ISO 26262 ASIL D</dd>
+    <dt>온도</dt><dd>Tj 최대 150 °C (FBGA-373) / 160 °C (FBGA-292)</dd>
+    <dt>패키지</dt><dd>FBGA-373 (21 × 21 mm, 0.8 mm 피치), FBGA-292 (17 × 17 mm, 0.8 mm 피치)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <p class="todo">데이터시트 확인 필요.</p>
+
+  <h2>권장 동작 조건</h2>
+  <p class="todo">데이터시트 확인 필요 (시리즈 공급 3 ~ 5.5 V만 확인).</p>
+
+  <h2>핀 배치</h2>
+  <p>FBGA-373 / FBGA-292 BGA — 핀 테이블 생략, 그룹 요약: 전원(VCC, EnVCC I/O 전원, AnVCC ADC 전원, DVCC, VDD 코어, SYSVCC, LVDVCC)과 GND, 시스템(리셋, 디버그, 메인 OSC), 포트 I/O(CAN FD·FlexRay·Ethernet·LIN·SPI 등 멀티플렉스), ADC 입력. 볼 배치는 데이터시트 1장 핀 다이어그램 참조.</p>
+
+  <h2>패키지 · 열</h2>
+  <p>FBGA-373 21 × 21 mm, FBGA-292 17 × 17 mm (0.8 mm 피치). 열저항은 데이터시트 확인 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>"RH850/U2A8"은 제품 그룹명이며 주문 품번이 아님 (데이터시트 Table 1.1 주문 정보 참조) — BOM에는 패키지·온도 등급을 포함한 주문 코드 사용.</li>
+    <li>U2A8은 BGA 패키지(292/373)만 제공 — 144/156/176핀 패키지는 U2A6 등 다른 그룹. 0.8 mm BGA 팬아웃에 맞는 기판 층수·비아 규칙 필요.</li>
+  </ul>
+</article>
+</body>
+</html>

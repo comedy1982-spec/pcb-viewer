@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L9788 · Multifunction IC for automotive engine management systems</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="L9788" data-mfr="STMicroelectronics" data-cat="전원" data-price="" data-status="stub" data-src="https://st.com/en/automotive-analog-and-power/l9788.html">
+  <h1>L9788</h1>
+  <p class="meta">STMicroelectronics · 전원 · 엔진 제어(EMS)용 다기능 IC: 프리 부스트/벅, 5 V 1 A LDO, 트래킹 레귤레이터 3개, 로우사이드 드라이버, CAN-FD, K-Line</p>
+  <p class="meta">원본: <a href="https://www.st.com/resource/en/datasheet/l9788.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> (미확인 링크) · <a href="https://st.com/en/automotive-analog-and-power/l9788.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=L9788" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
+  <p class="todo">데이터시트 PDF를 열지 못해 제품 페이지 정보만 반영했습니다. 절대 최대 정격, 동작 전압 범위, 열저항, 핀 번호별 배치(LQFP100-EP)는 데이터시트에서 채워야 합니다. 2차 시도: datasheetspdf.com·alldatasheet 사본은 표지·특징 쪽만 제공(LQFP100 14 × 14 × 1.4 mm EP, AEC-Q100 확인) — 절대 최대 정격·열·핀 표는 여전히 없음.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>4기통 내연기관 엔진 제어 ECU용 전원·신호 전처리 통합 IC (ST BCD 공정)</dd>
+    <dt>레귤레이터</dt><dd>프리 부스트 1개 + 프리 벅 1개, 리니어 5 V 1 A, 독립 자기보호 5 V 트래킹 150 mA × 3, 협조 소프트 스타트</dd>
+    <dt>로우사이드 드라이버</dt><dd>인젝터 4, O2 센서 히터 2(전류 감지), 캠샤프트/솔레노이드 2, 릴레이 5, LED 2, 메인 릴레이 1 (역배터리 다이오드 내장)</dd>
+    <dt>LS/HS 드라이버</dt><dd>3채널, 저전압 스마트 스타트 기능</dd>
+    <dt>프리드라이버</dt><dd>외부 FET용 5개 (1·3번은 외부 션트로 O2H 구동), 이그나이터용 6개</dd>
+    <dt>통신</dt><dd>CAN-FD (CAN 웨이크업), K-Line 1 (ISO 9141 / LIN 2.1), MSC(마이크로세컨드 채널)</dd>
+    <dt>감시</dt><dd>워치독, 웨이크업 핀, 스톱 카운터, 온도 센서, 이중 밴드갭·발진기, VRS 인터페이스, 차지 펌프</dd>
+    <dt>등급</dt><dd>AEC-Q100, ISO 26262 대응 시스템용</dd>
+    <dt>패키지</dt><dd>LQFP-EP 100, 14 × 14 × 1.4 mm (노출 패드)</dd>
+    <dt>상태</dt><dd>양산 중, ST 장기 공급 약속 2034-05까지</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <p class="todo">데이터시트 확인 필요.</p>
+
+  <h2>권장 동작 조건</h2>
+  <p class="todo">데이터시트 확인 필요 (제품 페이지에 동작 온도 미기재).</p>
+
+  <h2>핀 배치</h2>
+  <p>LQFP-EP 100 (14 × 14 mm). 100핀이므로 핀 그룹만 요약: 배터리·프리레귤레이터(부스트/벅) 전원, 5 V LDO·트래킹 레귤레이터 출력, 인젝터·히터·릴레이·LED 로우사이드 출력, 프리드라이버 게이트 출력, 이그나이터 구동, CAN-FD·K-Line, MSC·SPI 계열 MCU 인터페이스, VRS 입력, 웨이크업·워치독. 핀 번호는 데이터시트 확인 필요.</p>
+
+  <h2>패키지 · 열</h2>
+  <p>LQFP100 노출 패드 14 × 14 × 1.4 mm. 열저항·Tj 최대는 데이터시트 확인 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>부품 DB 설명 "SBC · CAN · LIN · LDO"는 부정확 — L9788은 엔진 매니지먼트 전용 다기능 IC(인젝터·이그니션·히터 드라이버 포함)이며 LIN 대신 K-Line(ISO 9141/LIN 2.1 호환)을 가짐. BCM/ELD/DADU 같은 일반 SBC 용도라면 범용 SBC로 교체 검토.</li>
+    <li>LQFP100-EP는 100핀 — 생성기용 핀 JSON은 만들지 않음.</li>
+  </ul>
+</article>
+</body>
+</html>

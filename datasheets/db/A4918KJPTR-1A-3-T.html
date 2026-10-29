@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A4918KJPTR-1A-3-T · Automotive 3-phase MOSFET driver with SPI and CSA</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="A4918KJPTR-1A-3-T" data-mfr="Allegro MicroSystems" data-cat="게이트 드라이버" data-price="6" data-status="stub" data-src="https://www.allegromicro.com/-/media/files/datasheets/a4918-1a-datasheet-sf.pdf?sc_lang=en">
+  <h1>A4918KJPTR-1A-3-T</h1>
+  <p class="meta">Allegro MicroSystems · 게이트 드라이버 · 차량용 3상 N-MOSFET 게이트 드라이버, SPI 진단, 전류 감지 앰프 3개, ASIL D · 참고 단가 약 $6 (추정)</p>
+  <p class="meta">원본: <a href="https://www.allegromicro.com/-/media/files/datasheets/a4918-1a-datasheet-sf.pdf?sc_lang=en" target="_blank" rel="noopener">데이터시트 PDF (요약판)</a> · <a href="https://www.allegromicro.com/en/products/motor-drivers/bldc-drivers/a4918" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=A4918KJPTR-1A-3-T" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 A4918-1A-DS Rev. 4 (2025-12-15, 요약판)</p>
+  <p class="todo">공개된 것은 요약판(short-form) 데이터시트뿐이라 절대 최대 정격, 전기적 특성, 48핀 핀 번호표, 권장 외부 부품 값, RθJA, 동작 온도 범위가 빠져 있습니다. 전체판(Allegro 요청)으로 확인 필요. 핀 테이블 JSON도 미작성. (2차 시도: bomkey 사본도 A4918-1A-DS Rev.2 2024-04-11 요약판이며 개정 이력에 "Unabridged Datasheet"가 별도로 있음 — Allegro에 전체판 요청 필요.)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>3상 브리지 N-MOSFET 게이트 드라이버 (BLDC 등), 부트스트랩 하이사이드 구동</dd>
+    <dt>전원</dt><dd>VBB 4.5~50 V 동작; 차지펌프로 배터리 7 V까지 완전 게이트 구동, 4.5 V까지 감소 구동</dd>
+    <dt>게이트 구동</dt><dd>게이트 전압·세기 프로그래머블, 데드타임 조정형 교차 도통 보호, 100 % PWM 지원</dd>
+    <dt>전류 감지</dt><dd>프로그래머블 전류 감지 앰프 3개</dd>
+    <dt>인터페이스</dt><dd>SPI 호환 시리얼, 광범위한 프로그래머블 진단</dd>
+    <dt>로직 I/O</dt><dd>-1A-3-T: 3.3 V · -1A-5-T: 5 V</dd>
+    <dt>등급</dt><dd>AEC-Q100; ISO 26262 ASIL D SEooC (안전 매뉴얼 조건)</dd>
+    <dt>온도</dt><dd>데이터시트 확인 필요 (품번 K 접두)</dd>
+    <dt>패키지</dt><dd>48-lead LQFP (JP) 7 × 7 mm, 1.6 mm, 0.50 mm 피치, 노출 열패드; 13인치 릴 1,500개</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <p class="todo">요약판에 없음 — 데이터시트 확인 필요.</p>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VBB (동작)</td><td>4.5</td><td></td><td>50</td><td>V</td></tr>
+      <tr><td>VBB (완전 게이트 구동)</td><td>7</td><td></td><td></td><td>V</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>48-lead LQFP-EP 7 × 7 mm (JP). 같은 다이의 QFN-48 (EV, 웨터블 플랭크) 품번: A4918KEVSR-1A-3-T / -5-T.</p>
+  <p class="todo">핀 번호표는 요약판에 없음 — 데이터시트 확인 필요.</p>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul><li>부트스트랩 커패시터와 VREG 커패시터가 필요하다는 언급만 있고 값은 요약판에 없음 — 데이터시트 확인 필요.</li></ul>
+
+  <h2>패키지 · 열</h2>
+  <p>LQFP-48 7 × 7 × 1.6 mm, 하면 노출 열패드. RθJA는 데이터시트 확인 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>Rev. 2 (2024-04)에서 STRn 입력이 풀다운→풀업으로 변경됨 — 이전 회로 재사용 시 확인.</li>
+    <li>-1A 세대 품번; 이전 A4918KJPTR-3-T / -5-T와 구분 필요.</li>
+    <li>3.3 V MCU 계열은 -3-T, 5 V 로직은 -5-T 선택.</li>
+  </ul>
+</article>
+</body>
+</html>

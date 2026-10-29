@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BAT54S · Dual series Schottky barrier diode, SOT23</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="BAT54S" data-mfr="Nexperia" data-cat="다이오드" data-price="" data-status="done" data-src="https://static.chipdip.ru/lib/782/DOC042782419.pdf">
+  <h1>BAT54S</h1>
+  <p class="meta">Nexperia (다수 제조사 동일 품번) · 다이오드 · 30 V 200 mA 직렬 듀얼 쇼트키 배리어 다이오드, SOT23</p>
+  <p class="meta">원본: <a href="https://static.chipdip.ru/lib/782/DOC042782419.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://octopart.com/search?q=BAT54S" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Nexperia BAT54_SER Rev. 5 (2012-10-05)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>구성</dt><dd>쇼트키 다이오드 2개 직렬 (핀 3 = D1 캐소드 / D2 애노드 공통)</dd>
+    <dt>V<sub>R</sub></dt><dd>30 V</dd>
+    <dt>I<sub>F</sub></dt><dd>200 mA (다이오드당, T<sub>amb</sub> 25 °C)</dd>
+    <dt>V<sub>F</sub> (max)</dt><dd>240 mV @0.1 mA, 320 mV @1 mA, 400 mV @10 mA, 500 mV @30 mA, 800 mV @100 mA</dd>
+    <dt>I<sub>R</sub></dt><dd>최대 2 µA @ V<sub>R</sub> = 25 V</dd>
+    <dt>C<sub>d</sub></dt><dd>최대 10 pF (1 V, 1 MHz)</dd>
+    <dt>t<sub>rr</sub></dt><dd>최대 5 ns</dd>
+    <dt>등급</dt><dd>AEC-Q101 qualified (Nexperia)</dd>
+    <dt>각인</dt><dd>*V4 (* = 생산지 코드)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>V<sub>R</sub></td><td></td><td>30</td><td>V</td><td></td></tr>
+    <tr><td>I<sub>F</sub></td><td></td><td>200</td><td>mA</td><td>다이오드당, 25 °C</td></tr>
+    <tr><td>I<sub>FRM</sub></td><td></td><td>300</td><td>mA</td><td>t<sub>p</sub> ≤ 1 s, δ ≤ 0.5</td></tr>
+    <tr><td>I<sub>FSM</sub></td><td></td><td>600</td><td>mA</td><td>구형파 t<sub>p</sub> &lt; 10 ms</td></tr>
+    <tr><td>P<sub>tot</sub></td><td></td><td>250</td><td>mW</td><td>소자당, 한쪽 다이오드 부하, FR4</td></tr>
+    <tr><td>T<sub>j</sub></td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>T<sub>amb</sub></td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>T<sub>stg</sub></td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT23 (TO-236AB)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>A1</td><td>다이오드 1 애노드</td></tr>
+    <tr><td>2</td><td>K2</td><td>다이오드 2 캐소드</td></tr>
+    <tr><td>3</td><td>K1/A2</td><td>다이오드 1 캐소드 + 다이오드 2 애노드 (공통)</td></tr>
+  </tbody></table>
+
+  <h2>패키지 · 열</h2>
+  <p>SOT23. R<sub>th(j-a)</sub> 최대 500 K/W (자유 대기, 소자당 한쪽 다이오드 부하, FR4).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>전형적 용도: ADC 입력 클램프(핀 1 = GND, 핀 2 = 기준 전원, 핀 3 = 신호), 차지펌프 전압 2배기.</li>
+    <li>쇼트키라 고온에서 누설 전류 증가 — 고임피던스 측정 노드 클램프 시 오차 확인.</li>
+    <li>배치 파일에 제조사 없음 — 여러 제조사(Nexperia, onsemi, Diodes 등) 동일 핀아웃 품번이 있으나 정격이 조금씩 다를 수 있음. 차량용이면 AEC-Q101 품목 지정.</li>
+  </ul>
+</article>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAB450M12XM3 · 1200 V 450 A SiC half-bridge module (XM3)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="CAB450M12XM3" data-mfr="Wolfspeed" data-cat="전력 모듈" data-price="" data-status="stub" data-src="https://www.farnell.com/datasheets/2819810.pdf">
+  <h1>CAB450M12XM3</h1>
+  <p class="meta">Wolfspeed · 전력 모듈 · 1200 V, 450 A, 2.6 mΩ SiC MOSFET 하프브리지 모듈 (XM3 플랫폼)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/2819810.pdf" target="_blank" rel="noopener">데이터시트 PDF (Farnell 사본)</a> · <a href="https://www.digikey.com.au/en/products/detail/wolfspeed-inc/CAB450M12XM3/10248983" target="_blank" rel="noopener">유통사 제품 페이지</a> · <a href="https://assets.wolfspeed.com/uploads/2024/01/Wolfspeed_PRD-07128_XM_Module_Signal_Pinout_Clarification_Guide.pdf" target="_blank" rel="noopener">XM 신호 핀아웃 가이드 PRD-07128</a> · <a href="https://octopart.com/search?q=CAB450M12XM3" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 CAB450M12XM3 Rev. A (2019-06-01)</p>
+  <p class="todo">신호 핀 번호는 Wolfspeed 핀아웃 가이드(PRD-07128)로 보강했으나 이 모듈이 Inline / Cross 중 어느 배치인지, 3번 핀의 정의는 읽은 텍스트에서 확정되지 않았습니다(데이터시트 Rev. A의 Schematic and Pin Out 그림 확인 필요). 보관 온도는 읽은 문서에 없음. 그래서 핀 표 JSON은 만들지 않았습니다.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>구성</dt><dd>SiC MOSFET 하프브리지, 구리 베이스플레이트 + Si3N4 절연 기판, 절연형 NTC 내장</dd>
+    <dt>VDS</dt><dd>1200 V</dd>
+    <dt>ID</dt><dd>450 A (TC 25 °C), 409 A (TC 90 °C), 펄스 900 A</dd>
+    <dt>RDS(on)</dt><dd>2.6 mΩ 일반 / 3.7 mΩ 최대 (25 °C), 4.6 mΩ (175 °C)</dd>
+    <dt>게이트</dt><dd>권장 −4 / +15 V, VGS(th) 1.8 / 2.5 / 3.6 V, QG 1330 nC, Ciss 38.0 nF, 내부 Rg 2.5 Ω</dd>
+    <dt>스위칭 손실</dt><dd>Eon 11.0 mJ / Eoff 10.1 mJ (25 °C), 13.0 / 12.1 mJ (175 °C) — 600 V, 450 A, L = 13.6 µH</dd>
+    <dt>바디 다이오드</dt><dd>VSD 4.7 V (25 °C), 4.2 V (175 °C) @ 450 A, VGS = −4 V</dd>
+    <dt>열</dt><dd>RthJC (스위치당) 0.11 °C/W 일반 / 0.13 °C/W 최대</dd>
+    <dt>온도</dt><dd>TVJ −40 ~ 175 °C, TC −40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>XM3, 80 × 53 × 19 mm, 175 g, 루프 인덕턴스 6.7 nH</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDS</td><td></td><td>1200</td><td>V</td><td></td></tr>
+      <tr><td>VGS (과도, AC ≥ 1 Hz)</td><td>−4</td><td>+19</td><td>V</td><td>바디 다이오드 미사용 시 −8 / +19 V</td></tr>
+      <tr><td>ID 연속</td><td></td><td>450 / 409</td><td>A</td><td>TC 25 / 90 °C, VGS 15 V, TVJ ≤ 175 °C</td></tr>
+      <tr><td>IDS 펄스</td><td></td><td>900</td><td>A</td><td>Tjmax 제한</td></tr>
+      <tr><td>TVJ 동작</td><td>−40</td><td>175</td><td>°C</td><td></td></tr>
+      <tr><td>TC 케이스</td><td>−40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>절연 전압</td><td></td><td>4.0</td><td>kV AC</td><td>50 Hz, 1분</td></tr>
+      <tr><td>체결 토크 베이스플레이트 (M4)</td><td>2.0</td><td>4.0</td><td>N·m</td><td>일반 3.0</td></tr>
+      <tr><td>체결 토크 전력 단자 (M5)</td><td>2.0</td><td>5.0</td><td>N·m</td><td>일반 4.0</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VGS 정적 (오프 / 온)</td><td>−4</td><td></td><td>+15</td><td>V</td></tr>
+      <tr><td>IDSS (VDS 1200 V)</td><td></td><td>5 µA</td><td>200 µA</td><td></td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>전력 단자: V+, V−, Mid (M5 볼트). 신호 핀은 Wolfspeed PRD-07128 Rev. 4 (2025-12) «XM Module Signal Pinout Clarification Guide» 기준 아래와 같습니다. XM 모듈은 Inline / Cross 두 가지 신호 핀 배치가 있고, CAB450M12XM3는 이 문서의 첫 번째 모듈 표에 실려 있으나 읽은 텍스트에서 그 표가 Inline인지 Cross인지 확정되지 않았습니다 — 게이트 드라이버 보드와 짝을 맞추기 전에 반드시 원본 그림으로 확인하세요(잘못 짝지으면 단락 위험).</p>
+  <table><thead><tr><th>핀</th><th>Inline 배치</th><th>Cross 배치 (2×2 위치)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td colspan="2">Mid (출력 전압 감지)</td></tr>
+      <tr><td>2</td><td colspan="2">V+ (문서 표기 "V3 V+")</td></tr>
+      <tr><td>3</td><td colspan="2">문서 표에 정의 없음</td></tr>
+      <tr><td>4</td><td>G1</td><td>4-1 K1, 4-2 G1</td></tr>
+      <tr><td>5</td><td>K1</td><td>5-1 G1, 5-2 K1</td></tr>
+      <tr><td>6</td><td>G2</td><td>6-1 K2, 6-2 G2</td></tr>
+      <tr><td>7</td><td>K2</td><td>7-1 G2, 7-2 K2</td></tr>
+      <tr><td>8, 9</td><td colspan="2">V+ (Overcurrent) — 드레인 켈빈, DESAT/과전류 감지용</td></tr>
+      <tr><td>10</td><td colspan="2">NTC2</td></tr>
+      <tr><td>11</td><td colspan="2">NTC1</td></tr>
+    </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>게이트 구동 −4 / +15 V, QG 1330 nC → 구동 전력 ≈ QG × ΔVGS × fsw (예: 19 V, 20 kHz 에서 약 0.5 W/스위치). 절연 게이트 드라이버 (예: UCC5870-Q1) 의 2차측 손실 한도와 비교.</li>
+    <li>드레인 켈빈 핀을 DESAT 감지에 사용, K1/K2 켈빈 소스로 게이트 루프 분리.</li>
+    <li>NTC: R25 = 4.7 kΩ ±1 %, P25 최대 50 mW, Steinhart–Hart 계수 A = 3.3540E−03, B = 3.0013E−04, C = 5.0852E−06, D = 2.1877E−07.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>80 × 53 × 19 mm, 175 g, 구리 베이스플레이트. RthJC 0.11 °C/W (일반, 스위치당). 히트싱크 체결 M4 2.0–4.0 N·m.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>저인덕턴스(6.7 nH) 모듈 — DC 링크 커패시터를 적층 버스바로 직결해야 오버슈트를 억제할 수 있음.</li>
+    <li>VGS 음전압 한계가 −4 V(과도)로 좁음 — 바디 다이오드를 쓰는 경우 −8 V 사용 불가.</li>
+    <li>Wolfspeed는 XM 모듈과 게이트 드라이버의 핀 배치(Inline/Cross)를 잘못 짝지으면 단락으로 드라이버가 손상될 수 있다고 경고합니다.</li>
+    <li>부품 DB 분류가 비어 있음(cat null) → "전력 모듈"로 지정.</li>
+  </ul>
+</article>
+</body>
+</html>

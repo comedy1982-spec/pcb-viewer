@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLIN1029-Q1 · LIN transceiver with dominant state timeout</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLIN1029-Q1" data-mfr="TI" data-cat="통신" data-price="" data-status="done" data-src="https://ti.com/document-viewer/lit/html/SLLSEY5F/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000018906">
+  <h1>TLIN1029-Q1</h1>
+  <p class="meta">TI · 통신 · Automotive LIN transceiver with dominant state timeout</p>
+  <p class="meta">원본: <a href="https://ti.com/document-viewer/lit/html/SLLSEY5F/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000018906" target="_blank" rel="noopener">데이터시트 (TI HTML 뷰어)</a> · <a href="https://ti.com/product/TLIN1029-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TLIN1029-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLLSEY5F (2017-10, 개정 2022-05)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>LIN 2.0/2.1/2.2/2.2A, ISO/DIS 17987-4.2 물리 계층 트랜시버, SAE J2602, ISO 9141 (K-Line) 지원. EN 핀/버스 웨이크, TXD 우세 타임아웃</dd>
+    <dt>데이터율</dt><dd>송신 최대 20 kbps, 수신 최대 100 kbps (인라인 프로그래밍)</dd>
+    <dt>전원</dt><dd>VSUP 4 ~ 36 V (권장), 절대 최대 45 V</dd>
+    <dt>버스 보호</dt><dd>LIN ±45 V</dd>
+    <dt>공급 전류</dt><dd>Sleep 8 typ / 12 µA max (VSUP ≤ 14 V), Normal 열성 300 / 650 µA, 우세 1 / 5 mA</dd>
+    <dt>내부 풀업</dt><dd>RPU 20 / 45 / 60 kΩ + 직렬 다이오드 (Responder 외부 풀업 불필요)</dd>
+    <dt>ESD</dt><dd>HBM ±8 kV, CDM ±1.5 kV (제품 페이지)</dd>
+    <dt>등급 · 온도</dt><dd>AEC-Q100 Grade 1, TA -40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>SOIC-8 (D) 4.90 × 3.91 mm, VSON-8 (DRB) 3.00 × 3.00 mm</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VSUP</td><td>-0.3</td><td>45</td><td>V</td><td>ISO/DIS 17987 Param 10</td></tr>
+    <tr><td>VLIN</td><td>-45</td><td>45</td><td>V</td><td>ISO/DIS 17987 Param 82</td></tr>
+    <tr><td>로직 핀 (RXD, TXD, EN)</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>TA</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+    <tr><td>TJ</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VSUP</td><td>4</td><td></td><td>36</td><td>V</td></tr>
+    <tr><td>VLIN</td><td>0</td><td></td><td>36</td><td>V</td></tr>
+    <tr><td>로직 핀 (RXD, TXD, EN)</td><td>0</td><td></td><td>5.25</td><td>V</td></tr>
+    <tr><td>과열 차단 TSD / 히스테리시스</td><td>165</td><td>15 (hys)</td><td></td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SOIC-8 (D) / VSON-8 (DRB) 공통 번호</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>RXD</td><td>수신 출력 (오픈 드레인) — LIN 버스 레벨</td></tr>
+    <tr><td>2</td><td>EN</td><td>High = Normal, Low = Sleep</td></tr>
+    <tr><td>3</td><td>NC</td><td>미연결</td></tr>
+    <tr><td>4</td><td>TXD</td><td>송신 입력 (내부 풀다운)</td></tr>
+    <tr><td>5</td><td>GND</td><td>그라운드</td></tr>
+    <tr><td>6</td><td>LIN</td><td>LIN 버스 단선 송수신</td></tr>
+    <tr><td>7</td><td>VSUP</td><td>배터리 전원 (외부 역방향 차단 다이오드 경유)</td></tr>
+    <tr><td>8</td><td>NC</td><td>미연결</td></tr>
+    <tr><td>PAD</td><td>Thermal pad</td><td>DRB만, 전기적 연결 없음 — 방열용으로 PCB에 납땜 가능</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VSUP: 배터리에서 역방향 차단 다이오드 경유, 디커플링 일반값 100 nF, 1 µF, ≥ 10 µF (시스템에 따라).</li>
+    <li>LIN 핀(6)에 220 pF를 GND로 (Commander/Responder 간이 회로, Rev D 이후 값).</li>
+    <li>Commander 노드: 외부 1 kΩ 풀업 + 직렬 차단 다이오드를 VSUP로. Responder는 내장 45 kΩ 사용.</li>
+    <li>RXD 오픈 드레인: MCU 내부 풀업이 없으면 외부 풀업 (전기 특성 VOL 0.6 V max @ RPU 2.4 kΩ).</li>
+    <li>TXD/EN VIL 0.8 V / VIH 2 V → 3.3 V, 5 V MCU 모두 직결.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SOIC-8 (D): RθJA 115.5, RθJC(top) 58.7, RθJB 58.9, ΨJT 14.1, ΨJB 58.2 °C/W. VSON-8 (DRB): RθJA 48.5, RθJC(bot) 4.8 °C/W. TJ max 150 °C, TSD ≥ 165 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN에 패키지 접미사가 없음 — 주문형은 TLIN1029DRQ1 (SOIC-8) 등으로 지정 필요 (주문 코드는 읽은 문서에서 미확인). 핀 테이블은 SOIC-8 (D) 기준.</li>
+    <li>TI 제품 페이지: 신규 TLIN1029A-Q1이 드롭인 대체(전원 전압 전 범위 듀티 사이클 개선), TLIN1039-Q1 핀 호환. 듀티 사이클 관련 정오표 SLLA490 존재.</li>
+    <li>UVSUP 2.9 ~ 3.85 V. Sleep 시 EN Low, 버스 웨이크 후 EN High로 Normal 복귀.</li>
+    <li>Rev 이력에 VLIN ±60 표기 변경 기록이 있으나 현행 절대 최대 정격 표는 ±45 V — 표 값을 적용.</li>
+  </ul>
+</article>
+</body>
+</html>

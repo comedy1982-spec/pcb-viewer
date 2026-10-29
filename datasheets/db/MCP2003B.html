@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP2003B · LIN transceiver (LIN 2.2 / SAE J2602 / ISO 17987)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MCP2003B" data-mfr="Microchip" data-cat="통신" data-price="" data-status="done" data-src="https://cdn.components.ru/media/PDF/1035392.pdf">
+  <h1>MCP2003B</h1>
+  <p class="meta">Microchip · 통신 · LIN transceiver (LIN 2.2 / SAE J2602 / ISO 17987)</p>
+  <p class="meta">원본: <a href="https://ww1.microchip.com/downloads/en/DeviceDoc/2000546C3.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.microchip.com/en-us/product/mcp2003b" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=MCP2003B" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS20005463C (Rev C, 04/2016)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>LIN 물리 계층 트랜시버, LIN 1.3/2.0/2.1/2.2, SAE J2602, ISO 17987 준수</dd>
+    <dt>속도</dt><dd>최대 20 kbaud</dd>
+    <dt>VBB</dt><dd>5.5 ~ 30.0 V 연속, 60 V 로드 덤프 보호</dd>
+    <dt>저전력</dt><dd>파워다운 전류 IBBPD 일반 6 µA, 최대 15 µA (VBB &gt; 18 V 시 최대 20 µA)</dd>
+    <dt>LIN 드라이버</dt><dd>전류 제한 50 ~ 200 mA</dd>
+    <dt>기타</dt><dd>VREN 출력으로 외부 레귤레이터 enable, WAKE 로컬 웨이크업 입력, RXD/TXD/CS 고전압 내성</dd>
+    <dt>온도</dt><dd>E: -40 ~ +125 °C, H: -40 ~ +150 °C</dd>
+    <dt>차량 관련</dt><dd>ESD 시험 AEC-Q100-002/-003/-011 인용 (읽은 문서에서 전체 AEC-Q100 인증 문구는 확인 못함)</dd>
+    <dt>패키지</dt><dd>8-lead SOIC (SN), 8-lead 2×3 DFN (MC), 8-lead 3×3 DFN (MF)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>RXD, TXD, CS DC</td><td>-0.3</td><td>50</td><td>V</td><td></td></tr>
+    <tr><td>WAKE, VREN DC</td><td>-0.3</td><td>VBB</td><td>V</td><td></td></tr>
+    <tr><td>VBB 연속 (비동작)</td><td>-0.3</td><td>50</td><td>V</td><td></td></tr>
+    <tr><td>VBB 비동작, LIN 리세시브</td><td>-0.3</td><td>60</td><td>V</td><td></td></tr>
+    <tr><td>VBB 과도 (ISO 7637 1 / 2a / 3a / 3b)</td><td></td><td></td><td>V</td><td>-200 / +150 / -300 / +200</td></tr>
+    <tr><td>LBUS 연속</td><td>-18</td><td>50</td><td>V</td><td></td></tr>
+    <tr><td>LBUS 과도</td><td>-27</td><td>60</td><td>V</td><td></td></tr>
+    <tr><td>LBUS 단락 전류</td><td></td><td>200</td><td>mA</td><td></td></tr>
+    <tr><td>ESD LIN (SAE J2962-1, TVS 없음)</td><td></td><td>±25</td><td>kV</td><td></td></tr>
+    <tr><td>ESD LIN/VBB/WAKE (IEC 61000-4-2)</td><td></td><td>±6</td><td>kV</td><td></td></tr>
+    <tr><td>ESD HBM LIN/VBB/WAKE/CS · 기타 핀</td><td></td><td>±8 · ±4</td><td>kV</td><td>CDM ±2 kV, MM ±400 V</td></tr>
+    <tr><td>최대 접합 온도</td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VBB (DC 특성 조건)</td><td>5.5</td><td></td><td>30.0</td><td>V</td></tr>
+    <tr><td>VBB (AC 특성 조건)</td><td>5.5</td><td></td><td>27.0</td><td>V</td></tr>
+    <tr><td>VBB 저전압 하강 임계</td><td>3.8</td><td>4.0</td><td>4.4</td><td>V</td></tr>
+    <tr><td>VBB POR→Ready 상승 임계</td><td>5.5</td><td>5.6</td><td>6.0</td><td>V</td></tr>
+    <tr><td>주위 온도 (E / H)</td><td>-40</td><td></td><td>125 / 150</td><td>°C</td></tr>
+    <tr><td>보레이트</td><td></td><td></td><td>20</td><td>kbaud</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>8-lead SOIC (SN) · DFN (MC/MF) 동일 핀 번호, DFN은 노출 패드 9번 추가</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>RXD</td><td>수신 데이터 출력 (오픈 드레인), HV 내성</td></tr>
+    <tr><td>2</td><td>CS</td><td>칩 셀렉트 입력 (TTL), HV 내성</td></tr>
+    <tr><td>3</td><td>WAKE</td><td>웨이크업 입력, HV 내성</td></tr>
+    <tr><td>4</td><td>TXD</td><td>송신 데이터 입력 (TTL), HV 내성</td></tr>
+    <tr><td>5</td><td>VSS</td><td>그라운드</td></tr>
+    <tr><td>6</td><td>LBUS</td><td>LIN 버스 (양방향)</td></tr>
+    <tr><td>7</td><td>VBB</td><td>배터리 전원</td></tr>
+    <tr><td>8</td><td>VREN</td><td>전압 레귤레이터 enable 출력</td></tr>
+    <tr><td>9</td><td>EP</td><td>DFN 노출 패드 — 전기적으로 연결하지 말 것 (VSS에도 연결 금지)</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>마스터 노드: LBUS–VBB 사이 1 kΩ 외부 풀업 필요 (직렬 다이오드 여부는 원본 회로도 확인). LIN 종단 한계 510 Ω (마스터 1 + 슬레이브 15).</li>
+    <li>슬레이브 노드: 내부 풀업 일반 30 kΩ (20 ~ 60 kΩ), 노드 용량 최대 100 pF.</li>
+    <li>역배터리: VBB 직렬 역저지 다이오드. 부하 덤프: VBB–GND 60 V TVS와 직렬 보호 저항(선택, 권장 관행).</li>
+    <li>예제 회로: VBB 1.0 µF 커패시터, VREN으로 외부 레귤레이터 제어 (부하 20 mA 미만이면 레귤레이터 VBAT 연결 생략 가능).</li>
+    <li>CS를 High에 고정하지 말 것 — 내부 풀다운 있음; 로컬 웨이크업 시 MCU 핀을 Hi-Z 입력으로.</li>
+    <li>WAKE: 내부 800 kΩ VBB 풀업, IEC 61000-4-2 ESD 충족을 위해 직렬 저항 필요.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>θJA: 8L SOIC 149.5 °C/W, 8L 2×3 DFN 75 °C/W, 8L 3×3 DFN 56.7 °C/W. 과열 차단 일반 180 °C, 복귀 일반 160 °C. 단락 복귀 시간 일반 1.5 ms / 최대 5.0 ms. Tj 최대 150 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN "MCP2003B"는 패키지·온도 코드가 없는 베이스 품번 — 주문 시 예: MCP2003B-E/SN, MCP2003BT-E/MC 등으로 지정 (핀 표는 SOIC 기준).</li>
+    <li>RXD는 오픈 드레인 — MCU 측 풀업 필요 (값은 데이터시트 확인 필요).</li>
+    <li>LBUS TVS 없이 SAE J2962-1 ESD/DCC 시험 통과 가능하다고 기재.</li>
+    <li>읽은 텍스트 추출에서 일부 기호(Ω, µ)가 누락되어 예제 회로 부품값(220 pF 등)의 위치는 원본 PDF로 재확인 권장.</li>
+  </ul>
+</article>
+</body>
+</html>

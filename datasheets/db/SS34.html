@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SS34 · 3 A 40 V Schottky rectifier</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="SS34" data-mfr="onsemi" data-cat="다이오드" data-price="" data-status="done" data-src="https://pdf.elecfans.com/ONSEMI/SS34.html">
+  <h1>SS34</h1>
+  <p class="meta">onsemi (기준 문서) · 다이오드 · 3 A 40 V Schottky rectifier — 범용 품번, 여러 제조사 생산</p>
+  <p class="meta">원본: <a href="https://www.onsemi.com/pdf/datasheet/ss39-d.pdf" target="_blank" rel="noopener">데이터시트 PDF (onsemi)</a> · <a href="https://pdf.elecfans.com/ONSEMI/SS34.html" target="_blank" rel="noopener">읽은 사본</a> · <a href="https://octopart.com/search?q=SS34" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 onsemi SS39/D Rev. 5 (2021-08), "Schottky Rectifier SS32 – S310"; 교차 확인 Vishay 문서 88751 (2008-01-23)</p>
+
+  <p class="todo">주의: onsemi와 Vishay의 SS34는 <b>SMC (DO-214AB)</b> 패키지입니다. BOM 설명의 "SMA"와 다릅니다. SMA (DO-214AC) 패키지 SS34는 주로 중국계 제조사 제품입니다(예: MDD SS34, Digi-Key 표기 DO-214AC). 같은 품번이라도 제조사마다 패키지와 정격이 다르므로 풋프린트와 구매 품번을 반드시 맞추세요. Vishay의 SMA 버전 품번은 SSA34입니다.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>표면 실장 쇼트키 배리어 정류 다이오드</dd>
+    <dt>VRRM</dt><dd>40 V (VRMS 28 V, VDC 40 V — Vishay)</dd>
+    <dt>IF(AV)</dt><dd>3.0 A (onsemi: TA = 75 °C; Vishay: 0.55×0.55 in 패드 PCB, TL 조건)</dd>
+    <dt>IFSM</dt><dd>100 A (8.3 ms 단일 반정현파)</dd>
+    <dt>VF</dt><dd>최대 0.50 V @ 3.0 A (SS32–SS34 그룹)</dd>
+    <dt>IR</dt><dd>최대 0.5 mA @ 정격 VR, 25 °C · 20 mA @ 100 °C</dd>
+    <dt>dV/dt</dt><dd>10 000 V/µs (정격 VR)</dd>
+    <dt>등급</dt><dd>onsemi 문서에는 AEC-Q101 언급 없음. Vishay SS34HE3 계열은 AEC-Q101 차량용 등급</dd>
+    <dt>패키지</dt><dd>SMC (DO-214AB), onsemi Case 403AG</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>반복 역전압 VRRM</td><td></td><td>40</td><td>V</td><td></td></tr>
+      <tr><td>평균 순방향 전류 IF(AV)</td><td></td><td>3.0</td><td>A</td><td>onsemi TA = 75 °C</td></tr>
+      <tr><td>서지 전류 IFSM</td><td></td><td>100</td><td>A</td><td>8.3 ms 반정현파, 비반복</td></tr>
+      <tr><td>소비 전력 PD</td><td></td><td>2.27</td><td>W</td><td>onsemi</td></tr>
+      <tr><td>접합 온도 TJ</td><td>-55</td><td>150</td><td>°C</td><td>onsemi. Vishay SS32–SS34는 최대 125 °C</td></tr>
+      <tr><td>보관 온도 TSTG</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <p>별도 표 없음. 위 정격 안에서 사용합니다.</p>
+
+  <h2>핀 배치</h2>
+  <p>SMC (DO-214AB), 2단자. 몸체의 색 띠가 캐소드 쪽입니다.</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody><tr><td>1</td><td>K</td><td>캐소드 (띠 표시 쪽)</td></tr><tr><td>2</td><td>A</td><td>애노드</td></tr></tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>정격 3 A와 열 저항은 0.55×0.55 in (14×14 mm) 구리 패드를 기준으로 합니다. 패드가 작으면 전류를 낮춰 써야 합니다.</li>
+    <li>쇼트키라서 고온 누설이 큽니다(100 °C에서 최대 20 mA). 역접속 보호나 OR-ing에 쓸 때 대기 전류 예산에 넣으세요.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SMC (DO-214AB). RθJA 55 °C/W, RθJL 17 °C/W (0.55×0.55 in 패드 PCB, onsemi·Vishay 같은 값). Vishay 권장 패드 치수: 0.126 in (3.20 mm) 이상, 0.060 in (1.52 mm) 이상, 0.320 in REF. Vishay 마킹 코드 S4.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>다른 제조사: Vishay (SS34, SMC; SMA는 SSA34), Taiwan Semiconductor, MCC, Diodes, 중국계(MDD, Slkor 등, 주로 SMA). 제조사마다 TJ 최대값(125 °C 또는 150 °C)과 패키지가 다릅니다.</li>
+    <li>onsemi 전기 특성 표가 여러 품번을 한 표에 묶어 두었습니다. VF 0.50 V와 IR 값은 SS32–SS34 그룹 값으로 읽었고 Vishay 문서와 일치합니다. 설계 한계에 가까우면 원본 표를 다시 확인하세요.</li>
+    <li>차량용 BOM이면 AEC-Q101 품번(예: Vishay SS34HE3)으로 바꾸는 것을 검토하세요.</li>
+  </ul>
+</article>
+</body>
+</html>

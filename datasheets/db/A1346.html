@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A1346 · Dual-die programmable linear Hall sensor, SENT/PWM</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="A1346" data-mfr="Allegro MicroSystems" data-cat="센서" data-price="" data-status="done" data-src="https://www.allegromicro.com/-/media/files/datasheets/a1346-datasheet.pdf">
+  <h1>A1346</h1>
+  <p class="meta">Allegro MicroSystems · 센서 · 프로그래머블 선형 홀 IC (듀얼 다이 / 싱글 다이), SENT·PWM 출력 · 신규 설계 비권장 (Not For New Design)</p>
+  <p class="meta">원본: <a href="https://www.allegromicro.com/-/media/files/datasheets/a1346-datasheet.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.allegromicro.com/en/products/sense/linear-and-angular-position/linear-sensors-1d/a1346" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=A1346LLETR-DD-T" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 A1346-DS Rev. 7 (2022-04-04)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>선형 홀 센서, 듀얼 다이(전기적으로 분리된 2개 다이) 또는 싱글 다이; 16-bit ADC, 출력 분해능 최대 12 bit</dd>
+    <dt>입력 자계</dt><dd>±1500 G; 초기 감도 0.0333 %FSO/G typ, 초기 무자계 출력 50 %FSO typ</dd>
+    <dt>출력</dt><dd>오픈 드레인 디지털: PWM, SENT (SAE J2716), TSENT, SSENT, ASENT (라인당 최대 4개), Fast SENT. 아날로그 전압 출력 없음</dd>
+    <dt>전원</dt><dd>VCC 4.5 / 5 / 5.5 V</dd>
+    <dt>소비 전류</dt><dd>5 / 9 / 10 mA (코일 off), 피크 10 / 13 / 16 mA (코일 on)</dd>
+    <dt>대역폭</dt><dd>40~7400 Hz 선택</dd>
+    <dt>진단</dt><dd>내장 피드백 코일(CoilBIST), 16-세그먼트 선형화, SECDED EEPROM</dd>
+    <dt>온도</dt><dd>TA −40~150 °C (L 범위); 정확도 표에 AEC-Q100 Grade 0 시험 언급</dd>
+    <dt>패키지</dt><dd>A1346LLETR-DD-T: TSSOP-14 (LE, 듀얼 다이) · A1346LKTTN-T: 4-pin SIP (KT, 싱글 다이)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>공급 전압 VCC</td><td>-16</td><td>20</td><td>V</td><td>역전압 −16 V</td></tr>
+      <tr><td>공급 전류 ICC</td><td>-30</td><td>30</td><td>mA</td><td></td></tr>
+      <tr><td>출력 전압 VOUT</td><td>-1</td><td>20</td><td>V</td><td></td></tr>
+      <tr><td>출력 단락 전류 (VCC→VOUT)</td><td></td><td>-20</td><td>mA</td><td>4.5 V &lt; VCC &lt; 5.5 V</td></tr>
+      <tr><td>동작 주위 온도 TA</td><td>-40</td><td>150</td><td>°C</td><td>L 범위</td></tr>
+      <tr><td>접합 온도 TJ(max)</td><td></td><td>165</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>165</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VCC</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+      <tr><td>출력 풀업 RL(PULLUP)</td><td>1.2</td><td></td><td></td><td>kΩ</td></tr>
+      <tr><td>출력 부하 용량 CLX</td><td></td><td></td><td>4.7</td><td>nF</td></tr>
+      <tr><td>출력 로우 포화 (−4.7 mA)</td><td></td><td>0.1</td><td>0.35</td><td>V</td></tr>
+      <tr><td>출력 전류 제한</td><td>20</td><td>30</td><td>50</td><td>mA</td></tr>
+      <tr><td>TA</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>LE: TSSOP-14, 듀얼 다이 (A1346LLETR-DD-T)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>OUT1</td><td>출력, 다이 1</td></tr>
+      <tr><td>2</td><td>DGND2</td><td>디지털 GND, 다이 2 (핀 4와 연결)</td></tr>
+      <tr><td>3</td><td>DGND1</td><td>디지털 GND, 다이 1 (핀 5와 연결)</td></tr>
+      <tr><td>4</td><td>AGND2</td><td>아날로그 GND, 다이 2 (핀 2와 연결)</td></tr>
+      <tr><td>5</td><td>AGND1</td><td>아날로그 GND, 다이 1 (핀 3과 연결)</td></tr>
+      <tr><td>6</td><td>NC</td><td>미접속 (EMC 위해 GND 연결 권장)</td></tr>
+      <tr><td>7</td><td>VCC1</td><td>전원, 다이 1</td></tr>
+      <tr><td>8</td><td>VCC2</td><td>전원, 다이 2</td></tr>
+      <tr><td>9–13</td><td>NC</td><td>미접속 (GND 연결 권장)</td></tr>
+      <tr><td>14</td><td>OUT2</td><td>출력, 다이 2</td></tr>
+    </tbody></table>
+  <p>KT: 4-pin SIP, 싱글 다이 (A1346LKTTN-T) — 1 OUT · 2 GND · 3 VCC · 4 NC (ESD 위해 GND 연결)</p>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>다이마다 VCC–GND 바이패스 0.1 µF (CBYPASS) 근접 배치.</li>
+    <li>출력: 오픈 드레인, 풀업 ≥ 1.2 kΩ, COUT 1.5 nF typ, 라인 총 용량 ≤ 4.7 nF.</li>
+    <li>듀얼 다이는 두 채널 전원·GND·출력을 분리 배선해야 이중화 의미가 있음.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>TSSOP-14 (LE), 노출 패드 없음. RθJA 174 °C/W (JEDEC 4층). TJ max 165 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>제조사 표기 "NOT FOR NEW DESIGN" — 대체 품번 A31102 권장 (데이터시트 Rev. 7).</li>
+    <li>데이터시트 선택 가이드는 TSSOP를 "16-pin"으로 적었지만 핀아웃·패키지 도면은 14-pin — 14핀으로 정리함.</li>
+    <li>EPS 토크/위치 센서용 SENT 출력; MCU 측은 SENT 수신 타이머/디코더 필요.</li>
+  </ul>
+</article>
+</body>
+</html>

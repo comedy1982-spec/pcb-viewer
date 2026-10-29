@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NXH006P120MNF2 · 1200 V 6 mΩ SiC MOSFET half-bridge F2 module</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="NXH006P120MNF2" data-mfr="onsemi" data-cat="전력 모듈" data-price="" data-status="done" data-src="https://www.farnell.com/datasheets/3213467.pdf">
+  <h1>NXH006P120MNF2</h1>
+  <p class="meta">onsemi · 전력 모듈 · 1200 V / 6 mΩ SiC MOSFET 하프브리지 + NTC, F2 패키지 (주문 품번 NXH006P120MNF2PTG)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/3213467.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=NXH006P120MNF2PTG" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 NXH006P120MNF2/D Rev. P3, 2021-01 (Product Preview)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>구성</dt><dd>SiC MOSFET 하프브리지 (Q1 상단 / Q2 하단) + NTC 서미스터</dd>
+    <dt>VDSS</dt><dd>1200 V</dd>
+    <dt>ID</dt><dd>304 A 연속 @TC = 80 °C (TJ 175 °C), 펄스 912 A</dd>
+    <dt>RDS(on)</dt><dd>5.48 mΩ typ / 7.2 mΩ max @VGS 20 V, ID 200 A, 25 °C · 6.52 mΩ typ @125 °C · 7.28 mΩ typ @150 °C</dd>
+    <dt>VGS(th)</dt><dd>1.8 / 2.83 / 4.3 V (min/typ/max, ID 80 mA)</dd>
+    <dt>게이트 전하</dt><dd>QG 847 nC, QGS 231 nC, QGD 195 nC (800 V, 20 V, 200 A)</dd>
+    <dt>스위칭 손실</dt><dd>Eon 2.1 / 2.3 mJ, Eoff 2.75 / 2.93 mJ (25 / 150 °C, 600 V, 200 A, VGS −5/20 V, RG 1.8 Ω)</dd>
+    <dt>절연</dt><dd>3000 VRMS (1 s, 60 Hz), 연면거리 12.7 mm</dd>
+    <dt>온도</dt><dd>TJ −40 … 175 °C</dd>
+    <dt>패키지</dt><dd>F2HALFBR, PIM36 56.7 × 42.5 mm, 프레스핏 핀, TIM 사전 도포 (CASE 180BY), 트레이 20개</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDSS</td><td></td><td>1200</td><td>V</td><td></td></tr>
+      <tr><td>VGS</td><td>−15</td><td>25</td><td>V</td><td></td></tr>
+      <tr><td>ID 연속</td><td></td><td>304</td><td>A</td><td>TC = 80 °C, TJ = 175 °C</td></tr>
+      <tr><td>ID 펄스</td><td></td><td>912</td><td>A</td><td>TJ = 175 °C</td></tr>
+      <tr><td>Ptot</td><td></td><td>950</td><td>W</td><td>TJ = 175 °C</td></tr>
+      <tr><td>TJ (동작)</td><td>−40</td><td>175</td><td>°C</td><td></td></tr>
+      <tr><td>Tstg</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>절연 시험 전압 Vis</td><td></td><td>3000</td><td>VRMS</td><td>1 s, 60 Hz</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>게이트 구동 (특성 측정 조건)</td><td>−5</td><td></td><td>20</td><td>V</td></tr>
+      <tr><td>TJ</td><td>−40</td><td></td><td>175</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PIM36 (F2 하프브리지) — 핀은 그리드 좌표명</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>A4, A5, E2, E3, L2, L3, P4, P5</td><td>DC+</td><td>직류 링크 +</td></tr>
+      <tr><td>C7, G6, G7, J6, J7, K6, M6, N7</td><td>DC−</td><td>직류 링크 −</td></tr>
+      <tr><td>A9, A10, A11, B10, B11, O10, O11, P9, P10, P11</td><td>PHASE</td><td>상 출력 (Q1 소스 / Q2 드레인)</td></tr>
+      <tr><td>B1, O1</td><td>G1</td><td>Q1(상단) 게이트</td></tr>
+      <tr><td>A1, P1</td><td>S1</td><td>Q1 켈빈 소스</td></tr>
+      <tr><td>E11, L11</td><td>G2</td><td>Q2(하단) 게이트</td></tr>
+      <tr><td>E10, L10</td><td>S2</td><td>Q2 켈빈 소스</td></tr>
+      <tr><td>G11</td><td>TH1</td><td>NTC 서미스터</td></tr>
+      <tr><td>H11</td><td>TH2</td><td>NTC 서미스터</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>게이트 구동은 특성 측정 조건 VGS −5 / +20 V, RG 1.8 Ω 기준. 절대 최대 −15 / +25 V 이내로 바이어스.</li>
+    <li>게이트 드라이버는 S1/S2 켈빈 소스에 기준을 둘 것 (전력 소스 경로 공유 금지).</li>
+    <li>NTC: R25 5 kΩ ±3 %, B(25/50) 3375 K, B(25/100) 3455 K, 최대 50 mW, 소산 상수 5 mW/K — 자기발열을 줄이도록 저전류로 측정.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>56.7 × 42.5 mm F2 프레스핏 모듈. RthJC 0.10 °C/W (스위치당), RthJH 0.21 °C/W (서멀 그리스 2 mil, 2.8 W/mK 조건). TJ max 175 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>품번: 부품 DB의 "NXH006P120MNF2"는 기본명. 주문 품번은 NXH006P120MNF2PTG (프레스핏 + TIM).</li>
+    <li>읽은 문서는 Product Preview(Rev. P3) — 양산 데이터시트로 수치 재확인 필요.</li>
+    <li>원문 추출에서 단락 내량(TSC)·EOSS 단위가 손상되어 생략. DESAT 보호 설계 시 데이터시트 원문 확인.</li>
+    <li>DC+/DC− 핀 다수를 낮은 인덕턴스 라미네이트 버스바/다층 PCB로 병렬 연결, DC 링크 스너버 커패시터를 모듈 가까이.</li>
+  </ul>
+</article>
+</body>
+</html>

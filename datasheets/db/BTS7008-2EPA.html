@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BTS7008-2EPA · Dual-channel PROFET+2 12 V high-side switch</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="BTS7008-2EPA" data-mfr="Infineon" data-cat="스마트 스위치" data-price="2.1" data-status="stub" data-src="https://cdn.sparkfun.com/assets/3/9/f/f/1/BTS7008-2EPA_datesheet.pdf">
+  <h1>BTS7008-2EPA</h1>
+  <p class="meta">Infineon · 스마트 스위치 · PROFET+2 12V 2채널 하이사이드 스위치, 8 mΩ급, 전류 센스·진단 · 참고 단가 약 $2.1 (추정)</p>
+  <p class="meta">원본: <a href="https://cdn.sparkfun.com/assets/3/9/f/f/1/BTS7008-2EPA_datesheet.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://datasheet.chipsmall.com/BTS70082EPAXUMA1/677571.pdf" target="_blank" rel="noopener">Rev 1.00 사본</a> · <a href="https://www.infineon.com/assets/row/public/documents/10/49/infineon-bts7008-2epa-datasheet-cn.pdf" target="_blank" rel="noopener">Infineon 중문판</a> · <a href="https://octopart.com/search?q=BTS7008-2EPA" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Data Sheet Rev. 1.20, 2020-12-14</p>
+  <p class="todo">남은 항목: 출력 핀 8–10과 12–14가 각각 OUT0/OUT1 중 어느 채널인지는 핀 그림에만 있고 읽은 세 사본의 텍스트(핀 표는 "OUTn"으로만 표기)에서 확인하지 못했습니다. 원본 PDF Figure 4로 확인하세요. 두 그룹은 서로 다른 채널이므로 연결하면 안 됩니다.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>2채널 스마트 하이사이드 스위치 (SMART7), 공용 IS 센스 출력, DEN/DSEL로 진단 채널 선택</dd>
+    <dt>공급 전압</dt><dd>정상 6~18 V (13.5 V typ) · 확장 하한 3.1 V (하강) / 4.1 V (상승) · 확장 상한 28 V</dd>
+    <dt>RDS(on) (채널당)</dt><dd>9 mΩ typ (25 °C) · 16 mΩ max (150 °C) · 크랭킹 (VS 3.1 V) 20 mΩ max</dd>
+    <dt>정격 부하 전류</dt><dd>IL(NOM) 7.5 A (TA 85 °C, 채널당)</dd>
+    <dt>과부하 차단</dt><dd>IL(OVL0) 77/88/99 A (−40·25 °C), 65/75/85 A (150 °C) · VDS &gt; 22 V 또는 점프 스타트 시 54 A typ · 자동 재시도 tRETRY 40/70/100 ms</dd>
+    <dt>전류 센스</dt><dd>kILIS 5450 typ (5.5 A, ±4.0 %) · 1 A에서 5400 ±13.5 % · IIS(FAULT) 4.4/5.5/10 mA</dd>
+    <dt>소모 전류</dt><dd>슬립 0.03 µA typ / 0.6 µA max (Tj ≤ 85 °C) · 동작 3 mA typ / 4 mA max · 대기 1.2/1.8 mA</dd>
+    <dt>입력 레벨</dt><dd>VDI(TH) 0.8/1.3/2 V · 히스테리시스 0.25 V</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1, Green (RoHS) · Tj −40~150 °C</dd>
+    <dt>패키지</dt><dd>PG-TSDSO-14 (노출 패드 = VS), 마킹 7008-2A</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VS</td><td>-0.3</td><td>28</td><td>V</td><td></td></tr>
+      <tr><td>로드 덤프 VBAT(LD)</td><td></td><td>35</td><td>V</td><td>억제 로드 덤프, ISO 16750-2 (2010), Ri 2 Ω</td></tr>
+      <tr><td>단락 보호 공급 VBAT(SC)</td><td>0</td><td>24</td><td>V</td><td>AEC-Q100-012</td></tr>
+      <tr><td>역접속 −VBAT(REV)</td><td></td><td>16</td><td>V</td><td>t ≤ 2 min, TA 25 °C</td></tr>
+      <tr><td>IGND</td><td>-50</td><td>50</td><td>mA</td><td></td></tr>
+      <tr><td>디지털 입력 전류 IDI</td><td>-1</td><td>2</td><td>mA</td><td>역접속 시 10 mA (t ≤ 2 min)</td></tr>
+      <tr><td>VIS</td><td>-1.5</td><td>VS</td><td>V</td><td>IIS 10 µA</td></tr>
+      <tr><td>IIS</td><td>-25</td><td>IIS(SAT),max</td><td>mA</td><td></td></tr>
+      <tr><td>EAS (단일 펄스)</td><td></td><td>75</td><td>mJ</td><td>IL 2×IL(NOM), Tj(0) 150 °C, VS 28 V</td></tr>
+      <tr><td>EAR (반복, 1M 사이클)</td><td></td><td>25</td><td>mJ</td><td>IL(NOM), Tj(0) 85 °C, VS 13.5 V</td></tr>
+      <tr><td>Tj</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>Tstg</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM / CDM</td><td></td><td>±2 kV / ±500 V</td><td></td><td>OUT 대 GND·VS HBM ±4 kV, 코너 핀 CDM ±750 V</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VS(NOR) 정상 동작</td><td>6</td><td>13.5</td><td>18</td><td>V</td></tr>
+      <tr><td>VS(EXT,LOW) 확장 하한</td><td>3.1</td><td></td><td>6</td><td>V</td></tr>
+      <tr><td>VS(EXT,UP) 확장 상한 (보호 동작)</td><td>18</td><td></td><td>28</td><td>V</td></tr>
+      <tr><td>저전압 차단 VS(UV) (하강)</td><td>1.8</td><td>2.3</td><td>3.1</td><td>V</td></tr>
+      <tr><td>최소 동작 VS(OP) (상승)</td><td>2.0</td><td>3.0</td><td>4.1</td><td>V</td></tr>
+      <tr><td>Tj</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-TSDSO-14 + 노출 패드</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>GND</td><td>신호 GND</td></tr>
+      <tr><td>2</td><td>IN0</td><td>채널 0 입력 (High 액티브). 미사용 시 10 kΩ로 GND</td></tr>
+      <tr><td>3</td><td>DEN</td><td>진단 인에이블 (High 액티브). 미사용 시 10 kΩ로 GND</td></tr>
+      <tr><td>4</td><td>IS</td><td>센스 전류 출력. 미사용 시 개방</td></tr>
+      <tr><td>5</td><td>DSEL</td><td>진단 채널 선택 (Low = 채널 0, High = 채널 1). 미사용 시 10 kΩ로 GND</td></tr>
+      <tr><td>6</td><td>IN1</td><td>채널 1 입력 (High 액티브)</td></tr>
+      <tr><td>7, 11</td><td>n.c.</td><td>내부 미본딩</td></tr>
+      <tr><td>8–10</td><td>OUTn</td><td>한 채널의 출력 (3핀 PCB에서 서로 연결) — 채널 번호는 원본 그림 확인 필요</td></tr>
+      <tr><td>12–14</td><td>OUTn</td><td>다른 채널의 출력 (3핀 PCB에서 서로 연결) — 채널 번호는 원본 그림 확인 필요</td></tr>
+      <tr><td>EP</td><td>VS</td><td>배터리 공급 (노출 패드)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>데이터시트 응용 회로 값: RIN / RDEN / RDSEL 4.7 kΩ · RSENSE 1.2 kΩ (820 Ω 이상, 중앙 역접속 보호가 있으면 400 Ω 이상) · RIS_PROT 4.7 kΩ · RADC 4.7 kΩ + CSENSE 220 pF (RADC×CSENSE &gt; 1 µs) · DZ1 7 V (MCU 보호).</li>
+    <li>CVS 100 nF · CVSGND 47 nF (빠른 과도용, 자리 확보 권장) · COUT 10 nF (ESD/BCI) · RGND 47 Ω · DZ2 33 V TVS (유도성 부하·배터리 손실).</li>
+    <li>OFF 상태 개방 부하 진단: ROL 1.5 kΩ 풀업 + T1 BC807 스위치, RPD 47 kΩ 풀다운.</li>
+    <li>부하 전류 ≈ IIS × kILIS → 1.2 kΩ에서 7.5 A ≈ 1.65 V (5450 typ 기준). IIS(SAT) 최소 4.4 mA (VS 8~18 V)이므로 RSENSE를 키우면 포화 주의.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-TSDSO-14, 노출 패드 = VS. RthJC 0.8 typ / 1.4 K/W max (노출 패드 기준, 시뮬레이션) · ΨJTOP 1.7 / 2.9 K/W · RthJA 30.9 K/W (JEDEC 2s2p). 1s0p 기판은 방열 면적에 따라 약 30~120 K/W. 과온 차단 Tj(ABS) 150/175/200 °C, 동적 ΔT 80 K typ.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>DEN·IN·DSEL 모두 Low면 슬립 모드(0.6 µA max). IS 공용이므로 두 채널 전류는 DSEL로 번갈아 측정하고 tsIS(CC) max 20 µs 대기 후 ADC 샘플.</li>
+    <li>재시도 전략: 카운터 리셋 후 5회, 이후 사이클 2회 뒤 래치. DEN 펄스(IN Low, tDEN(CR) 50~150 µs)로 카운터 리셋.</li>
+    <li>배선 인덕턴스 10 µH(IL(NOM) 기준)까지는 자체 처리, 그 이상은 외부 서프레서 권장.</li>
+    <li>GND 손실 시 각 디지털 입력의 직렬 저항이 OFF를 보장하므로 RIN/RDEN/RDSEL을 생략하지 마세요.</li>
+  </ul>
+</article>
+</body>
+</html>

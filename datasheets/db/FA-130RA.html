@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FA-130RA · FA-130 brushed DC motor + Tamiya 70097 gearbox</title>
+<title>FA-130RA · 130-size Brushed DC Motor</title>
 <style>
 body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
@@ -13,41 +13,56 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="FA-130RA" data-mfr="Mabuchi Motor (Tamiya 판매)" data-cat="모터" data-price="2.1" data-status="stub">
+<article data-mpn="FA-130RA" data-mfr="Mabuchi Motor (Tamiya 판매)" data-cat="모터" data-price="2.1" data-status="done" data-src="https://forums.parallax.com/uploads/attachments/53807/56129.pdf">
   <h1>FA-130RA</h1>
-  <p class="meta">Mabuchi Motor (Tamiya 판매) · 모터 · FA-130 brushed DC motor + Tamiya 70097 gearbox · 참고 단가 약 $2.1 (추정)</p>
-  <p class="meta">원본: <a href="https://www.pololu.com/product/77/specs" target="_blank" rel="noopener">제품·데이터시트 페이지</a> · <a href="https://www.pololu.com/product/61" target="_blank" rel="noopener">관련 페이지</a> · <a href="https://octopart.com/search?q=FA-130RA" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
+  <p class="meta">Mabuchi Motor (Tamiya 판매) · 모터 · 130-size metal-brush DC motor (Tamiya 980112M = FA-130RA-18100 상당) + 70097 gearbox · 참고 단가 약 $2.1 (추정)</p>
+  <p class="meta">원본: <a href="https://forums.parallax.com/uploads/attachments/53807/56129.pdf" target="_blank" rel="noopener">Mabuchi FA-130RA 사양서 PDF (Parallax 포럼 게시본)</a> · <a href="https://www.pololu.com/product/77/specs" target="_blank" rel="noopener">Pololu 사양 페이지</a> · <a href="https://www.pololu.com/product/61" target="_blank" rel="noopener">Tamiya 70097 기어박스 페이지</a> · <a href="https://octopart.com/search?q=FA-130RA" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Mabuchi 카탈로그 시트 (날짜 표기 없음)</p>
 
   <h2>핵심 사양</h2>
+  <p>FA-130RA 권선 변형 (Mabuchi 사양서). Pololu 측정값(3 V 무부하 12,300 rpm·150 mA, 구속 2.1 A)은 -18100과 일치.</p>
+  <table><thead><tr><th>모델</th><th>공칭 / 사용 전압</th><th>무부하</th><th>최대 효율점</th><th>구속</th></tr></thead>
+    <tbody>
+      <tr><td>FA-130RA-2270</td><td>1.5 V / 1.5 – 3.0 V</td><td>9100 rpm, 0.20 A</td><td>6990 rpm, 0.66 A, 0.59 mN·m, 0.43 W</td><td>2.55 mN·m, 2.20 A</td></tr>
+      <tr><td>FA-130RA-18100</td><td>3 V / 1.5 – 3.0 V</td><td>12300 rpm, 0.15 A</td><td>9710 rpm, 0.56 A, 0.74 mN·m, 0.76 W, 36 %</td><td>3.53 mN·m, 2.10 A</td></tr>
+      <tr><td>FA-130RA-14150</td><td>3 V / 1.5 – 4.5 V</td><td>8300 rpm, 0.11 A</td><td>6150 rpm, 0.31 A, 0.55 mN·m, 0.35 W, 22 %</td><td>2.11 mN·m, 0.90 A</td></tr>
+    </tbody></table>
   <dl>
-      <dt>정격</dt><dd>3 V</dd>
-      <dt>무부하</dt><dd>12,300 rpm, 150 mA (3 V)</dd>
-      <dt>구속</dt><dd>2.1 A, 0.5 oz·in ≈ 3.5 mN·m (3 V)</dd>
-      <dt>기어박스</dt><dd>Tamiya 70097 Twin-Motor Gearbox, 58:1 또는 203:1 (예제는 58:1)</dd>
-      <dt>시뮬레이션 값</dt><dd>R 1.43 Ω, ke = kt 2.16 mV/(rad/s), 마찰 0.32 mN·m — 위 정격에서 계산</dd>
+    <dt>형식</dt><dd>130 사이즈 금속 브러시 DC 모터, 출력 약 0.2 – 2.5 W (계열)</dd>
+    <dt>무게</dt><dd>약 17 g</dd>
+    <dt>기어박스</dt><dd>Tamiya 70097 Twin-Motor Gearbox, 58:1 또는 203:1 조립 선택 (Pololu). 출력축 3 mm 육각</dd>
+    <dt>시뮬레이션 값</dt><dd>-18100 기준 R ≈ 3 V / 2.1 A = 1.43 Ω (계산값, 데이터시트 값 아님)</dd>
   </dl>
 
   <h2>절대 최대 정격</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
+  <p>사양서에 절대 최대 정격 표 없음. 사용 전압 범위(-18100: 1.5 – 3.0 V)를 상한으로 볼 것. Pololu는 구속 시 과열 경고(구속은 수 초 이내).</p>
 
   <h2>권장 동작 조건</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>모터 전압 (-18100)</td><td>1.5</td><td>3</td><td>3.0</td><td>V</td></tr>
+    <tr><td>모터 전압 (-14150)</td><td>1.5</td><td>3</td><td>4.5</td><td>V</td></tr>
+  </tbody></table>
 
   <h2>핀 배치</h2>
-  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>M+</td><td>(+) 표시 단자 — 회전 방향 기준</td></tr>
+    <tr><td>2</td><td>M−</td><td>(−) 단자 (극성 반전 시 역회전)</td></tr>
+  </tbody></table>
 
   <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
+  <ul>
+    <li>구속 전류 2.1 – 2.2 A(-18100/-2270) — H-브리지 피크 전류 정격이 이 이상이어야 함. 저전류 대안: -14150 (구속 0.9 A) 또는 Pololu #1117 6 V 130 모터.</li>
+    <li>브러시 노이즈 억제용 단자 간 세라믹 커패시터는 일반 관행(사양서에 값 없음).</li>
+  </ul>
 
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
+  <p>130 사이즈 케이스. 외형도 수치(15.1, 20.1 등)는 읽은 텍스트에서 치수 항목과 대응되지 않아 싣지 않음 — 원문 도면 확인.</p>
 
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>Pololu에서 Tamiya 980112M 단종(discontinued) 표시. 정확한 권선 코드를 BOM에 지정할 것 (FA-130RA만으로는 변형 미특정).</li>
+    <li>-18100을 3 V 초과로 구동하면 사용 범위를 벗어남 — 6 V 구동이 필요하면 다른 권선 모델 선택.</li>
+    <li>스톨 감지 또는 전류 제한 권장 (Pololu 기어박스 페이지).</li>
+  </ul>
 </article>
 </body>
 </html>

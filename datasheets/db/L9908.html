@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L9908 · Automotive 3-phase motor gate driver</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="L9908" data-mfr="STMicroelectronics" data-cat="게이트 드라이버" data-price="8" data-status="done" data-src="https://pdf.elecfans.com/STMICROELECTRONICS/L9908TR.html">
+  <h1>L9908</h1>
+  <p class="meta">STMicroelectronics · 게이트 드라이버 · Automotive 3-phase motor gate driver unit (3× current monitor, SPI) · 참고 단가 약 $8 (추정)</p>
+  <p class="meta">원본: <a href="https://pdf.elecfans.com/STMICROELECTRONICS/L9908TR.html" target="_blank" rel="noopener">데이터시트 (사본, DS13546)</a> · <a href="https://www.st.com/resource/en/data_brief/l9908.pdf" target="_blank" rel="noopener">데이터 브리프 PDF</a> · <a href="https://www.st.com/en/automotive-analog-and-power/l9908.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=L9908" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS13546 Rev 3, 2022-03 / DB4343 Rev 1</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>3상 BLDC/PMSM용 N-MOSFET 6개 프리드라이버, 각 FET에 전용 PWM 입력·소스 연결, 듀티 0–100 %</dd>
+    <dt>전원</dt><dd>VDH 4.5–52 V 연속 (12/24/48 V 시스템) · VBP 4.5–36 V · VDD 4.5–5.5 V · VIO 2.5–5.5 V · VPRE 7–15 V</dd>
+    <dt>전류 모니터</dt><dd>차동 GND 기준 3채널, 입력 범위 ±7 ~ ±300 mV 선택, SPI로 이득·오프셋 조정·보정, 출력 0–4.6 V</dd>
+    <dt>보호·진단</dt><dd>온 상태 VDS 모니터 (27 mV/LSB, 블랭킹 0.7–8 µs), 데드타임·관통 방지, 오프 상태 개방/단락 진단, 과열 경고 130–160 °C 선택 · 차단 185 °C, GND 손실, 클럭 감시, VDD/VDH/VBP/VPRE/VCP 과·저전압, FS_FLAG</dd>
+    <dt>SPI</dt><dd>32비트, 최대 10 MHz, 5비트 CRC, 프레임 카운터, 윈도 워치독</dd>
+    <dt>안전</dt><dd>ISO 26262 준수, ASIL-D 시스템 대응</dd>
+    <dt>등급</dt><dd>AEC-Q100 · Ta −40 ~ 150 °C · Tj −40 ~ 150 °C (175 °C 수명 중 200 h)</dd>
+    <dt>패키지</dt><dd>TQFP48 7 × 7 × 1 mm, 노출 패드 아래 (L9908 트레이 / L9908-TR 테이프 앤 릴)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VBP</td><td>−0.3</td><td>65</td><td>V</td><td>과도 −1 ~ 65 V</td></tr>
+    <tr><td>VDH</td><td>−0.3</td><td>75</td><td>V</td><td>과도 −1 ~ 90 V</td></tr>
+    <tr><td>VDH − VBP</td><td>−65</td><td>75</td><td>V</td><td></td></tr>
+    <tr><td>VDD, VIO</td><td>−0.3</td><td>20</td><td>V</td><td></td></tr>
+    <tr><td>CBS_n, GHS_n, SHS_n</td><td>−0.3</td><td>95</td><td>V</td><td>DC, 리셋 상태</td></tr>
+    <tr><td>SHS_n</td><td>−7</td><td>75</td><td>V</td><td>VDD 동작 중</td></tr>
+    <tr><td>GLS_n, SLS_n</td><td>−7</td><td>20</td><td>V</td><td>VDD 동작 중</td></tr>
+    <tr><td>ISn± 공통 모드</td><td>−7</td><td>20</td><td>V</td><td>차동 ±5 V</td></tr>
+    <tr><td>EN_BR, NDIS</td><td>−0.3</td><td>65</td><td>V</td><td></td></tr>
+    <tr><td>SGND–PGND 오프셋</td><td>−0.6</td><td>0.6</td><td>V</td><td></td></tr>
+    <tr><td>ESD HBM</td><td>−2</td><td>2</td><td>kV</td><td>global 핀 ±4 kV · CDM ±500 V (코너 ±750 V)</td></tr>
+    <tr><td>Tstg</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VBP 연속</td><td>4.5</td><td></td><td>36</td><td>V</td></tr>
+    <tr><td>VDH 연속</td><td>4.5</td><td></td><td>52</td><td>V</td></tr>
+    <tr><td>VDD</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>VIO</td><td>2.5</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>VPRE</td><td>7</td><td></td><td>15</td><td>V</td></tr>
+    <tr><td>Ta / Tj</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>TQFP48 노출 패드 (7 × 7 mm, 0.5 mm 피치)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1–4</td><td>NCS, SCLK, SDI, SDO</td><td>SPI (칩 선택 액티브 LOW)</td></tr>
+    <tr><td>5</td><td>VIO</td><td>디지털 I/O 전원</td></tr>
+    <tr><td>6</td><td>CSO3/PVM</td><td>전류 모니터 3 출력 또는 상전압 피드백</td></tr>
+    <tr><td>7, 8</td><td>CSO2, CSO1</td><td>전류 모니터 2, 1 출력</td></tr>
+    <tr><td>9</td><td>VDD</td><td>내부 회로·전류 모니터 전원 (5 V)</td></tr>
+    <tr><td>10</td><td>SGND</td><td>신호 접지</td></tr>
+    <tr><td>11</td><td>EN_BR</td><td>브리지 인에이블 (액티브 HIGH)</td></tr>
+    <tr><td>12</td><td>NDIS</td><td>안전 차단 입력 (액티브 LOW)</td></tr>
+    <tr><td>13, 14</td><td>IS3−, IS3+</td><td>전류 모니터 3 입력</td></tr>
+    <tr><td>15, 16</td><td>IS2−, IS2+</td><td>전류 모니터 2 입력</td></tr>
+    <tr><td>17, 18</td><td>IS1−, IS1+</td><td>전류 모니터 1 입력</td></tr>
+    <tr><td>19, 20</td><td>SLS_3, GLS_3</td><td>상 3 로우사이드 소스, 게이트</td></tr>
+    <tr><td>21, 22</td><td>SLS_2, GLS_2</td><td>상 2 로우사이드 소스, 게이트</td></tr>
+    <tr><td>23, 24</td><td>SLS_1, GLS_1</td><td>상 1 로우사이드 소스, 게이트</td></tr>
+    <tr><td>25, 26, 27</td><td>CBS_3, GHS_3, SHS_3</td><td>상 3 부트스트랩 커패시터, 하이사이드 게이트, 소스</td></tr>
+    <tr><td>28, 29, 30</td><td>CBS_2, GHS_2, SHS_2</td><td>상 2 부트스트랩, 게이트, 소스</td></tr>
+    <tr><td>31, 32, 33</td><td>CBS_1, GHS_1, SHS_1</td><td>상 1 부트스트랩, 게이트, 소스</td></tr>
+    <tr><td>34</td><td>VDH</td><td>하이사이드 FET 드레인 연결 (모터 전원 감시)</td></tr>
+    <tr><td>35, 36</td><td>CP2P, CP2M</td><td>차지펌프 2 플라잉 커패시터</td></tr>
+    <tr><td>37</td><td>VBP</td><td>프리레귤레이터 전원 (배터리)</td></tr>
+    <tr><td>38</td><td>CP1M</td><td>차지펌프 1 플라잉 커패시터 (−)</td></tr>
+    <tr><td>39</td><td>PGND</td><td>전력 접지 (차지펌프 1·2)</td></tr>
+    <tr><td>40</td><td>CP1P</td><td>차지펌프 1 플라잉 커패시터 (+)</td></tr>
+    <tr><td>41</td><td>VPRE</td><td>프리레귤레이트된 게이트 구동 전압</td></tr>
+    <tr><td>42, 43, 44</td><td>INH3, INH2, INH1</td><td>하이사이드 PWM 입력</td></tr>
+    <tr><td>45, 46, 47</td><td>INL3, INL2, INL1</td><td>로우사이드 PWM 입력</td></tr>
+    <tr><td>48</td><td>FS_FLAG</td><td>고장 상태 플래그 (액티브 LOW)</td></tr>
+    <tr><td>EP</td><td>—</td><td>방열 패드, 전기적 미연결 — GND 플레인에 연결</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>CBS_n–SHS_n 사이 부트스트랩 커패시터, CP1P/CP1M·CP2P/CP2M 플라잉 커패시터, VPRE 탱크 커패시터 필요 — 값은 읽은 부분에 없어 데이터시트 응용 회로 확인 필요.</li>
+    <li>전류 감지: 각 상 로우사이드 션트의 양단을 ISn+/ISn−에 켈빈 연결. 입력 범위 ±7 ~ ±300 mV (기본 ±300 mV).</li>
+    <li>상전압 임계 기본 VDH의 75 %/25 % (설정 시 60 %/40 %), 정확도 ±6.5 %.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>TQFP48 7 × 7 × 1 mm (A 최대 1.2 mm), 피치 0.5 mm, 노출 패드 D2 최대 4.15 mm (아래쪽). Rth j-a 31 °C/W, Rth j-c(bottom) 2.1 °C/W (JEDEC 2s2p). Tj 150 °C (175 °C 200 h).</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>SHS_x, VDH, VBP는 "global" 핀(ESD HBM ±4 kV) — 커넥터·모터 쪽 배선과 직접 닿는 핀.</li>
+    <li>SGND와 PGND의 오프셋은 ±0.6 V 이내 — 단일 지점 접속 권장.</li>
+    <li>GND 손실 검출 임계 0.24–0.55 V, 필터 1–1.5 ms.</li>
+    <li>게이트 소스/싱크 전류, 대기 전류는 읽은 범위에서 확인하지 못함 — 원본 표 확인.</li>
+    <li>데이터 브리프는 노출 패드를 GND에 연결하는 냉각 슬러그로, 데이터시트는 전기적 미연결 방열 패드로 기술 — 어느 쪽이든 GND 플레인에 납땜.</li>
+  </ul>
+</article>
+</body>
+</html>

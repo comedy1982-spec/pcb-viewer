@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATA6563 · High-speed CAN FD transceiver with standby, VIO</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="ATA6563" data-mfr="Microchip" data-cat="통신" data-price="" data-status="done" data-src="https://datasheet.chipsmall.com/ATA6563-GBQW0/643022.pdf">
+  <h1>ATA6563</h1>
+  <p class="meta">Microchip · 통신 · High-speed CAN FD transceiver with standby, VIO</p>
+  <p class="meta">원본: <a href="https://datasheet.chipsmall.com/ATA6563-GBQW0/643022.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://microchip.com/en-us/product/ATA6563" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=ATA6563" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS20005790B (Rev. B, 2017-08, ATA6562/ATA6563 공통)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>고속 CAN 트랜시버, CAN FD 대응, 최대 5 Mbps, 스탠바이 모드 + CAN 원격 웨이크업(WUP)</dd>
+    <dt>표준</dt><dd>ISO 11898-2, ISO 11898-2:2016, SAE J2962-2</dd>
+    <dt>전원</dt><dd>VCC 4.5–5.5 V, VIO 2.8–5.5 V (3.3 V / 5 V MCU 직결)</dd>
+    <dt>소비 전류</dt><dd>노멀 리세시브 2–5 mA, 도미넌트 30/50/70 mA(최소/일반/최대), 스탠바이 ICC 최대 12 µA(25 °C 일반 7 µA), IVIO 스탠바이 최대 1 µA</dd>
+    <dt>타이밍</dt><dd>tPD(TXD-RXD) 상승 40–210 ns / 하강 40–200 ns (RL 60 Ω, CL 100 pF), TXD 도미넌트 타임아웃 0.8–3 ms, 웨이크 필터 0.5–3.8 µs</dd>
+    <dt>보호</dt><dd>VCC·VIO 저전압 검출, TXD 도미넌트 타임아웃, CANH/CANL 단락·과열 보호</dd>
+    <dt>등급</dt><dd>AEC-Q100, Grade 1 (Tamb ≤ 125 °C) / Grade 0 (Tamb ≤ 150 °C)</dd>
+    <dt>패키지</dt><dd>SOIC8 또는 VDFN8(웨터블 플랭크, MSL 1)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>CANH/CANL DC 전압</td><td>-27</td><td>+42</td><td>V</td><td></td></tr>
+    <tr><td>CANH/CANL 과도 (ISO 7637-2)</td><td>-150</td><td>+100</td><td>V</td><td></td></tr>
+    <tr><td>차동 버스 전압</td><td>-5</td><td>+18</td><td>V</td><td></td></tr>
+    <tr><td>기타 핀 DC 전압 (VCC, VIO, TXD, RXD, STBY)</td><td>-0.3</td><td>+5.5</td><td>V</td><td></td></tr>
+    <tr><td>ESD CANH/CANL (IEC 61000-4-2)</td><td></td><td>±8</td><td>kV</td><td></td></tr>
+    <tr><td>ESD CANH/CANL→GND (HBM)</td><td></td><td>±6</td><td>kV</td><td></td></tr>
+    <tr><td>ESD 부품 (HBM / CDM / MM)</td><td></td><td>±4 kV / ±750 V / ±200 V</td><td></td><td></td></tr>
+    <tr><td>가상 접합 온도 TvJ</td><td>-40</td><td>+175</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도</td><td>-55</td><td>+150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>VIO</td><td>2.8</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>주위 온도 (Grade 1)</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    <tr><td>주위 온도 (Grade 0)</td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SOIC8 (GAQW) / VDFN8 (GBQW, 노출 패드 9) — 핀 1–8 동일</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>TXD</td><td>송신 데이터 입력</td></tr>
+    <tr><td>2</td><td>GND</td><td>접지</td></tr>
+    <tr><td>3</td><td>VCC</td><td>전원</td></tr>
+    <tr><td>4</td><td>RXD</td><td>수신 데이터 출력</td></tr>
+    <tr><td>5</td><td>VIO</td><td>I/O 레벨 어댑터 전원 (ATA6562는 이 핀이 NSIL)</td></tr>
+    <tr><td>6</td><td>CANL</td><td>CAN 버스 Low</td></tr>
+    <tr><td>7</td><td>CANH</td><td>CAN 버스 High</td></tr>
+    <tr><td>8</td><td>STBY</td><td>스탠바이 모드 제어 입력</td></tr>
+    <tr><td>9 (EP)</td><td>EP</td><td>VDFN8 전용 노출 패드, 내부 GND 연결 — 반드시 GND에 납땜</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VCC·VIO에 각각 100 nF 디커플링, VCC 레일에 22 µF(외부 레귤레이터에 따라 값 조정) — 데이터시트 응용 회로 기준</li>
+    <li>VIO는 MCU I/O 전원(3.3 V 또는 5 V)에 연결</li>
+    <li>버스 종단 권장값은 데이터시트에 명시 없음(60 Ω은 시험 부하 조건) — 일반적인 120 Ω 또는 2×60 Ω 스플릿 종단은 시스템 설계로 결정</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SOIC8: RthvJA 145 K/W. VDFN8: RthvJC 10 K/W, 히트 슬러그를 JEDEC 보드에 납땜 시 RthvJA 50 K/W. 열 차단 TJsd: Grade 1 150/175/195 °C, Grade 0 160/175/195 °C (최소/일반/최대).</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>주문 코드: ATA6563-GAQW0 / -GAQW1 / -GBQW0 / -GBQW1 (데이터시트 열 특성 표 기준 GA=SOIC8, GB=VDFN8로 보이나 문서에 명시적 표기 없음, W0/W1 = Grade 0/1 여부 데이터시트 확인 필요).</li>
+    <li>MPN에 패키지·등급 접미사가 없음 — BOM에 실제 주문 코드 지정 필요.</li>
+    <li>ATA6562는 5번 핀이 NSIL(무음 모드)인 핀 호환 변형. MCP2542FD와 핀 배치 동일(1 TXD, 2 GND, 3 VDD, 4 RXD, 5 VIO, 6 CANL, 7 CANH, 8 STBY).</li>
+    <li>읽은 문서는 Rev. B(2017) — Microchip 사이트의 최신 개정판 확인 권장.</li>
+  </ul>
+</article>
+</body>
+</html>

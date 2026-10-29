@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LMR33630AQRNXRQ1 · 36-V 3-A Synchronous Buck Converter</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="LMR33630AQRNXRQ1" data-mfr="TI" data-cat="전원" data-price="1.9" data-status="done" data-src="https://www.ti.com.cn/cn/lit/gpn/lmr33630-q1">
+  <h1>LMR33630AQRNXRQ1</h1>
+  <p class="meta">TI · 전원 · 3.8–36 V 입력 3 A 동기 벅 컨버터 (400 kHz 버전) · 참고 단가 약 $1.9 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com.cn/cn/lit/gpn/lmr33630-q1" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://ti.com/product/de-de/LMR33630-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=LMR33630AQRNXRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SNVSB26C (2018-06, rev. 2020-10)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>동기 벅 컨버터, 피크 전류 모드, 내부 보상, 내부 소프트스타트 4 ms typ</dd>
+    <dt>입력 / 출력</dt><dd>VIN 3.8 ~ 36 V (절대 최대 38 V), VOUT 1 ~ 24 V 가변 (VFB 1.000 V ±1.5 %), IOUT 3 A</dd>
+    <dt>스위칭 주파수</dt><dd>A 버전 400 kHz typ (340–460 kHz). B = 1.4 MHz, C = 2.1 MHz</dd>
+    <dt>스위치</dt><dd>RDS(on) HS 75 mΩ / LS 50 mΩ typ, 최소 온타임 68 ns (80 ns typ)</dd>
+    <dt>전류 제한</dt><dd>HS 피크 4.5 A typ (3.85–5.05 A), LS 밸리 3.5 A typ (2.9–4.1 A)</dd>
+    <dt>대기 전류</dt><dd>동작 24 µA typ (34 µA max), 셧다운 5 µA typ</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1 (TA −40 ~ 125 °C), 기능안전 대응</dd>
+    <dt>패키지</dt><dd>VQFN-12 (RNX) 3.00 × 2.00 mm, 노출 패드 없음</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VIN – PGND</td><td>−0.3</td><td>38</td><td>V</td><td></td></tr>
+    <tr><td>EN – AGND</td><td>−0.3</td><td>VIN + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>FB – AGND</td><td>−0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>PG – AGND</td><td>0</td><td>22</td><td>V</td><td></td></tr>
+    <tr><td>AGND – PGND</td><td>−0.3</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>SW – PGND</td><td>−0.3</td><td>VIN + 0.3</td><td>V</td><td>&lt;100 ns 과도: −3.5 ~ 38 V</td></tr>
+    <tr><td>BOOT – SW</td><td>−0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>VCC – AGND</td><td>−0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>접합 온도 TJ</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VIN – PGND</td><td>3.8</td><td></td><td>36</td><td>V</td></tr>
+    <tr><td>EN</td><td>0</td><td></td><td>VIN</td><td>V</td></tr>
+    <tr><td>PG</td><td>0</td><td></td><td>18</td><td>V</td></tr>
+    <tr><td>VOUT (가변)</td><td>1</td><td></td><td>24</td><td>V</td></tr>
+    <tr><td>IOUT</td><td>0</td><td></td><td>3</td><td>A</td></tr>
+    <tr><td>동작 온도</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>VQFN-12 (RNX, 3 × 2 mm)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1, 11</td><td>PGND</td><td>파워 그라운드</td></tr>
+    <tr><td>2, 10</td><td>VIN</td><td>입력 전원, 각 핀 바로 옆에 바이패스 커패시터</td></tr>
+    <tr><td>3</td><td>NC</td><td>내부 미연결 — PCB에서 SW와 연결하면 CBOOT 배선이 쉬움</td></tr>
+    <tr><td>4</td><td>BOOT</td><td>부트스트랩, BOOT–SW 100 nF</td></tr>
+    <tr><td>5</td><td>VCC</td><td>내부 5 V LDO 출력, 1 µF → GND, 외부 부하 금지</td></tr>
+    <tr><td>6</td><td>AGND</td><td>아날로그 그라운드</td></tr>
+    <tr><td>7</td><td>FB</td><td>피드백 입력 (플로팅/접지 금지)</td></tr>
+    <tr><td>8</td><td>PG</td><td>파워굿 오픈드레인 (풀업 필요, 미사용 시 개방)</td></tr>
+    <tr><td>9</td><td>EN</td><td>인에이블 (VIN 연결 가능, 플로팅 금지)</td></tr>
+    <tr><td>12</td><td>SW</td><td>스위치 노드 → 인덕터</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>400 kHz 권장값 (표 8-2): 3.3 V → L 6.8 µH, RFBT 100 kΩ / RFBB 43.2 kΩ · 5 V → 8 µH, 24.9 kΩ · 12 V → 15 µH, 9.09 kΩ. 공통 COUT 4 × 22 µF, CIN 10 µF + 220 nF, CBOOT 100 nF, CVCC 1 µF, CFF 개방</li>
+    <li>출력 설정: VOUT = 1 V × (1 + RFBT/RFBB)</li>
+    <li>입력 커패시터는 VIN/PGND 쌍(2–1, 10–11) 각각에 고주파 세라믹을 배치 (예시 4.7 µF + 2 × 100 nF)</li>
+    <li>EN 문턱 1.231 V typ, 히스테리시스 100 mV — 분압기로 입력 UVLO 설정 가능</li>
+    <li>PG 창: 상한 107 % / 하한 94 % (상승), 필터 60–170 µs</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>VQFN-12 (RNX) 3.00 × 2.00 mm, 노출 패드 없음. RθJA 72.5 °C/W (설계용으로는 유효하지 않다고 명시 — 8.2.2.11 최대 주위 온도 방법 사용), RθJC(top) 35.9 °C/W, RθJB 23.3 °C/W, ψJT 0.8 °C/W, ψJB 23.5 °C/W. TJ 최대 150 °C, 열차단 165 °C / 복귀 148 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>VIN 절대 최대 38 V — 12 V 차량 부하 덤프에는 앞단 클램프/서지 스토퍼 필요.</li>
+    <li>최소 온타임 68 ns: 400 kHz에서는 24 V→3.3 V도 여유, 2.1 MHz(C) 버전은 고입력·저출력 시 온타임 한계 확인.</li>
+    <li>PCB에서 NC(3번)를 SW에 연결하면 BOOT 커패시터를 핀 3–4 사이에 바로 놓을 수 있음.</li>
+    <li>동일 패키지 B/C 버전으로 주파수만 변경 가능 (인덕터/커패시터 재설계 필요).</li>
+  </ul>
+</article>
+</body>
+</html>

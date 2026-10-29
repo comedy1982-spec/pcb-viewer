@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L9733 · Octal self-configuring low/high-side driver</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="L9733" data-mfr="STMicroelectronics" data-cat="스마트 스위치" data-price="" data-status="done" data-src="https://static.chipdip.ru/lib/361/DOC031361510.pdf">
+  <h1>L9733</h1>
+  <p class="meta">STMicroelectronics · 스마트 스위치 · Automotive octal self-configuring low/high-side driver, SPI</p>
+  <p class="meta">원본: <a href="https://static.chipdip.ru/lib/361/DOC031361510.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://www.st.com/en/automotive-analog-and-power/l9733.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=L9733" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DocID11319 Rev 12, 2016-05</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>8채널 드라이버, 채널별 로우사이드/하이사이드 자동 구성 (DRNx/SRCx 분리), SPI 제어·진단, IN6–IN8 PWM 직접 입력</dd>
+    <dt>전원</dt><dd>VDD 4.5–5.5 V · Vbat 기능 범위 4.5–18 V (점프 스타트 18–27 V 1분, 로드 덤프 27–40 V)</dd>
+    <dt>RDS(on)</dt><dd>최대 0.7 Ω (Tj 25 °C), 1.2 Ω (125 °C), 0.5 Ω (−40 °C) @ 350 mA</dd>
+    <dt>출력 전류</dt><dd>채널당 최대 800 mA · 전류 제한 1–2.2 A (Tamb &gt; 0 °C) · 과전류 임계 1–2.7 A</dd>
+    <dt>클램프</dt><dd>로우사이드 DRNx 50–60 V · 하이사이드 SRCx −24 ~ −14 V · 단발 클램프 에너지 20 mJ</dd>
+    <dt>진단</dt><dd>개방 부하, GND 단락, Vbat 단락, 과전류(래치/비래치), 채널별 과열 차단(typ 175 °C)</dd>
+    <dt>SPI</dt><dd>16비트 프레임, 타이밍은 fSCLK 5.4 MHz 기준 규정</dd>
+    <dt>기타</dt><dd>내장 차지펌프(외부 커패시터 불필요), 슬루율 제어 (턴온 0.65–1.95 V/µs)</dd>
+    <dt>등급</dt><dd>AEC-Q100 (Rev. F) · Tamb −40 ~ 125 °C · Tj −40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>PowerSSO-28 노출 패드 (L9733XP / L9733XPTR / L9733CN / L9733CNTR)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VDD</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>Vbat</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>CS, DI, DO, SCLK, EN, IN6–IN8, VDO</td><td>−0.3</td><td>7.0</td><td>V</td><td></td></tr>
+    <tr><td>SRCx</td><td>−24</td><td></td><td>V</td><td></td></tr>
+    <tr><td>DRN1–8</td><td>−0.3</td><td>60</td><td>V</td><td></td></tr>
+    <tr><td>IOL 전류 제한</td><td></td><td>2.5</td><td>A</td><td>−40 °C</td></tr>
+    <tr><td>IOP 과전류 보호</td><td></td><td>3</td><td>A</td><td>−40 °C</td></tr>
+    <tr><td>클램프 에너지</td><td></td><td>20</td><td>mJ</td><td></td></tr>
+    <tr><td>ESD HBM</td><td>−2</td><td>2</td><td>kV</td><td>출력 핀 ±4 kV</td></tr>
+    <tr><td>Tstg</td><td>−50</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VDD</td><td>4.5</td><td>5</td><td>5.5</td><td>V</td></tr>
+    <tr><td>Vbat (기능)</td><td>4.5</td><td></td><td>18</td><td>V</td></tr>
+    <tr><td>출력 전류 Ox</td><td></td><td></td><td>800</td><td>mA</td></tr>
+    <tr><td>Tamb</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+    <tr><td>Tj</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>PowerSSO-28 (노출 패드)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>VDD</td><td>5 V 전원</td></tr>
+    <tr><td>2</td><td>SCLK</td><td>SPI 클럭 입력</td></tr>
+    <tr><td>3</td><td>CS</td><td>SPI 칩 선택 (액티브 LOW)</td></tr>
+    <tr><td>4 / 5</td><td>SRC1 / DRN1</td><td>드라이버 1 소스 / 드레인</td></tr>
+    <tr><td>6 / 7</td><td>DRN2 / SRC2</td><td>드라이버 2 드레인 / 소스</td></tr>
+    <tr><td>8 / 9</td><td>SRC3 / DRN3</td><td>드라이버 3 소스 / 드레인</td></tr>
+    <tr><td>10 / 11</td><td>DRN4 / SRC4</td><td>드라이버 4 드레인 / 소스</td></tr>
+    <tr><td>12</td><td>IN6</td><td>드라이버 6 PWM 입력</td></tr>
+    <tr><td>13</td><td>IN7</td><td>드라이버 7 PWM 입력</td></tr>
+    <tr><td>14</td><td>Vbat</td><td>배터리 전원</td></tr>
+    <tr><td>15</td><td>GND</td><td>아날로그 접지</td></tr>
+    <tr><td>16</td><td>IN8</td><td>드라이버 8 PWM 입력</td></tr>
+    <tr><td>17</td><td>RES</td><td>리셋 입력 (액티브 LOW)</td></tr>
+    <tr><td>18 / 19</td><td>SRC5 / DRN5</td><td>드라이버 5 소스 / 드레인</td></tr>
+    <tr><td>20 / 21</td><td>DRN6 / SRC6</td><td>드라이버 6 드레인 / 소스</td></tr>
+    <tr><td>22 / 23</td><td>SRC7 / DRN7</td><td>드라이버 7 소스 / 드레인</td></tr>
+    <tr><td>24 / 25</td><td>DRN8 / SRC8</td><td>드라이버 8 드레인 / 소스</td></tr>
+    <tr><td>26</td><td>DI</td><td>SPI 데이터 입력</td></tr>
+    <tr><td>27</td><td>DO</td><td>SPI 데이터 출력</td></tr>
+    <tr><td>28</td><td>VDO</td><td>MCU 로직 인터페이스 전원</td></tr>
+    <tr><td>EP</td><td>GND (slug)</td><td>PCB에 납땜, GND 연결 필수</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>로우사이드 출력: 각 DRN–GND에 0.01–0.1 µF 세라믹 (빠른 음 과도 대책).</li>
+    <li>하이사이드 출력: 드레인(Vbat)–GND 디커플링 충분히.</li>
+    <li>Vbat 필터 커패시터 권장 (EMI), 역극성 보호 다이오드·직렬 저항 (값은 원본 그림 확인).</li>
+    <li>유도성 부하 35–325 mH 대상. 유도성 부하 PWM 시 외부 플라이백 다이오드 필요.</li>
+    <li>로직 레벨: VIH ≥ 0.7·VDO, VIL ≤ 0.3·VDO · DO VOL ≤ 0.4 V @ 2.5 mA.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>PowerSSO-28, 노출 패드 = GND. RthJ-amb 24 °C/W (2s2p), RthJ-case 3 °C/W. Tj max 150 °C, 과열 차단 151–200 °C (typ 175 °C), 히스테리시스 typ 10 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>부품 DB 설명 "8ch LSD"와 달리 각 채널이 로우/하이사이드로 자기 구성되는 구조 (DRN/SRC 핀 분리) — 하이사이드로 쓸 때 클램프 −14 V 이하 고려.</li>
+    <li>개방 부하 검출 저항 범위 11–200 kΩ (Vbat ≥ 9 V). Vbat 슬립 전류 최대 10 µA.</li>
+    <li>"L9733"은 기본 품번 — 주문 코드는 L9733XP(TR) 또는 L9733CN(TR).</li>
+    <li>읽은 문서는 2016년 Rev 12 사본 — ST 최신 개정 확인 권장.</li>
+  </ul>
+</article>
+</body>
+</html>

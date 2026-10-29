@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MP2451DJ-LF-Z · 36 V 2 MHz 0.6 A step-down converter, TSOT23-6</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MP2451DJ-LF-Z" data-mfr="MPS" data-cat="전원" data-price="0.6" data-status="done" data-src="https://cdn.eicom.ru/media/PDF/8045620.pdf">
+  <h1>MP2451DJ-LF-Z</h1>
+  <p class="meta">MPS · 전원 · 36 V, 2 MHz, 0.6 A step-down (buck) converter, TSOT23-6 · 참고 단가 약 $0.6 (추정)</p>
+  <p class="meta">원본: <a href="https://cdn.eicom.ru/media/PDF/8045620.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://www.monolithicpower.com/en/products/power-management/switching-converters-controllers/step-down-buck/converters/vin-max-30v-to-48v/mp2451.html" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=MP2451DJ-LF-Z" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 MP2451 Rev. 1.34, 2019-08-06</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>비동기 벅 (하이사이드 500 mΩ 내장, 외부 쇼트키), 내부 보상, 세라믹 출력 안정</dd>
+    <dt>입력</dt><dd>3.3 ~ 36 V</dd>
+    <dt>출력</dt><dd>0.8 V ~ 0.8 × VIN, 0.6 A</dd>
+    <dt>스위칭</dt><dd>2 MHz 고정 (1.6 ~ 2.4 MHz), 경부하·기동 시 주파수 폴드백</dd>
+    <dt>VFB</dt><dd>0.794 V typ (0.778 ~ 0.810 V, 4 V &lt; VIN &lt; 36 V)</dd>
+    <dt>전류</dt><dd>대기 130 µA, 셧다운 3 µA typ (15 µA max)</dd>
+    <dt>전류 제한</dt><dd>1.0 A typ</dd>
+    <dt>소프트스타트</dt><dd>0.5 ms</dd>
+    <dt>등급</dt><dd>Catalog (AEC-Q100 아님) — 차량용은 MPQ2451 (AEC-Q100)</dd>
+    <dt>패키지</dt><dd>DJ = TSOT23-6, -LF = RoHS, -Z = 테이프 릴</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VIN</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>VSW</td><td>−0.3</td><td>VIN(MAX) + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>BST − SW</td><td>−0.3</td><td>6.0</td><td>V</td><td></td></tr>
+    <tr><td>EN 전압</td><td></td><td>8</td><td>V</td><td>EN 싱크 전류 100 µA max</td></tr>
+    <tr><td>기타 핀</td><td>−0.3</td><td>5.0</td><td>V</td><td></td></tr>
+    <tr><td>연속 소비 전력</td><td></td><td>0.57</td><td>W</td><td>TA = 25 °C</td></tr>
+    <tr><td>접합 온도</td><td></td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>리드 온도</td><td></td><td>260</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VIN</td><td>3.3</td><td>12</td><td>36</td><td>V</td></tr>
+    <tr><td>VOUT</td><td>0.8</td><td></td><td>0.8 × VIN</td><td>V</td></tr>
+    <tr><td>동작 접합 온도 TJ</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>TSOT23-6 (MP2451DJ; SOT23-6 MP2451DT와 동일 핀배치)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>BST</td><td>부트스트랩, BST–SW 커패시터</td></tr>
+    <tr><td>2</td><td>GND</td><td>GND, 출력 커패시터 가까이</td></tr>
+    <tr><td>3</td><td>FB</td><td>피드백 (0.8 V 기준) VOUT 분압</td></tr>
+    <tr><td>4</td><td>EN</td><td>인에이블. 플로팅 시 셧다운</td></tr>
+    <tr><td>5</td><td>VIN</td><td>입력 전원, 가까이 디커플링</td></tr>
+    <tr><td>6</td><td>SW</td><td>스위치 노드, 저 VF 쇼트키 → GND 가까이</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>출력 분압: VOUT = VFB × (R1 + R2)/R2, R1 ≈ 124 kΩ (1 %) 권장, R2 = R1 / (VOUT/0.8 − 1). 3.3 V: R2 40.2 kΩ · 5 V: 23.7 kΩ · 1.2 V: 249 kΩ.</li>
+    <li>Table 3 (세라믹 출력, C2 10 µF): 1.2 V — 2.2 µH, 249 kΩ, C3 22 pF · 2.5 V — 2.2 µH, 57.6 kΩ, 22 pF · 3.3 V — 2.2 µH, 40.2 kΩ, 33 pF · 5 V — 3.3 µH, 23.7 kΩ, 33 pF · 12 V — 6.2 µH, 8.87 kΩ, 47 pF.</li>
+    <li>인덕터: 리플 ≈ 최대 부하의 30 %, 피크 전류 &lt; 1.0 A 전류 제한 및 포화 전류. 예: Würth 744043003 (3.3 µH).</li>
+    <li>입력: 세라믹 권장, 전해/탄탈이면 0.1 µF 세라믹 추가. 출력: 일반 10 µF 세라믹.</li>
+    <li>부트스트랩: BST–SW 100 nF (내부 레귤레이터로 약 5 V 충전). 5 V 레일 존재, VIN ≤ 5 V, VOUT 3.3–5 V, VOUT/VIN &gt; 65 % 중 하나면 외부 부트 다이오드(IN4148/BAT54). 경부하에서 VIN − VOUT &gt; 약 3 V 유지.</li>
+    <li>캐치 다이오드: 저 VF 쇼트키, SW 핀 가까이 (정격은 VIN max·부하 전류 이상으로 선정).</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>TSOT23-6, 노출 패드 없음. θJA 220 °C/W, θJC 110 °C/W (JESD51-7 4층). PD(MAX) = (TJ(MAX) − TA)/θJA. 열 차단 150 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>UVLO 상승 2.7–3.2 V (히스테리시스 0.4 V). EN 상승 1.4–1.7 V (1.55 V typ), 히스테리시스 0.3 V, EN 클램프 7.5 V — 고전압으로 EN 구동 시 직렬 저항으로 100 µA 이하 제한.</li>
+    <li>최소 on-time 100 ns @ 2 MHz → 듀티 최소 약 20 %: 36 V → 3.3 V 같은 큰 강압비는 펄스 스킵 가능, 계산 확인.</li>
+    <li>θJA 220 °C/W로 높음 — 0.6 A 연속·고온에서 손실 계산 필요.</li>
+    <li>차량 12 V 직결 시 AEC-Q100 버전 MPQ2451 고려 (제품 계열 존재 확인, 사양은 별도 데이터시트).</li>
+  </ul>
+</article>
+</body>
+</html>

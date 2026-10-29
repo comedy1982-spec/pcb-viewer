@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IPD90P04P4L-04 · -40 V P-channel OptiMOS-P2 MOSFET, DPAK</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="IPD90P04P4L-04" data-mfr="Infineon" data-cat="트랜지스터" data-price="1.6" data-status="done" data-src="https://www.mouser.com/datasheet/2/196/Infineon_IPD90P04P4L_04_DataSheet_v01_02_EN-3362636.pdf">
+  <h1>IPD90P04P4L-04</h1>
+  <p class="meta">Infineon · 트랜지스터 · -40 V, -90 A P-채널 로직 레벨 차량용 MOSFET (역접속 보호용) · 참고 단가 약 $1.6 (추정)</p>
+  <p class="meta">원본: <a href="https://www.mouser.com/datasheet/2/196/Infineon_IPD90P04P4L_04_DataSheet_v01_02_EN-3362636.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=IPD90P04P4L-04" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev. 1.2 (2019-07-04)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>P-채널 인핸스먼트, 로직 레벨, 100% 애벌런치 시험</dd>
+    <dt>VDS</dt><dd>-40 V</dd>
+    <dt>ID</dt><dd>-90 A (TC = 25 °C 및 100 °C, VGS = -10 V)</dd>
+    <dt>RDS(on)</dt><dd>VGS = -10 V: 일반 3.6 / 최대 4.3 mΩ · VGS = -4.5 V: 일반 5.1 / 최대 6.6 mΩ</dd>
+    <dt>VGS(th)</dt><dd>-1.2 / -1.7 / -2.2 V (ID = -250 µA)</dd>
+    <dt>Qg</dt><dd>일반 135 nC (최대 176 nC), Qgs 31 nC, Qgd 24 nC</dd>
+    <dt>등급</dt><dd>"AEC qualified" 표기, MSL1 (260 °C), 175 °C 동작</dd>
+    <dt>패키지</dt><dd>PG-TO252-3-313 (DPAK), 마킹 4P04L04</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDS</td><td></td><td>-40</td><td>V</td><td></td></tr>
+      <tr><td>연속 드레인 전류 ID</td><td></td><td>-90</td><td>A</td><td>TC = 25/100 °C, VGS = -10 V</td></tr>
+      <tr><td>펄스 드레인 전류</td><td></td><td>-360</td><td>A</td><td>TC = 25 °C</td></tr>
+      <tr><td>애벌런치 에너지 EAS</td><td></td><td>60</td><td>mJ</td><td>단일 펄스, ID = -45 A</td></tr>
+      <tr><td>애벌런치 전류 IAS</td><td></td><td>-90</td><td>A</td><td>단일 펄스</td></tr>
+      <tr><td>VGS</td><td>-16</td><td>+5</td><td>V</td><td>Rev. 1.2에서 변경</td></tr>
+      <tr><td>Ptot</td><td></td><td>125</td><td>W</td><td>TC = 25 °C</td></tr>
+      <tr><td>Tj, Tstg</td><td>-55</td><td>175</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>게이트 구동 (RDS(on) 보증점)</td><td>-10</td><td></td><td>-4.5</td><td>V</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-TO252-3 (DPAK)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>G</td><td>게이트</td></tr>
+      <tr><td>2 / 탭</td><td>D</td><td>드레인 (탭)</td></tr>
+      <tr><td>3</td><td>S</td><td>소스</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>역접속 보호 (하이사이드 P-FET): 소스를 부하 쪽, 드레인을 배터리 쪽에 두면 정상 시 바디 다이오드가 먼저 도통하고 게이트를 GND 쪽으로 당겨 채널을 켭니다. 역접속 시 VGS가 양(+)이 되어 꺼집니다.</li>
+    <li>VGS 정격이 +5 / -16 V로 비대칭입니다. 12 V 계통(로드덤프 포함)에서는 게이트–소스 제너 클램프(16 V 미만)와 게이트 직렬 저항이 필요합니다.</li>
+    <li>스위칭 (VDD -20 V, VGS -10 V, ID -90 A, RG 3.5 Ω, 일반): td(on) 20 ns, tr 20 ns, td(off) 140 ns, tf 60 ns.</li>
+    <li>커패시턴스 (일반): Ciss 8900 pF, Coss 2532 pF, Crss 100 pF.</li>
+    <li>바디 다이오드: VSD 일반 -1.0 / 최대 -1.3 V (IF -90 A), trr 63 ns, Qrr 72.3 nC.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-TO252-3-313. RthJC 최대 1.2 K/W, RthJA 최대 62 K/W (최소 풋프린트), 40 K/W (6 cm² 방열 구리). Tj 최대 175 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>정상 동작 손실 예: 20 A에서 4.3 mΩ(25 °C 최대) 기준 약 1.7 W. 고온에서 RDS(on)이 커지므로 데이터시트 온도 곡선으로 보정하세요.</li>
+    <li>VGS 양(+) 방향 최대 +5 V를 넘지 않도록 역접속·과도 상황을 모두 확인하세요.</li>
+  </ul>
+</article>
+</body>
+</html>

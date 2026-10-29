@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLE9879QXA40 · Cortex-M3 MCU with LIN and BLDC MOSFET driver, VQFN-48</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLE9879QXA40" data-mfr="Infineon" data-cat="모터 드라이버" data-price="3.8" data-status="stub" data-src="https://www.nyang-tech.com/datasheet/3348077717/Infineon-Technologies/TLE9879QXA40XUMA3.pdf">
+  <h1>TLE9879QXA40</h1>
+  <p class="meta">Infineon · 모터 드라이버 · Cortex-M3 MCU with LIN and 3-phase BLDC MOSFET driver, VQFN-48 · 참고 단가 약 $3.8 (추정)</p>
+  <p class="meta">원본: <a href="https://www.nyang-tech.com/datasheet/3348077717/Infineon-Technologies/TLE9879QXA40XUMA3.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=TLE9879QXA40" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TLE9879QXA40 Data Sheet Rev. 2.0, 2022-04-14 (BF/UH design step)</p>
+  <p class="todo">미완: 읽은 추출본에 절대 최대 정격(29.1.1), 기능 범위(29.1.2), 열저항(29.1.4), 외부 커패시터 권장값(VS/VDDP/VDDC/VAREF/차지 펌프/LIN)이 없음 — 원문 확인 필요. 핀 배치는 원문 Table 2 기준. 2차 시도: Infineon/배포처 PDF 사본은 텍스트 추출이 앞부분에서 끊기고, 표가 있는 alldatasheetcn 페이지 분할본(82/126쪽)은 사이트 차단으로 열람 실패.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>MOTIX 임베디드 파워: Cortex-M3 MCU + LIN 2.2 트랜시버 + 3상 브리지 MOSFET 드라이버 (외부 N-FET 6개)</dd>
+    <dt>CPU</dt><dd>32-bit Arm Cortex-M3, 최대 40 MHz. 외부 크리스털 4 – 25 MHz, 내부 LP_CLK 18 MHz / LP_CLK2 100 kHz</dd>
+    <dt>메모리</dt><dd>Flash 128 KB (4 KB 에뮬레이션 EEPROM 포함), RAM 6 KB, 100TP 512 B, 부트 ROM 32 KB</dd>
+    <dt>전원</dt><dd>VS 단일 전원 5.5 – 27 V, 확장 3 – 28 V</dd>
+    <dt>내부 레귤레이터</dt><dd>VDDP 5.0 V (I/O), VDDC 1.5 V (코어, 외부 부하 금지), VDDEXT 5.0 V / 20 mA 외부 출력</dd>
+    <dt>게이트 드라이버</dt><dd>GH1–3 / GL1–3, 공통 로우사이드 소스 SL, 차지 펌프(CP1H/L, CP2H/L, VCP, VSD)</dd>
+    <dt>아날로그</dt><dd>션트 전류용 고속 OP 앰프(OP1/OP2), 10-bit ADC1 (AN0, AN2–AN5), 진단용 8-bit ADC, HV 모니터 입력 MON</dd>
+    <dt>등급·온도</dt><dd>AEC-Q100/101, Tj −40 – 150 °C</dd>
+    <dt>패키지</dt><dd>VQFN-48 (BF step VQFN-48-31, UH step VQFN-48-79), LTI(측면 납땜 검사) 지원</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <p>데이터시트 29.1.1 확인 필요 (읽은 추출본에 표 없음).</p>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VS (정상)</td><td>5.5</td><td></td><td>27</td><td>V</td></tr>
+      <tr><td>VS (확장)</td><td>3</td><td></td><td>28</td><td>V</td></tr>
+      <tr><td>Tj</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>VQFN-48 + 노출 패드(GND)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>CP1L</td><td>차지 펌프 커패시터 1 low</td></tr>
+      <tr><td>2</td><td>VCP</td><td>차지 펌프 커패시터 (출력)</td></tr>
+      <tr><td>3</td><td>CP2H</td><td>차지 펌프 커패시터 2 high</td></tr>
+      <tr><td>4</td><td>CP2L</td><td>차지 펌프 커패시터 2 low</td></tr>
+      <tr><td>5</td><td>GH3</td><td>하이사이드 FET 3 게이트</td></tr>
+      <tr><td>6</td><td>SH2</td><td>하이사이드 FET 2 소스</td></tr>
+      <tr><td>7</td><td>GH2</td><td>하이사이드 FET 2 게이트</td></tr>
+      <tr><td>8</td><td>SH1</td><td>하이사이드 FET 1 소스</td></tr>
+      <tr><td>9</td><td>GH1</td><td>하이사이드 FET 1 게이트</td></tr>
+      <tr><td>10</td><td>SL</td><td>로우사이드 FET 공통 소스</td></tr>
+      <tr><td>11</td><td>GL3</td><td>로우사이드 FET 3 게이트</td></tr>
+      <tr><td>12</td><td>GL2</td><td>로우사이드 FET 2 게이트</td></tr>
+      <tr><td>13</td><td>GL1</td><td>로우사이드 FET 1 게이트</td></tr>
+      <tr><td>14</td><td>MON</td><td>고전압 모니터 입력</td></tr>
+      <tr><td>15</td><td>P1.0</td><td>GPIO</td></tr>
+      <tr><td>16</td><td>P1.1</td><td>GPIO</td></tr>
+      <tr><td>17</td><td>P1.2</td><td>GPIO</td></tr>
+      <tr><td>18</td><td>P0.4</td><td>GPIO</td></tr>
+      <tr><td>19</td><td>GND</td><td>디지털 접지</td></tr>
+      <tr><td>20</td><td>TMS</td><td>테스트 모드 선택 / SWD I/O</td></tr>
+      <tr><td>21</td><td>P0.0</td><td>GPIO / SWD 클럭</td></tr>
+      <tr><td>22</td><td>RESET</td><td>리셋 입력 (Sleep 모드에서는 사용 불가)</td></tr>
+      <tr><td>23</td><td>P0.1</td><td>GPIO</td></tr>
+      <tr><td>24</td><td>P0.3</td><td>GPIO</td></tr>
+      <tr><td>25</td><td>P0.2</td><td>GPIO (SWD 사용 시 0으로 고정)</td></tr>
+      <tr><td>26</td><td>P1.3</td><td>GPIO (돌입 전류 트랜지스터 제어용)</td></tr>
+      <tr><td>27</td><td>P1.4</td><td>GPIO</td></tr>
+      <tr><td>28</td><td>GND</td><td>디지털 접지</td></tr>
+      <tr><td>29</td><td>P2.0/XTAL1</td><td>AN0 / 크리스털 입력</td></tr>
+      <tr><td>30</td><td>P2.2/XTAL2</td><td>AN2 / 크리스털 출력</td></tr>
+      <tr><td>31</td><td>P2.5</td><td>AN5</td></tr>
+      <tr><td>32</td><td>P2.4</td><td>AN4</td></tr>
+      <tr><td>33</td><td>GND_REF</td><td>VAREF 기준 접지</td></tr>
+      <tr><td>34</td><td>VAREF</td><td>ADC1 5 V 기준 (버퍼 커패시터 또는 외부 입력)</td></tr>
+      <tr><td>35</td><td>P2.3</td><td>AN3</td></tr>
+      <tr><td>36</td><td>OP2</td><td>OP 앰프 + 입력</td></tr>
+      <tr><td>37</td><td>OP1</td><td>OP 앰프 − 입력</td></tr>
+      <tr><td>38</td><td>VDDC</td><td>코어 1.5 V (버퍼 커패시터만)</td></tr>
+      <tr><td>39</td><td>GND</td><td>아날로그 접지</td></tr>
+      <tr><td>40</td><td>VDDP</td><td>I/O 5.0 V (버퍼 커패시터)</td></tr>
+      <tr><td>41</td><td>VDDEXT</td><td>외부 5.0 V / 20 mA 출력</td></tr>
+      <tr><td>42</td><td>GND_LIN</td><td>LIN 접지</td></tr>
+      <tr><td>43</td><td>LIN</td><td>LIN 버스</td></tr>
+      <tr><td>44</td><td>VDH</td><td>하이사이드 드레인 전압 감지</td></tr>
+      <tr><td>45</td><td>VS</td><td>배터리 전원</td></tr>
+      <tr><td>46</td><td>SH3</td><td>하이사이드 FET 3 소스</td></tr>
+      <tr><td>47</td><td>VSD</td><td>차지 펌프용 배터리 전원</td></tr>
+      <tr><td>48</td><td>CP1H</td><td>차지 펌프 커패시터 1 high</td></tr>
+      <tr><td>EP</td><td>EP</td><td>노출 패드, GND에 연결</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDDP, VDDC: 외부 버퍼 커패시터 필수 (값은 데이터시트 28.1절 확인). VDDEXT 출력 커패시터 필수.</li>
+    <li>CP1H/CP1L, CP2H/CP2L: 차지 펌프 플라잉 커패시터, VCP: 저장 커패시터 (값 확인 필요).</li>
+    <li>크리스털 부하 커패시터 예: 4 MHz에서 33 pF, 25 MHz에서 8 pF (Rev. 1.0 표).</li>
+    <li>SWD 디버그: TMS + P0.0, P0.2를 0으로 유지.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>VQFN-48, 노출 패드 GND. 열저항은 데이터시트 29.1.4 확인 필요. Tj max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>VDDC(1.5 V)에는 외부 부하를 걸지 말 것.</li>
+    <li>로우사이드 소스가 SL 하나로 공통이므로 단일 션트(DC 링크) 전류 센싱 구조 — OP1/OP2로 증폭.</li>
+    <li>Design step(BF/UH)에 따라 패키지 코드가 다름(VQFN-48-31 / -79). 풋프린트는 주문 코드(XUMA1~4)별 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

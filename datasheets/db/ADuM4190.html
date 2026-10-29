@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADuM4190 · High-stability isolated error amplifier</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="ADuM4190" data-mfr="Analog Devices" data-cat="절연" data-price="" data-status="done" data-src="https://www.analog.com:443/media/en/technical-documentation/data-sheets/ADuM4190.pdf">
+  <h1>ADuM4190</h1>
+  <p class="meta">Analog Devices · 절연 · 5 kV 절연 오차 증폭기 (옵토커플러+TL431 대체), 1.225 V 기준</p>
+  <p class="meta">원본: <a href="https://www.analog.com:443/media/en/technical-documentation/data-sheets/ADuM4190.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=ADuM4190" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev. A (2025-02)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>2차측 오차 증폭기 + 1.225 V 기준 + iCoupler 절연 아날로그 전송, 절연 피드백 출력 EAOUT/EAOUT2</dd>
+    <dt>절연</dt><dd>강화 절연 5 kV rms (1분), VIORM 645 V peak, VIOSM 10000 V peak</dd>
+    <dt>기준 정확도</dt><dd>25 °C 최대 0.5 % (일반 0.25 %), 전 온도 최대 1 %</dd>
+    <dt>대역폭</dt><dd>A/S 등급 200 kHz, B/T 등급 400 kHz</dd>
+    <dt>전원</dt><dd>VDD1, VDD2 각각 3 ~ 20 V. IDD1 일반 1.4 mA, IDD2 일반 2.9 mA</dd>
+    <dt>출력</dt><dd>EAOUT ±3 mA (COMP → EAOUT 이득 0.83~1.17 V/V), EAOUT2 오픈 드레인 ±1 mA (이득 2.5~2.7 V/V)</dd>
+    <dt>오차 증폭기</dt><dd>GBW 10 MHz, 입력 공통 모드 0.35 ~ 1.5 V</dd>
+    <dt>온도</dt><dd>A/B -40 ~ +85 °C, S/T -40 ~ +125 °C</dd>
+    <dt>등급</dt><dd>읽은 문서에 AEC-Q100/자동차 등급 표기 없음</dd>
+    <dt>패키지</dt><dd>16-lead 와이드 바디 SOIC_IC (RI-16-2), 연면·공간 거리 8.7 mm</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDD1, VDD2</td><td>-0.5</td><td>24</td><td>V</td><td></td></tr>
+      <tr><td>VREG1, VREG2</td><td>-0.5</td><td>3.6</td><td>V</td><td></td></tr>
+      <tr><td>+IN, −IN</td><td>-0.5</td><td>3.6</td><td>V</td><td></td></tr>
+      <tr><td>REFOUT, REFOUT1, COMP, EAOUT</td><td>-0.5</td><td>3.6</td><td>V</td><td></td></tr>
+      <tr><td>EAOUT2</td><td>-0.5</td><td>5.5</td><td>V</td><td></td></tr>
+      <tr><td>핀당 출력 전류</td><td>-11</td><td>11</td><td>mA</td><td></td></tr>
+      <tr><td>공통 모드 과도</td><td>-100</td><td>100</td><td>kV/µs</td><td></td></tr>
+      <tr><td>동작 온도</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VDD1, VDD2</td><td>3.0</td><td></td><td>20</td><td>V</td></tr>
+      <tr><td>동작 온도 (A/B)</td><td>-40</td><td></td><td>85</td><td>°C</td></tr>
+      <tr><td>동작 온도 (S/T)</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>16-lead SOIC_IC 와이드 바디 (RI-16-2), 상면도</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>VDD1</td><td>1차측 전원 3~20 V, GND1에 1 µF</td></tr>
+      <tr><td>2</td><td>GND1</td><td>1차측 접지</td></tr>
+      <tr><td>3</td><td>VREG1</td><td>1차측 내부 레귤레이터, GND1에 1 µF</td></tr>
+      <tr><td>4</td><td>REFOUT1</td><td>1차측 기준 출력 (최대 15 pF)</td></tr>
+      <tr><td>5</td><td>NC</td><td>미연결. GND1에 연결 (플로팅 금지)</td></tr>
+      <tr><td>6</td><td>EAOUT2</td><td>절연 출력 2, 오픈 드레인 (VDD1로 풀업, 최대 1 mA)</td></tr>
+      <tr><td>7</td><td>EAOUT</td><td>절연 출력 (±3 mA)</td></tr>
+      <tr><td>8</td><td>GND1</td><td>1차측 접지</td></tr>
+      <tr><td>9</td><td>GND2</td><td>2차측 접지</td></tr>
+      <tr><td>10</td><td>COMP</td><td>오차 증폭기 출력, −IN과 보상망 연결</td></tr>
+      <tr><td>11</td><td>−IN</td><td>반전 입력 (분압 피드백)</td></tr>
+      <tr><td>12</td><td>+IN</td><td>비반전 입력 (기준 입력으로 사용 가능)</td></tr>
+      <tr><td>13</td><td>REFOUT</td><td>2차측 1.225 V 기준 출력 (최대 15 pF)</td></tr>
+      <tr><td>14</td><td>VREG2</td><td>2차측 내부 레귤레이터, GND2에 1 µF</td></tr>
+      <tr><td>15</td><td>GND2</td><td>2차측 접지</td></tr>
+      <tr><td>16</td><td>VDD2</td><td>2차측 전원 3~20 V, GND2에 1 µF</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD1, VREG1, VDD2, VREG2 각각 자기 접지에 1 µF.</li>
+    <li>REFOUT/REFOUT1 부하 커패시턴스 최대 15 pF, 출력 전류 최대 2.0 mA.</li>
+    <li>출력 전압 설정: VOUT = 1.225 V × (R1 + R2) / R2 (−IN 분압).</li>
+    <li>보상은 −IN과 COMP 사이에 둡니다. 정확도 시험 회로는 2.2 nF + 680 Ω 적분기(약 100 kHz 교차, 위상 여유 약 60°).</li>
+    <li>EAOUT 뒤에 500 kHz 차단 RC 저역 필터를 두면 약 3 MHz 내부 잡음을 줄일 수 있습니다.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>16-lead SOIC_IC (RI-16-2). θJA 45 °C/W. 최대 접합 150 °C, 안전 한계 PS 2.78 W.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>5번 NC 핀은 반드시 GND1에 연결합니다.</li>
+    <li>옵토커플러 방식(25~50 kHz) 대비 대역폭이 커서 절연 DC-DC 피드백 루프를 빠르게 할 수 있습니다.</li>
+    <li>패키지 하부 절연 영역에 구리를 두지 말고 PCB에서 8.7 mm 연면 거리를 확보합니다.</li>
+    <li>자동차 등급이 필요하면 별도 확인이 필요합니다(읽은 문서에는 AEC-Q100 언급 없음).</li>
+  </ul>
+</article>
+</body>
+</html>

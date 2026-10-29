@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MC33879A · Configurable octal serial switch with open load detect</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MC33879A" data-mfr="NXP" data-cat="스마트 스위치" data-price="" data-status="done" data-src="https://docs.ampnuts.ru/nxp.com.datasheet/MC33879.pdf">
+  <h1>MC33879A</h1>
+  <p class="meta">NXP · 스마트 스위치 · 8채널 구성형(하이/로우사이드) SPI 스위치, 오픈 로드 검출</p>
+  <p class="meta">원본: <a href="https://docs.ampnuts.ru/nxp.com.datasheet/MC33879.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://octopart.com/search?q=MC33879APEK" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 MC33879 Rev. 12.0 (2022-05-10, Product data sheet)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>드레인·소스가 모두 나온 8개 출력 — 각각 하이사이드 또는 로우사이드로 구성, 16-bit SPI 제어 + IN5/IN6 PWM 직접 입력</dd>
+    <dt>전원</dt><dd>VPWR 5.5–27.5 V 완전 동작 (33879A/B), VDD 3.1–5.5 V (3.3/5 V SPI)</dd>
+    <dt>RDS(on)</dt><dd>0.75 Ω typ @25 °C</dd>
+    <dt>전류 제한</dt><dd>출력당 0.6–1.2 A</dd>
+    <dt>출력 클램프</dt><dd>로우사이드 +45 V, 하이사이드 -20 V</dd>
+    <dt>진단·보호</dt><dd>오픈 로드 검출 전류 on/off, 단락 검출 + 자동 재시도, 채널별 과열, VPWR 과전압 30 V typ, VPWR 내부 역배터리 보호</dd>
+    <dt>대기 전류</dt><dd>최대 5.0 µA (VPWR 13 V)</dd>
+    <dt>온도</dt><dd>-40 ~ 125 °C (TA)</dd>
+    <dt>패키지</dt><dd>HSOP32 (SOT1746-1), 7.5 × 11 × 2.22 mm, 0.65 mm 피치 + EP — MC33879APEK (릴 R2)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VDD</td><td>-0.3</td><td>7.0</td><td>V</td><td></td></tr>
+    <tr><td>CS, DI, DO, SCLK, IN5, IN6, EN</td><td>-0.3</td><td>7.0</td><td>V</td><td></td></tr>
+    <tr><td>VPWR (33879A/B)</td><td>-16</td><td>45</td><td>V</td><td>33879(무접미)는 40 V</td></tr>
+    <tr><td>출력 클램프 에너지</td><td></td><td>50</td><td>mJ</td><td>단발, TJ 150 °C, 350 mA</td></tr>
+    <tr><td>ESD HBM / MM (33879A/B)</td><td></td><td>±2000 / ±200</td><td>V</td><td></td></tr>
+    <tr><td>주위 온도</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+    <tr><td>접합 온도</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>소비 전력 (TA 25 °C, 방열판 없음)</td><td></td><td>1.7</td><td>W</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VPWR 완전 동작 (33879A/B)</td><td>5.5</td><td></td><td>27.5</td><td>V</td></tr>
+    <tr><td>VPWR (정적 특성 규격 조건)</td><td>5.5</td><td></td><td>18</td><td>V</td></tr>
+    <tr><td>VDD</td><td>3.1</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>케이스 온도</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>HSOP32 + EP</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>GND</td><td>GND</td></tr>
+    <tr><td>2</td><td>VDD</td><td>로직 전원 (로우 = 슬립)</td></tr>
+    <tr><td>3 / 5</td><td>S8 / D8</td><td>출력 8 소스 / 드레인</td></tr>
+    <tr><td>4, 8, 9, 24, 25, 30</td><td>NC</td><td>미연결</td></tr>
+    <tr><td>6 / 7</td><td>S2 / D2</td><td>출력 2 소스 / 드레인</td></tr>
+    <tr><td>10 / 11</td><td>S1 / D1</td><td>출력 1 소스 / 드레인</td></tr>
+    <tr><td>12 / 13</td><td>D6 / S6</td><td>출력 6 드레인 / 소스</td></tr>
+    <tr><td>14</td><td>IN6</td><td>PWM 입력 6 (SPI 비트와 OR)</td></tr>
+    <tr><td>15</td><td>EN</td><td>인에이블, 액티브 하이 (로우 = 슬립)</td></tr>
+    <tr><td>16</td><td>SCLK</td><td>SPI 클록</td></tr>
+    <tr><td>17</td><td>DI</td><td>SPI 데이터 입력</td></tr>
+    <tr><td>18</td><td>CS</td><td>SPI 칩 셀렉트 (액티브 로우)</td></tr>
+    <tr><td>19</td><td>IN5</td><td>PWM 입력 5 (SPI 비트와 OR)</td></tr>
+    <tr><td>20 / 21</td><td>S5 / D5</td><td>출력 5 소스 / 드레인</td></tr>
+    <tr><td>22 / 23</td><td>D3 / S3</td><td>출력 3 드레인 / 소스</td></tr>
+    <tr><td>26 / 27</td><td>D4 / S4</td><td>출력 4 드레인 / 소스</td></tr>
+    <tr><td>28 / 29</td><td>D7 / S7</td><td>출력 7 드레인 / 소스</td></tr>
+    <tr><td>31</td><td>VPWR</td><td>배터리 입력</td></tr>
+    <tr><td>32</td><td>DO</td><td>SPI 데이터 출력 (1 = 고장)</td></tr>
+    <tr><td>33</td><td>EP</td><td>노출 패드, 1번 핀·시스템 GND에 연결 권장</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>데이터시트 응용도에는 토폴로지(VBAT, 5 V, MCU 연결)만 있고 부품 값은 없음 — VPWR·VDD 디커플링 값은 설계자가 결정.</li>
+    <li>로우사이드 사용: Sx를 GND, Dx를 부하에; 하이사이드 사용: Dx를 VPWR, Sx를 부하에.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>HSOP32 (SOT1746-1) 7.5 × 11 × 2.22 mm, EP 하단. RθJA 71 °C/W, RθJC(다이→EP) 1.2 °C/W. TJ 최대 150 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>주문 품번은 MC33879APEK (MC33879AEK 품번은 데이터시트 표에 없음). 33879B는 Rev. 12에 추가, 표 수치는 A와 동일.</li>
+    <li>무접미 MC33879는 VPWR 최대 40 V, HBM ±450 V로 A/B보다 약함 — 대체 시 주의.</li>
+    <li>RDS(on) 0.75 Ω급, 전류 제한 0.6–1.2 A: 릴레이·LED·소형 솔레노이드용. 유도성 부하는 50 mJ 클램프 에너지 이내.</li>
+  </ul>
+</article>
+</body>
+</html>

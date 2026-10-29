@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRV8706S-Q1 · Automotive H-bridge smart gate driver with SPI and current-sense amplifier</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="DRV8706S-Q1" data-mfr="Texas Instruments" data-cat="게이트 드라이버" data-price="3.4" data-status="done" data-src="https://ti.com/document-viewer/DRV8706-Q1/datasheet/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000167772">
+  <h1>DRV8706S-Q1</h1>
+  <p class="meta">Texas Instruments · 게이트 드라이버 · 차량용 H-브리지 스마트 게이트 드라이버 (SPI), 인라인 전류 센스 앰프 · 참고 단가 약 $3.4 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/DRV8706-Q1/datasheet" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/DRV8706-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=DRV8706SQRHBRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLLSFA7A (2020-07, 개정 2021-04) · 핀 번호: 기능안전 문서 SFFS088 Pin FMA</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>외부 N-MOSFET 4개(H-브리지) 또는 하프브리지 2개/솔레노이드용 게이트 드라이버. S = SPI 설정·진단 버전 (H = 하드웨어 핀 설정)</dd>
+    <dt>주문 번호</dt><dd>DRV8706SQRHBRQ1 (테이프 앤 릴)</dd>
+    <dt>PVDD</dt><dd>4.9–37 V 동작, 절대 최대 40 V</dd>
+    <dt>게이트 구동</dt><dd>피크 소스/싱크 0.5–62 mA 조정 (슬루 제어), 데드타임 핸드셰이크, 더블러 차지 펌프로 100 % 듀티 (평균 15 mA)</dd>
+    <dt>전류 센스 앰프</dt><dd>인라인/하이사이드/로우사이드, 이득 10/20/40/80 V/V, PWM 블랭킹</dd>
+    <dt>보호·진단</dt><dd>DRVOFF 핀, PVDD·차지 펌프 UV/OV, VDS 과전류, VGS 게이트 고장, 오프라인 개방 부하·단락 검출(SPI 버전만), 과열 경고·차단 → nFAULT</dd>
+    <dt>등급·온도</dt><dd>AEC-Q100 Grade 1, TA −40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>VQFN-32 (RHB) 5.00 × 5.00 mm, 웨터블 플랭크, 써멀 패드</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>PVDD</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>DRAIN</td><td>−0.3</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>AGND–GND</td><td>−0.3</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>VCP</td><td>−0.3</td><td>55</td><td>V</td><td></td></tr>
+    <tr><td>CPH</td><td>PVDD − 0.3</td><td>VCP + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>CPL</td><td>−0.3</td><td>PVDD + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>DVDD, 논리 입력, nFAULT, AREF</td><td>−0.3</td><td>5.75</td><td>V</td><td></td></tr>
+    <tr><td>SDO</td><td>−0.3</td><td>DVDD + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>GHx (연속 / 1 µs)</td><td>−2 / −5</td><td>VCP + 0.3</td><td>V</td><td>GHx–SHx −0.3 ~ 13.5 V</td></tr>
+    <tr><td>SHx (연속 / 1 µs)</td><td>−2 / −5</td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>GLx (연속 / 1 µs)</td><td>−2 / −3</td><td>13.5</td><td>V</td><td>GLx–SLx −0.3 ~ 13.5 V</td></tr>
+    <tr><td>SLx (연속 / 1 µs)</td><td>−2 / −3</td><td>2 / 3</td><td>V</td><td></td></tr>
+    <tr><td>SN, SP (연속 / 1 µs)</td><td>−2 / −5</td><td>VCP + 0.3</td><td>V</td><td>차동 ±5.75 V</td></tr>
+    <tr><td>SO</td><td>−0.3</td><td>AREF + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>TA / TJ / 보관</td><td>−40 / −40 / −65</td><td>125 / 150 / 150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <p class="meta">PVDD·DRAIN과 게이트/소스 핀 간 차이는 40 V 이하. PVDD 또는 DRAIN이 35 V를 넘으면 GHx, SHx, GLx, SLx의 음전압 정격이 줄어듦.</p>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>PVDD (동작)</td><td>4.9</td><td></td><td>37</td><td>V</td></tr>
+    <tr><td>TA (Grade 1)</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+  <p class="todo">권장 동작 조건 표(6.3)의 나머지 행(DVDD·AREF 범위, PWM 주파수, 게이트 전류 등)과 전기적 특성(6.5: UVLO, VDS_OCP 임계, SPI 클럭)은 데이터시트에서 확인 필요.</p>
+
+  <h2>핀 배치</h2>
+  <p>VQFN-32 (RHB) 5 × 5 mm, DRV8706S-Q1 (SPI) 기준. H 버전은 3–6번이 GAIN, VDS, IDRIVE, MODE.</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>GND</td><td>GND</td></tr>
+    <tr><td>2</td><td>DVDD</td><td>디지털 전원</td></tr>
+    <tr><td>3</td><td>nSCS</td><td>SPI 칩 셀렉트</td></tr>
+    <tr><td>4</td><td>SCLK</td><td>SPI 클럭</td></tr>
+    <tr><td>5</td><td>SDI</td><td>SPI 데이터 입력</td></tr>
+    <tr><td>6</td><td>SDO</td><td>SPI 데이터 출력</td></tr>
+    <tr><td>7</td><td>IN1/EN</td><td>제어 입력 1 / 인에이블</td></tr>
+    <tr><td>8</td><td>nHIZ1</td><td>하프브리지 1 Hi-Z 제어</td></tr>
+    <tr><td>9</td><td>IN2/PH</td><td>제어 입력 2 / 방향</td></tr>
+    <tr><td>10</td><td>nHIZ2</td><td>하프브리지 2 Hi-Z 제어</td></tr>
+    <tr><td>11</td><td>nSLEEP</td><td>슬립 제어</td></tr>
+    <tr><td>12</td><td>DRVOFF</td><td>게이트 드라이버 강제 OFF</td></tr>
+    <tr><td>13</td><td>nFAULT</td><td>고장 출력</td></tr>
+    <tr><td>14</td><td>SO</td><td>전류 센스 앰프 출력</td></tr>
+    <tr><td>15</td><td>RSVD</td><td>예약</td></tr>
+    <tr><td>16</td><td>AREF</td><td>앰프 전원·기준</td></tr>
+    <tr><td>17</td><td>AGND</td><td>아날로그 GND</td></tr>
+    <tr><td>18, 19</td><td>SP, SN</td><td>센스 앰프 +/− 입력</td></tr>
+    <tr><td>20–23</td><td>GH1, SH1, GL1, SL1</td><td>하프브리지 1 상단 게이트, 상단 소스, 하단 게이트, 하단 소스</td></tr>
+    <tr><td>24–27</td><td>SL2, GL2, SH2, GH2</td><td>하프브리지 2 하단 소스, 하단 게이트, 상단 소스, 상단 게이트</td></tr>
+    <tr><td>28</td><td>DRAIN</td><td>상단 FET 드레인 감지 (VDS 모니터)</td></tr>
+    <tr><td>29</td><td>PVDD</td><td>드라이버 전원</td></tr>
+    <tr><td>30</td><td>VCP</td><td>차지 펌프 출력, 1 µF 16 V → PVDD</td></tr>
+    <tr><td>31, 32</td><td>CPH, CPL</td><td>차지 펌프 플라잉 100 nF (PVDD 정격)</td></tr>
+    <tr><td>PAD</td><td>—</td><td>써멀 패드 (GND 연결 — 데이터시트 핀 표로 확인)</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>차지 펌프: PVDD–VCP 1 µF 16 V 저ESR X5R/X7R (저장), CPH–CPL 100 nF PVDD 정격 X5R/X7R (플라잉). 평균 출력 15 mA.</li>
+    <li>PVDD와 DRAIN 전압 차이는 작게 유지 (차지 펌프가 PVDD 기준).</li>
+    <li>오프라인 개방·단락 진단 시 VDS_LVL ≥ 1 V로 설정, EN_DRV로 브리지를 끈 뒤 수행.</li>
+    <li>솔레노이드 분리 제어 모드(BRG_MODE = 11b): GH1은 IN1/EN, GL2는 IN2/PH로 제어, nHIZx 미사용.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>VQFN-32 (RHB) 5.00 × 5.00 mm, 써멀 패드 도면 QFND589. RθJA 34.9 °C/W · RθJC(top) 25.6 · RθJB 15.0 · ψJT 0.5 · ψJB 15.0 · RθJC(bot) 5.2 °C/W. TJ 최대 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>DVDD·AREF 공급 방식(외부 공급 여부)과 디커플링 값은 데이터시트 5절 핀 표에서 확인.</li>
+    <li>40 V 절대 최대 — 12 V 차량 부하 덤프는 외부 TVS/보호로 제한 필요.</li>
+    <li>H 버전(DRV8706H-Q1)과 핀 호환, 3–6번만 다름.</li>
+  </ul>
+</article>
+</body>
+</html>

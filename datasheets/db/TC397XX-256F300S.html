@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TC397XX-256F300S · AURIX TC39x 32-bit TriCore 6-core MCU, 300 MHz, 16 MB Flash, LFBGA-292</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TC397XX-256F300S" data-mfr="Infineon" data-cat="MCU" data-price="36" data-status="stub" data-src="https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf">
+  <h1>TC397XX-256F300S</h1>
+  <p class="meta">Infineon · MCU · AURIX TC39x 32-bit TriCore 6-core MCU, 300 MHz, 16 MB Flash, LFBGA-292 · 참고 단가 약 $36 (추정)</p>
+  <p class="meta">원본: <a href="https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.farnell.com/datasheets/2920461.pdf" target="_blank" rel="noopener">변형 부록 (TC39x variants)</a> · <a href="https://www.lcsc.com/product-detail/C538883.html" target="_blank" rel="noopener">LCSC 제품 페이지</a> · <a href="https://documentation.infineon.com/aurixtc3xx/docs/nho1702366509393" target="_blank" rel="noopener">TC3xx 문서 페이지</a> · <a href="https://octopart.com/search?q=TC397XX-256F300S" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TC39x BC/BD-Step Data Sheet V1.2 (2021-03) · TC39x Variants Addendum v1.3 (2019-06)</p>
+  <p class="todo">읽은 문서(데이터시트 앞부분·변형 부록)에서 기능 사양과 패키지만 확인했습니다. 전기 사양 장(절대 최대 정격, 동작 조건, 전원 전류, 열저항, EVR 외부 부품)은 PDF 뒷부분에 있어 읽지 못했습니다. 이 값들을 원본 PDF에서 채운 뒤 data-status를 "done"으로 바꾸세요. 2차 시도(2026-10): Mouser·Farnell·Infineon dgdl/assets 사본 모두 WebFetch 텍스트 추출이 약 68 k자(데이터시트 앞 50여 쪽, 2장 핀 표 중간)에서 끊겨 3장 전기 사양에 도달하지 못함(offset 지정 시 '읽을 내용 없음'). alldatasheet 페이지 분할본은 사이트 차단.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>코어</dt><dd>TriCore TC1.6.2P 6개, 락스텝 체커 4개 (6/4), 최대 300 MHz (전 온도 범위)</dd>
+    <dt>메모리</dt><dd>PFLASH 16 MB, DFLASH0 1024 KB (+DF1 128 KB), SRAM 합계 2528 KB (DSPR CPU0/1 240 KB·기타 96 KB, DLMU CPU당 64 KB, PSPR 64 KB, LMU 768 KB, DAM 128 KB), EMEM 4096 KB</dd>
+    <dt>ADC</dt><dd>EVADC 주 그룹 5/40채널 + 보조 그룹 4/60채널, Fast compare 8, EDSADC 6채널, 입력 0–5.5 V</dd>
+    <dt>통신</dt><dd>이더넷 1 Gbit/s (변형 부록), MCMCAN 3모듈/3×4노드, FlexRay 2/2×2채널, HSSL 2, ASCLIN 12, QSPI 6 (LVDS 2), SENT 20, MSC 2, PSI5 4 + PSI5-S, SDMMC(eMMC) 있음, I2C 2, EBU</dd>
+    <dt>안전·보안</dt><dd>HSM 있음, MCDS, SMU, IOM, MTU, ISO 26262 SEooC ASIL D, AEC-Q100 (판매 코드별)</dd>
+    <dt>전원</dt><dd>EVR 내장, Single Supply / External Supply 모드, 5 V/3.3 V 전환 패드. I/O 5 V CMOS / 3.3 V CMOS / LVDS</dd>
+    <dt>온도</dt><dd>SAK: T<sub>A</sub> −40 … +125 °C (부록)</dd>
+    <dt>패키지</dt><dd>PG-LFBGA-292 (0.8 mm 볼 피치), 스텝 BD/BC</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>V<sub>EXT</sub> / V<sub>DDM</sub> / V<sub>DDP3</sub> / V<sub>DD</sub> 공급 전압</td><td></td><td></td><td>V</td><td>데이터시트 확인 필요 (데이터시트 3.2절, p.406)</td></tr>
+      <tr><td>입력 전압 · 핀 주입 전류</td><td></td><td></td><td></td><td>데이터시트 확인 필요</td></tr>
+      <tr><td>저장 온도 · 접합 온도</td><td></td><td></td><td>°C</td><td>데이터시트 확인 필요</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>동작 주파수 f<sub>CPU</sub></td><td></td><td></td><td>300</td><td>MHz</td></tr>
+      <tr><td>주변 온도 T<sub>A</sub> (SAK)</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+      <tr><td>공급 전압 (3.4절, p.410)</td><td></td><td></td><td></td><td>V – 데이터시트 확인 필요</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-LFBGA-292 · BGA이므로 핀 그룹만 정리합니다 (데이터시트 로직 심볼 기준).</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>—</td><td>VDD, VEXT, VDDP3, VDDSB, VEVRSB, VFLEX, VSS</td><td>전원·Standby 공급·접지</td></tr>
+      <tr><td>—</td><td>VDDM, VSSM, VAREF1/2, VAGND1/2</td><td>ADC 공급·기준 (VAREF3는 LFBGA-292에 없음)</td></tr>
+      <tr><td>—</td><td>XTAL1, XTAL2</td><td>크리스털</td></tr>
+      <tr><td>—</td><td>PORST, ESR0, ESR1</td><td>리셋·외부 서비스 요청</td></tr>
+      <tr><td>—</td><td>TCK, TMS, TRST, DAPE0–2; TDI=P21.6, TDO=P21.7</td><td>JTAG / DAP / DAPE 디버그</td></tr>
+      <tr><td>—</td><td>AGBT</td><td>에뮬레이션/ADAS 전용 장치에서만 사용</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>EVR 외부 부품과 디커플링 값: 데이터시트 확인 필요 (데이터시트 3장).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-LFBGA-292. 데이터시트 목차에 별도 열 특성 절이 없고, 열저항 값은 데이터시트 확인 필요. 패키지 외형은 3.34절(p.517).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>ASCLIN 수는 데이터시트 기능 목록(8)과 표 1-1/부록(12)이 다릅니다. 부록 값 12를 썼습니다.</li>
+    <li>LFBGA-516 패키지 변형은 TC399입니다. TC397은 LFBGA-292입니다.</li>
+  </ul>
+</article>
+</body>
+</html>

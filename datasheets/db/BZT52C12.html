@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BZT52C12 · 12 V Zener diode, SOD-123</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="BZT52C12" data-mfr="Diodes Incorporated" data-cat="다이오드" data-price="" data-status="done" data-src="https://manualmachine.com/diods/bzt52c12/3948067-datasheet">
+  <h1>BZT52C12</h1>
+  <p class="meta">Diodes Incorporated (다수 제조사 동일 품번) · 다이오드 · 12 V 500 mW 표면실장 제너 다이오드, SOD-123</p>
+  <p class="meta">원본: <a href="https://manualmachine.com/diods/bzt52c12/3948067-datasheet" target="_blank" rel="noopener">데이터시트 사본 (Diodes DS18004)</a> · <a href="https://elcodis.com/parts/366294/BZT52C12-7_p3.html" target="_blank" rel="noopener">Elcodis 요약</a> · <a href="https://www.lcsc.com/product-detail/C124196.html" target="_blank" rel="noopener">LCSC (BZT52C12-7-F)</a> · <a href="https://octopart.com/search?q=BZT52C12" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Diodes DS18004 Rev. 19-2 (읽은 사본; 최신판은 Rev. 32-2로 표기됨)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>V<sub>Z</sub></dt><dd>11.4 / 12 / 12.7 V (최소 / 공칭 / 최대) @ I<sub>ZT</sub> = 5 mA</dd>
+    <dt>Z<sub>ZT</sub></dt><dd>최대 25 Ω @ I<sub>ZT</sub></dd>
+    <dt>Z<sub>ZK</sub></dt><dd>최대 150 Ω @ I<sub>ZK</sub> = 1.0 mA</dd>
+    <dt>I<sub>R</sub></dt><dd>최대 0.1 µA @ V<sub>R</sub> = 8.0 V</dd>
+    <dt>온도계수</dt><dd>6.0 … 10.0 mV/°C (표 머리글이 깨져 최소/최대 배정은 추정)</dd>
+    <dt>P<sub>D</sub></dt><dd>500 mW (세라믹 PCB 7.6 × 9.4 × 0.87 mm, 패드 25 mm²)</dd>
+    <dt>V<sub>F</sub></dt><dd>최대 0.9 V @ I<sub>F</sub> = 10 mA</dd>
+    <dt>마킹</dt><dd>WH</dd>
+    <dt>온도</dt><dd>T<sub>J</sub>, T<sub>STG</sub> −65 … +150 °C</dd>
+    <dt>패키지</dt><dd>SOD-123, 캐소드 밴드 표기</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>P<sub>D</sub></td><td></td><td>500</td><td>mW</td><td>T<sub>A</sub> = 25 °C, 세라믹 PCB (Note 1)</td></tr>
+    <tr><td>V<sub>F</sub> @ 10 mA</td><td></td><td>0.9</td><td>V</td><td></td></tr>
+    <tr><td>R<sub>θJA</sub></td><td></td><td>305</td><td>°C/W</td><td>Note 1 조건</td></tr>
+    <tr><td>T<sub>J</sub>, T<sub>STG</sub></td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOD-123, 2단자. 데이터시트는 캐소드 밴드로 극성 표기; 아래 번호는 KiCad 다이오드 관례(1 = K).</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>K</td><td>캐소드 (밴드 쪽) — 보호 대상 레일에 연결</td></tr>
+    <tr><td>2</td><td>A</td><td>애노드 — GND 측</td></tr>
+  </tbody></table>
+
+  <h2>패키지 · 열</h2>
+  <p>SOD-123 (mm): A 3.55 … 3.85 (리드 포함 전장), B 2.55 … 2.85, C 1.40 … 1.70, D 1.35, E 0.55 typ, G 0.25, H 0.11 typ, J 0.10, 각도 0 … 8°. R<sub>θJA</sub> 305 °C/W (세라믹 PCB 기준 — FR-4에서는 더 나쁨).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>±5 % 등급(C 접미사) — 12 V 클램프·게이트 보호에 쓸 때 상한 12.7 V(5 mA) 기준으로 피보호 소자 정격 확인. 서지 전류에서 V<sub>Z</sub>는 더 올라감.</li>
+    <li>500 mW는 세라믹 기판 기준. FR-4·작은 패드에서는 감쇄해 사용 (LCSC 사양표는 370 mW로 표기).</li>
+    <li>주문 품번: 읽은 판은 "-7"(3000개/릴) 접미사만 표기. 현행 무연 품번은 BZT52C12-7-F (유통사 표기).</li>
+    <li>AEC-Q101 여부는 읽은 DS18004 Rev. 19-2에 표기 없음 — 차량용이면 최신판 또는 -Q 품번 확인 필요.</li>
+    <li>배치 파일에 제조사 없음 — Vishay(BZT52C12-V) 등 타사 동명 품번은 전력·패키지 정격이 다를 수 있음.</li>
+  </ul>
+</article>
+</body>
+</html>

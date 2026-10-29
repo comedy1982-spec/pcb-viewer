@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AS5147P · 14-bit on-axis Hall magnetic rotary position sensor</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="AS5147P-Q1" data-mfr="ams OSRAM" data-cat="센서" data-price="" data-status="done" data-src="https://www.infineon.com/assets/row/public/documents/24/49/infineon-as5147p-datasheet-en.pdf">
+  <h1>AS5147P-Q1</h1>
+  <p class="meta">ams OSRAM (현재 Infineon 문서로 이관) · 센서 · 14비트 온축 홀(Hall) 자기 로터리 위치 센서, SPI/ABI/UVW/PWM</p>
+  <p class="meta">원본: <a href="https://www.infineon.com/assets/row/public/documents/24/49/infineon-as5147p-datasheet-en.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=AS5147P-HTST" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 AS5147P Datasheet Rev 1.00, 2026-10-23 (ams OSRAM → Infineon 리브랜딩, 기술 사양 변경 없음)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>홀 효과 CMOS 자기 각도 센서, 14비트 코어 분해능</dd>
+    <dt>인터페이스</dt><dd>4선 SPI 슬레이브 (최대 10 MHz, 모드 1), ABI 증분 출력 12/11/10비트(1024/512/256 ppr), UVW 정류 신호(극쌍 1–7), PWM(W/I 핀)</dd>
+    <dt>최대 속도</dt><dd>28,000 rpm</dd>
+    <dt>전원</dt><dd>5 V 모드 VDD 4.5–5.5 V / 3.3 V 모드 VDD3V3 3.0–3.6 V</dd>
+    <dt>소비 전류</dt><dd>IDD 15 mA</dd>
+    <dt>파워온 시간</dt><dd>최대 10 ms</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 0</dd>
+    <dt>동작 온도</dt><dd>−40 … 150 °C (5 V 모드), −40 … 125 °C (3.3 V, NOISESET=0)</dd>
+    <dt>패키지</dt><dd>TSSOP-14 (싱글 다이)</dd>
+    <dt>주문 코드</dt><dd>AS5147P-HTST (13″ 릴 4500개), AS5147P-HTSM (7″ 릴 500개)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDD (5 V 핀)</td><td>−0.3</td><td>7.0</td><td>V</td><td></td></tr>
+      <tr><td>VDD3V3 핀</td><td>−0.3</td><td>5.0</td><td>V</td><td></td></tr>
+      <tr><td>GND 핀</td><td>−0.3</td><td>0.3</td><td>V</td><td></td></tr>
+      <tr><td>입력 핀 전압</td><td></td><td>VDD+0.3</td><td>V</td><td></td></tr>
+      <tr><td>래치업 입력 전류</td><td>−100</td><td>100</td><td>mA</td><td>AEC-Q100-004</td></tr>
+      <tr><td>ESD (HBM)</td><td colspan="2">±2</td><td>kV</td><td>AEC-Q100-002</td></tr>
+      <tr><td>총 전력 소모</td><td></td><td>150</td><td>mW</td><td>전 전원·출력 합</td></tr>
+      <tr><td>주위 온도 (5 V 모드)</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>주위 온도 (3.3 V 모드)</td><td>−40</td><td>125</td><td>°C</td><td>NOISESET=0</td></tr>
+      <tr><td>OTP 프로그래밍 온도</td><td>5</td><td>45</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>패키지 바디 온도</td><td></td><td>260</td><td>°C</td><td>J-STD-020</td></tr>
+      <tr><td>MSL</td><td></td><td>3</td><td></td><td>플로어 라이프 168 h</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VDD (5 V 모드)</td><td>4.5</td><td>5.0</td><td>5.5</td><td>V</td></tr>
+      <tr><td>VDD3V3 (3.3 V 모드)</td><td>3.0</td><td>3.3</td><td>3.6</td><td>V</td></tr>
+      <tr><td>내부 레귤레이터 VREG</td><td>3.2</td><td>3.4</td><td>3.6</td><td>V</td></tr>
+      <tr><td>자계 Bz (다이 표면, 반경 1.1 mm 원)</td><td>35</td><td></td><td>70</td><td>mT</td></tr>
+      <tr><td>VIH / VIL</td><td>0.7×VDD</td><td></td><td>0.3×VDD</td><td>V</td></tr>
+      <tr><td>출력 부하 용량</td><td></td><td></td><td>50</td><td>pF</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>TSSOP-14</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>CSn</td><td>SPI 칩 선택 (액티브 로우)</td></tr>
+      <tr><td>2</td><td>CLK</td><td>SPI 클럭</td></tr>
+      <tr><td>3</td><td>MISO</td><td>SPI 데이터 출력</td></tr>
+      <tr><td>4</td><td>MOSI</td><td>SPI 데이터 입력</td></tr>
+      <tr><td>5</td><td>TEST</td><td>테스트 핀 — GND에 연결</td></tr>
+      <tr><td>6</td><td>B</td><td>증분 신호 B</td></tr>
+      <tr><td>7</td><td>A</td><td>증분 신호 A</td></tr>
+      <tr><td>8</td><td>W/PWM</td><td>정류 신호 W 또는 PWM 출력</td></tr>
+      <tr><td>9</td><td>V</td><td>정류 신호 V</td></tr>
+      <tr><td>10</td><td>U</td><td>정류 신호 U</td></tr>
+      <tr><td>11</td><td>VDD</td><td>5 V 전원 (내부 LDO 입력)</td></tr>
+      <tr><td>12</td><td>VDD3V3</td><td>3.3 V LDO 출력 / 3.3 V 모드 전원 — 1 µF 필수</td></tr>
+      <tr><td>13</td><td>GND</td><td>접지</td></tr>
+      <tr><td>14</td><td>I/PWM</td><td>증분 인덱스 I 또는 PWM</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD3V3에 1 µF 세라믹을 칩 가까이 GND로. 5 V / 3.3 V 표준 회로는 데이터시트 Fig. 3 / Fig. 13 참조 (EMC·원거리 배선 시 추가 부품 표시).</li>
+    <li>VDD 디커플링 값은 본문에 수치 없음 — 데이터시트 그림(Fig. 3/10/11/13) 확인 필요.</li>
+    <li>SPI 미사용 시 CSn 풀업, CLK·MOSI 풀다운(MISO 개방 가능). 디지털 입력 플로팅 금지. ABI/UVW/PWM 미사용 시 개방 가능.</li>
+    <li>기준 자석: N35H, 직경 8 mm × 두께 3 mm, 패키지 중심축 정렬.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>TSSOP-14 (4.4 × 5.0 mm 바디, 0.65 mm 피치 — KiCad 표준). 총 전력 150 mW 제한. 열저항 수치는 이번에 읽은 범위에 없음.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li><b>품번 주의:</b> "AS5147P-Q1"은 데이터시트 주문 코드에 없음. 실제 주문 코드는 AS5147P-HTST / AS5147P-HTSM (Infineon 표기 AS5147P-HTST-TSSOP14 등). 자체가 AEC-Q100 Grade 0이므로 별도 -Q1 접미사 불필요.</li>
+    <li><b>센싱 원리:</b> 부품 DB 설명의 "AMR"은 오류 — 홀 효과 센서.</li>
+    <li>EPS 등 안전 용도에는 이중화(듀얼 다이) 버전이 필요한지 검토 (이 문서는 싱글 다이만 다룸).</li>
+    <li>5 V 모드에서만 150 °C까지 동작. 3.3 V 모드 150 °C 동작은 3V150°C 비트·NOISESET 설정 조건 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

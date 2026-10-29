@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FT232RL · USB to UART Bridge IC</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="FT232RL" data-mfr="FTDI" data-cat="통신" data-price="3.2" data-status="done" data-src="https://www.digikey.ca/en/resources/datasheets/ftdi/ft232r">
+  <h1>FT232RL</h1>
+  <p class="meta">FTDI · 통신 · USB 2.0 풀스피드 ↔ UART 브리지, SSOP-28 · 참고 단가 약 $3.2 (추정)</p>
+  <p class="meta">원본: <a href="https://www.digikey.ca/en/resources/datasheets/ftdi/ft232r" target="_blank" rel="noopener">데이터시트 (Digi-Key 사본)</a> · <a href="https://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT232R.pdf" target="_blank" rel="noopener">제조사 PDF (미확인 링크)</a> · <a href="https://octopart.com/search?q=FT232RL" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 FT_000053 Version 2.11</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>USB 2.0 Full Speed (12 Mb/s) ↔ 비동기 UART, 프로토콜 처리 내장</dd>
+    <dt>보레이트</dt><dd>183.1 baud ~ 3 Mbaud</dd>
+    <dt>버퍼</dt><dd>RX FIFO 128 바이트, TX FIFO 256 바이트</dd>
+    <dt>내장 기능</dt><dd>1024-bit EEPROM, 12 MHz 내부 발진기(×4 → 48 MHz, 외부 크리스털 불필요), CBUS0 ~ 4 구성 가능 핀</dd>
+    <dt>공급 전압</dt><dd>VCC 4.0 ~ 5.25 V (내부 발진), 3.3 ~ 5.25 V (외부 발진) · VCCIO 1.8 ~ 5.25 V</dd>
+    <dt>LDO 출력</dt><dd>3V3OUT 3.0 ~ 3.6 V, 외부 부하 최대 50 mA</dd>
+    <dt>소비 전류</dt><dd>동작 15 mA typ, USB 서스펜드 70 µA typ</dd>
+    <dt>품질 등급</dt><dd>데이터시트에 AEC-Q100 언급 없음 (산업용)</dd>
+    <dt>온도</dt><dd>−40 ~ +85 °C</dd>
+    <dt>패키지</dt><dd>FT232RL: 28-SSOP (FT232RQ: 32-QFN)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VCC</td><td>−0.5</td><td>6.00</td><td>V</td><td></td></tr>
+    <tr><td>USBDP, USBDM 입력</td><td>−0.5</td><td>3.8</td><td>V</td><td></td></tr>
+    <tr><td>기타 입력 / 양방향</td><td>−0.5</td><td>VCC + 0.5</td><td>V</td><td></td></tr>
+    <tr><td>출력 DC 전류</td><td></td><td>24</td><td>mA</td><td></td></tr>
+    <tr><td>소비 전력</td><td></td><td>500</td><td>mW</td><td>VCC = 5.25 V</td></tr>
+    <tr><td>TA (통전)</td><td>−40</td><td>85</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−65</td><td>150</td><td>°C</td><td>MSL 3 (플로어 라이프 168 h)</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC (내부 발진기)</td><td>4.0</td><td></td><td>5.25</td><td>V</td></tr>
+    <tr><td>VCC (외부 크리스털)</td><td>3.3</td><td></td><td>5.25</td><td>V</td></tr>
+    <tr><td>VCCIO</td><td>1.8</td><td></td><td>5.25</td><td>V</td></tr>
+    <tr><td>Icc (동작)</td><td></td><td>15</td><td></td><td>mA</td></tr>
+    <tr><td>Icc (서스펜드)</td><td>50</td><td>70</td><td>100</td><td>µA</td></tr>
+    <tr><td>3V3OUT</td><td>3.0</td><td>3.3</td><td>3.6</td><td>V</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>28-SSOP (FT232RL)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>TXD</td><td>UART 송신 출력</td></tr>
+    <tr><td>2</td><td>DTR#</td><td>DTR 핸드셰이크 출력</td></tr>
+    <tr><td>3</td><td>RTS#</td><td>RTS 핸드셰이크 출력</td></tr>
+    <tr><td>4</td><td>VCCIO</td><td>UART/CBUS I/O 전원 1.8 ~ 5.25 V</td></tr>
+    <tr><td>5</td><td>RXD</td><td>UART 수신 입력</td></tr>
+    <tr><td>6</td><td>RI#</td><td>링 지시 입력 (호스트 웨이크업)</td></tr>
+    <tr><td>7</td><td>GND</td><td>접지</td></tr>
+    <tr><td>8</td><td>NC</td><td>무접속</td></tr>
+    <tr><td>9</td><td>DSR#</td><td>DSR 입력</td></tr>
+    <tr><td>10</td><td>DCD#</td><td>DCD 입력</td></tr>
+    <tr><td>11</td><td>CTS#</td><td>CTS 입력</td></tr>
+    <tr><td>12</td><td>CBUS4</td><td>구성 가능, 출력 전용 (기본 SLEEP#)</td></tr>
+    <tr><td>13</td><td>CBUS2</td><td>구성 가능 (기본 TXDEN)</td></tr>
+    <tr><td>14</td><td>CBUS3</td><td>구성 가능 (기본 PWREN#)</td></tr>
+    <tr><td>15</td><td>USBDP</td><td>USB D+ (직렬 저항·1.5 kΩ 풀업 내장)</td></tr>
+    <tr><td>16</td><td>USBDM</td><td>USB D− (직렬 저항 내장)</td></tr>
+    <tr><td>17</td><td>3V3OUT</td><td>3.3 V LDO 출력 (100 nF 디커플링)</td></tr>
+    <tr><td>18</td><td>GND</td><td>접지</td></tr>
+    <tr><td>19</td><td>RESET#</td><td>Active Low 리셋 (미사용 시 VCC 또는 개방)</td></tr>
+    <tr><td>20</td><td>VCC</td><td>코어 전원</td></tr>
+    <tr><td>21</td><td>GND</td><td>접지</td></tr>
+    <tr><td>22</td><td>CBUS1</td><td>구성 가능 (기본 RXLED#)</td></tr>
+    <tr><td>23</td><td>CBUS0</td><td>구성 가능 (기본 TXLED#)</td></tr>
+    <tr><td>24</td><td>NC</td><td>무접속</td></tr>
+    <tr><td>25</td><td>AGND</td><td>클록 체배기용 아날로그 접지</td></tr>
+    <tr><td>26</td><td>TEST</td><td>정상 동작 시 GND에 연결 필수</td></tr>
+    <tr><td>27</td><td>OSCI</td><td>선택 12 MHz 발진 입력</td></tr>
+    <tr><td>28</td><td>OSCO</td><td>선택 12 MHz 발진 출력</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>3V3OUT 100 nF; 전원 핀 100 nF + 10 nF; 벌크 4.7 µF.</li>
+    <li>USB VBUS 직렬 페라이트 비드 (EMI 저감, 값은 전류에 따라).</li>
+    <li>USB 직렬 저항 내장 — 외부 저항 불필요.</li>
+    <li>PWREN# 사용 시 VCCIO로 10 kΩ 풀업; 전원 스위칭 소프트스타트 예: 1 kΩ + 0.1 µF.</li>
+    <li>LED 구동 예시 270 Ω, RS485 예시 종단 120 Ω.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>28-SSOP. θJA 55.82 °C/W, θJC 24.04 °C/W (정지 공기). (QFN: θJA 31.49 °C/W 센터 패드 납땜·비아 9개 / 62.31 °C/W 미납땜.)</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>TEST(26) 핀은 반드시 GND — 개방 시 정상 동작 안 함.</li>
+    <li>3.3 V MCU와 연결 시 VCCIO를 3V3OUT 또는 3.3 V 레일에 연결해 I/O 레벨 맞춤.</li>
+    <li>산업용 등급(−40 ~ 85 °C, AEC-Q100 언급 없음) — ECU 본체가 아닌 디버그/서비스 포트 용도로 한정 권장.</li>
+    <li>데이터시트에 대체 부품으로 FT234XD, FT230X, FT231X, FT232H 언급.</li>
+  </ul>
+</article>
+</body>
+</html>

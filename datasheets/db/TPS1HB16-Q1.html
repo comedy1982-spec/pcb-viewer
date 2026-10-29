@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPS1HB16-Q1 · 40-V 16-mΩ single-channel smart high-side switch</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TPS1HB16-Q1" data-mfr="Texas Instruments" data-cat="스마트 스위치" data-price="" data-status="stub" data-src="https://ti.com/document-viewer/TPS1HB16-Q1/datasheet/GUID-4148B527-9032-4156-B25F-F1CF7FA26212">
+  <h1>TPS1HB16-Q1</h1>
+  <p class="meta">Texas Instruments · 스마트 스위치 · 40 V, 16 mΩ 1채널 차량용 스마트 하이사이드 스위치 (아날로그 센스, 진단)</p>
+  <p class="meta">원본: <a href="https://www.ti.com.cn/document-viewer/cn/TPS1HB16-Q1/datasheet" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/TPS1HB16-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TPS1HB16-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLVSE17B (2019-05, 개정 2023-02) / 중문 ZHCSJT6B</p>
+  <p class="todo">미완: 절대 최대 정격, 권장 동작 조건, 전기적 특성(150 °C RON, 대기 전류, KSNS, RILIM 공식, UVLO 수치, 클램프 전압) 섹션을 읽지 못했습니다(문서 뷰어 접근 차단). 데이터시트 7.1/7.3/7.5절 확인 필요.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>12 V 배터리용 1채널 하이사이드 스위치, SNS 핀으로 부하 전류 또는 소자 온도 아날로그 출력, 개방부하·배터리 단락 검출</dd>
+    <dt>버전</dt><dd>A / B: ILIM 핀(전류 제한 설정) · F: FLT 오픈드레인 폴트 출력</dd>
+    <dt>RON</dt><dd>16 mΩ (TJ = 25 °C)</dd>
+    <dt>전류 제한</dt><dd>4.4 ~ 49 A 가변 (RILIM), 디글리치 3 µs</dd>
+    <dt>전원 범위</dt><dd>공칭 6 ~ 18 V (전 사양 보증), 확장 3 ~ 6 V(크랭킹), 18 ~ 40 V(점프 스타트·로드 덤프), 40 V 로드 덤프 내량</dd>
+    <dt>보호</dt><dd>열차단, 지락/배터리 단락 보호, 역배터리 보호, 전원/GND 상실 시 자동 차단, 유도성 부하 출력 클램프, 래치/자동 재시도 선택</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1 (-40 ~ 125 °C), HBM 레벨 2, CDM C4B, 기능안전 문서 제공</dd>
+    <dt>패키지</dt><dd>HTSSOP-16 (PWP), 노출 패드 = VBB</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <p class="todo">데이터시트 확인 필요 (7.1절을 읽지 못함).</p>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VBB 공칭 동작 (전원 권장 사항 기준)</td><td>6</td><td>12</td><td>18</td><td>V</td></tr>
+      <tr><td>VBB 확장 동작 (기능만 보증)</td><td>3</td><td></td><td>40</td><td>V</td></tr>
+    </tbody></table>
+  <p class="todo">권장 동작 조건 표(7.3절) 자체는 미확인. 위 값은 Power Supply Recommendations 절에서 읽은 것입니다.</p>
+
+  <h2>핀 배치</h2>
+  <p>HTSSOP-16 (PWP), 노출 패드는 VBB</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>GND</td><td>소자 접지</td></tr>
+      <tr><td>2</td><td>SNS</td><td>센스 출력 (전류/온도). 미사용 시 1 kΩ로 GND</td></tr>
+      <tr><td>3</td><td>LATCH</td><td>폴트 처리: 래치 / 자동 재시도. 미사용 시 개방 또는 RPROT로 GND(자동 재시도)</td></tr>
+      <tr><td>4</td><td>EN</td><td>액티브 하이 제어 입력</td></tr>
+      <tr><td>5</td><td>ILIM (A/B) / FLT (F)</td><td>A/B: 전류 제한 설정 저항 (개방 시 내부 기본값) / F: 오픈드레인 폴트 출력</td></tr>
+      <tr><td>6–8</td><td>VOUT</td><td>채널 출력</td></tr>
+      <tr><td>9–13, 15</td><td>NC</td><td>미연결, 개방</td></tr>
+      <tr><td>14</td><td>SEL1</td><td>진단 선택(전류/TJ). F 버전은 기능 없음, RPROT로 GND</td></tr>
+      <tr><td>16</td><td>DIA_EN</td><td>액티브 하이 진단 enable. 미사용 시 개방 또는 RPROT로 GND</td></tr>
+      <tr><td>EP</td><td>VBB</td><td>전원 입력 (노출 패드)</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>RILIM은 핀 가까이에 배치합니다. 멀리 두면 기생 성분 때문에 전류 제한 성능이 나빠집니다.</li>
+    <li>SEL1을 GND에 묶을 때도 RPROT 저항을 거쳐야 합니다(역배터리 시 FET 턴온 경로).</li>
+    <li>초기 VBB 상승은 1 V/ms보다 느리게, VBB가 UVLO를 넘을 때까지 EN은 로우로 유지합니다.</li>
+    <li>GND 보호 네트워크·MCU 인터페이스·RSNS 선정 공식은 데이터시트 10.1~10.2절 확인 필요.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>HTSSOP-16 (PWP), 4층 기판(JESD51-5/-7) 기준 RθJA 34.3 °C/W, RθJC(top) 31.2 °C/W, RθJB 10.8 °C/W, ψJT 2.4 °C/W, ψJB 10.8 °C/W, RθJC(bot) 1.6 °C/W.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN 'TPS1HB16-Q1'은 제품군 이름입니다. 주문 번호는 TPS1HB16AQPWPRQ1 / TPS1HB16BQPWPRQ1 / TPS1HB16FQPWPRQ1이며 5번 핀 기능이 버전마다 다릅니다. 핀 표 JSON은 A/B(ILIM) 기준입니다.</li>
+    <li>노출 패드가 VBB(전원)입니다. GND 패드가 아니므로 열 비아를 VBB 면에 연결하세요. TI는 내층 또는 하층 VBB 면과 상층 VBB 구리를 비아로 잇는 배치를 권장합니다.</li>
+    <li>빠른 전류 상승의 단락에서는 ICL을 순간적으로 넘을 수 있습니다(슬루율 의존).</li>
+  </ul>
+</article>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TMS570LS1224 · Hercules Cortex-R4F lockstep safety MCU</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TMS570LS1224" data-mfr="Texas Instruments" data-cat="MCU" data-price="10" data-status="stub" data-src="https://html.alldatasheet.net/html-pdf/846425/TI1/TMS570LS1224PGE/538/8/TMS570LS1224PGE.html">
+  <h1>TMS570LS1224</h1>
+  <p class="meta">Texas Instruments · MCU · Hercules 안전 MCU, Cortex-R4F 락스텝 160/180 MHz, 1.25 MB 플래시, CAN ×3 · 참고 단가 약 $10 (추정)</p>
+  <p class="meta">원본: <a href="https://html.alldatasheet.net/html-pdf/846425/TI1/TMS570LS1224PGE/62/1/TMS570LS1224PGE.html" target="_blank" rel="noopener">데이터시트 (SPNS190B 사본)</a> · <a href="https://www.ti.com/product/tms570ls1224" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TMS570LS1224" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SPNS190B (2012-10, 개정 2015-02)</p>
+  <p class="todo">미완: 절대 최대 정격, 권장 동작 조건 전체 표, 열 저항(PGE/ZWT)을 읽지 못했습니다(TI PDF 접근 차단). 데이터시트 5장 확인 필요.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>CPU</dt><dd>ARM Cortex-R4F 듀얼 락스텝, 단·배정밀 FPU, 12영역 MPU, 1.66 DMIPS/MHz</dd>
+    <dt>클럭</dt><dd>최대 180 MHz (ZWT 337볼) / 160 MHz (PGE 144핀) — 장치 비교표 기준</dd>
+    <dt>메모리</dt><dd>플래시 1.25 MB (ECC), RAM 192 KB (ECC), EEPROM 에뮬레이션 플래시 64 KB (ECC)</dd>
+    <dt>통신</dt><dd>DCAN ×3 (64 메일박스, 최대 1 Mbps), MibSPI ×3, SPI 최대 2, SCI ×2 (1개 LIN 2.1), I2C ×1, EMIF 16비트(ZWT)</dd>
+    <dt>제어 주변</dt><dd>ePWM ×7 (최대 14 출력), eCAP ×6, eQEP ×2, N2HET ×2 (32 + 18채널), DMA 16채널</dd>
+    <dt>아날로그</dt><dd>12비트 MibADC ×2, 총 24채널 (16채널 공유)</dd>
+    <dt>GPIO</dt><dd>PGE 64 (인터럽트 10) / ZWT 101 (인터럽트 16)</dd>
+    <dt>전원</dt><dd>코어 VCC 1.14 ~ 1.32 V, I/O VCCIO 3.0 ~ 3.6 V</dd>
+    <dt>온도 / 등급</dt><dd>-40 ~ 125 °C, 차량용. IEC 61508 SIL 3 달성 가능(TÜV SÜD 인증, 제품 페이지)</dd>
+    <dt>패키지</dt><dd>144핀 LQFP (PGE, 22 × 22 mm), 337볼 NFBGA (ZWT, 16 × 16 mm)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <p class="todo">데이터시트 확인 필요 (이번에 읽지 못함).</p>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>VCC (코어)</td><td>1.14</td><td></td><td>1.32</td><td>V</td></tr>
+      <tr><td>VCCIO</td><td>3.0</td><td></td><td>3.6</td><td>V</td></tr>
+      <tr><td>동작 온도</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>144핀 LQFP (PGE) / 337볼 NFBGA (ZWT). 대형 MCU라 핀 그룹만 요약합니다.</p>
+  <table><thead><tr><th>그룹</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>전원</td><td>VCC, VCCIO 등</td><td>1.2 V 코어, 3.3 V I/O</td></tr>
+      <tr><td>아날로그</td><td>MibADC1/2 입력 (24채널)</td><td>ADC</td></tr>
+      <tr><td>제어</td><td>ePWM, eCAP, eQEP, N2HET1/2</td><td>모터 제어 타이머</td></tr>
+      <tr><td>통신</td><td>DCAN1~3, MibSPI1~3, SPI, SCI/LIN, I2C</td><td>다른 기능과 다중화 (PGE에서는 MibSPI CS 5+6+1, SPI 1개)</td></tr>
+      <tr><td>외부 메모리</td><td>EMIF 16비트</td><td>ZWT 전용</td></tr>
+      <tr><td>디버그</td><td>JTAG, CoreSight</td><td></td></tr>
+    </tbody></table>
+  <p class="todo">핀 번호·정확한 핀 이름은 데이터시트 Terminal Configuration 장 확인 필요.</p>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>코어 1.2 V와 3.3 V 두 레일이 필요합니다. 디커플링·전원 시퀀스 요구 사항은 데이터시트 확인 필요.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>열 저항 데이터시트 확인 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>배치 설명의 160 MHz는 PGE(LQFP-144) 기준이며, ZWT(BGA)는 180 MHz입니다.</li>
+    <li>제품 페이지에는 SIL 3 인증이 표기되어 있고, ASIL D 언급은 TMS570LS1227 개발 키트에만 보였습니다. 배치 설명의 'ASIL D'는 안전 매뉴얼로 확인하세요.</li>
+    <li>MPN 'TMS570LS1224'는 제품군 이름입니다. 주문 품목 예: TMS5701224CPGEQQ1 (144-LQFP, 검색 결과 기준).</li>
+    <li>이더넷·FlexRay가 필요하면 TMS570LS1227 / TMS570LS3137 (ZWT)을 검토하세요(장치 비교표).</li>
+  </ul>
+</article>
+</body>
+</html>

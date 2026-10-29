@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPS3823DBVR · Voltage supervisor with watchdog timer, SOT-23-5</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TPS3823DBVR" data-mfr="Texas Instruments" data-cat="전원" data-price="" data-status="done" data-src="https://www.ti.com/document-viewer/TPS3823/datasheet">
+  <h1>TPS3823DBVR</h1>
+  <p class="meta">Texas Instruments · 전원 · 워치독 타이머 내장 전압 감시 리셋 IC (TPS3823-33, 2.93 V)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/TPS3823/datasheet" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/TPS3823" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TPS3823DBVR" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLVS165O (1998-04, 개정 2025-03)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>전원 감시 + 워치독 + 수동 리셋(MR), 액티브 로우 푸시풀 RESET 출력</dd>
+    <dt>감시 임계 VIT−</dt><dd>TPS3823-33: 2.86 / 2.93 / 3.00 V (최소/일반/최대, -40~85 °C)</dd>
+    <dt>리셋 지연 td</dt><dd>120 / 200 / 300 ms</dd>
+    <dt>워치독 타임아웃</dt><dd>0.9 / 1.6 / 2.5 s</dd>
+    <dt>전원 전압</dt><dd>1.1 ~ 5.5 V</dd>
+    <dt>소비 전류</dt><dd>일반 15 µA, 최대 25 µA</dd>
+    <dt>MR 내부 풀업</dt><dd>일반 90 kΩ</dd>
+    <dt>온도</dt><dd>-40 ~ +85 °C (TPS3823A-33만 -40 ~ +125 °C)</dd>
+    <dt>패키지</dt><dd>SOT-23-5 (DBV)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDD</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>RESET, MR, WDI 입력</td><td>-0.3</td><td>VDD + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>출력 전류 IOL / IOH</td><td>-5</td><td>5</td><td>mA</td><td></td></tr>
+      <tr><td>클램프 전류 IOK (VO &lt; 0 또는 &gt; VDD)</td><td>-10</td><td>10</td><td>mA</td><td></td></tr>
+      <tr><td>동작 온도 TA</td><td>-40</td><td>85</td><td>°C</td><td>TPS3823A-33: 125 °C</td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>전원 전압 VDD</td><td>1.1</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>VIH (MR, WDI)</td><td>0.7 × VDD</td><td></td><td></td><td>V</td></tr>
+      <tr><td>VIL (MR, WDI)</td><td></td><td></td><td>0.3 × VDD</td><td>V</td></tr>
+      <tr><td>입력 상승·하강율 (MR, WDI)</td><td></td><td></td><td>100</td><td>ns/V</td></tr>
+      <tr><td>동작 온도</td><td>-40</td><td></td><td>85</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT-23-5 (DBV), 상면도</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>RESET</td><td>액티브 로우 리셋 출력 (TPS3823은 푸시풀)</td></tr>
+      <tr><td>2</td><td>GND</td><td>접지</td></tr>
+      <tr><td>3</td><td>MR</td><td>수동 리셋 입력, 로우로 리셋. 미사용 시 개방 또는 VDD</td></tr>
+      <tr><td>4</td><td>WDI</td><td>워치독 입력. 타임아웃 동안 레벨 변화가 없으면 리셋</td></tr>
+      <tr><td>5</td><td>VDD</td><td>전원 및 감시 입력</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD 단자 가까이에 0.1 µF 세라믹 바이패스 커패시터를 둡니다(임계 안정성 권장 사항).</li>
+    <li>WDI 최소 펄스 폭 100 ns, MR 최소 펄스 폭 1 µs, VDD 글리치 응답 최소 6 µs.</li>
+    <li>MR 입력 전류: MR = 0.3 V, VDD = 5.5 V에서 일반 -110 µA (최대 -160 µA).</li>
+    <li>WDI 입력 전류는 일반 140 µA(최대 190 µA)입니다. MCU GPIO가 이 전류를 감당하는지 확인하세요.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOT-23-5 (DBV). RθJA 185 °C/W, RθJC(top) 83.3 °C/W, RθJB 52.4 °C/W, ψJT 20.4 °C/W, ψJB 52.0 °C/W.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN 표기 확인 필요: TI 주문 번호는 임계 접미사가 붙은 TPS3823-33DBVR 형식입니다(-25/-30/-33/-50, TPS3823A-33). 'TPS3823DBVR' 단독 주문 번호는 데이터시트 주문 목록에서 보이지 않습니다. 설명(TPS3823-33)에 맞춰 TPS3823-33DBVR로 고치는 것을 권합니다.</li>
+    <li>자동차 온도(-40~125 °C)가 필요하면 TPS3823A-33을 검토하세요. 일반 TPS3823은 85 °C까지입니다.</li>
+    <li>워치독 1.6 s(일반)이고 최소 0.9 s이므로, 펌웨어는 0.9 s보다 짧은 주기로 WDI를 토글해야 합니다.</li>
+    <li>부트 중 워치독을 피하려면 데이터시트 8.2.2 'Decoupling WDI During Reset Event' 예를 참고하세요.</li>
+    <li>VHYS(-33 버전) 값은 읽은 표에서 확인하지 못했습니다(데이터시트 확인 필요).</li>
+  </ul>
+</article>
+</body>
+</html>

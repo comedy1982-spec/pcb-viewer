@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STGAP3S · Isolated single gate driver for IGBT/SiC</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="STGAP3S" data-mfr="STMicroelectronics" data-cat="게이트 드라이버" data-price="" data-status="done" data-src="https://st.com/resource/en/datasheet/stgap3sxs.pdf">
+  <h1>STGAP3S</h1>
+  <p class="meta">STMicroelectronics · 게이트 드라이버 · Galvanically isolated 6 A / 10 A single gate driver for IGBT and SiC MOSFET</p>
+  <p class="meta">원본: <a href="https://st.com/resource/en/datasheet/stgap3sxs.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.st.com/en/power-management/stgap3s3s.html" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=STGAP3S" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS14758 Rev 3</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>강화 절연 단일 채널 게이트 드라이버, DESAT 보호, 조절형 소프트 턴오프, 액티브 밀러 클램프 프리드라이버 (외부 N-MOSFET 구동), UVLO, 과열 차단</dd>
+    <dt>변형</dt><dd>STGAP3S6I (±6 A, IGBT) · STGAP3SXI (±10 A, IGBT) · STGAP3S6S (±6 A, SiC) · STGAP3SXS (±10 A, SiC) · 각 TR = 테이프 앤 릴</dd>
+    <dt>고전압 레일</dt><dd>최대 1400 V</dd>
+    <dt>게이트 전원</dt><dd>VH 5–32 V · VL −10 ~ 0 V · VH−VL 최대 32 V</dd>
+    <dt>로직</dt><dd>VDD 3.1–5.5 V, 3.3/5 V TTL/CMOS 입력 (히스테리시스)</dd>
+    <dt>지연</dt><dd>tDon/tDoff typ 75 ns (55–95 ns) · 펄스폭 왜곡 최대 10 ns · 최소 입력 펄스 20 ns</dd>
+    <dt>CMTI</dt><dd>최소 ±200 V/ns (VCM 1200 V)</dd>
+    <dt>UVLO</dt><dd>VDD 온 2.95 / 오프 2.80 V · VH: I형 11.9/11.1 V, S형 13.6/12.8 V · DESAT 임계 I형 9.0 V, S형 6.0 V</dd>
+    <dt>절연</dt><dd>VIORM 1414 Vpk · VIOTM 8000 Vpk · VISO 5700 Vrms (UL 1577, 60 s) · 연면·공간 거리 8 mm</dd>
+    <dt>온도</dt><dd>Tj·Ta −40 ~ 125 °C (동작) · 스위칭 최대 1 MHz</dd>
+    <dt>패키지</dt><dd>SO-16W</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VDD (vs GND)</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>IN+, IN−, RST</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>VH (vs GNDISO)</td><td>−0.3</td><td>36</td><td>V</td><td></td></tr>
+    <tr><td>VL (vs GNDISO)</td><td>−15</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>VH − VL</td><td>−0.3</td><td>36</td><td>V</td><td></td></tr>
+    <tr><td>GOUT, SOFTOFF (vs VL)</td><td>VL − 0.3</td><td>VH + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>CLAMPdrv (vs VL)</td><td>VL − 0.3</td><td>min(20, VH + 0.3)</td><td>V</td><td></td></tr>
+    <tr><td>DESAT (vs GNDISO)</td><td>−0.3</td><td>VH + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>DIAG, RDY</td><td>−0.3</td><td>6.0</td><td>V</td><td>오픈 드레인</td></tr>
+    <tr><td>Tj</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>2</td><td>kV</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VDD</td><td>3.1</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>로직 입력</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>VH (vs GNDISO)</td><td>5</td><td></td><td>32</td><td>V</td></tr>
+    <tr><td>VL (vs GNDISO)</td><td>−10</td><td></td><td>0</td><td>V</td></tr>
+    <tr><td>VH − VL</td><td></td><td></td><td>32</td><td>V</td></tr>
+    <tr><td>DESAT 임계</td><td></td><td></td><td>VH − 2</td><td>V</td></tr>
+    <tr><td>스위칭 주파수</td><td></td><td></td><td>1</td><td>MHz</td></tr>
+    <tr><td>Tj / Ta</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SO-16W (모든 변형 동일)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1, 8</td><td>VL</td><td>게이트 구동 음전원</td></tr>
+    <tr><td>2</td><td>DESAT</td><td>비포화(desaturation) 보호 입력</td></tr>
+    <tr><td>3</td><td>GNDISO</td><td>절연측 게이트 구동 접지</td></tr>
+    <tr><td>4</td><td>SOFTOFF</td><td>소프트 턴오프 출력 (게이트 감시 겸용)</td></tr>
+    <tr><td>5</td><td>VH</td><td>게이트 구동 양전원</td></tr>
+    <tr><td>6</td><td>GOUT</td><td>소스/싱크 게이트 출력</td></tr>
+    <tr><td>7</td><td>CLAMPdrv</td><td>액티브 밀러 클램프 드라이버 출력 (외부 MOSFET)</td></tr>
+    <tr><td>9, 16</td><td>GND</td><td>로직 접지</td></tr>
+    <tr><td>10</td><td>IN+</td><td>드라이버 입력 (비반전)</td></tr>
+    <tr><td>11</td><td>IN−</td><td>드라이버 입력 (반전)</td></tr>
+    <tr><td>12</td><td>RDY</td><td>UVLO·과열 진단 (오픈 드레인)</td></tr>
+    <tr><td>13</td><td>DIAG</td><td>DESAT 진단 (오픈 드레인)</td></tr>
+    <tr><td>14</td><td>RST</td><td>고장 리셋·셧다운 (액티브 LOW)</td></tr>
+    <tr><td>15</td><td>VDD</td><td>로직 전원</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>각 전원 핀 가까이 100 nF 세라믹 (VDD–GND, VH–GNDISO, VL–GNDISO) + 펄스 전류용 1–10 µF.</li>
+    <li>단극 구동: GNDISO와 VL을 짧게 묶음. 양극 구동: GNDISO–VL 사이에 음전원.</li>
+    <li>밀러 클램프 동작에는 SOFTOFF를 저항을 통해 게이트에 연결. 클램프 루프에 0.5–1 Ω 댐핑 저항 권장.</li>
+    <li>DESAT 회로: Cblank, 고전압 다이오드 DDES, RDES. IDESAT 1.0 mA, 블랭킹 200 ns, 개입 150 ns, DIAG까지 최대 2.5 µs. 소프트 턴오프 전류 800 mA, 시간 5 µs (RSOFT로 속도 설정).</li>
+    <li>미사용 시: DESAT는 GNDISO에, DIAG 개방 · CLAMPdrv 개방 · RDY는 상위에서 쓰지 않을 때만 개방.</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SO-16W. Rth(JA) 65 °C/W, Rth(JC,top) 36 °C/W, Rth(JB) 38 °C/W, ψJT 16 °C/W. 과열 차단 최소 164 °C, 히스테리시스 20 °C. 출력 RDS(on): 소스 0.96 Ω(6 A) / 0.65 Ω(10 A), 싱크 0.70 / 0.50 Ω.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>"STGAP3S"는 계열명이며 주문 품번이 아님 — 전류(6 A/10 A)와 대상(IGBT=I, SiC=S)에 따라 STGAP3S6I/SXI/6S/SXS 중 선택.</li>
+    <li>읽은 데이터시트에 AEC-Q100 언급 없음 — 차량 인버터 적용 시 ST 차량용 등급 여부 확인 필요.</li>
+    <li>절연 유지를 위해 드라이버 아래 구리·배선 금지, 게이트 루프 최소화, VH·GNDISO는 다중 비아로 내층 연결.</li>
+    <li>데이터시트의 DESAT 방전 전류 단위(IDESoff 110–195 "mA") 표기는 의심스러움 — 원본 확인.</li>
+  </ul>
+</article>
+</body>
+</html>

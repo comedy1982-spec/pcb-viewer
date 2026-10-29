@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TC334LP · AURIX TC33x TC334LP family (TriCore lockstep, TQFP-144)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TC334LP" data-mfr="Infineon" data-cat="MCU" data-price="" data-status="stub" data-src="https://www.farnell.com/datasheets/3328492.pdf">
+  <h1>TC334LP</h1>
+  <p class="meta">Infineon · MCU · AURIX TC33x TC334LP family (TriCore lockstep, TQFP-144)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/3328492.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://atta.szlcsc.com/upload/public/pdf/source/20250416/F5B1F543B56ADA7B85A4E125C0ACB7CB.pdf" target="_blank" rel="noopener">변형 부록 (TC33x/TC32x)</a> · <a href="https://documentation.infineon.com/aurixtc3xx/docs/nho1702366509393" target="_blank" rel="noopener">TC3xx 문서 페이지</a> · <a href="https://octopart.com/search?q=TC334LP" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TC33x/TC32x AA-Step Data Sheet V1.1 (2021-03) · TC33x/TC32x Variants Addendum v1.5 (2021-06)</p>
+  <p class="todo">"TC334LP"는 주문 가능한 전체 품번이 아니라 계열 이름입니다. 아래 값은 대표 변형 SAK-TC334LP-32F300F 기준이며 전기 사양 장은 읽지 못했습니다. 상세는 <a href="TC334LP-32F300F.html">TC334LP-32F300F</a> 페이지를 보세요. (2차 시도: Infineon 원본·Farnell·Digi-Key·LCSC·chipdip 사본 모두 텍스트 추출이 약 65–70 k자, 2장 핀 표 중간(약 p.50)에서 끊겨 offset으로도 3장에 도달 불가. 위치: TC33x/TC32x AA-step 데이터시트: 3.2 절대 최대 정격, 3.4 동작 조건, 3.13 EVR.) 원본 PDF를 직접 열어 채운 뒤 data-status를 "done"으로 바꾸세요.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>코어</dt><dd>TriCore TC1.6.2P 1개 + 락스텝 체커 코어, 최대 300 MHz (전 온도 범위), FPU</dd>
+    <dt>메모리</dt><dd>PFLASH 2 MB, DFLASH0 128 KB, SRAM 합계 208 KB (DSPR 192 KB, PSPR 8 KB, DLMU 8 KB), I-캐시 32 KB, D-캐시 16 KB</dd>
+    <dt>ADC</dt><dd>EVADC 주 그룹 2/16채널 + 보조 그룹 2/26채널 (TQFP-144 변형, 부록), 입력 0–5.5 V. EDSADC 없음</dd>
+    <dt>통신</dt><dd>MCMCAN 2모듈/8노드(부록 표기), ASCLIN 12, QSPI 4, SENT 6, FlexRay 1모듈/2채널. 이더넷·HSSL·MSC·PSI5·SDMMC 없음</dd>
+    <dt>타이머</dt><dd>GTM, CCU60/CCU61, GPT12</dd>
+    <dt>안전·보안</dt><dd>ISO 26262 SEooC ASIL D까지 (Safety Package Release Note에 있는 판매 코드), HSM 있음, SMU, MTU, IOM</dd>
+    <dt>품질</dt><dd>AEC-Q100 (해당 판매 코드 출하 승인 후)</dd>
+    <dt>온도</dt><dd>SAK: T<sub>A</sub> −40 … +125 °C</dd>
+    <dt>패키지</dt><dd>PG-QFP-144 (TQFP, 0.4 mm 핀 피치)</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>V<sub>EXT</sub> / V<sub>DDM</sub> / V<sub>DDP3</sub> / V<sub>DD</sub> 공급 전압</td><td></td><td></td><td>V</td><td>데이터시트 확인 필요 (데이터시트 3.2절, p.259)</td></tr>
+      <tr><td>입력 전압 · 핀 주입 전류</td><td></td><td></td><td></td><td>데이터시트 확인 필요</td></tr>
+      <tr><td>저장 온도 · 접합 온도</td><td></td><td></td><td>°C</td><td>데이터시트 확인 필요</td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>동작 주파수 f<sub>CPU</sub> (-32F300F)</td><td></td><td></td><td>300</td><td>MHz</td></tr>
+      <tr><td>주변 온도 T<sub>A</sub> (SAK)</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+      <tr><td>공급 전압</td><td></td><td></td><td></td><td>V – 데이터시트 확인 필요</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-QFP-144 (TQFP-144) · 주요 전원·제어 핀 (데이터시트 그림 2-3 기준)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>10, 22, 53, 79, 99, 127</td><td>VDD</td><td>코어 공급</td></tr>
+      <tr><td>23, 69, 78, 83, 125</td><td>VEXT</td><td>외부 공급 (5 V / 3.3 V)</td></tr>
+      <tr><td>126</td><td>VDDP3</td><td>3.3 V 공급</td></tr>
+      <tr><td>72</td><td>VDDO</td><td>공급 (데이터시트 그림 표기)</td></tr>
+      <tr><td>70, 71</td><td>VCAP1, VCAP0</td><td>EVR 커패시터 핀</td></tr>
+      <tr><td>44 / 43</td><td>VDDM / VSSM</td><td>ADC 공급 / 접지</td></tr>
+      <tr><td>42 / 41</td><td>VAREF / VAGND</td><td>ADC 기준 전압 / 기준 접지</td></tr>
+      <tr><td>80</td><td>VSS</td><td>접지 (노출 패드 여부 데이터시트 확인 필요)</td></tr>
+      <tr><td>81, 82</td><td>XTAL1, XTAL2</td><td>크리스털</td></tr>
+      <tr><td>97</td><td>PORST</td><td>파워온 리셋</td></tr>
+      <tr><td>98, 96</td><td>ESR0, ESR1</td><td>외부 서비스 요청</td></tr>
+      <tr><td>89, 92, 91</td><td>TMS, TCK, TRST</td><td>JTAG / DAP</td></tr>
+      <tr><td>—</td><td>VEVRSB</td><td>Standby 공급 – 핀 번호 데이터시트 확인 필요 (추출 텍스트 불명확)</td></tr>
+      <tr><td>—</td><td>P00…P34 포트</td><td>GPIO + 주변장치 다중화</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>EVR 외부 부품·디커플링 값: 데이터시트 확인 필요.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-QFP-144 (TQFP, 0.4 mm). 열저항: 데이터시트 확인 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>부품 DB의 "TC334LP"는 접미사(플래시 크기·주파수·온도)가 없는 계열 표기입니다. 주문 시 SAK-TC334LP-32F300F 같은 전체 품번을 쓰세요.</li>
+    <li>핀 번호는 데이터시트 그림 2-3(TQFP-144 로직 심볼)에서 텍스트로 추출한 값입니다. 보드 설계 전 원본 그림·핀 표와 대조하세요.</li>
+    <li>배치 파일 설명의 "ASIL B"와 달리 데이터시트는 TC33x를 ASIL D까지(SEooC)로 표기합니다.</li>
+    <li>TC33x는 이더넷이 없습니다. 이더넷이 필요하면 TC37x/TC36x를 검토하세요.</li>
+  </ul>
+</article>
+</body>
+</html>

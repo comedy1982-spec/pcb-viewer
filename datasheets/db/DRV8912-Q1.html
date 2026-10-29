@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRV8912-Q1 · 12-channel half-bridge driver with SPI, automotive</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="DRV8912-Q1" data-mfr="Texas Instruments" data-cat="모터 드라이버" data-price="" data-status="done" data-src="https://edgeworker.ti.com/cn/lit/gpn/drv8908-q1">
+  <h1>DRV8912-Q1</h1>
+  <p class="meta">Texas Instruments · 모터 드라이버 · 차량용 12채널 하프브리지 드라이버 (SPI, PWM 발생기 4개)</p>
+  <p class="meta">원본: <a href="https://edgeworker.ti.com/cn/lit/gpn/drv8908-q1" target="_blank" rel="noopener">데이터시트 PDF (중문판 ZHCSJB5B)</a> · <a href="https://www.ti.com/product/DRV8912-Q1" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=DRV8912-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 ZHCSJB5B Rev B (2019-12), 영문판 SLVSEC9C (2020-02) 우선 — DRV8904/06/08/10/12-Q1 공용</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>하프브리지 출력 12개(FET 내장), 브러시 DC 모터·릴레이·LED 등 구동. PWM 발생기 4개 (8비트 듀티)</dd>
+    <dt>VM</dt><dd>4.5–32 V 동작 (절대 최대 40 V)</dd>
+    <dt>출력 전류</dt><dd>출력당 1 A RMS, 병렬 시 최대 6 A · OCP 1.3 / 1.8 / 2.3 A (min/typ/max)</dd>
+    <dt>RDS(on)</dt><dd>0.75 Ω typ / 1.1 Ω max (25 °C), 1.5 Ω (125 °C), VM 13.5 V, 0.5 A</dd>
+    <dt>인터페이스</dt><dd>SPI 16비트, 최대 5 MHz, 데이지 체인 · 3.3 / 5 V 로직 (VDD 3–5.5 V)</dd>
+    <dt>슬립 전류</dt><dd>IVM 0.35 µA typ / 1 µA max (25 °C)</dd>
+    <dt>보호</dt><dd>VM UVLO·OVP, POR, OCP, 개방 부하 검출, 과열 경고 140 °C / 차단 175 °C typ → nFAULT</dd>
+    <dt>등급·온도</dt><dd>차량용 (ESD AEC-Q100 기준 시험) · TA −40 ~ 125 °C</dd>
+    <dt>패키지</dt><dd>HTSSOP-24 (PWP), 노출 써멀 패드</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VM 전원 전압</td><td>(표기 4.5)</td><td>40</td><td>V</td><td>중문판 표의 최소값 표기 그대로 — 영문판에서 확인</td></tr>
+    <tr><td>VDD</td><td>−0.3</td><td>5.75</td><td>V</td><td></td></tr>
+    <tr><td>OUTx</td><td>−0.7</td><td>VM + 0.7</td><td>V</td><td></td></tr>
+    <tr><td>논리 입력 (nSCS, nSLEEP, SCLK, SDI)</td><td>−0.3</td><td>VDD + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>논리 출력 (nFAULT, SDO)</td><td>−0.3</td><td>VDD + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>VM 연속 전류 / GND 싱크 전류</td><td>0</td><td>6</td><td>A</td><td></td></tr>
+    <tr><td>TJ</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>±4000 (OUTx, VM) / ±2000</td><td>V</td><td>AEC-Q100</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>±750 (코너 핀 1, 12, 13, 24) / ±500</td><td>V</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VM</td><td>4.5</td><td></td><td>32</td><td>V</td></tr>
+    <tr><td>VDD</td><td>3</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>논리 입력 전압</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>nFAULT / SDO 풀업 전압</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>nFAULT / SDO 전류</td><td></td><td></td><td>5</td><td>mA</td></tr>
+    <tr><td>TA</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+    <tr><td>TJ</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>HTSSOP-24 (PWP), 노출 써멀 패드 (연결 방법은 표에 명시 없음 — 통상 GND, 영문판 레이아웃 확인)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>GND</td><td>전원 GND</td></tr>
+    <tr><td>2</td><td>OUT1</td><td>하프브리지 출력 1</td></tr>
+    <tr><td>3</td><td>OUT5</td><td>하프브리지 출력 5</td></tr>
+    <tr><td>4</td><td>OUT7</td><td>하프브리지 출력 7</td></tr>
+    <tr><td>5</td><td>SDI</td><td>SPI 데이터 입력, 내부 풀다운</td></tr>
+    <tr><td>6</td><td>VDD</td><td>로직 전원</td></tr>
+    <tr><td>7</td><td>SDO</td><td>SPI 데이터 출력 (푸시풀)</td></tr>
+    <tr><td>8</td><td>nSLEEP</td><td>L = 슬립, 내부 풀다운</td></tr>
+    <tr><td>9</td><td>OUT9</td><td>하프브리지 출력 9</td></tr>
+    <tr><td>10</td><td>OUT6</td><td>하프브리지 출력 6</td></tr>
+    <tr><td>11</td><td>OUT4</td><td>하프브리지 출력 4</td></tr>
+    <tr><td>12</td><td>nFAULT</td><td>고장 출력, 오픈 드레인 (풀업 필요)</td></tr>
+    <tr><td>13</td><td>GND</td><td>전원 GND</td></tr>
+    <tr><td>14</td><td>OUT3</td><td>하프브리지 출력 3</td></tr>
+    <tr><td>15</td><td>OUT10</td><td>하프브리지 출력 10</td></tr>
+    <tr><td>16</td><td>VM</td><td>주 전원 (21번과 연결)</td></tr>
+    <tr><td>17</td><td>OUT11</td><td>하프브리지 출력 11</td></tr>
+    <tr><td>18</td><td>OUT12</td><td>하프브리지 출력 12</td></tr>
+    <tr><td>19</td><td>nSCS</td><td>SPI 칩 셀렉트, 내부 풀업</td></tr>
+    <tr><td>20</td><td>SCLK</td><td>SPI 클럭, 내부 풀다운</td></tr>
+    <tr><td>21</td><td>VM</td><td>주 전원</td></tr>
+    <tr><td>22</td><td>OUT8</td><td>하프브리지 출력 8</td></tr>
+    <tr><td>23</td><td>OUT2</td><td>하프브리지 출력 2</td></tr>
+    <tr><td>24</td><td>GND</td><td>전원 GND</td></tr>
+    <tr><td>PAD</td><td>—</td><td>써멀 패드</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VM: 0.1 µF X5R/X7R (VM 정격) + ≥10 µF (VM 정격), VM–GND.</li>
+    <li>VDD: 0.1 µF X5R/X7R 6.3 V + ≥1 µF 6.3 V.</li>
+    <li>nFAULT: VDD로 풀업 저항 (값 미지정).</li>
+    <li>OCP 데글리치 기본 10 µs, 최소 1 µs. 20 V &lt; VM &lt; 28 V에서는 10 µs, VM &gt; 28 V에서는 1 µs로 제한.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>HTSSOP-24 (PWP): RθJA 30.2 °C/W · RθJC(top) 23.7 · RθJB 10.1 · ψJT 0.3 · ψJB 10.0 · RθJC(bot) 2.5 °C/W. TJ 최대 150 °C, OTW 120–170 °C (140 typ), OTSD 150–200 °C (175 typ), 히스테리시스 20 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>OVP 임계: EXT_OVP = 0일 때 상승 21–25 V (12 V 계통 기본), EXT_OVP = 1일 때 32.7–35 V. 24 V 계통이나 점프 스타트 동작이 필요하면 EXT_OVP 설정.</li>
+    <li>UVLO 상승 4.0–4.5 V / 하강 3.8–4.3 V, VDD POR 상승 2.45–3 V.</li>
+    <li>OUT 번호와 핀 번호가 순차적이지 않음 — 회로도 심볼 작성 시 표 그대로 사용.</li>
+    <li>같은 패밀리: DRV8904/06/08/10-Q1 (출력 수 다름, 패키지·핀 다름).</li>
+    <li>이 페이지는 중문판(ZHCSJB5B) 기준이며, 영문판 SLVSEC9C가 우선함.</li>
+    <li>"DRV8912-Q1"은 기본 이름 — BOM에는 포장 접미사가 붙은 주문 번호(예: DRV8912QPWPRQ1, 미확인)를 사용.</li>
+  </ul>
+</article>
+</body>
+</html>

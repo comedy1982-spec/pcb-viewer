@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRV8353RS-Q1 · 100 V three-phase smart gate driver with buck and three current-sense amplifiers (SPI)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="DRV8353RS-Q1" data-mfr="Texas Instruments" data-cat="게이트 드라이버" data-price="6.5" data-status="done" data-src="https://www.ti.com/document-viewer/DRV8353/datasheet/electrical-characteristics-x8427">
+  <h1>DRV8353RS-Q1</h1>
+  <p class="meta">Texas Instruments · 게이트 드라이버 · 100 V 3상 스마트 게이트 드라이버 + 벅 + 전류 센스 앰프 ×3 (SPI) · 참고 단가 약 $6.5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/DRV8353/datasheet/electrical-characteristics-x8427" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/DRV8353R" target="_blank" rel="noopener">제품 페이지 (미확인 링크)</a> · <a href="https://octopart.com/search?q=DRV8353RS" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLVSDY6A (2018-08, 개정 2019-06, DRV8350/DRV8350R/DRV8353/DRV8353R 공용)</p>
+  <p class="todo">주의: TI 데이터시트 SLVSDY6A에는 "-Q1"(AEC-Q100) 버전이 없습니다. 이 페이지 값은 상용 DRV8353RS(SPI, 벅 내장, 48핀 RGZ) 기준입니다. 차량용 등급이 필요하면 다른 -Q1 게이트 드라이버로 교체를 검토하세요.</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>외부 N-MOSFET 6개용 3상 게이트 드라이버 + 350 mA 벅 레귤레이터 + 전류 션트 앰프 3개, SPI(S 버전) 설정·진단</dd>
+    <dt>VM (게이트 드라이버)</dt><dd>9–75 V 권장 (절대 최대 80 V)</dd>
+    <dt>VDRAIN</dt><dd>7–100 V 권장 (절대 최대 102 V)</dd>
+    <dt>게이트 구동 (IDRIVE)</dt><dd>소스 50–1000 mA / 싱크 100–2000 mA, 16단계 (SPI) · VGLS 11 V · tDEAD 50/100/200/400 ns</dd>
+    <dt>전류 센스 앰프</dt><dd>이득 5/10/20/40 V/V (±3 %), 출력 0.25 V ~ VREF − 0.25 V, 바이어스 VREF/2 또는 VREF − 0.3 V, 오프셋 ±3 mV</dd>
+    <dt>벅 레귤레이터</dt><dd>VIN 6–95 V, VFB 2.5 V typ, 전류 제한 0.51 A typ, 스위치 RDS(on) 1.25–2.57 Ω</dd>
+    <dt>보호</dt><dd>VDS 과전류(SPI 0.06–2.0 V, 16단계), SEN_OCP 0.25–1.0 V, VM/VDRAIN/VCP/VGLS UVLO, OTW 150 °C / OTSD 170 °C typ → nFAULT</dd>
+    <dt>등급·온도</dt><dd>상용 (데이터시트에 AEC-Q100 언급 없음) · TA −40 ~ 125 °C, TJ −40 ~ 150 °C</dd>
+    <dt>패키지</dt><dd>VQFN-48 (RGZ), 노출 패드</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VM</td><td>−0.3</td><td>80</td><td>V</td><td></td></tr>
+    <tr><td>접지 핀 간 전압 (AGND, DGND, GND)</td><td>−0.3</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>VDRAIN</td><td>−0.3</td><td>102</td><td>V</td><td>슬루 최대 2 V/µs</td></tr>
+    <tr><td>CPH, VCP</td><td>−0.3</td><td>VDRAIN + 16</td><td>V</td><td></td></tr>
+    <tr><td>CPL</td><td>−0.3</td><td>VDRAIN</td><td>V</td><td></td></tr>
+    <tr><td>VGLS</td><td>−0.3</td><td>18</td><td>V</td><td></td></tr>
+    <tr><td>DVDD, 디지털 핀, VREF</td><td>−0.3</td><td>5.75</td><td>V</td><td></td></tr>
+    <tr><td>GHx 연속 / 200 ns 과도</td><td>−5 / −10</td><td>VCP + 0.3</td><td>V</td><td>GHx–SHx −0.3 ~ 16 V</td></tr>
+    <tr><td>SHx 연속</td><td>−5</td><td>102 (및 VDRAIN + 5)</td><td>V</td><td>200 ns 과도 −10 ~ VDRAIN + 10</td></tr>
+    <tr><td>GLx 연속 / 200 ns 과도</td><td>−1.0 / −5.0</td><td>VGLS + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>SLx, SPx, SNx 연속 / 200 ns 과도</td><td>−1 / −5</td><td>1 / 5</td><td>V</td><td></td></tr>
+    <tr><td>SOx</td><td>−0.3</td><td>VREF + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>벅 VIN</td><td>−0.3</td><td>100</td><td>V</td><td></td></tr>
+    <tr><td>BST / BST–SW</td><td>−0.3</td><td>114 / 14</td><td>V</td><td></td></tr>
+    <tr><td>SW</td><td>−1</td><td>VIN</td><td>V</td><td></td></tr>
+    <tr><td>VCC</td><td>−0.3</td><td>14</td><td>V</td><td></td></tr>
+    <tr><td>FB, RCL, RT/SD</td><td>−0.3</td><td>7</td><td>V</td><td></td></tr>
+    <tr><td>TJ / 보관 온도</td><td>−40 / −65</td><td>150 / 150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VM</td><td>9</td><td></td><td>75</td><td>V</td></tr>
+    <tr><td>VDRAIN</td><td>7</td><td></td><td>100</td><td>V</td></tr>
+    <tr><td>디지털 입력 전압</td><td>0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>PWM 주파수 (INHx, INLx)</td><td>0</td><td></td><td>200</td><td>kHz</td></tr>
+    <tr><td>SHx 스위치 노드 슬루</td><td>0</td><td></td><td>2</td><td>V/ns</td></tr>
+    <tr><td>평균 게이트 전류 (GHx, GLx 각)</td><td>0</td><td></td><td>25</td><td>mA</td></tr>
+    <tr><td>DVDD 외부 부하</td><td>0</td><td></td><td>10</td><td>mA</td></tr>
+    <tr><td>VREF</td><td>3</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>SOx 출력 전류</td><td>0</td><td></td><td>5</td><td>mA</td></tr>
+    <tr><td>오픈 드레인 풀업 전압 / 전류 (nFAULT, SDO)</td><td>0</td><td></td><td>5.5 / 5</td><td>V / mA</td></tr>
+    <tr><td>벅 VIN</td><td>6</td><td></td><td>95</td><td>V</td></tr>
+    <tr><td>TA</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>VQFN-48 (RGZ), DRV8353RS (SPI) 기준. 노출 패드는 핀 표에 기재되지 않음 — GND 연결 권장(데이터시트 레이아웃 확인).</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>GND</td><td>전원 GND</td></tr>
+    <tr><td>2</td><td>VGLS</td><td>11 V 하단 게이트 레귤레이터, 1 µF → GND</td></tr>
+    <tr><td>3, 4</td><td>CPL, CPH</td><td>차지 펌프 플라잉 47 nF</td></tr>
+    <tr><td>5</td><td>VM</td><td>게이트 드라이버 전원, 0.1 µF + ≥10 µF</td></tr>
+    <tr><td>6</td><td>VDRAIN</td><td>상단 FET 드레인 감지·차지 펌프 기준</td></tr>
+    <tr><td>7</td><td>VCP</td><td>차지 펌프 출력, 1 µF → VDRAIN</td></tr>
+    <tr><td>8–12</td><td>GHA, SHA, GLA, SPA, SNA</td><td>A상 상단 게이트, 상단 소스, 하단 게이트, 하단 소스/앰프 +, 앰프 −</td></tr>
+    <tr><td>13–17</td><td>SNB, SPB, GLB, SHB, GHB</td><td>B상 (역순 배치)</td></tr>
+    <tr><td>18–22</td><td>GHC, SHC, GLC, SPC, SNC</td><td>C상</td></tr>
+    <tr><td>23, 24, 25</td><td>SOC, SOB, SOA</td><td>센스 앰프 출력 C, B, A</td></tr>
+    <tr><td>26</td><td>VREF</td><td>앰프 전원·기준, 0.1 µF → AGND</td></tr>
+    <tr><td>27</td><td>AGND</td><td>아날로그 GND</td></tr>
+    <tr><td>28</td><td>nFAULT</td><td>고장 출력, 오픈 드레인 (풀업 필요)</td></tr>
+    <tr><td>29</td><td>SDO</td><td>SPI 데이터 출력, 오픈 드레인 (풀업 필요)</td></tr>
+    <tr><td>30, 31, 32</td><td>SDI, SCLK, nSCS</td><td>SPI 입력, 클럭, 칩 셀렉트</td></tr>
+    <tr><td>33</td><td>ENABLE</td><td>인에이블, L = 슬립, 8–40 µs L 펄스 = 고장 리셋</td></tr>
+    <tr><td>34–39</td><td>INHA, INLA, INHB, INLB, INHC, INLC</td><td>PWM 입력</td></tr>
+    <tr><td>40</td><td>DVDD</td><td>5 V 내부 레귤레이터, 1 µF → DGND</td></tr>
+    <tr><td>41</td><td>DGND</td><td>디지털 GND</td></tr>
+    <tr><td>42</td><td>SW</td><td>벅 스위치 노드</td></tr>
+    <tr><td>43</td><td>VIN</td><td>벅 전원 입력</td></tr>
+    <tr><td>44</td><td>VCC</td><td>벅용 7 V 내부 레귤레이터, 0.47 µF → GND</td></tr>
+    <tr><td>45</td><td>BST</td><td>벅 부트스트랩, 0.01 µF → SW</td></tr>
+    <tr><td>46</td><td>RCL</td><td>벅 전류 제한 오프 시간 저항 → GND</td></tr>
+    <tr><td>47</td><td>RT/SD</td><td>벅 온 시간 저항(→VIN)·원격 셧다운</td></tr>
+    <tr><td>48</td><td>FB</td><td>벅 피드백 분압</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VGLS 1 µF, CPH–CPL 47 nF, VCP–VDRAIN 1 µF, VM 0.1 µF + ≥10 µF, DVDD 1 µF, VREF 0.1 µF, VCC 0.47 µF, BST–SW 0.01 µF (핀 표 권장값).</li>
+    <li>벅 출력: FB 분압, 기준 2.5 V → V<sub>OUT</sub> = 2.5 V × (1 + R<sub>top</sub>/R<sub>bot</sub>). 온 시간은 RT/SD–VIN 저항(R<sub>ON</sub>)으로 설정 (VIN 10 V, R<sub>ON</sub> 200 kΩ에서 tON 2.77 µs typ).</li>
+    <li>센스 앰프 출력: SPI로 VREF/2(양방향) 또는 VREF − 0.3 V(단방향) 바이어스 선택.</li>
+    <li>nFAULT, SDO 오픈 드레인 풀업 ≤ 5.5 V, 싱크 ≤ 5 mA.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>VQFN-48 (RGZ, DRV835xR 열): RθJA 24.7 °C/W · RθJC(top) 12.0 · RθJB 7.1 · ψJT 0.1 · ψJB 7.1 · RθJC(bot) 0.8 °C/W. TJ 최대 150 °C, OTW 130–170 °C (150 typ), OTSD 150–190 °C (170 typ), 벅 자체 과열 165 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>MPN 문제: "DRV8353RS-Q1"은 TI 데이터시트 SLVSDY6A에 존재하지 않는 이름(-Q1 없음). 상용 DRV8353RS(48핀 RGZ) 주문 번호로 정정하거나, 차량용이면 -Q1 등급 3상 게이트 드라이버로 교체 필요.</li>
+    <li>VDRAIN 슬루 2 V/µs, SHx 슬루 2 V/ns 이하 — 고전압 버스 핫플러그와 스위칭 속도(IDRIVE) 설정 확인.</li>
+    <li>평균 게이트 전류 25 mA 한계: Qg × fPWM × 상당 FET 수를 계산해 확인.</li>
+    <li>센스 앰프 입력 공통 모드 ±0.15 V — 하단 션트 전용. 차동 입력 ±0.3 V.</li>
+    <li>DVDD는 외부 부하 10 mA 이하만 허용.</li>
+  </ul>
+</article>
+</body>
+</html>

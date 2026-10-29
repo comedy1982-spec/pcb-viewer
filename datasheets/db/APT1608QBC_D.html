@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>APT1608QBC/D · APT1608QBC/D — 0603 blue LED</title>
+<title>APT1608QBC/D · 0603 blue InGaN SMD LED</title>
 <style>
 body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
@@ -13,39 +13,58 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="APT1608QBC/D" data-mfr="Kingbright" data-cat="LED" data-price="0.09" data-status="stub">
+<article data-mpn="APT1608QBC/D" data-mfr="Kingbright" data-cat="LED" data-price="0.09" data-status="done" data-src="https://www.mikrocontroller.net/attachment/633844/APT1608QBC-D-65281.pdf">
   <h1>APT1608QBC/D</h1>
-  <p class="meta">Kingbright · LED · APT1608QBC/D — 0603 blue LED · 참고 단가 약 $0.09 (추정)</p>
-  <p class="meta">원본: <a href="https://www.kingbrightusa.com/images/catalog/SPEC/APT1608QBC-D.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=APT1608QBC%2FD" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
-
+  <p class="meta">Kingbright · LED · 0603 (1.6×0.8 mm) blue InGaN chip LED · 참고 단가 약 $0.09 (추정)</p>
+  <p class="meta">원본: <a href="https://www.mikrocontroller.net/attachment/633844/APT1608QBC-D-65281.pdf" target="_blank" rel="noopener">데이터시트 PDF (사본)</a> · <a href="https://www.kingbrightusa.com/images/catalog/SPEC/APT1608QBC-D.pdf" target="_blank" rel="noopener">Kingbright 원본 PDF (미확인 링크)</a> · <a href="https://www.lcsc.com/product-detail/C5875724.html" target="_blank" rel="noopener">LCSC 제품 페이지</a> · <a href="https://octopart.com/search?q=APT1608QBC%2FD" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Spec No. DSAD9944, Rev V.16B, 2017-07-11</p>
   <h2>핵심 사양</h2>
   <dl>
-      <dt>색</dt><dd>청색 465 nm (dominant)</dd>
-      <dt>VF</dt><dd>3.3 V typ @ 20 mA (최대 4.0 V)</dd>
-      <dt>패키지</dt><dd>0603</dd>
+    <dt>칩</dt><dd>InGaN 청색, 무색 투명 렌즈</dd>
+    <dt>파장</dt><dd>λD 465 nm typ (±1 nm), λpeak 460 nm, 반치폭 25 nm (IF = 20 mA)</dd>
+    <dt>광도 Iv</dt><dd>40 mcd min / 100 mcd typ @ 20 mA</dd>
+    <dt>지향각 2θ½</dt><dd>130°</dd>
+    <dt>VF</dt><dd>3.3 V typ / 4.0 V max @ 20 mA (±0.1 V)</dd>
+    <dt>IR</dt><dd>최대 50 µA @ VR = 5 V</dd>
+    <dt>정전 용량</dt><dd>100 pF typ</dd>
+    <dt>ESD</dt><dd>HBM 250 V (취급 주의)</dd>
+    <dt>온도</dt><dd>동작 −40 ~ +85 °C</dd>
+    <dt>패키지</dt><dd>1.6 × 0.8 mm, 두께 0.75 mm, MSL 3, 2000개/릴, RoHS</dd>
   </dl>
-
   <h2>절대 최대 정격</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
-
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>소비 전력 PD</td><td></td><td>120</td><td>mW</td><td>TA = 25 °C</td></tr>
+    <tr><td>역전압 VR</td><td></td><td>5</td><td>V</td><td></td></tr>
+    <tr><td>DC 순방향 전류 IF</td><td></td><td>30</td><td>mA</td><td></td></tr>
+    <tr><td>피크 순방향 전류 IFM</td><td></td><td>150</td><td>mA</td><td>듀티 1/10, 펄스폭 0.1 ms</td></tr>
+    <tr><td>ESD (HBM)</td><td></td><td>250</td><td>V</td><td></td></tr>
+    <tr><td>접합 온도 Tj</td><td></td><td>115</td><td>°C</td><td></td></tr>
+    <tr><td>동작 온도</td><td>−40</td><td>85</td><td>°C</td><td></td></tr>
+    <tr><td>저장 온도</td><td>−40</td><td>85</td><td>°C</td><td></td></tr>
+  </tbody></table>
   <h2>권장 동작 조건</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
-
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>순방향 전류 (특성 측정 조건)</td><td></td><td>20</td><td>30</td><td>mA</td></tr>
+    <tr><td>동작 온도</td><td>−40</td><td></td><td>85</td><td>°C</td></tr>
+  </tbody></table>
   <h2>핀 배치</h2>
-  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
-
+  <p>0603 칩 LED, 2단자. 번호는 KiCad LED 관례(1 = K, 2 = A) — 실물 캐소드 마크 위치는 데이터시트 외형도 확인 필요.</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>K</td><td>캐소드</td></tr>
+    <tr><td>2</td><td>A</td><td>애노드</td></tr>
+  </tbody></table>
   <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
-
+  <ul>
+    <li>직렬 저항 R = (V<sub>supply</sub> − VF) / IF. 3.3 V 전원에서는 VF typ 3.3 V·max 4.0 V라 전류가 거의 흐르지 않거나 불안정 — 5 V 이상 전원이나 정전류 구동 권장.</li>
+    <li>예: 5 V, IF 5 mA → (5 − 3.3)/0.005 ≈ 340 Ω (VF 편차로 밝기 차이 큼).</li>
+  </ul>
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
-
+  <p>1.6 × 0.8 mm, 두께 0.75 mm. RthJA 545 °C/W, RthJS 510 °C/W, Tj max 115 °C. 리플로 권장, 최대 2회. 패드 치수·리플로 프로파일은 데이터시트 그림 참조 (텍스트로 확인 못함).</p>
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>ESD HBM 250 V로 매우 약함 — 커넥터·패널 쪽 배치 시 보호 필요, 조립 시 ESD 관리.</li>
+    <li>차량용 AEC-Q101 표기 없음 — 상용 표시등용. 차량 ECU 양산에는 AEC-Q102 인증 LED 검토.</li>
+    <li>MSL 3: 개봉 후 보관 시간 관리.</li>
+  </ul>
 </article>
 </body>
 </html>

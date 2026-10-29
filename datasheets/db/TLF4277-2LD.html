@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLF4277-2LD · 300 mA adjustable LDO with current monitor, TSON-10</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TLF4277-2LD" data-mfr="Infineon" data-cat="전원" data-price="2.2" data-status="done" data-src="https://www.farnell.com/datasheets/2354825.pdf">
+  <h1>TLF4277-2LD</h1>
+  <p class="meta">Infineon · 전원 · 300 mA adjustable LDO with current monitor (antenna supply), PG-TSON-10 · 참고 단가 약 $2.2 (추정)</p>
+  <p class="meta">원본: <a href="https://www.farnell.com/datasheets/2354825.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.lcsc.com/product-detail/Linear-Voltage-Regulators-LDO_Infineon-Technologies-TLF4277-2LD_C540207.html" target="_blank" rel="noopener">LCSC</a> · <a href="https://octopart.com/search?q=TLF4277-2LD" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TLF4277-2LD Data Sheet Rev. 1.01, 2016-09-01</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>저드롭아웃 선형 레귤레이터(LDO) + 부하 전류 모니터 (액티브 안테나 전원용). 벅 컨버터 아님</dd>
+    <dt>입력</dt><dd>VQ + Vdr – 40 V (동작), 절대 최대 45 V, 역극성 −16 V 자체 보호</dd>
+    <dt>출력</dt><dd>5 – 12 V 가변 (외부 분압), ±2%, 최대 300 mA</dd>
+    <dt>드롭아웃</dt><dd>100 mA에서 100 mV typ / 250 mV max, 200 mA에서 200 mV typ / 500 mV max (VQ = 5 V)</dd>
+    <dt>전류 제한</dt><dd>RCSO로 10 – 300 mA 가변, ±10% (조건부)</dd>
+    <dt>전류 모니터</dt><dd>CSO 전류 = IQ / 100 (95 – 105 @10 – 150 mA). CSO 전압으로 상태 표시: 전류 제한 2.55 V, 과열 2.8 V, 과전압 3.1 V (typ)</dd>
+    <dt>정지 전류</dt><dd>150 µA typ / 200 µA max (경부하), 비활성 시 3 µA max (Tj ≤ 25 °C)</dd>
+    <dt>보호</dt><dd>과열 차단 151 – 200 °C (히스테리시스 15 K typ), 과전압 검출 (ADJ가 VREF보다 20% 높을 때), ST open-collector 폴트 출력</dd>
+    <dt>등급·온도</dt><dd>AEC qualified, Tj −40 – 150 °C</dd>
+    <dt>패키지</dt><dd>PG-TSON-10 (마킹 4277-2), 노출 패드</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>입력 VI</td><td>−16</td><td>45</td><td>V</td><td></td></tr>
+      <tr><td>인에이블 VEN</td><td>−16</td><td>45</td><td>V</td><td></td></tr>
+      <tr><td>전압 조정 VADJ</td><td>−0.3</td><td>16</td><td>V</td><td></td></tr>
+      <tr><td>출력 VQ</td><td>−0.3</td><td>45</td><td>V</td><td>VQ &lt; VI + 5 V</td></tr>
+      <tr><td>전류 모니터 VCSO</td><td>−0.3</td><td>5</td><td>V</td><td></td></tr>
+      <tr><td>상태 출력 VST</td><td>−0.3</td><td>45</td><td>V</td><td>외부 직렬 저항 사용</td></tr>
+      <tr><td>Tj</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>Tstg</td><td>−55</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>ESD HBM</td><td>−2</td><td>2</td><td>kV</td><td></td></tr>
+      <tr><td>ESD CDM (코너 핀 1, 5, 6, 10)</td><td>−500 (−750)</td><td>500 (750)</td><td>V</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>입력 VI</td><td>VQ + Vdr</td><td></td><td>40</td><td>V</td></tr>
+      <tr><td>출력 VQ</td><td>5</td><td></td><td>12</td><td>V</td></tr>
+      <tr><td>전류 센스 저항 RCSO</td><td>850</td><td></td><td>25.5 k</td><td>Ω</td></tr>
+      <tr><td>전류 센스 커패시터 CCSO</td><td>1</td><td></td><td>4.7</td><td>µF</td></tr>
+      <tr><td>출력 커패시터 CQ (최악 공차 30%)</td><td>1</td><td></td><td></td><td>µF</td></tr>
+      <tr><td>CQ ESR (10 kHz)</td><td></td><td></td><td>10</td><td>Ω</td></tr>
+      <tr><td>Tj</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-TSON-10 + 노출 패드</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>I</td><td>입력 (가까이 GND로 커패시터)</td></tr>
+      <tr><td>2</td><td>n.c.</td><td>내부 미연결, PCB GND에 연결</td></tr>
+      <tr><td>3</td><td>EN</td><td>인에이블 (HIGH = ON, 미사용 시 I에 연결)</td></tr>
+      <tr><td>4</td><td>n.c.</td><td>PCB GND에 연결</td></tr>
+      <tr><td>5</td><td>CSO</td><td>전류 모니터 / 상태 출력</td></tr>
+      <tr><td>6</td><td>ST</td><td>상태 출력 (open collector, LOW = 폴트)</td></tr>
+      <tr><td>7</td><td>GND</td><td>접지</td></tr>
+      <tr><td>8</td><td>ADJ</td><td>출력 전압 설정 (외부 분압기)</td></tr>
+      <tr><td>9</td><td>n.c.</td><td>PCB GND에 연결</td></tr>
+      <tr><td>10</td><td>Q</td><td>레귤레이터 출력</td></tr>
+      <tr><td>PAD</td><td>Heat sink</td><td>노출 패드, 방열 면적 및 GND에 연결</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>입력: 100 nF 세라믹 (I 핀 가까이, 100 – 470 nF) + 10 µF 전해 (10 – 470 µF 권장). 45 V 초과 과도에는 TVS 선택.</li>
+    <li>출력: CQ 1 µF 세라믹 X5R/X7R, ESR &lt; 10 Ω.</li>
+    <li>출력 전압: VQ = (R1 + R2) / R2 × VREF,int (1.19 V typ). R2 &lt; 27 kΩ, 1% 이하 저항.</li>
+    <li>전류 제한: IQ,lim = 2.55 V × 100 / RCSO (예: RCSO 1.5 kΩ → 170 mA), CCSO 2.2 µF 예시.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-TSON-10, 노출 패드. RthJC 9 K/W typ. RthJA 165 K/W (1s0p footprint only), 67 K/W (300 mm² 방열), 56 K/W (600 mm²), 55 K/W (2s2p). 예: VI 13.5 V, VQ 5 V, 100 mA, Ta 85 °C → 약 0.92 W, RthJA ≤ 70.8 K/W 필요.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>부품 DB 설명("400 mA LDO+벅 복합")은 틀림: 실제는 최대 300 mA 단일 LDO + 전류 모니터. 분류를 buck이 아닌 LDO로 수정 필요.</li>
+    <li>안테나 동축 피드처럼 출력이 외부로 나가는 경우 CSO 전압으로 단락/개방 진단 가능.</li>
+    <li>ST 핀은 VI까지 올라갈 수 있으므로 MCU 연결 시 직렬 저항/풀업 전압 주의.</li>
+  </ul>
+</article>
+</body>
+</html>

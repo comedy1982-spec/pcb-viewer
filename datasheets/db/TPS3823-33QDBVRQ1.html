@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPS3823-33QDBVRQ1 · Automotive supervisor with watchdog, SOT-23-5</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="TPS3823-33QDBVRQ1" data-mfr="Texas Instruments" data-cat="전원" data-price="0.95" data-status="done" data-src="https://ti.com/lit/gpn/TPS3823-Q1">
+  <h1>TPS3823-33QDBVRQ1</h1>
+  <p class="meta">Texas Instruments · 전원 · 차량용 전압 감시 리셋 IC + 워치독 (2.93 V 임계, 푸시풀 RESET) · 참고 단가 약 $0.95 (추정)</p>
+  <p class="meta">원본: <a href="https://ti.com/lit/gpn/TPS3823-Q1" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/product/TPS3823-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TPS3823-33QDBVRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SGLS143E (2002-12, 개정 2025-03, TPS382x-Q1 공용)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>전원 전압 감시 + 워치독(WDI) + 수동 리셋(MR), 액티브 로우 푸시풀 RESET 출력</dd>
+    <dt>감시 임계 VIT−</dt><dd>2.84 / 2.93 / 3.00 V (최소/일반/최대, -40~125 °C), 0~85 °C에서는 최소 2.88 V</dd>
+    <dt>리셋 지연 td</dt><dd>120 / 200 / 300 ms</dd>
+    <dt>워치독 타임아웃</dt><dd>0.9 / 1.6 / 2.5 s</dd>
+    <dt>전원 전압</dt><dd>1.1 ~ 5.5 V (권장)</dd>
+    <dt>소비 전류</dt><dd>일반 15 µA, 최대 25 µA</dd>
+    <dt>파워업 리셋 VPOR</dt><dd>최대 0.9 V</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1 (-40 ~ 125 °C), HBM 레벨 2, CDM C4B</dd>
+    <dt>패키지</dt><dd>SOT-23-5 (DBV), 2.90 × 1.60 mm, 마킹 PARQ, 릴 3000개</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>VDD</td><td>-0.3</td><td>6</td><td>V</td><td></td></tr>
+      <tr><td>RESET, MR, WDI</td><td>-0.3</td><td>VDD + 0.3</td><td>V</td><td></td></tr>
+      <tr><td>출력 전류 IOL / IOH</td><td>-5</td><td>5</td><td>mA</td><td></td></tr>
+      <tr><td>클램프 전류 IOK (VO &lt; 0 또는 &gt; VDD)</td><td>-10</td><td>10</td><td>mA</td><td></td></tr>
+      <tr><td>동작 온도 TA</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도 Tstg</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+    </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
+    <tbody>
+      <tr><td>전원 전압 VDD</td><td>1.1</td><td></td><td>5.5</td><td>V</td></tr>
+      <tr><td>입력 전압 VI</td><td>0</td><td></td><td>VDD + 0.3</td><td>V</td></tr>
+      <tr><td>VIH (MR, WDI)</td><td>0.7 × VDD</td><td></td><td></td><td>V</td></tr>
+      <tr><td>VIL (MR, WDI)</td><td></td><td></td><td>0.3 × VDD</td><td>V</td></tr>
+      <tr><td>입력 상승·하강율 (MR, WDI)</td><td></td><td></td><td>100</td><td>ns/V</td></tr>
+      <tr><td>동작 온도 TA</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>SOT-23-5 (DBV), 상면도</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>RESET</td><td>액티브 로우 리셋 출력 (푸시풀)</td></tr>
+      <tr><td>2</td><td>GND</td><td>접지</td></tr>
+      <tr><td>3</td><td>MR</td><td>수동 리셋 입력, 로우로 리셋. 미사용 시 개방 또는 VDD</td></tr>
+      <tr><td>4</td><td>WDI</td><td>워치독 입력. 타임아웃 동안 레벨 변화가 없으면 리셋</td></tr>
+      <tr><td>5</td><td>VDD</td><td>전원 및 감시 입력</td></tr>
+    </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>전원에 잡음이 있으면 VDD 핀 가까이에 0.1 µF 세라믹 커패시터를 둡니다(필수는 아니지만 권장).</li>
+    <li>RESET 중에도 WDI를 계속 구동해야 하는 구조라면, 게이트를 RESET에 연결한 N채널 FET를 WDI와 직렬로 넣어 분리하는 방법이 데이터시트에 제시되어 있습니다.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>SOT-23-5 (DBV). RθJA 185 °C/W, RθJC(top) 83.3 °C/W, RθJB 52.4 °C/W, ψJT 20.4 °C/W, ψJB 52.0 °C/W (읽은 표에 단위 표기가 빠져 있어 °C/W로 간주).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>VDD 배선을 길게 끌지 마세요. 기생 인덕턴스와 디커플링 C가 LC 공진을 만들어 VDD 최대치를 넘는 링잉이 생길 수 있습니다.</li>
+    <li>워치독은 윈도우형이 아닌 단순 타임아웃형입니다. 윈도우 워치독이 필요하면 다른 감시 IC를 검토하세요.</li>
+    <li>임계 히스테리시스(VHYS)는 추출 표에서 약 30 mV로 읽혔으나 열 정렬이 불확실해 데이터시트 확인이 필요합니다.</li>
+    <li>같은 문서에 TPS3820/3824/3825/3828-Q1 계열과 다른 임계 전압 변형이 함께 실려 있으니 주문 번호 접미사(-33)를 확인하세요. 비차량용 TPS3823은 별도 데이터시트입니다.</li>
+  </ul>
+</article>
+</body>
+</html>

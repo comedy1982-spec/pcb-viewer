@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCF8316A · Sensorless FOC Integrated-FET BLDC Driver</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MCF8316A" data-mfr="TI" data-cat="모터 드라이버" data-price="5" data-status="done" data-src="https://www.ti.com/document-viewer/MCF8316A/datasheet/GUID-AB91DD49-0FFD-4042-AB4E-65900BD07855">
+  <h1>MCF8316A</h1>
+  <p class="meta">TI · 모터 드라이버 · 센서리스 FOC 내장 3상 BLDC/PMSM 드라이버 (FET 내장, 8 A 피크) · 참고 단가 약 $5 (추정)</p>
+  <p class="meta">원본: <a href="https://ti.com/document-viewer/MCF8316A/datasheet" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/ja-jp/MCF8316A" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=MCF8316A" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLLSFI0C (2021-08, rev. 2023-06)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>코드 없는(code-free) 센서리스 FOC 3상 드라이버, 하프브리지 3개 내장, 전류 감지 내장(외부 션트 불필요), 설정 EEPROM 저장, MPET 모터 파라미터 추출</dd>
+    <dt>전원 VM</dt><dd>4.5 ~ 35 V 동작 (nom 24 V), 절대 최대 40 V — 12/24 V 모터용</dd>
+    <dt>출력</dt><dd>피크 8 A, RDS(on) HS+LS 95 mΩ typ (25 °C)</dd>
+    <dt>속도 명령</dt><dd>PWM, 아날로그, 가변 주파수, I²C. PWM 최대 75 kHz. 속도 정확도 3 % (내부 클럭) / 1 % (외부 클럭)</dd>
+    <dt>내장 레귤레이터</dt><dd>벅 3.3 / 4 / 5 / 5.7 V 선택, 최대 170 mA (47 µH 인덕터 모드); AVDD LDO 3.3 V 20 mA</dd>
+    <dt>보호</dt><dd>UVLO, OVP(서지), OCP, 모터 락 검출 5종, OTW/TSD, DRVOFF Hi-Z, nFAULT</dd>
+    <dt>슬립 전류</dt><dd>3 µA max (VM = 24 V, 25 °C)</dd>
+    <dt>온도 / 등급</dt><dd>TA −40 ~ 125 °C, AEC-Q100 표기 없음 (산업용)</dd>
+    <dt>패키지</dt><dd>VQFN-40 (RGF) 7.00 × 5.00 mm, 노출 패드 — 주문 MCF8316A1VRGFR</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VM</td><td>−0.3</td><td>40</td><td>V</td><td>램프 최대 4 V/µs</td></tr>
+    <tr><td>그라운드 간 (GND_BK, DGND, PGND, AGND)</td><td>−0.3</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>CPH, CP</td><td>−0.3</td><td>VVM + 6</td><td>V</td><td></td></tr>
+    <tr><td>CPL</td><td>−0.3</td><td>VVM + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>FB_BK</td><td>−0.3</td><td>5.75</td><td>V</td><td></td></tr>
+    <tr><td>SW_BK</td><td>−0.3</td><td>VVM + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>AVDD</td><td>−0.3</td><td>4</td><td>V</td><td></td></tr>
+    <tr><td>DVDD</td><td>−0.3</td><td>1.7</td><td>V</td><td></td></tr>
+    <tr><td>로직 입력 (BRAKE, DRVOFF, DIR, EXT_CLK, EXT_WD, SCL, SDA, SPEED)</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>오픈드레인 출력 (nFAULT, FG)</td><td>−0.3</td><td>6</td><td>V</td><td></td></tr>
+    <tr><td>OUTA, OUTB, OUTC</td><td>−1</td><td>VVM + 1</td><td>V</td><td></td></tr>
+    <tr><td>TA</td><td>−40</td><td>125</td><td>°C</td><td></td></tr>
+    <tr><td>TJ</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−65</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>ESD HBM / CDM</td><td></td><td>±2000 / ±750</td><td>V</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <p class="todo">아래 권장 동작 조건·전기 특성·열 저항은 초판 Advance Information (SLLSFI0, 2021-08) 기준 — 현행 SLLSFI0C 값과 대조 필요.</p>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VVM</td><td>4.5</td><td>24</td><td>35</td><td>V</td></tr>
+    <tr><td>IOUT 피크 (OUTA/B/C)</td><td></td><td></td><td>8</td><td>A</td></tr>
+    <tr><td>로직 입력 (DRVOFF, SPEED, SDA)</td><td>−0.1</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>오픈드레인 풀업 (nFAULT, FG)</td><td>−0.1</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>오픈드레인 전류</td><td></td><td></td><td>5</td><td>mA</td></tr>
+    <tr><td>TA</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+    <tr><td>TJ</td><td>−40</td><td></td><td>150</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>VQFN-40 (RGF, 7 × 5 mm) + 노출 패드 — SLLSFI0C 표 5-1 기준</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>DVDD</td><td>1.5 V 내부 레귤레이터 출력, 1 µF → DGND</td></tr>
+    <tr><td>2</td><td>DGND</td><td>디지털 그라운드</td></tr>
+    <tr><td>3</td><td>FB_BK</td><td>벅 출력 피드백 (인덕터/저항 뒤)</td></tr>
+    <tr><td>4</td><td>GND_BK</td><td>벅 그라운드</td></tr>
+    <tr><td>5</td><td>SW_BK</td><td>벅 스위치 노드 → 인덕터 또는 저항</td></tr>
+    <tr><td>6</td><td>CPL</td><td>차지펌프 플라잉 커패시터 하단</td></tr>
+    <tr><td>7</td><td>CPH</td><td>차지펌프 스위칭 노드, CPH–CPL 47 nF</td></tr>
+    <tr><td>8</td><td>CP</td><td>차지펌프 출력, CP–VM 1 µF</td></tr>
+    <tr><td>9, 10, 11</td><td>VM</td><td>모터/디바이스 전원, 0.1 µF + 벌크</td></tr>
+    <tr><td>12, 15, 18</td><td>PGND</td><td>파워 그라운드</td></tr>
+    <tr><td>13, 14</td><td>OUTA</td><td>하프브리지 출력 A</td></tr>
+    <tr><td>16, 17</td><td>OUTB</td><td>하프브리지 출력 B</td></tr>
+    <tr><td>19, 20</td><td>OUTC</td><td>하프브리지 출력 C</td></tr>
+    <tr><td>21</td><td>DRVOFF</td><td>High → 6개 FET 모두 Hi-Z (코스트)</td></tr>
+    <tr><td>22–25, 36, 37, 39</td><td>NC</td><td>미연결</td></tr>
+    <tr><td>26</td><td>AGND</td><td>아날로그 그라운드</td></tr>
+    <tr><td>27</td><td>AVDD</td><td>3.3 V LDO 출력, 1 µF → AGND, 외부 20 mA 까지</td></tr>
+    <tr><td>28</td><td>SPEED/WAKE</td><td>속도 입력 (아날로그/PWM/주파수), 웨이크업</td></tr>
+    <tr><td>29</td><td>FG</td><td>속도 펄스 출력, 오픈드레인 (1.8–5 V 풀업)</td></tr>
+    <tr><td>30</td><td>SDA</td><td>I²C 데이터</td></tr>
+    <tr><td>31</td><td>SCL</td><td>I²C 클럭</td></tr>
+    <tr><td>32</td><td>EXT_WD</td><td>외부 워치독 입력</td></tr>
+    <tr><td>33</td><td>EXT_CLK</td><td>외부 클럭 기준 입력</td></tr>
+    <tr><td>34</td><td>DIR</td><td>회전 방향 (미사용 시 10 kΩ → AVDD)</td></tr>
+    <tr><td>35</td><td>BRAKE</td><td>High → 브레이크 (미사용 시 10 kΩ → PGND)</td></tr>
+    <tr><td>38</td><td>SOX</td><td>한 상의 전류 감지 앰프 출력</td></tr>
+    <tr><td>40</td><td>nFAULT</td><td>폴트 출력, 오픈드레인 액티브 로우</td></tr>
+    <tr><td>EP</td><td>GND</td><td>서멀 패드 — 반드시 GND 연결</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>표 8-1 외부 부품: CVM1 0.1 µF X5R/X7R + CVM2 ≥ 10 µF (VM–PGND), CCP 1 µF 16 V (CP–VM), CFLY 47 nF (CPH–CPL), CAVDD 1 µF ≥ 6.3 V, CDVDD 1 µF ≥ 4 V</li>
+    <li>FG / nFAULT 풀업 5.1 kΩ (1.8–5 V), SDA / SCL 풀업 5.1 kΩ (1.8–3.3 V)</li>
+    <li>벅 모드 (표 7-1): 47 µH 인덕터 → 벅 최대 170 mA − IAVDD, 전류제한 600 mA (BUCK_CL = 0b); 22 µH → 20 mA − IAVDD, 150 mA; 22 Ω 저항 → 10 mA − IAVDD</li>
+    <li>권장 모터 범위 (표 8-2): Ke 0.6–2000 mV/Hz, R 0.006–20 Ω, L 0.006–20 mH, 전기 속도 ≤ 1500 Hz, 피크 상전류 ≤ 8 A</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>VQFN-40 (RGF) 7.00 × 5.00 mm, 노출 패드는 GND. (초판 SLLSFI0 기준) RθJA 25.7 °C/W, RθJC(top) 15.2 °C/W, RθJB 7.3 °C/W, ψJT 0.2 °C/W, ψJB 7.2 °C/W, RθJC(bot) 2.0 °C/W. TJ 최대 150 °C, TSD 160 °C typ (초판).</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>AEC-Q100 표기 없는 산업용 부품 — 차량용 설계에는 차량 등급 파생품(MCF8316C-Q1 등)을 별도 검토.</li>
+    <li>TI 제품 페이지에 개선판 MCF8316D(약계자·리드각 조정) 안내가 있음.</li>
+    <li>초판(Advance)과 현행판의 핀 36–39 정의가 다름 (초판: DACOUT/X1/X2/ALARM, 현행: NC·SOX) — 현행판 기준으로 배선.</li>
+    <li>VM 램프 4 V/µs 제한 — 핫플러그 시 입력 돌입 제한 고려. 서멀 패드에 충분한 비아.</li>
+  </ul>
+</article>
+</body>
+</html>

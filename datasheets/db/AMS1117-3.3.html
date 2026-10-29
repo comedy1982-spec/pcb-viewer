@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AMS1117-3.3 · AMS1117 — 1 A low-dropout regulator</title>
+<title>AMS1117-3.3 · 1 A low-dropout regulator, 3.3 V</title>
 <style>
 body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
@@ -13,41 +13,68 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </style>
 </head>
 <body>
-<article data-mpn="AMS1117-3.3" data-mfr="Advanced Monolithic Systems" data-cat="전원" data-price="0.28" data-status="stub">
+<article data-mpn="AMS1117-3.3" data-mfr="Advanced Monolithic Systems" data-cat="전원" data-price="0.12" data-status="done" data-src="https://www.mikrocontroller.net/attachment/493015/AMS1117.pdf">
   <h1>AMS1117-3.3</h1>
-  <p class="meta">Advanced Monolithic Systems · 전원 · AMS1117 — 1 A low-dropout regulator · 참고 단가 약 $0.28 (추정)</p>
-  <p class="meta">원본: <a href="http://www.advanced-monolithic.com/pdf/ds1117.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="http://www.advanced-monolithic.com/" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=AMS1117-3.3" target="_blank" rel="noopener">부품 검색 (Octopart)</a></p>
-  <p class="todo">이 페이지는 부품 DB의 요약으로 만든 초안입니다. 실제 데이터시트를 보고 아래 항목을 채우고, 다 채우면 data-status를 "done"으로 바꾸세요.</p>
+  <p class="meta">Advanced Monolithic Systems · 전원 · 1 A 저드롭아웃 선형 레귤레이터, 3.3 V 고정 (상용 등급) · 참고 단가 약 $0.12 (추정)</p>
+  <p class="meta">원본: <a href="http://www.advanced-monolithic.com/pdf/ds1117.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.mikrocontroller.net/attachment/493015/AMS1117.pdf" target="_blank" rel="noopener">읽은 사본</a> · <a href="http://www.advanced-monolithic.com/" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=AMS1117-3.3" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 AMS1117 "1A Low Dropout Voltage Regulator" (리비전·날짜 표기 없음)</p>
 
   <h2>핵심 사양</h2>
   <dl>
-      <dt>출력</dt><dd>3.3 V 고정, 최대 1 A</dd>
-      <dt>드롭아웃</dt><dd>약 1.1 V (1 A)</dd>
-      <dt>입력</dt><dd>최대 15 V</dd>
-      <dt>패키지</dt><dd>SOT-223: 1 GND · 2 VOUT · 3 VIN · 탭 VOUT</dd>
-      <dt>열 저항</dt><dd>θJB 15 °C/W · θJC 15 °C/W · ΨJT 3 °C/W · Tj,max 125 °C</dd>
+    <dt>기능</dt><dd>3단자 LDO, 고정 1.5/1.8/2.5/2.85/3.3/5.0 V 및 가변형</dd>
+    <dt>출력</dt><dd>3.3 V, 1 A. 25 °C 3.267~3.333 V, 온도 전 범위 3.235~3.365 V (0 ≤ IOUT ≤ 1 A, 4.75 V ≤ VIN ≤ 12 V)</dd>
+    <dt>드롭아웃</dt><dd>일반 1.1 V, 최대 1.3 V @ 1 A</dd>
+    <dt>전류 제한</dt><dd>900 / 1100 / 1500 mA (최소/일반/최대, VIN-VOUT = 5 V)</dd>
+    <dt>정지 전류</dt><dd>일반 5 mA, 최대 10 mA (VIN ≤ 12 V)</dd>
+    <dt>레귤레이션</dt><dd>라인 일반 0.5 mV / 최대 10 mV, 부하 일반 3 mV / 최대 15 mV (25 °C)</dd>
+    <dt>리플 제거</dt><dd>최소 60 dB, 일반 72 dB (120 Hz, COUT 22 µF 탄탈, 1 A, VIN 6.3 V)</dd>
+    <dt>온도</dt><dd>접합 온도: 제어부 0~125 °C, 파워 트랜지스터 0~150 °C (차량용 아님)</dd>
+    <dt>패키지</dt><dd>SOT-223, TO-252, SO-8</dd>
   </dl>
 
   <h2>절대 최대 정격</h2>
   <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-    <tbody><tr><td>[전원 전압]</td><td></td><td></td><td>V</td><td></td></tr></tbody></table>
+    <tbody>
+      <tr><td>입력 전압</td><td></td><td>15</td><td>V</td><td></td></tr>
+      <tr><td>소비 전력</td><td></td><td>내부 제한</td><td></td><td></td></tr>
+      <tr><td>동작 접합 온도 (제어부)</td><td>0</td><td>125</td><td>°C</td><td></td></tr>
+      <tr><td>동작 접합 온도 (파워 트랜지스터)</td><td>0</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>
+      <tr><td>리드 온도 (25 s)</td><td></td><td>265</td><td>°C</td><td></td></tr>
+    </tbody></table>
 
   <h2>권장 동작 조건</h2>
   <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-    <tbody><tr><td>[동작 전압]</td><td></td><td></td><td></td><td>V</td></tr><tr><td>[동작 온도]</td><td>-40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
+    <tbody>
+      <tr><td>입력 전압 (규격 조건)</td><td>4.75</td><td></td><td>12</td><td>V</td></tr>
+      <tr><td>출력 전류</td><td>0</td><td></td><td>1</td><td>A</td></tr>
+      <tr><td>접합 온도 (연속 동작)</td><td>0</td><td></td><td>125</td><td>°C</td></tr>
+    </tbody></table>
 
   <h2>핀 배치</h2>
+  <p>SOT-223 (3핀). TO-252는 탭이 출력. SO-8 핀 번호는 읽은 사본에서 확정하지 못했습니다(원본 그림 확인).</p>
   <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-    <tbody><tr><td>1</td><td></td><td></td></tr></tbody></table>
+    <tbody>
+      <tr><td>1</td><td>GND/ADJ</td><td>접지 (가변형은 Adjust)</td></tr>
+      <tr><td>2</td><td>VOUT</td><td>출력</td></tr>
+      <tr><td>3</td><td>VIN</td><td>입력</td></tr>
+    </tbody></table>
 
   <h2>응용 회로 · 주변 부품</h2>
-  <ul><li>[디커플링·바이패스 커패시터 값과 위치]</li><li>[외부 저항·인덕터 선정식]</li></ul>
+  <ul>
+    <li>출력: 22 µF 고체 탄탈이면 모든 동작 조건에서 안정. 용량을 키우면 안정성·과도 응답이 좋아집니다. 입력 커패시터 값과 ESR 범위는 문서에 명시 없음.</li>
+    <li>가변형: VOUT = 1.25 V × (1 + R2/R1) + IADJ × R2, IADJ 약 50 µA, 최소 부하 10 mA. ADJ 바이패스 임피던스는 리플 주파수에서 R1(일반 100~200 Ω)보다 작게 (R1 = 100 Ω에서 120 Hz 약 13 µF, 10 kHz 0.16 µF). ADJ를 바이패스하면 출력 커패시터 요구가 커집니다.</li>
+    <li>보호 다이오드: 입력에 크로바 회로가 있거나 큰 출력 커패시터(1000~5000 µF)가 입력 단락을 겪을 수 있으면 출력→입력 다이오드 추가.</li>
+  </ul>
 
   <h2>패키지 · 열</h2>
-  <p>[패키지 치수, 노출 패드 연결, θJA/θJC]</p>
+  <p>θJC 15 °C/W. θJA: SOT-223 90 °C/W (뒷면 구리 포함, 실장에 따라 46~90 °C/W 이상), TO-252 80 °C/W, SO-8 160 °C/W. 1/16" FR-4, 1 oz 구리에서 상·하면 각 2500 mm²이면 약 45 °C/W, 상면 100 mm² + 뒷면 2500 mm²이면 59 °C/W. 열 차단은 감지점 165 °C. 연속 동작은 TJ 125 °C 이하로. PD = (VIN - VOUT) × IOUT.</p>
 
   <h2>설계 메모</h2>
-  <ul><li>[이 부품을 고를 때·배치할 때 주의할 점]</li><li>[대체 부품]</li></ul>
+  <ul>
+    <li>5 V → 3.3 V, 1 A이면 손실 1.7 W. SOT-223에서는 넓은 구리 없이는 불가능하므로 실제 전류를 계산해 보세요.</li>
+    <li>접합 온도 하한이 0 °C인 상용 부품입니다. 차량 ECU 본체 전원에는 AEC-Q100 LDO를 쓰세요.</li>
+    <li>시중의 "AMS1117"은 여러 회사의 호환품이 많고(예: Slkor 판은 VIN 최대 30 V, 드롭아웃 1.4 V 등) 정격이 다릅니다. 구매처 제조사 데이터시트를 확인하세요. AMS의 AMS1117A는 별도 품번입니다.</li>
+  </ul>
 </article>
 </body>
 </html>

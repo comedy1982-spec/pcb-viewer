@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MSPM0G3507-Q1 · Automotive 80-MHz Cortex-M0+ MCU</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MSPM0G3507-Q1" data-mfr="TI" data-cat="MCU" data-price="1.5" data-status="done" data-src="https://www.ti.com/document-viewer/lit/html/SLASF88C/GUID-18BBE2F6-28D4-4530-A7D5-C696DECE7901">
+  <h1>MSPM0G3507-Q1</h1>
+  <p class="meta">TI · MCU · 차량용 Arm Cortex-M0+ 80 MHz, 128 KB 플래시, CAN-FD · 참고 단가 약 $1.5 (추정)</p>
+  <p class="meta">원본: <a href="https://www.ti.com/document-viewer/lit/html/SLASF88C/GUID-18BBE2F6-28D4-4530-A7D5-C696DECE7901" target="_blank" rel="noopener">데이터시트 (TI 문서 뷰어)</a> · <a href="https://www.ti.com/product/MSPM0G3507-Q1" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=MSPM0G3507-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLASF88C (2023-10, rev. 2025-09) — MSPM0G3505/3506/3507-Q1 공용</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>CPU</dt><dd>Arm Cortex-M0+ (MPU), 최대 80 MHz, 수학 가속기 (DIV, SQRT, MAC, TRIG), 7채널 DMA</dd>
+    <dt>메모리</dt><dd>플래시 128 KB (ECC), SRAM 32 KB (패리티). 패밀리: G3505 32 KB/16 KB, G3506 64 KB/32 KB</dd>
+    <dt>전원</dt><dd>VDD 1.62 V ~ 3.6 V (절대 최대 4.1 V)</dd>
+    <dt>아날로그</dt><dd>12-bit 4 Msps SAR ADC ×2 (외부 채널 최대 17, 하드웨어 평균 250 ksps 에서 14-bit 유효), 12-bit 1 Msps DAC, 고속 비교기 ×3 (8-bit 기준 DAC, 32 ns), 제로드리프트 초퍼 OPA ×2 (PGA 최대 32×), GPAMP ×1, VREF 1.4/2.5 V, 온도 센서</dd>
+    <dt>통신</dt><dd>CAN 2.0 A/B + CAN-FD ×1, UART ×4 (1개 LIN 지원), I²C ×2 (FM+ 1 Mbit/s), SPI ×2 (1개 32 Mbit/s)</dd>
+    <dt>타이머</dt><dd>7개, PWM 최대 22채널 (상보 출력 고급 타이머 2개), 윈도 WDT ×2, RTC</dd>
+    <dt>클럭</dt><dd>SYSOSC 4–32 MHz ±1.2 %, PLL 80 MHz, LFOSC 32 kHz ±3 %, HFXT 4–48 MHz, LFXT 32 kHz</dd>
+    <dt>저전력</dt><dd>RUN 101 µA/MHz, SLEEP 40 µA/MHz, STOP 190 µA (4 MHz), STANDBY 1.5 µA, SHUTDOWN 80 nA</dd>
+    <dt>보안 / 안전</dt><dd>CRC-16/32, TRNG, AES 128/256. ISO 26262 ASIL B 인증 (제품 페이지)</dd>
+    <dt>등급</dt><dd>AEC-Q100 Grade 1, TA −40 ~ 125 °C</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VDD</td><td>−0.3</td><td>4.1</td><td>V</td><td></td></tr>
+    <tr><td>입력 전압, 5 V 허용 오픈드레인 핀 (ODIO)</td><td>−0.3</td><td>5.5</td><td>V</td><td></td></tr>
+    <tr><td>입력 전압, 일반 핀</td><td>−0.3</td><td>VDD + 0.3 (≤ 4.1)</td><td>V</td><td></td></tr>
+    <tr><td>VDD 유입 / VSS 유출 전류</td><td></td><td>80 / 100</td><td>mA</td><td>TJ ≤ 130 °C / ≤ 90 °C. VDD = 1.62 V 에서는 ≤ 20 mA</td></tr>
+    <tr><td>핀 전류 SDIO, HSIO</td><td></td><td>6</td><td>mA</td><td>소스/싱크</td></tr>
+    <tr><td>핀 전류 HDIO</td><td></td><td>20</td><td>mA</td><td>소스/싱크</td></tr>
+    <tr><td>핀 전류 ODIO</td><td></td><td>20</td><td>mA</td><td>싱크</td></tr>
+    <tr><td>다이오드 전류 (임의 핀)</td><td>−2</td><td>2</td><td>mA</td><td>PA21 은 주입 전류 금지</td></tr>
+    <tr><td>TA</td><td>−40</td><td>125</td><td>°C</td><td></td></tr>
+    <tr><td>TJ</td><td>−40</td><td>130</td><td>°C</td><td></td></tr>
+    <tr><td>Tstg</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <p class="todo">권장 동작 조건 표(7.3) 원문은 읽지 못함 — 아래는 Features 기준. 데이터시트 확인 필요.</p>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VDD</td><td>1.62</td><td></td><td>3.6</td><td>V</td></tr>
+    <tr><td>CPU 클럭</td><td></td><td></td><td>80</td><td>MHz</td></tr>
+    <tr><td>TA</td><td>−40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>MPN 에 패키지 접미사가 없으므로 패키지별 핀 배치는 데이터시트 6장 참조. 패키지 (모두 0.5 mm 피치):</p>
+  <table><thead><tr><th>패키지</th><th>핀</th><th>크기</th></tr></thead><tbody>
+    <tr><td>LQFP (PM)</td><td>64</td><td>12 × 12 mm — GPIO 60</td></tr>
+    <tr><td>LQFP (PT)</td><td>48</td><td>9 × 9 mm</td></tr>
+    <tr><td>VQFN (RGZ)</td><td>48</td><td>7 × 7 mm</td></tr>
+    <tr><td>VQFN (RHB)</td><td>32</td><td>5 × 5 mm</td></tr>
+    <tr><td>VSSOP (DGS32)</td><td>32</td><td>8.1 × 4.9 mm</td></tr>
+    <tr><td>VSSOP (DGS28)</td><td>28</td><td>7.1 × 4.9 mm</td></tr>
+  </tbody></table>
+  <p>핀 그룹: 전원 VDD/VSS, GPIO 24/28/44/60 (패키지별) — 표준 SDIO, 고속 HSIO, 20 mA 고구동 HDIO ×2, 5 V 허용 오픈드레인 ODIO ×2; ADC 외부 채널 11/16/17; HFXT/LFXT 핀; CAN TX/RX, UART/I²C/SPI 는 핀 멀티플렉싱. PA21 은 내부 시험용 제약 있음.</p>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>VDD 디커플링·VCORE 커패시터·NRST 회로 값은 데이터시트 확인 필요 (본 페이지에서 미확인).</li>
+    <li>CAN-FD 사용 시 외부 트랜시버 (예: TCAN1043-Q1 등) 필요 — MCU 는 프로토콜 컨트롤러만 내장.</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <table><thead><tr><th>패키지</th><th>RθJA</th><th>RθJC(top)</th><th>RθJB</th><th>ψJT</th><th>RθJC(bot)</th></tr></thead><tbody>
+    <tr><td>LQFP-64 (PM)</td><td>61.4</td><td>21.9</td><td>32.8</td><td>1.8</td><td>N/A</td></tr>
+    <tr><td>LQFP-48 (PT)</td><td>70.7</td><td>27.3</td><td>34.9</td><td>2.2</td><td>N/A</td></tr>
+    <tr><td>VQFN-48 (RGZ)</td><td>29.9</td><td>20.5</td><td>12.3</td><td>0.4</td><td>4.1</td></tr>
+    <tr><td>VQFN-32 (RHB)</td><td>33.7</td><td>24.5</td><td>14.0</td><td>0.4</td><td>4.1</td></tr>
+    <tr><td>VSSOP-32 (DGS32)</td><td>69.1</td><td>24.5</td><td>33.4</td><td>0.7</td><td>N/A</td></tr>
+    <tr><td>VSSOP-28 (DGS28)</td><td>74.5</td><td>34.3</td><td>36.7</td><td>2.3</td><td>N/A</td></tr>
+  </tbody></table>
+  <p>단위 °C/W. TJ 최대 130 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>TJ 절대 최대가 130 °C 로 낮음 — TA 125 °C 환경에서는 자기 발열 여유가 작으므로 저열저항 VQFN 패키지 권장.</li>
+    <li>VDD 는 3.3 V 계통 전용 (최대 4.1 V) — 5 V 신호는 ODIO 2핀만 허용.</li>
+    <li>MPN 에 패키지·온도 접미사가 없어 풋프린트 확정 불가 — TI 주문 코드(패키지 포함)로 지정 필요.</li>
+  </ul>
+</article>
+</body>
+</html>

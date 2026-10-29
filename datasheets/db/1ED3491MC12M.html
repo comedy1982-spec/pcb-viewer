@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1ED3491MC12M · Isolated Single-Channel Gate Driver 9 A</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="1ED3491MC12M" data-mfr="Infineon" data-cat="게이트 드라이버" data-price="" data-status="done" data-src="https://www.infineon.com/assets/row/public/documents/24/49/infineon-1ed34x1mx12m-datasheet-cn.pdf">
+  <h1>1ED3491MC12M</h1>
+  <p class="meta">Infineon · 게이트 드라이버 · EiceDRIVER 1ED-X3 Analog 강화 절연 단채널 게이트 드라이버, 9 A, DESAT · 소프트 오프 · 클램프 드라이버</p>
+  <p class="meta">원본: <a href="https://www.infineon.com/assets/row/public/documents/24/49/infineon-1ed34x1mx12m-datasheet-cn.pdf" target="_blank" rel="noopener">데이터시트 PDF (중문판)</a> · <a href="https://octopart.com/search?q=1ED3491MC12M" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 1ED34x1Mc12M datasheet Rev 1.20, 2025-08-07 (중문 번역판, 영문판이 우선)</p>
+
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>단채널 절연 게이트 드라이버 (IGBT 650–2300 V, SiC/Si MOSFET), 분리 출력 ON/OFF</dd>
+    <dt>출력 피크 전류</dt><dd>소스 11 A typ (7.9 A min), 싱크 7.5 A typ (6.0 A min), 100 nF 부하</dd>
+    <dt>보호</dt><dd>DESAT (임계 9.18 V typ), 조정형 소프트 오프 (44–699 mA), 외부 MOSFET용 CLAMPDRV, VCC1/VCC2 UVLO, 과열 차단 160 °C</dd>
+    <dt>절연</dt><dd>강화 절연, IEC 60747-17: VIORM 1767 Vpk, VIOTM 8000 Vpk / UL 1577 VISO 5700 Vrms 60 s</dd>
+    <dt>CMTI</dt><dd>200 kV/µs</dd>
+    <dt>전파 지연</dt><dd>tPDON 244 ns, tPDOFF 236 ns typ, 소자 간 매칭 tPDD 30 ns max</dd>
+    <dt>전원</dt><dd>VCC1 3.0–5.5 V, VCC2 13–25 V, VEE2 -25–0 V (VCC2−VEE2 ≤ 35 V)</dd>
+    <dt>온도</dt><dd>TA -40 ~ 125 °C</dd>
+    <dt>등급</dt><dd>산업용 (JEDEC47/20/22). AEC-Q100 표기 없음</dd>
+    <dt>패키지</dt><dd>PG-DSO-16, 연면·공간 거리 &gt;8 mm, OPN 1ED3491MC12MXUMA1</dd>
+  </dl>
+
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VOFFSET (입출력 간)</td><td></td><td>2300</td><td>V</td><td></td></tr>
+    <tr><td>VCC1</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>로직 핀 (IN, RDYC, FLT_N, ADJA, ADJB)</td><td>-0.3</td><td>6.5</td><td>V</td><td></td></tr>
+    <tr><td>오픈 드레인 출력 전류 (RDYC, FLT_N)</td><td></td><td>10</td><td>mA</td><td></td></tr>
+    <tr><td>VCC2</td><td>-0.3</td><td>40</td><td>V</td><td>GND2 기준</td></tr>
+    <tr><td>VEE2</td><td>-40</td><td>0.3</td><td>V</td><td></td></tr>
+    <tr><td>VCC2 − VEE2</td><td></td><td>40</td><td>V</td><td></td></tr>
+    <tr><td>DESAT</td><td>-0.3</td><td>VCC2+0.3</td><td>V</td><td></td></tr>
+    <tr><td>CLAMP</td><td>VEE2−0.3</td><td>VCC2+0.3</td><td>V</td><td>CLAMP 전류 2.4 A (t &lt; 5 µs)</td></tr>
+    <tr><td>ON, OFF</td><td>VEE2−0.3</td><td>Vmax2+0.3</td><td>V</td><td></td></tr>
+    <tr><td>접합 온도 Tj</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>보관 온도</td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
+    <tr><td>소비 전력 (출력측)</td><td></td><td>700</td><td>mW</td><td>25 °C, 65 °C 초과 시 8 mW/°C 감소 / 입력측 100 mW</td></tr>
+    <tr><td>ESD</td><td></td><td>2 / 0.5</td><td>kV</td><td>HBM / CDM</td></tr>
+  </tbody></table>
+
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC1</td><td>3.0</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>VCC2</td><td>13</td><td></td><td>25</td><td>V</td></tr>
+    <tr><td>VEE2</td><td>-25</td><td></td><td>0</td><td>V</td></tr>
+    <tr><td>VCC2 − VEE2</td><td>13</td><td></td><td>35</td><td>V</td></tr>
+    <tr><td>주위 온도</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+    <tr><td>스위칭 주파수</td><td></td><td></td><td>250</td><td>kHz</td></tr>
+  </tbody></table>
+
+  <h2>핀 배치</h2>
+  <p>PG-DSO-16</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>GND1</td><td>입력측 GND</td></tr>
+    <tr><td>2</td><td>VCC1</td><td>입력측 전원 (3.3 V / 5 V)</td></tr>
+    <tr><td>3</td><td>ADJA</td><td>파라미터 A: 소프트 오프 전류 설정 저항</td></tr>
+    <tr><td>4</td><td>ADJB</td><td>파라미터 B: DESAT 블랭킹·필터 시간 설정 저항</td></tr>
+    <tr><td>5</td><td>RDYC</td><td>Ready 출력(H 액티브)/폴트 클리어·소프트 오프 입력(L), 오픈 드레인</td></tr>
+    <tr><td>6</td><td>FLT_N</td><td>폴트 출력(L 액티브)/소프트 오프 입력, 오픈 드레인</td></tr>
+    <tr><td>7</td><td>IN</td><td>비반전 입력 (40 kΩ 풀다운)</td></tr>
+    <tr><td>8</td><td>GND1</td><td>입력측 GND</td></tr>
+    <tr><td>9</td><td>VEE2</td><td>출력측 음전원</td></tr>
+    <tr><td>10</td><td>CLAMPDRV</td><td>외부 클램프 N-MOSFET 구동 출력</td></tr>
+    <tr><td>11</td><td>OFF</td><td>싱크 출력 (턴오프)</td></tr>
+    <tr><td>12</td><td>ON</td><td>소스 출력 (턴온), 클램프 감지 입력 겸용</td></tr>
+    <tr><td>13</td><td>DESAT</td><td>불포화 검출 입력 (충전 전류 500 µA)</td></tr>
+    <tr><td>14</td><td>VCC2</td><td>출력측 양전원</td></tr>
+    <tr><td>15</td><td>GND2</td><td>출력측 신호 GND (이미터/소스 기준)</td></tr>
+    <tr><td>16</td><td>VEE2</td><td>출력측 음전원</td></tr>
+  </tbody></table>
+
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>RDYC, FLT_N: VCC1으로 외부 풀업 (일반 2.2 kΩ).</li>
+    <li>ADJA / ADJB: 1% E96 저항 1.33–28.0 kΩ로 소프트 오프 전류 · DESAT 블랭킹(400/650/1150 ns)·필터 시간(1.575–3.975 µs) 선택. ADJB를 VCC1에 묶으면 블랭킹 400 ns · 필터 225 ns 기본값, ADJA를 GND1에 묶으면 기본 소프트 오프, ADJA를 VCC1에 묶으면 드라이버 동작 금지.</li>
+    <li>DESAT: 임계 9.18 V typ (8.88–9.48 V), 충전 전류 500 µA typ. 외부 직렬 저항을 키우면 실효 임계가 (전류 × 저항)만큼 낮아짐.</li>
+    <li>디커플링: VCC2–GND2, GND2–VEE2, VCC1–GND1 각각 핀 가까이 배치 (데이터시트에 용량 값 미기재).</li>
+  </ul>
+
+  <h2>패키지 · 열</h2>
+  <p>PG-DSO-16, 연면/공간 거리 &gt;8 mm, CTI &gt;400. RthJA 122 K/W (TA 65 °C, PD,OUT 400 mW, PD,IN 50 mW, 4층 기판), ΨJtop 8 K/W. 최대 방열을 위해 핀 1·8·9·16을 그라운드 플레인에 연결. Tj max 150 °C.</p>
+
+  <h2>설계 메모</h2>
+  <ul>
+    <li>배치 파일 설명의 "ASC(능동 단락)" 기능은 데이터시트에 없음 — 고장 시 턴오프 수단은 소프트 오프(ADJA)뿐. 인버터 ASC는 MCU/외부 로직으로 구현해야 함.</li>
+    <li>산업용 부품(AEC-Q100 표기 없음). 차량 트랙션 인버터용이면 자동차 등급 EiceDRIVER 계열 검토 필요.</li>
+    <li>MC(강화, IEC 60747-17) / MU(UL 1577만) 접미사 차이 주의. 3 A·6 A 변형(1ED3431/1ED3461)과 핀 호환.</li>
+    <li>CLAMPDRV는 외부 N-MOSFET 게이트를 구동(클램프 전류 최대 20 A 수준, MOSFET에 따라).</li>
+  </ul>
+</article>
+</body>
+</html>

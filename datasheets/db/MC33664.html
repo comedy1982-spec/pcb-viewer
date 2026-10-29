@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MC33664 · Isolated network high-speed transceiver (TPL)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="MC33664" data-mfr="NXP" data-cat="통신" data-price="" data-status="done" data-src="https://nxp.com/docs/en/data-sheet/MC33664.pdf">
+  <h1>MC33664</h1>
+  <p class="meta">NXP · 통신 · BMS 셀 모니터(TPL) 트랜스포머 절연 2 Mbit/s 트랜시버, 듀얼 SPI</p>
+  <p class="meta">원본: <a href="https://nxp.com/docs/en/data-sheet/MC33664.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://octopart.com/search?q=MC33664ATL1EG" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 MC33664 Rev. 5.0 (2024-08-27, Product data sheet)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+    <dt>기능</dt><dd>MCU SPI ↔ 트랜스포머 결합 절연 네트워크(TPL) 변환, 송신 SPI_0 / 수신 SPI_1 이중 구조</dd>
+    <dt>데이터율</dt><dd>2.0 Mbit/s, 버스 펄스 4.0 MHz typ</dd>
+    <dt>전원</dt><dd>VCC5 4.75–5.5 V 완전 동작 (4.5–4.75 V 제한 동작), VIO 3.1–5.5 V (3.3/5 V 로직)</dd>
+    <dt>전류</dt><dd>송신 연속 40 mA typ (50 Ω), 수신 3.0 mA typ; 슬립 VCC5 30 µA typ / 50 µA max</dd>
+    <dt>버스 출력</dt><dd>RDTX± 차동 2.5 V typ (2.2–3.0 V, RL 50 Ω), 전류 제한 65–300 mA</dd>
+    <dt>웨이크업</dt><dd>Sleep→Normal tREADY 최대 100 µs, INTB 웨이크업 출력</dd>
+    <dt>등급·온도</dt><dd>차량용 인증·ISO 26262 ASIL 분류 명시 (AEC-Q100 등급 표기 없음), Tamb -40~125 °C</dd>
+    <dt>패키지</dt><dd>SO16 (SOT109-5), 9.9 × 3.9 × 1.75 mm, 1.27 mm 피치 — MC33664ATL1EG (릴 R2)</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>
+    <tr><td>VIO, VCC5</td><td>-0.3</td><td>7.0</td><td>V</td><td></td></tr>
+    <tr><td>EN, INTB, SPI 핀</td><td>-0.3</td><td>VIO + 0.3</td><td>V</td><td></td></tr>
+    <tr><td>RDTX+, RDTX-</td><td>-10</td><td>10</td><td>V</td><td></td></tr>
+    <tr><td>ESD HBM</td><td></td><td>±2000</td><td>V</td><td>RDTX± ±4000 V</td></tr>
+    <tr><td>ESD CDM</td><td></td><td>±500</td><td>V</td><td>코너 핀 ±750 V</td></tr>
+    <tr><td>ESD MM</td><td></td><td>±200</td><td>V</td><td></td></tr>
+    <tr><td>저장 온도</td><td>-55</td><td>150</td><td>°C</td><td>리플로 피크 260 °C</td></tr>
+    <tr><td>접합 온도</td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
+  </tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody>
+    <tr><td>VCC5 완전 동작</td><td>4.75</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>VCC5 제한 동작</td><td>4.5</td><td></td><td>4.75</td><td>V</td></tr>
+    <tr><td>VIO</td><td>3.1</td><td></td><td>5.5</td><td>V</td></tr>
+    <tr><td>SCLK_TX / SCLK_RX</td><td>1.9</td><td>2.0</td><td>2.1</td><td>MHz</td></tr>
+    <tr><td>주위 온도</td><td>-40</td><td></td><td>125</td><td>°C</td></tr>
+  </tbody></table>
+  <h2>핀 배치</h2>
+  <p>SO16 (SOT109-5)</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody>
+    <tr><td>1</td><td>SCLK_TX</td><td>송신 SPI 클록 (MCU→)</td></tr>
+    <tr><td>2</td><td>CSB_TX</td><td>송신 SPI 칩 셀렉트</td></tr>
+    <tr><td>3</td><td>DATA_TX</td><td>송신 SPI 데이터</td></tr>
+    <tr><td>4</td><td>EN</td><td>Sleep/Normal 제어</td></tr>
+    <tr><td>5</td><td>SCLK_RX</td><td>수신 SPI 클록 출력 (→MCU, 슬레이브 SPI)</td></tr>
+    <tr><td>6</td><td>CSB_RX</td><td>수신 칩 셀렉트 출력</td></tr>
+    <tr><td>7</td><td>DATA_RX</td><td>수신 데이터 출력</td></tr>
+    <tr><td>8</td><td>INTB</td><td>웨이크업 인터럽트 출력</td></tr>
+    <tr><td>9</td><td>VIO</td><td>디지털 3.3/5 V 전원</td></tr>
+    <tr><td>10</td><td>DGND</td><td>디지털 GND</td></tr>
+    <tr><td>11</td><td>GNDT</td><td>GND에 연결</td></tr>
+    <tr><td>12</td><td>GNDS</td><td>기판 GND, GND에 연결</td></tr>
+    <tr><td>13</td><td>RDTX-</td><td>트랜스포머 버스 -</td></tr>
+    <tr><td>14</td><td>RDTX+</td><td>트랜스포머 버스 +</td></tr>
+    <tr><td>15</td><td>AGND</td><td>아날로그 GND</td></tr>
+    <tr><td>16</td><td>VCC5</td><td>5.0 V 전원</td></tr>
+  </tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+    <li>절연 트랜스포머 권장: SUMIDA ESMIT-4180/C, PULSE HM2102NL, HM2103NL (1:1).</li>
+    <li>종단 저항 150 Ω, 트랜스포머 1차측 가까이 스텁 없이 배치.</li>
+    <li>트랜스포머 1차측 ESD: PESD5V0F1BL 또는 동등품.</li>
+    <li>예시 회로 수동 소자: 4.7 kΩ ×2, 2.2 µF, 0.1 µF ×2, 1000 pF, 68 pF ×2, 100 pF (DNP) — 각 소자의 연결 위치는 데이터시트 그림 확인.</li>
+    <li>VCC5–AGND, VIO–DGND 디커플링 루프를 짧게, 비아 없이.</li>
+    <li>내부 풀다운 100 kΩ typ (EN, SCLK_TX, DATA_TX), 풀업 100 kΩ typ (CSB_TX).</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>SO16, 노출 패드 없음. Rth(j-a) 125 °C/W (1s), Rth(j-pcb) 62 °C/W (2s2p). Tj 최대 150 °C.</p>
+  <h2>설계 메모</h2>
+  <ul>
+    <li>RDTX± 는 연속 GND 플레인 위 차동 배선, 비아·스텁 금지. BCI 성능을 위해 트랜스포머 2차측 배선 아래·주변 GND 제거.</li>
+    <li>MCU는 송신용 SPI 마스터 1개 + 수신용 SPI 슬레이브 1개 필요.</li>
+    <li>절연 내압 수치는 데이터시트에 없음 — 트랜스포머 사양으로 결정.</li>
+    <li>주문 품번은 MC33664ATL1EG.</li>
+  </ul>
+</article>
+</body>
+</html>
