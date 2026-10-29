@@ -27,3 +27,11 @@ test('part ranking: datasheet-checked LDO / buck figures and the external parts 
   const parts = NEWPROJ.build(P).parts;
   assert.ok(parts.some(c => c.mpn === 'TPS54331QDRQ1') && parts.some(c => c.mpn === 'MBRA340T3G'), 'buck keeps its catch diode');
 });
+
+test('part candidates: orderable codes instead of family names, nonexistent numbers replaced', () => {
+  const all = Object.values(PARTRANK.C).flat().map(p => p.mpn);
+  for (const bad of ['DRV8353RS-Q1', 'TCAN1043-Q1', 'GD3000', 'A4964', 'TPS1H100-Q1', 'MSPM0G3507-Q1']) assert.ok(!all.includes(bad), `${bad} is not an orderable code`);
+  const drv = Object.values(PARTRANK.C).flat().find(p => p.mpn === 'DRV8343SPHPRQ1');
+  assert.ok(drv && drv.family === 'DRV8353RS-Q1' && drv.spec.pkg === 'HTQFP-48' && drv.spec.v === 60);
+  assert.ok(Object.values(PARTRANK.C).flat().some(p => p.mpn === 'MC33GD3000EPR2' && p.spec.pkg === 'QFN-56'));
+});

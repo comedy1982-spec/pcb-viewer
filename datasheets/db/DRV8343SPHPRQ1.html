@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRV8343SPHPRQ1 · Automotive 3-phase smart gate driver (SPI)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<article data-mpn="DRV8343SPHPRQ1" data-mfr="Texas Instruments" data-cat="게이트 드라이버" data-price="6.5" data-status="done" data-src="https://ti.com/jp/lit/gpn/drv8343-q1" data-alias="DRV8343*">
+  <h1>DRV8343SPHPRQ1</h1>
+  <p class="meta">Texas Instruments · 게이트 드라이버 · Automotive 3-phase smart gate driver with SPI and 3 current-sense amplifiers · 참고 단가 약 $6.5 (추정)</p>
+  <p class="meta">원본: <a href="https://ti.com/jp/lit/gpn/drv8343-q1" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.ti.com/document-viewer/DRV8343-Q1/datasheet" target="_blank" rel="noopener">제품 페이지 (문서 뷰어)</a> · <a href="https://octopart.com/search?q=DRV8343SPHPRQ1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SLVSE12A (2018-03, 개정 2019-04)</p>
+  <h2>핵심 사양</h2>
+  <dl>
+  <dt>기능</dt><dd>3상 하프브리지 게이트 드라이버 (N-MOSFET 하이 3 + 로우 3). S = SPI 인터페이스 버전, H = 하드웨어 설정 버전 (DRV8343HPHPRQ1)</dd>
+  <dt>전원 VM</dt><dd>5.5–50 V 연속, 60 V 과도 (abs max 65 V)</dd>
+  <dt>게이트 구동</dt><dd>조절형 슬루율: 소스 1.5 mA–1 A, 싱크 3 mA–2 A 피크; 차지펌프로 100% 듀티 지원</dd>
+  <dt>전류 센스</dt><dd>내장 CSA 3채널, 게인 5/10/20/40 V/V, 양방향·단방향</dd>
+  <dt>PWM 모드</dt><dd>6x, 3x, 1x, 독립 모드; 3.3 V / 5 V 로직 입력, fPWM ≤ 200 kHz</dd>
+  <dt>부가 기능</dt><dd>3.3 V 30 mA LDO (DVDD), 차지펌프 출력으로 역접속 보호 MOSFET 구동 가능</dd>
+  <dt>보호</dt><dd>VM UVLO, 차지펌프 UVLO, SHT_BAT, SHT_GND, MOSFET 과전류(VDS), 게이트 드라이버 폴트, 과열 경고·셧다운, nFAULT</dd>
+  <dt>등급</dt><dd>AEC-Q100 Grade 1 (TA −40–125 °C)</dd>
+  <dt>패키지</dt><dd>HTQFP-48 (PHP), 써멀 패드</dd>
+  </dl>
+  <h2>절대 최대 정격</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>VM 전원</td><td>−0.3</td><td>65</td><td>V</td><td></td></tr><tr><td>GND 핀 간 전압차</td><td>−0.3</td><td>0.3</td><td>V</td><td></td></tr><tr><td>VDRAIN</td><td>−0.3</td><td>65</td><td>V</td><td></td></tr><tr><td>VM − VDRAIN</td><td>−10</td><td>10</td><td>V</td><td></td></tr><tr><td>CPH, VCP</td><td>−0.3</td><td>VVM + 13.5</td><td>V</td><td></td></tr><tr><td>CPL</td><td>−0.3</td><td>VVM</td><td>V</td><td></td></tr><tr><td>DVDD</td><td>−0.3</td><td>3.8</td><td>V</td><td></td></tr><tr><td>디지털 핀 (CAL, ENABLE, INHx, INLx, nFAULT, nSCS, SCLK, SDI, SDO)</td><td>−0.3</td><td>5.75</td><td>V</td><td></td></tr><tr><td>GHx 연속</td><td>−5</td><td>VVCP + 0.5</td><td>V</td><td>VM 65 V 사용 시 −2 V로 제한 (VM ≤ 60 V에서 −5 V)</td></tr><tr><td>GHx 200 ns 과도</td><td>−7</td><td>VVCP + 0.5</td><td>V</td><td></td></tr><tr><td>GHx − SHx</td><td>−0.3</td><td>13.5</td><td>V</td><td></td></tr><tr><td>SHx, DLx 연속 (VM / VDRAIN 기준)</td><td>−5</td><td>VVM + 5 / VDRAIN + 5</td><td>V</td><td></td></tr><tr><td>SHx, DLx 200 ns 과도</td><td>−7</td><td>VVM + 7 / VDRAIN + 7</td><td>V</td><td></td></tr><tr><td>GLx 연속</td><td>−0.5</td><td>15</td><td>V</td><td></td></tr><tr><td>SLx 연속 / 200 ns 과도</td><td>−1 / −3</td><td>1 / 3</td><td>V</td><td></td></tr><tr><td>SNx, SPx 연속 / 200 ns 과도</td><td>−1 / −3</td><td>1 / 3</td><td>V</td><td></td></tr><tr><td>VREF</td><td>−0.3</td><td>5.75</td><td>V</td><td></td></tr><tr><td>SOx</td><td>−0.3</td><td>VVREF + 0.3</td><td>V</td><td></td></tr><tr><td>SOx 출력 전류</td><td>0</td><td>8</td><td>mA</td><td></td></tr><tr><td>VSDO</td><td>−0.3</td><td>5.75</td><td>V</td><td></td></tr><tr><td>SDO 출력 전류</td><td>0</td><td>10</td><td>mA</td><td></td></tr><tr><td>nFAULT 풀업 전압 / 전류</td><td>−0.3 / 0</td><td>5.75 / 10</td><td>V / mA</td><td></td></tr><tr><td>게이트 소스/싱크 전류 (GHx, GLx)</td><td></td><td>내부 제한</td><td>A</td><td></td></tr><tr><td>동작 접합 온도 TJ</td><td>−40</td><td>150</td><td>°C</td><td></td></tr><tr><td>보관 온도 Tstg</td><td>−65</td><td>150</td><td>°C</td><td></td></tr></tbody></table>
+  <h2>권장 동작 조건</h2>
+  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>VM 연속</td><td>5.5</td><td></td><td>50</td><td>V</td></tr><tr><td>VM 과도 과전압</td><td>5.5</td><td></td><td>60</td><td>V</td></tr><tr><td>로직 입력 (CAL, ENABLE, INHx, INLx, nSCS, SCLK, SDI, VSDO)</td><td>0</td><td></td><td>5.5</td><td>V</td></tr><tr><td>PWM 주파수 fPWM</td><td>0</td><td></td><td>200</td><td>kHz</td></tr><tr><td>하이사이드 평균 게이트 전류 IGATE_HS</td><td>0</td><td></td><td>25</td><td>mA</td></tr><tr><td>로우사이드 평균 게이트 전류 IGATE_LS</td><td>0</td><td></td><td>25</td><td>mA</td></tr><tr><td>DVDD 외부 부하 전류</td><td>0</td><td></td><td>30</td><td>mA</td></tr><tr><td>VREF</td><td>3</td><td></td><td>5.5</td><td>V</td></tr><tr><td>VSDO</td><td>3</td><td></td><td>5.5</td><td>V</td></tr><tr><td>nFAULT 풀업 VOD</td><td>0</td><td></td><td>5.5</td><td>V</td></tr><tr><td>동작 주위 온도 TA</td><td>−40</td><td></td><td>125</td><td>°C</td></tr></tbody></table>
+  <h2>핀 배치</h2>
+  <p>HTQFP-48 (PHP) — DRV8343S (SPI) 버전 핀 배치. H 버전은 SPI 핀 대신 GAIN, IDRIVE, MODE, VDS, nDIAG 등 하드웨어 설정 핀을 가지므로 핀 배치가 다름 (H 핀표는 데이터시트 확인).</p>
+  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1</td><td>CPL</td><td>차지펌프 스위칭 노드 (CFLY CPH–CPL)</td></tr><tr><td>2</td><td>CPH</td><td>차지펌프 스위칭 노드 (CFLY CPH–CPL)</td></tr><tr><td>3</td><td>VCP</td><td>차지펌프 출력, VM으로 바이패스 캡</td></tr><tr><td>4</td><td>VM</td><td>게이트 드라이버 전원, PGND로 바이패스</td></tr><tr><td>5</td><td>VDRAIN</td><td>하이사이드 MOSFET 드레인 센스 (공통 드레인점)</td></tr><tr><td>6</td><td>GHA</td><td>A상 하이사이드 게이트 출력</td></tr><tr><td>7</td><td>SHA</td><td>A상 하이사이드 소스 센스</td></tr><tr><td>8</td><td>DLA</td><td>A상 로우사이드 드레인 센스</td></tr><tr><td>9</td><td>GLA</td><td>A상 로우사이드 게이트 출력</td></tr><tr><td>10</td><td>SLA</td><td>A상 로우사이드 소스 센스</td></tr><tr><td>11</td><td>SPA</td><td>A상 전류 증폭기 입력 (션트 상단)</td></tr><tr><td>12</td><td>SNA</td><td>A상 전류 증폭기 입력 (션트 하단)</td></tr><tr><td>13</td><td>SNB</td><td>B상 전류 증폭기 입력 (션트 하단)</td></tr><tr><td>14</td><td>SPB</td><td>B상 전류 증폭기 입력 (션트 상단)</td></tr><tr><td>15</td><td>SLB</td><td>B상 로우사이드 소스 센스</td></tr><tr><td>16</td><td>GLB</td><td>B상 로우사이드 게이트 출력</td></tr><tr><td>17</td><td>DLB</td><td>B상 로우사이드 드레인 센스</td></tr><tr><td>18</td><td>SHB</td><td>B상 하이사이드 소스 센스</td></tr><tr><td>19</td><td>GHB</td><td>B상 하이사이드 게이트 출력</td></tr><tr><td>20</td><td>GHC</td><td>C상 하이사이드 게이트 출력</td></tr><tr><td>21</td><td>SHC</td><td>C상 하이사이드 소스 센스</td></tr><tr><td>22</td><td>DLC</td><td>C상 로우사이드 드레인 센스</td></tr><tr><td>23</td><td>GLC</td><td>C상 로우사이드 게이트 출력</td></tr><tr><td>24</td><td>SLC</td><td>C상 로우사이드 소스 센스</td></tr><tr><td>25</td><td>SPC</td><td>C상 전류 증폭기 입력 (션트 상단)</td></tr><tr><td>26</td><td>SNC</td><td>C상 전류 증폭기 입력 (션트 하단)</td></tr><tr><td>27</td><td>SOC</td><td>C상 전류 증폭기 출력</td></tr><tr><td>28</td><td>SOB</td><td>B상 전류 증폭기 출력</td></tr><tr><td>29</td><td>SOA</td><td>A상 전류 증폭기 출력</td></tr><tr><td>30</td><td>VREF</td><td>전류 증폭기 전원·기준 입력, AGND로 바이패스</td></tr><tr><td>31</td><td>nFAULT</td><td>폴트 출력 (오픈 드레인, 외부 풀업 필요)</td></tr><tr><td>32</td><td>SDO</td><td>SPI 데이터 출력 (푸시풀, 레벨 = VSDO)</td></tr><tr><td>33</td><td>SDI</td><td>SPI 데이터 입력</td></tr><tr><td>34</td><td>SCLK</td><td>SPI 클록</td></tr><tr><td>35</td><td>nSCS</td><td>SPI 칩 셀렉트 (Low 활성)</td></tr><tr><td>36</td><td>ENABLE</td><td>Low = 슬립, 약 20 µs Low 펄스로 폴트 리셋</td></tr><tr><td>37</td><td>CAL</td><td>High = 증폭기 입력 내부 단락 (캘리브레이션)</td></tr><tr><td>38</td><td>AGND</td><td>아날로그 GND</td></tr><tr><td>39</td><td>DVDD</td><td>3.3 V 레귤레이터 출력 (외부 최대 30 mA), AGND로 바이패스</td></tr><tr><td>40</td><td>VSDO</td><td>SDO 출력 전원 (3.3 V 또는 5 V)</td></tr><tr><td>41</td><td>INHA</td><td>A상 하이사이드 입력</td></tr><tr><td>42</td><td>INLA</td><td>A상 로우사이드 입력</td></tr><tr><td>43</td><td>INHB</td><td>B상 하이사이드 입력</td></tr><tr><td>44</td><td>INLB</td><td>B상 로우사이드 입력</td></tr><tr><td>45</td><td>INHC</td><td>C상 하이사이드 입력</td></tr><tr><td>46</td><td>INLC</td><td>C상 로우사이드 입력</td></tr><tr><td>47</td><td>PGND</td><td>전원 GND</td></tr><tr><td>48</td><td>NC</td><td>무연결</td></tr><tr><td>PAD</td><td>Thermal Pad</td><td>노출 패드, GND에 연결 필수</td></tr></tbody></table>
+  <h2>응용 회로 · 주변 부품</h2>
+  <ul>
+  <li>CFLY (CPH–CPL): 47 nF X5R/X7R, VM 정격</li>
+  <li>CVCP (VCP–VM): 1 µF X5R/X7R, VCP−VM 정격</li>
+  <li>VM–PGND: 0.1 µF + 4.7 µF 세라믹 (X5R/X7R) + 10 µF 초과 전해</li>
+  <li>CVREF (VREF–AGND) 0.1 µF, CDVDD (DVDD–AGND) 1 µF, CVSDO (VSDO–AGND) 0.1 µF (S 버전만)</li>
+  <li>nFAULT 풀업 2.5–10 kΩ (MCU I/O 전원 또는 DVDD)</li>
+  <li>RSENSE (SPx–SNx): 예시 2.5 mΩ 션트</li>
+  <li>세라믹 캡은 동작 전압 극단에서 용량이 최대 50% 감소할 수 있으므로 DC 바이어스 특성 확인</li>
+  </ul>
+  <h2>패키지 · 열</h2>
+  <p>HTQFP-48 (PHP), 써멀 패드는 GND 연결 필수. RθJA 26.5 °C/W, RθJC(top) 16.3 °C/W, RθJC(bot) 1.0 °C/W, RθJB 6.7 °C/W, ψJT 0.2 °C/W, ψJB 6.8 °C/W. TJ 최대 150 °C. 외형 도면 MPQF051B, 써멀 패드 도면 PPTD117D 참조 (패드 치수는 데이터시트 확인 필요).</p>
+  <h2>설계 메모</h2>
+  <ul>
+  <li>VM 5.5 V 동작은 더 높은 VM에서 내려온 경우에만 해당 — 기동 시에는 UVLO 상승 임계값 이상 필요.</li>
+  <li>VM 65 V 근처에서 쓰려면 GHx/SHx 연속 음전압을 −2 V로 제한 (VM ≤ 60 V에서 −5 V 허용). 12 V / 24 V 시스템용 (수명 기준 5.5–50 V).</li>
+  <li>VDRAIN은 하이사이드 MOSFET 공통 드레인점에 연결 — VDS 과전류 검출 기준. VM−VDRAIN은 ±10 V 이내.</li>
+  <li>SLx, SNx/SPx는 ±1 V (연속) 한계 — 로우사이드 소스·션트 루프 인덕턴스를 최소화.</li>
+  <li>평균 게이트 전류 25 mA 한계: Qg × fPWM × (구동 수)가 이를 넘지 않는지 확인.</li>
+  <li>S(SPI)와 H(하드웨어) 버전은 같은 PHP 패키지지만 인터페이스 핀이 달라 회로 공용 불가. 계열 alias DRV8343*.</li>
+  </ul>
+</article>
+</body>
+</html>

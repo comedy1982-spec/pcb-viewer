@@ -576,6 +576,15 @@
       "status": "done",
       "title": "DRV8313PWPR · 2.5 A triple half-bridge motor driver, 60 V"
     },
+    "DRV8343SPHPRQ1": {
+      "file": "datasheets/db/DRV8343SPHPRQ1.html",
+      "mfr": "Texas Instruments",
+      "cat": "게이트 드라이버",
+      "price": 6.5,
+      "status": "done",
+      "alias": "DRV8343*",
+      "title": "DRV8343SPHPRQ1 · Automotive 3-phase smart gate driver (SPI)"
+    },
     "DRV8353RS-Q1": {
       "file": "datasheets/db/DRV8353RS-Q1.html",
       "mfr": "Texas Instruments",
@@ -659,6 +668,15 @@
       "status": "done",
       "alias": "FS26* MFS26* MFS2601AMDA0ADR2 SFS26*",
       "title": "FS2600 · FS26 safety system basis chip, ASIL B/D"
+    },
+    "FS400R07A1E3BOSA1": {
+      "file": "datasheets/db/FS400R07A1E3BOSA1.html",
+      "mfr": "Infineon",
+      "cat": "전력 모듈",
+      "price": null,
+      "status": "stub",
+      "alias": "FS400R07A1E3*",
+      "title": "FS400R07A1E3BOSA1 · HybridPACK 1 650 V 400 A six-pack IGBT module"
     },
     "FS600R10A6P2": {
       "file": "datasheets/db/FS600R10A6P2.html",
