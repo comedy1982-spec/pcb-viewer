@@ -538,13 +538,35 @@ function mkSheet(B,lay,name){
 
 function build(B,files){
   let sheets,auto=false;
-  if(files&&files.length){sheets=files.map(f=>parseKicadSch(f.text,f.name));
+  if(files&&files.length){sheets=[];files.forEach(f=>{if(typeof PADSSCH!=='undefined'&&PADSSCH.isLogic(f.text))PADSSCH.parseLogic(f.text,f.name).forEach(s=>sheets.push(s));else sheets.push(parseKicadSch(f.text,f.name));});
     // order: root sheet (the one that references others) first
     const refd=new Set();sheets.forEach(s=>s.sheets.forEach(x=>refd.add(x.file.split('/').pop())));sheets.sort((a,b)=>(refd.has(a.file.split('/').pop())?1:0)-(refd.has(b.file.split('/').pop())?1:0));}
   else{sheets=autoSchematic(B);auto=true;}
   const c=connect(sheets,B);
   return{sheets,auto,groups:c.groups,matched:c.matched,total:c.total};
 }
-return{parseKicadSch,autoSchematic,connect,build,twoPin,onePin,powerSym,boxSym,finishBB,moveSym};
+/* board from a schematic alone (no PCB file): one footprint per reference with the schematic's nets, packed in rows
+   beside each other — placement and routing happen in the PCB step as for a generated design */
+function boardFrom(files){
+  const sheets=build(null,files).sheets;const nl=SCHEDIT.netlist(sheets,null);const refs=new Map();
+  sheets.forEach(sh=>sh.symbols.forEach(s=>{if(s.power||!s.ref||/^#/.test(s.ref))return;const r=refs.get(s.ref)||{ref:s.ref,val:s.val,fp:s.fp||'',mpn:s.mpn||'',desc:s.desc||'',pins:new Map()};
+    s.pins.forEach(p=>{if(!r.pins.has(String(p.num)))r.pins.set(String(p.num),p.name&&p.name!=='~'?p.name:'');});refs.set(s.ref,r);}));
+  if(!refs.size)throw new Error('회로도에 부품이 없습니다.');
+  const comps=[...refs.values()].sort((a,b)=>a.ref.localeCompare(b.ref,undefined,{numeric:true})).map(r=>{let fp=String(r.fp||'').trim();
+    if(fp&&!PCB.FP[fp]&&typeof FPGEN!=='undefined'){const g=FPGEN.ensure(PCB,fp.split(':').pop(),r.pins.size);if(g)fp=g;}
+    const pins={},pn={};r.pins.forEach((nm,n)=>{const net=nl.pinNet.get(r.ref+'.'+n);if(net)pins[n]=net;if(nm)pn[n]=nm;});
+    const c={ref:r.ref,value:r.val,footprint:fp,side:'top',x:0,y:0,rotation:0,pins,pinNames:pn,mpn:r.mpn,description:r.desc||'회로도에서 가져옴'};
+    if(!PCB.FP[fp])c.pads=[...r.pins.keys()].map((n,i)=>({n,x:(i%2)*2.54,y:Math.floor(i/2)*2.54,w:1.6,h:1.6}));return c;});
+  // shelf-pack by footprint size
+  const probe=PCB.finalize(PCB.fromSpec({board:{width:10,height:10},components:comps.map(c=>Object.assign({},c))}));const sz=new Map(probe.comps.map(c=>[c.ref,[c.bb[2]-c.bb[0],c.bb[3]-c.bb[1],c.x-c.bb[0],c.y-c.bb[1]]]));
+  const area=[...sz.values()].reduce((a,v)=>a+(v[0]+2)*(v[1]+2),0);const W=Math.max(40,Math.ceil(Math.sqrt(area*1.6)));let x=3,y=3,row=0;
+  comps.forEach(c=>{const s=sz.get(c.ref)||[3,3,1.5,1.5];if(x+s[0]>W-3&&x>3){x=3;y+=row+2;row=0;}c.x=+(x+s[2]).toFixed(2);c.y=+(y+s[3]).toFixed(2);x+=s[0]+2;row=Math.max(row,s[1]);});
+  const name=(files[0].name||'schematic').replace(/\.(kicad_sch|txt|asc)$/i,'');
+  const B=PCB.fromSpec({board:{name,width:W,height:Math.ceil(y+row+3),thickness:1.6,corner:1},components:comps});
+  B.source=files.some(f=>typeof PADSSCH!=='undefined'&&PADSSCH.isLogic(f.text))?'PADS Logic 회로도':'KiCad 회로도';B.fromSch=true;
+  (B.notes||(B.notes=[])).push(`회로도에서 부품 ${comps.length}개 · 넷 ${new Set(nl.pinNet.values()).size}개를 가져왔습니다. 부품은 아직 배치 전입니다 — PCB 단계에서 배치·배선하세요.`);
+  return B;
+}
+return{boardFrom,parseKicadSch,autoSchematic,connect,build,twoPin,onePin,powerSym,boxSym,finishBB,moveSym};
 })();
 if(typeof module!=='undefined')module.exports=SCH;

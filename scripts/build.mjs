@@ -34,6 +34,7 @@ ${scriptW(stripExport(read('src/core/pcb-core.js')))}
 ${script(stripExport(read('src/parts/mcu-pins.js')))}
 ${script(stripExport(read('src/sch/sch.js')))}
 ${script(stripExport(read('src/sch/schedit.js')))}
+${script(stripExport(read('src/sch/pads.js')))}
 ${scriptW(stripExport(read('src/sim/sim.js')))}
 ${scriptW(stripExport(read('src/sim/emc.js')))}
 ${script(read('src/app/sample.js'))}

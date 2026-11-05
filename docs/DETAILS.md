@@ -1116,3 +1116,36 @@ ELD 80 × 55 6층(넷 62) 헤드리스 기준 route 67 s → 14 s(같은 결과:
   - 모든 레코드가 검사를 통과하고, 번들이 최신이며, 페이지가 레코드에서 렌더된 것인지 확인합니다.
   - 모든 후보 사양이 레코드에서 오는지 확인합니다.
   - 검사기가 잘못된 데이터를 잡는지 확인합니다.
+
+## v1.91.0 PADS 회로도 내보내기 · 가져오기 (+ v1.90.0 앱 시작 오류 수정)
+
+- **v1.90.0 수정**: 데이터시트 탭에 새로 넣은 `dsHTML` 이름이 `viewer.js`의 같은 이름 함수와 겹쳐, 앱 본체 스크립트가 시작하지 못했습니다.
+  - 이름을 `dsRecHTML`로 바꿨습니다.
+  - 같은 실수를 막기 위해 `test/dist-scripts.test.mjs`를 더했습니다. 빌드한 `dist/index.html`의 모든 인라인 스크립트를 컴파일해 중복 선언을 잡습니다.
+- `src/sch/pads.js`(`PADSSCH`)를 새로 만들었습니다. 레코드 배치는 실제 PADS Logic V9.x ASCII 내보내기 파일과 같습니다.
+- `toLogic(sheets)` — **PADS Logic ASCII**(.txt, `*PADS-LOGIC-V9.0*`):
+  - `*SCH*` · `*FIELDS*`, 그리고 시트마다 `*SHT*` · `*CAE*` · `*TEXT*` · `*LINES*` · `*CAEDECAL*` · `*PARTTYPE*` · `*PART*` · `*BUSSES*` · `*OFFPAGE REFS*` · `*TIEDOTS*` · `*CONNECTION*` · `*NETNAMES*`를 씁니다.
+  - 심볼: 화면에 그린 모양을 그대로 CAEDECAL로 씁니다(같은 모양은 하나로 합침). 핀은 `T`/`P` 줄로, 길이별 핀 데칼은 `PVPIN<mil>`로 씁니다.
+  - 여러 유닛으로 그린 부품은 GATE가 여럿인 PARTTYPE 하나가 되고, 배치 이름은 `U1-A`, `U1-B`입니다.
+  - 전원 · 접지 심볼은 `$PWR_SYMS` / `$GND_SYMS` 오프페이지로, 넷 라벨은 `$OSR_SYMS` 오프페이지로 씁니다. 이름은 `*NETNAMES*`에 넣습니다.
+  - 배선은 핀 · 오프페이지 · 타이 닷 사이 선분(`REF.PIN @@@D0 n 0` + 꼭짓점)으로 씁니다. T 분기와 접점에는 타이 닷을 넣습니다.
+  - 단위는 mil, y는 위로 커집니다(시트 크기 A4 … E 중 맞는 것).
+  - PADS가 읽는 ASCII만 씁니다: µ → u, Ω 생략, 한글 설명은 뺍니다.
+- `toNetlist(sheets)` — PADS Layout용 **PADS 넷리스트**(.asc, `*PADS-PCB*` · `*PART*` · `*NET*` · `*SIGNAL*`).
+- `parseLogic(text)` — PADS Logic ASCII를 뷰어 회로도 모델로 읽습니다.
+  - CAEDECAL(그래픽 · 핀 방향 · 핀 데칼 길이), PARTTYPE(`GATE` · 옛 `G:` · `CONN`), PART를 읽습니다. PART의 15번째 칸은 데칼 변형(H / H-OP / V …)이고, 게이트는 참조 이름의 `-A` / `-B`로 정합니다.
+  - 회전 · 반전, OFFPAGE(전원 · 접지 심볼 · 글로벌 라벨), TIEDOTS(접점), CONNECTION(배선)도 읽습니다.
+  - 이름 있는 신호에 오프페이지가 없으면 로컬 라벨로 이름을 남깁니다. TEXT와 LINES(도면 테두리)도 읽습니다.
+- 앱 연결:
+  - 내보내기 창에 "회로도 (CAD 교환)"을 더했습니다: PADS Logic(.txt) · PADS 넷리스트(.asc) · 둘 다(zip) · KiCad.
+  - 회로도 콘솔 명령은 `export pads` · `export pads-net` · `export kicad`입니다.
+  - 파일 불러오기와 회로도 보기의 "회로도 불러오기"가 PADS Logic `.txt`를 알아봅니다(파일 첫 줄 `*PADS-LOGIC`).
+  - **회로도만 넣으면**(KiCad나 PADS) 그 부품 · 넷으로 보드를 만듭니다(`SCH.boardFrom`). 부품은 풋프린트 크기대로 줄지어 놓이고, 배치 · 배선은 PCB 단계에서 합니다.
+- 검증:
+  - 예제 보드 3개(1 · 1 · 5시트, 다중 게이트 포함)를 PADS로 내보낸 뒤 다시 읽으면 부품 수가 같고, 보드 넷과 다른 핀이 0개입니다.
+  - 공개된 실제 PADS Logic 내보내기 파일 2개(KiCad 가져오기 시험용)에서 신호 28/28 · 51/51이 각각 하나의 넷으로 묶이고 빠진 핀이 없습니다.
+  - 브라우저에서 내보내기 다운로드, 회로도만 가져오기(부품 42 · 넷 28), 열린 보드에 붙이기(넷 38/38)를 확인했습니다.
+- 한계:
+  - PADS 프로그램 자체로는 열어 보지 못했습니다.
+  - 심볼 안 글자(그래픽 텍스트)와 버스는 내보내지 않습니다.
+  - PADS 배선이 다른 넷의 핀 위를 그냥 지나가면 뷰어는 위치로 연결을 판단하므로, 그곳이 이어진 것으로 읽힐 수 있습니다.

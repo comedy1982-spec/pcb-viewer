@@ -63,7 +63,7 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
         <button type="button" class="home-card" id="homeOpen">
           <span class="hc-ico" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14a3 3 0 0 1 3-3h10l4 4h16a3 3 0 0 1 3 3v19a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z"/><path d="M17 27h14M24 20v14"/></svg></span>
           <b>기존 프로젝트</b>
-          <span>KiCad · Gerber · 뷰어 JSON 파일을 열어 3D / TOP / BOTTOM / 회로도로 보고, 시뮬레이션 · HSIS · PCB 편집을 합니다. 단계 표시줄로 시스템 다이어그램(보드에서 추출) → 회로 → PCB → 기구를 오갈 수 있습니다.</span>
+          <span>KiCad · PADS Logic · Gerber · 뷰어 JSON 파일을 열어 3D / TOP / BOTTOM / 회로도로 보고, 시뮬레이션 · HSIS · PCB 편집을 합니다. 단계 표시줄로 시스템 다이어그램(보드에서 추출) → 회로 → PCB → 기구를 오갈 수 있습니다.</span>
           <em>디자인 뷰어</em>
         </button>
       </div>
@@ -113,7 +113,7 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
       <div id="splitter"></div>
       <div id="schOv" hidden>
         <div class="sov sov-tl" id="schPages"></div>
-        <div class="sov sov-tr"><button class="pill vbtn" id="schFitBtn">화면 맞춤</button><button class="pill vbtn" id="schPop" title="회로도를 새 창으로 엽니다">새 창</button><button class="pill vbtn" id="schEdit" title="회로도를 편집합니다 (Eeschema 단축키)">회로 편집</button><button class="pill vbtn" id="schOpen">회로도 불러오기</button><input type="file" id="schFile" accept=".kicad_sch" multiple hidden></div>
+        <div class="sov sov-tr"><button class="pill vbtn" id="schFitBtn">화면 맞춤</button><button class="pill vbtn" id="schPop" title="회로도를 새 창으로 엽니다">새 창</button><button class="pill vbtn" id="schEdit" title="회로도를 편집합니다 (Eeschema 단축키)">회로 편집</button><button class="pill vbtn" id="schOpen">회로도 불러오기</button><input type="file" id="schFile" accept=".kicad_sch,.txt" multiple hidden></div>
         <div class="sov-card" id="schInfo" hidden role="dialog" aria-label="선택한 부품 정보"></div>
         <div class="sov sov-bl" id="schNote"></div>
         <div class="sov sov-br"><span class="pill hint">드래그 이동 · 휠 확대 · 클릭하면 보드와 함께 강조</span><button class="btn primary sch-next" id="schNext" hidden>다음: PCB 설계 →</button></div>
@@ -244,10 +244,11 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
     <div class="sheet-b">
       <div class="drop" id="drop" role="button" tabindex="0"><input type="file" id="file" multiple hidden>
         <b>파일을 여기에 끌어다 놓거나 클릭해서 선택하세요</b>
-        <span>.kicad_pcb · .kicad_sch · Gerber(.zip 가능) · 드릴 · Pick-and-Place · BOM · IPC-D-356 · 뷰어 JSON</span>
+        <span>.kicad_pcb · .kicad_sch · PADS Logic ASCII(.txt) · Gerber(.zip 가능) · 드릴 · Pick-and-Place · BOM · IPC-D-356 · 뷰어 JSON</span>
       </div>
       <div class="fmt">
         <div><b>KiCad PCB + 회로도</b><span>.kicad_pcb 하나면 보드 전체가 표시되고, .kicad_sch를 함께 넣으면 회로도와 연동됩니다.</span></div>
+        <div><b>회로도만 (KiCad · PADS Logic)</b><span>.kicad_sch나 PADS Logic ASCII(.txt)만 넣으면 회로도의 부품·넷으로 보드를 만들고, 배치·배선은 PCB 단계에서 합니다.</span></div>
         <div><b>Gerber 세트</b><span>상단·하단 동박, 실크, 외곽선, 드릴. zip으로 묶어도 됩니다.</span></div>
         <div><b>+ Pick-and-Place / BOM</b><span>부품 위치와 3D 부품, 값과 부품 번호를 더합니다.</span></div>
       </div>
@@ -291,6 +292,7 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
 <p class="note"><b>파일 불러오기</b>로 실제 보드를 열 수 있습니다. 지원하는 입력은 다음과 같습니다.</p>
 <ul class="note" style="padding-left:18px;margin:6px 0 12px;font-size:13px">
 <li><b>KiCad</b> .kicad_pcb (버전 5~10): 동박·존·실크·외곽선·부품·핀 기능·넷</li>
+<li><b>PADS Logic</b> ASCII 회로도(.txt, File → Export): 심볼·부품·넷 — 회로도만 넣으면 그 부품·넷으로 보드를 만듭니다</li>
 <li><b>Gerber</b> RS-274X와 X2 속성(넷·부품), <b>Excellon</b> 드릴</li>
 <li><b>Pick-and-Place</b> CSV/.pos, <b>BOM</b> CSV, <b>IPC-D-356</b> 넷리스트</li>
 <li><b>뷰어 JSON</b> (아래 구조)</li>

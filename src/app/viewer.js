@@ -708,9 +708,9 @@ function plan(){
     if(!has('outline'))out.push(['warn','외곽선 Gerber가 없어 보드 모양을 배선 범위로 추정합니다.']);
     if(!has('drill'))out.push(['info','드릴 파일을 넣으면 구멍과 스루홀이 표시됩니다.']);
     if(!has('pnp'))out.push(['info','Pick-and-Place를 넣으면 부품 위치와 3D 부품이 표시됩니다.']);
-  }else if(IMP.entries.length)out.push(['warn','보드를 만들 수 있는 파일이 아직 없습니다. KiCad PCB, Gerber, Pick-and-Place 중 하나가 필요합니다.']);
+  }else if(IMP.entries.length&&!has('sch'))out.push(['warn','보드를 만들 수 있는 파일이 아직 없습니다. KiCad PCB, Gerber, Pick-and-Place 중 하나가 필요합니다.']);
   if(has('bom'))out.push(['ok','BOM의 값·부품 번호를 부품에 합칩니다.']);
-  if(has('sch'))out.push(['ok',`KiCad 회로도 ${IMP.entries.filter(e=>e.role==='sch').length}장을 보드와 연동합니다.`]);
+  if(has('sch'))out.push(['ok',`회로도 파일 ${IMP.entries.filter(e=>e.role==='sch').length}개(KiCad · PADS Logic)를 ${['kicad','json','tcu','bcu','tsilk','bsilk','outline','drill','pnp'].some(has)?'보드와 연동합니다':'기준으로 부품·넷을 만들고, 배치·배선은 PCB 단계에서 합니다'}.`]);
   return out;
 }
 function renderImport(){

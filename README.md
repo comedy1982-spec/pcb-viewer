@@ -21,7 +21,7 @@
 | **1 안전 목표** | ASIL ≠ QM이면 안전 목표(SG)를 고르고 위반 경로 블록에 태그, 구조 변형 3안(단일 MCU+외부 감시 · 메인+세이프티 MCU · ASIL 분해 2채널)을 DC·FTTI·원가로 비교해 적용, 규칙으로 검증(감지·독립 차단·FTTI·독립성·공통 원인). | SG 태그 · 검증 ✓/✗ |
 | **4 기구 CAD** | 보드를 감싸는 보호 하우징을 Text-to-CAD로 설계합니다(시안 A 다이캐스팅·B 사출 스냅핏·C 압출 프로파일·D 하이브리드, 재질 6종·IP·진동·발열 조건, 구멍·글랜드·벤트·탭·리브·핀·각인, 둥근모따기/각모따기). 3D에서 요소를 **선택해 AI에게 지시**하고, 조립도·부품도(베이스/커버)·기구 BOM·SCAD/STL을 냅니다. | 하우징 3D · 도면 · BOM · SCAD |
 
-기존 프로젝트(KiCad `.kicad_pcb`·회로도, Gerber, 뷰어 JSON)도 같은 단계 표시줄로 오갑니다. 1단계는 보드에서 추출한 HW 블록 다이어그램입니다.
+기존 프로젝트(KiCad `.kicad_pcb`·회로도, PADS Logic 회로도, Gerber, 뷰어 JSON)도 같은 단계 표시줄로 오갑니다. 1단계는 보드에서 추출한 HW 블록 다이어그램입니다.
 
 ### 2. AI 설계 도우미
 - 오른쪽 도킹 패널의 **설계 도우미**가 네 단계의 콘솔(시스템·회로도·배치/배선·Text-to-CAD)을 하나의 대화로 합칩니다. 결정론 모드는 문장을 규칙으로 명령으로 바꾸고, AI 모드는 Claude가 같은 명령을 골라 실행합니다.
@@ -58,6 +58,7 @@
 - **복원**, 이력 JSON 내보내기/불러오기(Git에 함께 커밋).
 
 ### 7. 내보내기
+- 회로도 교환: **PADS Logic ASCII**(.txt) 내보내기·가져오기, PADS Layout용 **PADS 넷리스트**(.asc), KiCad `.kicad_sch`. 회로도 파일만 넣으면 그 부품·넷으로 보드를 만들어 PCB 단계로 이어 갑니다.
 - 그림: 2D 보드(층별)·회로도는 화면과 동일한 **SVG**, PNG, 시스템 다이어그램, 3D·기구 3D PNG, 기구 조립도·부품도, 모든 층 zip.
 - 표: HSIS(시트별), BOM, 부품 배치, 넷리스트, 층 구성, 기구 BOM, 리비전 기록, 비교 결과 → **Excel**.
 - **설계 보고서**: 항목을 골라 그림·표를 모두 담은 HTML 한 파일(브라우저 인쇄로 PDF). KiCad PCB/회로도 저장, OpenSCAD·STEP(AP214 솔리드 — SolidCraft·Fusion·SolidWorks·FreeCAD)·STL·HSIS CSV·MCAL 파일.
@@ -89,7 +90,7 @@ npm run examples  # examples/ 다시 만들기 (python3 + openpyxl)
 |---|---|
 | `src/core/` | 보드 모델·파서(`pcb-core`), 편집(`pcbedit`), 자동 배치(`autoplace`), HW 아키텍처(`hwarch`), 시스템 다이어그램(`sysdiag`), 새 회로 설계(`newproj`), 하우징(`housing`), Text-to-CAD(`text2cad`), 가이드라인(`guide`), 리비전 스냅샷·비교(`revlog`), 멀티보드 시스템(`multiboard`), 부품 라이브러리·핀 대응(`partlib`), 풋프린트 생성(`fpgen`) |
 | `src/route/autoroute.js` | 다층 자동 배선 |
-| `src/sch/` | KiCad 회로도 파서·생성·편집 |
+| `src/sch/` | 회로도 파서·생성·편집 (KiCad, PADS Logic `pads.js`) |
 | `src/sim/` | 전기·열·EMC 해석, MNA 회로 해석 |
 | `src/hsis/` | HSIS 파서·검사·추적성, 핀 추천, MCAL, 테스트 케이스 생성 |
 | `src/parts/` | 부품 DB, MCU 핀 DB, 데이터시트 DB 번들 |

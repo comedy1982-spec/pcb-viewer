@@ -27,7 +27,7 @@ const SCLI_HELP=[
   ['erc','전기 규칙 검사 목록'],
   ['diff · apply','보드와 다른 점 보기 · 보드에 반영 (F8과 같음, 새 부품은 보드 빈 자리에)'],
   ['regen','보드 넷리스트로 회로도를 처음부터 다시 생성 (편집 내용 버림)'],
-  ['export','KiCad 회로도(.kicad_sch) zip 저장'],
+  ['export [kicad|pads|pads-net]','회로도 저장: KiCad(.kicad_sch zip, 기본) · PADS Logic ASCII(.txt) · PADS 넷리스트(.asc, PADS Layout용)'],
   ['undo · redo · clear','실행 취소 · 다시 실행 · 화면 지우기'],
   GUIDE_HELP,
   ['ai <요청>','Claude가 위 명령을 골라 실행. 헤더에서 결정론/AI를 고르면 문장·버튼이 그 방식으로 실행되고, AI 실행마다 모델 등급과 토큰(추정)을 표시']];
@@ -318,7 +318,9 @@ async function scRun(line,by){
     case'diff':return scDiff();
     case'apply':return scApply();
     case'regen':return scRegen();
-    case'export':await seExport();return'.kicad_sch zip을 내려받습니다.';
+    case'export':{const k=String(a._[0]||'kicad').toLowerCase();if(/^pads-?net|^asc$|^netlist$/.test(k)){const r=await exportPads('net');return r?`PADS 넷리스트(.asc)를 내려받습니다 · 부품 ${r.parts} · 넷 ${r.nets}`:'회로도가 없습니다.';}
+      if(/^pads|^txt$|^logic$/.test(k)){const r=await exportPads('logic');return r?`PADS Logic ASCII(.txt)를 내려받습니다 · 시트 ${r.sheets} · 부품 ${r.parts} · 신호 ${r.signals} — PADS Logic에서 File → Import로 엽니다.`:'회로도가 없습니다.';}
+      await seExport();return'.kicad_sch zip을 내려받습니다.';}
     case'undo':if(!SE.undo.length)return'되돌릴 것이 없습니다.';seAction('undo');renderSchOv();return'실행 취소했습니다.';
     case'redo':if(!SE.redo.length)return'다시 실행할 것이 없습니다.';seAction('redo');renderSchOv();return'다시 실행했습니다.';
     case'clear':{copClear('sch');SCLI.log=[];return'';}

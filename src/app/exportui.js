@@ -130,6 +130,14 @@ async function exportHousing(fmt){if(!BD||typeof mechRun!=='function')return;if(
   if(fmt==='drawing-png'){const R=mechRun();const cv=await svgToPng(HOUSING.drawingSVG(R,BD.name),2);if(cv)return expSaveCanvas(base+'_housing_drawing.png',cv);return;}
   const url=board3DPNG({housing:true,size:1600,iso:HS.ws!=='cad'});if(!url)return toast('3D를 그리지 못했습니다.');return expSave(base+'_housing_3D.png',dataUrlBytes(url),'image/png');}
 /* ---- Excel ---- */
+/* PADS: the schematic as PADS Logic ASCII (.txt) and/or a PADS netlist (.asc) for PADS Layout */
+async function exportPads(kind){const d=(()=>{try{return(typeof seSheets==='function'&&seSheets())||schData().sheets;}catch(e){return null;}})();if(!d||!d.length){toast('회로도가 없습니다.');return null;}
+  const base=expName(),meta={name:BD.name||base,title:BD.name,board:BD,date:new Date().toISOString().slice(0,10)};
+  const L=kind!=='net'?PADSSCH.toLogic(d,meta):null,N=kind!=='logic'?PADSSCH.toNetlist(d,meta):null;
+  if(kind==='zip'){if(typeof JSZip==='undefined'){toast('zip 라이브러리를 불러오지 못했습니다.');return null;}const z=new JSZip();z.file(base+'_pads.txt',L.text);z.file(base+'_pads.asc',N.text);
+    await expSave(base+'_pads.zip',await z.generateAsync({type:'uint8array'}),'application/zip',`PADS 회로도·넷리스트 zip 내려받기 · 부품 ${L.stats.refs} · 신호 ${L.stats.signals}`);return Object.assign({},L.stats,N.stats);}
+  if(L){await expSave(base+'_pads.txt',L.text,'text/plain',`PADS Logic 회로도 내려받기 · 시트 ${L.stats.sheets} · 부품 ${L.stats.refs} · 신호 ${L.stats.signals} (PADS Logic: File → Import)`);return L.stats;}
+  await expSave(base+'_pads.asc',N.text,'text/plain',`PADS 넷리스트 내려받기 · 부품 ${N.stats.parts} · 넷 ${N.stats.nets} (PADS Layout: File → Import)`);return N.stats;}
 function xlsxTablesFrom(html){const d=document.createElement('div');d.innerHTML=html;return[...d.querySelectorAll('table')];}
 function xlsxSheetName(n,used){let s=String(n||'Sheet').replace(/[\\/?*[\]:]/g,' ').trim().slice(0,28)||'Sheet';let k=s,i=2;while(used.has(k))k=s+' '+(i++);used.add(k);return k;}
 function tableAoa(tbl){const rows=[];tbl.querySelectorAll('tr').forEach(tr=>{if(tr.closest('table')!==tbl)return;const r=[];tr.querySelectorAll('th,td').forEach(c=>{if(c.closest('tr')!==tr)return;let t=c.innerText!=null?c.innerText:c.textContent;t=String(t).replace(/\s+/g,' ').trim();const n=t!==''&&/^-?\d+(\.\d+)?$/.test(t)?+t:t;r.push(n);for(let k=1;k<(+c.colSpan||1);k++)r.push('');});rows.push(r);});return rows;}
@@ -218,6 +226,7 @@ function expDialogHTML(){const st=BD?PCB.stackOf(BD):[];const multi=st.length>2;
   return`<div class="sheet exp" role="dialog" aria-modal="true" aria-labelledby="expT"><div class="sheet-h"><h2 id="expT">내보내기</h2><button class="x" data-close aria-label="닫기">✕</button></div><div class="sheet-b">
   ${grp('그림 (SVG · PNG)',`${btn('view:svg','지금 보기 SVG')}${btn('view:png','지금 보기 PNG')}${['T','B'].map(k=>btn(`layer:${k}:svg`,`${k==='T'?'TOP':'BOTTOM'} SVG`)).join('')}${multi?st.filter(x=>x.k!=='T'&&x.k!=='B').map(x=>btn(`layer:${x.k}:svg`,`${PCB.cuName(x.k)} SVG`)).join(''):''}${btn('layers:zip','모든 층 + 회로도 SVG (zip)')}
     ${schN?Array.from({length:schN},(_,i)=>btn(`sch:${i}:svg`,`회로도 ${i+1} SVG`)+btn(`sch:${i}:png`,`회로도 ${i+1} PNG`)).join(''):''}${btn('sys:hw:svg','HW 블록 다이어그램 SVG')}${btn('sys:hw:png','HW 블록 PNG')}${btn('sys:parts:svg','부품 구성도 SVG')}${btn('3d:png','3D PNG')}${btn('housing:drawing','기구 조립도 SVG')}${btn('housing:drawing-png','기구 조립도 PNG')}${btn('mech:base','HSG-01 베이스 부품도 SVG')}${btn('mech:lid','HSG-02 커버 부품도 SVG')}${btn('mech:zip','기구 도면 묶음 (zip: 조립도·부품도·BOM·SCAD)')}${btn('housing:3d','기구 3D PNG')}${typeof mbMetrics==='function'&&mbMetrics()?btn('mb:svg','보드 연결도 SVG')+btn('mb:png','보드 연결도 PNG'):''}`)}
+  ${schN?grp('회로도 (CAD 교환)',`${btn('pads:logic','PADS Logic 회로도 (.txt)','PADS Logic ASCII — PADS Logic에서 File → Import로 엽니다')}${btn('pads:net','PADS 넷리스트 (.asc)','PADS Layout용 부품·넷 목록 (File → Import)')}${btn('pads:zip','PADS 둘 다 (zip)')}${btn('kicad:sch','KiCad 회로도 (.kicad_sch zip)')}`):''}
   ${grp('표 (Excel)',`${btn('xlsx:hsis','HSIS 전체 (신호 표·핀 맵·추적성·검사·핀 추천·MCAL·테스트)')}${btn('xlsx:hsis1','HSIS 신호 표만')}${btn('xlsx:bom','BOM')}${btn('xlsx:parts','부품 배치')}${btn('xlsx:nets','넷리스트')}${btn('mech:bom','기구 BOM')}${typeof mbMetrics==='function'&&mbMetrics()?btn('mb:xlsx','시스템 연결·BOM'):''}${btn('xlsx:design','설계 데이터 전체 (요약·BOM·배치·넷·층·HSIS·하우징)')}`)}
   ${grp('설계 보고서 (HTML → PDF)',`<div class="exp-secs">${REPORT_SECTIONS.map(([k,l])=>`<label><input type="checkbox" data-sec="${k}" checked> ${l}</label>`).join('')}</div><div class="acts">${btn('report:html','HTML 파일로 저장')}${btn('report:print','바로 인쇄 → PDF')}</div><p class="lead">보고서 HTML은 그림(SVG·PNG)과 표를 모두 안에 품은 파일 하나입니다. 열어서 [PDF로 저장]을 누르거나 브라우저 인쇄에서 PDF로 저장하세요.</p>`)}
   </div></div>`;}
@@ -233,6 +242,8 @@ async function runExport0(x,sel){const[a,b,c]=x.split(':');
     case'housing':return exportHousing(b);
     case'mech':return exportMechParts(b);
     case'mb':return mbExport(b);
+    case'pads':return exportPads(b);
+    case'kicad':return seExport();
     case'xlsx':{const n=expName();if(b==='hsis')return exportXlsx(hsisSheets(true),n+'_hsis.xlsx');if(b==='hsis1')return exportXlsx(hsisSheets(false),n+'_hsis_signals.xlsx');if(b==='bom')return exportXlsx([{name:'BOM',aoa:expBomAoa()}],n+'_bom.xlsx');if(b==='parts')return exportXlsx([{name:'부품 배치',aoa:expPartsAoa()}],n+'_parts.xlsx');if(b==='nets')return exportXlsx([{name:'넷리스트',aoa:expNetAoa()}],n+'_nets.xlsx');return exportDesignXlsx();}
     case'report':return exportReport(sel,b==='print'?'print':'html');}}
 {const hb=$('#expBtn');if(hb)hb.addEventListener('click',openExport);}

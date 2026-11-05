@@ -2,7 +2,7 @@
    Left: parts of the circuit (BOM order, with reference price) and a search over the whole DB; right: the part's page. */
 var DS={q:'',sel:null,view:'list'};
 const dsDB=()=>typeof DSDB!=='undefined'?DSDB:{built:'',items:{}};
-const dsHTML=it=>it.html||(it.rec&&typeof DSREC!=='undefined'?(it._h||(it._h=DSREC.render(it.rec))):'');
+const dsRecHTML=it=>it.html||(it.rec&&typeof DSREC!=='undefined'?(it._h||(it._h=DSREC.render(it.rec))):'');
 const dsStrip=html=>String(html||'').replace(/<script[\s\S]*?<\/script>/gi,'').replace(/\son[a-z]+="[^"]*"/gi,'').replace(/javascript:/gi,'');
 function dsFind(mpn){if(!mpn)return null;const I=dsDB().items;const k=String(mpn).trim();if(I[k])return Object.assign({mpn:k},I[k]);if(typeof plDsPage==='function'){const g=plDsPage(k);if(g)return g;}const base=k.replace(/\s*\(.*\)$/,'');if(I[base])return Object.assign({mpn:base},I[base]);
   const hit=Object.keys(I).find(x=>x.replace(/\s*\(.*\)$/,'')===base);if(hit)return Object.assign({mpn:hit},I[hit]);
@@ -38,7 +38,7 @@ function dsRender(){
   const total=parts.reduce((a,p)=>a+(p.sub||0),0),unknown=parts.filter(p=>p.sub==null).length;
   if(DS.sel){const it=dsFind(DS.sel);const P=typeof PARTS!=='undefined'?PARTS:null;const info=P&&P.find(DS.sel);
     host.innerHTML=`<div class="ds-h"><button type="button" class="btn sm" data-dsback>← 목록</button><b class="mono">${esc(DS.sel)}</b>${it&&it.status==='stub'?'<span class="ds-stub">초안</span>':it&&it.status==='verified'?'<span class="ds-ver">재확인</span>':''}<span class="cop-sp"></span>${it?`<a class="btn sm" href="${esc(it.file)}" target="_blank" rel="noopener">원본 파일</a>`:''}</div>
-      <div class="ds-page">${it?dsStrip(dsHTML(dsDB().items[it.mpn]||it)):dsFallbackHTML(DS.sel)}${dsPinsHTML(DS.sel)}</div>`;
+      <div class="ds-page">${it?dsStrip(dsRecHTML(dsDB().items[it.mpn]||it)):dsFallbackHTML(DS.sel)}${dsPinsHTML(DS.sel)}</div>`;
     host.querySelector('[data-dsback]').addEventListener('click',()=>{DS.sel=null;DS.ref=null;dsRender();});return;}
   const row=p=>{const name=p.mpn||p.val;return`<button type="button" class="ds-row${p.ds?'':' none'}" data-ds="${esc(p.mpn||'')}" ${p.mpn?'':'disabled'}><span class="ds-refs mono">${esc(p.refs.slice(0,4).join(', '))}${p.refs.length>4?` +${p.refs.length-4}`:''}</span><span class="ds-name"><b>${esc(name)}</b><small>${esc(p.info?p.info.title:p.desc||p.fp||'')}</small></span><span class="ds-price mono">${p.price!=null?`$${p.price}${p.refs.length>1?` ×${p.refs.length}`:''}`:'—'}</span><span class="ds-st">${p.ds?(p.ds.status==='stub'?'초안':p.ds.status==='verified'?'DB ✓':'DB'):'없음'}</span></button>`;};
   const all=Object.entries(D.items).map(([mpn,v])=>({mpn,v})).filter(x=>!q||(x.mpn+' '+x.v.title+' '+x.v.mfr+' '+x.v.cat).toLowerCase().includes(q)).slice(0,60);
