@@ -1,0 +1,399 @@
+{
+ "mpn": "TLE7182EM",
+ "mfr": "Infineon",
+ "cat": "게이트 드라이버",
+ "price": null,
+ "status": "done",
+ "title": "H-bridge / dual half-bridge MOSFET driver, SSOP-24",
+ "meta": [
+  "Infineon · 게이트 드라이버 · H-bridge / dual half-bridge MOSFET driver, SSOP-24",
+  "원본: <a href=\"https://cdn.components.ru/media/PDF/8127181.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (사본)</a> · <a href=\"https://jp.farnell.com/en-JP/infineon/tle7182emxuma1/mosfet-driver-aec-q100-ssop-24/dp/2710059\" target=\"_blank\" rel=\"noopener\">제품 페이지 (Farnell, 미확인 링크)</a> · <a href=\"https://octopart.com/search?q=TLE7182EM\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Rev 1.1 (2010-09-30)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "N-MOSFET 4개 구동 H-브리지 / 듀얼 하프브리지 드라이버, 각 게이트 독립 입력"
+      ],
+      [
+       "전원",
+       "V<sub>S</sub> 7.0–34 V 사양 범위 (확장 5.5–45 V), 12 V 전원망용"
+      ],
+      [
+       "듀티",
+       "하이사이드 0–95% @20 kHz 및 100% (차지펌프), 로우사이드 0–100%"
+      ],
+      [
+       "출력단",
+       "소스 저항 13.5 Ω max / 싱크 9 Ω max"
+      ],
+      [
+       "보호",
+       "SCDL 핀으로 단락 검출 레벨 아날로그 설정, 슛스루 방지·최소 데드타임, 과온·과전압·저전압 경고, 저전압 차단, ERR 1비트 진단"
+      ],
+      [
+       "부가 기능",
+       "전류 센스 OpAmp(고정 과전류 경고), 역극성 보호 MOSFET 구동 출력 RPP"
+      ],
+      [
+       "대기 전류",
+       "8 µA typ (12 V, ENA low, 25 °C), 10 µA max (≤85 °C)"
+      ],
+      [
+       "등급·온도",
+       "AEC qualified, T<sub>j</sub> −40 ~ 150 °C"
+      ],
+      [
+       "패키지",
+       "PG-SSOP-24 (노출 탭 → GND)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "V<sub>S</sub>",
+        "-0.3",
+        "45",
+        "V",
+        "역전압 −4.0 V (R<sub>VS</sub> ≥ 10 Ω)"
+       ],
+       [
+        "VDH, RPP, BHx",
+        "-0.3",
+        "55",
+        "V",
+        "RPP 전류 ±25 mA"
+       ],
+       [
+        "ENA",
+        "-0.3",
+        "45",
+        "V",
+        ""
+       ],
+       [
+        "IH1/IL1/IH2/IL2, ERR, ISO, SCDL",
+        "-0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "ISP, ISN",
+        "-5.0",
+        "5.0",
+        "V",
+        ""
+       ],
+       [
+        "VREG",
+        "-0.3",
+        "15",
+        "V",
+        ""
+       ],
+       [
+        "GHx",
+        "-0.3",
+        "55",
+        "V",
+        "과도 −7.0 V (t<sub>P</sub> &lt; 1 µs)"
+       ],
+       [
+        "SHx",
+        "-2.0",
+        "45",
+        "V",
+        "과도 −7.0 V (t<sub>P</sub> &lt; 1 µs)"
+       ],
+       [
+        "GLx",
+        "-0.3",
+        "18",
+        "V",
+        "과도 −7.0 V (t<sub>P</sub> &lt; 0.5 µs)"
+       ],
+       [
+        "SL",
+        "-1.0",
+        "5.0",
+        "V",
+        "과도 −7.0 V (C<sub>BS</sub> ≥ 330 nF)"
+       ],
+       [
+        "Gxx–Sxx, BHx–SHx 차",
+        "-0.3",
+        "15",
+        "V",
+        ""
+       ],
+       [
+        "P<sub>tot</sub> (DC)",
+        "",
+        "2",
+        "W",
+        ""
+       ],
+       [
+        "T<sub>j</sub> / T<sub>stg</sub>",
+        "-40 / -55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM / CDM",
+        "",
+        "2 / 1",
+        "kV",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "V<sub>S</sub> (사양 범위)",
+        "7.0",
+        "12",
+        "34",
+        "V"
+       ],
+       [
+        "V<sub>S</sub> (확장, 기능 제한)",
+        "5.5",
+        "",
+        "45",
+        "V"
+       ],
+       [
+        "T<sub>j</sub>",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ],
+       [
+        "VREG 출력 (V<sub>S</sub> ≥ 13.5 V, −35 mA)",
+        "11",
+        "12.5",
+        "14",
+        "V"
+       ],
+       [
+        "동작 전류 (무스위칭 / 4·Q<sub>GS</sub>·f ≤ 20 mA)",
+        "",
+        "",
+        "22 / 45",
+        "mA"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>PG-SSOP-24 + 노출 탭</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "BH2",
+        "부트스트랩 C (+), 상 2"
+       ],
+       [
+        "2",
+        "GH2",
+        "하이사이드 2 게이트"
+       ],
+       [
+        "3",
+        "SH2",
+        "하이사이드 2 소스"
+       ],
+       [
+        "4",
+        "GL2",
+        "로우사이드 2 게이트"
+       ],
+       [
+        "5",
+        "VDH",
+        "하이사이드 공통 드레인 감지 (단락 검출)"
+       ],
+       [
+        "6",
+        "RPP",
+        "역극성 보호 MOSFET 구동 차지펌프 출력"
+       ],
+       [
+        "7",
+        "VS",
+        "전원"
+       ],
+       [
+        "8",
+        "VREG",
+        "출력단 전원 (커패시터 연결)"
+       ],
+       [
+        "9",
+        "ENA",
+        "인에이블 (High=동작), ERR 리셋, 저전류 모드"
+       ],
+       [
+        "10",
+        "ISN",
+        "OpAmp + 입력"
+       ],
+       [
+        "11",
+        "ISP",
+        "OpAmp − 입력"
+       ],
+       [
+        "12",
+        "ISO",
+        "OpAmp 출력"
+       ],
+       [
+        "13",
+        "IH2",
+        "하이사이드 2 입력 (active low)"
+       ],
+       [
+        "14",
+        "IL2",
+        "로우사이드 2 입력 (active high)"
+       ],
+       [
+        "15",
+        "IH1",
+        "하이사이드 1 입력 (active low)"
+       ],
+       [
+        "16",
+        "IL1",
+        "로우사이드 1 입력 (active high)"
+       ],
+       [
+        "17",
+        "ERR",
+        "진단 출력 (push-pull)"
+       ],
+       [
+        "18",
+        "SCDL",
+        "단락 검출 레벨 설정 / SCD 비활성"
+       ],
+       [
+        "19",
+        "GND",
+        "그라운드"
+       ],
+       [
+        "20",
+        "SL",
+        "로우사이드 MOSFET 공통 소스"
+       ],
+       [
+        "21",
+        "GL1",
+        "로우사이드 1 게이트"
+       ],
+       [
+        "22",
+        "SH1",
+        "하이사이드 1 소스"
+       ],
+       [
+        "23",
+        "GH1",
+        "하이사이드 1 게이트"
+       ],
+       [
+        "24",
+        "BH1",
+        "부트스트랩 C (+), 상 1"
+       ],
+       [
+        "탭",
+        "—",
+        "GND 연결"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>부트스트랩 C<sub>BS1</sub>, C<sub>BS2</sub> ≥ 330 nF (BHx–SHx).</li>\n    <li>VREG: C<sub>REG1</sub> 2.2 µF + C<sub>REG2</sub> 10 nF 세라믹 병렬.</li>\n    <li>VS: C<sub>VS1</sub> 2.2 µF + C<sub>VS2</sub> 10 nF, 응용 회로에 L = 2.2 µH 표기.</li>\n    <li>전류 센스: C<sub>IS</sub> 50 pF 입력 필터, ISO 출력 C<sub>ISO</sub> 100 pF + R<sub>ISO</sub>, 이득 R<sub>FB</sub> = R<sub>REF1</sub> ∥ R<sub>REF2</sub>.</li>\n    <li>RPP 회로 R<sub>RPS</sub> 4.7 kΩ. 레이아웃 가이드: 스너버 RC 수 Ω / 수 nF.</li>\n    <li>웨이크업 50–100 µs (C<sub>REG</sub>=2.2 µF, C<sub>BS</sub>=330 nF). 차지펌프 21 MHz typ.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PG-SSOP-24, 노출 탭은 GND. R<sub>thJC</sub> 5 K/W max (설계 보증) · R<sub>thJA</sub> 35 K/W typ (JEDEC 2s2p, 패드 아래 써멀 비아). T<sub>j</sub> max 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>IHx는 active low, ILx는 active high — MCU PWM 극성 주의. 슛스루 방지는 내장이지만 데드타임은 MCU에서도 확보 권장.</li>\n    <li>내장 100% 차지펌프는 누설 보상용 — 약 99% 듀티 지속 운전에는 부족 (데이터시트 명시).</li>\n    <li>SH/GL/SL의 음전압 과도 정격(−7 V, &lt;0.5–1 µs)을 넘지 않도록 게이트 저항·레이아웃 관리.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://cdn.components.ru/media/PDF/8127181.pdf"
+ ]
+}

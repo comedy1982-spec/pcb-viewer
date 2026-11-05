@@ -1,0 +1,336 @@
+{
+ "mpn": "TMS570LS3137",
+ "mfr": "Texas Instruments",
+ "cat": "MCU",
+ "price": 18,
+ "status": "done",
+ "title": "Hercules Cortex-R4F lockstep MCU with Ethernet and FlexRay",
+ "meta": [
+  "Texas Instruments · MCU · Hercules 안전 MCU, Cortex-R4F 락스텝 최대 180 MHz, 3 MB 플래시, 이더넷·FlexRay · 참고 단가 약 $18 (추정)",
+  "원본: <a href=\"https://www.ti.com/document-viewer/lit/html/SPNS162C/specifications\" target=\"_blank\" rel=\"noopener\">데이터시트 (TI 문서 뷰어)</a> · <a href=\"https://www.ti.com/product/TMS570LS3137\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TMS570LS3137\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SPNS162C (2012-04, 개정 2015-04)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "CPU",
+       "ARM Cortex-R4F 듀얼 락스텝, 단·배정밀 FPU, 12영역 MPU, 1.66 DMIPS/MHz"
+      ],
+      [
+       "클럭",
+       "HCLK 최대: ZWT 180 MHz / PGE 160 MHz (플래시 파이프라인 모드), 파이프라인 해제 시 50 MHz. VCLK 최대 100 MHz"
+      ],
+      [
+       "메모리",
+       "플래시 3 MB (ECC), RAM 256 KB (ECC), 데이터 플래시(EEPROM 에뮬레이션) 64 KB (ECC)"
+      ],
+      [
+       "네트워크",
+       "EMAC 10/100 (MII/RMII/MDIO, 3.3 V I/O), FlexRay 2채널 10 Mbps (8 KB 메시지 RAM), DCAN ×3 (64 메일박스)"
+      ],
+      [
+       "기타 통신",
+       "MibSPI ×3, SPI ×2, SCI ×1 + LIN ×1, I2C ×1, 16비트 EMIF"
+      ],
+      [
+       "아날로그·타이머",
+       "12비트 MibADC ×2 (ADC1 24채널, ADC2 16채널 공유), N2HET ×2 (32 + 18채널)"
+      ],
+      [
+       "안전",
+       "락스텝 CPU, CPU·RAM BIST, 플래시·RAM ECC, 주변 메모리 패리티, ESM(ERROR 핀), 전압·클럭 감시, 듀얼 클럭 비교기"
+      ],
+      [
+       "전원",
+       "코어 1.2 V, I/O 3.3 V, ADC 3.0 ~ 5.25 V"
+      ],
+      [
+       "온도",
+       "TA -40 ~ 125 °C, TJ -40 ~ 150 °C"
+      ],
+      [
+       "패키지",
+       "144핀 LQFP (PGE, 20 × 20 mm), 337볼 NFBGA (ZWT, 16 × 16 mm)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VCC (코어)",
+        "-0.3",
+        "1.43",
+        "V",
+        ""
+       ],
+       [
+        "VCCIO, VCCP",
+        "-0.3",
+        "4.6",
+        "V",
+        ""
+       ],
+       [
+        "VCCAD",
+        "-0.3",
+        "6.25",
+        "V",
+        ""
+       ],
+       [
+        "입력 전압 (전 입력)",
+        "-0.3",
+        "4.6",
+        "V",
+        ""
+       ],
+       [
+        "입력 전압 (ADC 입력)",
+        "-0.3",
+        "6.25",
+        "V",
+        ""
+       ],
+       [
+        "입력 클램프 전류 (일반 핀)",
+        "-20",
+        "20",
+        "mA",
+        ""
+       ],
+       [
+        "입력 클램프 전류 (AD1IN, AD2IN)",
+        "-10",
+        "10",
+        "mA",
+        ""
+       ],
+       [
+        "입력 클램프 전류 합계",
+        "-40",
+        "40",
+        "mA",
+        ""
+       ],
+       [
+        "동작 주위 온도 TA",
+        "-40",
+        "125",
+        "°C",
+        ""
+       ],
+       [
+        "접합 온도 TJ",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "보관 온도",
+        "-65",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VCC (코어) / VCCPLL",
+        "1.14",
+        "1.2",
+        "1.32",
+        "V"
+       ],
+       [
+        "VCCIO",
+        "3",
+        "3.3",
+        "3.6",
+        "V"
+       ],
+       [
+        "VCCAD",
+        "3",
+        "3.3 / 5.0",
+        "5.25",
+        "V"
+       ],
+       [
+        "VCCP (플래시 펌프)",
+        "3",
+        "3.3",
+        "3.6",
+        "V"
+       ],
+       [
+        "VSSAD",
+        "-0.1",
+        "",
+        "0.1",
+        "V"
+       ],
+       [
+        "VADREFHI / VADREFLO",
+        "VSSAD",
+        "",
+        "VCCAD",
+        "V"
+       ],
+       [
+        "VCCIO/VCCAD/VCCP 상승 슬루율",
+        "",
+        "",
+        "1",
+        "V/µs"
+       ],
+       [
+        "TA",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ],
+       [
+        "TJ",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>144핀 LQFP (PGE) / 337볼 NFBGA (ZWT). 대형 MCU라 핀 그룹만 요약합니다.</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "그룹",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "전원",
+        "VCC, VCCPLL, VCCIO, VCCAD, VCCP, VSS, VSSAD",
+        "1.2 V 코어·PLL, 3.3 V I/O·플래시 펌프, 3.0 ~ 5.25 V ADC"
+       ],
+       [
+        "아날로그",
+        "AD1IN[23:0], AD2IN[15:0], VADREFHI/LO",
+        "MibADC 입력(일부 공유), 기준 전압"
+       ],
+       [
+        "네트워크",
+        "EMAC (MII/RMII/MDIO), FlexRay ×2, DCAN ×3",
+        "이더넷·FlexRay·CAN"
+       ],
+       [
+        "외부 메모리",
+        "EMIF 16비트",
+        "ZWT 패키지에서만 핀 제공"
+       ],
+       [
+        "GPIO",
+        "인터럽트 가능 GPIO",
+        "ZWT 16개, PGE 4개"
+       ],
+       [
+        "디버그·추적",
+        "JTAG, ETM-R4, RTP, DMM",
+        "추적 포트"
+       ]
+      ]
+     }
+    },
+    {
+     "html": "<p class=\"todo\">핀 번호·정확한 핀 이름은 데이터시트 4장(Terminal Configuration and Functions) 확인 필요(이번에 읽지 않음).</p>"
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>CPU 클럭 180/160 MHz에서는 플래시를 파이프라인 모드(주소 대기 1, 데이터 대기 3)로 설정해야 합니다. 리셋 직후는 비파이프라인 모드입니다.</li>\n    <li>외부 클럭 입력 EXTCLK 최대 80 MHz, PLL VCO 150 ~ 550 MHz, CPU 자기 진단(STC) 클럭 최대 90 MHz.</li>\n    <li>3.3 V 계열 전원 상승 슬루율은 1 V/µs 이하로 제한합니다.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PGE: RθJA 39 °C/W (JEDEC 2s2p, 정지 공기), RθJB 26.3, RθJC 6.7, ψJT 0.10 °C/W. ZWT: RθJA 18.8 °C/W (2s2p + 5×5 열 비아), RθJB 14.1, RθJC 7.1, ψJT 0.33 °C/W. 수명: VCC 1.2 V, TJ 105 °C에서 100K 전원 인가 시간.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>배치 설명의 180 MHz는 ZWT(BGA) 기준입니다. PGE(LQFP-144)는 최대 160 MHz입니다.</li>\n    <li>EMIF 핀은 ZWT에서만 나오고, PGE는 인터럽트 GPIO가 4개뿐입니다. 패키지 선택 시 주변 기능 가용성을 확인하세요.</li>\n    <li>배치 설명의 'ASIL D'는 읽은 문서 범위에서 등급 표기를 확인하지 못했습니다. 안전 매뉴얼·인증서로 확인하세요.</li>\n    <li>문서 설명부와 특징 목록의 LIN 버전 표기(2.0 / 2.1)가 다릅니다.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.ti.com/document-viewer/lit/html/SPNS162C/specifications"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "LQFP-144",
+   "feat": [
+    "motor",
+    "eth",
+    "flexray"
+   ]
+  },
+  "grade": "Q100"
+ },
+ "issues": [
+  {
+   "p": "[설명·분류 오류] description \"180 MHz\" applies only to ZWT 337-BGA; PGE LQFP-144 max HCLK is 160 MHz",
+   "fix": "note package dependence in desc",
+   "url": "https://www.ti.com/document-viewer/lit/html/SPNS162C/specifications"
+  }
+ ]
+}

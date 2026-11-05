@@ -1,0 +1,253 @@
+{
+ "mpn": "FS400R07A1E3BOSA1",
+ "mfr": "Infineon",
+ "cat": "전력 모듈",
+ "price": null,
+ "status": "stub",
+ "title": "HybridPACK 1 650 V 400 A six-pack IGBT module",
+ "meta": [
+  "Infineon · 전력 모듈 · HybridPACK 1 650 V / 400 A six-pack IGBT module with NTC",
+  "원본: <a href=\"https://pdf.elecfans.com/EUPEC/FS400R07A1E3BOSA1.html\" target=\"_blank\" rel=\"noopener\">데이터시트 (elecfans 사본)</a> · <a href=\"https://www.infineon.com/cms/de/product/power/igbt/igbt-modules/fs400r07a1e3_s7/\" target=\"_blank\" rel=\"noopener\">제품 페이지 (FS400R07A1E3_S7, 미확인 링크)</a> · <a href=\"https://www.infineon.com/assets/row/public/documents/10/49/infineon-fs400r07a1e3-s7-ds-en.pdf\" target=\"_blank\" rel=\"noopener\">S7 버전 데이터시트</a> · <a href=\"https://octopart.com/search?q=FS400R07A1E3BOSA1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 FS400R07A1E3 Final Data Sheet V3.4, 2018-08-09 (주문 코드 SP000663446)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "3상 인버터용 six-pack IGBT 모듈 (IGBT3 + 환류 다이오드 6조) + NTC 온도 센서, HybridPACK 1, Cu 베이스플레이트, Al2O3 기판"
+      ],
+      [
+       "정격",
+       "VCES 650 V, IC nom 400 A (TC 65 °C), ICRM 800 A"
+      ],
+      [
+       "VCE(sat)",
+       "IC 400 A, VGE 15 V: 1.45 V (25 °C) / 1.60 V (125 °C) / 1.70 V (150 °C) 일반값"
+      ],
+      [
+       "게이트",
+       "VGE(th) 4.90 / 5.80 / 6.50 V (min/typ/max, IC 6.40 mA), QG 4.30 µC (−15…15 V), Cies 26.0 nF, Cres 0.76 nF, RGint 1.0 Ω"
+      ],
+      [
+       "스위칭 (150 °C)",
+       "IC 400 A, VCE 300 V, RG 1.8 Ω, LS 25 nH: Eon 4.50 mJ, Eoff 17.0 mJ, Erec 8.30 mJ; td(on) 0.12 µs, td(off) 0.50 µs"
+      ],
+      [
+       "다이오드",
+       "VF (IF 400 A) 1.55 / 1.50 / 1.45 V 일반 (25/125/150 °C), 최대 1.95 V"
+      ],
+      [
+       "NTC",
+       "R25 5.00 kΩ, R100 493 Ω (±5%), B25/50 3375 K, B25/80 3411 K, B25/100 3433 K, P25 20.0 mW"
+      ],
+      [
+       "온도",
+       "Tvj op −40–150 °C, Tstg −40–125 °C"
+      ],
+      [
+       "패키지",
+       "HybridPACK 1 (M5 베이스 장착, M6 나사 단자)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "IGBT VCES (Tvj 25 °C)",
+        "",
+        "650",
+        "V",
+        "S7 버전은 705 V"
+       ],
+       [
+        "IGBT VGES",
+        "−20",
+        "20",
+        "V",
+        ""
+       ],
+       [
+        "IC nom (TC 65 °C, Tvj max 175 °C)",
+        "",
+        "400",
+        "A",
+        ""
+       ],
+       [
+        "IC (TC 25 °C)",
+        "",
+        "500",
+        "A",
+        ""
+       ],
+       [
+        "ICRM (tP 1 ms)",
+        "",
+        "800",
+        "A",
+        ""
+       ],
+       [
+        "Ptot (TC 25 °C)",
+        "",
+        "1250",
+        "W",
+        "IGBT당"
+       ],
+       [
+        "다이오드 VRRM",
+        "",
+        "650",
+        "V",
+        ""
+       ],
+       [
+        "다이오드 IF (DC)",
+        "",
+        "400",
+        "A",
+        ""
+       ],
+       [
+        "다이오드 IFRM (tP 1 ms)",
+        "",
+        "800",
+        "A",
+        ""
+       ],
+       [
+        "다이오드 I²t (VR 0 V, 10 ms)",
+        "",
+        "8800 (125 °C) / 8500 (150 °C)",
+        "A²s",
+        ""
+       ],
+       [
+        "단락 ISC (VCC 360 V, VGE ≤ 15 V)",
+        "",
+        "2800 (25 °C, ≤ 8 µs) / 2000 (150 °C, ≤ 6 µs)",
+        "A",
+        ""
+       ],
+       [
+        "절연 VISOL (RMS, 50 Hz, 1 min)",
+        "",
+        "2.5",
+        "kV",
+        ""
+       ],
+       [
+        "Tvj op (연속)",
+        "−40",
+        "150",
+        "°C",
+        "S7: 175 °C 단시간 허용"
+       ],
+       [
+        "Tstg",
+        "−40",
+        "125",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "Tvj 동작 (연속)",
+        "−40",
+        "",
+        "150",
+        "°C"
+       ],
+       [
+        "모듈 장착 토크 M5 (베이스–히트싱크)",
+        "3.00",
+        "",
+        "6.00",
+        "Nm"
+       ],
+       [
+        "단자 토크 M6",
+        "3.0",
+        "",
+        "6.0",
+        "Nm"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>HybridPACK 1 모듈 단자 (그룹 요약): DC+ / DC− 전원 단자 (M6 나사), 상 출력 U / V / W (M6 나사), 6개 IGBT의 게이트·보조 이미터 신호 핀, NTC 신호 핀 2개. 단자 번호·이름은 원본 회로도/외형도에서 확인 필요 (텍스트 추출로 확인 못함).</p>"
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n  <li>데이터시트 스위칭 조건: VGE ±15 V, RGon = RGoff = 1.8 Ω, LS 25 nH, VCE 300 V — 게이트 저항 선정 출발점.</li>\n  <li>단락 내량: VCC 360 V, VGE ≤ 15 V에서 150 °C 6 µs 이내 (ISC 약 2000 A) — 디새추레이션 검출 블랭킹은 이 안에 끝나야 함.</li>\n  <li>NTC는 R25 5 kΩ / B25/80 3411 K로 온도 환산; 기본 절연(class 1)이므로 NTC 측정 회로는 고전압 측 전위로 취급.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>RthJC IGBT 0.120 K/W, 다이오드 0.200 K/W (개당); RthCH IGBT 0.080 K/W, 다이오드 0.085 K/W (λpaste = 1 W/(m·K)). 스트레이 인덕턴스 LsCE 30 nH, 단자–칩 저항 RCC'+EE' 1.00 mΩ (S7 데이터시트 기준 값과 동일). 연면거리 단자–히트싱크 12.0 mm / 단자–단자 6.1 mm, 공간거리 동일. CTI &gt; 200, 무게 485 g (S7 데이터시트 값; 이 버전은 확인 필요). Tvj 최대 150 °C (연속).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n  <li>BOSA1 주문형은 FS400R07A1E3 (SP000663446, VCES 650 V) 데이터시트에 해당. 현행 FS400R07A1E3_S7 (SP001290884, V3.2 2017-09-28)은 VCES/VRRM 705 V, Tvj 175 °C 단시간 허용, Eon 등 일부 값이 다름 — 같은 HybridPACK 1 계열이나 신규 설계는 S7 확인 권장.</li>\n  <li>BOSA1의 단종 여부는 확인하지 못함 (Rochester 등 재고 유통 흔적만 있음) — Infineon 제품 페이지에서 상태 확인 필요.</li>\n  <li>DC 링크 스너버·라미네이트 버스바로 루프 인덕턴스를 줄여 턴오프 과전압 (650 V 한계) 관리; 400 V급 배터리 시스템용.</li>\n  <li>절연은 basic insulation (2.5 kV RMS 1 min) — 강화 절연이 필요한 경우 게이트 드라이버 측에서 확보.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "alias": [
+  "FS400R07A1E3*"
+ ],
+ "src": [
+  "https://pdf.elecfans.com/EUPEC/FS400R07A1E3BOSA1.html"
+ ],
+ "todo": "미완: 단자(핀) 배치·회로도 단자명, 패키지 외형 치수, VCE(sat) 최대값, 모듈 무게(이 버전)를 텍스트로 확인하지 못함 — 원본 PDF 도면 확인 필요."
+}

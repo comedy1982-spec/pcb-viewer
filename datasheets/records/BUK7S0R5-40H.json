@@ -1,0 +1,295 @@
+{
+ "mpn": "BUK7S0R5-40H",
+ "mfr": "Nexperia",
+ "cat": "트랜지스터",
+ "price": null,
+ "status": "done",
+ "title": "N-channel 40 V 0.5 mOhm standard level MOSFET in LFPAK88",
+ "meta": [
+  "Nexperia · 트랜지스터 · N-channel 40 V, 0.5 mΩ standard level MOSFET in LFPAK88",
+  "원본: <a href=\"https://xonstorage.blob.core.windows.net/pdf/nexperia_buk7s0r540h_apr22_xonlink.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://nexperia.cn/product/BUK7S0R5-40H\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=BUK7S0R5-40H\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Product data sheet, 2021-04-06"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "N-채널 트렌치 MOSFET, 스탠더드 레벨 (VGS 10 V 구동)"
+      ],
+      [
+       "VDS",
+       "40 V (25 °C ≤ Tj ≤ 175 °C)"
+      ],
+      [
+       "ID",
+       "500 A (VGS 10 V, Tmb 25 °C), 펄스 2237 A (tp ≤ 10 µs)"
+      ],
+      [
+       "RDS(on)",
+       "VGS 10 V, ID 25 A, Tj 25 °C: 일반 0.47 / 최대 0.55 mΩ · Tj 175 °C: 일반 0.93 / 최대 1.19 mΩ"
+      ],
+      [
+       "VGS(th)",
+       "2.4 / 3 / 3.6 V (ID 1 mA, Tj 25 °C)"
+      ],
+      [
+       "Qg(tot)",
+       "일반 190 nC (최대 267 nC), QGS 51 nC, QGD 32 nC (ID 25 A, VDS 32 V, VGS 10 V)"
+      ],
+      [
+       "RG (내부)",
+       "0.37 / 0.92 / 2.31 Ω"
+      ],
+      [
+       "등급",
+       "AEC-Q101 이상으로 인증, Tj −55 ~ 175 °C"
+      ],
+      [
+       "패키지",
+       "LFPAK88 (SOT1235), 8 × 8 × 1.6 mm, 리드 4개, 2 mm 피치, 마킹 7S0R540H"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VDS",
+        "",
+        "40",
+        "V",
+        "25 °C ≤ Tj ≤ 175 °C"
+       ],
+       [
+        "VGS",
+        "−10",
+        "20",
+        "V",
+        "DC, Tj 175 °C"
+       ],
+       [
+        "ID",
+        "",
+        "500",
+        "A",
+        "VGS 10 V, Tmb 25 °C (100 °C 값은 그래프만 제공)"
+       ],
+       [
+        "IDM",
+        "",
+        "2237",
+        "A",
+        "펄스 tp ≤ 10 µs, Tmb 25 °C"
+       ],
+       [
+        "Ptot",
+        "",
+        "375",
+        "W",
+        "Tmb 25 °C"
+       ],
+       [
+        "IS / ISM",
+        "",
+        "500 / 2237",
+        "A",
+        "바디 다이오드, Tmb 25 °C"
+       ],
+       [
+        "EDS(AL)S",
+        "",
+        "1375",
+        "mJ",
+        "비반복, ID 120 A, Vsup ≤ 40 V, RGS 50 Ω, Tj(init) 25 °C"
+       ],
+       [
+        "IAS",
+        "",
+        "315",
+        "A",
+        "비반복 애벌런치 전류"
+       ],
+       [
+        "Tj, Tstg",
+        "−55",
+        "175",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "html": "<p>디스크리트 MOSFET으로 별도 권장 동작 표 없음. 동적 특성(참고):</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "Ciss (VDS 25 V, 1 MHz)",
+        "",
+        "15116",
+        "21162",
+        "pF"
+       ],
+       [
+        "Coss",
+        "",
+        "2718",
+        "3805",
+        "pF"
+       ],
+       [
+        "Crss",
+        "",
+        "544",
+        "1197",
+        "pF"
+       ],
+       [
+        "td(on) / tr / td(off) / tf (VDS 30 V, RL 1.2 Ω, RG(ext) 5 Ω)",
+        "",
+        "40 / 33 / 117 / 48",
+        "",
+        "ns"
+       ],
+       [
+        "VSD (IS 25 A)",
+        "",
+        "0.79",
+        "1",
+        "V"
+       ],
+       [
+        "trr / Qr (IS 25 A, −100 A/µs, VDS 20 V)",
+        "",
+        "62 / 93",
+        "",
+        "ns / nC"
+       ],
+       [
+        "IDSS (VDS 40 V, 25 °C / 175 °C)",
+        "",
+        "0.2 / 455",
+        "2.9 / 1000",
+        "µA"
+       ],
+       [
+        "IGSS (VGS 20 V / −10 V)",
+        "",
+        "2",
+        "100",
+        "nA"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>LFPAK88 (SOT1235)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "G",
+        "게이트"
+       ],
+       [
+        "2",
+        "S",
+        "소스"
+       ],
+       [
+        "3",
+        "S",
+        "소스"
+       ],
+       [
+        "4",
+        "S",
+        "소스"
+       ],
+       [
+        "mb",
+        "D",
+        "마운팅 베이스 = 드레인"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>Qg(tot) 190 nC(일반)이므로 게이트 드라이버 소스/싱크 전류와 부트스트랩 커패시터는 이 전하량 기준으로 선정 (예: 브리지 하이사이드).</li>\n    <li>스위칭 시간 측정 조건은 RG(ext) 5 Ω — 실제 게이트 저항은 EMI·dv/dt에 맞춰 조정.</li>\n    <li>VGS 최대 +20 V / −10 V: 게이트-소스 간 TVS 또는 제너로 과전압 클램프 권장.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>LFPAK88 8 × 8 × 1.6 mm, 드레인 = 마운팅 베이스(mb). Rth(j-mb) 일반 0.35 / 최대 0.4 K/W. Rth(j-a)는 데이터시트에 기재 없음(기판 설계 의존). Tj 최대 175 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>LFPAK56(5×6)과 다른 8×8 mm LFPAK88 패키지이므로 풋프린트를 LFPAK88(SOT1235) 전용으로 써야 함.</li>\n    <li>RDS(on)은 175 °C에서 약 2배(최대 1.19 mΩ) — 손실·열 계산은 고온 값 사용.</li>\n    <li>EPS/전동 브레이크 등 대전류 브리지에서 병렬 대신 단일 소자로 쓰는 용도. 드레인 탭 면적·써멀 비아로 Rth(mb-a)를 낮출 것.</li>\n    <li>동일 패키지 계열: BUK7S0R7-40H, BUK7S1R0-40H (Nexperia LFPAK88, 사양 미확인).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://xonstorage.blob.core.windows.net/pdf/nexperia_buk7s0r540h_apr22_xonlink.pdf"
+ ],
+ "issues": [
+  {
+   "p": "[패키지·핀] description says just \"LFPAK\"; real package is LFPAK88 (SOT1235, 8x8x1.6 mm, 4 leads 2 mm pitch + drain mb), not LFPAK56",
+   "fix": "use an LFPAK88/SOT1235 footprint and say \"LFPAK88\" in desc",
+   "url": "https://xonstorage.blob.core.windows.net/pdf/nexperia_buk7s0r540h_apr22_xonlink.pdf"
+  }
+ ]
+}

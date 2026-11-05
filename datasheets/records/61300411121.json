@@ -1,0 +1,104 @@
+{
+ "mpn": "61300411121",
+ "mfr": "Würth Elektronik",
+ "cat": "커넥터",
+ "price": 0.16,
+ "status": "stub",
+ "title": "WR-PHD 2.54 mm pin header, 4 pins",
+ "meta": [
+  "Würth Elektronik · 커넥터 · WR-PHD 2.54 mm 1열 4핀 스트레이트 THT 핀 헤더 · 참고 단가 약 $0.16 (추정)",
+  "원본: <a href=\"https://www.we-online.com/katalog/datasheet/61300411121.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> (미확인 링크) · <a href=\"https://be.farnell.com/wurth-elektronik/61300411121/header-2-54mm-pin-tht-vertical/dp/2356155\" target=\"_blank\" rel=\"noopener\">Farnell 사양</a> · <a href=\"https://ie.rs-online.com/web/p/pcb-headers/8281594P\" target=\"_blank\" rel=\"noopener\">RS 사양</a> · <a href=\"https://octopart.com/search?q=61300411121\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a>"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "형태",
+       "WR-PHD 핀 헤더, 1열 4핀, 수직(스트레이트), 비슈라우드, 수(male), 스루홀 솔더"
+      ],
+      [
+       "피치",
+       "2.54 mm"
+      ],
+      [
+       "정격 전류",
+       "3 A"
+      ],
+      [
+       "사용 전압",
+       "250 V AC"
+      ],
+      [
+       "접촉 저항",
+       "최대 20 mΩ"
+      ],
+      [
+       "절연 저항",
+       "&gt; 1000 MΩ"
+      ],
+      [
+       "재질",
+       "접점 구리 합금, 금도금(스탬핑). 절연체 PA6T(Farnell) — RS는 폴리아마이드/PBT로 표기, UL94 V-0"
+      ],
+      [
+       "핀 길이",
+       "테일(PCB측) 3 mm, 결합측 6 mm (RS)"
+      ],
+      [
+       "동작 온도",
+       "−40 … +105 °C (RS)"
+      ],
+      [
+       "기타",
+       "품질 등급 Class 3 (CECC 75 301-802), JEDEC 무연 웨이브 솔더링"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1–4",
+        "1, 2, 3, 4",
+        "단순 접점 (1열 순차 번호)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>1×4, 2.54 mm 피치. 전체 몸체 치수·홀 지름은 데이터시트 확인 필요 (KiCad 표준 PinHeader_1x04_P2.54mm_Vertical과 호환되는 일반 규격).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>디버그/프로그래밍용 헤더로 적합. 차량 실장 커넥터(진동·방수)로는 부적합.</li>\n    <li>동일 시리즈 2핀 61300211121, 8핀 61300811121.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://be.farnell.com/wurth-elektronik/61300411121/header-2-54mm-pin-tht-vertical/dp/2356155"
+ ],
+ "todo": "제조사 PDF를 읽지 못해 유통사(Farnell, RS) 사양으로 작성. 몸체 치수·권장 홀 지름·도금 두께는 WE 데이터시트로 확인 필요. 2차 시도: 검색 결과에 WE PDF(we-online.com/components/products/datasheet/61300411121.pdf) 링크가 나오지 않아 열지 못함; chipdip 페이지는 데이터시트 링크 없이 사양만(3.0 A, 250 V, 1열 4핀, 2.54 mm) 제공."
+}

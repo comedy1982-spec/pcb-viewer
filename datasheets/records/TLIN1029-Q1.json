@@ -1,0 +1,253 @@
+{
+ "mpn": "TLIN1029-Q1",
+ "mfr": "TI",
+ "cat": "통신",
+ "price": null,
+ "status": "done",
+ "title": "LIN transceiver with dominant state timeout",
+ "meta": [
+  "TI · 통신 · Automotive LIN transceiver with dominant state timeout",
+  "원본: <a href=\"https://ti.com/document-viewer/lit/html/SLLSEY5F/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000018906\" target=\"_blank\" rel=\"noopener\">데이터시트 (TI HTML 뷰어)</a> · <a href=\"https://ti.com/product/TLIN1029-Q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TLIN1029-Q1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SLLSEY5F (2017-10, 개정 2022-05)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "LIN 2.0/2.1/2.2/2.2A, ISO/DIS 17987-4.2 물리 계층 트랜시버, SAE J2602, ISO 9141 (K-Line) 지원. EN 핀/버스 웨이크, TXD 우세 타임아웃"
+      ],
+      [
+       "데이터율",
+       "송신 최대 20 kbps, 수신 최대 100 kbps (인라인 프로그래밍)"
+      ],
+      [
+       "전원",
+       "VSUP 4 ~ 36 V (권장), 절대 최대 45 V"
+      ],
+      [
+       "버스 보호",
+       "LIN ±45 V"
+      ],
+      [
+       "공급 전류",
+       "Sleep 8 typ / 12 µA max (VSUP ≤ 14 V), Normal 열성 300 / 650 µA, 우세 1 / 5 mA"
+      ],
+      [
+       "내부 풀업",
+       "RPU 20 / 45 / 60 kΩ + 직렬 다이오드 (Responder 외부 풀업 불필요)"
+      ],
+      [
+       "ESD",
+       "HBM ±8 kV, CDM ±1.5 kV (제품 페이지)"
+      ],
+      [
+       "등급 · 온도",
+       "AEC-Q100 Grade 1, TA -40 ~ 125 °C"
+      ],
+      [
+       "패키지",
+       "SOIC-8 (D) 4.90 × 3.91 mm, VSON-8 (DRB) 3.00 × 3.00 mm"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VSUP",
+        "-0.3",
+        "45",
+        "V",
+        "ISO/DIS 17987 Param 10"
+       ],
+       [
+        "VLIN",
+        "-45",
+        "45",
+        "V",
+        "ISO/DIS 17987 Param 82"
+       ],
+       [
+        "로직 핀 (RXD, TXD, EN)",
+        "-0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "TA",
+        "-40",
+        "125",
+        "°C",
+        ""
+       ],
+       [
+        "TJ",
+        "-55",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VSUP",
+        "4",
+        "",
+        "36",
+        "V"
+       ],
+       [
+        "VLIN",
+        "0",
+        "",
+        "36",
+        "V"
+       ],
+       [
+        "로직 핀 (RXD, TXD, EN)",
+        "0",
+        "",
+        "5.25",
+        "V"
+       ],
+       [
+        "과열 차단 TSD / 히스테리시스",
+        "165",
+        "15 (hys)",
+        "",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8 (D) / VSON-8 (DRB) 공통 번호</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "RXD",
+        "수신 출력 (오픈 드레인) — LIN 버스 레벨"
+       ],
+       [
+        "2",
+        "EN",
+        "High = Normal, Low = Sleep"
+       ],
+       [
+        "3",
+        "NC",
+        "미연결"
+       ],
+       [
+        "4",
+        "TXD",
+        "송신 입력 (내부 풀다운)"
+       ],
+       [
+        "5",
+        "GND",
+        "그라운드"
+       ],
+       [
+        "6",
+        "LIN",
+        "LIN 버스 단선 송수신"
+       ],
+       [
+        "7",
+        "VSUP",
+        "배터리 전원 (외부 역방향 차단 다이오드 경유)"
+       ],
+       [
+        "8",
+        "NC",
+        "미연결"
+       ],
+       [
+        "PAD",
+        "Thermal pad",
+        "DRB만, 전기적 연결 없음 — 방열용으로 PCB에 납땜 가능"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VSUP: 배터리에서 역방향 차단 다이오드 경유, 디커플링 일반값 100 nF, 1 µF, ≥ 10 µF (시스템에 따라).</li>\n    <li>LIN 핀(6)에 220 pF를 GND로 (Commander/Responder 간이 회로, Rev D 이후 값).</li>\n    <li>Commander 노드: 외부 1 kΩ 풀업 + 직렬 차단 다이오드를 VSUP로. Responder는 내장 45 kΩ 사용.</li>\n    <li>RXD 오픈 드레인: MCU 내부 풀업이 없으면 외부 풀업 (전기 특성 VOL 0.6 V max @ RPU 2.4 kΩ).</li>\n    <li>TXD/EN VIL 0.8 V / VIH 2 V → 3.3 V, 5 V MCU 모두 직결.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8 (D): RθJA 115.5, RθJC(top) 58.7, RθJB 58.9, ΨJT 14.1, ΨJB 58.2 °C/W. VSON-8 (DRB): RθJA 48.5, RθJC(bot) 4.8 °C/W. TJ max 150 °C, TSD ≥ 165 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>MPN에 패키지 접미사가 없음 — 주문형은 TLIN1029DRQ1 (SOIC-8) 등으로 지정 필요 (주문 코드는 읽은 문서에서 미확인). 핀 테이블은 SOIC-8 (D) 기준.</li>\n    <li>TI 제품 페이지: 신규 TLIN1029A-Q1이 드롭인 대체(전원 전압 전 범위 듀티 사이클 개선), TLIN1039-Q1 핀 호환. 듀티 사이클 관련 정오표 SLLA490 존재.</li>\n    <li>UVSUP 2.9 ~ 3.85 V. Sleep 시 EN Low, 버스 웨이크 후 EN High로 Normal 복귀.</li>\n    <li>Rev 이력에 VLIN ±60 표기 변경 기록이 있으나 현행 절대 최대 정격 표는 ±45 V — 표 값을 적용.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "alias": [
+  "TLIN1029*",
+  "TLIN1029DRQ1"
+ ],
+ "src": [
+  "https://ti.com/document-viewer/lit/html/SLLSEY5F/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000018906"
+ ]
+}

@@ -1,0 +1,287 @@
+{
+ "mpn": "FS820R08A6P2",
+ "mfr": "Infineon",
+ "cat": "전력 모듈",
+ "price": null,
+ "status": "done",
+ "title": "HybridPACK Drive 750 V six-pack IGBT module",
+ "meta": [
+  "Infineon · 전력 모듈 · HybridPACK Drive 6-팩(3상 인버터) IGBT 모듈, 750 V / 820 A (ICN), EDT2, 핀핀 직접 수냉",
+  "원본: <a href=\"https://pdf.elecfans.com/EUPEC/FS820R08A6P2BPSA1.html\" target=\"_blank\" rel=\"noopener\">데이터시트 사본 (FS820R08A6P2, V3.3)</a> · <a href=\"https://www.infineon.com/assets/row/public/documents/10/49/infineon-fs820r08a6p2-datasheet-cn.pdf\" target=\"_blank\" rel=\"noopener\">Infineon 중문판 (미확인 링크)</a> · <a href=\"https://uploadcdn.oneyac.com/attachments/files/brand_pdf/infineontechnologies/43/0C/Infineon-FS820R08A6P2B-DS-v03_00-EN.pdf\" target=\"_blank\" rel=\"noopener\">FS820R08A6P2B V3.0 사본</a> · <a href=\"https://octopart.com/search?q=FS820R08A6P2\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Final Data Sheet V3.3, 2019-10-09 (주문 코드 SP001499702, OPN FS820R08A6P2BPSA1)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "구성",
+       "3상 6-팩 (IGBT 6 + 역병렬 다이오드 6), NTC 내장, PressFIT 신호 핀"
+      ],
+      [
+       "VCES",
+       "750 V (Tvj 25 °C)"
+      ],
+      [
+       "전류",
+       "ICN (구현) 820 A · IC nom 450 A (TF 80 °C, Tvj max 175 °C) · ICRM 1640 A (tP 1 ms)"
+      ],
+      [
+       "VGES",
+       "±20 V"
+      ],
+      [
+       "Ptot",
+       "714 W (TF 75 °C, 스위치당)"
+      ],
+      [
+       "VGE(th)",
+       "4.90 / 5.80 / 6.50 V (25 °C)"
+      ],
+      [
+       "스위칭 손실",
+       "Eon 17.5 mJ, Eoff 29.0 mJ (150 °C, IC 450 A, VCE 400 V, VGE −8/+15 V, RGon 2.4 Ω, RGoff 5.1 Ω)"
+      ],
+      [
+       "단락 내량",
+       "ISC 4800 A (tP ≤ 6 µs, 25 °C) / 3900 A (tP ≤ 3 µs, 175 °C), VGE ≤ 15 V, VCC 400 V"
+      ],
+      [
+       "온도",
+       "Tvj op −40~150 °C 연속, 175 °C 단시간 (30 s 중 10 s, 수명 3000회) · Tstg −40~125 °C"
+      ],
+      [
+       "패키지",
+       "HybridPACK Drive, Cu+Ni 핀핀 베이스플레이트, Al2O3 기판, 무게 720 g"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VCES (IGBT)",
+        "",
+        "750",
+        "V",
+        "Tvj 25 °C"
+       ],
+       [
+        "IC nom",
+        "",
+        "450",
+        "A",
+        "TF 80 °C"
+       ],
+       [
+        "ICRM",
+        "",
+        "1640",
+        "A",
+        "tP 1 ms"
+       ],
+       [
+        "VGES",
+        "-20",
+        "20",
+        "V",
+        ""
+       ],
+       [
+        "Ptot",
+        "",
+        "714",
+        "W",
+        "TF 75 °C"
+       ],
+       [
+        "VRRM (다이오드)",
+        "",
+        "750",
+        "V",
+        ""
+       ],
+       [
+        "IF / IFRM (다이오드)",
+        "",
+        "450 / 1640",
+        "A",
+        "TF 80 °C / tP 1 ms"
+       ],
+       [
+        "I²t (다이오드)",
+        "",
+        "19000 / 16000",
+        "A²s",
+        "tP 10 ms, 150 / 175 °C"
+       ],
+       [
+        "단자 RMS 전류",
+        "",
+        "500",
+        "A",
+        "TF 75 °C, TCt 105 °C"
+       ],
+       [
+        "절연 시험 전압",
+        "",
+        "4.2",
+        "kV",
+        "RMS, 1 s"
+       ],
+       [
+        "Tvj op",
+        "-40",
+        "150 (단시간 175)",
+        "°C",
+        "Tvj &gt; 150 °C 시 베이스플레이트 ≤ 125 °C"
+       ],
+       [
+        "Tstg",
+        "-40",
+        "125",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "게이트 전압 (특성 측정 조건)",
+        "-8",
+        "",
+        "15",
+        "V"
+       ],
+       [
+        "냉각수 (50 % 물 / 50 % 에틸렌글리콜) 유량",
+        "",
+        "10",
+        "",
+        "dm³/min"
+       ],
+       [
+        "베이스플레이트–히트싱크 체결 토크 (M4)",
+        "1.8",
+        "2.0",
+        "2.2",
+        "Nm"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>HybridPACK Drive 모듈 — 핀 그룹만 요약 (위치는 데이터시트 외형도 참조)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "그룹",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "게이트",
+        "G1–G6",
+        "스위치별 게이트 (상별 G1/G2, G3/G4, G5/G6)"
+       ],
+       [
+        "보조 이미터",
+        "E1–E6",
+        "스위치별 켈빈 이미터 (게이트 구동 기준)"
+       ],
+       [
+        "보조 컬렉터",
+        "C1–C6",
+        "스위치별 컬렉터 센스 (DESAT 감지용)"
+       ],
+       [
+        "DC 전원 단자",
+        "P1–P3, N1–N3",
+        "상별 DC 링크 단자 (P/N)"
+       ],
+       [
+        "AC 출력",
+        "1, 2, 3",
+        "상 출력 단자"
+       ],
+       [
+        "NTC",
+        "T11/T12, T21/T22, T31/T32",
+        "회로도 표기의 온도 센서 단자 (데이터시트 기능 표기 확인 필요)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>게이트 전하 QG 4.40 µC (VGE −8~+15 V) → 게이트 드라이버 평균 전류 ≈ QG × fsw (10 kHz에서 스위치당 약 44 mA), 드라이버 전력 ≈ QG × ΔVGE(23 V) × fsw ≈ 1.0 W.</li>\n    <li>데이터시트 측정 조건 RGon 2.4 Ω / RGoff 5.1 Ω, 내부 RGint 0.7 Ω. Cies 80.0 nF, Cres 0.30 nF (VCE 50 V).</li>\n    <li>모듈 표유 인덕턴스는 V3.0(FS820R08A6P2B) 사본에서 LsCE 8.0 nH. DC 링크 커패시터는 저인덕턴스 버스바로 바로 연결.</li>\n    <li>NTC: R25 5.00 kΩ (±5 %), B25/50 3375 K, B25/80 3411 K, B25/100 3433 K, P25 20.0 mW.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>HybridPACK Drive, 핀핀 직접 수냉. RthJF IGBT 0.120 typ / 0.140 max K/W, 다이오드 0.175 typ / 0.200 max K/W (10 dm³/min, TF 75 °C). 연면거리 9.0 mm, 공간거리 4.5 mm, CTI &gt; 200. 모듈 리드 저항 RCC'+EE' 0.75 mΩ. 무게 720 g (V3.0 B버전 사본은 800 g 표기).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VCE(sat)는 읽은 사본에서 표 정렬이 깨져 값(450 A에서 1.10~1.35 V, 820 A에서 1.30~1.50 V 범위)과 온도·typ/max 대응을 확정하지 못했습니다. 손실 계산 전에 원본 표를 확인하세요.</li>\n    <li>다이오드 VF typ (450 A): 1.45 V (25 °C), 1.30 V (150 °C), 1.25 V (175 °C). Erec 13.0 mJ (150 °C).</li>\n    <li>\"820 A\"는 칩 구현 전류(ICN)이며 연속 정격 IC nom은 450 A(TF 80 °C), 단자 RMS 한계는 500 A입니다. 인버터 전류 정격은 열 계산과 단자 한계로 정하세요.</li>\n    <li>B 접미사 변형 FS820R08A6P2B는 별도 데이터시트(주문 코드 SP001499708)가 있습니다. 두 문서 간 차이는 읽은 텍스트에 명시되지 않음.</li>\n    <li>Tvj 150 °C 초과 단시간 운전 시 베이스플레이트 125 °C 이하로 제한. 냉각수 최대 압력 2.5 bar (베이스플레이트 &lt; 40 °C) / 2.0 bar (&gt; 40 °C, V3.0 사본).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://pdf.elecfans.com/EUPEC/FS820R08A6P2BPSA1.html"
+ ],
+ "issues": [
+  {
+   "p": "[설명·분류 오류] cat null in batch; real part is a HybridPACK Drive 750 V six-pack, ICN 820 A but IC nom 450 A (TF 80 °C) and terminal RMS 500 A; separate \"B\" variant FS820R08A6P2B exists with its own datasheet",
+   "fix": "set cat 전력 모듈; don't treat 820 A as continuous rating.",
+   "url": "https://pdf.elecfans.com/EUPEC/FS820R08A6P2BPSA1.html"
+  }
+ ]
+}

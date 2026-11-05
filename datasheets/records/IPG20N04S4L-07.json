@@ -1,0 +1,238 @@
+{
+ "mpn": "IPG20N04S4L-07",
+ "mfr": "Infineon",
+ "cat": "트랜지스터",
+ "price": null,
+ "status": "stub",
+ "title": "Dual N-channel 40 V logic-level OptiMOS-T2 MOSFET",
+ "meta": [
+  "Infineon · 트랜지스터 · Dual N-channel 40 V logic-level OptiMOS-T2 MOSFET",
+  "원본: <a href=\"https://www.mouser.com/datasheet/3/70/1/Infineon-IPG20N04S4L-07-DataSheet-v01_01-EN.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.infineon.com/dgdl/Infineon-IPG20N04S4L-07-DataSheet-v01_01-EN.pdf?fileId=db3a30432ba3fa6f012bbf622fcf6c0a\" target=\"_blank\" rel=\"noopener\">Infineon 원본 PDF (미확인 링크)</a> · <a href=\"https://octopart.com/search?q=IPG20N04S4L-07\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Rev. 1.01 (2024-08-19)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "구성",
+       "N채널 MOSFET 2개 (독립), 로직 레벨, 증가형"
+      ],
+      [
+       "V<sub>DS</sub>",
+       "40 V"
+      ],
+      [
+       "R<sub>DS(on)</sub>",
+       "6.5 mΩ typ / 7.2 mΩ max (V<sub>GS</sub>=10 V, I<sub>D</sub>=17 A) · 8.0 / 9.2 mΩ (V<sub>GS</sub>=4.5 V, 10 A)"
+      ],
+      [
+       "I<sub>D</sub>",
+       "20 A (T<sub>C</sub>=25 °C 및 100 °C, 채널당), 펄스 80 A"
+      ],
+      [
+       "V<sub>GS(th)</sub>",
+       "1.2 / 1.7 / 2.2 V (min/typ/max, I<sub>D</sub>=30 µA)"
+      ],
+      [
+       "게이트 전하",
+       "Q<sub>g</sub> 39 nC typ (50 max) · Q<sub>gs</sub> 8.2 nC · Q<sub>gd</sub> 4 nC · V<sub>plateau</sub> 2.7 V"
+      ],
+      [
+       "등급",
+       "AEC-Q101, MSL1 (260 °C), 175 °C 동작, 100% 애벌랜치 시험"
+      ],
+      [
+       "패키지",
+       "PG-TDSON-8 (마킹 4N04L07)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "V<sub>DS</sub> (V<sub>(BR)DSS</sub> min)",
+        "",
+        "40",
+        "V",
+        "V<sub>GS</sub>=0, I<sub>D</sub>=1 mA"
+       ],
+       [
+        "V<sub>GS</sub>",
+        "-16",
+        "16",
+        "V",
+        ""
+       ],
+       [
+        "I<sub>D</sub> 연속",
+        "",
+        "20",
+        "A",
+        "T<sub>C</sub>=25/100 °C, V<sub>GS</sub>=10 V"
+       ],
+       [
+        "I<sub>D,pulse</sub>",
+        "",
+        "80",
+        "A",
+        "한 채널 동작"
+       ],
+       [
+        "E<sub>AS</sub>",
+        "",
+        "230",
+        "mJ",
+        "단일 펄스, I<sub>D</sub>=10 A"
+       ],
+       [
+        "I<sub>AS</sub>",
+        "",
+        "15",
+        "A",
+        "단일 펄스"
+       ],
+       [
+        "P<sub>tot</sub>",
+        "",
+        "65",
+        "W",
+        "T<sub>C</sub>=25 °C"
+       ],
+       [
+        "T<sub>j</sub>, T<sub>stg</sub>",
+        "-55",
+        "175",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "html": "<p>데이터시트에 별도 표 없음. 주요 전기 특성:</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "I<sub>DSS</sub> (V<sub>DS</sub>=40 V, 25 °C)",
+        "",
+        "0.01",
+        "1",
+        "µA"
+       ],
+       [
+        "I<sub>GSS</sub> (V<sub>GS</sub>=16 V)",
+        "",
+        "",
+        "100",
+        "nA"
+       ],
+       [
+        "C<sub>iss</sub> / C<sub>oss</sub> / C<sub>rss</sub>",
+        "",
+        "3060 / 560 / 25",
+        "3980 / 730 / 58",
+        "pF"
+       ],
+       [
+        "t<sub>d(on)</sub> / t<sub>r</sub> / t<sub>d(off)</sub> / t<sub>f</sub>",
+        "",
+        "9 / 4 / 50 / 25",
+        "",
+        "ns"
+       ],
+       [
+        "V<sub>SD</sub> (I<sub>F</sub>=17 A)",
+        "",
+        "0.9",
+        "1.3",
+        "V"
+       ],
+       [
+        "t<sub>rr</sub> / Q<sub>rr</sub>",
+        "",
+        "36 ns / 34 nC",
+        "",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>PG-TDSON-8 (듀얼, 8핀 + 드레인 패드)</p>"
+    },
+    {
+     "html": "<table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>\n  <tbody><tr><td colspan=\"3\">데이터시트 확인 필요 — 원본 PDF의 핀 그림이 텍스트로 추출되지 않음</td></tr></tbody></table>"
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>로직 레벨(4.5 V 구동 시 9.2 mΩ max)이지만 10 V 구동이 R<sub>DS(on)</sub>·손실 면에서 유리.</li>\n    <li>Q<sub>g</sub> 39 nC typ → 게이트 드라이버 평균 전류 ≈ Q<sub>g</sub>·f<sub>PWM</sub> (예: 20 kHz에서 채널당 약 0.8 mA).</li>\n    <li>V<sub>GS</sub> 정격 ±16 V — 12 V 게이트 드라이버(VREG 11–14 V 등)와 조합 시 여유 확인.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PG-TDSON-8. R<sub>thJC</sub> 2.3 K/W max · R<sub>thJA</sub> 100 K/W (최소 풋프린트) / 60 K/W (6 cm² 구리, 40×40×1.5 mm FR4). T<sub>j</sub> max 175 °C. 외형 치수: 데이터시트 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>두 채널이 독립(절연)이라 하프브리지 1개(하이+로우) 또는 두 개의 로우사이드로 사용 가능 — 6개 단품을 3개로 줄이는 용도.</li>\n    <li>펄스 정격 80 A는 한 채널만 동작할 때 기준. 두 채널 동시 도통 시 패키지 전체 발열로 판단.</li>\n    <li>동일 계열: IPG20N04S4L-08, IPG20N04S4L-11 (R<sub>DS(on)</sub> 다름, 핀 호환 여부는 각 데이터시트 확인).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.mouser.com/datasheet/3/70/1/Infineon-IPG20N04S4L-07-DataSheet-v01_01-EN.pdf"
+ ],
+ "todo": "핀 배치(S1/G1/S2/G2/D1/D2 핀 번호)는 데이터시트의 그림으로만 표시되어 텍스트로 확인하지 못했습니다. 패키지 도면 치수도 확인 필요. 원본 PDF의 Package Outline 그림을 보고 채우세요. (2차 확인 2026-10: dtsheet 사본 s1.dtsheet.com/store/data/002982700.pdf는 접근 승인되지 않아 읽지 못함.)",
+ "issues": [
+  {
+   "p": "[패키지·핀] Infineon dgdl PDF link and LCSC/dtsheet PDFs blocked by fetch provenance; Mouser copy read but pin drawing not extractable as text",
+   "fix": "fill pin table from the PDF figure manually",
+   "url": "https://www.mouser.com/datasheet/3/70/1/Infineon-IPG20N04S4L-07-DataSheet-v01_01-EN.pdf"
+  }
+ ]
+}

@@ -1,5 +1,5 @@
 {
-  "built": "2026-10-29",
+  "built": "2026-11-05",
   "items": {
     "0348301201": {
       "file": "datasheets/db/0348301201.html",
@@ -7,7 +7,7 @@
       "cat": "커넥터",
       "price": null,
       "status": "stub",
-      "title": "0348301201 · MX150 2x6 Right-Angle Sealed PCB Header"
+      "title": "MX150 2x6 Right-Angle Sealed PCB Header"
     },
     "1ED3491MC12M": {
       "file": "datasheets/db/1ED3491MC12M.html",
@@ -15,7 +15,7 @@
       "cat": "게이트 드라이버",
       "price": null,
       "status": "done",
-      "title": "1ED3491MC12M · Isolated Single-Channel Gate Driver 9 A"
+      "title": "Isolated Single-Channel Gate Driver 9 A"
     },
     "24LC256T-I/SN": {
       "file": "datasheets/db/24LC256T-I_SN.html",
@@ -23,7 +23,7 @@
       "cat": "메모리",
       "price": 0.5,
       "status": "done",
-      "title": "24LC256T-I/SN · 256-Kbit I²C Serial EEPROM, SOIC-8"
+      "title": "256-Kbit I²C Serial EEPROM, SOIC-8"
     },
     "42BLF01 (MIKROE-4455)": {
       "file": "datasheets/db/42BLF01.html",
@@ -31,7 +31,7 @@
       "cat": "모터",
       "price": 24,
       "status": "done",
-      "title": "42BLF01 (MIKROE-4455) · 3-phase BLDC motor with hall sensors"
+      "title": "3-phase BLDC motor with hall sensors"
     },
     "61300211121": {
       "file": "datasheets/db/61300211121.html",
@@ -39,7 +39,7 @@
       "cat": "커넥터",
       "price": 0.1,
       "status": "stub",
-      "title": "61300211121 · WR-PHD 2.54 mm 1x2 straight THT pin header"
+      "title": "WR-PHD 2.54 mm 1x2 straight THT pin header"
     },
     "61300411121": {
       "file": "datasheets/db/61300411121.html",
@@ -47,7 +47,7 @@
       "cat": "커넥터",
       "price": 0.16,
       "status": "stub",
-      "title": "61300411121 · WR-PHD 2.54 mm pin header, 4 pins"
+      "title": "WR-PHD 2.54 mm pin header, 4 pins"
     },
     "61300811121": {
       "file": "datasheets/db/61300811121.html",
@@ -55,7 +55,7 @@
       "cat": "커넥터",
       "price": 0.28,
       "status": "stub",
-      "title": "61300811121 · WR-PHD 2.54 mm 1x8 straight THT pin header"
+      "title": "WR-PHD 2.54 mm 1x8 straight THT pin header"
     },
     "A1346": {
       "file": "datasheets/db/A1346.html",
@@ -63,7 +63,7 @@
       "cat": "센서",
       "price": null,
       "status": "done",
-      "title": "A1346 · Dual-die programmable linear Hall sensor, SENT/PWM"
+      "title": "Dual-die programmable linear Hall sensor, SENT/PWM"
     },
     "A3941": {
       "file": "datasheets/db/A3941.html",
@@ -71,7 +71,7 @@
       "cat": "게이트 드라이버",
       "price": null,
       "status": "done",
-      "title": "A3941 · Automotive full-bridge MOSFET driver"
+      "title": "Automotive full-bridge MOSFET driver"
     },
     "A4403GEUTR-T": {
       "file": "datasheets/db/A4403GEUTR-T.html",
@@ -79,15 +79,15 @@
       "cat": "전원",
       "price": 1.7,
       "status": "stub",
-      "title": "A4403GEUTR-T · 3 A valley-current-mode buck converter"
+      "title": "3 A valley-current-mode buck converter"
     },
     "A4911KJPTR-T-1": {
       "file": "datasheets/db/A4911KJPTR-T-1.html",
       "mfr": "Allegro MicroSystems",
       "cat": "게이트 드라이버",
       "price": 6,
-      "status": "done",
-      "title": "A4911KJPTR-T-1 · Automotive three-phase MOSFET driver"
+      "status": "verified",
+      "title": "Automotive three-phase MOSFET driver"
     },
     "A4918KJPTR-1A-3-T": {
       "file": "datasheets/db/A4918KJPTR-1A-3-T.html",
@@ -95,7 +95,7 @@
       "cat": "게이트 드라이버",
       "price": 6,
       "status": "stub",
-      "title": "A4918KJPTR-1A-3-T · Automotive 3-phase MOSFET driver with SPI and CSA"
+      "title": "Automotive 3-phase MOSFET driver with SPI and CSA"
     },
     "A4919": {
       "file": "datasheets/db/A4919.html",
@@ -103,7 +103,7 @@
       "cat": "게이트 드라이버",
       "price": 5,
       "status": "done",
-      "title": "A4919 · Three-phase MOSFET driver with diagnostics"
+      "title": "Three-phase MOSFET driver with diagnostics"
     },
     "A4950KLJTR-T": {
       "file": "datasheets/db/A4950KLJTR-T.html",
@@ -111,7 +111,7 @@
       "cat": "모터 드라이버",
       "price": 1.3,
       "status": "done",
-      "title": "A4950KLJTR-T · Full-bridge DMOS PWM motor driver, 3.5 A 40 V"
+      "title": "Full-bridge DMOS PWM motor driver, 3.5 A 40 V"
     },
     "A4953ELJTR-T": {
       "file": "datasheets/db/A4953ELJTR-T.html",
@@ -119,15 +119,15 @@
       "cat": "모터 드라이버",
       "price": 1,
       "status": "done",
-      "title": "A4953ELJTR-T · Full-bridge DMOS PWM motor driver, 2 A 40 V"
+      "title": "Full-bridge DMOS PWM motor driver, 2 A 40 V"
     },
     "A4954ELPTR-T": {
       "file": "datasheets/db/A4954ELPTR-T.html",
       "mfr": "Allegro MicroSystems",
       "cat": "모터 드라이버",
       "price": 1.4,
-      "status": "done",
-      "title": "A4954ELPTR-T · Dual full-bridge DMOS PWM motor driver, 2 A 40 V"
+      "status": "verified",
+      "title": "Dual full-bridge DMOS PWM motor driver, 2 A 40 V"
     },
     "A4964": {
       "file": "datasheets/db/A4964.html",
@@ -136,7 +136,7 @@
       "price": 4.5,
       "status": "done",
       "alias": "A4964* A4964KJPTR-T",
-      "title": "A4964 · Sensorless Sinusoidal BLDC Controller"
+      "title": "Sensorless Sinusoidal BLDC Controller"
     },
     "ABM8-20.000MHZ-B2-T": {
       "file": "datasheets/db/ABM8-20.000MHZ-B2-T.html",
@@ -144,7 +144,7 @@
       "cat": "크리스털",
       "price": null,
       "status": "stub",
-      "title": "ABM8-20.000MHZ-B2-T · 20 MHz SMD crystal 3.2×2.5 mm"
+      "title": "20 MHz SMD crystal 3.2×2.5 mm"
     },
     "ACPL-C87B": {
       "file": "datasheets/db/ACPL-C87B.html",
@@ -153,16 +153,16 @@
       "price": null,
       "status": "done",
       "alias": "ACPL-C87A* ACPL-C87B* ACPL-C87BT-500E",
-      "title": "ACPL-C87B · Optically Isolated Voltage Sensor"
+      "title": "Optically Isolated Voltage Sensor"
     },
     "ACS37002": {
       "file": "datasheets/db/ACS37002.html",
       "mfr": "Allegro",
       "cat": "전류 센서",
       "price": null,
-      "status": "done",
+      "status": "verified",
       "alias": "ACS37002* ACS37002LMABTR-066B5",
-      "title": "ACS37002 · 400 kHz Isolated Hall Current Sensor"
+      "title": "400 kHz Isolated Hall Current Sensor"
     },
     "ACS711KLCTR-25AB-T": {
       "file": "datasheets/db/ACS711KLCTR-25AB-T.html",
@@ -170,15 +170,15 @@
       "cat": "전류 센서",
       "price": 1.6,
       "status": "done",
-      "title": "ACS711KLCTR-25AB-T · Hall Current Sensor with Fault"
+      "title": "Hall Current Sensor with Fault"
     },
     "ACS712ELCTR-20A-T": {
       "file": "datasheets/db/ACS712ELCTR-20A-T.html",
       "mfr": "Allegro",
       "cat": "전류 센서",
       "price": 1.5,
-      "status": "done",
-      "title": "ACS712ELCTR-20A-T · Hall Current Sensor 20 A"
+      "status": "verified",
+      "title": "Hall Current Sensor 20 A"
     },
     "ACS724LLCTR-20AB-T": {
       "file": "datasheets/db/ACS724LLCTR-20AB-T.html",
@@ -186,7 +186,7 @@
       "cat": "전류 센서",
       "price": 2.6,
       "status": "done",
-      "title": "ACS724LLCTR-20AB-T · Isolated Hall Current Sensor"
+      "title": "Isolated Hall Current Sensor"
     },
     "ACS725LLCTR-20AB-T": {
       "file": "datasheets/db/ACS725LLCTR-20AB-T.html",
@@ -194,7 +194,7 @@
       "cat": "전류 센서",
       "price": 2.6,
       "status": "done",
-      "title": "ACS725LLCTR-20AB-T · 3.3 V Isolated Hall Current Sensor"
+      "title": "3.3 V Isolated Hall Current Sensor"
     },
     "AD2S1210": {
       "file": "datasheets/db/AD2S1210.html",
@@ -203,15 +203,15 @@
       "price": null,
       "status": "done",
       "alias": "AD2S1210* AD2S1210WDSTZRL7",
-      "title": "AD2S1210 · 10- to 16-bit resolver-to-digital converter with reference oscillator"
+      "title": "10- to 16-bit resolver-to-digital converter with reference oscillator"
     },
     "AD8418A": {
       "file": "datasheets/db/AD8418A.html",
       "mfr": "Analog Devices",
       "cat": "전류 센서",
       "price": null,
-      "status": "done",
-      "title": "AD8418A · Bidirectional zero-drift current sense amplifier"
+      "status": "verified",
+      "title": "Bidirectional zero-drift current sense amplifier"
     },
     "ADA4571": {
       "file": "datasheets/db/ADA4571.html",
@@ -220,7 +220,7 @@
       "price": null,
       "status": "done",
       "alias": "ADA4571* ADA4571WHRZ-R7",
-      "title": "ADA4571 · Integrated AMR angle sensor and signal conditioner"
+      "title": "Integrated AMR angle sensor and signal conditioner"
     },
     "ADuM4135": {
       "file": "datasheets/db/ADuM4135.html",
@@ -228,7 +228,7 @@
       "cat": "게이트 드라이버",
       "price": null,
       "status": "done",
-      "title": "ADuM4135 · Single-channel isolated gate driver with DESAT and Miller clamp"
+      "title": "Single-channel isolated gate driver with DESAT and Miller clamp"
     },
     "ADuM4190": {
       "file": "datasheets/db/ADuM4190.html",
@@ -236,7 +236,7 @@
       "cat": "절연",
       "price": null,
       "status": "done",
-      "title": "ADuM4190 · High-stability isolated error amplifier"
+      "title": "High-stability isolated error amplifier"
     },
     "AM2634-Q1": {
       "file": "datasheets/db/AM2634-Q1.html",
@@ -244,7 +244,7 @@
       "cat": "MCU",
       "price": 14,
       "status": "stub",
-      "title": "AM2634-Q1 · Sitara quad Cortex-R5F real-time MCU"
+      "title": "Sitara quad Cortex-R5F real-time MCU"
     },
     "AMC1306M05": {
       "file": "datasheets/db/AMC1306M05.html",
@@ -252,7 +252,7 @@
       "cat": "절연",
       "price": null,
       "status": "done",
-      "title": "AMC1306M05 · ±50 mV reinforced isolated delta-sigma modulator"
+      "title": "±50 mV reinforced isolated delta-sigma modulator"
     },
     "AMC1311-Q1": {
       "file": "datasheets/db/AMC1311-Q1.html",
@@ -260,15 +260,15 @@
       "cat": "절연",
       "price": null,
       "status": "done",
-      "title": "AMC1311-Q1 · 2 V input reinforced isolated amplifier"
+      "title": "2 V input reinforced isolated amplifier"
     },
     "AMS1117-3.3": {
       "file": "datasheets/db/AMS1117-3.3.html",
       "mfr": "Advanced Monolithic Systems",
       "cat": "전원",
       "price": 0.12,
-      "status": "done",
-      "title": "AMS1117-3.3 · 1 A low-dropout regulator, 3.3 V"
+      "status": "verified",
+      "title": "1 A low-dropout regulator, 3.3 V"
     },
     "AMS1117-5.0": {
       "file": "datasheets/db/AMS1117-5.0.html",
@@ -276,7 +276,7 @@
       "cat": "전원",
       "price": null,
       "status": "done",
-      "title": "AMS1117-5.0 · 1 A low-dropout regulator, 5.0 V"
+      "title": "1 A low-dropout regulator, 5.0 V"
     },
     "AMT49413": {
       "file": "datasheets/db/AMT49413.html",
@@ -284,7 +284,7 @@
       "cat": "모터 드라이버",
       "price": 4.8,
       "status": "done",
-      "title": "AMT49413 · 3-Phase BLDC Controller and Gate Driver"
+      "title": "3-Phase BLDC Controller and Gate Driver"
     },
     "AO3400A": {
       "file": "datasheets/db/AO3400A.html",
@@ -292,7 +292,7 @@
       "cat": "트랜지스터",
       "price": 0.08,
       "status": "done",
-      "title": "AO3400A · 30 V N-channel MOSFET, SOT-23"
+      "title": "30 V N-channel MOSFET, SOT-23"
     },
     "APT1608EC": {
       "file": "datasheets/db/APT1608EC.html",
@@ -300,7 +300,7 @@
       "cat": "LED",
       "price": 0.05,
       "status": "done",
-      "title": "APT1608EC · 0603 High Efficiency Red Chip LED"
+      "title": "0603 High Efficiency Red Chip LED"
     },
     "APT1608QBC/D": {
       "file": "datasheets/db/APT1608QBC_D.html",
@@ -308,7 +308,7 @@
       "cat": "LED",
       "price": 0.09,
       "status": "done",
-      "title": "APT1608QBC/D · 0603 blue InGaN SMD LED"
+      "title": "0603 blue InGaN SMD LED"
     },
     "APT1608SGC": {
       "file": "datasheets/db/APT1608SGC.html",
@@ -316,7 +316,7 @@
       "cat": "LED",
       "price": 0.07,
       "status": "done",
-      "title": "APT1608SGC · 0603 green GaP SMD LED"
+      "title": "0603 green GaP SMD LED"
     },
     "AS5147P-Q1": {
       "file": "datasheets/db/AS5147P-Q1.html",
@@ -325,7 +325,7 @@
       "price": null,
       "status": "done",
       "alias": "AS5147P* AS5147P-HTS* AS5147P-HTST",
-      "title": "AS5147P · 14-bit on-axis Hall magnetic rotary position sensor"
+      "title": "14-bit on-axis Hall magnetic rotary position sensor"
     },
     "AT25SF641B-SHB-T": {
       "file": "datasheets/db/AT25SF641B-SHB-T.html",
@@ -333,7 +333,7 @@
       "cat": "메모리",
       "price": 1.4,
       "status": "stub",
-      "title": "AT25SF641B-SHB-T · 64-Mbit SPI serial NOR flash"
+      "title": "64-Mbit SPI serial NOR flash"
     },
     "ATA6563": {
       "file": "datasheets/db/ATA6563.html",
@@ -341,7 +341,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
-      "title": "ATA6563 · High-speed CAN FD transceiver with standby, VIO"
+      "title": "High-speed CAN FD transceiver with standby, VIO"
     },
     "B3FS-1000P": {
       "file": "datasheets/db/B3FS-1000P.html",
@@ -349,7 +349,7 @@
       "cat": "스위치",
       "price": 0.18,
       "status": "done",
-      "title": "B3FS-1000P · B3FS 6×6 mm SMT tactile switch"
+      "title": "B3FS 6×6 mm SMT tactile switch"
     },
     "B57861S0103F040": {
       "file": "datasheets/db/B57861S0103F040.html",
@@ -357,7 +357,7 @@
       "cat": "센서",
       "price": 0.3,
       "status": "done",
-      "title": "B57861S0103F040 · NTC thermistor 10 kΩ ±1 %, epoxy, PTFE-insulated leads (S861)"
+      "title": "NTC thermistor 10 kΩ ±1 %, epoxy, PTFE-insulated leads (S861)"
     },
     "BAT54S": {
       "file": "datasheets/db/BAT54S.html",
@@ -365,7 +365,7 @@
       "cat": "다이오드",
       "price": null,
       "status": "done",
-      "title": "BAT54S · Dual series Schottky barrier diode, SOT23"
+      "title": "Dual series Schottky barrier diode, SOT23"
     },
     "BQ79600-Q1": {
       "file": "datasheets/db/BQ79600-Q1.html",
@@ -373,7 +373,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
-      "title": "BQ79600-Q1 · SPI/UART to isolated daisy-chain bridge"
+      "title": "SPI/UART to isolated daisy-chain bridge"
     },
     "BTN9970LV": {
       "file": "datasheets/db/BTN9970LV.html",
@@ -381,15 +381,15 @@
       "cat": "모터 드라이버",
       "price": 4.2,
       "status": "done",
-      "title": "BTN9970LV · High-Current PN Half-Bridge NovalithIC+"
+      "title": "High-Current PN Half-Bridge NovalithIC+"
     },
     "BTS3011TE": {
       "file": "datasheets/db/BTS3011TE.html",
       "mfr": "Infineon",
       "cat": "스마트 스위치",
       "price": 1.4,
-      "status": "done",
-      "title": "BTS3011TE · HITFET+ Smart Low-Side Switch"
+      "status": "verified",
+      "title": "HITFET+ Smart Low-Side Switch"
     },
     "BTS50010-1TAD": {
       "file": "datasheets/db/BTS50010-1TAD.html",
@@ -397,7 +397,7 @@
       "cat": "스마트 스위치",
       "price": 3.5,
       "status": "done",
-      "title": "BTS50010-1TAD · 1 mΩ single-channel PROFET high-side switch"
+      "title": "1 mΩ single-channel PROFET high-side switch"
     },
     "BTS7008-2EPA": {
       "file": "datasheets/db/BTS7008-2EPA.html",
@@ -405,7 +405,7 @@
       "cat": "스마트 스위치",
       "price": 2.1,
       "status": "stub",
-      "title": "BTS7008-2EPA · Dual-channel PROFET+2 12 V high-side switch"
+      "title": "Dual-channel PROFET+2 12 V high-side switch"
     },
     "BUK7S0R5-40H": {
       "file": "datasheets/db/BUK7S0R5-40H.html",
@@ -413,7 +413,7 @@
       "cat": "트랜지스터",
       "price": null,
       "status": "done",
-      "title": "BUK7S0R5-40H · N-channel 40 V 0.5 mOhm standard level MOSFET in LFPAK88"
+      "title": "N-channel 40 V 0.5 mOhm standard level MOSFET in LFPAK88"
     },
     "BZT52C12": {
       "file": "datasheets/db/BZT52C12.html",
@@ -422,7 +422,7 @@
       "price": null,
       "status": "done",
       "alias": "BZT52C12* BZT52C12Q-7-F",
-      "title": "BZT52C12 · 12 V Zener diode, SOD-123"
+      "title": "12 V Zener diode, SOD-123"
     },
     "C3225X7R1H225K200AE": {
       "file": "datasheets/db/C3225X7R1H225K200AE.html",
@@ -430,7 +430,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "C3225X7R1H225K200AE · MLCC 2.2 µF 50 V X7R ±10 % 1210 (C series, commercial)"
+      "title": "MLCC 2.2 µF 50 V X7R ±10 % 1210 (C series, commercial)"
     },
     "CAB450M12XM3": {
       "file": "datasheets/db/CAB450M12XM3.html",
@@ -438,7 +438,7 @@
       "cat": "전력 모듈",
       "price": null,
       "status": "stub",
-      "title": "CAB450M12XM3 · 1200 V 450 A SiC half-bridge module (XM3)"
+      "title": "1200 V 450 A SiC half-bridge module (XM3)"
     },
     "CGA6M3X7R1H225K200AB": {
       "file": "datasheets/db/CGA6M3X7R1H225K200AB.html",
@@ -446,7 +446,7 @@
       "cat": "커패시터",
       "price": 0.12,
       "status": "done",
-      "title": "CGA6M3X7R1H225K200AB · 2.2 µF 50 V X7R 1210 MLCC"
+      "title": "2.2 µF 50 V X7R 1210 MLCC"
     },
     "CL05B102KB5NNNC": {
       "file": "datasheets/db/CL05B102KB5NNNC.html",
@@ -454,7 +454,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "CL05B102KB5NNNC · 1 nF 50 V X7R 0402 MLCC"
+      "title": "1 nF 50 V X7R 0402 MLCC"
     },
     "CL05B103KB5NNNC": {
       "file": "datasheets/db/CL05B103KB5NNNC.html",
@@ -462,7 +462,7 @@
       "cat": "커패시터",
       "price": 0.0022,
       "status": "done",
-      "title": "CL05B103KB5NNNC · MLCC 10 nF ±10 % (K) 50 V X7R 0402"
+      "title": "MLCC 10 nF ±10 % (K) 50 V X7R 0402"
     },
     "CL05B104KO5NNNC": {
       "file": "datasheets/db/CL05B104KO5NNNC.html",
@@ -470,7 +470,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "CL05B104KO5NNNC · MLCC 100 nF ±10 % (K) 16 V X7R 0402"
+      "title": "MLCC 100 nF ±10 % (K) 16 V X7R 0402"
     },
     "CL05B332KB5NNNC": {
       "file": "datasheets/db/CL05B332KB5NNNC.html",
@@ -478,7 +478,7 @@
       "cat": "커패시터",
       "price": 0.006,
       "status": "done",
-      "title": "CL05B332KB5NNNC · MLCC 3.3 nF ±10 % (K) 50 V X7R 0402"
+      "title": "MLCC 3.3 nF ±10 % (K) 50 V X7R 0402"
     },
     "CL05B472KB5NNNC": {
       "file": "datasheets/db/CL05B472KB5NNNC.html",
@@ -486,7 +486,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "CL05B472KB5NNNC · MLCC 4.7 nF ±10 % (K) 50 V X7R 0402"
+      "title": "MLCC 4.7 nF ±10 % (K) 50 V X7R 0402"
     },
     "CL05C120JB5NNNC": {
       "file": "datasheets/db/CL05C120JB5NNNC.html",
@@ -494,7 +494,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "CL05C120JB5NNNC · MLCC 12 pF ±5 % (J) 50 V C0G 0402"
+      "title": "MLCC 12 pF ±5 % (J) 50 V C0G 0402"
     },
     "CL05C470JB5NNNC": {
       "file": "datasheets/db/CL05C470JB5NNNC.html",
@@ -502,7 +502,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "CL05C470JB5NNNC · MLCC 47 pF ±5 % (J) 50 V C0G 0402"
+      "title": "MLCC 47 pF ±5 % (J) 50 V C0G 0402"
     },
     "CL10A105KB8NNNC": {
       "file": "datasheets/db/CL10A105KB8NNNC.html",
@@ -510,7 +510,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "CL10A105KB8NNNC · MLCC 1 µF 50 V X5R 0603"
+      "title": "MLCC 1 µF 50 V X5R 0603"
     },
     "CL10A106KP8NNNC": {
       "file": "datasheets/db/CL10A106KP8NNNC.html",
@@ -518,7 +518,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "CL10A106KP8NNNC · MLCC 10 µF ±10 % (K) 10 V X5R 0603"
+      "title": "MLCC 10 µF ±10 % (K) 10 V X5R 0603"
     },
     "CL10B103KB8NNNC": {
       "file": "datasheets/db/CL10B103KB8NNNC.html",
@@ -526,15 +526,15 @@
       "cat": "커패시터",
       "price": 0.012,
       "status": "done",
-      "title": "CL10B103KB8NNNC · MLCC 10 nF 50 V X7R 0603"
+      "title": "MLCC 10 nF 50 V X7R 0603"
     },
     "CL10B104KB8NNNC": {
       "file": "datasheets/db/CL10B104KB8NNNC.html",
       "mfr": "Samsung Electro-Mechanics",
       "cat": "커패시터",
       "price": 0.014,
-      "status": "done",
-      "title": "CL10B104KB8NNNC · MLCC 100 nF 50 V X7R 0603"
+      "status": "verified",
+      "title": "MLCC 100 nF 50 V X7R 0603"
     },
     "CL10B683KB8NNNC": {
       "file": "datasheets/db/CL10B683KB8NNNC.html",
@@ -542,7 +542,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "CL10B683KB8NNNC · MLCC 68 nF 50 V X7R 0603"
+      "title": "MLCC 68 nF 50 V X7R 0603"
     },
     "CL21A106KAYNNNE": {
       "file": "datasheets/db/CL21A106KAYNNNE.html",
@@ -550,7 +550,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "CL21A106KAYNNNE · MLCC 10 µF 25 V X5R 0805"
+      "title": "MLCC 10 µF 25 V X5R 0805"
     },
     "DMP2035UQ-7": {
       "file": "datasheets/db/DMP2035UQ-7.html",
@@ -558,7 +558,7 @@
       "cat": "트랜지스터",
       "price": null,
       "status": "stub",
-      "title": "DMP2035UQ-7 · 20 V P-Channel MOSFET SOT23"
+      "title": "20 V P-Channel MOSFET SOT23"
     },
     "DRV8302DCAR": {
       "file": "datasheets/db/DRV8302DCAR.html",
@@ -566,7 +566,7 @@
       "cat": "게이트 드라이버",
       "price": 5.8,
       "status": "done",
-      "title": "DRV8302DCAR · Three-phase gate driver with buck regulator and dual current-shunt amplifiers"
+      "title": "Three-phase gate driver with buck regulator and dual current-shunt amplifiers"
     },
     "DRV8313PWPR": {
       "file": "datasheets/db/DRV8313PWPR.html",
@@ -574,7 +574,7 @@
       "cat": "모터 드라이버",
       "price": 2.6,
       "status": "done",
-      "title": "DRV8313PWPR · 2.5 A triple half-bridge motor driver, 60 V"
+      "title": "2.5 A triple half-bridge motor driver, 60 V"
     },
     "DRV8343SPHPRQ1": {
       "file": "datasheets/db/DRV8343SPHPRQ1.html",
@@ -583,7 +583,7 @@
       "price": 6.5,
       "status": "done",
       "alias": "DRV8343*",
-      "title": "DRV8343SPHPRQ1 · Automotive 3-phase smart gate driver (SPI)"
+      "title": "Automotive 3-phase smart gate driver (SPI)"
     },
     "DRV8353RS-Q1": {
       "file": "datasheets/db/DRV8353RS-Q1.html",
@@ -591,7 +591,7 @@
       "cat": "게이트 드라이버",
       "price": 6.5,
       "status": "done",
-      "title": "DRV8353RS-Q1 · 100 V three-phase smart gate driver with buck and three current-sense amplifiers (SPI)"
+      "title": "100 V three-phase smart gate driver with buck and three current-sense amplifiers (SPI)"
     },
     "DRV8701ERGER": {
       "file": "datasheets/db/DRV8701ERGER.html",
@@ -599,7 +599,7 @@
       "cat": "게이트 드라이버",
       "price": 2.6,
       "status": "done",
-      "title": "DRV8701ERGER · Brushed DC H-bridge gate driver, PH/EN interface"
+      "title": "Brushed DC H-bridge gate driver, PH/EN interface"
     },
     "DRV8702-Q1": {
       "file": "datasheets/db/DRV8702-Q1.html",
@@ -607,7 +607,7 @@
       "cat": "게이트 드라이버",
       "price": null,
       "status": "done",
-      "title": "DRV8702-Q1 · Automotive H-bridge gate driver, HW interface, current-shunt amplifier"
+      "title": "Automotive H-bridge gate driver, HW interface, current-shunt amplifier"
     },
     "DRV8703-Q1": {
       "file": "datasheets/db/DRV8703-Q1.html",
@@ -615,7 +615,7 @@
       "cat": "게이트 드라이버",
       "price": null,
       "status": "done",
-      "title": "DRV8703-Q1 · Automotive H-bridge gate driver, SPI interface, current-shunt amplifier"
+      "title": "Automotive H-bridge gate driver, SPI interface, current-shunt amplifier"
     },
     "DRV8706S-Q1": {
       "file": "datasheets/db/DRV8706S-Q1.html",
@@ -624,7 +624,7 @@
       "price": 3.4,
       "status": "done",
       "alias": "DRV8706S* DRV8706SQRHBRQ1",
-      "title": "DRV8706S-Q1 · Automotive H-bridge smart gate driver with SPI and current-sense amplifier"
+      "title": "Automotive H-bridge smart gate driver with SPI and current-sense amplifier"
     },
     "DRV8912-Q1": {
       "file": "datasheets/db/DRV8912-Q1.html",
@@ -633,7 +633,7 @@
       "price": null,
       "status": "done",
       "alias": "DRV8912*Q1 DRV8912QPWPRQ1",
-      "title": "DRV8912-Q1 · 12-channel half-bridge driver with SPI, automotive"
+      "title": "12-channel half-bridge driver with SPI, automotive"
     },
     "EEE-FK1E471P": {
       "file": "datasheets/db/EEE-FK1E471P.html",
@@ -641,7 +641,7 @@
       "cat": "커패시터",
       "price": 0.38,
       "status": "done",
-      "title": "EEE-FK1E471P · Aluminum electrolytic capacitor 470 µF 25 V, FK series SMD"
+      "title": "Aluminum electrolytic capacitor 470 µF 25 V, FK series SMD"
     },
     "EEE-FK1V471P": {
       "file": "datasheets/db/EEE-FK1V471P.html",
@@ -650,7 +650,7 @@
       "price": null,
       "status": "stub",
       "alias": "EEE-FK1V471* EEE-FK1V471SP EEEFK1V471*",
-      "title": "EEE-FK1V471P · SMD aluminum electrolytic capacitor 470 µF 35 V, FK series"
+      "title": "SMD aluminum electrolytic capacitor 470 µF 35 V, FK series"
     },
     "FA-130RA": {
       "file": "datasheets/db/FA-130RA.html",
@@ -658,7 +658,7 @@
       "cat": "모터",
       "price": 2.1,
       "status": "done",
-      "title": "FA-130RA · 130-size Brushed DC Motor"
+      "title": "130-size Brushed DC Motor"
     },
     "FS2600": {
       "file": "datasheets/db/FS2600.html",
@@ -667,7 +667,7 @@
       "price": 7.2,
       "status": "done",
       "alias": "FS26* MFS26* MFS2601AMDA0ADR2 SFS26*",
-      "title": "FS2600 · FS26 safety system basis chip, ASIL B/D"
+      "title": "FS26 safety system basis chip, ASIL B/D"
     },
     "FS400R07A1E3BOSA1": {
       "file": "datasheets/db/FS400R07A1E3BOSA1.html",
@@ -676,7 +676,7 @@
       "price": null,
       "status": "stub",
       "alias": "FS400R07A1E3*",
-      "title": "FS400R07A1E3BOSA1 · HybridPACK 1 650 V 400 A six-pack IGBT module"
+      "title": "HybridPACK 1 650 V 400 A six-pack IGBT module"
     },
     "FS600R10A6P2": {
       "file": "datasheets/db/FS600R10A6P2.html",
@@ -684,7 +684,7 @@
       "cat": "전력 모듈",
       "price": null,
       "status": "stub",
-      "title": "FS600R10A6P2 · Unverified HybridPACK IGBT module MPN"
+      "title": "Unverified HybridPACK IGBT module MPN"
     },
     "FS820R08A6P2": {
       "file": "datasheets/db/FS820R08A6P2.html",
@@ -692,7 +692,7 @@
       "cat": "전력 모듈",
       "price": null,
       "status": "done",
-      "title": "FS820R08A6P2 · HybridPACK Drive 750 V six-pack IGBT module"
+      "title": "HybridPACK Drive 750 V six-pack IGBT module"
     },
     "FT232RL": {
       "file": "datasheets/db/FT232RL.html",
@@ -700,7 +700,7 @@
       "cat": "통신",
       "price": 3.2,
       "status": "done",
-      "title": "FT232RL · USB to UART Bridge IC"
+      "title": "USB to UART Bridge IC"
     },
     "GCM188R71C474KA55D": {
       "file": "datasheets/db/GCM188R71C474KA55D.html",
@@ -708,7 +708,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "GCM188R71C474KA55D · Automotive MLCC 470 nF 16 V X7R 0603"
+      "title": "Automotive MLCC 470 nF 16 V X7R 0603"
     },
     "GCM188R71H104KA57D": {
       "file": "datasheets/db/GCM188R71H104KA57D.html",
@@ -716,7 +716,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "GCM188R71H104KA57D · Automotive MLCC 100 nF 50 V X7R 0603"
+      "title": "Automotive MLCC 100 nF 50 V X7R 0603"
     },
     "GCM21BR71A106KE22L": {
       "file": "datasheets/db/GCM21BR71A106KE22L.html",
@@ -724,7 +724,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "done",
-      "title": "GCM21BR71A106KE22L · Automotive MLCC 10 µF 10 V X7R 0805"
+      "title": "Automotive MLCC 10 µF 10 V X7R 0805"
     },
     "GCM32EC71E226KE36L": {
       "file": "datasheets/db/GCM32EC71E226KE36L.html",
@@ -732,7 +732,7 @@
       "cat": "커패시터",
       "price": 0.25,
       "status": "done",
-      "title": "GCM32EC71E226KE36L · 22 µF 25 V X7S 1210 MLCC"
+      "title": "22 µF 25 V X7S 1210 MLCC"
     },
     "GCM32ER71E226KE15L": {
       "file": "datasheets/db/GCM32ER71E226KE15L.html",
@@ -740,7 +740,7 @@
       "cat": "커패시터",
       "price": null,
       "status": "stub",
-      "title": "GCM32ER71E226KE15L · MLCC 22 µF 25 V 1210 — 품번 확인 필요"
+      "title": "MLCC 22 µF 25 V 1210 — 품번 확인 필요"
     },
     "GD3000": {
       "file": "datasheets/db/GD3000.html",
@@ -749,7 +749,7 @@
       "price": 4.5,
       "status": "done",
       "alias": "GD3000* MC33GD3000* MC33GD3000EPR2 MC34GD3000*",
-      "title": "GD3000 · 3-phase brushless motor FET pre-driver"
+      "title": "3-phase brushless motor FET pre-driver"
     },
     "GRM188R71C474KA88D": {
       "file": "datasheets/db/GRM188R71C474KA88D.html",
@@ -757,7 +757,7 @@
       "cat": "커패시터",
       "price": 0.02,
       "status": "done",
-      "title": "GRM188R71C474KA88D · MLCC 0.47 µF 16 V X7R 0603"
+      "title": "MLCC 0.47 µF 16 V X7R 0603"
     },
     "GRM31CR60J107ME39": {
       "file": "datasheets/db/GRM31CR60J107ME39.html",
@@ -765,7 +765,7 @@
       "cat": "커패시터",
       "price": 0.22,
       "status": "done",
-      "title": "GRM31CR60J107ME39 · MLCC 100 µF 6.3 V X5R 1206"
+      "title": "MLCC 100 µF 6.3 V X5R 1206"
     },
     "GRM32ER61E226KE15": {
       "file": "datasheets/db/GRM32ER61E226KE15.html",
@@ -773,7 +773,7 @@
       "cat": "커패시터",
       "price": 0.12,
       "status": "done",
-      "title": "GRM32ER61E226KE15 · MLCC 22 µF 25 V X5R 1210"
+      "title": "MLCC 22 µF 25 V X5R 1210"
     },
     "IAUC100N04S6N008": {
       "file": "datasheets/db/IAUC100N04S6N008.html",
@@ -781,7 +781,7 @@
       "cat": "트랜지스터",
       "price": null,
       "status": "stub",
-      "title": "IAUC100N04S6N008 · 40 V 0.8 mΩ OptiMOS 6 MOSFET"
+      "title": "40 V 0.8 mΩ OptiMOS 6 MOSFET"
     },
     "IAUC120N04S6N008": {
       "file": "datasheets/db/IAUC120N04S6N008.html",
@@ -789,7 +789,7 @@
       "cat": "트랜지스터",
       "price": null,
       "status": "stub",
-      "title": "IAUC120N04S6N008 · 40 V 0.8 mΩ OptiMOS 6 MOSFET"
+      "title": "40 V 0.8 mΩ OptiMOS 6 MOSFET"
     },
     "IAUC60N04S6N050H": {
       "file": "datasheets/db/IAUC60N04S6N050H.html",
@@ -797,7 +797,7 @@
       "cat": "트랜지스터",
       "price": null,
       "status": "stub",
-      "title": "IAUC60N04S6N050H · 40 V OptiMOS 6 integrated half-bridge"
+      "title": "40 V OptiMOS 6 integrated half-bridge"
     },
     "INA181A1QDBVRQ1": {
       "file": "datasheets/db/INA181A1QDBVRQ1.html",
@@ -805,7 +805,7 @@
       "cat": "전류 센서",
       "price": 0.75,
       "status": "done",
-      "title": "INA181A1QDBVRQ1 · Automotive bidirectional current-sense amplifier, gain 20"
+      "title": "Automotive bidirectional current-sense amplifier, gain 20"
     },
     "INA240A2-Q1": {
       "file": "datasheets/db/INA240A2-Q1.html",
@@ -813,7 +813,7 @@
       "cat": "전류 센서",
       "price": null,
       "status": "done",
-      "title": "INA240A2-Q1 · Automotive bidirectional current-sense amplifier, enhanced PWM rejection, 50 V/V"
+      "title": "Automotive bidirectional current-sense amplifier, enhanced PWM rejection, 50 V/V"
     },
     "INA240A2QPWRQ1": {
       "file": "datasheets/db/INA240A2QPWRQ1.html",
@@ -821,7 +821,7 @@
       "cat": "전류 센서",
       "price": 1.9,
       "status": "done",
-      "title": "INA240A2QPWRQ1 · Automotive current-sense amplifier with enhanced PWM rejection, gain 50"
+      "title": "Automotive current-sense amplifier with enhanced PWM rejection, gain 50"
     },
     "IPD90N04S4-04": {
       "file": "datasheets/db/IPD90N04S4-04.html",
@@ -829,15 +829,15 @@
       "cat": "트랜지스터",
       "price": 1.1,
       "status": "stub",
-      "title": "IPD90N04S4-04 · 40 V 90 A OptiMOS-T2 N-channel MOSFET"
+      "title": "40 V 90 A OptiMOS-T2 N-channel MOSFET"
     },
     "IPD90P04P4L-04": {
       "file": "datasheets/db/IPD90P04P4L-04.html",
       "mfr": "Infineon",
       "cat": "트랜지스터",
       "price": 1.6,
-      "status": "done",
-      "title": "IPD90P04P4L-04 · -40 V P-channel OptiMOS-P2 MOSFET, DPAK"
+      "status": "verified",
+      "title": "-40 V P-channel OptiMOS-P2 MOSFET, DPAK"
     },
     "IPG20N04S4L-07": {
       "file": "datasheets/db/IPG20N04S4L-07.html",
@@ -845,15 +845,15 @@
       "cat": "트랜지스터",
       "price": null,
       "status": "stub",
-      "title": "IPG20N04S4L-07 · Dual N-channel 40 V logic-level OptiMOS-T2 MOSFET"
+      "title": "Dual N-channel 40 V logic-level OptiMOS-T2 MOSFET"
     },
     "IR2104S": {
       "file": "datasheets/db/IR2104S.html",
       "mfr": "Infineon",
       "cat": "게이트 드라이버",
       "price": 1.2,
-      "status": "done",
-      "title": "IR2104S · 600 V half-bridge gate driver, SOIC-8"
+      "status": "verified",
+      "title": "600 V half-bridge gate driver, SOIC-8"
     },
     "IS25LP064A-JBLA3": {
       "file": "datasheets/db/IS25LP064A-JBLA3.html",
@@ -861,7 +861,7 @@
       "cat": "메모리",
       "price": 1.3,
       "status": "stub",
-      "title": "IS25LP064A-JBLA3 · 64Mb Serial NOR Flash"
+      "title": "64Mb Serial NOR Flash"
     },
     "ISO224": {
       "file": "datasheets/db/ISO224.html",
@@ -870,7 +870,7 @@
       "price": null,
       "status": "done",
       "alias": "ISO224* ISO224BDWVR",
-      "title": "ISO224 · Reinforced isolated amplifier, ±12 V single-ended input"
+      "title": "Reinforced isolated amplifier, ±12 V single-ended input"
     },
     "L9396": {
       "file": "datasheets/db/L9396.html",
@@ -878,7 +878,7 @@
       "cat": "전원",
       "price": null,
       "status": "done",
-      "title": "L9396 · Automotive multiple power supply IC (System Basis Chip) for chassis and safety"
+      "title": "Automotive multiple power supply IC (System Basis Chip) for chassis and safety"
     },
     "L9733": {
       "file": "datasheets/db/L9733.html",
@@ -887,7 +887,7 @@
       "price": null,
       "status": "done",
       "alias": "L9733* L9733XPTR",
-      "title": "L9733 · Octal self-configuring low/high-side driver"
+      "title": "Octal self-configuring low/high-side driver"
     },
     "L9788": {
       "file": "datasheets/db/L9788.html",
@@ -895,7 +895,7 @@
       "cat": "전원",
       "price": null,
       "status": "stub",
-      "title": "L9788 · Multifunction IC for automotive engine management systems"
+      "title": "Multifunction IC for automotive engine management systems"
     },
     "L9908": {
       "file": "datasheets/db/L9908.html",
@@ -903,7 +903,7 @@
       "cat": "게이트 드라이버",
       "price": 8,
       "status": "done",
-      "title": "L9908 · Automotive 3-phase motor gate driver"
+      "title": "Automotive 3-phase motor gate driver"
     },
     "LM1117-Q1": {
       "file": "datasheets/db/LM1117-Q1.html",
@@ -912,7 +912,7 @@
       "price": 0.62,
       "status": "done",
       "alias": "LM111733QDCYRQ1 LM111750QDCYRQ1 LM1117*QDCYRQ1 LM1117*QKVURQ1",
-      "title": "LM1117-Q1 · 18 V 1 A Automotive Fixed-Output LDO"
+      "title": "18 V 1 A Automotive Fixed-Output LDO"
     },
     "LM317DCYR": {
       "file": "datasheets/db/LM317DCYR.html",
@@ -920,7 +920,7 @@
       "cat": "전원",
       "price": 0.3,
       "status": "done",
-      "title": "LM317DCYR · 3-terminal adjustable positive regulator, 1.5 A, SOT-223"
+      "title": "3-terminal adjustable positive regulator, 1.5 A, SOT-223"
     },
     "LM5176-Q1": {
       "file": "datasheets/db/LM5176-Q1.html",
@@ -929,7 +929,7 @@
       "price": null,
       "status": "done",
       "alias": "LM5176*Q1 LM5176QPWPRQ1",
-      "title": "LM5176-Q1 · 55-V Synchronous 4-Switch Buck-Boost Controller"
+      "title": "55-V Synchronous 4-Switch Buck-Boost Controller"
     },
     "LM74700-Q1": {
       "file": "datasheets/db/LM74700-Q1.html",
@@ -937,7 +937,7 @@
       "cat": "보호",
       "price": 1.1,
       "status": "done",
-      "title": "LM74700-Q1 · Low-IQ reverse battery protection ideal diode controller"
+      "title": "Low-IQ reverse battery protection ideal diode controller"
     },
     "LM74701QDDFRQ1": {
       "file": "datasheets/db/LM74701QDDFRQ1.html",
@@ -945,7 +945,7 @@
       "cat": "보호",
       "price": 1.2,
       "status": "done",
-      "title": "LM74701QDDFRQ1 · TVS-less Ideal Diode Controller"
+      "title": "TVS-less Ideal Diode Controller"
     },
     "LMR33630AQRNXRQ1": {
       "file": "datasheets/db/LMR33630AQRNXRQ1.html",
@@ -953,15 +953,15 @@
       "cat": "전원",
       "price": 1.9,
       "status": "done",
-      "title": "LMR33630AQRNXRQ1 · 36-V 3-A Synchronous Buck Converter"
+      "title": "36-V 3-A Synchronous Buck Converter"
     },
     "LTC4359": {
       "file": "datasheets/db/LTC4359.html",
       "mfr": "Analog Devices",
       "cat": "전원",
       "price": 2.4,
-      "status": "done",
-      "title": "LTC4359 · Ideal diode controller with reverse input protection"
+      "status": "verified",
+      "title": "Ideal diode controller with reverse input protection"
     },
     "LTC6820": {
       "file": "datasheets/db/LTC6820.html",
@@ -970,7 +970,7 @@
       "price": null,
       "status": "done",
       "alias": "LTC6820* LTC6820HMS#3ZZTRPBF",
-      "title": "LTC6820 · isoSPI isolated communications interface"
+      "title": "isoSPI isolated communications interface"
     },
     "MAX22531": {
       "file": "datasheets/db/MAX22531.html",
@@ -979,7 +979,7 @@
       "price": null,
       "status": "done",
       "alias": "MAX22531* MAX22531AAP+T",
-      "title": "MAX22531 · Isolated 4-channel 12-bit ADC with integrated DC-DC"
+      "title": "Isolated 4-channel 12-bit ADC with integrated DC-DC"
     },
     "MAX3232EIDR": {
       "file": "datasheets/db/MAX3232EIDR.html",
@@ -987,7 +987,7 @@
       "cat": "통신",
       "price": 0.9,
       "status": "done",
-      "title": "MAX3232EIDR · 3-5.5 V Dual RS-232 Transceiver"
+      "title": "3-5.5 V Dual RS-232 Transceiver"
     },
     "MAX40056FAUA+": {
       "file": "datasheets/db/MAX40056FAUA+.html",
@@ -996,7 +996,7 @@
       "price": 2.3,
       "status": "done",
       "alias": "MAX40056FAUA* MAX40056FAUA/V+T",
-      "title": "MAX40056FAUA+ · Bidirectional Current-Sense Amplifier with PWM Rejection"
+      "title": "Bidirectional Current-Sense Amplifier with PWM Rejection"
     },
     "MAX6369KA+T": {
       "file": "datasheets/db/MAX6369KA+T.html",
@@ -1004,7 +1004,7 @@
       "cat": "전원",
       "price": 1.8,
       "status": "done",
-      "title": "MAX6369KA+T · Pin-selectable watchdog timer"
+      "title": "Pin-selectable watchdog timer"
     },
     "MBRA340T3G": {
       "file": "datasheets/db/MBRA340T3G.html",
@@ -1013,7 +1013,7 @@
       "price": 0.3,
       "status": "done",
       "alias": "MBRA340T3G NRVBA340T3G",
-      "title": "MBRA340T3G · 40 V 3 A Schottky Rectifier SMA"
+      "title": "40 V 3 A Schottky Rectifier SMA"
     },
     "MC12XS6": {
       "file": "datasheets/db/MC12XS6.html",
@@ -1022,16 +1022,16 @@
       "price": null,
       "status": "done",
       "alias": "MC08XS6421* MC08XS6421DEKR2 MC12XS6*",
-      "title": "MC12XS6 · 12XS6 eXtreme Switch high-side family"
+      "title": "12XS6 eXtreme Switch high-side family"
     },
     "MC33664": {
       "file": "datasheets/db/MC33664.html",
       "mfr": "NXP",
       "cat": "통신",
       "price": null,
-      "status": "done",
+      "status": "verified",
       "alias": "MC33664* MC33664ATL1EGR2",
-      "title": "MC33664 · Isolated network high-speed transceiver (TPL)"
+      "title": "Isolated network high-speed transceiver (TPL)"
     },
     "MC33879A": {
       "file": "datasheets/db/MC33879A.html",
@@ -1040,7 +1040,7 @@
       "price": null,
       "status": "done",
       "alias": "MC33879* MC33879A* MC33879APEKR2",
-      "title": "MC33879A · Configurable octal serial switch with open load detect"
+      "title": "Configurable octal serial switch with open load detect"
     },
     "MC33FS4500": {
       "file": "datasheets/db/MC33FS4500.html",
@@ -1049,7 +1049,7 @@
       "price": null,
       "status": "done",
       "alias": "MC33FS450* MC33FS4500* MC33FS4500LAER2",
-      "title": "MC33FS4500 · FS4500 safety power SBC with linear VCORE, CAN FD/LIN"
+      "title": "FS4500 safety power SBC with linear VCORE, CAN FD/LIN"
     },
     "MCF8316A": {
       "file": "datasheets/db/MCF8316A.html",
@@ -1057,7 +1057,7 @@
       "cat": "모터 드라이버",
       "price": 5,
       "status": "done",
-      "title": "MCF8316A · Sensorless FOC Integrated-FET BLDC Driver"
+      "title": "Sensorless FOC Integrated-FET BLDC Driver"
     },
     "MCP1799T-3302H/TT": {
       "file": "datasheets/db/MCP1799T-3302H_TT.html",
@@ -1065,7 +1065,7 @@
       "cat": "전원",
       "price": 0.4,
       "status": "done",
-      "title": "MCP1799T-3302H/TT · 80 mA 45 V automotive LDO, 3.3 V fixed, SOT-23-3"
+      "title": "80 mA 45 V automotive LDO, 3.3 V fixed, SOT-23-3"
     },
     "MCP1799T-5002H/TT": {
       "file": "datasheets/db/MCP1799T-5002H_TT.html",
@@ -1073,7 +1073,7 @@
       "cat": "전원",
       "price": 0.4,
       "status": "done",
-      "title": "MCP1799T-5002H/TT · 80 mA 45 V automotive LDO, 5.0 V fixed, SOT-23-3"
+      "title": "80 mA 45 V automotive LDO, 5.0 V fixed, SOT-23-3"
     },
     "MCP2003B": {
       "file": "datasheets/db/MCP2003B.html",
@@ -1082,7 +1082,7 @@
       "price": null,
       "status": "done",
       "alias": "MCP2003B* MCP2003BT-E/SN",
-      "title": "MCP2003B · LIN transceiver (LIN 2.2 / SAE J2602 / ISO 17987)"
+      "title": "LIN transceiver (LIN 2.2 / SAE J2602 / ISO 17987)"
     },
     "MCP2542FD": {
       "file": "datasheets/db/MCP2542FD.html",
@@ -1090,7 +1090,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
-      "title": "MCP2542FD · CAN FD transceiver 8 Mbps with standby, VIO"
+      "title": "CAN FD transceiver 8 Mbps with standby, VIO"
     },
     "MCP2562FD-E/SN": {
       "file": "datasheets/db/MCP2562FD-E_SN.html",
@@ -1098,7 +1098,7 @@
       "cat": "통신",
       "price": 1,
       "status": "done",
-      "title": "MCP2562FD-E/SN · High-speed CAN FD transceiver with VIO, SOIC-8"
+      "title": "High-speed CAN FD transceiver with VIO, SOIC-8"
     },
     "MIC5219-3.3YM5": {
       "file": "datasheets/db/MIC5219-3.3YM5.html",
@@ -1106,7 +1106,7 @@
       "cat": "전원",
       "price": 0.5,
       "status": "done",
-      "title": "MIC5219-3.3YM5 · 500 mA peak LDO regulator, 3.3 V fixed, SOT-23-5"
+      "title": "500 mA peak LDO regulator, 3.3 V fixed, SOT-23-5"
     },
     "MLX90372": {
       "file": "datasheets/db/MLX90372.html",
@@ -1115,7 +1115,7 @@
       "price": null,
       "status": "done",
       "alias": "MLX90372* MLX90372GGO-ACE-100-RE",
-      "title": "MLX90372 · Triaxis position processor, SENT/PWM, single or dual die"
+      "title": "Triaxis position processor, SENT/PWM, single or dual die"
     },
     "MLX90380": {
       "file": "datasheets/db/MLX90380.html",
@@ -1123,7 +1123,7 @@
       "cat": "센서",
       "price": null,
       "status": "done",
-      "title": "MLX90380 · Triaxis resolver, ratiometric analog SIN/COS outputs"
+      "title": "Triaxis resolver, ratiometric analog SIN/COS outputs"
     },
     "MP1584EN": {
       "file": "datasheets/db/MP1584EN.html",
@@ -1131,7 +1131,7 @@
       "cat": "전원",
       "price": 0.5,
       "status": "done",
-      "title": "MP1584EN · 3 A 1.5 MHz 28 V step-down converter"
+      "title": "3 A 1.5 MHz 28 V step-down converter"
     },
     "MP2451DJ-LF-Z": {
       "file": "datasheets/db/MP2451DJ-LF-Z.html",
@@ -1139,7 +1139,7 @@
       "cat": "전원",
       "price": 0.6,
       "status": "done",
-      "title": "MP2451DJ-LF-Z · 36 V 2 MHz 0.6 A step-down converter, TSOT23-6"
+      "title": "36 V 2 MHz 0.6 A step-down converter, TSOT23-6"
     },
     "MPC5744P": {
       "file": "datasheets/db/MPC5744P.html",
@@ -1148,7 +1148,7 @@
       "price": 15,
       "status": "stub",
       "alias": "MPC5744P* SP5744P* SP5744PFK1AMLQ9R SPC5744P*",
-      "title": "MPC5744P · Power Architecture e200z4 lockstep ASIL D MCU"
+      "title": "Power Architecture e200z4 lockstep ASIL D MCU"
     },
     "MSPM0G3507-Q1": {
       "file": "datasheets/db/MSPM0G3507-Q1.html",
@@ -1157,7 +1157,7 @@
       "price": 1.5,
       "status": "done",
       "alias": "M0G3505*Q1 M0G3506*Q1 M0G3507*Q1 M0G3507QPMRQ1 MSPM0G3507*Q1",
-      "title": "MSPM0G3507-Q1 · Automotive 80-MHz Cortex-M0+ MCU"
+      "title": "Automotive 80-MHz Cortex-M0+ MCU"
     },
     "MX25L6433F": {
       "file": "datasheets/db/MX25L6433F.html",
@@ -1166,7 +1166,7 @@
       "price": 0.85,
       "status": "stub",
       "alias": "MX25L6433F* MX25L6433FM2I-08GTR",
-      "title": "MX25L6433F · 3 V 64 Mbit serial multi-I/O NOR flash"
+      "title": "3 V 64 Mbit serial multi-I/O NOR flash"
     },
     "NCD57000": {
       "file": "datasheets/db/NCD57000.html",
@@ -1175,7 +1175,7 @@
       "price": null,
       "status": "stub",
       "alias": "NCD57000* NCV57000* NCV57000DWR2G",
-      "title": "NCD57000 · Isolated high-current IGBT gate driver with DESAT"
+      "title": "Isolated high-current IGBT gate driver with DESAT"
     },
     "NCP18XH103F03RB": {
       "file": "datasheets/db/NCP18XH103F03RB.html",
@@ -1183,7 +1183,7 @@
       "cat": "센서",
       "price": 0.04,
       "status": "done",
-      "title": "NCP18XH103F03RB · NTC thermistor 10 kΩ B3380 K 0603"
+      "title": "NTC thermistor 10 kΩ B3380 K 0603"
     },
     "NCS21671": {
       "file": "datasheets/db/NCS21671.html",
@@ -1192,7 +1192,7 @@
       "price": null,
       "status": "stub",
       "alias": "NCS21671* NCV21671* NCV21671SQ050T2G",
-      "title": "NCS21671 · Zero-drift 40 V bidirectional current-shunt monitor"
+      "title": "Zero-drift 40 V bidirectional current-shunt monitor"
     },
     "NCU18XH103F60RB": {
       "file": "datasheets/db/NCU18XH103F60RB.html",
@@ -1200,7 +1200,7 @@
       "cat": "센서",
       "price": 0.06,
       "status": "done",
-      "title": "NCU18XH103F60RB · NTC thermistor 10 kΩ B3380 K 0603"
+      "title": "NTC thermistor 10 kΩ B3380 K 0603"
     },
     "NCV8664CST33T3G": {
       "file": "datasheets/db/NCV8664CST33T3G.html",
@@ -1208,7 +1208,7 @@
       "cat": "전원",
       "price": 0.7,
       "status": "done",
-      "title": "NCV8664CST33T3G · 3.3 V 150 mA 45 V low-Iq automotive LDO, SOT-223"
+      "title": "3.3 V 150 mA 45 V low-Iq automotive LDO, SOT-223"
     },
     "NRVB140SFT1G": {
       "file": "datasheets/db/NRVB140SFT1G.html",
@@ -1216,7 +1216,7 @@
       "cat": "다이오드",
       "price": null,
       "status": "done",
-      "title": "NRVB140SFT1G · 40 V 1 A Schottky rectifier, SOD-123FL, AEC-Q101"
+      "title": "40 V 1 A Schottky rectifier, SOD-123FL, AEC-Q101"
     },
     "NRVBA140T3G": {
       "file": "datasheets/db/NRVBA140T3G.html",
@@ -1225,7 +1225,7 @@
       "price": 0.18,
       "status": "done",
       "alias": "NRVBA140T3G MBRA140T3G",
-      "title": "NRVBA140T3G · 40 V 1 A Automotive Schottky SMA"
+      "title": "40 V 1 A Automotive Schottky SMA"
     },
     "NVMFS5C404N": {
       "file": "datasheets/db/NVMFS5C404N.html",
@@ -1233,7 +1233,7 @@
       "cat": "트랜지스터",
       "price": null,
       "status": "done",
-      "title": "NVMFS5C404N · 40 V 0.7 mΩ N-channel power MOSFET, DFN5 5x6"
+      "title": "40 V 0.7 mΩ N-channel power MOSFET, DFN5 5x6"
     },
     "NVTR4502NT1G": {
       "file": "datasheets/db/NVTR4502NT1G.html",
@@ -1241,7 +1241,7 @@
       "cat": "트랜지스터",
       "price": null,
       "status": "done",
-      "title": "NVTR4502NT1G · (actual part NVTR4502PT1G) −30 V P-channel MOSFET, SOT-23"
+      "title": "(actual part NVTR4502PT1G) −30 V P-channel MOSFET, SOT-23"
     },
     "NXH006P120MNF2": {
       "file": "datasheets/db/NXH006P120MNF2.html",
@@ -1250,7 +1250,7 @@
       "price": null,
       "status": "done",
       "alias": "NXH006P120MNF2* NXH006P120MNF2PTG",
-      "title": "NXH006P120MNF2 · 1200 V 6 mΩ SiC MOSFET half-bridge F2 module"
+      "title": "1200 V 6 mΩ SiC MOSFET half-bridge F2 module"
     },
     "PCA9306DCUR": {
       "file": "datasheets/db/PCA9306DCUR.html",
@@ -1258,7 +1258,7 @@
       "cat": "통신",
       "price": 0.5,
       "status": "done",
-      "title": "PCA9306DCUR · Dual Bidirectional I2C Level Translator"
+      "title": "Dual Bidirectional I2C Level Translator"
     },
     "PESD1CAN": {
       "file": "datasheets/db/PESD1CAN.html",
@@ -1266,7 +1266,7 @@
       "cat": "다이오드",
       "price": null,
       "status": "done",
-      "title": "PESD1CAN · CAN bus ESD protection diode (SOT23)"
+      "title": "CAN bus ESD protection diode (SOT23)"
     },
     "PGA411-Q1": {
       "file": "datasheets/db/PGA411-Q1.html",
@@ -1275,7 +1275,7 @@
       "price": null,
       "status": "done",
       "alias": "PGA411* PGA411QPAPRQ1",
-      "title": "PGA411-Q1 · Resolver-to-Digital Converter with Exciter"
+      "title": "Resolver-to-Digital Converter with Exciter"
     },
     "RC0402 (Yageo RC_L)": {
       "file": "datasheets/db/RC0402.html",
@@ -1284,7 +1284,7 @@
       "price": null,
       "status": "done",
       "alias": "RC0402FR-07*L RC0402JR-07*L RC0603FR-07*L RC0603JR-07*L RC0805FR-07*L RC1206FR-07*L",
-      "title": "RC0402 · Yageo RC_L thick film chip resistors"
+      "title": "Yageo RC_L thick film chip resistors"
     },
     "RH850/F1KM-S1": {
       "file": "datasheets/db/RH850_F1KM-S1.html",
@@ -1293,7 +1293,7 @@
       "price": null,
       "status": "stub",
       "alias": "R7F70166* R7F70167* R7F70168* R7F7016874AFP-C#AA1",
-      "title": "RH850/F1KM-S1 · 32-bit automotive MCU, G3KH 120 MHz"
+      "title": "32-bit automotive MCU, G3KH 120 MHz"
     },
     "RH850/U2A8": {
       "file": "datasheets/db/RH850_U2A8.html",
@@ -1302,7 +1302,7 @@
       "price": null,
       "status": "stub",
       "alias": "R7F702301* R7F702301BEBBA-C#BC6 RH850/U2A8*",
-      "title": "RH850/U2A8 · Automotive 32-bit dual-core lockstep MCU, 8 MB flash, ASIL D"
+      "title": "Automotive 32-bit dual-core lockstep MCU, 8 MB flash, ASIL D"
     },
     "RL1206FR-070R1L": {
       "file": "datasheets/db/RL1206FR-070R1L.html",
@@ -1310,7 +1310,7 @@
       "cat": "저항",
       "price": 0.08,
       "status": "done",
-      "title": "RL1206FR-070R1L · 0.1 Ω 1% 1206 low-ohm thick-film chip resistor"
+      "title": "0.1 Ω 1% 1206 low-ohm thick-film chip resistor"
     },
     "S32K142": {
       "file": "datasheets/db/S32K142.html",
@@ -1318,7 +1318,7 @@
       "cat": "MCU",
       "price": 3.5,
       "status": "done",
-      "title": "S32K142 · S32K1 Cortex-M4F 256KB automotive MCU"
+      "title": "S32K1 Cortex-M4F 256KB automotive MCU"
     },
     "S32K144": {
       "file": "datasheets/db/S32K144.html",
@@ -1326,7 +1326,7 @@
       "cat": "MCU",
       "price": 6,
       "status": "done",
-      "title": "S32K144 · S32K1 Cortex-M4F 512KB automotive MCU"
+      "title": "S32K1 Cortex-M4F 512KB automotive MCU"
     },
     "S32K146": {
       "file": "datasheets/db/S32K146.html",
@@ -1334,7 +1334,7 @@
       "cat": "MCU",
       "price": 7.5,
       "status": "done",
-      "title": "S32K146 · S32K1 Cortex-M4F 1MB automotive MCU"
+      "title": "S32K1 Cortex-M4F 1MB automotive MCU"
     },
     "S32K148": {
       "file": "datasheets/db/S32K148.html",
@@ -1342,7 +1342,7 @@
       "cat": "MCU",
       "price": 9,
       "status": "done",
-      "title": "S32K148 · S32K1 Cortex-M4F 2MB automotive MCU"
+      "title": "S32K1 Cortex-M4F 2MB automotive MCU"
     },
     "S32K311": {
       "file": "datasheets/db/S32K311.html",
@@ -1350,7 +1350,7 @@
       "cat": "MCU",
       "price": 4,
       "status": "done",
-      "title": "S32K311 · S32K3 Cortex-M7 120 MHz 1 MB automotive MCU"
+      "title": "S32K3 Cortex-M7 120 MHz 1 MB automotive MCU"
     },
     "S32K312": {
       "file": "datasheets/db/S32K312.html",
@@ -1358,7 +1358,7 @@
       "cat": "MCU",
       "price": 5.5,
       "status": "done",
-      "title": "S32K312 · S32K3 Cortex-M7 120 MHz 2 MB automotive MCU"
+      "title": "S32K3 Cortex-M7 120 MHz 2 MB automotive MCU"
     },
     "S32K342": {
       "file": "datasheets/db/S32K342.html",
@@ -1366,7 +1366,7 @@
       "cat": "MCU",
       "price": 9,
       "status": "done",
-      "title": "S32K342 · S32K3 Cortex-M7 lockstep 160 MHz 2 MB automotive MCU"
+      "title": "S32K3 Cortex-M7 lockstep 160 MHz 2 MB automotive MCU"
     },
     "S32K344": {
       "file": "datasheets/db/S32K344.html",
@@ -1374,7 +1374,7 @@
       "cat": "MCU",
       "price": 14,
       "status": "done",
-      "title": "S32K344 · S32K3 Cortex-M7 lockstep 160 MHz 4 MB automotive MCU"
+      "title": "S32K3 Cortex-M7 lockstep 160 MHz 4 MB automotive MCU"
     },
     "S32K358": {
       "file": "datasheets/db/S32K358.html",
@@ -1382,7 +1382,7 @@
       "cat": "MCU",
       "price": 20,
       "status": "done",
-      "title": "S32K358 · S32K3 lockstep M7 + M7 240 MHz 8 MB automotive MCU"
+      "title": "S32K3 lockstep M7 + M7 240 MHz 8 MB automotive MCU"
     },
     "SM8S33A": {
       "file": "datasheets/db/SM8S33A.html",
@@ -1390,7 +1390,7 @@
       "cat": "보호",
       "price": 0.9,
       "status": "done",
-      "title": "SM8S33A · 33 V load-dump TVS diode, SMTO-263"
+      "title": "33 V load-dump TVS diode, SMTO-263"
     },
     "SMAJ15A-Q": {
       "file": "datasheets/db/SMAJ15A-Q.html",
@@ -1398,7 +1398,7 @@
       "cat": "보호",
       "price": null,
       "status": "done",
-      "title": "SMAJ15A-Q · 400 W unidirectional TVS 15 V, SMA, AEC-Q101"
+      "title": "400 W unidirectional TVS 15 V, SMA, AEC-Q101"
     },
     "SMAJ15A": {
       "file": "datasheets/db/SMAJ15A.html",
@@ -1406,7 +1406,7 @@
       "cat": "다이오드",
       "price": null,
       "status": "done",
-      "title": "SMAJ15A · 15 V 400 W unidirectional TVS diode, SMA"
+      "title": "15 V 400 W unidirectional TVS diode, SMA"
     },
     "SMAJ15CA": {
       "file": "datasheets/db/SMAJ15CA.html",
@@ -1414,7 +1414,7 @@
       "cat": "보호",
       "price": 0.074,
       "status": "done",
-      "title": "SMAJ15CA · 400 W bidirectional TVS diode, VR 15 V, SMA (DO-214AC)"
+      "title": "400 W bidirectional TVS diode, VR 15 V, SMA (DO-214AC)"
     },
     "SN65HVD230DR": {
       "file": "datasheets/db/SN65HVD230DR.html",
@@ -1422,7 +1422,7 @@
       "cat": "통신",
       "price": 1.3,
       "status": "done",
-      "title": "SN65HVD230DR · 3.3-V CAN Transceiver"
+      "title": "3.3-V CAN Transceiver"
     },
     "SPC560P50": {
       "file": "datasheets/db/SPC560P50.html",
@@ -1431,7 +1431,7 @@
       "price": null,
       "status": "done",
       "alias": "SPC560P50* SPC560P50L5CEFAR",
-      "title": "SPC560P50 · Power Architecture automotive MCU"
+      "title": "Power Architecture automotive MCU"
     },
     "SPC58EC80E5": {
       "file": "datasheets/db/SPC58EC80E5.html",
@@ -1439,7 +1439,7 @@
       "cat": "MCU",
       "price": null,
       "status": "done",
-      "title": "SPC58EC80E5 · 32-bit dual-core Power Architecture automotive MCU, 4 MB flash, eTQFP144"
+      "title": "32-bit dual-core Power Architecture automotive MCU, 4 MB flash, eTQFP144"
     },
     "SQD50P04-09L_GE3": {
       "file": "datasheets/db/SQD50P04-09L_GE3.html",
@@ -1447,7 +1447,7 @@
       "cat": "트랜지스터",
       "price": 1.38,
       "status": "done",
-      "title": "SQD50P04-09L_GE3 · Automotive P-channel 40 V 50 A TrenchFET MOSFET, TO-252 (DPAK)"
+      "title": "Automotive P-channel 40 V 50 A TrenchFET MOSFET, TO-252 (DPAK)"
     },
     "SRN5040-100M": {
       "file": "datasheets/db/SRN5040-100M.html",
@@ -1455,7 +1455,7 @@
       "cat": "인덕터",
       "price": null,
       "status": "done",
-      "title": "SRN5040-100M · 10 uH semi-shielded SMD power inductor"
+      "title": "10 uH semi-shielded SMD power inductor"
     },
     "SS14": {
       "file": "datasheets/db/SS14.html",
@@ -1464,7 +1464,7 @@
       "price": 0.09,
       "status": "done",
       "alias": "SS14* SS14HE3_A/H",
-      "title": "SS14 · 1 A 40 V surface-mount Schottky rectifier"
+      "title": "1 A 40 V surface-mount Schottky rectifier"
     },
     "SS34": {
       "file": "datasheets/db/SS34.html",
@@ -1472,16 +1472,16 @@
       "cat": "다이오드",
       "price": null,
       "status": "done",
-      "title": "SS34 · 3 A 40 V Schottky rectifier"
+      "title": "3 A 40 V Schottky rectifier"
     },
     "STGAP3S": {
       "file": "datasheets/db/STGAP3S.html",
       "mfr": "STMicroelectronics",
       "cat": "게이트 드라이버",
       "price": null,
-      "status": "done",
+      "status": "verified",
       "alias": "STGAP3S* STGAP3SXSTR",
-      "title": "STGAP3S · Isolated single gate driver for IGBT/SiC"
+      "title": "Isolated single gate driver for IGBT/SiC"
     },
     "STL325N4LF8AG": {
       "file": "datasheets/db/STL325N4LF8AG.html",
@@ -1489,7 +1489,7 @@
       "cat": "트랜지스터",
       "price": null,
       "status": "done",
-      "title": "STL325N4LF8AG · Automotive N-channel 40 V 0.75 mOhm STripFET F8 MOSFET, PowerFLAT 5x6"
+      "title": "Automotive N-channel 40 V 0.75 mOhm STripFET F8 MOSFET, PowerFLAT 5x6"
     },
     "STM32F042K6U6": {
       "file": "datasheets/db/STM32F042K6U6.html",
@@ -1497,7 +1497,7 @@
       "cat": "MCU",
       "price": 2.2,
       "status": "stub",
-      "title": "STM32F042K6U6 · STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN"
+      "title": "STM32F042x4/x6 — Arm Cortex-M0 MCU, USB, CAN"
     },
     "STM32G474RET6": {
       "file": "datasheets/db/STM32G474RET6.html",
@@ -1505,7 +1505,7 @@
       "cat": "MCU",
       "price": 5.5,
       "status": "stub",
-      "title": "STM32G474RET6 · Cortex-M4F 170 MHz MCU with HRTIM"
+      "title": "Cortex-M4F 170 MHz MCU with HRTIM"
     },
     "TC233LP-32F200F": {
       "file": "datasheets/db/TC233LP-32F200F.html",
@@ -1513,7 +1513,7 @@
       "cat": "MCU",
       "price": 7,
       "status": "stub",
-      "title": "TC233LP-32F200F · AURIX TC23x 32-bit TriCore lockstep MCU, 200 MHz, 2 MB Flash, TQFP-100"
+      "title": "AURIX TC23x 32-bit TriCore lockstep MCU, 200 MHz, 2 MB Flash, TQFP-100"
     },
     "TC275TP-64F200W": {
       "file": "datasheets/db/TC275TP-64F200W.html",
@@ -1521,7 +1521,7 @@
       "cat": "MCU",
       "price": 14,
       "status": "stub",
-      "title": "TC275TP-64F200W · AURIX TC27x 32-bit TriCore 3-core MCU, 200 MHz, 4 MB Flash, LQFP-176"
+      "title": "AURIX TC27x 32-bit TriCore 3-core MCU, 200 MHz, 4 MB Flash, LQFP-176"
     },
     "TC334LP-32F300F": {
       "file": "datasheets/db/TC334LP-32F300F.html",
@@ -1529,7 +1529,7 @@
       "cat": "MCU",
       "price": 8,
       "status": "stub",
-      "title": "TC334LP-32F300F · AURIX TC33x 32-bit TriCore lockstep MCU, 300 MHz, 2 MB Flash, TQFP-144"
+      "title": "AURIX TC33x 32-bit TriCore lockstep MCU, 300 MHz, 2 MB Flash, TQFP-144"
     },
     "TC334LP": {
       "file": "datasheets/db/TC334LP.html",
@@ -1538,7 +1538,7 @@
       "price": null,
       "status": "stub",
       "alias": "SAK-TC334LP* TC334LP* TC334LP32F300FAAKXUMA1",
-      "title": "TC334LP · AURIX TC33x TC334LP family (TriCore lockstep, TQFP-144)"
+      "title": "AURIX TC33x TC334LP family (TriCore lockstep, TQFP-144)"
     },
     "TC364DP-64F300F": {
       "file": "datasheets/db/TC364DP-64F300F.html",
@@ -1546,7 +1546,7 @@
       "cat": "MCU",
       "price": 18,
       "status": "stub",
-      "title": "TC364DP-64F300F · AURIX TC36x dual-core TriCore MCU, 300 MHz"
+      "title": "AURIX TC36x dual-core TriCore MCU, 300 MHz"
     },
     "TC375TP-96F300W": {
       "file": "datasheets/db/TC375TP-96F300W.html",
@@ -1554,7 +1554,7 @@
       "cat": "MCU",
       "price": 16,
       "status": "stub",
-      "title": "TC375TP-96F300W · AURIX TC37x 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, LQFP-176"
+      "title": "AURIX TC37x 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, LQFP-176"
     },
     "TC377TX-96F300S": {
       "file": "datasheets/db/TC377TX-96F300S.html",
@@ -1562,7 +1562,7 @@
       "cat": "MCU",
       "price": 19,
       "status": "stub",
-      "title": "TC377TX-96F300S · AURIX TC37xEXT 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, dual Ethernet, LFBGA-292"
+      "title": "AURIX TC37xEXT 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, dual Ethernet, LFBGA-292"
     },
     "TC387QP-160F300S": {
       "file": "datasheets/db/TC387QP-160F300S.html",
@@ -1570,7 +1570,7 @@
       "cat": "MCU",
       "price": 26,
       "status": "stub",
-      "title": "TC387QP-160F300S · AURIX TC38x 32-bit TriCore 4-core MCU, 300 MHz, 10 MB Flash, LFBGA-292"
+      "title": "AURIX TC38x 32-bit TriCore 4-core MCU, 300 MHz, 10 MB Flash, LFBGA-292"
     },
     "TC397XX-256F300S": {
       "file": "datasheets/db/TC397XX-256F300S.html",
@@ -1578,7 +1578,7 @@
       "cat": "MCU",
       "price": 36,
       "status": "stub",
-      "title": "TC397XX-256F300S · AURIX TC39x 32-bit TriCore 6-core MCU, 300 MHz, 16 MB Flash, LFBGA-292"
+      "title": "AURIX TC39x 32-bit TriCore 6-core MCU, 300 MHz, 16 MB Flash, LFBGA-292"
     },
     "TCAN1043-Q1": {
       "file": "datasheets/db/TCAN1043-Q1.html",
@@ -1587,7 +1587,7 @@
       "price": null,
       "status": "done",
       "alias": "TCAN1043* TCAN1043GDRQ1",
-      "title": "TCAN1043-Q1 · Automotive fault-protected CAN FD transceiver with inhibit and wake"
+      "title": "Automotive fault-protected CAN FD transceiver with inhibit and wake"
     },
     "TCAN1043HDRQ1": {
       "file": "datasheets/db/TCAN1043HDRQ1.html",
@@ -1595,7 +1595,7 @@
       "cat": "통신",
       "price": 1.4,
       "status": "done",
-      "title": "TCAN1043HDRQ1 · ±70-V CAN FD Transceiver with Inhibit and Wake"
+      "title": "±70-V CAN FD Transceiver with Inhibit and Wake"
     },
     "TCAN1044AVDRQ1": {
       "file": "datasheets/db/TCAN1044AVDRQ1.html",
@@ -1603,7 +1603,7 @@
       "cat": "통신",
       "price": 0.9,
       "status": "done",
-      "title": "TCAN1044AVDRQ1 · Automotive fault-protected CAN FD transceiver with standby and VIO"
+      "title": "Automotive fault-protected CAN FD transceiver with standby and VIO"
     },
     "TCAN4550-Q1": {
       "file": "datasheets/db/TCAN4550-Q1.html",
@@ -1611,7 +1611,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
-      "title": "TCAN4550-Q1 · Automotive CAN FD controller with integrated transceiver (SPI)"
+      "title": "Automotive CAN FD controller with integrated transceiver (SPI)"
     },
     "TCAN4551RGYRQ1": {
       "file": "datasheets/db/TCAN4551RGYRQ1.html",
@@ -1619,7 +1619,7 @@
       "cat": "통신",
       "price": 3.2,
       "status": "done",
-      "title": "TCAN4551RGYRQ1 · Automotive SPI CAN FD controller with integrated transceiver"
+      "title": "Automotive SPI CAN FD controller with integrated transceiver"
     },
     "THVD1450DR": {
       "file": "datasheets/db/THVD1450DR.html",
@@ -1627,7 +1627,7 @@
       "cat": "통신",
       "price": 1.4,
       "status": "done",
-      "title": "THVD1450DR · 3.3-V to 5-V RS-485 transceiver, 50 Mbps, ±18-kV IEC ESD"
+      "title": "3.3-V to 5-V RS-485 transceiver, 50 Mbps, ±18-kV IEC ESD"
     },
     "TJA1021T": {
       "file": "datasheets/db/TJA1021T.html",
@@ -1636,7 +1636,7 @@
       "price": null,
       "status": "done",
       "alias": "TJA1021T* TJA1021T/20/C,118",
-      "title": "TJA1021T · LIN 2.x / SAE J2602 transceiver, SO8"
+      "title": "LIN 2.x / SAE J2602 transceiver, SO8"
     },
     "TJA1021T/20": {
       "file": "datasheets/db/TJA1021T_20.html",
@@ -1644,7 +1644,7 @@
       "cat": "통신",
       "price": 0.8,
       "status": "done",
-      "title": "TJA1021T/20 · LIN 2.x / SAE J2602 transceiver, 20 kBd, SO8"
+      "title": "LIN 2.x / SAE J2602 transceiver, 20 kBd, SO8"
     },
     "TJA1042T/3": {
       "file": "datasheets/db/TJA1042T_3.html",
@@ -1652,7 +1652,7 @@
       "cat": "통신",
       "price": 0.75,
       "status": "done",
-      "title": "TJA1042T/3 · High-speed CAN FD transceiver with Standby mode and VIO, SO8"
+      "title": "High-speed CAN FD transceiver with Standby mode and VIO, SO8"
     },
     "TJA1049T/3": {
       "file": "datasheets/db/TJA1049T_3.html",
@@ -1660,7 +1660,7 @@
       "cat": "통신",
       "price": 0.8,
       "status": "done",
-      "title": "TJA1049T/3 · High-speed CAN transceiver with Standby mode and VIO, SO8"
+      "title": "High-speed CAN transceiver with Standby mode and VIO, SO8"
     },
     "TJA1051T/3": {
       "file": "datasheets/db/TJA1051T_3.html",
@@ -1668,7 +1668,7 @@
       "cat": "통신",
       "price": 0.8,
       "status": "done",
-      "title": "TJA1051T/3 · High-speed CAN transceiver with Silent mode and VIO, SO8"
+      "title": "High-speed CAN transceiver with Silent mode and VIO, SO8"
     },
     "TJA1145T/FD": {
       "file": "datasheets/db/TJA1145T_FD.html",
@@ -1676,7 +1676,7 @@
       "cat": "통신",
       "price": 1.9,
       "status": "done",
-      "title": "TJA1145T/FD · High-speed CAN transceiver for partial networking, FD-passive, SO14"
+      "title": "High-speed CAN transceiver for partial networking, FD-passive, SO14"
     },
     "TJA1443AT": {
       "file": "datasheets/db/TJA1443AT.html",
@@ -1684,7 +1684,7 @@
       "cat": "통신",
       "price": 0.75,
       "status": "stub",
-      "title": "TJA1443AT · High-speed CAN FD transceiver with Sleep mode, SO14"
+      "title": "High-speed CAN FD transceiver with Sleep mode, SO14"
     },
     "TJA1463ATK/0Z": {
       "file": "datasheets/db/TJA1463ATK_0Z.html",
@@ -1692,7 +1692,7 @@
       "cat": "통신",
       "price": 1.6,
       "status": "done",
-      "title": "TJA1463ATK/0Z · CAN SIC transceiver with Sleep mode"
+      "title": "CAN SIC transceiver with Sleep mode"
     },
     "TLE4972-AE35D5": {
       "file": "datasheets/db/TLE4972-AE35D5.html",
@@ -1700,7 +1700,7 @@
       "cat": "전류 센서",
       "price": null,
       "status": "done",
-      "title": "TLE4972-AE35D5 · XENSIV coreless magnetic current sensor, TDSO-16"
+      "title": "XENSIV coreless magnetic current sensor, TDSO-16"
     },
     "TLE4972": {
       "file": "datasheets/db/TLE4972.html",
@@ -1708,15 +1708,15 @@
       "cat": "전류 센서",
       "price": 2.8,
       "status": "done",
-      "title": "TLE4972 · Coreless Hall current sensor with analog output and dual OCD, PG-TDSO-16"
+      "title": "Coreless Hall current sensor with analog output and dual OCD, PG-TDSO-16"
     },
     "TLE4998S8": {
       "file": "datasheets/db/TLE4998S8.html",
       "mfr": "Infineon",
       "cat": "센서",
       "price": 2.5,
-      "status": "done",
-      "title": "TLE4998S8 · Programmable linear Hall sensor with SENT output, PG-TDSO-8"
+      "status": "verified",
+      "title": "Programmable linear Hall sensor with SENT output, PG-TDSO-8"
     },
     "TLE5012B": {
       "file": "datasheets/db/TLE5012B.html",
@@ -1725,7 +1725,7 @@
       "price": null,
       "status": "done",
       "alias": "TLE5012B* TLE5012BE9000XUMA1",
-      "title": "TLE5012B · GMR-based angle sensor, SSC (SPI) + IIF/PWM/HSM/SPC, DSO-8"
+      "title": "GMR-based angle sensor, SSC (SPI) + IIF/PWM/HSM/SPC, DSO-8"
     },
     "TLE6240GP": {
       "file": "datasheets/db/TLE6240GP.html",
@@ -1733,7 +1733,7 @@
       "cat": "스마트 스위치",
       "price": null,
       "status": "done",
-      "title": "TLE6240GP · Smart 16-channel low-side switch with SPI diagnostics"
+      "title": "Smart 16-channel low-side switch with SPI diagnostics"
     },
     "TLE7182EM": {
       "file": "datasheets/db/TLE7182EM.html",
@@ -1741,7 +1741,7 @@
       "cat": "게이트 드라이버",
       "price": null,
       "status": "done",
-      "title": "TLE7182EM · H-bridge / dual half-bridge MOSFET driver, SSOP-24"
+      "title": "H-bridge / dual half-bridge MOSFET driver, SSOP-24"
     },
     "TLE7259-3GE": {
       "file": "datasheets/db/TLE7259-3GE.html",
@@ -1749,7 +1749,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
-      "title": "TLE7259-3GE · LIN transceiver, LIN 2.2A / ISO 17987-4, DSO-8"
+      "title": "LIN transceiver, LIN 2.2A / ISO 17987-4, DSO-8"
     },
     "TLE9015DQU": {
       "file": "datasheets/db/TLE9015DQU.html",
@@ -1757,7 +1757,7 @@
       "cat": "통신",
       "price": null,
       "status": "done",
-      "title": "TLE9015DQU · iso UART transceiver for battery management, TQFP-48"
+      "title": "iso UART transceiver for battery management, TQFP-48"
     },
     "TLE9180D-31QK": {
       "file": "datasheets/db/TLE9180D-31QK.html",
@@ -1765,7 +1765,7 @@
       "cat": "게이트 드라이버",
       "price": 9,
       "status": "stub",
-      "title": "TLE9180D-31QK · 3-phase bridge driver IC, 3 CSA, SPI, LQFP-64"
+      "title": "3-phase bridge driver IC, 3 CSA, SPI, LQFP-64"
     },
     "TLE9201SG": {
       "file": "datasheets/db/TLE9201SG.html",
@@ -1773,15 +1773,15 @@
       "cat": "모터 드라이버",
       "price": 1.75,
       "status": "done",
-      "title": "TLE9201SG · 6 A H-bridge with SPI, DSO-12"
+      "title": "6 A H-bridge with SPI, DSO-12"
     },
     "TLE9251VSJ": {
       "file": "datasheets/db/TLE9251VSJ.html",
       "mfr": "Infineon",
       "cat": "통신",
       "price": 1.15,
-      "status": "done",
-      "title": "TLE9251VSJ · High-speed CAN FD transceiver with VIO, DSO-8"
+      "status": "verified",
+      "title": "High-speed CAN FD transceiver with VIO, DSO-8"
     },
     "TLE9471ES": {
       "file": "datasheets/db/TLE9471ES.html",
@@ -1789,7 +1789,7 @@
       "cat": "전원",
       "price": null,
       "status": "done",
-      "title": "TLE9471ES · Lite CAN SBC with 5 V buck, CAN FD, watchdog"
+      "title": "Lite CAN SBC with 5 V buck, CAN FD, watchdog"
     },
     "TLE9879QXA40": {
       "file": "datasheets/db/TLE9879QXA40.html",
@@ -1797,7 +1797,7 @@
       "cat": "모터 드라이버",
       "price": 3.8,
       "status": "stub",
-      "title": "TLE9879QXA40 · Cortex-M3 MCU with LIN and BLDC MOSFET driver, VQFN-48"
+      "title": "Cortex-M3 MCU with LIN and BLDC MOSFET driver, VQFN-48"
     },
     "TLF35584QVVS2": {
       "file": "datasheets/db/TLF35584QVVS2.html",
@@ -1805,7 +1805,7 @@
       "cat": "전원",
       "price": 7.5,
       "status": "done",
-      "title": "TLF35584QVVS2 · Functional safety PMIC, 3.3 V µC LDO, VQFN-48"
+      "title": "Functional safety PMIC, 3.3 V µC LDO, VQFN-48"
     },
     "TLF4277-2LD": {
       "file": "datasheets/db/TLF4277-2LD.html",
@@ -1813,7 +1813,7 @@
       "cat": "전원",
       "price": 2.2,
       "status": "done",
-      "title": "TLF4277-2LD · 300 mA adjustable LDO with current monitor, TSON-10"
+      "title": "300 mA adjustable LDO with current monitor, TSON-10"
     },
     "TLI4971-A120T5": {
       "file": "datasheets/db/TLI4971-A120T5.html",
@@ -1822,7 +1822,7 @@
       "price": null,
       "status": "done",
       "alias": "TLI4971-A120T5* TLI4971A120T5* TLI4971A120T5E0001XUMA1",
-      "title": "TLI4971-A120T5 · Coreless magnetic current sensor ±120 A, TISON-8"
+      "title": "Coreless magnetic current sensor ±120 A, TISON-8"
     },
     "TLIN1029-Q1": {
       "file": "datasheets/db/TLIN1029-Q1.html",
@@ -1831,7 +1831,7 @@
       "price": null,
       "status": "done",
       "alias": "TLIN1029* TLIN1029DRQ1",
-      "title": "TLIN1029-Q1 · LIN transceiver with dominant state timeout"
+      "title": "LIN transceiver with dominant state timeout"
     },
     "TLV1117LV33QDCYRQ1": {
       "file": "datasheets/db/TLV1117LV33QDCYRQ1.html",
@@ -1839,7 +1839,7 @@
       "cat": "전원",
       "price": 0.62,
       "status": "done",
-      "title": "TLV1117LV33QDCYRQ1 · 1-A positive fixed-voltage LDO, 3.3 V, SOT-223"
+      "title": "1-A positive fixed-voltage LDO, 3.3 V, SOT-223"
     },
     "TLV1117LV50QDCYRQ1": {
       "file": "datasheets/db/TLV1117LV50QDCYRQ1.html",
@@ -1847,7 +1847,7 @@
       "cat": "전원",
       "price": null,
       "status": "stub",
-      "title": "TLV1117LV50QDCYRQ1 · Invalid part number (no 5 V TLV1117LV-Q1)"
+      "title": "Invalid part number (no 5 V TLV1117LV-Q1)"
     },
     "TLV76733QWDRBRQ1": {
       "file": "datasheets/db/TLV76733QWDRBRQ1.html",
@@ -1855,7 +1855,7 @@
       "cat": "전원",
       "price": 0.55,
       "status": "done",
-      "title": "TLV76733QWDRBRQ1 · Automotive 1-A 16-V LDO, 3.3 V fixed, WSON-8 wettable flank"
+      "title": "Automotive 1-A 16-V LDO, 3.3 V fixed, WSON-8 wettable flank"
     },
     "TLV76750QWDRBRQ1": {
       "file": "datasheets/db/TLV76750QWDRBRQ1.html",
@@ -1863,7 +1863,7 @@
       "cat": "전원",
       "price": 0.55,
       "status": "done",
-      "title": "TLV76750QWDRBRQ1 · Automotive 1-A 16-V LDO, 5 V fixed, WSON-8 wettable flank"
+      "title": "Automotive 1-A 16-V LDO, 5 V fixed, WSON-8 wettable flank"
     },
     "TMP102AIDRLR": {
       "file": "datasheets/db/TMP102AIDRLR.html",
@@ -1871,7 +1871,7 @@
       "cat": "센서",
       "price": 0.7,
       "status": "done",
-      "title": "TMP102AIDRLR · Low-power digital temperature sensor, I2C, SOT-563"
+      "title": "Low-power digital temperature sensor, I2C, SOT-563"
     },
     "TMP117AIDRVR": {
       "file": "datasheets/db/TMP117AIDRVR.html",
@@ -1879,7 +1879,7 @@
       "cat": "센서",
       "price": 1.9,
       "status": "done",
-      "title": "TMP117AIDRVR · ±0.1 °C high-accuracy digital temperature sensor, I2C, WSON-6"
+      "title": "±0.1 °C high-accuracy digital temperature sensor, I2C, WSON-6"
     },
     "TMP235-Q1": {
       "file": "datasheets/db/TMP235-Q1.html",
@@ -1887,7 +1887,7 @@
       "cat": "센서",
       "price": 0.35,
       "status": "done",
-      "title": "TMP235-Q1 · Automotive analog output temperature sensor, 10 mV/°C"
+      "title": "Automotive analog output temperature sensor, 10 mV/°C"
     },
     "TMS320F280039C-Q1": {
       "file": "datasheets/db/TMS320F280039C-Q1.html",
@@ -1896,7 +1896,7 @@
       "price": 6,
       "status": "stub",
       "alias": "F280039C* F280039CPZRQ1 TMS320F280039C*",
-      "title": "TMS320F280039C-Q1 · Automotive C2000 real-time MCU, 120 MHz C28x + CLA, 384 KB flash"
+      "title": "Automotive C2000 real-time MCU, 120 MHz C28x + CLA, 384 KB flash"
     },
     "TMS320F280049C-Q1": {
       "file": "datasheets/db/TMS320F280049C-Q1.html",
@@ -1904,7 +1904,7 @@
       "cat": "MCU",
       "price": 7,
       "status": "done",
-      "title": "TMS320F280049C-Q1 · C2000 real-time MCU, 100 MHz C28x + CLA"
+      "title": "C2000 real-time MCU, 100 MHz C28x + CLA"
     },
     "TMS570LC4357": {
       "file": "datasheets/db/TMS570LC4357.html",
@@ -1912,7 +1912,7 @@
       "cat": "MCU",
       "price": 22,
       "status": "done",
-      "title": "TMS570LC4357 · Hercules safety MCU, dual Cortex-R5F lockstep 300 MHz, 4 MB flash"
+      "title": "Hercules safety MCU, dual Cortex-R5F lockstep 300 MHz, 4 MB flash"
     },
     "TMS570LS0432": {
       "file": "datasheets/db/TMS570LS0432.html",
@@ -1920,7 +1920,7 @@
       "cat": "MCU",
       "price": 5,
       "status": "done",
-      "title": "TMS570LS0432 · Hercules Cortex-R4 lockstep safety MCU"
+      "title": "Hercules Cortex-R4 lockstep safety MCU"
     },
     "TMS570LS1224": {
       "file": "datasheets/db/TMS570LS1224.html",
@@ -1928,7 +1928,7 @@
       "cat": "MCU",
       "price": 10,
       "status": "stub",
-      "title": "TMS570LS1224 · Hercules Cortex-R4F lockstep safety MCU"
+      "title": "Hercules Cortex-R4F lockstep safety MCU"
     },
     "TMS570LS3137": {
       "file": "datasheets/db/TMS570LS3137.html",
@@ -1936,7 +1936,7 @@
       "cat": "MCU",
       "price": 18,
       "status": "done",
-      "title": "TMS570LS3137 · Hercules Cortex-R4F lockstep MCU with Ethernet and FlexRay"
+      "title": "Hercules Cortex-R4F lockstep MCU with Ethernet and FlexRay"
     },
     "TPD2E2U06DBZR": {
       "file": "datasheets/db/TPD2E2U06DBZR.html",
@@ -1944,7 +1944,7 @@
       "cat": "보호",
       "price": 0.2,
       "status": "done",
-      "title": "TPD2E2U06DBZR · 2-channel ESD protection diode, SOT-23"
+      "title": "2-channel ESD protection diode, SOT-23"
     },
     "TPD2E2U06QDBZRQ1": {
       "file": "datasheets/db/TPD2E2U06QDBZRQ1.html",
@@ -1952,7 +1952,7 @@
       "cat": "보호",
       "price": 0.2,
       "status": "done",
-      "title": "TPD2E2U06QDBZRQ1 · 2-channel ESD protection diode, SOT-23"
+      "title": "2-channel ESD protection diode, SOT-23"
     },
     "TPS1H100-Q1": {
       "file": "datasheets/db/TPS1H100-Q1.html",
@@ -1961,7 +1961,7 @@
       "price": 1.7,
       "status": "done",
       "alias": "TPS1H100*Q1 TPS1H100BQPWPRQ1",
-      "title": "TPS1H100-Q1 · 40-V 100-mΩ single-channel smart high-side switch"
+      "title": "40-V 100-mΩ single-channel smart high-side switch"
     },
     "TPS1HB16-Q1": {
       "file": "datasheets/db/TPS1HB16-Q1.html",
@@ -1970,7 +1970,7 @@
       "price": null,
       "status": "stub",
       "alias": "TPS1HB16* TPS1HB16AQPWPRQ1",
-      "title": "TPS1HB16-Q1 · 40-V 16-mΩ single-channel smart high-side switch"
+      "title": "40-V 16-mΩ single-channel smart high-side switch"
     },
     "TPS2553DBVR": {
       "file": "datasheets/db/TPS2553DBVR.html",
@@ -1978,7 +1978,7 @@
       "cat": "스마트 스위치",
       "price": 0.9,
       "status": "done",
-      "title": "TPS2553DBVR · Adjustable current-limited power-distribution switch"
+      "title": "Adjustable current-limited power-distribution switch"
     },
     "TPS3823-33QDBVRQ1": {
       "file": "datasheets/db/TPS3823-33QDBVRQ1.html",
@@ -1986,7 +1986,7 @@
       "cat": "전원",
       "price": 0.95,
       "status": "done",
-      "title": "TPS3823-33QDBVRQ1 · Automotive supervisor with watchdog, SOT-23-5"
+      "title": "Automotive supervisor with watchdog, SOT-23-5"
     },
     "TPS3823DBVR": {
       "file": "datasheets/db/TPS3823DBVR.html",
@@ -1995,15 +1995,15 @@
       "price": null,
       "status": "done",
       "alias": "TPS3823* TPS3823*DBVR TPS3823-33DBVR",
-      "title": "TPS3823DBVR · Voltage supervisor with watchdog timer, SOT-23-5"
+      "title": "Voltage supervisor with watchdog timer, SOT-23-5"
     },
     "TPS54331DR": {
       "file": "datasheets/db/TPS54331DR.html",
       "mfr": "Texas Instruments",
       "cat": "전원",
       "price": null,
-      "status": "done",
-      "title": "TPS54331DR · 3.5-28 V input, 3 A, 570 kHz step-down converter"
+      "status": "verified",
+      "title": "3.5-28 V input, 3 A, 570 kHz step-down converter"
     },
     "TPS54331QDRQ1": {
       "file": "datasheets/db/TPS54331QDRQ1.html",
@@ -2011,7 +2011,7 @@
       "cat": "전원",
       "price": 1.4,
       "status": "done",
-      "title": "TPS54331QDRQ1 · 3-A 28-V non-synchronous step-down converter (automotive)"
+      "title": "3-A 28-V non-synchronous step-down converter (automotive)"
     },
     "TPS65381A-Q1": {
       "file": "datasheets/db/TPS65381A-Q1.html",
@@ -2019,7 +2019,7 @@
       "cat": "전원",
       "price": 6.8,
       "status": "done",
-      "title": "TPS65381A-Q1 · Multirail power supply for safety-relevant MCUs"
+      "title": "Multirail power supply for safety-relevant MCUs"
     },
     "TPS7B8133QDRVRQ1": {
       "file": "datasheets/db/TPS7B8133QDRVRQ1.html",
@@ -2027,7 +2027,7 @@
       "cat": "전원",
       "price": 0.95,
       "status": "done",
-      "title": "TPS7B8133QDRVRQ1 · Automotive 150 mA 3.3 V ultra-low-IQ off-battery LDO"
+      "title": "Automotive 150 mA 3.3 V ultra-low-IQ off-battery LDO"
     },
     "TPS7B86-Q1": {
       "file": "datasheets/db/TPS7B86-Q1.html",
@@ -2035,7 +2035,7 @@
       "cat": "전원",
       "price": 0.9,
       "status": "done",
-      "title": "TPS7B86-Q1 · Automotive 500 mA 40 V adjustable LDO with power-good"
+      "title": "Automotive 500 mA 40 V adjustable LDO with power-good"
     },
     "UA78M05QDCYRQ1": {
       "file": "datasheets/db/UA78M05QDCYRQ1.html",
@@ -2043,7 +2043,7 @@
       "cat": "전원",
       "price": 0.35,
       "status": "done",
-      "title": "UA78M05QDCYRQ1 · Automotive 500 mA 5 V positive linear regulator (78M)"
+      "title": "Automotive 500 mA 5 V positive linear regulator (78M)"
     },
     "UA78M33QDCYRQ1": {
       "file": "datasheets/db/UA78M33QDCYRQ1.html",
@@ -2052,7 +2052,7 @@
       "price": 0.35,
       "status": "done",
       "alias": "UA78M33QDCYR* UA78M33QDCYRG4Q1",
-      "title": "UA78M33QDCYRQ1 · Automotive 500 mA 3.3 V positive linear regulator (78M)"
+      "title": "Automotive 500 mA 3.3 V positive linear regulator (78M)"
     },
     "UCC5870-Q1": {
       "file": "datasheets/db/UCC5870-Q1.html",
@@ -2060,7 +2060,7 @@
       "cat": "게이트 드라이버",
       "price": null,
       "status": "done",
-      "title": "UCC5870-Q1 · 30 A isolated IGBT/SiC gate driver with SPI and advanced protection"
+      "title": "30 A isolated IGBT/SiC gate driver with SPI and advanced protection"
     },
     "USB4105-GF-A": {
       "file": "datasheets/db/USB4105-GF-A.html",
@@ -2068,7 +2068,7 @@
       "cat": "커넥터",
       "price": null,
       "status": "done",
-      "title": "USB4105-GF-A · USB Type-C 2.0 Receptacle"
+      "title": "USB Type-C 2.0 Receptacle"
     },
     "USBLC6-2SC6": {
       "file": "datasheets/db/USBLC6-2SC6.html",
@@ -2076,7 +2076,7 @@
       "cat": "보호",
       "price": 0.25,
       "status": "done",
-      "title": "USBLC6-2SC6 · Very low capacitance ESD protection for USB 2.0"
+      "title": "Very low capacitance ESD protection for USB 2.0"
     },
     "VN7050AJ": {
       "file": "datasheets/db/VN7050AJ.html",
@@ -2084,7 +2084,7 @@
       "cat": "스마트 스위치",
       "price": 1.9,
       "status": "stub",
-      "title": "VN7050AJ · 50 mΩ high-side driver with MultiSense"
+      "title": "50 mΩ high-side driver with MultiSense"
     },
     "VND7050AJ": {
       "file": "datasheets/db/VND7050AJ.html",
@@ -2092,7 +2092,7 @@
       "cat": "스마트 스위치",
       "price": 2.4,
       "status": "stub",
-      "title": "VND7050AJ · Dual 50 mΩ high-side driver with MultiSense"
+      "title": "Dual 50 mΩ high-side driver with MultiSense"
     },
     "W25Q32JVSSIQ": {
       "file": "datasheets/db/W25Q32JVSSIQ.html",
@@ -2100,7 +2100,7 @@
       "cat": "메모리",
       "price": 0.55,
       "status": "stub",
-      "title": "W25Q32JVSSIQ · 3 V 32 Mbit serial NOR flash (Dual/Quad SPI)"
+      "title": "3 V 32 Mbit serial NOR flash (Dual/Quad SPI)"
     },
     "W25Q64JVSSIQ": {
       "file": "datasheets/db/W25Q64JVSSIQ.html",
@@ -2109,7 +2109,7 @@
       "price": 0.9,
       "status": "stub",
       "alias": "W25Q64JV* W25Q64JVSS* W25Q64JVSSIQ TR",
-      "title": "W25Q64JVSSIQ · 3 V 64 Mbit serial NOR flash (Dual/Quad SPI)"
+      "title": "3 V 64 Mbit serial NOR flash (Dual/Quad SPI)"
     },
     "WSLP12062L000FEA": {
       "file": "datasheets/db/WSLP12062L000FEA.html",
@@ -2117,7 +2117,7 @@
       "cat": "저항",
       "price": null,
       "status": "done",
-      "title": "WSLP12062L000FEA · 2 mΩ 1206 Power Metal Strip resistor"
+      "title": "2 mΩ 1206 Power Metal Strip resistor"
     }
   }
 }

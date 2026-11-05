@@ -1,0 +1,271 @@
+{
+ "mpn": "24LC256T-I/SN",
+ "mfr": "Microchip",
+ "cat": "메모리",
+ "price": 0.5,
+ "status": "done",
+ "title": "256-Kbit I²C Serial EEPROM, SOIC-8",
+ "meta": [
+  "Microchip · 메모리 · 256-Kbit I²C Serial EEPROM, SOIC-8 · 참고 단가 약 $0.5 (추정)",
+  "원본: <a href=\"https://ww1.microchip.com/downloads/en/DeviceDoc/24AA256-24LC256-24FC256-Data-Sheet-20001203V.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.microchip.com/en-us/product/24lc256\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=24LC256T-I%2FSN\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 DS20001203V (Rev V, 08/2018)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "256 Kbit (32K × 8) I²C 직렬 EEPROM, 64바이트 페이지 쓰기 버퍼"
+      ],
+      [
+       "전원 (VCC)",
+       "2.5 ~ 5.5 V (24LC256)"
+      ],
+      [
+       "클럭",
+       "최대 400 kHz (2.5 V ≤ VCC ≤ 5.5 V)"
+      ],
+      [
+       "쓰기 시간",
+       "바이트/페이지 최대 5 ms (TWC)"
+      ],
+      [
+       "내구성 · 보존",
+       "1,000,000 회 소거/쓰기, 데이터 보존 &gt; 200 년"
+      ],
+      [
+       "소비 전류",
+       "읽기 최대 400 µA (5.5 V, 400 kHz), 쓰기 최대 3 mA (5.5 V), 대기 최대 1.5 µA (5.5 V, I-temp) / 1 µA (3.6 V)"
+      ],
+      [
+       "온도 등급",
+       "I: -40 ~ +85 °C (본 MPN), E: -40 ~ +125 °C"
+      ],
+      [
+       "패키지",
+       "8-lead SOIC 3.90 mm (SN), T = 테이프 앤 릴"
+      ],
+      [
+       "차량 등급",
+       "데이터시트에 AEC-Q100 언급 없음"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VCC",
+        "",
+        "6.5",
+        "V",
+        ""
+       ],
+       [
+        "입출력 전압 (VSS 기준)",
+        "-0.6",
+        "VCC + 1.0",
+        "V",
+        "모든 입출력"
+       ],
+       [
+        "보관 온도",
+        "-65",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "전원 인가 시 주위 온도",
+        "-40",
+        "125",
+        "°C",
+        ""
+       ],
+       [
+        "ESD",
+        "",
+        "4",
+        "kV",
+        "모든 핀"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VCC",
+        "2.5",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "주위 온도 (I)",
+        "-40",
+        "",
+        "85",
+        "°C"
+       ],
+       [
+        "VIH (A0–A2, SCL, SDA, WP)",
+        "0.7 VCC",
+        "",
+        "",
+        "V"
+       ],
+       [
+        "VIL (VCC ≥ 2.5 V)",
+        "",
+        "",
+        "0.3 VCC",
+        "V"
+       ],
+       [
+        "VOL (IOL 3.0 mA @ 4.5 V / 2.1 mA @ 2.5 V)",
+        "",
+        "",
+        "0.40",
+        "V"
+       ],
+       [
+        "SCL 클럭",
+        "",
+        "",
+        "400",
+        "kHz"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>8-lead SOIC (SN), 상면도</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "A0",
+        "칩 주소 입력"
+       ],
+       [
+        "2",
+        "A1",
+        "칩 주소 입력"
+       ],
+       [
+        "3",
+        "A2",
+        "칩 주소 입력"
+       ],
+       [
+        "4",
+        "VSS",
+        "그라운드"
+       ],
+       [
+        "5",
+        "SDA",
+        "직렬 데이터 (오픈 드레인)"
+       ],
+       [
+        "6",
+        "SCL",
+        "직렬 클럭 입력"
+       ],
+       [
+        "7",
+        "WP",
+        "쓰기 보호 입력"
+       ],
+       [
+        "8",
+        "VCC",
+        "전원"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>SDA는 오픈 드레인 — VCC로 풀업 필요. 일반값 100 kHz에서 10 kΩ, 400 kHz에서 2 kΩ.</li>\n    <li>A0–A2: Rev V 문서는 VCC 또는 VSS에 반드시 연결하도록 명시 (최대 8개 디바이스 버스 공유).</li>\n    <li>WP: VSS 연결 시 쓰기 허용, VCC 연결 시 전체 어레이(0000–7FFF) 쓰기 금지(읽기는 정상). STOP 비트에서 샘플링.</li>\n    <li>VCC 핀 가까이에 디커플링 커패시터 배치 (값은 읽은 문서에 규정 없음 — 데이터시트 확인 필요).</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>8-lead SOIC 3.90 mm 바디 (도면 C04-057-SN): 피치 1.27 mm BSC, E 6.00 mm BSC, E1 3.90 mm BSC, D 4.90 mm BSC, 전체 높이 최대 1.75 mm. 열저항 값은 읽은 문서에 없음.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>쓰기 사이클(최대 5 ms) 동안 디바이스는 ACK를 하지 않음 — ACK 폴링으로 완료 확인.</li>\n    <li>페이지 경계(64바이트)를 넘는 페이지 쓰기는 같은 페이지 앞부분으로 롤오버되므로 펌웨어에서 분할 필요.</li>\n    <li>125 °C 동작이 필요하면 E 등급(24LC256-E/SN, 대기 최대 5 µA @ 5.5 V) 사용 검토. 차량 PPAP가 필요하면 Microchip 차량용 품번 별도 확인.</li>\n    <li>배치 파일의 데이터시트 링크(DS21203M, 2004)는 구버전 — 최신 DS20001203 리비전 사용 권장.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://pdf.elecfans.com/ACTEL/24LC256T-I--SN.html"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "SOIC-8"
+  },
+  "grade": ""
+ },
+ "issues": [
+  {
+   "p": "[기타] batch pdf link is old DS21203M (2004); current is DS20001203 (rev V read: endurance 1,000,000 cycles, VCC abs max 6.5 V differ from old revs)",
+   "fix": "update pdf to https://ww1.microchip.com/downloads/en/DeviceDoc/24AA256-24LC256-24FC256-Data-Sheet-20001203W.pdf (latest listed)",
+   "url": "https://pdf.elecfans.com/ACTEL/24LC256T-I--SN.html"
+  }
+ ]
+}

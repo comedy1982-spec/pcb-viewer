@@ -41,7 +41,9 @@ ${script(read('src/app/sample-mcu.js'))}
 ${script(read('src/app/sample-tc364.js'))}
 ${script(stripExport(read('src/fw/fw.js')))}
 ${script(stripExport(read('src/parts/parts.js')))}
+${script(read('src/parts/dsrec.js').replace(/if \(typeof module !== 'undefined'\) module\.exports = DSREC;/, ''))}
 ${script(stripExport(read('src/parts/dsdb.js')))}
+${script(stripExport(read('src/parts/dskey.js')))}
 ${script(stripExport(read('src/hsis/hsis.js')))}
 ${script(stripExport(read('src/hsis/pinrec.js')))}
 ${script(stripExport(read('src/hsis/mcal.js')))}

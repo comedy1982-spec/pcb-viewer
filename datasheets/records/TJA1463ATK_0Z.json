@@ -1,0 +1,363 @@
+{
+ "mpn": "TJA1463ATK/0Z",
+ "mfr": "NXP",
+ "cat": "통신",
+ "price": 1.6,
+ "status": "done",
+ "title": "CAN SIC transceiver with Sleep mode",
+ "meta": [
+  "NXP · 통신 · CAN SIC transceiver with Sleep mode (CAN FD 8 Mbit/s) · 참고 단가 약 $1.6 (추정)",
+  "원본: <a href=\"https://pdf.bomkeyelectronics.com/pdf/1/TJA1463.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (사본)</a> · <a href=\"https://nxp.com/products/TJA1463\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TJA1463ATK%2F0Z\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TJA1463 Product data sheet Rev. 3.0, 2025-02-12"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "CAN 트랜시버, 신호 개선(SIC, ISO 11898-2:2024 parameter set C), ISO 11898-2:2024 A–C · SAE J2284-1~5 · SAE J1939-14"
+      ],
+      [
+       "데이터 속도",
+       "CAN FD 최대 8 Mbit/s (비트 타이밍 대칭)"
+      ],
+      [
+       "동작 모드",
+       "Normal, Standby, Sleep, Listen-only, Off · INH로 외부 레귤레이터 제어, WAKE 로컬 웨이크"
+      ],
+      [
+       "전원",
+       "VBAT 4.5–28 V · VCC 4.5–5.5 V · VIO 2.95–5.5 V (3.3 V/5 V MCU)"
+      ],
+      [
+       "루프 지연",
+       "td(TXD–RXD) 최대 255 ns (Normal) · SIC 조건(VCC 4.75–5.25 V) 최대 190 ns"
+      ],
+      [
+       "웨이크업 필터",
+       "0.5–1.8 µs · 버스 웨이크업 타임아웃 0.8–9 ms"
+      ],
+      [
+       "등급",
+       "AEC-Q100 Grade 1 (TJR1463는 Grade 0, Ta 150 °C)"
+      ],
+      [
+       "온도",
+       "Tvj −40 ~ +150 °C"
+      ],
+      [
+       "패키지",
+       "HVSON14 (SOT1086-2), 3 × 4.5 × 0.85 mm, 0.65 mm 피치, 노출 패드"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VCC, VIO, TXD, STB_N, EN",
+        "−0.3",
+        "+6",
+        "V",
+        "6–7 V는 수명 중 누적 20 s 허용"
+       ],
+       [
+        "VBAT",
+        "",
+        "+40",
+        "V",
+        "로드 덤프, 최대 50 h"
+       ],
+       [
+        "INH",
+        "−0.3",
+        "VBAT + 0.3",
+        "V",
+        ""
+       ],
+       [
+        "CANH, CANL, WAKE",
+        "−36",
+        "+40",
+        "V",
+        ""
+       ],
+       [
+        "V(CANH−CANL)",
+        "−40",
+        "+40",
+        "V",
+        ""
+       ],
+       [
+        "RXD, ERR_N",
+        "−0.3",
+        "VIO + 0.3",
+        "V",
+        ""
+       ],
+       [
+        "IO(INH)",
+        "−2",
+        "",
+        "mA",
+        ""
+       ],
+       [
+        "Ir(VBAT) 역전류",
+        "−10",
+        "",
+        "mA",
+        ""
+       ],
+       [
+        "과도 펄스 1 / 2a / 3a / 3b",
+        "−100 / – / −150 / –",
+        "– / +75 / – / +100",
+        "V",
+        "VBAT, WAKE, CANH, CANL"
+       ],
+       [
+        "ESD IEC 61000-4-2 (CANH/CANL)",
+        "−6",
+        "+6",
+        "kV",
+        "VBAT(100 nF)·WAKE(33 kΩ) ±8 kV"
+       ],
+       [
+        "ESD HBM",
+        "−4",
+        "+4",
+        "kV",
+        "CANH/CANL ±8 kV"
+       ],
+       [
+        "ESD CDM",
+        "−500",
+        "+500",
+        "V",
+        "코너 핀 ±750 V"
+       ],
+       [
+        "Tvj",
+        "−40",
+        "+150",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "−55",
+        "+150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VBAT",
+        "4.5",
+        "",
+        "28",
+        "V"
+       ],
+       [
+        "VCC",
+        "4.5",
+        "5",
+        "5.5",
+        "V"
+       ],
+       [
+        "VIO",
+        "2.95",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "저전압 검출 VBAT / VCC",
+        "4",
+        "",
+        "4.5",
+        "V"
+       ],
+       [
+        "저전압 검출 VIO",
+        "2.65",
+        "",
+        "2.95",
+        "V"
+       ],
+       [
+        "Tvj",
+        "−40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>HVSON14 (SOT1086-2)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "TXD",
+        "송신 데이터 입력 (CAN 컨트롤러에서)"
+       ],
+       [
+        "2",
+        "GND",
+        "접지"
+       ],
+       [
+        "3",
+        "VCC",
+        "5 V 전원 입력"
+       ],
+       [
+        "4",
+        "RXD",
+        "수신 데이터 출력"
+       ],
+       [
+        "5",
+        "VIO",
+        "I/O 레벨 전원 (MCU 전원에 연결)"
+       ],
+       [
+        "6",
+        "EN",
+        "Enable 제어 입력"
+       ],
+       [
+        "7",
+        "INH",
+        "외부 레귤레이터 제어(Inhibit) 출력"
+       ],
+       [
+        "8",
+        "ERR_N",
+        "로컬 고장·웨이크업 소스·파워온 표시 출력 (액티브 LOW)"
+       ],
+       [
+        "9",
+        "WAKE",
+        "로컬 웨이크업 입력"
+       ],
+       [
+        "10",
+        "VBAT",
+        "배터리 전원 입력"
+       ],
+       [
+        "11",
+        "n.c.",
+        "미연결"
+       ],
+       [
+        "12",
+        "CANL",
+        "CAN 버스 LOW 라인"
+       ],
+       [
+        "13",
+        "CANH",
+        "CAN 버스 HIGH 라인"
+       ],
+       [
+        "14",
+        "STB_N",
+        "Standby 제어 입력 (액티브 LOW)"
+       ],
+       [
+        "EP",
+        "—",
+        "노출 패드: 보드 GND에 납땜 권장 (열·전기 성능)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VIO는 MCU 전원(예: 3.3 V)에 연결. VBAT는 역극성 보호 후 배터리에, INH로 외부 레귤레이터를 켜고 끄는 구성(Figure 10).</li>\n    <li>INH 출력 전류 한계 −2 mA, Off/Sleep 모드에서 고임피던스.</li>\n    <li>로컬 웨이크업 미사용 시 WAKE를 VBAT 또는 GND에 연결 (EMI). 내부 풀업/풀다운 100–400 kΩ.</li>\n    <li>ESD 시험 조건: VBAT 100 nF, WAKE 직렬 33 kΩ. 디커플링 값은 데이터시트에 명시 없음 — NXP 응용 노트 AH2002 (TJx144x/TJx146x Application Hints) 참조.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>HVSON14 3.0 × 4.5 mm, 높이 0.85 mm (최대 1.00 mm), 피치 0.65 mm, 노출 패드 GND. Rth(j-a) 46 K/W, Rth(j-c) 13 K/W, Ψj-top 7 K/W (JEDEC 2S2P, 일반값). Tvj max 150 °C. (SO14: Rth(j-a) 74 K/W)</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>SIC로 링잉을 억제해 다중 노드 스타형 토폴로지에서 CAN FD 고속(최대 8 Mbit/s) 동작에 유리.</li>\n    <li>VCC·VIO 저전압 검출이 있으므로 VIO를 MCU와 같은 레일로 공급해야 레벨 변환·저전압 처리가 정상 동작.</li>\n    <li>Grade 0(Ta 150 °C)가 필요하면 TJR1463 계열 선택.</li>\n    <li>데이터시트 사본(배포 사이트 미러)을 읽었으며 NXP 원본 최신 개정 확인 권장.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://pdf.bomkeyelectronics.com/pdf/1/TJA1463.pdf"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "HVSON-14",
+   "fd": 1
+  },
+  "grade": "Q100"
+ }
+}

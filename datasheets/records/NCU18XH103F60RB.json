@@ -1,0 +1,91 @@
+{
+ "mpn": "NCU18XH103F60RB",
+ "mfr": "Murata",
+ "cat": "센서",
+ "price": 0.06,
+ "status": "done",
+ "title": "NTC thermistor 10 kΩ B3380 K 0603",
+ "meta": [
+  "Murata · 센서 · NTC thermistor 10 kΩ B3380 K 0603 · 참고 단가 약 $0.06 (추정)",
+  "원본: <a href=\"https://static.chipdip.ru/lib/233/DOC033233072.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=NCU18XH103F60RB\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Murata 제품 데이터시트 NCU18XH103F60RB (Last updated 2016/07/27)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "저항 (25 °C)",
+       "10 kΩ ±1 %"
+      ],
+      [
+       "B 정수",
+       "B25/50 3380 K ±1 %, B25/85 3434 K (참고값)"
+      ],
+      [
+       "정격 전력 (25 °C)",
+       "100.0 mW"
+      ],
+      [
+       "허용 동작 전류 (25 °C)",
+       "0.31 mA"
+      ],
+      [
+       "방산 상수 (일반)",
+       "1 mW/°C"
+      ],
+      [
+       "동작 온도",
+       "-40 ~ +125 °C"
+      ],
+      [
+       "크기",
+       "1.6 × 0.8 mm (0603), 질량 0.0047 g"
+      ],
+      [
+       "인증",
+       "UL/cUL 인정 (UL1434, File No. E137188). AEC-Q200은 이 문서에 언급 없음"
+      ],
+      [
+       "포장",
+       "RB = φ180 mm 종이 테이프, 최소 4000개"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>0603 / 1608 metric, 1.6 × 0.8 mm. 두께·단자 치수는 이번 문서에 없음. 플로/리플로 납땜 가능, 무연.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>부품 DB 설명의 '차량용'은 이 데이터시트로 확인되지 않음(AEC-Q200 언급 없음) — 차량용 등급이 필요하면 Murata 차량용 NTC 목록에서 확인 필요.</li>\n    <li>R-T 표는 문서에 그래프로만 있음 — ADC 변환표는 Murata SimSurfing 데이터로 작성.</li>\n    <li>자기 발열 1 mW/°C — 측정 전류를 작게(수십~수백 µA) 유지.</li>\n    <li>NCP18XH103F03RB와 전기 사양 동일(10 kΩ, B3380 K, 0603) — 상호 대체 가능 여부는 승인도로 확인.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://static.chipdip.ru/lib/233/DOC033233072.pdf"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "0603"
+  },
+  "grade": "Q200"
+ },
+ "issues": [
+  {
+   "p": "[등급·수명] desc says \"차량용\" but Murata sheet mentions only UL1434 recognition, no AEC-Q200",
+   "fix": "verify automotive grade or drop \"차량용\" from desc",
+   "url": "https://static.chipdip.ru/lib/233/DOC033233072.pdf"
+  }
+ ]
+}

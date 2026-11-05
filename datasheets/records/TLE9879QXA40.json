@@ -1,0 +1,414 @@
+{
+ "mpn": "TLE9879QXA40",
+ "mfr": "Infineon",
+ "cat": "모터 드라이버",
+ "price": 3.8,
+ "status": "stub",
+ "title": "Cortex-M3 MCU with LIN and BLDC MOSFET driver, VQFN-48",
+ "meta": [
+  "Infineon · 모터 드라이버 · Cortex-M3 MCU with LIN and 3-phase BLDC MOSFET driver, VQFN-48 · 참고 단가 약 $3.8 (추정)",
+  "원본: <a href=\"https://www.nyang-tech.com/datasheet/3348077717/Infineon-Technologies/TLE9879QXA40XUMA3.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=TLE9879QXA40\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TLE9879QXA40 Data Sheet Rev. 2.0, 2022-04-14 (BF/UH design step)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "MOTIX 임베디드 파워: Cortex-M3 MCU + LIN 2.2 트랜시버 + 3상 브리지 MOSFET 드라이버 (외부 N-FET 6개)"
+      ],
+      [
+       "CPU",
+       "32-bit Arm Cortex-M3, 최대 40 MHz. 외부 크리스털 4 – 25 MHz, 내부 LP_CLK 18 MHz / LP_CLK2 100 kHz"
+      ],
+      [
+       "메모리",
+       "Flash 128 KB (4 KB 에뮬레이션 EEPROM 포함), RAM 6 KB, 100TP 512 B, 부트 ROM 32 KB"
+      ],
+      [
+       "전원",
+       "VS 단일 전원 5.5 – 27 V, 확장 3 – 28 V"
+      ],
+      [
+       "내부 레귤레이터",
+       "VDDP 5.0 V (I/O), VDDC 1.5 V (코어, 외부 부하 금지), VDDEXT 5.0 V / 20 mA 외부 출력"
+      ],
+      [
+       "게이트 드라이버",
+       "GH1–3 / GL1–3, 공통 로우사이드 소스 SL, 차지 펌프(CP1H/L, CP2H/L, VCP, VSD)"
+      ],
+      [
+       "아날로그",
+       "션트 전류용 고속 OP 앰프(OP1/OP2), 10-bit ADC1 (AN0, AN2–AN5), 진단용 8-bit ADC, HV 모니터 입력 MON"
+      ],
+      [
+       "등급·온도",
+       "AEC-Q100/101, Tj −40 – 150 °C"
+      ],
+      [
+       "패키지",
+       "VQFN-48 (BF step VQFN-48-31, UH step VQFN-48-79), LTI(측면 납땜 검사) 지원"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "html": "<p>데이터시트 29.1.1 확인 필요 (읽은 추출본에 표 없음).</p>"
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VS (정상)",
+        "5.5",
+        "",
+        "27",
+        "V"
+       ],
+       [
+        "VS (확장)",
+        "3",
+        "",
+        "28",
+        "V"
+       ],
+       [
+        "Tj",
+        "−40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>VQFN-48 + 노출 패드(GND)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "CP1L",
+        "차지 펌프 커패시터 1 low"
+       ],
+       [
+        "2",
+        "VCP",
+        "차지 펌프 커패시터 (출력)"
+       ],
+       [
+        "3",
+        "CP2H",
+        "차지 펌프 커패시터 2 high"
+       ],
+       [
+        "4",
+        "CP2L",
+        "차지 펌프 커패시터 2 low"
+       ],
+       [
+        "5",
+        "GH3",
+        "하이사이드 FET 3 게이트"
+       ],
+       [
+        "6",
+        "SH2",
+        "하이사이드 FET 2 소스"
+       ],
+       [
+        "7",
+        "GH2",
+        "하이사이드 FET 2 게이트"
+       ],
+       [
+        "8",
+        "SH1",
+        "하이사이드 FET 1 소스"
+       ],
+       [
+        "9",
+        "GH1",
+        "하이사이드 FET 1 게이트"
+       ],
+       [
+        "10",
+        "SL",
+        "로우사이드 FET 공통 소스"
+       ],
+       [
+        "11",
+        "GL3",
+        "로우사이드 FET 3 게이트"
+       ],
+       [
+        "12",
+        "GL2",
+        "로우사이드 FET 2 게이트"
+       ],
+       [
+        "13",
+        "GL1",
+        "로우사이드 FET 1 게이트"
+       ],
+       [
+        "14",
+        "MON",
+        "고전압 모니터 입력"
+       ],
+       [
+        "15",
+        "P1.0",
+        "GPIO"
+       ],
+       [
+        "16",
+        "P1.1",
+        "GPIO"
+       ],
+       [
+        "17",
+        "P1.2",
+        "GPIO"
+       ],
+       [
+        "18",
+        "P0.4",
+        "GPIO"
+       ],
+       [
+        "19",
+        "GND",
+        "디지털 접지"
+       ],
+       [
+        "20",
+        "TMS",
+        "테스트 모드 선택 / SWD I/O"
+       ],
+       [
+        "21",
+        "P0.0",
+        "GPIO / SWD 클럭"
+       ],
+       [
+        "22",
+        "RESET",
+        "리셋 입력 (Sleep 모드에서는 사용 불가)"
+       ],
+       [
+        "23",
+        "P0.1",
+        "GPIO"
+       ],
+       [
+        "24",
+        "P0.3",
+        "GPIO"
+       ],
+       [
+        "25",
+        "P0.2",
+        "GPIO (SWD 사용 시 0으로 고정)"
+       ],
+       [
+        "26",
+        "P1.3",
+        "GPIO (돌입 전류 트랜지스터 제어용)"
+       ],
+       [
+        "27",
+        "P1.4",
+        "GPIO"
+       ],
+       [
+        "28",
+        "GND",
+        "디지털 접지"
+       ],
+       [
+        "29",
+        "P2.0/XTAL1",
+        "AN0 / 크리스털 입력"
+       ],
+       [
+        "30",
+        "P2.2/XTAL2",
+        "AN2 / 크리스털 출력"
+       ],
+       [
+        "31",
+        "P2.5",
+        "AN5"
+       ],
+       [
+        "32",
+        "P2.4",
+        "AN4"
+       ],
+       [
+        "33",
+        "GND_REF",
+        "VAREF 기준 접지"
+       ],
+       [
+        "34",
+        "VAREF",
+        "ADC1 5 V 기준 (버퍼 커패시터 또는 외부 입력)"
+       ],
+       [
+        "35",
+        "P2.3",
+        "AN3"
+       ],
+       [
+        "36",
+        "OP2",
+        "OP 앰프 + 입력"
+       ],
+       [
+        "37",
+        "OP1",
+        "OP 앰프 − 입력"
+       ],
+       [
+        "38",
+        "VDDC",
+        "코어 1.5 V (버퍼 커패시터만)"
+       ],
+       [
+        "39",
+        "GND",
+        "아날로그 접지"
+       ],
+       [
+        "40",
+        "VDDP",
+        "I/O 5.0 V (버퍼 커패시터)"
+       ],
+       [
+        "41",
+        "VDDEXT",
+        "외부 5.0 V / 20 mA 출력"
+       ],
+       [
+        "42",
+        "GND_LIN",
+        "LIN 접지"
+       ],
+       [
+        "43",
+        "LIN",
+        "LIN 버스"
+       ],
+       [
+        "44",
+        "VDH",
+        "하이사이드 드레인 전압 감지"
+       ],
+       [
+        "45",
+        "VS",
+        "배터리 전원"
+       ],
+       [
+        "46",
+        "SH3",
+        "하이사이드 FET 3 소스"
+       ],
+       [
+        "47",
+        "VSD",
+        "차지 펌프용 배터리 전원"
+       ],
+       [
+        "48",
+        "CP1H",
+        "차지 펌프 커패시터 1 high"
+       ],
+       [
+        "EP",
+        "EP",
+        "노출 패드, GND에 연결"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VDDP, VDDC: 외부 버퍼 커패시터 필수 (값은 데이터시트 28.1절 확인). VDDEXT 출력 커패시터 필수.</li>\n    <li>CP1H/CP1L, CP2H/CP2L: 차지 펌프 플라잉 커패시터, VCP: 저장 커패시터 (값 확인 필요).</li>\n    <li>크리스털 부하 커패시터 예: 4 MHz에서 33 pF, 25 MHz에서 8 pF (Rev. 1.0 표).</li>\n    <li>SWD 디버그: TMS + P0.0, P0.2를 0으로 유지.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>VQFN-48, 노출 패드 GND. 열저항은 데이터시트 29.1.4 확인 필요. Tj max 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VDDC(1.5 V)에는 외부 부하를 걸지 말 것.</li>\n    <li>로우사이드 소스가 SL 하나로 공통이므로 단일 션트(DC 링크) 전류 센싱 구조 — OP1/OP2로 증폭.</li>\n    <li>Design step(BF/UH)에 따라 패키지 코드가 다름(VQFN-48-31 / -79). 풋프린트는 주문 코드(XUMA1~4)별 확인.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.nyang-tech.com/datasheet/3348077717/Infineon-Technologies/TLE9879QXA40XUMA3.pdf"
+ ],
+ "todo": "미완: 읽은 추출본에 절대 최대 정격(29.1.1), 기능 범위(29.1.2), 열저항(29.1.4), 외부 커패시터 권장값(VS/VDDP/VDDC/VAREF/차지 펌프/LIN)이 없음 — 원문 확인 필요. 핀 배치는 원문 Table 2 기준. 2차 시도: Infineon/배포처 PDF 사본은 텍스트 추출이 앞부분에서 끊기고, 표가 있는 alldatasheetcn 페이지 분할본(82/126쪽)은 사이트 차단으로 열람 실패.",
+ "key": {
+  "spec": {
+   "v": 40,
+   "pkg": "VQFN-48"
+  },
+  "grade": "Q100",
+  "basis": "v = VS 절대 최대 정격 40 V — 이 페이지에는 표가 없어 데이터시트 29.1.1 확인 필요"
+ },
+ "issues": [
+  {
+   "p": "[기타] WebFetch PDF text extraction stops at ~68 k characters (≈ first 50 pages), so electrical-spec chapters at the back of long datasheets cannot be reached with offset",
+   "fix": "fill these sections manually from the PDFs (or via a non-truncating PDF reader)",
+   "url": "https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf",
+   "also": "TC377TX-96F300S / TC387QP-160F300S / TC397XX-256F300S / TLE9879QXA40 / MX25L6433F"
+  }
+ ]
+}

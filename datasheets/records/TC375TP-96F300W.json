@@ -1,0 +1,231 @@
+{
+ "mpn": "TC375TP-96F300W",
+ "mfr": "Infineon",
+ "cat": "MCU",
+ "price": 16,
+ "status": "stub",
+ "title": "AURIX TC37x 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, LQFP-176",
+ "meta": [
+  "Infineon · MCU · AURIX TC37x 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, LQFP-176 · 참고 단가 약 $16 (추정)",
+  "원본: <a href=\"https://www.farnell.com/datasheets/3177162.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://community.infineon.com/gfawx74859/attachments/gfawx74859/AURIX/3700/1/TC37x_Data_Sheet_Addendum_v1.4.pdf\" target=\"_blank\" rel=\"noopener\">변형 부록 (TC37x variants)</a> · <a href=\"https://documentation.infineon.com/aurixtc3xx/docs/nho1702366509393\" target=\"_blank\" rel=\"noopener\">TC3xx 문서 페이지</a> · <a href=\"https://octopart.com/search?q=TC375TP-96F300W\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TC37x AA-Step Data Sheet V1.0 (2020-01) · TC37x Variants Addendum v1.4 (2020-05)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "코어",
+       "TriCore TC1.6.2P 3개, 락스텝 체커 2개 (부록 3/2), 최대 300 MHz"
+      ],
+      [
+       "메모리",
+       "PFLASH 6 MB, DFLASH0 256 KB, SRAM 합계 992 KB (DSPR CPU0/1 240 KB, 기타 96 KB; DLMU CPU당 64 KB; PSPR 64 KB; DAM 32 KB), EMEM 없음"
+      ],
+      [
+       "ADC",
+       "EVADC 주 그룹 4/25채널 + 보조 그룹 4/45채널, Fast compare 4, EDSADC 6채널"
+      ],
+      [
+       "통신",
+       "이더넷 100 Mbit/s (RMII) 1개, MCMCAN 2모듈/2×4노드, FlexRay 1/2채널, ASCLIN 12, QSPI 5 (LVDS 2), HSSL 1, SENT 15, MSC 2, PSI5 2 + PSI5-S, I2C. SDMMC 없음"
+      ],
+      [
+       "안전·보안",
+       "HSM 있음, SMU, IOM, MTU, miniMCDS"
+      ],
+      [
+       "I/O",
+       "5 V CMOS / 3.3 V CMOS / LVDS"
+      ],
+      [
+       "온도",
+       "SAK: T<sub>A</sub> −40 … +125 °C"
+      ],
+      [
+       "패키지",
+       "PG-LQFP-176 (0.5 mm 피치)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "V<sub>EXT</sub> / V<sub>DDM</sub> / V<sub>DDP3</sub> / V<sub>DD</sub> 공급 전압",
+        "",
+        "",
+        "V",
+        "데이터시트 확인 필요 (데이터시트 3장)"
+       ],
+       [
+        "입력 전압 · 핀 주입 전류",
+        "",
+        "",
+        "",
+        "데이터시트 확인 필요"
+       ],
+       [
+        "저장 온도 · 접합 온도",
+        "",
+        "",
+        "°C",
+        "데이터시트 확인 필요"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "동작 주파수 f<sub>CPU</sub>",
+        "",
+        "",
+        "300",
+        "MHz"
+       ],
+       [
+        "주변 온도 T<sub>A</sub> (SAK)",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ],
+       [
+        "공급 전압",
+        "",
+        "",
+        "",
+        "V – 데이터시트 확인 필요"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>PG-LQFP-176 (0.5 mm) · 176핀 MCU이므로 핀 그룹만 정리합니다. 핀 번호는 데이터시트 2.2절 LQFP-176 핀 표를 보세요.</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "—",
+        "VEXT, VDDP3, VDD, VFLEX, VEVRSB, VSS",
+        "외부 공급·3.3 V·코어·플렉스·Standby 공급, 접지"
+       ],
+       [
+        "—",
+        "VDDM, VAREF, VAGND",
+        "ADC 공급·기준"
+       ],
+       [
+        "—",
+        "XTAL1, XTAL2",
+        "크리스털"
+       ],
+       [
+        "—",
+        "PORST, ESR0, ESR1",
+        "리셋·외부 서비스 요청"
+       ],
+       [
+        "—",
+        "TMS, TCK, TRST",
+        "JTAG / DAP"
+       ],
+       [
+        "—",
+        "P00…P34 포트, AN 핀",
+        "GPIO + 주변장치 다중화, 아날로그 입력"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>EVR(내장 전압 레귤레이터)·PLL 내장. 외부 부품과 디커플링 값: 데이터시트 확인 필요.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PG-LQFP-176. 열저항·T<sub>J</sub> 최대·노출 패드: 데이터시트 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>이 LQFP-176 변형의 이더넷은 100 Mbit/s RMII입니다 (1 Gbit/s는 LFBGA-292의 TC377TP).</li>\n    <li>그룹 이름은 데이터시트 기능 요약·패키지 목록 기준이며 LQFP-176 핀 번호는 읽지 못했습니다.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.farnell.com/datasheets/3177162.pdf"
+ ],
+ "todo": "읽은 문서(데이터시트 앞부분·변형 부록)에서 기능 사양과 패키지만 확인했습니다. 전기 사양 장(절대 최대 정격, 동작 조건, 전원 전류, 열저항, EVR 외부 부품)은 PDF 뒷부분에 있어 읽지 못했습니다. (2차 시도: Infineon 원본·Farnell·Digi-Key·LCSC·chipdip 사본 모두 텍스트 추출이 약 65–70 k자, 2장 핀 표 중간(약 p.50)에서 끊겨 offset으로도 3장에 도달 불가. 위치: TC37x 데이터시트 V1.1 2021-03: 3장 전기 사양 (절대 최대 정격·동작 조건·EVR·패키지 파라미터).) 원본 PDF를 직접 열어 채운 뒤 data-status를 \"done\"으로 바꾸세요.",
+ "key": {
+  "spec": {
+   "pkg": "LQFP-176",
+   "feat": [
+    "fd",
+    "motor",
+    "sent",
+    "eth",
+    "flexray"
+   ]
+  },
+  "grade": "Q100"
+ },
+ "issues": [
+  {
+   "p": "[패키지·핀] WebFetch text extraction of every copy of the AURIX datasheets is capped at ~65-70 k chars (stops in chapter 2 pin tables), so chapter 3 electrical data cannot be reached even with offset",
+   "fix": "fill electrical sections manually from the PDF",
+   "url": "https://www.farnell.com/datasheets/3204903.pdf",
+   "also": "TC233LP-32F200F, TC275TP-64F200W, TC334LP(-32F300F), TC375TP-96F300W"
+  }
+ ]
+}

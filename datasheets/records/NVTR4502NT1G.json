@@ -1,0 +1,198 @@
+{
+ "mpn": "NVTR4502NT1G",
+ "mfr": "onsemi",
+ "cat": "트랜지스터",
+ "price": null,
+ "status": "done",
+ "title": "(actual part NVTR4502PT1G) −30 V P-channel MOSFET, SOT-23",
+ "meta": [
+  "onsemi · 트랜지스터 · <b>실제 품번 NVTR4502PT1G</b> — −30 V / −1.95 A P채널 MOSFET, SOT-23, AEC-Q101",
+  "원본: <a href=\"https://www.onsemi.com/download/data-sheet/pdf/ntr4502p-d.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=NVTR4502PT1G\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 NTR4502P/D Rev. 7, 2026-02"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "P채널 파워 MOSFET,로드 스위치·역접속 보호용"
+      ],
+      [
+       "VDSS",
+       "−30 V"
+      ],
+      [
+       "VGS",
+       "±20 V"
+      ],
+      [
+       "ID",
+       "−1.13 A (정상상태, 25 °C) / −1.95 A (t &lt; 10 s, 25 °C)"
+      ],
+      [
+       "RDS(on)",
+       "155 / 200 mΩ typ/max @VGS −10 V, −1.95 A · 240 / 350 mΩ @−4.5 V, −1.5 A"
+      ],
+      [
+       "VGS(th)",
+       "−1.0 … −3.0 V (ID −250 µA)"
+      ],
+      [
+       "QG(TOT)",
+       "6 nC typ, 10 nC max (−10 V, −15 V, −1.95 A)"
+      ],
+      [
+       "Ciss",
+       "200 pF typ (VDS −15 V, 1 MHz)"
+      ],
+      [
+       "등급",
+       "NV 접두 = AEC-Q101, PPAP 대응"
+      ],
+      [
+       "패키지",
+       "SOT-23 (TO-236, CASE 318 STYLE 21), 3000개/릴"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VDSS",
+        "",
+        "−30",
+        "V",
+        ""
+       ],
+       [
+        "VGS",
+        "−20",
+        "20",
+        "V",
+        ""
+       ],
+       [
+        "ID 정상상태",
+        "",
+        "−1.13 / −0.90",
+        "A",
+        "TA 25 / 70 °C"
+       ],
+       [
+        "ID t &lt; 10 s",
+        "",
+        "−1.95 / −1.56",
+        "A",
+        "TA 25 / 70 °C"
+       ],
+       [
+        "IDM 펄스",
+        "",
+        "−6.8",
+        "A",
+        "tp 10 µs (추출 단위 확인)"
+       ],
+       [
+        "IS (바디 다이오드)",
+        "",
+        "−1.25",
+        "A",
+        ""
+       ],
+       [
+        "PD",
+        "",
+        "0.4 / 1.25",
+        "W",
+        "정상상태 / t &lt; 10 s"
+       ],
+       [
+        "TJ, Tstg",
+        "−55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "리드 솔더링",
+        "",
+        "260",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOT-23 (STYLE 21)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "G",
+        "게이트"
+       ],
+       [
+        "2",
+        "S",
+        "소스"
+       ],
+       [
+        "3",
+        "D",
+        "드레인"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOT-23. RθJA 300 °C/W (정상상태), 100 °C/W (t = 10 s). TJ max 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li><b>품번 오류:</b> 부품 DB의 \"NVTR4502N — 30 V N-ch\"는 존재하지 않음. 실제 품은 P채널 NVTR4502PT1G. N채널 30 V SOT-23 자동차용이 필요하면 별도 품번 선정 필요.</li>\n    <li>P채널이므로 하이사이드 스위치: 소스를 전원에, 게이트를 VS−VGS로 끌어내려 ON. VGS ±20 V 한계 — 12 V 이상 전원에서는 게이트–소스 제너 클램프.</li>\n    <li>정상상태 RθJA 300 °C/W로 연속 −1.13 A 한계. 실사용은 수백 mA 수준.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.onsemi.com/download/data-sheet/pdf/ntr4502p-d.pdf"
+ ],
+ "todo": "\"NVTR4502NT1G\"(N채널)은 onsemi 데이터시트·유통사 어디에도 없는 품번. NTR4502P/D의 주문 품번은 NTR4502PT1G / NVTR4502PT1G(P채널)뿐이며, 아래 내용은 NVTR4502PT1G 기준. 회로가 N채널을 전제했다면 부품 교체 필요."
+}

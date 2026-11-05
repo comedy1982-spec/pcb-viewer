@@ -1,0 +1,222 @@
+{
+ "mpn": "NVMFS5C404N",
+ "mfr": "onsemi",
+ "cat": "트랜지스터",
+ "price": null,
+ "status": "done",
+ "title": "40 V 0.7 mΩ N-channel power MOSFET, DFN5 5x6",
+ "meta": [
+  "onsemi · 트랜지스터 · 40 V, 378 A, 0.7 mΩ 단일 N채널 파워 MOSFET (차량용, DFN5 5×6)",
+  "원본: <a href=\"https://www.mouser.com/datasheet/2/308/NVMFS5C404N_D-1387904.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (Mouser 사본)</a> · <a href=\"https://octopart.com/search?q=NVMFS5C404N\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 NVMFS5C404N/D Rev. 10 (2025-03)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "종류",
+       "단일 N채널 파워 MOSFET"
+      ],
+      [
+       "V<sub>DSS</sub>",
+       "40 V"
+      ],
+      [
+       "R<sub>DS(on)</sub>",
+       "0.57 mΩ typ / 0.7 mΩ max @ V<sub>GS</sub> = 10 V, I<sub>D</sub> = 50 A"
+      ],
+      [
+       "I<sub>D</sub>",
+       "378 A (T<sub>C</sub> = 25 °C), 267 A (T<sub>C</sub> = 100 °C); 53 A (T<sub>A</sub> = 25 °C, R<sub>θJA</sub> 기준)"
+      ],
+      [
+       "V<sub>GS(th)</sub>",
+       "2.0 … 4.0 V (I<sub>D</sub> = 250 µA) — 표준 레벨 게이트(10 V 구동)"
+      ],
+      [
+       "게이트 전하",
+       "Q<sub>G(TOT)</sub> 128 nC, Q<sub>GS</sub> 35 nC, Q<sub>GD</sub> 26 nC, 플래토 4.3 V (10 V, 20 V, 50 A)"
+      ],
+      [
+       "용량",
+       "C<sub>iss</sub> 8400 pF, C<sub>oss</sub> 4600 pF, C<sub>rss</sub> 120 pF (25 V, 1 MHz)"
+      ],
+      [
+       "스위칭",
+       "t<sub>d(on)</sub> 16 ns, t<sub>r</sub> 113 ns, t<sub>d(off)</sub> 77 ns, t<sub>f</sub> 109 ns (R<sub>G</sub> = 2.5 Ω)"
+      ],
+      [
+       "바디 다이오드",
+       "V<sub>SD</sub> 0.76 V typ / 1.2 V max @ 50 A; t<sub>rr</sub> 96 ns, Q<sub>RR</sub> 189 nC"
+      ],
+      [
+       "등급",
+       "AEC-Q101, PPAP 대응 (NVMFS5C404NWF = 웨터블 플랭크)"
+      ],
+      [
+       "온도",
+       "T<sub>J</sub> −55 … +175 °C"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "V<sub>DSS</sub>",
+        "",
+        "40",
+        "V",
+        ""
+       ],
+       [
+        "V<sub>GS</sub>",
+        "−20",
+        "20",
+        "V",
+        ""
+       ],
+       [
+        "I<sub>D</sub> (T<sub>C</sub> 25 / 100 °C)",
+        "",
+        "378 / 267",
+        "A",
+        "R<sub>θJC</sub> 기준"
+       ],
+       [
+        "I<sub>D</sub> (T<sub>A</sub> 25 / 100 °C)",
+        "",
+        "53 / 37",
+        "A",
+        "R<sub>θJA</sub> 기준"
+       ],
+       [
+        "P<sub>D</sub> (T<sub>C</sub> 25 / 100 °C)",
+        "",
+        "200 / 100",
+        "W",
+        ""
+       ],
+       [
+        "P<sub>D</sub> (T<sub>A</sub> 25 / 100 °C)",
+        "",
+        "3.9 / 1.9",
+        "W",
+        ""
+       ],
+       [
+        "I<sub>DM</sub>",
+        "",
+        "900",
+        "A",
+        "T<sub>A</sub> 25 °C, t<sub>p</sub> = 10 µs"
+       ],
+       [
+        "I<sub>S</sub>",
+        "",
+        "191",
+        "A",
+        "바디 다이오드"
+       ],
+       [
+        "E<sub>AS</sub>",
+        "",
+        "907",
+        "mJ",
+        "I<sub>L(pk)</sub> = 38 A"
+       ],
+       [
+        "T<sub>J</sub>, T<sub>stg</sub>",
+        "−55",
+        "175",
+        "°C",
+        ""
+       ],
+       [
+        "T<sub>L</sub>",
+        "",
+        "260",
+        "°C",
+        "솔더링 10 s"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>DFN5 4.90 × 5.90 × 1.00 mm, 1.27 mm 피치 (CASE 506EZ; 웨터블 플랭크 DFNW5 CASE 507BA)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1, 2, 3",
+        "S",
+        "소스"
+       ],
+       [
+        "4",
+        "G",
+        "게이트"
+       ],
+       [
+        "5, 6",
+        "D",
+        "드레인 (데이터시트 표기 \"D (5,6)\"; 회로 기호 아래 S S S G D D D D 표기 — 드레인 리드 + 노출 탭)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>R<sub>θJC</sub> 0.75 °C/W, R<sub>θJA</sub> 39 °C/W (650 mm² 2 oz Cu 패드). 각인 5C404N (WF형 404NWF). 권장 랜드 치수는 읽은 텍스트에 없음 — 패키지 도면 확인.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>V<sub>GS(th)</sub> 최대 4 V의 표준 레벨 소자 — 게이트 드라이버/차지펌프로 10 V 구동 전제. 5 V 로직 직접 구동 불가.</li>\n    <li>Q<sub>G</sub> 128 nC로 큼 — 게이트 드라이버 소스/싱크 전류, 데드타임 설계 시 반영.</li>\n    <li>주문 품번: NVMFS5C404NT1G / NET1G / NAFT1G (DFN5, 1500/릴), NVMFS5C404NWFT1G 등 (DFNW5). <b>NVMFS5C404NT3G는 단종</b>.</li>\n    <li>데이터시트 핀 번호(1–6)는 KiCad 8핀 SO-8FL/DFN5 풋프린트의 1–8 번호와 1:1이 아닐 수 있음 — 심볼·풋프린트 매핑 시 드레인 리드와 탭을 모두 D로 묶을 것.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.mouser.com/datasheet/2/308/NVMFS5C404N_D-1387904.pdf"
+ ],
+ "issues": [
+  {
+   "p": "[패키지·핀] datasheet pin-out reads \"S (1,2,3), G (4), D (5,6)\" (DFN5, 6 numbered terminals) whereas typical KiCad SO-8FL footprints number 1-8 + tab",
+   "fix": "map all drain leads + tab to D in symbol/footprint; also NVMFS5C404NT3G is discontinued (use T1G / AFT1G / WFT1G)",
+   "url": "https://www.mouser.com/datasheet/2/308/NVMFS5C404N_D-1387904.pdf"
+  }
+ ]
+}

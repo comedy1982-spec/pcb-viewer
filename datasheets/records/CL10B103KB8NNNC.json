@@ -1,0 +1,81 @@
+{
+ "mpn": "CL10B103KB8NNNC",
+ "mfr": "Samsung Electro-Mechanics",
+ "cat": "커패시터",
+ "price": 0.012,
+ "status": "done",
+ "title": "MLCC 10 nF 50 V X7R 0603",
+ "meta": [
+  "Samsung Electro-Mechanics · 커패시터 · MLCC 10 nF ±10 % 50 V X7R 0603 · 참고 단가 약 $0.012 (추정, Farnell 1000개 €0.0112 기준)",
+  "원본: <a href=\"https://be.farnell.com/en-BE/samsung-electro-mechanics/cl10b103kb8nnnc/cap-0-01uf-50v-mlcc-0603/dp/3013408\" target=\"_blank\" rel=\"noopener\">유통사 사양 페이지</a> · <a href=\"https://product.samsungsem.com/mlcc/CL10B103KB8NNN.do\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=CL10B103KB8NNNC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a>"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "정전용량",
+       "10 nF (0.01 µF)"
+      ],
+      [
+       "허용차",
+       "±10 % (K)"
+      ],
+      [
+       "정격 전압",
+       "50 V DC"
+      ],
+      [
+       "유전체",
+       "X7R"
+      ],
+      [
+       "동작 온도",
+       "-55 – +125 °C"
+      ],
+      [
+       "크기",
+       "0603 (1608 metric)"
+      ],
+      [
+       "두께",
+       "0.80 ±0.10 mm"
+      ],
+      [
+       "차량 등급",
+       "AEC-Q200 표기 없음 (Farnell 자격 항목 '-')"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>0603 (1608 metric): 길이 1.6 mm, 폭 0.8 mm, 두께 0.80 ±0.10 mm.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>바이패스/필터용 소용량 X7R — 10 nF 50 V에서는 DC 바이어스 감소가 작은 편이나 정확값은 제조사 곡선 확인.</li>\n    <li>읽은 유통사 페이지에 AEC-Q200 표기 없음 (일반 산업용 CL 시리즈) — 차량 ECU에는 Samsung 전장용(AEC-Q200) 품번으로 대체 검토.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://be.farnell.com/en-BE/samsung-electro-mechanics/cl10b103kb8nnnc/cap-0-01uf-50v-mlcc-0603/dp/3013408"
+ ],
+ "issues": [
+  {
+   "p": "[등급·수명] no AEC-Q200 listed (Farnell qualification field \"-\")",
+   "fix": "consider a Samsung automotive (AEC-Q200) equivalent",
+   "url": "https://be.farnell.com/en-BE/samsung-electro-mechanics/cl10b103kb8nnnc/cap-0-01uf-50v-mlcc-0603/dp/3013408"
+  }
+ ]
+}

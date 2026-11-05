@@ -10,76 +10,46 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bott
 .meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
 table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
 .todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+.ds-issues{background:#fdecea;border:1px solid #e8a39b;border-radius:8px;padding:6px 12px;font-size:13px;margin:8px 0}.ds-issues ul{margin:4px 0 2px 18px;padding:0}
+.ds-verified{color:#2e7d32}
 </style>
 </head>
 <body>
-<article data-mpn="TLE9251VSJ" data-mfr="Infineon" data-cat="통신" data-price="1.15" data-status="done" data-src="https://pdf.elecfans.com/EUPEC/TLE9251VSJ.html">
-  <h1>TLE9251VSJ</h1>
-  <p class="meta">Infineon · 통신 · High-speed CAN FD transceiver with VIO, DSO-8 · 참고 단가 약 $1.15 (추정)</p>
-  <p class="meta">원본: <a href="https://pdf.elecfans.com/EUPEC/TLE9251VSJ.html" target="_blank" rel="noopener">데이터시트 (사본)</a> · <a href="https://www.infineon.com/cms/en/product/interface/automotive-transceiver/automotive-can-transceivers/tle9251vsj/" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TLE9251VSJ" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev. 1.0 (2017-08-09)</p>
-
-  <h2>핵심 사양</h2>
-  <dl>
-    <dt>등급</dt><dd>AEC-Q100 qualified (Infineon 데이터시트 표기)</dd>
-    <dt>기능</dt><dd>하이스피드 CAN 트랜시버, ISO 11898-2:2016 · SAE J2284-4/-5</dd>
-    <dt>속도</dt><dd>최대 5 Mbit/s (CAN FD, 루프 지연 대칭 보증)</dd>
-    <dt>전원</dt><dd>VCC 4.5–5.5 V (송신부) · VIO 3.0–5.5 V (MCU 인터페이스)</dd>
-    <dt>루프 지연</dt><dd>t<sub>Loop</sub> 80–255 ns</dd>
-    <dt>모드</dt><dd>STB High = 대기 (내부 풀업 to VIO), Low = 정상 · 대기 중 VIO 7 µA typ, VCC 5 µA max</dd>
-    <dt>버스 보호</dt><dd>CANH/CANL ±40 V, HBM ±8 kV, TxD 지배 타임아웃 1–4 ms, 과온 차단 180 °C typ</dd>
-    <dt>온도</dt><dd>T<sub>j</sub> −40 ~ 150 °C</dd>
-    <dt>패키지</dt><dd>PG-DSO-8 (TLE9251VSJ) · PG-TSON-8은 TLE9251VLE</dd>
-  </dl>
-
-  <h2>절대 최대 정격</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead>
-  <tbody>
-    <tr><td>VCC, VIO</td><td>-0.3</td><td>6.0</td><td>V</td><td></td></tr>
-    <tr><td>CANH, CANL (GND 기준)</td><td>-40</td><td>40</td><td>V</td><td></td></tr>
-    <tr><td>CANH–CANL 차동</td><td>-40</td><td>40</td><td>V</td><td></td></tr>
-    <tr><td>STB, RxD, TxD</td><td>-0.3</td><td>6.0</td><td>V</td><td>≤ VIO+0.3 V</td></tr>
-    <tr><td>RxD 출력 전류</td><td>-5</td><td>5</td><td>mA</td><td></td></tr>
-    <tr><td>T<sub>j</sub></td><td>-40</td><td>150</td><td>°C</td><td></td></tr>
-    <tr><td>T<sub>stg</sub></td><td>-55</td><td>150</td><td>°C</td><td></td></tr>
-    <tr><td>ESD HBM CANH/CANL / 기타</td><td></td><td>±8 / ±2</td><td>kV</td><td>CDM ±750 V, IEC 61000-4-2 ≥ ±11 kV (외부 시험)</td></tr>
-  </tbody></table>
-
-  <h2>권장 동작 조건</h2>
-  <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead>
-  <tbody>
-    <tr><td>VCC</td><td>4.5</td><td>5.0</td><td>5.5</td><td>V</td></tr>
-    <tr><td>VIO</td><td>3.0</td><td></td><td>5.5</td><td>V</td></tr>
-    <tr><td>T<sub>j</sub></td><td>-40</td><td></td><td>150</td><td>°C</td></tr>
-    <tr><td>VCC 저전압 (상승/하강)</td><td>3.8</td><td>4.35 / 4.25</td><td>4.5</td><td>V</td></tr>
-    <tr><td>VCC 전류 정상 열성/우성</td><td></td><td>2 / 38</td><td>4 / 60</td><td>mA</td></tr>
-  </tbody></table>
-
-  <h2>핀 배치</h2>
-  <p>PG-DSO-8</p>
-  <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead>
-  <tbody>
-    <tr><td>1</td><td>TxD</td><td>송신 데이터 입력, 내부 풀업 to VIO, Low = 우성</td></tr>
-    <tr><td>2</td><td>GND</td><td>그라운드</td></tr>
-    <tr><td>3</td><td>VCC</td><td>송신부 전원, 100 nF 디커플링 필수 (대기 중 차단 가능)</td></tr>
-    <tr><td>4</td><td>RxD</td><td>수신 데이터 출력, Low = 우성</td></tr>
-    <tr><td>5</td><td>VIO</td><td>디지털·저전력 수신기 전원, 100 nF 디커플링 필수</td></tr>
-    <tr><td>6</td><td>CANL</td><td>CAN 버스 Low</td></tr>
-    <tr><td>7</td><td>CANH</td><td>CAN 버스 High</td></tr>
-    <tr><td>8</td><td>STB</td><td>대기 입력, 내부 풀업 to VIO, Low = 정상</td></tr>
-  </tbody></table>
-
-  <h2>응용 회로 · 주변 부품</h2>
-  <ul>
+<!-- generated from datasheets/records/TLE9251VSJ.json by scripts/dsdb.mjs — edit the record, not this page -->
+<article data-mpn="TLE9251VSJ" data-mfr="Infineon" data-cat="통신" data-price="1.15" data-status="verified" data-src="https://pdf.elecfans.com/EUPEC/TLE9251VSJ.html">
+<h1>TLE9251VSJ</h1>
+<p class="meta">Infineon · 통신 · High-speed CAN FD transceiver with VIO, DSO-8 · 참고 단가 약 $1.15 (추정)</p>
+<p class="meta">원본: <a href="https://pdf.elecfans.com/EUPEC/TLE9251VSJ.html" target="_blank" rel="noopener">데이터시트 (사본)</a> · <a href="https://www.infineon.com/cms/en/product/interface/automotive-transceiver/automotive-can-transceivers/tle9251vsj/" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TLE9251VSJ" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev. 1.0 (2017-08-09)</p>
+<p class="meta ds-verified">독립 재확인 2026-10-29 · 독립 점검 16페이지 · 원문 대조</p>
+<h2>핵심 사양</h2>
+<dl>
+  <dt>등급</dt><dd>AEC-Q100 qualified (Infineon 데이터시트 표기)</dd>
+  <dt>기능</dt><dd>하이스피드 CAN 트랜시버, ISO 11898-2:2016 · SAE J2284-4/-5</dd>
+  <dt>속도</dt><dd>최대 5 Mbit/s (CAN FD, 루프 지연 대칭 보증)</dd>
+  <dt>전원</dt><dd>VCC 4.5–5.5 V (송신부) · VIO 3.0–5.5 V (MCU 인터페이스)</dd>
+  <dt>루프 지연</dt><dd>t<sub>Loop</sub> 80–255 ns</dd>
+  <dt>모드</dt><dd>STB High = 대기 (내부 풀업 to VIO), Low = 정상 · 대기 중 VIO 7 µA typ, VCC 5 µA max</dd>
+  <dt>버스 보호</dt><dd>CANH/CANL ±40 V, HBM ±8 kV, TxD 지배 타임아웃 1–4 ms, 과온 차단 180 °C typ</dd>
+  <dt>온도</dt><dd>T<sub>j</sub> −40 ~ 150 °C</dd>
+  <dt>패키지</dt><dd>PG-DSO-8 (TLE9251VSJ) · PG-TSON-8은 TLE9251VLE</dd>
+</dl>
+<h2>절대 최대 정격</h2>
+<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>VCC, VIO</td><td>-0.3</td><td>6.0</td><td>V</td><td></td></tr><tr><td>CANH, CANL (GND 기준)</td><td>-40</td><td>40</td><td>V</td><td></td></tr><tr><td>CANH–CANL 차동</td><td>-40</td><td>40</td><td>V</td><td></td></tr><tr><td>STB, RxD, TxD</td><td>-0.3</td><td>6.0</td><td>V</td><td>≤ VIO+0.3 V</td></tr><tr><td>RxD 출력 전류</td><td>-5</td><td>5</td><td>mA</td><td></td></tr><tr><td>T<sub>j</sub></td><td>-40</td><td>150</td><td>°C</td><td></td></tr><tr><td>T<sub>stg</sub></td><td>-55</td><td>150</td><td>°C</td><td></td></tr><tr><td>ESD HBM CANH/CANL / 기타</td><td></td><td>±8 / ±2</td><td>kV</td><td>CDM ±750 V, IEC 61000-4-2 ≥ ±11 kV (외부 시험)</td></tr></tbody></table>
+<h2>권장 동작 조건</h2>
+<table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>VCC</td><td>4.5</td><td>5.0</td><td>5.5</td><td>V</td></tr><tr><td>VIO</td><td>3.0</td><td></td><td>5.5</td><td>V</td></tr><tr><td>T<sub>j</sub></td><td>-40</td><td></td><td>150</td><td>°C</td></tr><tr><td>VCC 저전압 (상승/하강)</td><td>3.8</td><td>4.35 / 4.25</td><td>4.5</td><td>V</td></tr><tr><td>VCC 전류 정상 열성/우성</td><td></td><td>2 / 38</td><td>4 / 60</td><td>mA</td></tr></tbody></table>
+<h2>핀 배치</h2>
+<p>PG-DSO-8</p>
+<table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1</td><td>TxD</td><td>송신 데이터 입력, 내부 풀업 to VIO, Low = 우성</td></tr><tr><td>2</td><td>GND</td><td>그라운드</td></tr><tr><td>3</td><td>VCC</td><td>송신부 전원, 100 nF 디커플링 필수 (대기 중 차단 가능)</td></tr><tr><td>4</td><td>RxD</td><td>수신 데이터 출력, Low = 우성</td></tr><tr><td>5</td><td>VIO</td><td>디지털·저전력 수신기 전원, 100 nF 디커플링 필수</td></tr><tr><td>6</td><td>CANL</td><td>CAN 버스 Low</td></tr><tr><td>7</td><td>CANH</td><td>CAN 버스 High</td></tr><tr><td>8</td><td>STB</td><td>대기 입력, 내부 풀업 to VIO, Low = 정상</td></tr></tbody></table>
+<h2>응용 회로 · 주변 부품</h2>
+<ul>
     <li>VCC, VIO 각각 100 nF to GND (핀 가까이). 예시 회로는 레귤레이터 출력에 22 µF 추가.</li>
     <li>VIO는 MCU I/O 전원에 연결, 분리 필요 없으면 VCC에 연결.</li>
     <li>버스 종단 120 Ω (CANH–CANL, 예시 ECU 회로).</li>
   </ul>
-
-  <h2>패키지 · 열</h2>
-  <p>PG-DSO-8 (SOIC-8 풋프린트). R<sub>thJA</sub> 120 K/W (JEDEC 2s2p 시뮬레이션; TSON-8은 65 K/W). 과온 차단 170/180/190 °C, 히스테리시스 10 K typ.</p>
-
-  <h2>설계 메모</h2>
-  <ul>
+<h2>패키지 · 열</h2>
+<p>PG-DSO-8 (SOIC-8 풋프린트). R<sub>thJA</sub> 120 K/W (JEDEC 2s2p 시뮬레이션; TSON-8은 65 K/W). 과온 차단 170/180/190 °C, 히스테리시스 10 K typ.</p>
+<h2>설계 메모</h2>
+<ul>
     <li>STB를 플로팅하면 내부 풀업으로 대기 모드 — 정상 동작하려면 MCU가 Low로 구동해야 함.</li>
     <li>TxD 지배 타임아웃(1–4 ms)으로 TxD 고착 시 버스 차단 — 매우 느린 비트레이트에서 긴 우성 구간 주의.</li>
     <li>3.3 V MCU와 직접 연결 가능(VIO=3.3 V), VCC는 반드시 5 V.</li>

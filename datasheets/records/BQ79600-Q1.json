@@ -1,0 +1,378 @@
+{
+ "mpn": "BQ79600-Q1",
+ "mfr": "TI",
+ "cat": "통신",
+ "price": null,
+ "status": "done",
+ "title": "SPI/UART to isolated daisy-chain bridge",
+ "meta": [
+  "TI · 통신 · BMS용 SPI/UART ↔ 절연 데이지체인 브리지 (기능 안전)",
+  "원본: <a href=\"https://ti.com/jp/lit/gpn/bq79600-q1\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (일본어판 JAJSP77A)</a> · <a href=\"https://www.ti.com/product/es-mx/BQ79600-Q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=BQ79600-Q1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 JAJSP77A (영문 SLUSDS1 번역, 2019-11 발행 / 2020-08 개정)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "MCU의 UART/SPI를 TI 배터리 모니터(BQ7961X-Q1, BQ7965X, BQ7963X 등)용 절연 차동 데이지체인으로 변환·복호"
+      ],
+      [
+       "전원",
+       "BAT 4.75–40 V 범위 지원; 일반 동작 전류 2500 µA (제품 페이지)"
+      ],
+      [
+       "호스트 I/F",
+       "UART 또는 SPI, VIO 3.3 V/5 V 로직"
+      ],
+      [
+       "데이지체인",
+       "변압기 또는 커패시터 절연, 링(ring) 구조 지원 (시스템당 1개)"
+      ],
+      [
+       "웨이크업",
+       "링 구조에서 결함 발생 시 INH로 BMS(MCU·PMIC) 자동 기상(reverse wakeup)"
+      ],
+      [
+       "기능 안전",
+       "ISO 26262 대응, ASIL-D 가능, 안전 매뉴얼·FMEDA 제공"
+      ],
+      [
+       "등급",
+       "AEC-Q100 Grade 1 (TA -40 – 125 °C), HBM 2급, CDM C4B"
+      ],
+      [
+       "패키지",
+       "TSSOP-16 (PW), 5.0 × 6.4 mm (제품 페이지 표기)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "BAT – GND",
+        "-0.3",
+        "40",
+        "V",
+        ""
+       ],
+       [
+        "INH – GND",
+        "-0.3",
+        "40",
+        "V",
+        "INH &lt; BAT"
+       ],
+       [
+        "VIO, CVDD – GND",
+        "-0.3",
+        "5.5",
+        "V",
+        ""
+       ],
+       [
+        "DVDD – GND",
+        "-0.3",
+        "1.98",
+        "V",
+        ""
+       ],
+       [
+        "MISO/TX, MOSI/RX, nCS, SCLK, NFAULT, nUART/SPI",
+        "-0.3",
+        "VIO + 0.3",
+        "V",
+        ""
+       ],
+       [
+        "COMHP, COMHN, COMLP, COMLN – GND",
+        "-10",
+        "10",
+        "V",
+        ""
+       ],
+       [
+        "COMHP–COMHN, COMLP–COMLN 차동",
+        "-6.5",
+        "6.5",
+        "V",
+        ""
+       ],
+       [
+        "INH 전류",
+        "",
+        "4",
+        "mA",
+        ""
+       ],
+       [
+        "MISO/TX 전류",
+        "",
+        "8",
+        "mA",
+        "100 pF, VIO = 5 V, 10 ns 천이"
+       ],
+       [
+        "접합 온도 TJ",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "저장 온도 Tstg",
+        "-65",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM",
+        "",
+        "±2000",
+        "V",
+        "AEC-Q100"
+       ],
+       [
+        "ESD CDM",
+        "",
+        "±750 / ±500",
+        "V",
+        "코너 핀(1, 8, 9, 16) / 그 외"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VBAT, INH (12 V 배터리 직결, reverse wakeup 사용)",
+        "5.5",
+        "",
+        "24",
+        "V"
+       ],
+       [
+        "VBAT (BAT/CVDD를 5 V 레귤레이터로 공급, reverse wakeup 미사용)",
+        "4.75",
+        "",
+        "5.25",
+        "V"
+       ],
+       [
+        "VIO",
+        "3.135",
+        "",
+        "5.25",
+        "V"
+       ],
+       [
+        "MISO/TX 전류",
+        "",
+        "",
+        "3",
+        "mA"
+       ],
+       [
+        "INH 출력 전류",
+        "",
+        "",
+        "2",
+        "mA"
+       ],
+       [
+        "CVDD 출력 (무부하)",
+        "4.9",
+        "5",
+        "5.1",
+        "V"
+       ],
+       [
+        "DVDD 출력 (무부하)",
+        "1.75",
+        "1.8",
+        "1.85",
+        "V"
+       ],
+       [
+        "CVDD·DVDD 부하 용량",
+        "0.1",
+        "",
+        "0.8",
+        "µF"
+       ],
+       [
+        "주위 온도 TA",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>PW 16핀 TSSOP</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "DVDD",
+        "내부 디지털 1.8 V LDO 출력 — 0.22 µF(권장) 또는 0.47 µF로 GND"
+       ],
+       [
+        "2",
+        "NFAULT",
+        "오픈 드레인 결함 출력 (액티브 로우), 100 kΩ로 VIO 풀업; 미사용 시 GND"
+       ],
+       [
+        "3",
+        "VIO",
+        "UART/SPI I/O 전원, 0.1 µF 디커플링; 다른 I/O 구동 전에 먼저 인가"
+       ],
+       [
+        "4",
+        "RX/MOSI",
+        "UART RX / SPI MOSI, 10–100 kΩ로 VIO 풀업, 개방 금지"
+       ],
+       [
+        "5",
+        "TX/MISO",
+        "UART TX / SPI MISO, MCU측에 10–100 kΩ 풀업"
+       ],
+       [
+        "6",
+        "SCLK",
+        "SPI 클럭, 10–100 kΩ로 GND 풀다운 (미사용 시 GND)"
+       ],
+       [
+        "7",
+        "nCS",
+        "SPI 칩 선택 (액티브 로우), SPI 모드는 10–100 kΩ 풀업, UART 모드는 GND"
+       ],
+       [
+        "8",
+        "nUART/SPI (SPI_RDY)",
+        "인터페이스 선택: GND = UART, 10–100 kΩ로 VIO + MCU GPIO = SPI (SPI_RDY 표시)"
+       ],
+       [
+        "9",
+        "GND",
+        "접지"
+       ],
+       [
+        "10",
+        "COMLP",
+        "데이지체인 하위측 AC 결합 양방향 I/O (+)"
+       ],
+       [
+        "11",
+        "COMLN",
+        "데이지체인 하위측 (−)"
+       ],
+       [
+        "12",
+        "COMHN",
+        "데이지체인 상위측 (−)"
+       ],
+       [
+        "13",
+        "COMHP",
+        "데이지체인 상위측 (+)"
+       ],
+       [
+        "14",
+        "CVDD",
+        "데이지체인 전용 5 V 전원 출력 — 0.22 µF(권장) 또는 0.47 µF"
+       ],
+       [
+        "15",
+        "BAT",
+        "배터리 전원 입력, 10 Ω 직렬 + 0.1 µF 바이패스"
+       ],
+       [
+        "16",
+        "INH",
+        "PMOS 오픈 드레인 인히비트 출력 (시스템 레귤레이터 기상), 100 kΩ로 GND; reverse wakeup 미사용 시 BAT에 연결, 개방 금지"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>BAT: 10 Ω 직렬 저항 + 0.1 µF; VIO 0.1 µF; DVDD·CVDD 0.22 µF (허용 부하 0.1–0.8 µF).</li>\n    <li>풀업/풀다운: nCS·RX/MOSI·TX/MISO 10–100 kΩ to VIO, SCLK 10–100 kΩ to GND, NFAULT 100 kΩ to VIO.</li>\n    <li>COMH/COML은 AC 결합 전용 — 외부 DC 인가 금지, 링 미사용 시 해당 포트 개방. 절연 커패시터/변압기 부품값은 데이터시트 7.3.2.1.1절 확인 필요.</li>\n    <li>INH: 100 kΩ to GND, 출력 전류 2 mA 이하(권장).</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PW TSSOP-16: RθJA 102 °C/W, RθJC(top) 28.9 °C/W, RθJB 49 °C/W, ψJT 14 °C/W, ψJB 48.2 °C/W. TJ 최대 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>SPI 멀티드롭에서는 MISO가 하이로 대기하므로 3상태 버퍼 추가 필요(데이터시트 명시).</li>\n    <li>VIO를 먼저 인가한 뒤 MCU가 통신 핀을 구동하도록 전원 순서 관리.</li>\n    <li>데이지체인 배선은 차동 쌍으로 대칭 배선하고, 절연 부품(커패시터/변압기)은 커넥터 쪽에 배치.</li>\n    <li>패키지 크기 표기가 문서마다 다름 (일본어 데이터시트 6.6 × 5.1 mm 공칭, 제품 페이지 5 × 6.4 mm) — 풋프린트는 TI 기구 도면 기준으로.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://ti.com/jp/lit/gpn/bq79600-q1"
+ ],
+ "issues": [
+  {
+   "p": "[설명·분류 오류] batch cat field is empty",
+   "fix": "set cat 통신",
+   "url": "https://www.ti.com/product/es-mx/BQ79600-Q1"
+  }
+ ]
+}

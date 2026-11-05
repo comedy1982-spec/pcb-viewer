@@ -1,0 +1,249 @@
+{
+ "mpn": "SPC58EC80E5",
+ "mfr": "STMicroelectronics",
+ "cat": "MCU",
+ "price": null,
+ "status": "done",
+ "title": "32-bit dual-core Power Architecture automotive MCU, 4 MB flash, eTQFP144",
+ "meta": [
+  "STMicroelectronics · MCU · SPC58 C-line (Chorus) 듀얼 e200z420 180 MHz, 4 MB 플래시, eTQFP144",
+  "원본: <a href=\"https://manualmachine.com/stmicroelectronics/spc584c74e3/18236156-datasheet\" target=\"_blank\" rel=\"noopener\">데이터시트 (SPC584Cx/SPC58ECx, DS11620 사본)</a> · <a href=\"https://www.st.com/en/automotive-microcontrollers/spc58ec80e5.html\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=SPC58EC80E5\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 DS11620 Rev 7, 2020-07"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "코어",
+       "e200z420n3 × 2 (Power Architecture, VLE, 단정밀도 FPU), 최대 180 MHz + HSM용 e200z0. 블록도에 지연 락스텝(delayed lock-step) 표기"
+      ],
+      [
+       "메모리",
+       "플래시 4224 KB (코드 4096 + 데이터 128), HSM 플래시 176 KB, SRAM 384 KB + 코어 로컬 데이터 RAM 64 KB × 2"
+      ],
+      [
+       "통신",
+       "MCAN (CAN FD) 8, LINFlexD 18, DSPI 8, FlexRay 2채널, Ethernet 10/100 1"
+      ],
+      [
+       "아날로그·타이머",
+       "12비트 SAR ADC 3 + 감시용 12비트 SAR 1 + 10비트 SAR 1, eMIOS 최대 64채널, BCTU, eDMA 64채널"
+      ],
+      [
+       "전원",
+       "VDD_HV (I/O·플래시·OSC·ADC) 3.0 ~ 5.5 V, VDD_LV 코어 1.14 ~ 1.26 V (내장 리니어 레귤레이터 있음)"
+      ],
+      [
+       "안전",
+       "제품 페이지 기준 ASIL-B (FCCU, MEMU, CRC)"
+      ],
+      [
+       "등급",
+       "AEC-Q100, 125 등급 Ta −40 ~ 125 °C / Tj −40 ~ 150 °C"
+      ],
+      [
+       "패키지",
+       "E5 = eTQFP144, 20 × 20 × 1.0 mm"
+      ],
+      [
+       "주문 코드",
+       "SPC58EC80E5QMC1Y, SPC58EC80E5QMC1X, SPC58EC80E5EMC1X, SPC58EC80E5FMC1X"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VDD_LV",
+        "−0.3",
+        "1.4",
+        "V",
+        "코어"
+       ],
+       [
+        "VDD_HV_* (IO_MAIN, IO_FLEX, FLA, OSC, ADV, ADR_S)",
+        "−0.3",
+        "6.0",
+        "V",
+        ""
+       ],
+       [
+        "VSS_HV_ADV, VSS_HV_ADR_S − VSS",
+        "−0.3",
+        "0.3",
+        "V",
+        ""
+       ],
+       [
+        "VIN",
+        "−0.3",
+        "6.0",
+        "V",
+        "또한 해당 VDD_HV +0.3 V 이하"
+       ],
+       [
+        "IINJ (패드당 DC)",
+        "−5",
+        "5",
+        "mA",
+        ""
+       ],
+       [
+        "TSTG",
+        "−55",
+        "125",
+        "°C",
+        ""
+       ],
+       [
+        "TPAS (비동작 수명)",
+        "",
+        "150",
+        "°C",
+        "제한 시간 175 °C"
+       ],
+       [
+        "TSDR (리플로)",
+        "",
+        "260",
+        "°C",
+        "MSL 3"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VDD_LV",
+        "1.14",
+        "1.20",
+        "1.26",
+        "V"
+       ],
+       [
+        "VDD_HV_IO_MAIN / IO_FLEX / FLA / OSC",
+        "3.0",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "VDD_HV_ADV, VDD_HV_ADR_S",
+        "3.0",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "VIN",
+        "0",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "FSYS",
+        "",
+        "",
+        "180",
+        "MHz"
+       ],
+       [
+        "Ta (125 등급) / Tj",
+        "−40",
+        "",
+        "125 / 150",
+        "°C"
+       ],
+       [
+        "Ta (105 등급) / Tj",
+        "−40",
+        "",
+        "105 / 130",
+        "°C"
+       ],
+       [
+        "주입 전류 IINJ1 (성능 저하 없음)",
+        "−3",
+        "",
+        "3",
+        "mA"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>eTQFP144 (20 × 20 mm). 대형 MCU이므로 그룹만 요약: 전원·기준 핀(VDD_HV_IO_MAIN/FLEX, VDD_HV_FLA, VDD_HV_OSC, VDD_HV_ADV, VDD_HV_ADR_S, VDD_LV, VSS), 시스템 핀(리셋, JTAG/디버그, XTAL 40 MHz·32 kHz), LVDS 핀, 범용 GPIO(약/중/강/초강 드라이브, 입력 전용 ADC 패드, 스탠바이 패드). 핀 번호는 ST의 별도 IO_Definition 문서 참조.</p>"
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>외부 공급은 5 V 또는 3.3 V 단일 계통 가능, 코어 1.2 V는 내장 리니어 레귤레이터로 생성 — 레귤레이터 외부 커패시터 값은 데이터시트 4.15.2절 확인 필요.</li>\n    <li>클록: 40 MHz 크리스털 발진기, 32 kHz 발진기, 16 MHz RC 내장. 크리스털 부하 조건은 데이터시트 확인 필요.</li>\n    <li>PRAM 대기: 180 MHz 미만 1 wait state, 120 MHz 미만 0 wait state.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>eTQFP144 20 × 20 × 1.0 mm (같은 계열: eTQFP64/100, eLQFP176, FPBGA292). 열저항(RθJA/RθJC)은 데이터시트 5.6.3절 — 읽은 사본에 수치 없음. Tj 최대 150 °C (125 등급).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>부품 DB 설명 \"락스텝 · ASIL D\"는 ST 제품 페이지(ASIL-B)와 다름 — ASIL-D 요구라면 ST의 ASIL-D 등급 SPC58 품목(확인 필요)이나 다른 MCU로 재검토.</li>\n    <li>\"SPC58EC80E5\"는 패키지까지만 지정한 기본 품번 — 주문은 SPC58EC80E5QMC1Y 등 전체 주문 코드 사용.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://manualmachine.com/stmicroelectronics/spc584c74e3/18236156-datasheet"
+ ],
+ "issues": [
+  {
+   "p": "[설명·분류 오류] desc says \"락스텝 · ASIL D\", but ST product page lists ASIL-B (dual e200z420, 180 MHz)",
+   "fix": "fix desc to ASIL-B or choose an ASIL-D MCU; also not an orderable code (e.g. SPC58EC80E5QMC1Y; E5 = eTQFP144)",
+   "url": "https://www.st.com/en/automotive-microcontrollers/spc58ec80e5.html"
+  }
+ ]
+}

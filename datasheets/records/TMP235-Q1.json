@@ -1,0 +1,231 @@
+{
+ "mpn": "TMP235-Q1",
+ "mfr": "TI",
+ "cat": "센서",
+ "price": 0.35,
+ "status": "done",
+ "title": "Automotive analog output temperature sensor, 10 mV/°C",
+ "meta": [
+  "TI · 센서 · Automotive analog output temperature sensor, 10 mV/°C · 참고 단가 약 $0.35 (추정)",
+  "원본: <a href=\"https://static.chipdip.ru/lib/082/DOC012082530.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (사본)</a> · <a href=\"https://www.ti.com/product/es-mx/TMP235-Q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TMP235-Q1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SBOS939C (2019-04, 개정 2019-11)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "아날로그 출력 온도 센서 (양의 기울기)"
+      ],
+      [
+       "기울기 · 오프셋",
+       "10 mV/°C, 0 °C에서 500 mV"
+      ],
+      [
+       "정확도",
+       "±2.5 °C max (-40 ~ 150 °C), ±0.5 °C typ (0 ~ 70 °C)"
+      ],
+      [
+       "전원",
+       "2.3 ~ 5.5 V, IQ 9 µA typ"
+      ],
+      [
+       "출력 구동",
+       "최대 500 µA, 부하 용량 1000 pF까지"
+      ],
+      [
+       "등급 · 온도",
+       "AEC-Q100 Grade 0 (-40 ~ 150 °C) — AE 버전; AQ 버전은 -40 ~ 125 °C"
+      ],
+      [
+       "패키지",
+       "SOT-23-3 (DBZ), SC70-5 (DCK)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "전원 VDD",
+        "",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "출력 VOUT",
+        "-0.3",
+        "VDD + 0.3",
+        "V",
+        ""
+       ],
+       [
+        "출력 전류",
+        "-30",
+        "30",
+        "mA",
+        ""
+       ],
+       [
+        "래치업 전류 (핀당)",
+        "-200",
+        "200",
+        "mA",
+        ""
+       ],
+       [
+        "접합 온도",
+        "",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "보관 온도",
+        "-65",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM / CDM",
+        "",
+        "±2000 / ±500 (코너 ±750)",
+        "V",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VDD",
+        "2.3",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "동작 주위 온도 TA",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ],
+       [
+        "부하 용량 CLOAD",
+        "",
+        "1000",
+        "",
+        "pF"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOT-23-3 (DBZ) — (SC70-5 DCK: 1 NC, 2 GND, 3 VOUT, 4 VDD, 5 NC)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "VDD",
+        "양의 전원"
+       ],
+       [
+        "2",
+        "VOUT",
+        "온도 비례 전압 출력"
+       ],
+       [
+        "3",
+        "GND",
+        "전원 그라운드"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul><li>전달 함수: VOUT = (TA − TINFL) × TC + VOFFS. -40 ~ 100 °C: TINFL 0 °C, TC 10 mV/°C, VOFFS 500 mV; 100 ~ 125 °C: 100 °C, 10.1 mV/°C, 1500 mV; 125 ~ 150 °C: 125 °C, 10.6 mV/°C, 1752.5 mV.</li><li>VDD 바이패스 0.1 µF. 노이즈 환경에서는 외부 전원–VDD 사이 100 Ω + 0.1 µF 필터.</li><li>총 CLOAD(CFILTER + CMUX + CSAMPLE) ≤ 1000 pF — 대부분 CFILTER 680 pF 권장, ADC 입력 가까이 배치.</li><li>출력 임피던스 20 Ω (100 Hz), 50 Ω (500 Hz) @ IOUT 100 µA.</li></ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOT-23-3 (DBZ): RθJA 167, RθJC(top) 90, RθJB 146, ΨJT 35, ΨJB 146 °C/W. SC70-5 (DCK): RθJA 275, RθJC(top) 84, RθJB 56, ΨJT 1.2, ΨJB 55 °C/W. TJ 최대 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul><li>주문형: TMP235AEDBZRQ1 (SOT-23, -40 ~ 150 °C, 마킹 235E), TMP235AQDBZRQ1 (SOT-23, -40 ~ 125 °C, 235Q). 핀 JSON은 SOT-23-3 (DBZ).</li><li>배치 설명 '±2.5 °C · SOT-23' 일치. 분류는 NTC가 아니라 IC 온도 센서.</li><li>측정 대상과 열 결합을 위해 GND 패드/동박을 대상 부품 쪽으로 연결.</li><li>TMP236-Q1은 19.5 mV/°C, 3.1 V 이상 전원 — 혼동 주의.</li></ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://static.chipdip.ru/lib/082/DOC012082530.pdf"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "SOT-23"
+  },
+  "grade": "Q100"
+ },
+ "issues": [
+  {
+   "p": "[설명·분류 오류] batch cat \"ntc\" is wrong: it is an analog IC temperature sensor, not an NTC",
+   "fix": "set cat to 센서",
+   "url": "https://static.chipdip.ru/lib/082/DOC012082530.pdf"
+  }
+ ]
+}

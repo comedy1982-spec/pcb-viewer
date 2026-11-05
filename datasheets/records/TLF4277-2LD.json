@@ -1,0 +1,331 @@
+{
+ "mpn": "TLF4277-2LD",
+ "mfr": "Infineon",
+ "cat": "전원",
+ "price": 2.2,
+ "status": "done",
+ "title": "300 mA adjustable LDO with current monitor, TSON-10",
+ "meta": [
+  "Infineon · 전원 · 300 mA adjustable LDO with current monitor (antenna supply), PG-TSON-10 · 참고 단가 약 $2.2 (추정)",
+  "원본: <a href=\"https://www.farnell.com/datasheets/2354825.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.lcsc.com/product-detail/Linear-Voltage-Regulators-LDO_Infineon-Technologies-TLF4277-2LD_C540207.html\" target=\"_blank\" rel=\"noopener\">LCSC</a> · <a href=\"https://octopart.com/search?q=TLF4277-2LD\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TLF4277-2LD Data Sheet Rev. 1.01, 2016-09-01"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "저드롭아웃 선형 레귤레이터(LDO) + 부하 전류 모니터 (액티브 안테나 전원용). 벅 컨버터 아님"
+      ],
+      [
+       "입력",
+       "VQ + Vdr – 40 V (동작), 절대 최대 45 V, 역극성 −16 V 자체 보호"
+      ],
+      [
+       "출력",
+       "5 – 12 V 가변 (외부 분압), ±2%, 최대 300 mA"
+      ],
+      [
+       "드롭아웃",
+       "100 mA에서 100 mV typ / 250 mV max, 200 mA에서 200 mV typ / 500 mV max (VQ = 5 V)"
+      ],
+      [
+       "전류 제한",
+       "RCSO로 10 – 300 mA 가변, ±10% (조건부)"
+      ],
+      [
+       "전류 모니터",
+       "CSO 전류 = IQ / 100 (95 – 105 @10 – 150 mA). CSO 전압으로 상태 표시: 전류 제한 2.55 V, 과열 2.8 V, 과전압 3.1 V (typ)"
+      ],
+      [
+       "정지 전류",
+       "150 µA typ / 200 µA max (경부하), 비활성 시 3 µA max (Tj ≤ 25 °C)"
+      ],
+      [
+       "보호",
+       "과열 차단 151 – 200 °C (히스테리시스 15 K typ), 과전압 검출 (ADJ가 VREF보다 20% 높을 때), ST open-collector 폴트 출력"
+      ],
+      [
+       "등급·온도",
+       "AEC qualified, Tj −40 – 150 °C"
+      ],
+      [
+       "패키지",
+       "PG-TSON-10 (마킹 4277-2), 노출 패드"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "입력 VI",
+        "−16",
+        "45",
+        "V",
+        ""
+       ],
+       [
+        "인에이블 VEN",
+        "−16",
+        "45",
+        "V",
+        ""
+       ],
+       [
+        "전압 조정 VADJ",
+        "−0.3",
+        "16",
+        "V",
+        ""
+       ],
+       [
+        "출력 VQ",
+        "−0.3",
+        "45",
+        "V",
+        "VQ &lt; VI + 5 V"
+       ],
+       [
+        "전류 모니터 VCSO",
+        "−0.3",
+        "5",
+        "V",
+        ""
+       ],
+       [
+        "상태 출력 VST",
+        "−0.3",
+        "45",
+        "V",
+        "외부 직렬 저항 사용"
+       ],
+       [
+        "Tj",
+        "−40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "−55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM",
+        "−2",
+        "2",
+        "kV",
+        ""
+       ],
+       [
+        "ESD CDM (코너 핀 1, 5, 6, 10)",
+        "−500 (−750)",
+        "500 (750)",
+        "V",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "입력 VI",
+        "VQ + Vdr",
+        "",
+        "40",
+        "V"
+       ],
+       [
+        "출력 VQ",
+        "5",
+        "",
+        "12",
+        "V"
+       ],
+       [
+        "전류 센스 저항 RCSO",
+        "850",
+        "",
+        "25.5 k",
+        "Ω"
+       ],
+       [
+        "전류 센스 커패시터 CCSO",
+        "1",
+        "",
+        "4.7",
+        "µF"
+       ],
+       [
+        "출력 커패시터 CQ (최악 공차 30%)",
+        "1",
+        "",
+        "",
+        "µF"
+       ],
+       [
+        "CQ ESR (10 kHz)",
+        "",
+        "",
+        "10",
+        "Ω"
+       ],
+       [
+        "Tj",
+        "−40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>PG-TSON-10 + 노출 패드</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "I",
+        "입력 (가까이 GND로 커패시터)"
+       ],
+       [
+        "2",
+        "n.c.",
+        "내부 미연결, PCB GND에 연결"
+       ],
+       [
+        "3",
+        "EN",
+        "인에이블 (HIGH = ON, 미사용 시 I에 연결)"
+       ],
+       [
+        "4",
+        "n.c.",
+        "PCB GND에 연결"
+       ],
+       [
+        "5",
+        "CSO",
+        "전류 모니터 / 상태 출력"
+       ],
+       [
+        "6",
+        "ST",
+        "상태 출력 (open collector, LOW = 폴트)"
+       ],
+       [
+        "7",
+        "GND",
+        "접지"
+       ],
+       [
+        "8",
+        "ADJ",
+        "출력 전압 설정 (외부 분압기)"
+       ],
+       [
+        "9",
+        "n.c.",
+        "PCB GND에 연결"
+       ],
+       [
+        "10",
+        "Q",
+        "레귤레이터 출력"
+       ],
+       [
+        "PAD",
+        "Heat sink",
+        "노출 패드, 방열 면적 및 GND에 연결"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>입력: 100 nF 세라믹 (I 핀 가까이, 100 – 470 nF) + 10 µF 전해 (10 – 470 µF 권장). 45 V 초과 과도에는 TVS 선택.</li>\n    <li>출력: CQ 1 µF 세라믹 X5R/X7R, ESR &lt; 10 Ω.</li>\n    <li>출력 전압: VQ = (R1 + R2) / R2 × VREF,int (1.19 V typ). R2 &lt; 27 kΩ, 1% 이하 저항.</li>\n    <li>전류 제한: IQ,lim = 2.55 V × 100 / RCSO (예: RCSO 1.5 kΩ → 170 mA), CCSO 2.2 µF 예시.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PG-TSON-10, 노출 패드. RthJC 9 K/W typ. RthJA 165 K/W (1s0p footprint only), 67 K/W (300 mm² 방열), 56 K/W (600 mm²), 55 K/W (2s2p). 예: VI 13.5 V, VQ 5 V, 100 mA, Ta 85 °C → 약 0.92 W, RthJA ≤ 70.8 K/W 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>부품 DB 설명(\"400 mA LDO+벅 복합\")은 틀림: 실제는 최대 300 mA 단일 LDO + 전류 모니터. 분류를 buck이 아닌 LDO로 수정 필요.</li>\n    <li>안테나 동축 피드처럼 출력이 외부로 나가는 경우 CSO 전압으로 단락/개방 진단 가능.</li>\n    <li>ST 핀은 VI까지 올라갈 수 있으므로 MCU 연결 시 직렬 저항/풀업 전압 주의.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.farnell.com/datasheets/2354825.pdf"
+ ],
+ "key": {
+  "spec": {
+   "i": 0.3,
+   "vin": [
+    5.5,
+    40
+   ],
+   "adj": 1,
+   "pkg": "TSON-10"
+  },
+  "grade": "Q100"
+ }
+}

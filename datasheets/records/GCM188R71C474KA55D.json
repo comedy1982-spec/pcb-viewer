@@ -1,0 +1,70 @@
+{
+ "mpn": "GCM188R71C474KA55D",
+ "mfr": "Murata",
+ "cat": "커패시터",
+ "price": null,
+ "status": "done",
+ "title": "Automotive MLCC 470 nF 16 V X7R 0603",
+ "meta": [
+  "Murata · 커패시터 · Automotive MLCC 470 nF 16 V X7R 0603",
+  "원본: <a href=\"https://docs.rs-online.com/8e42/0900766b80ef92d0.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (RS 제공, 미확인 링크)</a> · <a href=\"https://www.murata.com/products/productdetail?partno=GCM188R71C474KA55D\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=GCM188R71C474KA55D\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 유통사 사양 (RS 169-3946, Future Electronics)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "값",
+       "470 nF ±10 % (K)"
+      ],
+      [
+       "정격 전압",
+       "16 V DC"
+      ],
+      [
+       "유전체",
+       "X7R"
+      ],
+      [
+       "동작 온도",
+       "-55 ~ +125 °C"
+      ],
+      [
+       "크기",
+       "0603 (1608 metric), 1.6 × 0.8 × 0.8 mm"
+      ],
+      [
+       "AEC-Q200",
+       "예 (RS 사양 표기)"
+      ],
+      [
+       "상태",
+       "Active (Future Electronics)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>0603 (1608M): L 1.6 mm, W 0.8 mm, T 0.8 mm (공칭). 치수 공차·단자 폭은 Murata 원본 데이터시트 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>16 V 정격 — 12 V 배터리 직결 라인(부하 덤프·점프 스타트) 용도로는 부적합, 5 V/3.3 V 레일 디커플링용.</li>\n    <li>X7R 0603 470 nF는 DC 바이어스에서 실효 용량이 줄어듦 — Murata SimSurfing 곡선으로 확인.</li>\n    <li>Murata 원본 PDF(pim.murata.com)는 이번 조사에서 열람되지 않아 유통사 사양으로 작성.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://ph.rs-online.com/web/p/mlccs-multilayer-ceramic-capacitors/1693946"
+ ]
+}

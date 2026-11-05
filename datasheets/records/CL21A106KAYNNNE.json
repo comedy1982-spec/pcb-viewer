@@ -1,0 +1,85 @@
+{
+ "mpn": "CL21A106KAYNNNE",
+ "mfr": "Samsung Electro-Mechanics",
+ "cat": "커패시터",
+ "price": null,
+ "status": "done",
+ "title": "MLCC 10 µF 25 V X5R 0805",
+ "meta": [
+  "Samsung Electro-Mechanics · 커패시터 · MLCC 10 µF ±10 % 25 V X5R 0805",
+  "원본: <a href=\"https://www.futureelectronics.com/p/capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl21a106kaynnne-samsung-electro-mechanics-6036703\" target=\"_blank\" rel=\"noopener\">유통사 사양 페이지</a> · <a href=\"https://product.samsungsem.com/mlcc/CL21A106KAYNNN.do\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=CL21A106KAYNNNE\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a>"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "정전용량",
+       "10 µF"
+      ],
+      [
+       "허용차",
+       "±10 % (K)"
+      ],
+      [
+       "정격 전압",
+       "25 V"
+      ],
+      [
+       "유전체",
+       "X5R (온도 특성 ±15 %)"
+      ],
+      [
+       "동작 온도",
+       "-55 – +85 °C"
+      ],
+      [
+       "절연 저항",
+       "10 GΩ (Future 표기)"
+      ],
+      [
+       "크기",
+       "0805 (2012 metric)"
+      ],
+      [
+       "포장",
+       "릴당 2,000개"
+      ],
+      [
+       "상태",
+       "Active"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>0805 (2012 metric). 정확한 치수·두께는 제조사 사양서 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>0805 크기 10 µF 25 V X5R은 12 V 이상 바이어스에서 실효 용량이 정격의 일부로 떨어질 수 있음 — 레귤레이터 입·출력 용량 계산 시 DC-bias 곡선으로 확인.</li>\n    <li>X5R 상한 85 °C: 고온 위치에서는 X7R 품번 검토.</li>\n    <li>읽은 유통사 페이지에 AEC-Q200 표기 없음 (일반 산업용 CL 시리즈) — 차량 ECU에는 Samsung 전장용(AEC-Q200) 품번으로 대체 검토.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.futureelectronics.com/p/capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl21a106kaynnne-samsung-electro-mechanics-6036703"
+ ],
+ "issues": [
+  {
+   "p": "[등급·수명] no AEC-Q200 listed and X5R max +85 °C",
+   "fix": "consider automotive X7R 10 µF part (may need 1206/larger)",
+   "url": "https://www.futureelectronics.com/p/capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl21a106kaynnne-samsung-electro-mechanics-6036703"
+  }
+ ]
+}

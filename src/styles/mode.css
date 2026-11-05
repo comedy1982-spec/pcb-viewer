@@ -78,6 +78,8 @@ body[data-mode="steps"][data-step="2"] #schNote,body[data-mode="steps"][data-ste
 .ds-name small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ds-price{font-size:12px;white-space:nowrap}
 .ds-st{font-size:10.5px;color:var(--muted);text-align:right}
+.ds-ver{font-size:11px;color:var(--ok-fg,#2e7d32);background:var(--ok-bg,#e6f4ea);border-radius:99px;padding:1px 8px}
+.ds-page .ds-issues{background:var(--err-bg,#fdecea);border:1px solid var(--err-fg,#e8a39b);border-radius:8px;padding:6px 12px;font-size:13px;margin:8px 0}.ds-page .ds-issues ul{margin:4px 0 2px 18px;padding:0}.ds-page .ds-verified{color:var(--ok-fg,#2e7d32)}
 .ds-stub{font-size:11px;color:var(--warn-fg);background:var(--warn-bg);border-radius:99px;padding:1px 8px}
 .ds-page{padding:14px 16px;font-size:13.5px;line-height:1.55;overflow-wrap:anywhere}
 .ds-page h1{font-size:18px;margin:0 0 4px;font-family:var(--f-mono)}

@@ -1,0 +1,267 @@
+{
+ "mpn": "TPS54331DR",
+ "mfr": "Texas Instruments",
+ "cat": "전원",
+ "price": null,
+ "status": "verified",
+ "title": "3.5-28 V input, 3 A, 570 kHz step-down converter",
+ "meta": [
+  "Texas Instruments · 전원 · 3.5~28 V 입력 3 A 570 kHz 비동기 벅 컨버터 (Eco-mode)",
+  "원본: <a href=\"https://www.ti.com/document-viewer/TPS54331/datasheet\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://manualmachine.com/texasinstruments/tps54331d/4444754-datasheet\" target=\"_blank\" rel=\"noopener\">읽은 사본</a> · <a href=\"https://www.ti.com/product/TPS54331\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TPS54331DR\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SLVS839 (읽은 사본은 2008-07 초판, 최신 SLVS839H 2023-10)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "비동기 벅 컨버터, 하이사이드 MOSFET 내장, 전류 모드 제어, 저부하 펄스 스킵(Eco-mode)"
+      ],
+      [
+       "입력 전압",
+       "3.5 ~ 28 V (VIN 절대 최대 30 V)"
+      ],
+      [
+       "출력 전류",
+       "3 A"
+      ],
+      [
+       "기준 전압",
+       "0.772 / 0.8 / 0.828 V"
+      ],
+      [
+       "스위칭 주파수",
+       "456 / 570 / 684 kHz (VIN = 12 V, SLVS839F 기준 · 초판은 400 / 740 kHz)"
+      ],
+      [
+       "하이사이드 RDS(on)",
+       "일반 80 mΩ, 최대 150 mΩ (BOOT-PH = 6 V, VIN = 12 V)"
+      ],
+      [
+       "전류 제한",
+       "3.5 ~ 5.8 A (사이클별)"
+      ],
+      [
+       "정지 / 셧다운 전류",
+       "비스위칭 110 µA (최대 190 µA) / 1 µA (최대 10 µA)"
+      ],
+      [
+       "온도",
+       "TJ -40 ~ +150 °C"
+      ],
+      [
+       "패키지",
+       "SOIC-8 (D), DR = 테이프·릴"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VIN",
+        "-0.3",
+        "30",
+        "V",
+        ""
+       ],
+       [
+        "EN",
+        "-0.3",
+        "6",
+        "V",
+        "SLVS839F (초판 5 V)"
+       ],
+       [
+        "BOOT",
+        "",
+        "38",
+        "V",
+        ""
+       ],
+       [
+        "BOOT-PH",
+        "",
+        "8",
+        "V",
+        ""
+       ],
+       [
+        "PH",
+        "-0.6",
+        "30",
+        "V",
+        "10 ns 과도 -5 V"
+       ],
+       [
+        "VSENSE, COMP, SS",
+        "-0.3",
+        "3",
+        "V",
+        ""
+       ],
+       [
+        "ESD HBM / CDM",
+        "",
+        "2000 / 500",
+        "V",
+        ""
+       ],
+       [
+        "접합 온도",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "보관 온도",
+        "-65",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "입력 전압 VIN",
+        "3.5",
+        "",
+        "28",
+        "V"
+       ],
+       [
+        "접합 온도 TJ",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8 (D), 상면도</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "BOOT",
+        "부트스트랩. BOOT-PH 사이 0.1 µF"
+       ],
+       [
+        "2",
+        "VIN",
+        "입력 전원 3.5~28 V"
+       ],
+       [
+        "3",
+        "EN",
+        "인에이블. 1.25 V 미만으로 내리면 정지, 개방 시 동작. 저항 분압으로 UVLO 설정"
+       ],
+       [
+        "4",
+        "SS",
+        "소프트 스타트 커패시터"
+       ],
+       [
+        "5",
+        "VSENSE",
+        "오차 증폭기 반전 입력 (피드백)"
+       ],
+       [
+        "6",
+        "COMP",
+        "오차 증폭기 출력, 보상 회로 연결"
+       ],
+       [
+        "7",
+        "GND",
+        "접지"
+       ],
+       [
+        "8",
+        "PH",
+        "내부 하이사이드 MOSFET 소스 (스위치 노드)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>부트스트랩: BOOT-PH 사이 0.1 µF X5R/X7R 세라믹.</li>\n    <li>출력 전압: VOUT = 0.8 V × (1 + R5/R6). 데이터시트 예는 R5 = 10.2 kΩ, R6 = 3.24 kΩ로 약 3.31 V.</li>\n    <li>입력: 10 µF X5R/X7R 세라믹 권장. 예시 회로는 4.7 µF 50 V X7R × 2 + 0.01 µF.</li>\n    <li>인덕터: L(min) = VOUT × (VIN(max) − VOUT) / (VIN(max) × KIND × IOUT × fSW), KIND ≈ 0.3. 예시(7~28 V → 3.3 V/3 A)는 6.8 µH.</li>\n    <li>캐치 다이오드: 역전압 VIN(max) + 0.5 V 이상, 피크 전류 IOUT(max) + 리플 절반 이상. 예시는 B340A (40 V, 3 A).</li>\n    <li>EN UVLO: Ren1 = (VSTART − VSTOP) / 3 µA. Ren2 식은 데이터시트 Equation 2 확인.</li>\n    <li>소프트 스타트: SS 충전 전류 2 µA, tSS 1~10 ms 범위, CSS ≤ 27 nF 권장.</li>\n    <li>보상: Type II, 교차 주파수 약 25 kHz 이하. 예시값 R3 = 29.4 kΩ, C6 = 1000 pF, C7 = 47 pF.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8 (D). 접합-주변 열저항 116.3 °C/W (SLVS839F Thermal Information; 초판 시험 보드 값 100 °C/W), 접합-상면 5 °C/W (2 in × 1.5 in, 2층, 2 oz 구리, 열 비아 6개 시험 보드 기준, 초판 문서 값). 열 차단 165 °C. 최신판 Thermal Information 표는 데이터시트 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>읽은 사본은 2008년 초판이라 텍스트 추출이 일부 깨져 있습니다. 최신판(SLVS839H)과 수치를 한 번 대조하세요.</li>\n    <li>비동기 구조라 외부 쇼트키 다이오드가 필요합니다. 다이오드-입력 커패시터-GND 루프를 최소화하세요.</li>\n    <li>AEC-Q100 등급 문구는 읽은 문서에 없습니다. 자동차용은 별도 Q1 등급 부품 여부를 확인하세요.</li>\n    <li>SOIC-8 PowerPAD(DDA) 버전도 있으며 열 성능이 더 좋습니다(풋프린트 다름).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://manualmachine.com/texasinstruments/tps54331d/4444754-datasheet"
+ ],
+ "verify": {
+  "date": "2026-10-29",
+  "by": "독립 점검 에이전트",
+  "note": "독립 점검 16페이지 · 원문 대조"
+ }
+}

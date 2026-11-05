@@ -1,0 +1,100 @@
+{
+ "mpn": "61300811121",
+ "mfr": "Würth Elektronik",
+ "cat": "커넥터",
+ "price": 0.28,
+ "status": "stub",
+ "title": "WR-PHD 2.54 mm 1x8 straight THT pin header",
+ "meta": [
+  "Würth Elektronik · 커넥터 · WR-PHD 2.54 mm 1열 8핀 스트레이트 THT 핀 헤더 · 참고 단가 약 $0.28 (추정)",
+  "원본: <a href=\"https://www.we-online.com/components/products/datasheet/61300811121.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> (미확인 링크) · <a href=\"https://ie.rs-online.com/web/p/pcb-headers/8281604\" target=\"_blank\" rel=\"noopener\">RS 사양</a> · <a href=\"https://octopart.com/search?q=61300811121\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a>"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "형태",
+       "WR-PHD 핀 헤더, 1열 8핀, 스트레이트, 비슈라우드, 수(male), 솔더 단자"
+      ],
+      [
+       "피치",
+       "2.54 mm"
+      ],
+      [
+       "정격 전류",
+       "3 A"
+      ],
+      [
+       "사용 전압",
+       "250 V"
+      ],
+      [
+       "재질",
+       "접점 구리 합금, 금도금 · 절연체 폴리아마이드(RS 속성) / PBT(RS 설명) — 표기 상이"
+      ],
+      [
+       "핀 길이",
+       "테일(PCB측) 3 mm, 결합측 6 mm"
+      ],
+      [
+       "동작 온도",
+       "−40 … +105 °C"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1–8",
+        "1 … 8",
+        "단순 접점 (1열 순차 번호)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>1×8, 2.54 mm 피치, 스루홀. 전체 길이·몸체 높이·홀 지름은 데이터시트 확인 필요 (KiCad PinHeader_1x08_P2.54mm_Vertical 계열의 일반 규격).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>RS 속성란에 실장 방식이 \"surface mount\"로 잘못 표기된 페이지가 있으나 제품명·제목은 스루홀(THT). 발주 시 MPN으로 확인.</li>\n    <li>디버그/프로그래밍(JTAG·UART 등) 헤더 용도. 차량 실장 커넥터로는 부적합.</li>\n    <li>동일 시리즈 2핀 61300211121, 4핀 61300411121.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://ie.rs-online.com/web/p/pcb-headers/8281604"
+ ],
+ "todo": "제조사 PDF는 열람이 차단되어 유통사(RS) 사양으로 작성. 몸체 치수·권장 홀 지름·접촉/절연 저항은 WE 데이터시트로 확인 필요. 2차 시도에서도 WE PDF·미러를 찾지 못함.",
+ "issues": [
+  {
+   "p": "[기타] WE datasheet PDF fetch blocked (permission timeout on we-online.com); pages built from RS/element14 specs, dimensions missing",
+   "fix": "none (re-fetch WE PDF later)",
+   "url": "https://au.rs-online.com/web/p/pcb-headers/8281581",
+   "also": "61300211121 / 61300811121"
+  }
+ ]
+}

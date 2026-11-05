@@ -1,0 +1,275 @@
+{
+ "mpn": "ACS712ELCTR-20A-T",
+ "mfr": "Allegro",
+ "cat": "전류 센서",
+ "price": 1.5,
+ "status": "verified",
+ "title": "Hall Current Sensor 20 A",
+ "meta": [
+  "Allegro · 전류 센서 · ±20 A 홀 전류 센서, 2.1 kVRMS 절연, 5 V, 100 mV/A (비차량용) · 참고 단가 약 $1.5 (추정)",
+  "원본: <a href=\"https://www.makerguides.com/wp-content/uploads/2024/02/ACS712-Datasheet.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (사본)</a> · <a href=\"http://www.allegromicro.com/~/media/Files/Datasheets/ACS712-Datasheet.ashx?la=en\" target=\"_blank\" rel=\"noopener\">제조사 PDF (미확인 링크)</a> · <a href=\"https://octopart.com/search?q=ACS712ELCTR-20A-T\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 ACS712-DS Rev. 21 (MCO-0000197), 2023-02-09"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "내장 도체형 선형 홀 전류 센서, 레이쇼메트릭 출력, FILTER 핀으로 대역 설정"
+      ],
+      [
+       "측정 범위",
+       "±20 A"
+      ],
+      [
+       "감도",
+       "96 / 100 / 104 mV/A (min/typ/max, 25 °C)"
+      ],
+      [
+       "공급 전압",
+       "4.5 ~ 5.5 V (typ 5.0 V), ICC 10 mA typ / 13 mA max"
+      ],
+      [
+       "대역폭 · 응답",
+       "80 kHz, 상승 3.5 µs (COUT 개방) / 특징 목록 기준 5 µs"
+      ],
+      [
+       "총 출력 오차",
+       "±1.5 % (IP = ±20 A, 25 °C)"
+      ],
+      [
+       "1차 도체 저항",
+       "1.2 mΩ typ"
+      ],
+      [
+       "절연",
+       "2100 VAC (60 s 형식시험, UL 60950-1), 기본 절연 354 Vpk, 강화 절연 184 Vpk"
+      ],
+      [
+       "품질 등급",
+       "데이터시트: \"자동차 용도로 의도되지 않음\" (AEC-Q100 아님)"
+      ],
+      [
+       "온도",
+       "E: −40 ~ 85 °C"
+      ],
+      [
+       "패키지",
+       "SOIC-8, 릴 3000개"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VCC",
+        "−0.1",
+        "8",
+        "V",
+        ""
+       ],
+       [
+        "VIOUT",
+        "−0.1",
+        "8",
+        "V",
+        ""
+       ],
+       [
+        "출력 소스 전류",
+        "",
+        "3",
+        "mA",
+        ""
+       ],
+       [
+        "출력 싱크 전류",
+        "",
+        "10",
+        "mA",
+        ""
+       ],
+       [
+        "과전류 과도 내량",
+        "",
+        "100",
+        "A",
+        "1 펄스, 100 ms"
+       ],
+       [
+        "TA (E)",
+        "−40",
+        "85",
+        "°C",
+        ""
+       ],
+       [
+        "TJ(max)",
+        "",
+        "165",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "−65",
+        "170",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VCC",
+        "4.5",
+        "5.0",
+        "5.5",
+        "V"
+       ],
+       [
+        "영전류 출력 VIOUT(Q)",
+        "",
+        "VCC × 0.5",
+        "",
+        "V"
+       ],
+       [
+        "TA",
+        "−40",
+        "",
+        "85",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1, 2",
+        "IP+",
+        "피측정 전류 단자 (내부 퓨즈)"
+       ],
+       [
+        "3, 4",
+        "IP−",
+        "피측정 전류 단자 (내부 퓨즈)"
+       ],
+       [
+        "5",
+        "GND",
+        "신호 접지"
+       ],
+       [
+        "6",
+        "FILTER",
+        "대역 설정용 외부 커패시터"
+       ],
+       [
+        "7",
+        "VIOUT",
+        "아날로그 출력"
+       ],
+       [
+        "8",
+        "VCC",
+        "전원"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>CBYP 0.1 µF (VCC–GND).</li>\n    <li>CF (FILTER–GND): 대표 회로 1 nF. 내부 RF(INT) 1.7 kΩ와 RC 형성. f(−3 dB) = 0.35 / tr.</li>\n    <li>CF별 상승시간 (15 A 스텝): 개방 3.5 µs · 1 nF 5.8 µs · 4.7 nF 17.5 µs · 22 nF 73.5 µs · 47 nF 88.2 µs · 100 nF 291.3 µs · 220 nF 623 µs · 470 nF 1120 µs.</li>\n    <li>노이즈 11 mVpp typ (CF = 47 nF, 2 kHz 대역).</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8. RθJL 5 °C/W (ASEK 712 평가보드), RθJA 23 °C/W (85-0322 평가보드). TJ(max) 165 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>데이터시트가 자동차 용도가 아님을 명시하고 온도 범위도 −40 ~ 85 °C — 차량 ECU에는 ACS724LLCTR-20AB-T (AEC-Q100, −40 ~ 150 °C, 동일 핀아웃·100 mV/A) 대체 권장.</li>\n    <li>레이쇼메트릭 출력: 5 V 레일 변동이 출력에 그대로 반영 — ADC 기준을 같은 5 V로 쓰거나 비율 측정.</li>\n    <li>3.3 V MCU에 직접 연결 시 출력이 5 V 공급 기준으로 스윙(영점 2.5 V)하므로 분압/클램프 필요.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.makerguides.com/wp-content/uploads/2024/02/ACS712-Datasheet.pdf"
+ ],
+ "key": {
+  "spec": {
+   "i": 20,
+   "pkg": "SOIC-8"
+  },
+  "grade": ""
+ },
+ "issues": [
+  {
+   "p": "[등급·수명] datasheet states \"not intended for automotive applications\", TA -40..85 °C (E range)",
+   "fix": "for ECU use ACS724LLCTR-20AB-T (AEC-Q100, -40..150 °C, same pinout, 100 mV/A)",
+   "url": "https://www.makerguides.com/wp-content/uploads/2024/02/ACS712-Datasheet.pdf"
+  }
+ ],
+ "verify": {
+  "date": "2026-10-29",
+  "by": "독립 점검 에이전트",
+  "note": "독립 점검 16페이지 · 원문 대조"
+ }
+}

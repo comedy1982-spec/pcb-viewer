@@ -1,0 +1,117 @@
+{
+ "mpn": "61300211121",
+ "mfr": "Würth Elektronik",
+ "cat": "커넥터",
+ "price": 0.1,
+ "status": "stub",
+ "title": "WR-PHD 2.54 mm 1x2 straight THT pin header",
+ "meta": [
+  "Würth Elektronik · 커넥터 · WR-PHD 2.54 mm 1열 2핀 스트레이트 THT 핀 헤더 · 참고 단가 약 $0.1 (추정)",
+  "원본: <a href=\"https://www.we-online.com/components/products/datasheet/61300211121.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> (미확인 링크) · <a href=\"https://au.rs-online.com/web/p/pcb-headers/8281581\" target=\"_blank\" rel=\"noopener\">RS 사양</a> · <a href=\"https://sg.element14.com/wurth-elektronik/61300211121/header-2-54mm-pin-tht-vertical/dp/2356153\" target=\"_blank\" rel=\"noopener\">element14 사양</a> · <a href=\"https://www.datasheets.com/wurth-electronics/61300211121\" target=\"_blank\" rel=\"noopener\">datasheets.com 사양</a> · <a href=\"https://octopart.com/search?q=61300211121\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a>"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "형태",
+       "WR-PHD 핀 헤더, 1열 2핀, 스트레이트, 비슈라우드, 수(male), 스루홀 솔더"
+      ],
+      [
+       "피치",
+       "2.54 mm"
+      ],
+      [
+       "정격 전류",
+       "3 A (RS)"
+      ],
+      [
+       "사용 전압",
+       "250 V (RS)"
+      ],
+      [
+       "내전압",
+       "500 V AC (element14)"
+      ],
+      [
+       "접촉 저항",
+       "20 mΩ (element14)"
+      ],
+      [
+       "재질",
+       "접점 구리 합금(스탬핑), 금도금 · 절연체 PA6T/PBT(유통사별 표기 상이), UL94 V-0"
+      ],
+      [
+       "핀 길이",
+       "테일(PCB측) 3 mm, 결합측 6 mm (RS)"
+      ],
+      [
+       "삽발 횟수",
+       "25회 (element14)"
+      ],
+      [
+       "동작 온도",
+       "−40 … +105 °C (RS/element14) — datasheets.com은 −40 … +125 °C로 표기, WE 데이터시트로 확인 필요"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "1",
+        "단순 접점"
+       ],
+       [
+        "2",
+        "2",
+        "단순 접점"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>1×2, 2.54 mm 피치, 스루홀. 전체 높이 8.94 mm, 결합측 접점 길이 0.236 in (datasheets.com 표기). 몸체 폭·길이·홀 지름은 데이터시트 확인 필요 (KiCad PinHeader_1x02_P2.54mm_Vertical 계열의 일반 규격).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>점퍼·디버그·테스트용. 금도금 25회 삽발 등급이라 반복 결합이 잦은 용도에는 수명 확인.</li>\n    <li>차량 실장 하네스 커넥터(진동·방수)로는 부적합.</li>\n    <li>동일 시리즈 4핀 61300411121, 8핀 61300811121.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://au.rs-online.com/web/p/pcb-headers/8281581"
+ ],
+ "todo": "제조사 PDF는 열람이 차단되어 유통사(RS, element14) 사양으로 작성. 몸체 폭·길이, 권장 홀 지름, 절연 저항, 동작 온도 상한(105/125 °C 표기 불일치)은 WE 데이터시트로 확인 필요. 2차 시도에서도 WE PDF를 열지 못함.",
+ "issues": [
+  {
+   "p": "[기타] WE datasheet PDF fetch blocked (permission timeout on we-online.com); pages built from RS/element14 specs, dimensions missing",
+   "fix": "none (re-fetch WE PDF later)",
+   "url": "https://au.rs-online.com/web/p/pcb-headers/8281581",
+   "also": "61300211121 / 61300811121"
+  }
+ ]
+}

@@ -1,0 +1,333 @@
+{
+ "mpn": "DRV8313PWPR",
+ "mfr": "Texas Instruments",
+ "cat": "모터 드라이버",
+ "price": 2.6,
+ "status": "done",
+ "title": "2.5 A triple half-bridge motor driver, 60 V",
+ "meta": [
+  "Texas Instruments · 모터 드라이버 · 2.5 A 피크 3채널 하프브리지(FET 내장) 드라이버, 8–60 V · 참고 단가 약 $2.6 (추정)",
+  "원본: <a href=\"https://www.ti.com/document-viewer/DRV8313/datasheet\" target=\"_blank\" rel=\"noopener\">데이터시트 (TI 문서 뷰어)</a> · <a href=\"https://www.ti.com/product/DRV8313\" target=\"_blank\" rel=\"noopener\">제품 페이지 (미확인 링크)</a> · <a href=\"https://octopart.com/search?q=DRV8313PWPR\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SLVSBA5D (2012-10, 개정 2016-04)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "독립 제어 하프브리지 3채널 (BLDC 3상, 브러시 DC, 솔레노이드), 미사용 비교기 1개 내장"
+      ],
+      [
+       "VM",
+       "8–60 V (절대 최대 65 V)"
+      ],
+      [
+       "출력 전류",
+       "2.5 A 피크 · 과전류 트립 3 A min / 5 A typ (데글리치 5 µs)"
+      ],
+      [
+       "RDS(on)",
+       "상단·하단 각 0.24 Ω typ (25 °C) / 0.29 typ · 0.39 Ω max (85 °C), VM 24 V, 1 A"
+      ],
+      [
+       "입력 논리",
+       "ENx=0 → OUTx 하이 임피던스, ENx=1이면 INx로 H/L. PWM 최대 250 kHz, 데드타임 90 ns typ"
+      ],
+      [
+       "보조 전원",
+       "V3P3 3.3 V (3.1–3.52 V), 외부 부하 최대 10 mA"
+      ],
+      [
+       "보호",
+       "과전류, 과열(160 °C typ, 히스테리시스 35 °C), VM UVLO (상승 6.3 typ / 8 V max) → nFAULT 오픈 드레인"
+      ],
+      [
+       "등급·온도",
+       "상용 등급 (AEC-Q100 언급 없음) · TA −40 ~ 125 °C"
+      ],
+      [
+       "패키지",
+       "HTSSOP-28 (PWP) 9.70 × 4.40 mm, PowerPAD = GND (VQFN-36 6×6 mm 버전 별도)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "html": "<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>\n    <tr><td>VM 전원 전압</td><td>−0.3</td><td>65</td><td>V</td><td></td></tr>\n    <tr><td>VM 상승 슬루</td><td>0</td><td>2</td><td>V/µs</td><td></td></tr>\n    <tr><td>VCP, CPH</td><td>−0.3</td><td>VM + 12</td><td>V</td><td></td></tr>\n    <tr><td>CPL</td><td>−0.3</td><td>VM</td><td>V</td><td></td></tr>\n    <tr><td>V3P3 전압 / 출력 전류</td><td>−0.3 / 0</td><td>3.8 / 10</td><td>V / mA</td><td></td></tr>\n    <tr><td>제어 핀 (nRESET, nSLEEP, nFAULT, nCOMPO, ENx, INx)</td><td>−0.5</td><td>7</td><td>V</td><td></td></tr>\n    <tr><td>비교기 입력 (COMPP, COMPN)</td><td>−0.5</td><td>7</td><td>V</td><td></td></tr>\n    <tr><td>오픈 드레인 출력 전류</td><td>0</td><td>10</td><td>mA</td><td>nFAULT, nCOMPO</td></tr>\n    <tr><td>OUTx 연속</td><td>−0.7</td><td>VM + 0.7</td><td>V</td><td></td></tr>\n    <tr><td>PGNDx 연속</td><td>−600</td><td>600</td><td>mV</td><td></td></tr>\n    <tr><td>OUTx 피크 전류</td><td colspan=\"2\">내부 제한</td><td>A</td><td></td></tr>\n    <tr><td>접합 온도 TJ</td><td>−40</td><td>150</td><td>°C</td><td></td></tr>\n    <tr><td>보관 온도</td><td>−60</td><td>150</td><td>°C</td><td></td></tr>\n    <tr><td>ESD HBM / CDM</td><td></td><td>±3000 / ±1500</td><td>V</td><td></td></tr>\n  </tbody></table>"
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VM",
+        "8",
+        "",
+        "60",
+        "V"
+       ],
+       [
+        "디지털 핀 전압",
+        "0",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "PWM 주파수 (ENx, INx)",
+        "0",
+        "",
+        "250",
+        "kHz"
+       ],
+       [
+        "PGNDx 전압",
+        "−500",
+        "",
+        "500",
+        "mV"
+       ],
+       [
+        "V3P3 부하 전류",
+        "0",
+        "",
+        "10",
+        "mA"
+       ],
+       [
+        "주위 온도 TA",
+        "−40",
+        "",
+        "125",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>HTSSOP-28 (PWP), 0.65 mm 피치, 노출 패드 = GND</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "CPL",
+        "차지 펌프 하단 (CPH–CPL 0.01 µF, VM 정격)"
+       ],
+       [
+        "2",
+        "CPH",
+        "차지 펌프 상단"
+       ],
+       [
+        "3",
+        "VCP",
+        "차지 펌프 출력 (16 V 0.1 µF → VM)"
+       ],
+       [
+        "4",
+        "VM",
+        "모터 전원"
+       ],
+       [
+        "5",
+        "OUT1",
+        "하프브리지 1 출력"
+       ],
+       [
+        "6",
+        "PGND1",
+        "브리지 1 하단 FET 소스 (GND 또는 션트)"
+       ],
+       [
+        "7",
+        "PGND2",
+        "브리지 2 하단 FET 소스"
+       ],
+       [
+        "8",
+        "OUT2",
+        "하프브리지 2 출력"
+       ],
+       [
+        "9",
+        "OUT3",
+        "하프브리지 3 출력"
+       ],
+       [
+        "10",
+        "PGND3",
+        "브리지 3 하단 FET 소스"
+       ],
+       [
+        "11",
+        "VM",
+        "모터 전원"
+       ],
+       [
+        "12",
+        "COMPP",
+        "비교기 + 입력"
+       ],
+       [
+        "13",
+        "COMPN",
+        "비교기 − 입력"
+       ],
+       [
+        "14",
+        "GND",
+        "GND"
+       ],
+       [
+        "15",
+        "V3P3",
+        "3.3 V 레귤레이터 출력 (6.3 V 0.47 µF → GND)"
+       ],
+       [
+        "16",
+        "nRESET",
+        "리셋(액티브 로우), 내부 풀다운"
+       ],
+       [
+        "17",
+        "nSLEEP",
+        "H = 동작, L = 슬립, 내부 풀다운"
+       ],
+       [
+        "18",
+        "nFAULT",
+        "고장 출력, 오픈 드레인"
+       ],
+       [
+        "19",
+        "nCOMPO",
+        "비교기 출력, 오픈 드레인"
+       ],
+       [
+        "20",
+        "GND",
+        "GND"
+       ],
+       [
+        "21",
+        "NC",
+        "미연결"
+       ],
+       [
+        "22",
+        "EN3",
+        "브리지 3 인에이블, 내부 풀다운"
+       ],
+       [
+        "23",
+        "IN3",
+        "브리지 3 입력, 내부 풀다운"
+       ],
+       [
+        "24",
+        "EN2",
+        "브리지 2 인에이블"
+       ],
+       [
+        "25",
+        "IN2",
+        "브리지 2 입력"
+       ],
+       [
+        "26",
+        "EN1",
+        "브리지 1 인에이블"
+       ],
+       [
+        "27",
+        "IN1",
+        "브리지 1 입력"
+       ],
+       [
+        "28",
+        "GND",
+        "GND"
+       ],
+       [
+        "29 (PAD)",
+        "GND",
+        "방열 패드, GND 연결 필수"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>CPH–CPL 0.01 µF (VM 정격), VCP–VM 0.1 µF 16 V, V3P3 0.47 µF 6.3 V, VM 핀마다 0.1 µF ×2 + VM 정격 벌크 커패시터.</li>\n    <li>nFAULT, nCOMPO: 외부 풀업 필요 (VOL ≤ 0.5 V @ 5 mA).</li>\n    <li>전류 트립 예: R<sub>SENSE</sub> 200 mΩ, I<sub>TRIP</sub> 2.5 A → COMPN 0.5 V를 V3P3 분압 R1 56 kΩ / R2 10 kΩ로 설정, nCOMPO로 MCU에 통지.</li>\n    <li>동기 정류는 INx에 PWM, 비동기 정류는 ENx에 PWM. 120°(사다리꼴)·180°(정현파) 구동 모두 가능.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>HTSSOP-28 (PWP) 9.70 × 4.40 mm. RθJA 31.6 °C/W · RθJC(top) 15.9 · RθJB 5.6 · ψJT 0.2 · ψJB 5.5 · RθJC(bot) 1.4 °C/W. TJ 최대 150 °C, 과열 차단 150–180 °C (160 typ).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VM 상승 슬루 2 V/µs 이하 (절대 최대) — 핫플러그 시 입력 필터 검토.</li>\n    <li>PGNDx 전압 ±500 mV 이내 (권장) — 션트 전압 강하가 이를 넘지 않게 R<sub>SENSE</sub> 선정.</li>\n    <li>nSLEEP, nRESET, ENx, INx 모두 내부 100 kΩ 풀다운 → 기본 출력 꺼짐.</li>\n    <li>슬립 전류 IVMQ 500 µA typ / 800 µA max (VM 24 V) — 상시 전원 연결 시 암전류 고려.</li>\n    <li>상용 등급(-Q1 아님). 차량용은 별도 -Q1 드라이버 검토.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.ti.com/document-viewer/ja-jp/DRV8313/datasheet/specifications"
+ ],
+ "key": {
+  "spec": {
+   "v": 60,
+   "i": 2.5,
+   "pkg": "HTSSOP-28"
+  },
+  "grade": ""
+ },
+ "issues": [
+  {
+   "p": "[등급·수명] stub page had price 3.4, batch price 2.6; commercial grade (no -Q1)",
+   "fix": "page updated to 2.6",
+   "url": "https://www.ti.com/document-viewer/DRV8313/datasheet"
+  }
+ ]
+}

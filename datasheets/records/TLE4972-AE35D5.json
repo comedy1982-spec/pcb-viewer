@@ -1,0 +1,287 @@
+{
+ "mpn": "TLE4972-AE35D5",
+ "mfr": "Infineon",
+ "cat": "전류 센서",
+ "price": null,
+ "status": "done",
+ "title": "XENSIV coreless magnetic current sensor, TDSO-16",
+ "meta": [
+  "Infineon · 전류 센서 · XENSIV coreless magnetic current sensor, TDSO-16",
+  "원본: <a href=\"https://www.mouser.com/datasheet/2/196/Infineon_TLE4972_AE35D5_DataSheet_v01_02_EN-3363724.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.infineon.com/assets/row/public/documents/30/49/infineon-tle4972-ae35d5-datasheet-cn.pdf\" target=\"_blank\" rel=\"noopener\">Infineon 문서 (미확인 링크)</a> · <a href=\"https://octopart.com/search?q=TLE4972-AE35D5\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Rev. 1.02 (2021-12-21)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "코어리스 홀 전류 센서 — 외부 버스바/PCB 도체의 자계를 측정 (최대 2,000 A급 응용), 아날로그 출력 + 과전류 검출 2개"
+      ],
+      [
+       "자계 범위",
+       "최대 ±31 mT (감도 6단계 프로그래밍, 기본 S3 = 62 mV/mT, ±19.35 mT)"
+      ],
+      [
+       "대역폭",
+       "210 kHz typ (120 kHz min, −3 dB, C<sub>O</sub>=6.8 nF) · 그룹 지연 1 µs typ"
+      ],
+      [
+       "정확도",
+       "초기 감도 오차 ±5% (25 °C, 캘리브레이션 범위 ±15%) · 온도·수명 총 드리프트 ±1.4% typ / ±2% max · 오프셋 ±200 µT 초기"
+      ],
+      [
+       "OCD",
+       "OCD1·OCD2 오픈드레인, 응답 0.7 µs typ, 임계 ±10%, 풀업 4.7 kΩ typ"
+      ],
+      [
+       "전원",
+       "V<sub>DD</sub> 3.1–3.5 V (3.3 V typ), I<sub>DD</sub> 18 mA typ / 25 mA max"
+      ],
+      [
+       "기능 안전",
+       "ISO 26262 개발, ASIL B까지, 내부 자기진단"
+      ],
+      [
+       "온도",
+       "T<sub>a</sub> −40 ~ +125 °C, T<sub>J</sub> −40 ~ +160 °C 동작"
+      ],
+      [
+       "패키지",
+       "PG-TDSO-16, RoHS·할로겐 프리 (주문 번호 SP004914362)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "V<sub>DD</sub>",
+        "-0.3",
+        "3.6",
+        "V",
+        ""
+       ],
+       [
+        "VREF, OCD1, AOUT",
+        "-0.3",
+        "V<sub>DD</sub>+0.3",
+        "V",
+        ""
+       ],
+       [
+        "OCD2",
+        "-0.3",
+        "21",
+        "V",
+        "EEPROM 프로그래밍 핀 겸용"
+       ],
+       [
+        "T<sub>j</sub>",
+        "",
+        "175",
+        "°C",
+        ""
+       ],
+       [
+        "T<sub>stg</sub>",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM / CDM",
+        "",
+        "±2 kV / ±1 kV",
+        "",
+        "AEC-Q100-002 / -011"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "V<sub>DD</sub>",
+        "3.1",
+        "3.3",
+        "3.5",
+        "V"
+       ],
+       [
+        "T<sub>a</sub>",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ],
+       [
+        "출력 부하 C<sub>O</sub>",
+        "4.7",
+        "6.8",
+        "8",
+        "nF"
+       ],
+       [
+        "AOUT 구동 전류 (DC)",
+        "-2",
+        "",
+        "2",
+        "mA"
+       ],
+       [
+        "OCD 부하 용량",
+        "",
+        "",
+        "1",
+        "nF"
+       ],
+       [
+        "OCD 풀업",
+        "",
+        "4.7",
+        "10",
+        "kΩ"
+       ],
+       [
+        "파워온 지연 t<sub>POR</sub>",
+        "",
+        "",
+        "1.5",
+        "ms"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>PG-TDSO-16</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "RSVD",
+        "리드프레임과 연결 (RSVD 중 하나만 GND)"
+       ],
+       [
+        "2",
+        "OCD2",
+        "과전류 출력 2 (오픈드레인), 프로그래밍 핀"
+       ],
+       [
+        "3",
+        "OCD1",
+        "과전류 출력 1 (오픈드레인)"
+       ],
+       [
+        "4",
+        "AOUT",
+        "아날로그 출력"
+       ],
+       [
+        "5",
+        "VREF",
+        "기준 전압 입출력 / 완전 차동 모드 출력"
+       ],
+       [
+        "6",
+        "GND",
+        "그라운드"
+       ],
+       [
+        "7",
+        "VDD",
+        "전원"
+       ],
+       [
+        "8",
+        "RSVD",
+        "리드프레임과 연결"
+       ],
+       [
+        "9–13",
+        "NC",
+        "미연결"
+       ],
+       [
+        "14",
+        "RSVD",
+        "리드프레임과 연결"
+       ],
+       [
+        "15–16",
+        "NC",
+        "미연결"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VDD 디커플링 220 nF/25 V (응용 회로도).</li>\n    <li>AOUT·VREF 출력 커패시터 6.8 nF/25 V (4.7–8 nF 범위), 직렬 220 Ω.</li>\n    <li>선택 저역통과 필터: 220 Ω + 15 nF → f<sub>c</sub> = 48.2 kHz.</li>\n    <li>OCD1/OCD2 풀업 4.7 kΩ to V<sub>DD</sub>, 부하 용량 1 nF 이하.</li>\n    <li>VREF 1.65 V 기본 (1.5 V / 1.8 V 설정 가능), 영점 출력 V<sub>DD</sub>/2·1.5 V(양방향) 또는 V<sub>DD</sub>/5.5(단방향).</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PG-TDSO-16 (외형 그림만 제공, 일반 공차 ±0.1 mm). 열저항은 데이터시트에 없음. T<sub>j</sub> max 175 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>1차 전류 경로가 패키지 내부에 없음 — 측정 범위는 버스바 형상·거리로 결정 (mT → A 변환은 기구 설계에 따라 다름). 절연 정격도 데이터시트에 없으며 외부 거리로 확보.</li>\n    <li>OCD2 핀은 20.5–20.7 V로 EEPROM 프로그래밍 — 생산 시 이 전압을 견디도록 OCD2 측 회로 구성.</li>\n    <li>외부 균일 자계 억제 34 dB min (차동 구조) — 인접 상 버스바 간섭은 레이아웃으로 관리.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.mouser.com/datasheet/2/196/Infineon_TLE4972_AE35D5_DataSheet_v01_02_EN-3363724.pdf"
+ ]
+}

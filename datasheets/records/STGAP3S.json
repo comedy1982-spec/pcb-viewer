@@ -1,0 +1,368 @@
+{
+ "mpn": "STGAP3S",
+ "mfr": "STMicroelectronics",
+ "cat": "게이트 드라이버",
+ "price": null,
+ "status": "verified",
+ "title": "Isolated single gate driver for IGBT/SiC",
+ "meta": [
+  "STMicroelectronics · 게이트 드라이버 · Galvanically isolated 6 A / 10 A single gate driver for IGBT and SiC MOSFET",
+  "원본: <a href=\"https://st.com/resource/en/datasheet/stgap3sxs.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.st.com/en/power-management/stgap3s3s.html\" target=\"_blank\" rel=\"noopener\">제품 페이지 (미확인 링크)</a> · <a href=\"https://octopart.com/search?q=STGAP3S\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 DS14758 Rev 3"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "강화 절연 단일 채널 게이트 드라이버, DESAT 보호, 조절형 소프트 턴오프, 액티브 밀러 클램프 프리드라이버 (외부 N-MOSFET 구동), UVLO, 과열 차단"
+      ],
+      [
+       "변형",
+       "STGAP3S6I (±6 A, IGBT) · STGAP3SXI (±10 A, IGBT) · STGAP3S6S (±6 A, SiC) · STGAP3SXS (±10 A, SiC) · 각 TR = 테이프 앤 릴"
+      ],
+      [
+       "고전압 레일",
+       "최대 1400 V"
+      ],
+      [
+       "게이트 전원",
+       "VH 5–32 V · VL −10 ~ 0 V · VH−VL 최대 32 V"
+      ],
+      [
+       "로직",
+       "VDD 3.1–5.5 V, 3.3/5 V TTL/CMOS 입력 (히스테리시스)"
+      ],
+      [
+       "지연",
+       "tDon/tDoff typ 75 ns (55–95 ns) · 펄스폭 왜곡 최대 10 ns · 최소 입력 펄스 20 ns"
+      ],
+      [
+       "CMTI",
+       "최소 ±200 V/ns (VCM 1200 V)"
+      ],
+      [
+       "UVLO",
+       "VDD 온 2.95 / 오프 2.80 V · VH: I형 11.9/11.1 V, S형 13.6/12.8 V · DESAT 임계 I형 9.0 V, S형 6.0 V"
+      ],
+      [
+       "절연",
+       "VIORM 1414 Vpk · VIOTM 8000 Vpk · VISO 5700 Vrms (UL 1577, 60 s) · 연면·공간 거리 8 mm"
+      ],
+      [
+       "온도",
+       "Tj·Ta −40 ~ 125 °C (동작) · 스위칭 최대 1 MHz"
+      ],
+      [
+       "패키지",
+       "SO-16W"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VDD (vs GND)",
+        "−0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "IN+, IN−, RST",
+        "−0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "VH (vs GNDISO)",
+        "−0.3",
+        "36",
+        "V",
+        ""
+       ],
+       [
+        "VL (vs GNDISO)",
+        "−15",
+        "0.3",
+        "V",
+        ""
+       ],
+       [
+        "VH − VL",
+        "−0.3",
+        "36",
+        "V",
+        ""
+       ],
+       [
+        "GOUT, SOFTOFF (vs VL)",
+        "VL − 0.3",
+        "VH + 0.3",
+        "V",
+        ""
+       ],
+       [
+        "CLAMPdrv (vs VL)",
+        "VL − 0.3",
+        "min(20, VH + 0.3)",
+        "V",
+        ""
+       ],
+       [
+        "DESAT (vs GNDISO)",
+        "−0.3",
+        "VH + 0.3",
+        "V",
+        ""
+       ],
+       [
+        "DIAG, RDY",
+        "−0.3",
+        "6.0",
+        "V",
+        "오픈 드레인"
+       ],
+       [
+        "Tj",
+        "−40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "−55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM",
+        "",
+        "2",
+        "kV",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VDD",
+        "3.1",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "로직 입력",
+        "0",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "VH (vs GNDISO)",
+        "5",
+        "",
+        "32",
+        "V"
+       ],
+       [
+        "VL (vs GNDISO)",
+        "−10",
+        "",
+        "0",
+        "V"
+       ],
+       [
+        "VH − VL",
+        "",
+        "",
+        "32",
+        "V"
+       ],
+       [
+        "DESAT 임계",
+        "",
+        "",
+        "VH − 2",
+        "V"
+       ],
+       [
+        "스위칭 주파수",
+        "",
+        "",
+        "1",
+        "MHz"
+       ],
+       [
+        "Tj / Ta",
+        "−40",
+        "",
+        "125",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SO-16W (모든 변형 동일)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1, 8",
+        "VL",
+        "게이트 구동 음전원"
+       ],
+       [
+        "2",
+        "DESAT",
+        "비포화(desaturation) 보호 입력"
+       ],
+       [
+        "3",
+        "GNDISO",
+        "절연측 게이트 구동 접지"
+       ],
+       [
+        "4",
+        "SOFTOFF",
+        "소프트 턴오프 출력 (게이트 감시 겸용)"
+       ],
+       [
+        "5",
+        "VH",
+        "게이트 구동 양전원"
+       ],
+       [
+        "6",
+        "GOUT",
+        "소스/싱크 게이트 출력"
+       ],
+       [
+        "7",
+        "CLAMPdrv",
+        "액티브 밀러 클램프 드라이버 출력 (외부 MOSFET)"
+       ],
+       [
+        "9, 16",
+        "GND",
+        "로직 접지"
+       ],
+       [
+        "10",
+        "IN+",
+        "드라이버 입력 (비반전)"
+       ],
+       [
+        "11",
+        "IN−",
+        "드라이버 입력 (반전)"
+       ],
+       [
+        "12",
+        "RDY",
+        "UVLO·과열 진단 (오픈 드레인)"
+       ],
+       [
+        "13",
+        "DIAG",
+        "DESAT 진단 (오픈 드레인)"
+       ],
+       [
+        "14",
+        "RST",
+        "고장 리셋·셧다운 (액티브 LOW)"
+       ],
+       [
+        "15",
+        "VDD",
+        "로직 전원"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>각 전원 핀 가까이 100 nF 세라믹 (VDD–GND, VH–GNDISO, VL–GNDISO) + 펄스 전류용 1–10 µF.</li>\n    <li>단극 구동: GNDISO와 VL을 짧게 묶음. 양극 구동: GNDISO–VL 사이에 음전원.</li>\n    <li>밀러 클램프 동작에는 SOFTOFF를 저항을 통해 게이트에 연결. 클램프 루프에 0.5–1 Ω 댐핑 저항 권장.</li>\n    <li>DESAT 회로: Cblank, 고전압 다이오드 DDES, RDES. IDESAT 1.0 mA, 블랭킹 200 ns, 개입 150 ns, DIAG까지 최대 2.5 µs. 소프트 턴오프 전류 800 mA, 시간 5 µs (RSOFT로 속도 설정).</li>\n    <li>미사용 시: DESAT는 GNDISO에, DIAG 개방 · CLAMPdrv 개방 · RDY는 상위에서 쓰지 않을 때만 개방.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SO-16W. Rth(JA) 65 °C/W, Rth(JC,top) 36 °C/W, Rth(JB) 38 °C/W, ψJT 16 °C/W. 과열 차단 최소 164 °C, 히스테리시스 20 °C. 출력 RDS(on): 소스 0.96 Ω(6 A) / 0.65 Ω(10 A), 싱크 0.70 / 0.50 Ω.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>\"STGAP3S\"는 계열명이며 주문 품번이 아님 — 전류(6 A/10 A)와 대상(IGBT=I, SiC=S)에 따라 STGAP3S6I/SXI/6S/SXS 중 선택.</li>\n    <li>읽은 데이터시트에 AEC-Q100 언급 없음 — 차량 인버터 적용 시 ST 차량용 등급 여부 확인 필요.</li>\n    <li>절연 유지를 위해 드라이버 아래 구리·배선 금지, 게이트 루프 최소화, VH·GNDISO는 다중 비아로 내층 연결.</li>\n    <li>데이터시트의 DESAT 방전 전류 단위(IDESoff 110–195 \"mA\") 표기는 의심스러움 — 원본 확인.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "alias": [
+  "STGAP3S*",
+  "STGAP3SXSTR"
+ ],
+ "src": [
+  "https://st.com/resource/en/datasheet/stgap3sxs.pdf"
+ ],
+ "verify": {
+  "date": "2026-10-29",
+  "by": "독립 점검 에이전트",
+  "note": "독립 점검 16페이지 · 원문 대조"
+ }
+}

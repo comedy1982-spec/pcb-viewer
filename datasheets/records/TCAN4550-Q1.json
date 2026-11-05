@@ -1,0 +1,397 @@
+{
+ "mpn": "TCAN4550-Q1",
+ "mfr": "TI",
+ "cat": "통신",
+ "price": null,
+ "status": "done",
+ "title": "Automotive CAN FD controller with integrated transceiver (SPI)",
+ "meta": [
+  "TI · 통신 · Automotive CAN FD controller with integrated transceiver (SPI)",
+  "원본: <a href=\"https://cdn.elektroniknet.de/media_uploads/documents/1559825764-291-tcan4550-q1.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (Rev A 사본)</a> · <a href=\"https://ti.com/product/es-mx/TCAN4550-Q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TCAN4550-Q1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SLLSEZ5A (2018-01, 개정 2019-04)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "SPI 인터페이스 CAN FD 컨트롤러(M_CAN) + 트랜시버 통합, 5 V LDO, INH, WAKE"
+      ],
+      [
+       "전원",
+       "VSUP 5.5 ~ 30 V (권장), VIO 3.135 ~ 5.25 V (3.3/5 V 로직)"
+      ],
+      [
+       "LDO VCCOUT",
+       "5 V (4.75 ~ 5.25 V), 외부 부하 최대 70 mA (트랜시버 포함 총 125 mA — 8.3.3절)"
+      ],
+      [
+       "SPI",
+       "최대 18 MHz"
+      ],
+      [
+       "CAN FD",
+       "최대 8 Mbps (Features), 개요는 5 Mbps (40 MHz 클록에서)"
+      ],
+      [
+       "버스 보호",
+       "±58 V 버스 폴트, ±12 V 공통 모드"
+      ],
+      [
+       "클록",
+       "20 MHz 또는 40 MHz 크리스털/클록 (±0.5 %), 40 MHz 권장"
+      ],
+      [
+       "전류",
+       "Sleep ISUP 25 µA typ / 42 µA max, Standby 약 3.5 mA, Normal 우세 80 mA typ"
+      ],
+      [
+       "등급 · 온도",
+       "AEC-Q100 Grade 1, TA -40 ~ 125 °C"
+      ],
+      [
+       "패키지",
+       "VQFN-20 (RGY) 4.50 × 3.50 mm, 열 패드"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VSUP",
+        "-0.3",
+        "42",
+        "V",
+        ""
+       ],
+       [
+        "VIO",
+        "-0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "VCCOUT",
+        "-0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "CANH, CANL",
+        "-58",
+        "58",
+        "V",
+        ""
+       ],
+       [
+        "WAKE",
+        "-0.3",
+        "42",
+        "V",
+        ""
+       ],
+       [
+        "INH",
+        "-0.3",
+        "42",
+        "V",
+        ""
+       ],
+       [
+        "로직 입력",
+        "-0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "디지털 출력",
+        "-0.5",
+        "6",
+        "V",
+        "SDO 출력 전류 8 mA max"
+       ],
+       [
+        "INH 전류",
+        "",
+        "4",
+        "mA",
+        ""
+       ],
+       [
+        "WAKE 전류 (V(WAKE) ≤ GND − 0.3 V)",
+        "",
+        "3",
+        "mA",
+        ""
+       ],
+       [
+        "접합 온도 TJ",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "보관 온도 Tstg",
+        "-65",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM (CANH/CANL) / 기타 / CDM",
+        "",
+        "±15000 / ±4000 / ±750",
+        "V",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VSUP",
+        "5.5",
+        "",
+        "30",
+        "V"
+       ],
+       [
+        "VIO",
+        "3.135",
+        "",
+        "5.25",
+        "V"
+       ],
+       [
+        "디지털 출력 IOH / IOL",
+        "",
+        "",
+        "-2 / 2",
+        "mA"
+       ],
+       [
+        "INH 출력 전류",
+        "",
+        "",
+        "1",
+        "mA"
+       ],
+       [
+        "FLTR 커패시터",
+        "",
+        "",
+        "300",
+        "nF"
+       ],
+       [
+        "VCCOUT 커패시터",
+        "",
+        "10",
+        "",
+        "µF"
+       ],
+       [
+        "WAKE 커패시터",
+        "",
+        "10",
+        "",
+        "nF"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>VQFN-20 (RGY) 4.50 × 3.50 mm</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "OSC1",
+        "크리스털 또는 외부 클록 입력"
+       ],
+       [
+        "2",
+        "nWKRQ",
+        "웨이크 요청 출력 (액티브 로우)"
+       ],
+       [
+        "3",
+        "GPIO1",
+        "SPI로 설정 가능한 I/O"
+       ],
+       [
+        "4",
+        "SCLK",
+        "SPI 클록 입력"
+       ],
+       [
+        "5",
+        "SDI",
+        "SPI 데이터 입력"
+       ],
+       [
+        "6",
+        "SDO",
+        "SPI 데이터 출력"
+       ],
+       [
+        "7",
+        "nCS",
+        "SPI 칩 셀렉트"
+       ],
+       [
+        "8",
+        "nINT",
+        "MCU 인터럽트 출력 (액티브 로우)"
+       ],
+       [
+        "9",
+        "GPO2",
+        "SPI로 설정 가능한 출력"
+       ],
+       [
+        "10",
+        "CANL",
+        "CAN 버스 로우"
+       ],
+       [
+        "11",
+        "CANH",
+        "CAN 버스 하이"
+       ],
+       [
+        "12",
+        "WAKE",
+        "고전압 웨이크 입력"
+       ],
+       [
+        "13",
+        "GND",
+        "그라운드"
+       ],
+       [
+        "14",
+        "VSUP",
+        "배터리 전원 입력"
+       ],
+       [
+        "15",
+        "INH",
+        "인히빗 출력 (시스템 레귤레이터 제어, 오픈드레인)"
+       ],
+       [
+        "16",
+        "VCCOUT",
+        "5 V 레귤레이터 출력"
+       ],
+       [
+        "17",
+        "VIO",
+        "디지털 I/O 전원 입력"
+       ],
+       [
+        "18",
+        "FLTR",
+        "내부 레귤레이터 필터 — 외부 커패시터를 GND로"
+       ],
+       [
+        "19",
+        "RST",
+        "디바이스 리셋 입력"
+       ],
+       [
+        "20",
+        "OSC2",
+        "크리스털 출력 (OSC1을 클록으로 구동 시 GND에 연결)"
+       ],
+       [
+        "PAD",
+        "Thermal pad",
+        "반드시 GND에 납땜"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul><li>VSUP 100 nF, VIO 100 nF 핀 가까이. VCCOUT 10 µF 최대한 핀 가까이.</li><li>FLTR: 300 nF을 GND로 (전기적 특성 표 300 ~ 330 nF).</li><li>WAKE: 외부 배선 시 10 nF을 GND로(과도 내성), 미사용 시 VSUP 또는 GND에 연결.</li><li>nINT, GPO2: VIO로 풀업 필요. nWKRQ는 VIO 전원 구성 시에만 풀업.</li><li>크리스털 ESR 최대 60 Ω (부하 용량에서), 외부 클록 입력 듀티 45 ~ 55 %, VIH 0.85 × VIO 이상. 부하 커패시터 값은 읽은 문서에 없음.</li><li>INH는 시스템 웨이크업이 필요 없으면 개방 가능.</li></ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>VQFN-20 (RGY) 4.50 × 3.50 mm, 열 패드 GND 납땜 필수. RθJA 35.2, RθJC(top) 28.1, RθJB 12.8, ΨJT 0.3, ΨJB 12.7, RθJC(bot) 1.1 °C/W. TSD 상승 160 °C / 하강 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul><li>배치 설명 'CAN-FD SBC · LDO': SBC라기보다 SPI CAN FD 컨트롤러+트랜시버(5 V LDO 70 mA 외부 공급 가능). MCU 전원용 SBC가 아님.</li><li>읽은 문서는 Rev A (2019-04) 제3자 사본 — TI 현행판에서 데이터율(5/8 Mbps) 표기와 수치 재확인 권장.</li><li>VCCOUT 외부 부하는 70 mA 이내, 드롭아웃 300 mV typ / 500 mV max (70 mA).</li><li>UVSUP 상승 5.5 ~ 5.9 V / 하강 4.5 ~ 4.7 V — 크랭킹 시 리셋 동작 고려.</li></ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://cdn.elektroniknet.de/media_uploads/documents/1559825764-291-tcan4550-q1.pdf"
+ ],
+ "issues": [
+  {
+   "p": "[설명·분류 오류] batch desc \"CAN-FD SBC · LDO\" is misleading: it is an SPI CAN FD controller + transceiver with a 5 V LDO (70 mA external), not an SBC supplying the MCU",
+   "fix": "reword desc to \"SPI CAN-FD 컨트롤러+트랜시버 · 5 V LDO\"",
+   "url": "https://cdn.elektroniknet.de/media_uploads/documents/1559825764-291-tcan4550-q1.pdf"
+  }
+ ]
+}

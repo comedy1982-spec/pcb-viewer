@@ -1,0 +1,161 @@
+{
+ "mpn": "AT25SF641B-SHB-T",
+ "mfr": "Renesas",
+ "cat": "메모리",
+ "price": 1.4,
+ "status": "stub",
+ "title": "64-Mbit SPI serial NOR flash",
+ "meta": [
+  "Renesas · 메모리 · 64-Mbit SPI serial NOR flash (dual/quad I/O) · 참고 단가 약 $1.4 (추정)",
+  "원본: <a href=\"https://www.renesas.com/en/document/dst/at25sf641b-datasheet?r=1608816\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (미확인 링크)</a> · <a href=\"https://www.renesas.com/en/products/at25sf641b/part-details/at25sf641b-shb-b\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=AT25SF641B-SHB-T\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 DS-AT25SF641B-191 Rev. G (2023-10-04)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "64 Mbit (8 MB) SPI 시리얼 NOR 플래시, SPI 모드 0/3"
+      ],
+      [
+       "I/O 모드",
+       "Single 1-1-1 · Dual 1-1-2, 1-2-2, 0-2-2 · Quad 1-1-4, 1-4-4, 0-4-4 · 연속 읽기(8/16/32/64 B 랩, XiP)"
+      ],
+      [
+       "전원",
+       "단일 2.7–3.6 V"
+      ],
+      [
+       "최대 클럭",
+       "133 MHz (명령별 구분은 원본 확인)"
+      ],
+      [
+       "소거 시간 (일반)",
+       "4 KB 65 ms · 32 KB 150 ms · 64 KB 240 ms · 칩 전체 30 s"
+      ],
+      [
+       "프로그램",
+       "1회 최대 256 바이트"
+      ],
+      [
+       "전류",
+       "Standby 14 µA 일반 · Deep power-down 1 µA 일반 · 읽기 3.3 mA (Renesas 제품 페이지 표기)"
+      ],
+      [
+       "내구성 / 보존",
+       "100,000 P/E 사이클 / 20년"
+      ],
+      [
+       "보안",
+       "OTP 보안 레지스터 256 B × 3 · 64비트 UID · WP 핀 하드웨어 보호 · 비휘발 레지스터 소프트웨어 보호 · SFDP (JESD216B)"
+      ],
+      [
+       "온도",
+       "−40 ~ +85 °C (산업용)"
+      ],
+      [
+       "패키지",
+       "-SH: 8-pad SOIC 0.208\" (Renesas 표기 SOIC-W 5.18 × 7.70 mm, 1.27 mm 피치) · 접미사 -B/-T 의미는 원본 주문 정보 확인 필요"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "html": "<p class=\"todo\">데이터시트 확인 필요</p>"
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VCC",
+        "2.7",
+        "",
+        "3.6",
+        "V"
+       ],
+       [
+        "동작 온도",
+        "−40",
+        "",
+        "85",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>8-pad SOIC 208 mil — 핀 번호표는 데이터시트 확인 필요 (읽은 문서에 없음).</p>"
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul><li>디커플링·풀업 권장값은 읽은 범위에 없음 — 원본 확인 필요.</li></ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOIC 0.208\" 8-pad (5.18 × 7.70 mm, 1.27 mm 피치). 다른 패키지: UDFN 5 × 6 × 0.6 mm (-MHB), 다이/웨이퍼.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>부품 DB 설명의 \"차량용\"은 데이터시트와 맞지 않음: 산업용 −40~85 °C이며 AEC-Q100 언급 없음. 차량 ECU에는 AEC-Q100 등급의 SPI NOR로 대체 검토.</li>\n    <li>Digi-Key는 108 MHz로 표기하나 데이터시트 특징 목록은 133 MHz — 사용 명령별 최대 주파수를 원본에서 확인.</li>\n    <li>Renesas 수명 정보: Active, Longevity 2030 Jan.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://pdf.jiepei.com/at25sf641b-45852966.html"
+ ],
+ "todo": "데이터시트 표지·특징 목록과 Renesas 제품 페이지만 읽음. 2차 시도: jiepei(1/61쪽만), eeworld(봇 차단), qdatasheet(소개만), Renesas 문서 링크(접근 승인 안 됨) — 절대 최대 정격, DC 특성(동작 전류), 페이지 프로그램 시간, 8핀 SOIC 핀 배치는 여전히 원본 PDF에서 확인 필요.",
+ "key": {
+  "spec": {
+   "pkg": "SOIC-8"
+  },
+  "grade": "Q100"
+ },
+ "issues": [
+  {
+   "p": "[등급·수명] batch desc says \"차량용\" but datasheet/product page give industrial -40..+85 °C, no AEC-Q100; Digi-Key lists 108 MHz vs datasheet 133 MHz",
+   "fix": "drop \"차량용\" / pick an AEC-Q100 SPI NOR for ECU use",
+   "url": "https://pdf.jiepei.com/at25sf641b-45852966.html"
+  },
+  {
+   "p": "[등급·수명] description says \"차량용\" but datasheet cover/product page give industrial -40~85 °C only, no AEC-Q100",
+   "fix": "drop \"차량용\" or substitute an AEC-Q100 SPI NOR",
+   "url": "https://pdf.jiepei.com/at25sf641b-45852966.html"
+  }
+ ]
+}

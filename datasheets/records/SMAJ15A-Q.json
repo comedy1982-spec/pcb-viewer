@@ -1,0 +1,211 @@
+{
+ "mpn": "SMAJ15A-Q",
+ "mfr": "Bourns",
+ "cat": "보호",
+ "price": null,
+ "status": "done",
+ "title": "400 W unidirectional TVS 15 V, SMA, AEC-Q101",
+ "meta": [
+  "Bourns · 보호 · 400 W unidirectional TVS diode, VRWM 15 V, SMA (DO-214AC), AEC-Q101",
+  "원본: <a href=\"https://www.mouser.com/datasheet/2/54/smaj_q-1773145.pdf\" target=\"_blank\" rel=\"noopener\">SMAJxxA-Q 시리즈 데이터시트 PDF</a> · <a href=\"https://www.digikey.bg/en/products/detail/bourns-inc/SMAJ15A-Q/8275972\" target=\"_blank\" rel=\"noopener\">Digi-Key 제품 페이지</a> · <a href=\"https://octopart.com/search?q=SMAJ15A-Q\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Bourns, REV. 06/25"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "단방향 TVS 다이오드 (A형)"
+      ],
+      [
+       "VRWM",
+       "15 V"
+      ],
+      [
+       "VBR",
+       "16.7 ~ 18.5 V @ IT 1.0 mA"
+      ],
+      [
+       "IR",
+       "최대 1.0 µA @ VRWM"
+      ],
+      [
+       "클램프 VC",
+       "24.4 V @ IPP 16.4 A (10/1000 µs) · 31.7 V @ 82.0 A (8/20 µs)"
+      ],
+      [
+       "피크 펄스 전력",
+       "400 W (TP = 1 ms, 비반복)"
+      ],
+      [
+       "등급",
+       "AEC-Q101 준수 (데이터시트 표기)"
+      ],
+      [
+       "마킹",
+       "IMQ (양방향 SMAJ15CA-Q는 UMQ)"
+      ],
+      [
+       "온도",
+       "TJ −55 ~ +150 °C"
+      ],
+      [
+       "패키지",
+       "SMA (DO-214AC), 캐소드 밴드"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "피크 펄스 전력 PPK",
+        "",
+        "400",
+        "W",
+        "TP = 1 ms, 비반복"
+       ],
+       [
+        "피크 펄스 전류 IPP",
+        "",
+        "16.4",
+        "A",
+        "10/1000 µs"
+       ],
+       [
+        "피크 펄스 전류 IPP",
+        "",
+        "82.0",
+        "A",
+        "8/20 µs"
+       ],
+       [
+        "순방향 서지 전류 IFSM",
+        "",
+        "40",
+        "A",
+        "8.3 ms 반정현파 (JEDEC)"
+       ],
+       [
+        "동작 접합 온도 TJ",
+        "−55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "저장 온도 TSTG",
+        "−55",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "상시 역방향 인가 전압",
+        "",
+        "",
+        "15",
+        "V"
+       ],
+       [
+        "접합 온도",
+        "−55",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SMA (DO-214AC), 2단자 단방향 — 캐소드 밴드 쪽이 K. 번호는 KiCad D_SMA 관례.</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "K",
+        "캐소드 (밴드, 보호 라인 +측)"
+       ],
+       [
+        "2",
+        "A",
+        "애노드 (GND)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>보호 라인과 GND 사이, 커넥터 바로 옆에 캐소드를 라인 쪽으로 배치. GND 리턴은 짧고 넓게.</li>\n    <li>클램프 시 최대 24.4 V(10/1000 µs)·31.7 V(8/20 µs)까지 상승 — 후단 소자 절대 최대 정격이 이보다 높아야 함.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SMA (DO-214AC) 치수(mm): A 3.99–4.50, B 2.54–2.79, C 1.25–1.65, D 0.15–0.31, E 4.93–5.28, F 최대 0.203, G 1.98–2.29, H 0.76–1.52. 정상 상태 소비 전력·열저항은 수치 없이 감쇄 그래프만 제공. 권장 패드 치수는 데이터시트 그림 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li><b>제조사 정정:</b> 부품 DB에는 Littelfuse로 되어 있으나 \"-Q\" 접미사 SMAJ15A-Q는 Bourns 품번 (Bourns 데이터시트, Digi-Key 등록). Littelfuse 동급은 SMAJ15A(AEC-Q101 표기 없음). 접미사 Q = 13인치 릴, QH = 7인치 릴.</li>\n    <li>Bourns 법적 고지: AEC-Q 표기만으로 차량용 승인을 의미하지 않음 — 적용 전 제조사 확인.</li>\n    <li>12 V 배터리 직결 시 점프 스타트(24 V)에서 도통 — 전원 입력 주 보호보다는 신호·보조 라인용. 로드 덤프는 SMBJ/SMCJ 이상 검토.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.mouser.com/datasheet/2/54/smaj_q-1773145.pdf"
+ ]
+}

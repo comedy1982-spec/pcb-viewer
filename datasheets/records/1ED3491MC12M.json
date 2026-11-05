@@ -1,0 +1,372 @@
+{
+ "mpn": "1ED3491MC12M",
+ "mfr": "Infineon",
+ "cat": "게이트 드라이버",
+ "price": null,
+ "status": "done",
+ "title": "Isolated Single-Channel Gate Driver 9 A",
+ "meta": [
+  "Infineon · 게이트 드라이버 · EiceDRIVER 1ED-X3 Analog 강화 절연 단채널 게이트 드라이버, 9 A, DESAT · 소프트 오프 · 클램프 드라이버",
+  "원본: <a href=\"https://www.infineon.com/assets/row/public/documents/24/49/infineon-1ed34x1mx12m-datasheet-cn.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (중문판)</a> · <a href=\"https://octopart.com/search?q=1ED3491MC12M\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 1ED34x1Mc12M datasheet Rev 1.20, 2025-08-07 (중문 번역판, 영문판이 우선)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "단채널 절연 게이트 드라이버 (IGBT 650–2300 V, SiC/Si MOSFET), 분리 출력 ON/OFF"
+      ],
+      [
+       "출력 피크 전류",
+       "소스 11 A typ (7.9 A min), 싱크 7.5 A typ (6.0 A min), 100 nF 부하"
+      ],
+      [
+       "보호",
+       "DESAT (임계 9.18 V typ), 조정형 소프트 오프 (44–699 mA), 외부 MOSFET용 CLAMPDRV, VCC1/VCC2 UVLO, 과열 차단 160 °C"
+      ],
+      [
+       "절연",
+       "강화 절연, IEC 60747-17: VIORM 1767 Vpk, VIOTM 8000 Vpk / UL 1577 VISO 5700 Vrms 60 s"
+      ],
+      [
+       "CMTI",
+       "200 kV/µs"
+      ],
+      [
+       "전파 지연",
+       "tPDON 244 ns, tPDOFF 236 ns typ, 소자 간 매칭 tPDD 30 ns max"
+      ],
+      [
+       "전원",
+       "VCC1 3.0–5.5 V, VCC2 13–25 V, VEE2 -25–0 V (VCC2−VEE2 ≤ 35 V)"
+      ],
+      [
+       "온도",
+       "TA -40 ~ 125 °C"
+      ],
+      [
+       "등급",
+       "산업용 (JEDEC47/20/22). AEC-Q100 표기 없음"
+      ],
+      [
+       "패키지",
+       "PG-DSO-16, 연면·공간 거리 &gt;8 mm, OPN 1ED3491MC12MXUMA1"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VOFFSET (입출력 간)",
+        "",
+        "2300",
+        "V",
+        ""
+       ],
+       [
+        "VCC1",
+        "-0.3",
+        "6.5",
+        "V",
+        ""
+       ],
+       [
+        "로직 핀 (IN, RDYC, FLT_N, ADJA, ADJB)",
+        "-0.3",
+        "6.5",
+        "V",
+        ""
+       ],
+       [
+        "오픈 드레인 출력 전류 (RDYC, FLT_N)",
+        "",
+        "10",
+        "mA",
+        ""
+       ],
+       [
+        "VCC2",
+        "-0.3",
+        "40",
+        "V",
+        "GND2 기준"
+       ],
+       [
+        "VEE2",
+        "-40",
+        "0.3",
+        "V",
+        ""
+       ],
+       [
+        "VCC2 − VEE2",
+        "",
+        "40",
+        "V",
+        ""
+       ],
+       [
+        "DESAT",
+        "-0.3",
+        "VCC2+0.3",
+        "V",
+        ""
+       ],
+       [
+        "CLAMP",
+        "VEE2−0.3",
+        "VCC2+0.3",
+        "V",
+        "CLAMP 전류 2.4 A (t &lt; 5 µs)"
+       ],
+       [
+        "ON, OFF",
+        "VEE2−0.3",
+        "Vmax2+0.3",
+        "V",
+        ""
+       ],
+       [
+        "접합 온도 Tj",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "보관 온도",
+        "-55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "소비 전력 (출력측)",
+        "",
+        "700",
+        "mW",
+        "25 °C, 65 °C 초과 시 8 mW/°C 감소 / 입력측 100 mW"
+       ],
+       [
+        "ESD",
+        "",
+        "2 / 0.5",
+        "kV",
+        "HBM / CDM"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VCC1",
+        "3.0",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "VCC2",
+        "13",
+        "",
+        "25",
+        "V"
+       ],
+       [
+        "VEE2",
+        "-25",
+        "",
+        "0",
+        "V"
+       ],
+       [
+        "VCC2 − VEE2",
+        "13",
+        "",
+        "35",
+        "V"
+       ],
+       [
+        "주위 온도",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ],
+       [
+        "스위칭 주파수",
+        "",
+        "",
+        "250",
+        "kHz"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>PG-DSO-16</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "GND1",
+        "입력측 GND"
+       ],
+       [
+        "2",
+        "VCC1",
+        "입력측 전원 (3.3 V / 5 V)"
+       ],
+       [
+        "3",
+        "ADJA",
+        "파라미터 A: 소프트 오프 전류 설정 저항"
+       ],
+       [
+        "4",
+        "ADJB",
+        "파라미터 B: DESAT 블랭킹·필터 시간 설정 저항"
+       ],
+       [
+        "5",
+        "RDYC",
+        "Ready 출력(H 액티브)/폴트 클리어·소프트 오프 입력(L), 오픈 드레인"
+       ],
+       [
+        "6",
+        "FLT_N",
+        "폴트 출력(L 액티브)/소프트 오프 입력, 오픈 드레인"
+       ],
+       [
+        "7",
+        "IN",
+        "비반전 입력 (40 kΩ 풀다운)"
+       ],
+       [
+        "8",
+        "GND1",
+        "입력측 GND"
+       ],
+       [
+        "9",
+        "VEE2",
+        "출력측 음전원"
+       ],
+       [
+        "10",
+        "CLAMPDRV",
+        "외부 클램프 N-MOSFET 구동 출력"
+       ],
+       [
+        "11",
+        "OFF",
+        "싱크 출력 (턴오프)"
+       ],
+       [
+        "12",
+        "ON",
+        "소스 출력 (턴온), 클램프 감지 입력 겸용"
+       ],
+       [
+        "13",
+        "DESAT",
+        "불포화 검출 입력 (충전 전류 500 µA)"
+       ],
+       [
+        "14",
+        "VCC2",
+        "출력측 양전원"
+       ],
+       [
+        "15",
+        "GND2",
+        "출력측 신호 GND (이미터/소스 기준)"
+       ],
+       [
+        "16",
+        "VEE2",
+        "출력측 음전원"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>RDYC, FLT_N: VCC1으로 외부 풀업 (일반 2.2 kΩ).</li>\n    <li>ADJA / ADJB: 1% E96 저항 1.33–28.0 kΩ로 소프트 오프 전류 · DESAT 블랭킹(400/650/1150 ns)·필터 시간(1.575–3.975 µs) 선택. ADJB를 VCC1에 묶으면 블랭킹 400 ns · 필터 225 ns 기본값, ADJA를 GND1에 묶으면 기본 소프트 오프, ADJA를 VCC1에 묶으면 드라이버 동작 금지.</li>\n    <li>DESAT: 임계 9.18 V typ (8.88–9.48 V), 충전 전류 500 µA typ. 외부 직렬 저항을 키우면 실효 임계가 (전류 × 저항)만큼 낮아짐.</li>\n    <li>디커플링: VCC2–GND2, GND2–VEE2, VCC1–GND1 각각 핀 가까이 배치 (데이터시트에 용량 값 미기재).</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PG-DSO-16, 연면/공간 거리 &gt;8 mm, CTI &gt;400. RthJA 122 K/W (TA 65 °C, PD,OUT 400 mW, PD,IN 50 mW, 4층 기판), ΨJtop 8 K/W. 최대 방열을 위해 핀 1·8·9·16을 그라운드 플레인에 연결. Tj max 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>배치 파일 설명의 \"ASC(능동 단락)\" 기능은 데이터시트에 없음 — 고장 시 턴오프 수단은 소프트 오프(ADJA)뿐. 인버터 ASC는 MCU/외부 로직으로 구현해야 함.</li>\n    <li>산업용 부품(AEC-Q100 표기 없음). 차량 트랙션 인버터용이면 자동차 등급 EiceDRIVER 계열 검토 필요.</li>\n    <li>MC(강화, IEC 60747-17) / MU(UL 1577만) 접미사 차이 주의. 3 A·6 A 변형(1ED3431/1ED3461)과 핀 호환.</li>\n    <li>CLAMPDRV는 외부 N-MOSFET 게이트를 구동(클램프 전류 최대 20 A 수준, MOSFET에 따라).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.infineon.com/assets/row/public/documents/24/49/infineon-1ed34x1mx12m-datasheet-cn.pdf"
+ ],
+ "issues": [
+  {
+   "p": "[등급·수명] batch desc says \"ASC\" but datasheet documents no active-short-circuit function (only DESAT + soft-off via ADJA); part is industrial (JEDEC47/20/22), no AEC-Q100, yet used in product:inv",
+   "fix": "drop \"ASC\" from desc; consider automotive-qualified EiceDRIVER for traction inverter",
+   "url": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-1ed34x1mx12m-datasheet-cn.pdf"
+  }
+ ]
+}

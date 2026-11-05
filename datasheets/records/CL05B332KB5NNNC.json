@@ -1,0 +1,190 @@
+{
+ "mpn": "CL05B332KB5NNNC",
+ "mfr": "Samsung Electro-Mechanics",
+ "cat": "커패시터",
+ "price": 0.006,
+ "status": "done",
+ "title": "MLCC 3.3 nF ±10 % (K) 50 V X7R 0402",
+ "meta": [
+  "Samsung Electro-Mechanics · 커패시터 · MLCC 3.3 nF ±10 % (K) 50 V X7R 0402 · 참고 단가 약 $0.006 (추정)",
+  "원본: <a href=\"https://www.digikey.ca/en/htmldatasheets/production/1892602/0/0/1/cl02c330jo2annc\" target=\"_blank\" rel=\"noopener\">CL 시리즈 데이터시트</a> · <a href=\"https://octopart.com/part/samsung-electro-mechanics/CL05B332KB5NNNC\" target=\"_blank\" rel=\"noopener\">Octopart</a> · <a href=\"https://octopart.com/search?q=CL05B332KB5NNNC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 삼성전기 CL 시리즈 MLCC 데이터시트 (Digi-Key HTML 사본, 문서번호·개정일 표기 없음)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "적층 세라믹 칩 커패시터 (MLCC)"
+      ],
+      [
+       "정전용량",
+       "3.3 nF (332)"
+      ],
+      [
+       "허용차",
+       "±10 % (K)"
+      ],
+      [
+       "정격 전압",
+       "50 V DC"
+      ],
+      [
+       "유전체 / 온도 특성",
+       "X7R (Class II): ΔC ±15 %, −55 ~ +125 °C"
+      ],
+      [
+       "크기",
+       "0402 (1005 metric), CL05"
+      ],
+      [
+       "등급",
+       "8번째 자리 N = Normal(일반 등급). 삼성 품번 체계에서 자동차용은 P 코드이며, 이 품번은 AEC-Q200 자동차 등급이 아닙니다"
+      ],
+      [
+       "포장",
+       "끝자리 C = 7인치 종이 테이프"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "정격 전압 (연속)",
+        "",
+        "50",
+        "V DC",
+        "이 값을 넘는 연속 인가 금지"
+       ],
+       [
+        "내전압 시험 전압",
+        "",
+        "125",
+        "V DC",
+        "정격의 250 % (Class II), 1~5 s"
+       ],
+       [
+        "사용 온도 (온도 특성 범위)",
+        "−55",
+        "+125",
+        "°C",
+        "X7R"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "인가 전압",
+        "",
+        "",
+        "50",
+        "V"
+       ],
+       [
+        "온도",
+        "−55",
+        "",
+        "+125",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>0402 (1005 metric) 2단자 칩</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "1",
+        "전극 (무극성)"
+       ],
+       [
+        "2",
+        "2",
+        "전극 (무극성)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>X7R: 디커플링·바이패스·EMI 필터용. Class II 유전체이므로 DC 바이어스·온도·경시(aging)에 따라 용량이 줄어듭니다 — 실제 바이어스 전압에서의 용량은 삼성 제품 페이지의 DC-bias 곡선으로 확인 (데이터시트 확인 필요).</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>CL05 (EIA 0402 / 1005): L 1.0 ± 0.05 mm, W 0.5 ± 0.05 mm, T 최대 0.55 mm (두께 코드 5 = 0.50 mm), 단자 폭 BW 0.2 +0.15/−0.1 mm. 2단자, Ni 배리어 / Sn 100 % 도금 (제품 코드 N). 열 저항 항목 없음 (수동 부품).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>품번 해독 (삼성 CL 체계): CL / 05 크기 / B 유전체 / 332 용량 / K 허용차 / B 전압 / 5 두께 / N 일반 / N / N / C 포장.</li>\n    <li>내전압 시험: 정격의 250 % (Class II), 1~5 s, 파괴 없을 것. 절연저항: 10,000 MΩ 또는 500 MΩ·µF 중 작은 값 (16 V 이상 정격, 사본 OCR 일부 불명확 — 원본 확인 권장).</li>\n    <li>자동차 ECU에 쓰려면 같은 값의 삼성 자동차용(8번째 자리 P, AEC-Q200) 품번 또는 타사 차량용 MLCC로 교체를 검토하세요 (자동차용 품번은 데이터시트 확인 필요).</li>\n    <li>Octopart 기준 수명주기 Production, 1,000개 단가 약 $0.006.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.digikey.ca/en/htmldatasheets/production/1892602/0/0/1/cl02c330jo2annc"
+ ],
+ "issues": [
+  {
+   "p": "[등급·수명] 8th character N = Samsung \"Normal\" grade (automotive = P), not AEC-Q200, used on an automotive ECU board",
+   "fix": "consider automotive (P-code) equivalents",
+   "url": "https://www.digikey.ca/en/htmldatasheets/production/1892602/0/0/1/cl02c330jo2annc",
+   "also": "CL05B103KB5NNNC, CL05B104KO5NNNC, CL05B332KB5NNNC, CL05B472KB5NNNC, CL05C120JB5NNNC, CL05C470JB5NNNC, CL10A106KP8NNNC"
+  }
+ ]
+}

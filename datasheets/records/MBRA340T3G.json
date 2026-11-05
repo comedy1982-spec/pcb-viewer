@@ -1,0 +1,189 @@
+{
+ "mpn": "MBRA340T3G",
+ "mfr": "onsemi",
+ "cat": "다이오드",
+ "price": 0.3,
+ "status": "done",
+ "title": "40 V 3 A Schottky Rectifier SMA",
+ "meta": [
+  "onsemi · 다이오드 · 40 V 3 A 쇼트키 정류 다이오드, SMA (NRVBA340T3G = AEC-Q101 버전) · 참고 단가 약 $0.3 (추정)",
+  "원본: <a href=\"https://static.chipdip.ru/lib/629/DOC011629432.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://pdf.elecfans.com/ONSEMI/MBRA340T3G.html\" target=\"_blank\" rel=\"noopener\">제품 페이지 (미러, 미확인 링크)</a> · <a href=\"https://octopart.com/search?q=MBRA340T3G\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 MBRA340T3/D Rev. 6 (2013년 9월)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "쇼트키 배리어 정류 다이오드 (전원 역류 방지, 프리휠링)"
+      ],
+      [
+       "VRRM",
+       "40 V"
+      ],
+      [
+       "IO",
+       "3.0 A (정격 VR, TL = 100 °C)"
+      ],
+      [
+       "IFSM",
+       "100 A (60 Hz 반파, 정격 부하)"
+      ],
+      [
+       "VF max",
+       "0.450 V @ 3.0 A, 25 °C / 0.390 V @ 3.0 A, 100 °C"
+      ],
+      [
+       "IR max",
+       "0.3 mA @ 40 V, 25 °C / 15 mA @ 40 V, 100 °C"
+      ],
+      [
+       "등급",
+       "MBRA340T3G: 일반 등급 (AEC 표기 없음) · <b>NRVBA340T3G: AEC-Q101 인증, PPAP 가능</b>"
+      ],
+      [
+       "온도",
+       "TJ −55 ~ +150 °C"
+      ],
+      [
+       "패키지",
+       "SMA, CASE 403D (Style 1) — 업계 DO-214AC 외형 (문서에는 \"DO-214AC\" 명칭 미기재)"
+      ],
+      [
+       "마킹",
+       "A34 + AYWW"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VRRM / VRWM / VR",
+        "",
+        "40",
+        "V",
+        ""
+       ],
+       [
+        "IO (평균 정류 전류)",
+        "",
+        "3.0",
+        "A",
+        "TL = 100 °C"
+       ],
+       [
+        "IFSM",
+        "",
+        "100",
+        "A",
+        "60 Hz 반파 단상"
+       ],
+       [
+        "TJ",
+        "−55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "−55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "dv/dt",
+        "",
+        "10,000",
+        "V/µs",
+        "정격 VR, 25 °C (원문 단위 표기 깨짐)"
+       ],
+       [
+        "ESD",
+        "",
+        "",
+        "",
+        "MM Class C, HBM Class 3B"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SMA (CASE 403D, Style 1)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "K",
+        "캐소드 (극성 띠 표시 쪽)"
+       ],
+       [
+        "2",
+        "A",
+        "애노드"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>본체 E 4.06 ~ 4.57 mm, 전체 HE 4.83 ~ 5.59 mm, 폭 D 2.29 ~ 2.92 mm, 높이 A 1.97 ~ 2.20 mm, 리드 폭 b 1.27 ~ 1.63 mm. RθJL 15 °C/W, RθJA 81 °C/W (2″ FR4, 1″ 패드). MSL 1, 260 °C 10 s. 5,000개/13″ 릴 (12 mm 테이프). 권장 풋프린트 도면 치수 4.0 / 2.0 / 2.0 mm.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>차량용 BOM에는 반드시 NRVBA340T3G 사용 — MBRA340T3G 자체는 AEC-Q101 인증이 아님. 두 품번은 전기적 사양·패키지 동일.</li>\n    <li>고온에서 IR이 급증 (100 °C에서 최대 15 mA) — 역방향 누설로 인한 열폭주와 대기전류 영향 검토.</li>\n    <li>KiCad 풋프린트: Diode_SMD:D_SMA, 핀 1 = 캐소드.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "alias": [
+  "MBRA340T3G",
+  "NRVBA340T3G"
+ ],
+ "src": [
+  "https://static.chipdip.ru/lib/629/DOC011629432.pdf"
+ ],
+ "issues": [
+  {
+   "p": "[등급·수명] MBRA340T3G is not AEC-Q101; only NRVBA340T3G is (\"AEC-Q101 Qualified and PPAP Capable\")",
+   "fix": "use NRVBA340T3G in automotive BOMs",
+   "url": "https://static.chipdip.ru/lib/629/DOC011629432.pdf"
+  }
+ ]
+}

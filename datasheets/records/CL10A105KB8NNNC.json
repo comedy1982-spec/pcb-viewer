@@ -1,0 +1,81 @@
+{
+ "mpn": "CL10A105KB8NNNC",
+ "mfr": "Samsung Electro-Mechanics",
+ "cat": "커패시터",
+ "price": null,
+ "status": "done",
+ "title": "MLCC 1 µF 50 V X5R 0603",
+ "meta": [
+  "Samsung Electro-Mechanics · 커패시터 · MLCC 1 µF ±10 % 50 V X5R 0603",
+  "원본: <a href=\"https://www.futureelectronics.com/p/capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl10a105kb8nnnc-samsung-electro-mechanics-7019721\" target=\"_blank\" rel=\"noopener\">유통사 사양 페이지</a> · <a href=\"https://product.samsungsem.com/mlcc/CL10A105KB8NNN.do\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=CL10A105KB8NNNC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a>"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "정전용량",
+       "1 µF"
+      ],
+      [
+       "허용차",
+       "±10 % (K)"
+      ],
+      [
+       "정격 전압",
+       "50 V"
+      ],
+      [
+       "유전체",
+       "X5R"
+      ],
+      [
+       "동작 온도",
+       "-55 – +85 °C"
+      ],
+      [
+       "크기",
+       "0603 (1608 metric)"
+      ],
+      [
+       "상태",
+       "Active (Future Electronics)"
+      ],
+      [
+       "차량 등급",
+       "AEC-Q200 표기 없음"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>0603 (1608 metric). 정확한 치수·두께·전극 폭은 제조사 사양서 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>X5R 고유전율 MLCC는 DC 바이어스에서 실효 용량이 크게 줄어듦 — 50 V 정격이라도 사용 전압에서의 용량을 제조사 DC-bias 곡선으로 확인.</li>\n    <li>X5R 상한 85 °C: 엔진룸/고온 ECU 위치에서는 X7R(125 °C) 품번 검토.</li>\n    <li>읽은 유통사 페이지에 AEC-Q200 표기 없음 (일반 산업용 CL 시리즈) — 차량 ECU에는 Samsung 전장용(AEC-Q200) 품번으로 대체 검토.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.futureelectronics.com/p/capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl10a105kb8nnnc-samsung-electro-mechanics-7019721"
+ ],
+ "issues": [
+  {
+   "p": "[등급·수명] no AEC-Q200 listed (general-purpose CL series) and X5R max +85 °C, used in an automotive-ECU part list",
+   "fix": "consider a Samsung automotive (AEC-Q200) X7R equivalent",
+   "url": "https://www.futureelectronics.com/p/capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl10a105kb8nnnc-samsung-electro-mechanics-7019721"
+  }
+ ]
+}

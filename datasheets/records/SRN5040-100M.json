@@ -1,0 +1,162 @@
+{
+ "mpn": "SRN5040-100M",
+ "mfr": "Bourns",
+ "cat": "인덕터",
+ "price": null,
+ "status": "done",
+ "title": "10 uH semi-shielded SMD power inductor",
+ "meta": [
+  "Bourns · 인덕터 · 10 µH 반차폐 SMD 파워 인덕터 (SRN5040 시리즈)",
+  "원본: <a href=\"https://static.chipdip.ru/lib/755/DOC014755838.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (사본)</a> · <a href=\"https://jp.farnell.com/en-JP/bourns/srn5040-100m/inductor-10uh-20-2-1a-semi-shld/dp/2428234\" target=\"_blank\" rel=\"noopener\">제품 페이지 (Farnell)</a> · <a href=\"https://octopart.com/search?q=SRN5040-100M\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Bourns SRN5040 Series REV. 08/17"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "인덕턴스",
+       "10 µH ±20 % (측정 100 kHz, 1 V)"
+      ],
+      [
+       "정격 전류 Irms",
+       "2.1 A (온도 상승 40 °C 기준)"
+      ],
+      [
+       "포화 전류 Isat",
+       "2.3 A (인덕턴스 30 % 감소 기준)"
+      ],
+      [
+       "DCR",
+       "최대 0.068 Ω (일반값은 표에 없음)"
+      ],
+      [
+       "SRF · Q",
+       "SRF 17 MHz typ · Q 17 (기준값, 7.96 MHz)"
+      ],
+      [
+       "구조",
+       "반차폐 권선형: 페라이트 코어, 에나멜 동선, 자성 에폭시 코팅, 단자 Sn"
+      ],
+      [
+       "크기",
+       "5.0 ± 0.2 × 5.0 ± 0.2 mm, 높이 최대 4.0 mm"
+      ],
+      [
+       "동작 온도",
+       "−40 … +125 °C (자기 발열 포함)"
+      ],
+      [
+       "AEC-Q200",
+       "데이터시트에 표기 없음"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "시리즈 인접 품번 (같은 표)",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "품번",
+       "L (µH)",
+       "DCR max (Ω)",
+       "Irms (A)",
+       "Isat (A)",
+       "SRF (MHz)"
+      ],
+      "rows": [
+       [
+        "SRN5040-4R7M",
+        "4.7",
+        "0.035",
+        "3.1",
+        "3.3",
+        "27"
+       ],
+       [
+        "SRN5040-100M",
+        "10",
+        "0.068",
+        "2.1",
+        "2.3",
+        "17"
+       ],
+       [
+        "SRN5040-150M",
+        "15",
+        "0.096",
+        "1.8",
+        "2.0",
+        "15"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>2단자 SMD, 무극성</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "1",
+        "단자 (무극성)"
+       ],
+       [
+        "2",
+        "2",
+        "단자 (무극성)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>본체 5.0 × 5.0 mm, 높이 ≤ 4.0 mm. 권장 패드 도면에 5.1 / 4.0 / 1.5 / 1.5 mm 치수가 있으나 추출본에서 각 치수의 위치 배정이 불분명 — 랜드 패턴은 원본 도면 그림으로 확인. 보관 −40 … +125 °C (부품), 납땜 내열 260 °C 10 s.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>Isat 2.3 A(−30 %)와 Irms 2.1 A의 여유가 작음 — 벅 컨버터에서 최대 부하 전류 + 리플 절반이 2.3 A보다 충분히 낮게.</li>\n    <li>반차폐 구조라 누설 자속이 있음 — 피드백·아날로그 배선을 인덕터 아래로 지나가지 않게.</li>\n    <li>REV. 12/14 판은 보관 온도를 −10 … +40 °C(포장 상태)로 표기 — 판에 따라 조건이 다름.</li>\n    <li>AEC-Q200 표기가 없으므로 차량용 보드에는 AEC-Q200 인증 품번(같은 5 × 5 mm 풋프린트) 검토 — SRN5040TA 계열 존재(인증 여부 미확인).</li>\n    <li>Onlinecomponents에 단종(discontinued) 표시 — 양산 전 Bourns 수명 상태 확인.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://static.chipdip.ru/lib/755/DOC014755838.pdf"
+ ],
+ "issues": [
+  {
+   "p": "[등급·수명] Bourns SRN5040 datasheet (REV. 08/17) has no AEC-Q200 statement; mfr missing in batch",
+   "fix": "set mfr=Bourns; for automotive boards choose an AEC-Q200 5x5 mm inductor",
+   "url": "https://static.chipdip.ru/lib/755/DOC014755838.pdf"
+  },
+  {
+   "p": "[등급·수명] listed as discontinued (\"no longer being manufactured\") by distributor; mfr missing in batch",
+   "fix": "confirm Bourns lifecycle, set mfr=Bourns, pick a 5x5 mm alternative if EOL",
+   "url": "https://www.onlinecomponents.com/en/bourns/srn5040100m-45479565.html"
+  }
+ ]
+}

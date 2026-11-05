@@ -1,0 +1,340 @@
+{
+ "mpn": "TJA1145T/FD",
+ "mfr": "NXP",
+ "cat": "통신",
+ "price": 1.9,
+ "status": "done",
+ "title": "High-speed CAN transceiver for partial networking, FD-passive, SO14",
+ "meta": [
+  "NXP · 통신 · High-speed CAN transceiver for partial networking, FD-passive, SO14 · 참고 단가 약 $1.9 (추정)",
+  "원본: <a href=\"https://nxp.com/docs/en/data-sheet/TJA1145.pdf?pspll=1\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.nxp.com/products/interfaces/can-transceivers/high-speed-can-transceiver-for-partial-networking:TJA1145\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TJA1145T%2FFD\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TJA1145 Product data sheet Rev. 4 (2018-05-09)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "고속 CAN 트랜시버 + 부분 네트워킹(선택적 웨이크업), ISO 11898-2:2016 / SAE J2284-1~4"
+      ],
+      [
+       "데이터 레이트",
+       "타이밍 최대 2 Mbit/s 보증 (CAN FD 고속 구간); 선택적 웨이크업 50–1000 kbit/s"
+      ],
+      [
+       "/FD",
+       "FD-passive: Sleep/Standby 중 CAN FD 프레임을 무시(에러 미발생), FD 프레임은 웨이크업 프레임으로 불인정. 디바이스 ID 0x74"
+      ],
+      [
+       "제어",
+       "16/24/32-bit SPI, 모드 Normal / Standby / Sleep / Overtemp / Off, INH·WAKE"
+      ],
+      [
+       "전원",
+       "VBAT 4.5–28 V, VCC 4.5–5.5 V, VIO 2.85–5.5 V"
+      ],
+      [
+       "소비 전류",
+       "Sleep IBAT 40/59 µA (일반/최대, CWE=1), Standby 44/68 µA, Normal IBAT 1 mA; ICC 우성 45 mA 일반"
+      ],
+      [
+       "보호",
+       "CANH/CANL ±58 V, ESD IEC 61000-4-2 ±6 kV, 과열 경고/차단"
+      ],
+      [
+       "패키지",
+       "SO14 (SOT108-1), Tvj -40~150 °C"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VCC, VIO",
+        "-0.2",
+        "+6",
+        "V",
+        ""
+       ],
+       [
+        "TXD, RXD, SDI, SDO, SCK, SCSN",
+        "-0.2",
+        "VIO+0.2",
+        "V",
+        "6 V 이하"
+       ],
+       [
+        "WAKE, INH",
+        "-18",
+        "+40",
+        "V",
+        ""
+       ],
+       [
+        "BAT",
+        "-0.2",
+        "+40",
+        "V",
+        ""
+       ],
+       [
+        "CANH, CANL (다른 핀 기준)",
+        "-58",
+        "+58",
+        "V",
+        ""
+       ],
+       [
+        "CANH–CANL",
+        "-40",
+        "+40",
+        "V",
+        ""
+       ],
+       [
+        "ESD IEC 61000-4-2 (CANH, CANL)",
+        "-6",
+        "+6",
+        "kV",
+        ""
+       ],
+       [
+        "ESD HBM (CANH/CANL · BAT/WAKE · 기타)",
+        "",
+        "±8 · ±4 · ±2",
+        "kV",
+        ""
+       ],
+       [
+        "ESD MM / CDM",
+        "",
+        "±100 V / ±500 V (코너 ±750 V)",
+        "",
+        ""
+       ],
+       [
+        "Tvj",
+        "-40",
+        "+150",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "-55",
+        "+150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VBAT",
+        "4.5",
+        "",
+        "28",
+        "V"
+       ],
+       [
+        "VCC",
+        "4.5",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "VIO",
+        "2.85",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "Tvj",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ],
+       [
+        "SPI 클럭 주기 (Normal/Standby)",
+        "250 ns",
+        "",
+        "",
+        ""
+       ],
+       [
+        "SPI 클럭 주기 (Sleep)",
+        "1 µs",
+        "",
+        "",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SO14 (SOT108-1, 3.9 mm 바디)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "TXD",
+        "송신 데이터 입력"
+       ],
+       [
+        "2",
+        "GND",
+        "접지"
+       ],
+       [
+        "3",
+        "VCC",
+        "5 V 송신기 전원"
+       ],
+       [
+        "4",
+        "RXD",
+        "수신 데이터 출력"
+       ],
+       [
+        "5",
+        "VIO",
+        "I/O 레벨 변환 전원"
+       ],
+       [
+        "6",
+        "SDO",
+        "SPI 데이터 출력"
+       ],
+       [
+        "7",
+        "INH",
+        "외부 레귤레이터 인히빗 출력"
+       ],
+       [
+        "8",
+        "SCK",
+        "SPI 클럭 입력"
+       ],
+       [
+        "9",
+        "WAKE",
+        "로컬 웨이크업 입력"
+       ],
+       [
+        "10",
+        "BAT",
+        "배터리 전원"
+       ],
+       [
+        "11",
+        "SDI",
+        "SPI 데이터 입력"
+       ],
+       [
+        "12",
+        "CANL",
+        "CAN 버스 LOW"
+       ],
+       [
+        "13",
+        "CANH",
+        "CAN 버스 HIGH"
+       ],
+       [
+        "14",
+        "SCSN",
+        "SPI 칩 선택 (액티브 LOW)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>로컬 웨이크업 미사용 시 WAKE를 GND에 연결 (EMI)</li>\n    <li>INH: 하이사이드 출력, 180 µA에서 최소 VBAT-0.8 V; Sleep 시 고임피던스 → 외부 레귤레이터 차단</li>\n    <li>디커플링·WAKE 저항/커패시터·종단 권장값은 읽은 발췌에 없음 — AH1309 (TJA1145 Application Hints) 확인. (데이터시트 ESD 시험 회로는 BAT 100 nF, WAKE 10 nF + 10 kΩ 사용 — 설계 권장값 아님)</li>\n    <li>SPI 최소 클럭 주기 250 ns(약 4 MHz), Sleep 중 1 µs</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SO14 (SOT108-1) Rth(vj-a) 106 K/W, HVSON14(TK) 60 K/W. 과열 차단 167–187 °C, 해제/경고 127–147 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>부품 DB 설명 'CAN 부분 네트워킹 · SPI · INH · WAKE · FD 수동'과 일치.</li>\n    <li>BAT 상승 시 INH 활성까지 tstartup 2.8 ms 일반 / 4.7 ms 최대. TXD 우성 타임아웃 2.7–3.3 ms.</li>\n    <li>Table 1의 IIO Sleep(58 µA 최대)과 Table 34(5/8 µA)가 불일치 — 원본 확인.</li>\n    <li>후속품 TJA1145A (5 Mbit/s 대응, NXP 제품 페이지 검색 결과 기준 — 미확인 링크) 검토 가능.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://nxp.com/docs/en/data-sheet/TJA1145.pdf?pspll=1"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "SOIC-14",
+   "fd": 1
+  },
+  "grade": "Q100"
+ },
+ "issues": [
+  {
+   "p": "[설명·분류 오류] the datasheet (Rev. 4) guarantees timing only up to 2 Mbit/s; the successor TJA1145A supports up to 5 Mbit/s (NXP product page seen in search, not fetched)",
+   "fix": "note this, consider TJA1145AT/FD for new designs",
+   "url": "https://nxp.com/docs/en/data-sheet/TJA1145.pdf?pspll=1"
+  }
+ ]
+}

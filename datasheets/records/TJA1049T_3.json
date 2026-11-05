@@ -1,0 +1,282 @@
+{
+ "mpn": "TJA1049T/3",
+ "mfr": "NXP",
+ "cat": "통신",
+ "price": 0.8,
+ "status": "done",
+ "title": "High-speed CAN transceiver with Standby mode and VIO, SO8",
+ "meta": [
+  "NXP · 통신 · High-speed CAN transceiver with Standby mode and VIO, SO8 · 참고 단가 약 $0.8 (추정)",
+  "원본: <a href=\"https://dtsheet.com/doc/1656343/data-sheet\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://nxp.com/part/TJA1049T\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TJA1049T%2F3\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TJA1049 Product data sheet Rev. 4 (2015-01-15) — 배포 사본(dtsheet)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "고속 CAN 트랜시버, ISO 11898-2:2003 / ISO 11898-5:2007"
+      ],
+      [
+       "데이터 레이트",
+       "루프 지연 대칭 타이밍으로 CAN FD 최대 2 Mbit/s (Rev. 4 기준)"
+      ],
+      [
+       "모드",
+       "Normal / Standby (STB 핀), 버스·호스트 웨이크업 — Sleep 모드 없음"
+      ],
+      [
+       "전원",
+       "VCC 4.75–5.25 V, VIO 2.8–5.5 V"
+      ],
+      [
+       "소비 전류",
+       "Standby ICC 최대 5 µA (/3), IIO 5–14 µA; Normal 열성 5 mA / 우성 45 mA 일반"
+      ],
+      [
+       "타이밍",
+       "tPD(TXD-RXD) 60–250 ns (VIO 버전), TXD 우성 타임아웃 0.3/2/5 ms, Standby→Normal 7/25/47 µs"
+      ],
+      [
+       "보호",
+       "CANH/CANL ±58 V, ESD IEC 61000-4-2 ±8 kV, 무전원 시 버스 분리"
+      ],
+      [
+       "등급",
+       "AEC-Q100, Tvj -40~150 °C, SO8 (SOT96-1)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "CANH, CANL",
+        "-58",
+        "+58",
+        "V",
+        ""
+       ],
+       [
+        "기타 핀",
+        "-0.3",
+        "+7",
+        "V",
+        ""
+       ],
+       [
+        "ISO 7637 펄스 (CANH/CANL)",
+        "-150",
+        "+100",
+        "V",
+        ""
+       ],
+       [
+        "ESD IEC 61000-4-2 (CANH, CANL)",
+        "-8",
+        "+8",
+        "kV",
+        "150 pF, 330 Ω"
+       ],
+       [
+        "ESD HBM (CANH, CANL / 기타)",
+        "",
+        "±8 / ±4",
+        "kV",
+        ""
+       ],
+       [
+        "ESD MM / CDM",
+        "",
+        "±300 V / ±500 V (코너 ±750 V)",
+        "",
+        "표 정렬 불명확 — 원본 확인"
+       ],
+       [
+        "Tvj",
+        "-40",
+        "+150",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "-55",
+        "+150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VCC",
+        "4.75",
+        "5.0",
+        "5.25",
+        "V"
+       ],
+       [
+        "VIO",
+        "2.8",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "Tvj",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ],
+       [
+        "Vuvd(VCC)",
+        "3.5",
+        "",
+        "4.75",
+        "V"
+       ],
+       [
+        "Vuvd(VIO)",
+        "1.3",
+        "2.0",
+        "2.7",
+        "V"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SO8 (SOT96-1) — /3 버전 (5번 핀 VIO)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "TXD",
+        "송신 데이터 입력"
+       ],
+       [
+        "2",
+        "GND",
+        "접지"
+       ],
+       [
+        "3",
+        "VCC",
+        "5 V 전원 (송신기)"
+       ],
+       [
+        "4",
+        "RXD",
+        "수신 데이터 출력"
+       ],
+       [
+        "5",
+        "VIO",
+        "I/O 레벨 변환 전원 (MCU 전원 3.3/5 V)"
+       ],
+       [
+        "6",
+        "CANL",
+        "CAN 버스 LOW 라인"
+       ],
+       [
+        "7",
+        "CANH",
+        "CAN 버스 HIGH 라인"
+       ],
+       [
+        "8",
+        "STB",
+        "Standby 모드 제어 입력"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>3 V MCU 응용: VIO를 MCU 전원에 연결, 5 V VCC는 Standby 중 선택적으로 차단 가능 (데이터시트 그림 7)</li>\n    <li>5 V MCU + 분할 종단이 필요하면 SPLIT 핀이 있는 TJA1049T 사용 (그림 6)</li>\n    <li>상세 응용은 AH1021 (TJA1049 Application Hints)</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SO8 Rth(j-a) 145 K/W (자유 대기), HVSON8 50 K/W. Tvj 최대 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VCC 범위가 4.75–5.25 V로 TJA1042(4.5–5.5 V)보다 좁음 — 5 V 레귤레이터 정밀도 확인.</li>\n    <li>읽은 문서는 Rev. 4 (2015) — 이후 개정판의 5 Mbit/s 보증 여부는 NXP 최신본 확인 필요.</li>\n    <li>부품 DB 설명의 '대기 모드 · 저 Iq'는 Standby ICC 5 µA 최대와 일치.</li>\n    <li>핀 호환: TJA1042T/3 (동일 핀 배열).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://dtsheet.com/doc/1656343/data-sheet"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "SOIC-8",
+   "fd": 1
+  },
+  "grade": "Q100"
+ },
+ "issues": [
+  {
+   "p": "[설명·분류 오류] the datasheet read is Rev. 4 (2015), which gives VCC 4.75–5.25 V (narrower than TJA1042's 4.5–5.5 V) and only 2 Mbit/s CAN FD timing; the desc claim \"5 Mbit/s\" is not confirmed by this revision",
+   "fix": "check the latest NXP revision before relying on 5 Mbit/s",
+   "url": "https://dtsheet.com/doc/1656343/data-sheet"
+  }
+ ]
+}

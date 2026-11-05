@@ -1,0 +1,348 @@
+{
+ "mpn": "SPC560P50",
+ "mfr": "STMicroelectronics",
+ "cat": "MCU",
+ "price": null,
+ "status": "done",
+ "title": "Power Architecture automotive MCU",
+ "meta": [
+  "STMicroelectronics · MCU · 32-bit Power Architecture e200z0h automotive MCU (chassis/safety)",
+  "원본: <a href=\"https://www.st.com/resource/en/datasheet/spc560p50l5.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (미확인 링크)</a> · <a href=\"https://www.st.com/en/automotive-microcontrollers/spc560p50l5.html\" target=\"_blank\" rel=\"noopener\">제품 페이지 (L5)</a> · <a href=\"https://www.st.com/en/automotive-microcontrollers/spc560p50l3.html\" target=\"_blank\" rel=\"noopener\">제품 페이지 (L3)</a> · <a href=\"https://octopart.com/search?q=SPC560P50\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · <a href=\"https://pdf.elecfans.com/STMICROELECTRONICS/SPC560P50L3CEFBY.html\" target=\"_blank\" rel=\"noopener\">데이터시트 사본</a> · 데이터시트 Doc ID 14723 Rev 9 (사본; manualmachine 사본은 Rev 8, 2012-07) · 데이터 브리프 Doc ID 13950 Rev 5"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "코어",
+       "32비트 e200z0h (Power Architecture, VLE), 최대 64 MHz"
+      ],
+      [
+       "메모리",
+       "코드 플래시 최대 512 KB (ECC) · 데이터 플래시 64 KB (4 × 16 KB, ECC, EEPROM 에뮬레이션) · SRAM 최대 40 KB (ECC)"
+      ],
+      [
+       "모터 제어",
+       "FlexPWM 1개 (8출력) · eTimer 2개 (각 16비트 6채널) · 10비트 ADC 2개 (2 × 11채널 + 공유 4, 변환 &lt; 1 µs)"
+      ],
+      [
+       "통신",
+       "FlexCAN 1 (2.0B, 메시지 객체 32) + FlexCAN 기반 Safety port 1 (최대 7.5 Mbit/s) · FlexRay V2.1 1 (최대 10 Mbit/s, 512 KB 품목만) · LINFlex 2 · DSPI 4"
+      ],
+      [
+       "안전·기타",
+       "워치독, NMI, Fault Collection Unit, eDMA 16채널, Nexus L2+, CAN/UART 부트로더"
+      ],
+      [
+       "전원",
+       "3.3 V 또는 5.0 V 단일 공급 (I/O 3.0–3.6 V / 4.5–5.5 V, 레귤레이터 3.0–5.5 V / 4.5–5.5 V) + 외부 NPN 밸러스트로 코어 1.2 V 생성"
+      ],
+      [
+       "온도",
+       "TA −40 ~ 105 °C (fCPU 64 MHz), −40 ~ 125 °C (fCPU 60 MHz) · Tj 최대 150 °C"
+      ],
+      [
+       "패키지",
+       "SPC560P50L3: LQFP100 14 × 14 × 1.4 mm · SPC560P50L5: LQFP144 20 × 20 × 1.4 mm"
+      ],
+      [
+       "수명",
+       "Active, 2034-01까지 공급 (일부 주문 코드 NRND)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VDD_HV_IOx (3.3/5.0 V I/O 전원)",
+        "-0.3",
+        "6.0",
+        "V",
+        "표 9 (추출 텍스트 일부 깨짐)"
+       ],
+       [
+        "VDD_HV_OSC (발진기 전원)",
+        "-0.3",
+        "6.0",
+        "V",
+        ""
+       ],
+       [
+        "VDD_HV_REG (레귤레이터 전원)",
+        "-0.3",
+        "6.0",
+        "V",
+        ""
+       ],
+       [
+        "VDD_HV_ADC0/1 (ADC 전원·상위 기준)",
+        "-0.3",
+        "6.0",
+        "V",
+        ""
+       ],
+       [
+        "VSS_HV_ADC0/1",
+        "-0.1",
+        "0.1",
+        "V",
+        ""
+       ],
+       [
+        "VIN (모든 핀, VSS 기준)",
+        "-0.3",
+        "VDD_HV_IOx + 0.3",
+        "V",
+        ""
+       ],
+       [
+        "IINJPAD (핀당 주입 전류)",
+        "-10",
+        "10",
+        "mA",
+        ""
+       ],
+       [
+        "IINJSUM (주입 전류 합)",
+        "-50",
+        "50",
+        "mA",
+        ""
+       ],
+       [
+        "IVDD_LV (VDD_LV 정적 싱크 전류)",
+        "",
+        "155",
+        "mA",
+        ""
+       ],
+       [
+        "TSTG",
+        "-55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "TJ (바이어스 상태)",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "5.0 V 동작: VDD_HV_IOx, 플래시, OSC, REG, ADC 전원 (표 10)",
+        "4.5",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "3.3 V 동작: I/O·플래시 전원 (표 11)",
+        "3.0",
+        "",
+        "3.6",
+        "V"
+       ],
+       [
+        "3.3 V 동작: 레귤레이터 전원 VDD_HV_REG",
+        "3.0",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "TA (fCPU = 64 MHz)",
+        "-40",
+        "",
+        "105",
+        "°C"
+       ],
+       [
+        "TA (fCPU = 60 MHz)",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ],
+       [
+        "레귤레이터 출력 (트리밍 후, 표 17)",
+        "1.15",
+        "",
+        "1.32",
+        "V"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>LQFP100 (L3) / LQFP144 (L5) — 대형 MCU로 전체 핀표 생략, 핀 그룹만 요약 (표 5 전원 핀, 표 6 시스템 핀).</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "—",
+        "VDD_HV_IOx / VSS_HV_IOx",
+        "3.3/5.0 V I/O 전원 (공급 간 차이 300 mV 이내)"
+       ],
+       [
+        "—",
+        "VDD_HV_REG, BCTRL",
+        "레귤레이터 전원, 외부 NPN 밸러스트 베이스 제어"
+       ],
+       [
+        "—",
+        "VDD_LV_CORx / VSS_LV_CORx",
+        "1.2 V 코어 — 디커플링 커패시터만 연결 (외부 회로 구동 금지)"
+       ],
+       [
+        "—",
+        "VDD_HV_ADC0/1, VSS_HV_ADC0/1",
+        "ADC 전원·기준 (두 ADC 전원 차이 100 mV 이내)"
+       ],
+       [
+        "—",
+        "VDD_HV_OSC, XTAL/EXTAL",
+        "크리스털 발진기"
+       ],
+       [
+        "—",
+        "RESET",
+        "양방향 리셋"
+       ],
+       [
+        "—",
+        "GPIO 포트",
+        "FlexPWM, eTimer, ADC, FlexCAN, FlexRay, LINFlex, DSPI, Nexus 다중화 — 데이터시트 핀아웃 장 참조"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>코어 1.2 V(VDD_LV_COR)는 반드시 내부 레귤레이터 + 외부 NPN 밸러스트로 생성 — 외부 레귤레이터로 직접 공급 불가 (3.8.1절).</li>\n    <li>승인 밸러스트 (표 16): BCP68, BCX68, BC868, BC817, BCP56 계열.</li>\n    <li>베이스 저항 구성 (표 17, 그림 9): RB 18–22 kΩ · CDEC1 19.5–30 µF (10 µF X7R/X8R ×3; BC817 사용 시 22 µF ×1, 14.3–22 µF) · CDEC2 1200–1760 nF (440 nF ×4) · CDEC3 19.5–30 µF (≥ CDEC1).</li>\n    <li>베이스 저항 없는 구성 (표 18, 그림 10): CDEC1 40–56 µF (4개) · CDEC2 ≥ 400 nF (100 nF ×4) · CDEC3 ≥ 40 µF.</li>\n    <li>VDD_HV_REG, BCTRL, VDD_LV_CORx 배선 직렬 인덕턴스 LReg ≤ 15 nH — 밸러스트와 커패시터를 핀 가까이.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "LQFP144",
+       "LQFP100",
+       "조건"
+      ],
+      "rows": [
+       [
+        "RθJA",
+        "54.2",
+        "47.3",
+        "1s 보드 (°C/W)"
+       ],
+       [
+        "RθJA",
+        "44.4",
+        "35.3",
+        "2s2p 보드"
+       ],
+       [
+        "RθJB",
+        "29.9",
+        "19.1",
+        "2s2p"
+       ],
+       [
+        "RθJC(top)",
+        "9.3",
+        "9.7",
+        "1s"
+       ],
+       [
+        "ΨJB",
+        "30.2",
+        "19.1",
+        "자연 대류"
+       ],
+       [
+        "ΨJC",
+        "0.8",
+        "0.8",
+        "자연 대류"
+       ]
+      ]
+     }
+    },
+    {
+     "html": "<p>LQFP100 14 × 14 × 1.4 mm · LQFP144 20 × 20 × 1.4 mm. Tj 최대 150 °C. (표 12/13 추출 레이아웃이 일부 모호 — 원본 대조 권장)</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>\"SPC560P50\"은 기본 품번 — 주문 시 패키지(L3 = LQFP100, L5 = LQFP144)와 옵션 접미사 필요.</li>\n    <li>NRND 주문 코드 — L3: BEFAR, BEFAY, CEFAY, CEFBY · L5: BEAAR, BEAAY, BEABR, BEABY, BEFAY, CEFAY. Active — L3: BEABR, BEABY, CEFAR, CEFBR · L5: BEFAR, CEFAR.</li>\n    <li>부품 DB 설명 \"ASIL B\": 제품 페이지에 ISO 26262/ASIL 언급 없음 — 안전 매뉴얼로 확인 필요.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "alias": [
+  "SPC560P50*",
+  "SPC560P50L5CEFAR"
+ ],
+ "src": [
+  "https://pdf.elecfans.com/STMICROELECTRONICS/SPC560P50L3CEFBY.html"
+ ],
+ "todo": "데이터시트 사본(Doc ID 14723 Rev 9)의 3장에서 채움. 표 9 앞부분(VDD_HV_FL 등)과 VDD_LV_CORx 권장 범위는 추출 텍스트가 깨져 확인하지 못함 — 원본 대조 권장."
+}

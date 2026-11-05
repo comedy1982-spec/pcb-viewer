@@ -1,0 +1,463 @@
+{
+ "mpn": "MC33FS4500",
+ "mfr": "NXP",
+ "cat": "전원",
+ "price": null,
+ "status": "done",
+ "title": "FS4500 safety power SBC with linear VCORE, CAN FD/LIN",
+ "meta": [
+  "NXP · 전원 · FS4500 safety power SBC with linear VCORE, CAN FD/LIN",
+  "원본: <a href=\"https://nxp.com/docs/en/data-sheet/FS6500-FS4500-ASILD.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.nxp.com/FS4500\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=MC33FS4500\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 FS6500-FS4500-ASILD Rev. 9.0 (2026-07-15)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "4세대 안전 전원 SBC (ASIL D까지), 리니어 VCORE + CAN FD (+ LIN 변형), 안전 출력 FS0B/FS1B/RSTB"
+      ],
+      [
+       "입력",
+       "VSUP 동작 2.7 V(부스트 구성) / 4.5 V(벅 구성)까지, 정적 사양 36 V까지, 절대 최대 40 V"
+      ],
+      [
+       "VPRE",
+       "벅 또는 비반전 벅-부스트 프리레귤레이터, 출력 6.5 V 일반 (벅 6.25–6.75 V), 최대 2.0 A"
+      ],
+      [
+       "VCORE (FS45)",
+       "리니어 1.0–5.0 V (외부 분압, 기준 0.8 V), 0.5 A"
+      ],
+      [
+       "VCCA / VAUX",
+       "VCCA 5.0/3.3 V ±1 % 내부 100 mA (외부 PNP 300 mA ±3 %), VAUX 5.0/3.3 V 최대 400 mA"
+      ],
+      [
+       "CAN FD / LIN",
+       "CAN FD 2.0 Mbit/s (ISO 11898-2/-5), CAN_5V 4.8–5.2 V 100 mA / LIN 2.0–2.2, SAE J2602-2"
+      ],
+      [
+       "저전력",
+       "LPOFF 약 32 µA (14 V, 25 °C), 최대 60 µA (18 V, 80 °C), CAN/LIN/IO/LDT 웨이크"
+      ],
+      [
+       "등급",
+       "AEC-Q100 Grade 1, Ta ≤ 125 °C, Tj ≤ 150 °C"
+      ],
+      [
+       "패키지",
+       "48-pin LQFP 노출 패드"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VSUP1/2/3",
+        "-1.0",
+        "40",
+        "V",
+        ""
+       ],
+       [
+        "VSENSE",
+        "-14",
+        "40",
+        "V",
+        "외부 직렬 저항 필요"
+       ],
+       [
+        "CANH/CANL",
+        "-27",
+        "40",
+        "V",
+        ""
+       ],
+       [
+        "LIN",
+        "-18",
+        "40",
+        "V",
+        ""
+       ],
+       [
+        "ESD HBM",
+        "",
+        "±2 kV (전 핀) / ±4 kV (일부) / ±6 kV (CANH/L) / ±8 kV (LIN)",
+        "",
+        ""
+       ],
+       [
+        "ESD CDM",
+        "",
+        "±500 V (코너 ±750 V)",
+        "",
+        ""
+       ],
+       [
+        "접합 온도 TJ",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "저장 온도",
+        "-55",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VSUP (벅 구성)",
+        "4.5",
+        "",
+        "36",
+        "V"
+       ],
+       [
+        "VSUP (부스트 구성)",
+        "2.7",
+        "",
+        "36",
+        "V"
+       ],
+       [
+        "주위 온도 TA",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>48-pin LQFP 노출 패드 — CAN FD + LIN 변형(MC33FS4500L) 기준. 노출 패드 연결은 이 문서 발췌에 명시 없음</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "VSUP1",
+        "전원 입력 1 (역접속 다이오드 필요)"
+       ],
+       [
+        "2",
+        "VSUP2",
+        "전원 입력 2"
+       ],
+       [
+        "3",
+        "VSENSE",
+        "배터리 감지 (직렬 저항 필요)"
+       ],
+       [
+        "4",
+        "VSUP3",
+        "전원 입력 3"
+       ],
+       [
+        "5",
+        "LIN",
+        "LIN 버스 (L 변형). FS1B 변형은 FS1B, C 변형(FS1B·LIN 없음)은 미연결"
+       ],
+       [
+        "6",
+        "GND_COM",
+        "CAN/LIN 공통 접지"
+       ],
+       [
+        "7",
+        "CAN_5V",
+        "CAN 트랜시버용 5 V 출력"
+       ],
+       [
+        "8",
+        "CANH",
+        "CAN 버스 High"
+       ],
+       [
+        "9",
+        "CANL",
+        "CAN 버스 Low"
+       ],
+       [
+        "10",
+        "IO_4",
+        "입출력 4"
+       ],
+       [
+        "11",
+        "IO_5/VKAM",
+        "입출력 5 / VKAM"
+       ],
+       [
+        "12",
+        "IO_0",
+        "입출력 0 (직렬 저항 필요)"
+       ],
+       [
+        "13",
+        "FCRBM",
+        "VCORE 저항 브리지 모니터"
+       ],
+       [
+        "14",
+        "FS0B",
+        "안전 출력 0 (오픈 드레인)"
+       ],
+       [
+        "15",
+        "DEBUG",
+        "디버그 모드 입력"
+       ],
+       [
+        "16",
+        "AGND",
+        "아날로그 접지"
+       ],
+       [
+        "17",
+        "MUX_OUT",
+        "아날로그 MUX 출력"
+       ],
+       [
+        "18",
+        "IO_2",
+        "입력 (FCCU 모니터링)"
+       ],
+       [
+        "19",
+        "IO_3",
+        "입력 (FCCU 모니터링)"
+       ],
+       [
+        "20",
+        "TXD",
+        "CAN 송신 입력"
+       ],
+       [
+        "21",
+        "RXD",
+        "CAN 수신 출력"
+       ],
+       [
+        "22",
+        "TXDL",
+        "LIN 송신 입력 (FS1B 변형은 VPU_FS)"
+       ],
+       [
+        "23",
+        "RXDL",
+        "LIN 수신 출력 (FS1B 변형은 n.c.)"
+       ],
+       [
+        "24",
+        "RSTB",
+        "리셋 출력 (오픈 드레인)"
+       ],
+       [
+        "25",
+        "MISO",
+        "SPI 데이터 출력"
+       ],
+       [
+        "26",
+        "MOSI",
+        "SPI 데이터 입력"
+       ],
+       [
+        "27",
+        "SCLK",
+        "SPI 클럭"
+       ],
+       [
+        "28",
+        "NCS",
+        "SPI 칩 선택"
+       ],
+       [
+        "29",
+        "INTB",
+        "인터럽트 출력"
+       ],
+       [
+        "30",
+        "VDDIO",
+        "I/O 전원 입력"
+       ],
+       [
+        "31",
+        "SELECT",
+        "VCCA/VAUX 전압 선택 저항"
+       ],
+       [
+        "32",
+        "FB_CORE",
+        "VCORE 피드백 (기준 0.8 V)"
+       ],
+       [
+        "33",
+        "COMP_CORE",
+        "FS45에서는 개방"
+       ],
+       [
+        "34",
+        "VCORE_SNS",
+        "VCORE 감지"
+       ],
+       [
+        "35",
+        "VCORE",
+        "VCORE 리니어 출력 (FS65는 SW_CORE)"
+       ],
+       [
+        "36",
+        "BOOT_CORE",
+        "FS45에서는 개방"
+       ],
+       [
+        "37",
+        "VPRE",
+        "VPRE 감지 입력"
+       ],
+       [
+        "38",
+        "VAUX",
+        "VAUX 출력"
+       ],
+       [
+        "39",
+        "VAUX_B",
+        "VAUX 외부 PNP 베이스"
+       ],
+       [
+        "40",
+        "VAUX_E",
+        "VAUX 외부 PNP 이미터"
+       ],
+       [
+        "41",
+        "VCCA_E",
+        "VCCA 외부 PNP 이미터"
+       ],
+       [
+        "42",
+        "VCCA_B",
+        "VCCA 외부 PNP 베이스"
+       ],
+       [
+        "43",
+        "VCCA",
+        "VCCA 출력"
+       ],
+       [
+        "44",
+        "GATE_LS",
+        "부스트 로우사이드 게이트"
+       ],
+       [
+        "45",
+        "DGND",
+        "디지털 접지"
+       ],
+       [
+        "46",
+        "BOOT_PRE",
+        "VPRE 부트스트랩"
+       ],
+       [
+        "47",
+        "SW_PRE2",
+        "VPRE 스위치 노드 2"
+       ],
+       [
+        "48",
+        "SW_PRE1",
+        "VPRE 스위치 노드 1"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VSUP 최소 47 µF, VSUP1에 역접속 방지 다이오드 필요</li>\n    <li>VPRE 출력 용량: 사양 시험 조건 57 µF. FS45 VCORE 출력: 시험 조건 20 µF. VPRE 인덕터 권장값은 읽은 문서에 없음</li>\n    <li>SELECT 저항(VCCA/VAUX): 5.1 kΩ = 3.3/3.3 V, 12 kΩ = 5.0/5.0 V, 24 kΩ = 3.3/5.0 V, 51 kΩ = 5.0/3.3 V, 개방 = 3.3 V</li>\n    <li>VSENSE, FS0B/FS1B, IO_0/IO_4에 직렬 저항 필요. LIN 마스터 노드는 1.0 kΩ 풀업. FS1B 풀업 RVPU_FS 1.0–1.5 kΩ</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>48-pin LQFP 노출 패드. RθJA 30 °C/W (JESD51-6/-7), RθJC(top) 23.8 °C/W, RθJC(bottom) 0.9 °C/W. 28 V 초과 입력에서는 리니어 손실 고려.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>'MC33FS4500'은 기본 품번이며 주문 가능 품번은 MC33FS4500CAE/CKE (CAN FD), MC33FS4500LAE/LKE (CAN FD + LIN), MC33FS4500NAE/NKE (인터페이스 없음). R2 = 테이프·릴. 부품 DB 설명(CAN/LIN)에 맞추면 MC33FS4500LAE.</li>\n    <li>LIN과 FS1B는 상호 배타 — FS1B가 필요하면 MC33FS4501C (LIN 없음).</li>\n    <li>VCORE가 리니어 0.5 A — (VPRE 6.5 V − VCORE) × I 손실이 큼. 1.25 V 코어를 0.5 A 공급 시 약 2.6 W로 열 설계 주의, 고전류 코어는 FS65 (DC-DC) 고려.</li>\n    <li>읽은 문서에 워치독 방식(챌린저/단순)과 패키지 외형 치수는 명시되지 않음 — 전체 데이터시트·안전 매뉴얼 확인.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "alias": [
+  "MC33FS450*",
+  "MC33FS4500*",
+  "MC33FS4500LAER2"
+ ],
+ "src": [
+  "https://nxp.com/docs/en/data-sheet/FS6500-FS4500-ASILD.pdf"
+ ]
+}

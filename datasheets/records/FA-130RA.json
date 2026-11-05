@@ -1,0 +1,181 @@
+{
+ "mpn": "FA-130RA",
+ "mfr": "Mabuchi Motor (Tamiya 판매)",
+ "cat": "모터",
+ "price": 2.1,
+ "status": "done",
+ "title": "130-size Brushed DC Motor",
+ "meta": [
+  "Mabuchi Motor (Tamiya 판매) · 모터 · 130-size metal-brush DC motor (Tamiya 980112M = FA-130RA-18100 상당) + 70097 gearbox · 참고 단가 약 $2.1 (추정)",
+  "원본: <a href=\"https://forums.parallax.com/uploads/attachments/53807/56129.pdf\" target=\"_blank\" rel=\"noopener\">Mabuchi FA-130RA 사양서 PDF (Parallax 포럼 게시본)</a> · <a href=\"https://www.pololu.com/product/77/specs\" target=\"_blank\" rel=\"noopener\">Pololu 사양 페이지</a> · <a href=\"https://www.pololu.com/product/61\" target=\"_blank\" rel=\"noopener\">Tamiya 70097 기어박스 페이지</a> · <a href=\"https://octopart.com/search?q=FA-130RA\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Mabuchi 카탈로그 시트 (날짜 표기 없음)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "html": "<p>FA-130RA 권선 변형 (Mabuchi 사양서). Pololu 측정값(3 V 무부하 12,300 rpm·150 mA, 구속 2.1 A)은 -18100과 일치.</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "모델",
+       "공칭 / 사용 전압",
+       "무부하",
+       "최대 효율점",
+       "구속"
+      ],
+      "rows": [
+       [
+        "FA-130RA-2270",
+        "1.5 V / 1.5 – 3.0 V",
+        "9100 rpm, 0.20 A",
+        "6990 rpm, 0.66 A, 0.59 mN·m, 0.43 W",
+        "2.55 mN·m, 2.20 A"
+       ],
+       [
+        "FA-130RA-18100",
+        "3 V / 1.5 – 3.0 V",
+        "12300 rpm, 0.15 A",
+        "9710 rpm, 0.56 A, 0.74 mN·m, 0.76 W, 36 %",
+        "3.53 mN·m, 2.10 A"
+       ],
+       [
+        "FA-130RA-14150",
+        "3 V / 1.5 – 4.5 V",
+        "8300 rpm, 0.11 A",
+        "6150 rpm, 0.31 A, 0.55 mN·m, 0.35 W, 22 %",
+        "2.11 mN·m, 0.90 A"
+       ]
+      ]
+     }
+    },
+    {
+     "dl": [
+      [
+       "형식",
+       "130 사이즈 금속 브러시 DC 모터, 출력 약 0.2 – 2.5 W (계열)"
+      ],
+      [
+       "무게",
+       "약 17 g"
+      ],
+      [
+       "기어박스",
+       "Tamiya 70097 Twin-Motor Gearbox, 58:1 또는 203:1 조립 선택 (Pololu). 출력축 3 mm 육각"
+      ],
+      [
+       "시뮬레이션 값",
+       "-18100 기준 R ≈ 3 V / 2.1 A = 1.43 Ω (계산값, 데이터시트 값 아님)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "html": "<p>사양서에 절대 최대 정격 표 없음. 사용 전압 범위(-18100: 1.5 – 3.0 V)를 상한으로 볼 것. Pololu는 구속 시 과열 경고(구속은 수 초 이내).</p>"
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "모터 전압 (-18100)",
+        "1.5",
+        "3",
+        "3.0",
+        "V"
+       ],
+       [
+        "모터 전압 (-14150)",
+        "1.5",
+        "3",
+        "4.5",
+        "V"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "M+",
+        "(+) 표시 단자 — 회전 방향 기준"
+       ],
+       [
+        "2",
+        "M−",
+        "(−) 단자 (극성 반전 시 역회전)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>구속 전류 2.1 – 2.2 A(-18100/-2270) — H-브리지 피크 전류 정격이 이 이상이어야 함. 저전류 대안: -14150 (구속 0.9 A) 또는 Pololu #1117 6 V 130 모터.</li>\n    <li>브러시 노이즈 억제용 단자 간 세라믹 커패시터는 일반 관행(사양서에 값 없음).</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>130 사이즈 케이스. 외형도 수치(15.1, 20.1 등)는 읽은 텍스트에서 치수 항목과 대응되지 않아 싣지 않음 — 원문 도면 확인.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>Pololu에서 Tamiya 980112M 단종(discontinued) 표시. 정확한 권선 코드를 BOM에 지정할 것 (FA-130RA만으로는 변형 미특정).</li>\n    <li>-18100을 3 V 초과로 구동하면 사용 범위를 벗어남 — 6 V 구동이 필요하면 다른 권선 모델 선택.</li>\n    <li>스톨 감지 또는 전류 제한 권장 (Pololu 기어박스 페이지).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://forums.parallax.com/uploads/attachments/53807/56129.pdf"
+ ],
+ "issues": [
+  {
+   "p": "[등급·수명] Pololu lists the Tamiya 980112M FA-130 motor as discontinued",
+   "fix": "consider Pololu #1117 130-size 6 V motor as replacement",
+   "url": "https://www.pololu.com/product/77/specs"
+  },
+  {
+   "p": "[기타] \"FA-130RA\" alone does not identify the winding: Mabuchi lists -2270 (1.5 V), -18100 (3 V, matches Tamiya/Pololu figures) and -14150 (3 V, 0.9 A stall); -18100 rated 1.5–3.0 V only, so the \"3–6 V\" gearbox usage exceeds the motor's range",
+   "fix": "change MPN to FA-130RA-18100 and cap motor supply at 3 V",
+   "url": "https://forums.parallax.com/uploads/attachments/53807/56129.pdf"
+  }
+ ]
+}

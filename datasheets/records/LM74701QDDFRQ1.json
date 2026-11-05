@@ -1,0 +1,287 @@
+{
+ "mpn": "LM74701QDDFRQ1",
+ "mfr": "TI",
+ "cat": "보호",
+ "price": 1.2,
+ "status": "done",
+ "title": "TVS-less Ideal Diode Controller",
+ "meta": [
+  "TI · 보호 · 이상 다이오드 컨트롤러 (내장 VDS 클램프, TVS 생략형 역접속 보호) · 참고 단가 약 $1.2 (추정)",
+  "원본: <a href=\"https://ti.com/document-viewer/LM74701-Q1/datasheet/GUID-B01A7132-8E28-4103-99BD-5A0EE3D94562\" target=\"_blank\" rel=\"noopener\">데이터시트 (TI 문서 뷰어)</a> · <a href=\"https://www.ti.com/product/lm74701-q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=LM74701QDDFRQ1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SNOSDB8A (2021-06, rev. 2021-12)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "외부 N-채널 MOSFET 구동 이상 다이오드 컨트롤러 (차지펌프 내장), 역전류 차단, 내장 VDS 클램프로 ISO 7637 과도에 입력 TVS 없이 대응 (제품 페이지 기재)"
+      ],
+      [
+       "입력 전압",
+       "3.2 V ~ 65 V (기동 3.9 V), 역전압 −33 V (제품 페이지). 전기 특성표 동작 VANODE 4–60 V"
+      ],
+      [
+       "순방향 레귤레이션",
+       "VAK 20 mV typ (13–29 mV), 완전 도통 54 mV typ"
+      ],
+      [
+       "역전류 차단",
+       "VAK −11 mV typ (−17 ~ −2 mV) 에서 차단, 응답 &lt; 0.75 µs (제품 페이지), 게이트 피크 싱크 2000 mA typ"
+      ],
+      [
+       "클램프",
+       "VCLAMP (CATHODE−ANODE) 34 ~ 43 V"
+      ],
+      [
+       "전류 소비",
+       "동작 80 µA typ (130 µA max), 셧다운 0.9 µA typ (1.5 µA max)"
+      ],
+      [
+       "기타",
+       "배터리 전압 모니터용 SW 단로 스위치 (19.5 Ω typ)"
+      ],
+      [
+       "등급",
+       "AEC-Q100 Grade 1 (TA −40 ~ 125 °C)"
+      ],
+      [
+       "패키지",
+       "SOT-23-THN 8핀 (DDF)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "ANODE – GND",
+        "−(VCLAMP−1)",
+        "65",
+        "V",
+        ""
+       ],
+       [
+        "SW, EN – GND (VANODE &gt; 0 V)",
+        "−0.3",
+        "65",
+        "V",
+        ""
+       ],
+       [
+        "EN – GND (VANODE ≤ 0 V)",
+        "VANODE",
+        "65 + VANODE",
+        "V",
+        ""
+       ],
+       [
+        "SW – GND (VANODE ≤ 0 V)",
+        "VANODE",
+        "0.3 + VANODE",
+        "V",
+        ""
+       ],
+       [
+        "ISW",
+        "−1",
+        "10",
+        "mA",
+        ""
+       ],
+       [
+        "GATE – ANODE",
+        "−0.3",
+        "15",
+        "V",
+        ""
+       ],
+       [
+        "VCAP – ANODE",
+        "−0.3",
+        "15",
+        "V",
+        ""
+       ],
+       [
+        "CATHODE – ANODE",
+        "−5",
+        "VCLAMP",
+        "V",
+        ""
+       ],
+       [
+        "동작 접합 온도",
+        "−40",
+        "150",
+        "°C",
+        "125 °C 초과 시 수명 디레이팅"
+       ],
+       [
+        "보관 온도",
+        "−40",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "html": "<p class=\"todo\">권장 동작 조건 표 원문은 읽지 못함 — 데이터시트 확인 필요. 아래는 전기 특성표 기준 값.</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VANODE 동작 입력 (전기 특성 조건)",
+        "4",
+        "12",
+        "60",
+        "V"
+       ],
+       [
+        "CVCAP (특성 측정 조건)",
+        "",
+        "0.1",
+        "",
+        "µF"
+       ],
+       [
+        "TJ",
+        "−40",
+        "",
+        "125",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOT-23-THN 8핀 (DDF)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "GATE",
+        "외부 N-MOSFET 게이트 구동 출력"
+       ],
+       [
+        "2",
+        "ANODE",
+        "입력 전원 / 이상 다이오드 애노드 — MOSFET 소스"
+       ],
+       [
+        "3",
+        "VCAP",
+        "차지펌프 출력, 외부 커패시터 연결"
+       ],
+       [
+        "4",
+        "SW",
+        "배터리 전압 감지 단로 스위치 (EN 시 ANODE와 연결, 분압기 연결)"
+       ],
+       [
+        "5",
+        "GND",
+        "그라운드"
+       ],
+       [
+        "6",
+        "EN",
+        "인에이블 입력 (상시 동작 시 ANODE에 연결 가능)"
+       ],
+       [
+        "7",
+        "N.C",
+        "미연결, 플로팅 유지"
+       ],
+       [
+        "8",
+        "CATHODE",
+        "이상 다이오드 캐소드 — MOSFET 드레인"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VCAP: 차지펌프 커패시터 (특성 측정 조건 0.1 µF). 차지펌프 소스 300 µA typ, VCAP−ANODE 11.6 V에서 켜지고 12.4 V에서 꺼짐. VCAP UVLO 상승 6.5 V / 하강 5.4 V typ</li>\n    <li>게이트 소스 11 mA typ로 턴온, 역전류 시 2 A급 싱크로 빠르게 턴오프 — MOSFET Qg가 크면 턴온이 느려짐</li>\n    <li>EN 문턱 low 0.9 V / high 2 V typ, EN 싱크 3 µA (VEN = 12 V)</li>\n    <li>SW 핀에 분압기 → ADC 로 배터리 감시, 디스에이블 시 분압기 누설 차단 (ISW 최대 10 mA)</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>DDF (SOT-23-THN) 8핀. RθJA 133.8 °C/W, RθJC(top) 72.6 °C/W, RθJB 54.5 °C/W, ψJT 4.6 °C/W, ψJB 54.2 °C/W. TJ 최대 150 °C. 제품 페이지의 바디 크기 표기가 2.9 × 2.8 mm / 2.90 × 1.60 mm 로 혼재 — 패키지 도면(MPDS569D) 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>MOSFET VDS 정격은 VCLAMP(최대 43 V) 이상으로 선정 — 내장 클램프가 CATHODE−ANODE를 제한하는 구조.</li>\n    <li>역접속 시 ANODE 최소 −(VCLAMP−1) V 까지 허용, −33 V 역전압 (제품 페이지).</li>\n    <li>콜드 크랭킹 3.2 V 까지 동작하지만 기동은 3.9 V (POR 상승 최대 3.9 V).</li>\n    <li>LM74700-Q1 계열과 교체 시 핀 배치·패키지는 각 데이터시트로 대조 필요 (본 페이지에서 미확인).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://ti.com/document-viewer/lit/html/SNOSDB8A/GUID-B3DA3828-DFBD-4A9C-95A8-C42E8583C627"
+ ],
+ "key": {
+  "spec": {
+   "vin": [
+    3.2,
+    65
+   ],
+   "i": 20,
+   "pkg": "SOT-23-8"
+  },
+  "grade": "Q100",
+  "basis": "부하 전류는 외부 N-FET가 정함 — 20 A는 생성기가 함께 고르는 FET 기준"
+ }
+}

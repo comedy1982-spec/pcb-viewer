@@ -1,0 +1,339 @@
+{
+ "mpn": "SQD50P04-09L_GE3",
+ "mfr": "Vishay Siliconix",
+ "cat": "트랜지스터",
+ "price": 1.38,
+ "status": "done",
+ "title": "Automotive P-channel 40 V 50 A TrenchFET MOSFET, TO-252 (DPAK)",
+ "meta": [
+  "Vishay Siliconix · 트랜지스터 · Automotive P-channel 40 V 50 A TrenchFET MOSFET, TO-252 (DPAK) · 참고 단가 약 $1.38 (추정)",
+  "원본: <a href=\"https://docs.rs-online.com/40c7/A700000015989733.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (RS 사본)</a> · <a href=\"https://www.vishay.com/en/product/65018/tab/designtools-ppg\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=SQD50P04-09L_GE3\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Vishay 문서번호 65018, S11-2065-Rev. C, 24-Oct-11"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "자동차용 P채널 MOSFET, TrenchFET, 175 °C 정격"
+      ],
+      [
+       "VDS",
+       "−40 V"
+      ],
+      [
+       "ID",
+       "−50 A (TC = 25 °C 및 125 °C)"
+      ],
+      [
+       "RDS(on)",
+       "VGS = −10 V, ID = −17 A: typ 7.6 mΩ / 최대 9.4 mΩ; VGS = −4.5 V, ID = −14 A: typ 12 mΩ / 최대 19 mΩ"
+      ],
+      [
+       "VGS(th)",
+       "−1.5 ~ −2.5 V (ID = −250 µA)"
+      ],
+      [
+       "Qg",
+       "typ 103 nC / 최대 155 nC (VGS = −10 V, VDS = −20 V, ID = −50 A)"
+      ],
+      [
+       "등급",
+       "AEC-Q101 (데이터시트 각주: 파라메트릭 검증 진행 중 표기), 100 % Rg·UIS 시험, 할로겐 프리"
+      ],
+      [
+       "온도",
+       "TJ −55 ~ +175 °C"
+      ],
+      [
+       "패키지",
+       "TO-252 (DPAK), 드레인 = 탭"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "드레인-소스 전압 VDS",
+        "",
+        "−40",
+        "V",
+        ""
+       ],
+       [
+        "게이트-소스 전압 VGS",
+        "−20",
+        "+20",
+        "V",
+        ""
+       ],
+       [
+        "연속 드레인 전류 ID",
+        "",
+        "−50",
+        "A",
+        "TC = 25 °C / 125 °C 모두 −50 A"
+       ],
+       [
+        "펄스 드레인 전류 IDM",
+        "",
+        "−200",
+        "A",
+        ""
+       ],
+       [
+        "연속 소스(바디 다이오드) 전류 IS",
+        "",
+        "−50",
+        "A",
+        ""
+       ],
+       [
+        "단일 펄스 애벌란시 전류 IAS",
+        "",
+        "−50",
+        "A",
+        "L = 0.1 mH"
+       ],
+       [
+        "단일 펄스 애벌란시 에너지 EAS",
+        "",
+        "125",
+        "mJ",
+        "L = 0.1 mH"
+       ],
+       [
+        "소비 전력 PD",
+        "",
+        "136",
+        "W",
+        "TC = 25 °C (125 °C에서 45 W)"
+       ],
+       [
+        "접합·저장 온도 TJ, Tstg",
+        "−55",
+        "175",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "게이트 구동 VGS",
+        "",
+        "−10",
+        "",
+        "V"
+       ],
+       [
+        "접합 온도",
+        "−55",
+        "",
+        "175",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "전기적 특성 (TC = 25 °C)",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "조건",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "Ciss",
+        "VDS = −20 V, f = 1 MHz",
+        "",
+        "5339",
+        "6675",
+        "pF"
+       ],
+       [
+        "Coss",
+        "VDS = −20 V, f = 1 MHz",
+        "",
+        "852",
+        "1065",
+        "pF"
+       ],
+       [
+        "Crss",
+        "VDS = −20 V, f = 1 MHz",
+        "",
+        "681",
+        "855",
+        "pF"
+       ],
+       [
+        "Qgs / Qgd",
+        "VGS = −10 V, ID = −50 A",
+        "",
+        "24 / 16",
+        "",
+        "nC"
+       ],
+       [
+        "Rg",
+        "f = 1 MHz",
+        "1.4",
+        "2.8",
+        "4.2",
+        "Ω"
+       ],
+       [
+        "td(on) / tr",
+        "VDD = −20 V, RL = 0.4 Ω, VGEN = −10 V, Rg = 1 Ω",
+        "",
+        "13 / 15",
+        "20 / 23",
+        "ns"
+       ],
+       [
+        "td(off) / tf",
+        "동일",
+        "",
+        "61 / 19",
+        "92 / 29",
+        "ns"
+       ],
+       [
+        "RDS(on) @ 고온",
+        "VGS = −10 V, ID = −50 A",
+        "",
+        "",
+        "14 (125 °C) / 17 (175 °C)",
+        "mΩ"
+       ],
+       [
+        "gfs",
+        "VDS = −15 V, ID = −17 A",
+        "",
+        "46",
+        "",
+        "S"
+       ],
+       [
+        "VSD",
+        "IF = −50 A, VGS = 0 V",
+        "",
+        "0.95",
+        "1.5",
+        "V"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>TO-252 (DPAK, TO-252AA), 윗면에서 G-D-S, 드레인은 탭에 연결</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "G",
+        "게이트"
+       ],
+       [
+        "2 (탭)",
+        "D",
+        "드레인 — 탭과 연결"
+       ],
+       [
+        "3",
+        "S",
+        "소스"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>역접속 보호(하이사이드 P-FET): 소스를 부하 쪽, 드레인을 배터리 쪽에 두고 게이트를 저항으로 GND에 풀다운 — VGS 최대 ±20 V이므로 게이트-소스 사이에 제너 클램프 필요 (12 V 시스템 로드 덤프 대비).</li>\n    <li>Qg typ 103 nC로 큰 편 — PWM 스위칭용이면 게이트 드라이버 전류와 스위칭 손실을 계산.</li>\n    <li>VGS = −4.5 V에서도 RDS(on) 최대 19 mΩ로 규정되어 있어 로직 레벨 구동 가능.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>TO-252 (DPAK). RthJA 50 °C/W (PCB 실장), RthJC 1.1 °C/W (드레인 탭). TJ 최대 175 °C. 드레인 탭을 넓은 동박에 납땜하고 비아로 내층에 방열.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>품번 표기: 데이터시트 주문 코드는 SQD50P04-09L-GE3 (하이픈), 배치·LCSC는 SQD50P04-09L_GE3 (밑줄). 같은 부품으로 보이나 BOM 표기를 통일할 것.</li>\n    <li>읽은 데이터시트는 2011년 Rev. C 사본 — 최신 개정은 Vishay 공식 PDF로 확인.</li>\n    <li>단가: LCSC 'From $1.383' (수량 구간 미표시).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://docs.rs-online.com/40c7/A700000015989733.pdf"
+ ],
+ "issues": [
+  {
+   "p": "[기타] Vishay datasheet ordering code is SQD50P04-09L-GE3 (hyphen); underscore form used by LCSC/Vishay buy link",
+   "fix": "normalise MPN spelling / add alias",
+   "url": "https://docs.rs-online.com/40c7/A700000015989733.pdf"
+  }
+ ]
+}

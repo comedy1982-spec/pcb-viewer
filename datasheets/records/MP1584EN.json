@@ -1,0 +1,290 @@
+{
+ "mpn": "MP1584EN",
+ "mfr": "MPS",
+ "cat": "전원",
+ "price": 0.5,
+ "status": "done",
+ "title": "3 A 1.5 MHz 28 V step-down converter",
+ "meta": [
+  "MPS · 전원 · 3 A, 1.5 MHz, 28 V step-down (buck) converter, SOIC-8E · 참고 단가 약 $0.5 (추정)",
+  "원본: <a href=\"https://www.monolithicpower.com/pub/media/document/MP1584_r1.1.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=MP1584EN\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 MP1584 Rev. 1.0, 2011-08-08 (파일명 r1.1) · <b>NOT RECOMMENDED FOR NEW DESIGNS</b>"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "비동기 벅 컨버터 (하이사이드 MOSFET 내장, 외부 쇼트키 필요), 전류 모드, 외부 보상"
+      ],
+      [
+       "입력",
+       "4.5 ~ 28 V"
+      ],
+      [
+       "출력",
+       "0.8 ~ 25 V, 3 A"
+      ],
+      [
+       "스위칭",
+       "100 kHz ~ 1.5 MHz (FREQ 저항으로 설정)"
+      ],
+      [
+       "RDS(on)",
+       "하이사이드 150 mΩ"
+      ],
+      [
+       "VFB",
+       "0.8 V typ (0.776 ~ 0.824 V)"
+      ],
+      [
+       "전류",
+       "대기 100 µA typ (125 µA max), 셧다운 12 µA typ (20 µA max)"
+      ],
+      [
+       "전류 제한",
+       "4.0 ~ 4.7 A (사이클 단위)"
+      ],
+      [
+       "소프트스타트",
+       "1.5 ms 내부"
+      ],
+      [
+       "온도",
+       "주위 −20 ~ +85 °C (주문 정보), TJ −20 ~ +125 °C — 상용 등급, AEC-Q100 아님"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VIN",
+        "−0.3",
+        "30",
+        "V",
+        ""
+       ],
+       [
+        "VSW",
+        "−0.3",
+        "VIN + 0.3",
+        "V",
+        ""
+       ],
+       [
+        "BST − SW",
+        "−0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "기타 핀",
+        "−0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "연속 소비 전력",
+        "",
+        "2.5",
+        "W",
+        "TA = 25 °C"
+       ],
+       [
+        "접합 온도",
+        "",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "리드 온도",
+        "",
+        "260",
+        "°C",
+        ""
+       ],
+       [
+        "저장 온도",
+        "−65",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VIN",
+        "4.5",
+        "12",
+        "28",
+        "V"
+       ],
+       [
+        "VOUT",
+        "0.8",
+        "",
+        "25",
+        "V"
+       ],
+       [
+        "동작 접합 온도 TJ",
+        "−20",
+        "",
+        "125",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8E (노출 패드 = GND)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "SW",
+        "스위치 노드. 저 VF 쇼트키를 SW 가까이 GND로"
+       ],
+       [
+        "2",
+        "EN",
+        "인에이블. 플로팅 시 내부 1 µA로 약 3.0 V 풀업 → 동작"
+       ],
+       [
+        "3",
+        "COMP",
+        "에러 앰프 출력, 보상 회로 연결"
+       ],
+       [
+        "4",
+        "FB",
+        "피드백 (0.8 V 기준), VOUT 분압"
+       ],
+       [
+        "5",
+        "GND",
+        "GND (노출 패드와 함께 GND 플레인)"
+       ],
+       [
+        "6",
+        "FREQ",
+        "스위칭 주파수 설정 저항 → GND"
+       ],
+       [
+        "7",
+        "VIN",
+        "입력 전원, 가까이 디커플링"
+       ],
+       [
+        "8",
+        "BST",
+        "부트스트랩 커패시터 BST–SW"
+       ],
+       [
+        "EP",
+        "GND",
+        "노출 패드"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>출력 분압: VOUT = 0.8 V × (R1 + R2) / R2, R2 &lt; 40 kΩ 권장 (일반 R2 = 40.2 kΩ). 3.3 V 예: R1 127 kΩ / R2 40.2 kΩ.</li>\n    <li>주파수: RFREQ(kΩ) = 180000 / fS(kHz)<sup>1.1</sup>. 예: 100 kΩ → 약 900 kHz.</li>\n    <li>인덕터: 리플 ≈ 최소 전류 제한의 30 %. L = VOUT / (fS·ΔIL) × (1 − VOUT/VIN). 예시 10 µH (Würth 744066100, TDK SLF10145T-100 등).</li>\n    <li>보상 (Table 3): 1.8 V — 4.7 µH, 47 µF, R3 105 kΩ, C3 100 pF · 2.5 V — 4.7–6.8 µH, 22 µF, 54.9 kΩ, 220 pF · 3.3 V — 6.8–10 µH, 22 µF, 68.1 kΩ, 220 pF · 5 V — 15–22 µH, 22 µF, 100 kΩ, 150 pF · 12 V — 22–33 µH, 22 µF, 147 kΩ, 150 pF. 크로스오버 ≈ fSW/10 목표.</li>\n    <li>입력 C1: 저 ESR 세라믹 (시험 10 µF), RMS 전류 정격 &gt; 최대 부하의 1/2. 전해/탄탈이면 0.1 µF 세라믹 추가.</li>\n    <li>부트스트랩: BST–SW 100 nF. VIN ≤ 5 V, 5 V 레일 존재, VOUT/VIN &gt; 65 % 중 하나면 외부 부트 다이오드(IN4148/BAT54) 권장. 경부하에서 VIN − VOUT &gt; 3 V 유지.</li>\n    <li>캐치 다이오드: 쇼트키, 역전압 &gt; VIN max, 전류 &gt; 부하 max (예: B340A-13-F, CMSH3-40MA — 40 V 3 A).</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8E (노출 패드, GND 연결). θJA 50 °C/W, θJC 10 °C/W (JESD51-7 4층 기판). TJ max 150 °C, 열 차단 150 °C (히스테리시스 15 °C).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li><b>NRND:</b> 데이터시트에 \"Not Recommended for New Designs\" 표기, 후속으로 MP2338 안내. 신규 설계는 대체품 검토.</li>\n    <li>UVLO 상승 3.0 V typ (2.7–3.3 V), 히스테리시스 0.35 V. EN 상승 1.5 V typ (1.35–1.65 V), 히스테리시스 300 mV.</li>\n    <li>최소 on/off 시간 각 100 ns — 고 VIN·저 VOUT·고 fSW 조합에서 듀티 한계 확인.</li>\n    <li>상용 온도(−20 ~ +85 °C) — 차량 ECU 양산용 아님.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.monolithicpower.com/pub/media/document/MP1584_r1.1.pdf"
+ ],
+ "key": {
+  "spec": {
+   "i": 3,
+   "vin": [
+    4.5,
+    28
+   ],
+   "pkg": "SOIC-8",
+   "sync": 0
+  },
+  "grade": "",
+  "ext": [
+   "인덕터",
+   "캐치 쇼트키"
+  ]
+ },
+ "issues": [
+  {
+   "p": "[등급·수명] NRND: datasheet marked \"NOT RECOMMENDED FOR NEW DESIGNS\", refers to MP2338; also commercial temp −20…+85 °C",
+   "fix": "flag NRND / suggest replacement",
+   "url": "https://www.monolithicpower.com/pub/media/document/MP1584_r1.1.pdf"
+  }
+ ]
+}

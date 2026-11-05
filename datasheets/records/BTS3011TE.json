@@ -1,0 +1,315 @@
+{
+ "mpn": "BTS3011TE",
+ "mfr": "Infineon",
+ "cat": "스마트 스위치",
+ "price": 1.4,
+ "status": "verified",
+ "title": "HITFET+ Smart Low-Side Switch",
+ "meta": [
+  "Infineon · 스마트 스위치 · HITFET+ 보호형 단채널 로우사이드 스위치, 10.7 mΩ, 래칭 STATUS 진단 · 참고 단가 약 $1.4 (추정)",
+  "원본: <a href=\"https://static.chipdip.ru/lib/752/DOC028752740.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (사본)</a> · <a href=\"https://infineon.com/cms/en/product/power/smart-power-switches/low-side-switches/hitfet-plus-12v/bts3011te\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=BTS3011TE\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 BTS3011TE datasheet Rev 1.0, 2018-07-19"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "12 V 계통용 보호형 N채널 로우사이드 스위치 (HITFET+), 마킹 S3011TE"
+      ],
+      [
+       "RDS(on)",
+       "10.7 mΩ typ (25 °C), 19 mΩ typ / 22 mΩ max (150 °C), VDD 5 V"
+      ],
+      [
+       "정격 부하 전류",
+       "IL(NOM) 10 A"
+      ],
+      [
+       "전류 제한",
+       "트리거 70–140 A, 제한 레벨 35–70 A"
+      ],
+      [
+       "출력 클램프",
+       "VOUT(CLAMP) 40 V min"
+      ],
+      [
+       "로직 전원",
+       "VDD 3.0–5.5 V, 3.3 V/5 V 로직 입력 호환"
+      ],
+      [
+       "대기 전류",
+       "IDD(OFF) 1.5 µA typ, 6 µA max (Tj ≤ 85 °C)"
+      ],
+      [
+       "진단",
+       "배터리 단락, 과열 — 래칭 STATUS (오픈 드레인, L 액티브)"
+      ],
+      [
+       "등급",
+       "\"AEC qualified\" 표기, Tj -40 ~ 150 °C"
+      ],
+      [
+       "패키지",
+       "PG-TO252-5 (DPAK-5)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VDD",
+        "-0.3",
+        "5.5",
+        "V",
+        ""
+       ],
+       [
+        "VOUT",
+        "",
+        "40",
+        "V",
+        "내부 클램프"
+       ],
+       [
+        "VBAT(SC) 단락 보호 보장",
+        "",
+        "32",
+        "V",
+        ""
+       ],
+       [
+        "VBAT(LD) 로드 덤프",
+        "",
+        "40",
+        "V",
+        ""
+       ],
+       [
+        "VIN, VSTATUS",
+        "-0.3",
+        "5.5",
+        "V",
+        ""
+       ],
+       [
+        "IL",
+        "",
+        "",
+        "",
+        "IL(LIM)_TRIGGER로 제한"
+       ],
+       [
+        "EAS 단일 펄스",
+        "",
+        "390",
+        "mJ",
+        "IL(NOM), 13.5 V, Tj(0) 150 °C"
+       ],
+       [
+        "EAR 반복 (100k 회)",
+        "",
+        "290",
+        "mJ",
+        "Tj(0) 105 °C"
+       ],
+       [
+        "Tj",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "-55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM",
+        "",
+        "±2 / ±4",
+        "kV",
+        "전 핀 / OUT 대 GND"
+       ],
+       [
+        "ESD CDM",
+        "",
+        "±750",
+        "V",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VDD",
+        "3.0",
+        "5.0",
+        "5.5",
+        "V"
+       ],
+       [
+        "VBAT (정상)",
+        "6",
+        "13.5",
+        "18",
+        "V"
+       ],
+       [
+        "VBAT (확장, 편차 가능)",
+        "0",
+        "",
+        "32",
+        "V"
+       ],
+       [
+        "IDD(ON)",
+        "",
+        "",
+        "1",
+        "mA"
+       ],
+       [
+        "Tj",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>PG-TO252-5, 탭 = OUT</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "IN",
+        "입력"
+       ],
+       [
+        "2",
+        "VDD",
+        "5 V 로직 전원"
+       ],
+       [
+        "3",
+        "OUT",
+        "드레인 / 부하 연결"
+       ],
+       [
+        "4",
+        "STATUS",
+        "오픈 드레인 상태 출력 (L 액티브, 래칭)"
+       ],
+       [
+        "5",
+        "GND",
+        "접지, 파워 DMOS 소스"
+       ],
+       [
+        "6 (탭)",
+        "OUT",
+        "드레인 / 부하 연결 (탭)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>STATUS: VDD로 10 kΩ 풀업.</li>\n    <li>VDD: 100 nF (급격한 공급 전류 변화 대비, 그림상 선택 사항).</li>\n    <li>IN 직렬 저항 값은 데이터시트에 지정 없음.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PG-TO252-5, 탭은 OUT(드레인). RthJSP 2 K/W typ, RthJA 25 K/W (JEDEC 2s2p), 38 K/W (1s0p + 600 mm² Cu). Tj max 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>파워 소스가 GND 핀(5)이므로 GND 경로가 부하 전류 귀환로 — 굵고 짧게.</li>\n    <li>STATUS는 래칭 — 폴트 후 해제 조건은 데이터시트 진단 절 참조.</li>\n    <li>유도성 부하는 EAS 390 mJ(단일)/290 mJ(반복) 이내에서 내부 클램프 사용 가능, 초과 시 프리휠 다이오드 추가.</li>\n    <li>KiCad TO-252-5 풋프린트는 탭 패드 번호가 다를 수 있음 — 탭(6)=OUT, 3과 동일 네트로 연결.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://static.chipdip.ru/lib/752/DOC028752740.pdf"
+ ],
+ "key": {
+  "spec": {
+   "v": 40,
+   "i": 5,
+   "pkg": "PG-SOT223"
+  },
+  "grade": "Q100",
+  "basis": "연속 부하 설계값 (열·RON 기준; 전류 제한값 아님)"
+ },
+ "issues": [
+  {
+   "p": "[패키지·핀] tab is OUT (drain), numbered pin 6 in datasheet; KiCad TO-252-5 footprints number the tab differently",
+   "fix": "map tab pad to OUT net",
+   "url": "https://static.chipdip.ru/lib/752/DOC028752740.pdf"
+  }
+ ],
+ "verify": {
+  "date": "2026-10-29",
+  "by": "독립 점검 에이전트",
+  "note": "독립 점검 16페이지 · 원문 대조"
+ }
+}

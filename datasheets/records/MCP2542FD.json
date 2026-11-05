@@ -1,0 +1,280 @@
+{
+ "mpn": "MCP2542FD",
+ "mfr": "Microchip",
+ "cat": "통신",
+ "price": null,
+ "status": "done",
+ "title": "CAN FD transceiver 8 Mbps with standby, VIO",
+ "meta": [
+  "Microchip · 통신 · CAN FD transceiver 8 Mbps with standby, VIO",
+  "원본: <a href=\"https://www.farnell.com/datasheets/3153873.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://octopart.com/search?q=MCP2542FD\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 DS20005514C (Rev. C, 2020-08, MCP2542FD/4FD · MCP2542WFD/4WFD)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "CAN 2.0 / CAN FD 물리 계층 트랜시버, 2·5·8 Mbps 최적화, 스탠바이 + CAN 활동 웨이크업(WFD 변형은 WUP)"
+      ],
+      [
+       "표준",
+       "ISO 11898-2:2016, 12 V / 24 V 시스템"
+      ],
+      [
+       "전원",
+       "VDD 4.5–5.5 V, VIO 1.7–5.5 V (1.8–5 V I/O)"
+      ],
+      [
+       "소비 전류",
+       "IDD 리세시브 2.5/5 mA, 도미넌트 55/70 mA, 스탠바이(IIO 포함) 4/16 µA (일반/최대)"
+      ],
+      [
+       "타이밍",
+       "TXD→RXD 전파 지연 90 ns 일반 / 120 ns 최대, 루프 지연 대칭 -10 %/+10 % @2 Mbps, 웨이크 필터 최대 3.6 µs"
+      ],
+      [
+       "보호",
+       "무전원 시 버스 핀 분리, CANH/CANL ±58 V DC, IEC 61000-4-2 ±13 kV, 열 차단 175 °C 일반"
+      ],
+      [
+       "등급",
+       "AEC-Q100 Rev. G, E = -40~+125 °C, H = -40~+150 °C"
+      ],
+      [
+       "패키지",
+       "8-SOIC (SN), 8-DFN 3×3 (MF, EP), 8-TDFN 2×3 (MNY, EP)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VDD",
+        "",
+        "7.0",
+        "V",
+        ""
+       ],
+       [
+        "VIO",
+        "",
+        "7.0",
+        "V",
+        ""
+       ],
+       [
+        "TXD, RXD, STBY DC 전압",
+        "-0.3",
+        "VIO+0.3",
+        "V",
+        ""
+       ],
+       [
+        "CANH/CANL DC 전압",
+        "-58",
+        "+58",
+        "V",
+        ""
+       ],
+       [
+        "CANH/CANL 과도 (ISO 7637)",
+        "-150",
+        "+100",
+        "V",
+        ""
+       ],
+       [
+        "차동 버스 전압 연속 (60일)",
+        "-5",
+        "+10",
+        "V",
+        ""
+       ],
+       [
+        "ESD CANH/CANL (IEC 61000-4-2 / HBM)",
+        "",
+        "±13 / ±8",
+        "kV",
+        ""
+       ],
+       [
+        "ESD 기타 핀 HBM / 전 핀 MM / CDM",
+        "",
+        "±4 kV / ±400 V / ±750 V",
+        "",
+        ""
+       ],
+       [
+        "가상 접합 온도 TVJ",
+        "-40",
+        "+190",
+        "°C",
+        ""
+       ],
+       [
+        "저장 온도",
+        "-55",
+        "+150",
+        "°C",
+        "표 2-3에는 -65~+155 °C로 별도 표기"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VDD",
+        "4.5",
+        "5",
+        "5.5",
+        "V"
+       ],
+       [
+        "VIO",
+        "1.7",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "주위 온도 (E)",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ],
+       [
+        "주위 온도 (H)",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>8-SOIC (SN) 기준. DFN/TDFN은 핀 1–8 동일 + 9 = EP</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "TXD",
+        "송신 데이터 입력 (내부 약 33 kΩ 풀업 → VIO)"
+       ],
+       [
+        "2",
+        "VSS",
+        "접지"
+       ],
+       [
+        "3",
+        "VDD",
+        "전원"
+       ],
+       [
+        "4",
+        "RXD",
+        "수신 데이터 출력"
+       ],
+       [
+        "5",
+        "VIO",
+        "디지털 I/O 전원 (MCP2544FD는 NC)"
+       ],
+       [
+        "6",
+        "CANL",
+        "CAN 버스 Low"
+       ],
+       [
+        "7",
+        "CANH",
+        "CAN 버스 High"
+       ],
+       [
+        "8",
+        "STBY",
+        "스탠바이 모드 입력"
+       ],
+       [
+        "9",
+        "EP",
+        "DFN/TDFN 노출 패드 — VSS에 연결 (SOIC 없음)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VDD·VIO 전원 핀에 0.1 µF 디커플링</li>\n    <li>종단: 120 Ω(CANH–CANL) 또는 60 Ω + 60 Ω 스플릿 + 4.7 nF→GND (데이터시트 응용 예)</li>\n    <li>1 Mbps 초과 시 EMC를 위해 공통 모드 초크 필요할 수 있음</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>θJA: 8-SOIC 149.5 °C/W, 8-DFN 3×3 56.7 °C/W, 8-TDFN 2×3 53 °C/W. 열 차단 165/175/185 °C (최소/일반/최대), 히스테리시스 15–30 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>주문 예: MCP2542FD-E/SN, MCP2542FD-E/MF, MCP2542FDT-E/MNY, 차량용 VAO 접미사(SNVAO/MFVAO/MNYVAO). MPN에 등급·패키지 접미사가 없으므로 BOM에서 지정 필요.</li>\n    <li>8 Mbps 대응 — 실제 데이터율은 루프 지연·버스 토폴로지·CAN 컨트롤러 TDC 설정으로 검증.</li>\n    <li>ATA6563과 SO8 핀 배치 동일(5번 핀 VIO).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.farnell.com/datasheets/3153873.pdf"
+ ]
+}

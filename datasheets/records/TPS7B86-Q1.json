@@ -1,0 +1,362 @@
+{
+ "mpn": "TPS7B86-Q1",
+ "mfr": "TI",
+ "cat": "전원",
+ "price": 0.9,
+ "status": "done",
+ "title": "Automotive 500 mA 40 V adjustable LDO with power-good",
+ "meta": [
+  "TI · 전원 · 차량용 500 mA, 40 V, 가변(1.2–18 V)/고정 LDO, 파워굿 · 참고 단가 약 $0.9 (추정)",
+  "원본: <a href=\"https://www.ti.com/lit/gpn/TPS7B86-Q1\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (미확인 링크)</a> · <a href=\"https://www.ti.com/document-viewer/TPS7B86-Q1/datasheet/GUID-77EEFBC3-08EF-4BD7-8F5B-238F145F8E65\" target=\"_blank\" rel=\"noopener\">데이터시트 (TI 문서 뷰어)</a> · <a href=\"https://ti.com/product/TPS7B86-Q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TPS7B86-Q1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SBVS362E (2020년 6월 – 2026년 10월)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "배터리 직결 LDO, EN, (B/D 버전) 오픈드레인 파워굿 + 지연 조정 DELAY 핀"
+      ],
+      [
+       "입력 전압",
+       "3–40 V 동작, 절대 최대 42 V"
+      ],
+      [
+       "출력",
+       "가변 1.2–18 V (VFB 0.65 V 일반, 0.644–0.656 V) 또는 고정 3.3 V / 5 V, 최대 500 mA"
+      ],
+      [
+       "정확도",
+       "DDA ±0.85 % (전 온도, 100 µA–500 mA), KVU ±1.15 %"
+      ],
+      [
+       "드롭아웃",
+       "DDA 고정(VOUT ≥ 3.3 V): 450 mA 335/475 mV, 500 mA 360/535 mV (일반/최대); 가변 500 mA 최대 570 mV"
+      ],
+      [
+       "IQ",
+       "17 µA 일반 / 21 µA 최대 (25 °C, 무부하), 전 온도 26 µA 최대; 셧다운 4 µA 최대"
+      ],
+      [
+       "전류 제한",
+       "540–780 mA"
+      ],
+      [
+       "PSRR",
+       "70 dB 일반 (1 kHz, VIN−VOUT = 1 V, 450 mA)"
+      ],
+      [
+       "등급 / 온도",
+       "AEC-Q100 Grade 1, TA −40 ~ 125 °C, TJ −40 ~ 150 °C, 기능 안전 대응(Functional Safety-Capable)"
+      ],
+      [
+       "패키지",
+       "DDA 8핀 HSOIC (써멀 패드), KVU 5핀 TO-252"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VIN",
+        "−0.3",
+        "42",
+        "V",
+        ""
+       ],
+       [
+        "EN",
+        "−0.3",
+        "VIN + 2",
+        "V",
+        "VIN+2 V 또는 42 V 중 작은 값"
+       ],
+       [
+        "VOUT",
+        "−0.3",
+        "VIN + 0.3",
+        "V",
+        "VIN+0.3 V 또는 20 V 중 작은 값"
+       ],
+       [
+        "FB",
+        "−0.3",
+        "20",
+        "V",
+        ""
+       ],
+       [
+        "DELAY",
+        "−0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "PG",
+        "−0.3",
+        "20",
+        "V",
+        ""
+       ],
+       [
+        "TJ",
+        "−40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "−65",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VIN",
+        "3",
+        "",
+        "40",
+        "V"
+       ],
+       [
+        "VOUT",
+        "1.2",
+        "",
+        "18",
+        "V"
+       ],
+       [
+        "IOUT",
+        "0",
+        "",
+        "500",
+        "mA"
+       ],
+       [
+        "VEN",
+        "0",
+        "",
+        "VIN + 1 (≤ 40)",
+        "V"
+       ],
+       [
+        "EN 주파수 (최소 펄스 100 µs)",
+        "",
+        "",
+        "5",
+        "kHz"
+       ],
+       [
+        "VDELAY",
+        "0",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "VPG",
+        "0",
+        "",
+        "18",
+        "V"
+       ],
+       [
+        "CFF 피드포워드",
+        "0",
+        "",
+        "1",
+        "µF"
+       ],
+       [
+        "COUT (실효 최소 1 µF 필요)",
+        "2.2",
+        "",
+        "220",
+        "µF"
+       ],
+       [
+        "COUT ESR",
+        "0.001",
+        "",
+        "2",
+        "Ω"
+       ],
+       [
+        "CIN (EMI 위해 최소 500 nF)",
+        "0.1",
+        "1",
+        "",
+        "µF"
+       ],
+       [
+        "CDELAY",
+        "",
+        "",
+        "1",
+        "µF"
+       ],
+       [
+        "TJ",
+        "−40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>DDA 8핀 HSOIC (써멀 패드 = GND). 버전에 따라 핀이 다름.</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "PG 없음 (예: TPS7B8601QDDARQ1)",
+       "B 버전",
+       "D 버전"
+      ],
+      "rows": [
+       [
+        "1",
+        "OUT",
+        "OUT",
+        "OUT"
+       ],
+       [
+        "2",
+        "FB/NC",
+        "FB/NC",
+        "FB/NC"
+       ],
+       [
+        "3",
+        "NC",
+        "DELAY",
+        "DELAY"
+       ],
+       [
+        "4",
+        "NC",
+        "NC",
+        "GND"
+       ],
+       [
+        "5",
+        "GND",
+        "GND",
+        "PG"
+       ],
+       [
+        "6",
+        "NC",
+        "PG",
+        "EN"
+       ],
+       [
+        "7",
+        "EN",
+        "EN",
+        "NC"
+       ],
+       [
+        "8",
+        "IN",
+        "IN",
+        "IN"
+       ],
+       [
+        "PAD",
+        "Thermal pad (GND)",
+        "Thermal pad (GND)",
+        "Thermal pad (GND)"
+       ]
+      ]
+     }
+    },
+    {
+     "html": "<ul>\n    <li>IN: 입력 전원, 세라믹 커패시터를 가까이. OUT: 출력, GND로 커패시터 필수. FB/NC: 가변형 피드백, 고정형은 개방 또는 GND.</li>\n    <li>EN: 고임피던스이므로 개방 금지. PG: 액티브-하이 오픈드레인. DELAY: GND로 커패시터 → 지연 설정, 개방 시 기본 지연 t(DLY_FIX).</li>\n    <li>KVU(TO-252-5)는 PG/DELAY 없음 (EN 2, GND 3, FB/NC 4; IN/OUT 핀 번호는 문서 뷰어 표 정렬이 깨져 데이터시트 확인 필요).</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>출력 전압: VOUT = VFB × (1 + R1/R2), VFB = 0.65 V. 분압 전류는 IFB(±10 nA)의 100배 이상: R1 + R2 ≤ VOUT / (IFB × 100).</li>\n    <li>COUT 2.2–220 µF, ESR 0.001–2 Ω, X5R/X7R 권장 (고출력 전압에서 DC 바이어스 감소 고려).</li>\n    <li>CIN 0.1 µF 이상 (일반 1 µF), EMI 대책으로 최소 500 nF.</li>\n    <li>PG: 상승 임계 VOUT의 85–95 %, 하강 83–93 %, VOL 최대 0.4 V. DELAY 충전 전류 1.5 µA 일반 (1–2 µA), 임계 1.21 V 일반 → 지연 수식은 데이터시트 Equation 11 확인 필요.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>DDA (HSOIC-8, 4.9 × 6 mm): RθJA 41.8 °C/W, RθJC(top) 55, RθJB 17.3, ψJT 4.5, ψJB 17.3, RθJC(bot) 5.7 °C/W (조립처 ASE 기준; FMX 기준 RθJA 42.6). KVU (TO-252-5, 6.6 × 10.11 mm): RθJA 29.7, RθJC(bot) 1.5 °C/W. 열 차단 175 °C (히스테리시스 20 °C), UVLO 상승 2.7 V / 하강 2.5 V 일반.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>14 V → 5 V, 500 mA 이면 손실 4.5 W → DDA로는 불가, 큰 전류는 KVU + 넓은 동박 또는 전단 강압 컨버터 고려.</li>\n    <li>B 와 D 버전은 같은 HSOIC-8 이지만 GND/PG/EN/NC 위치가 다르므로 주문 품번과 풋프린트 핀 매핑을 반드시 맞출 것.</li>\n    <li>PG·DELAY 없이 EN도 없는 대안: TPS7B87-Q1 (핀 배치 다름).</li>\n    <li>주문 예: TPS7B8601QDDARQ1 (가변, PG 없음), TPS7B8601BQDDARQ1 / TPS7B8601DQDDARQ1 (가변, PG), TPS7B8633/8650 (고정 3.3/5 V), …QKVURQ1 (TO-252).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.ti.com/document-viewer/TPS7B86-Q1/datasheet/GUID-77EEFBC3-08EF-4BD7-8F5B-238F145F8E65"
+ ],
+ "key": {
+  "spec": {
+   "i": 0.5,
+   "vin": [
+    3,
+    40
+   ],
+   "adj": 1,
+   "pkg": "HSOIC-8"
+  },
+  "grade": "Q100"
+ }
+}

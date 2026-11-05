@@ -1,0 +1,346 @@
+{
+ "mpn": "TCAN1043-Q1",
+ "mfr": "TI",
+ "cat": "통신",
+ "price": null,
+ "status": "done",
+ "title": "Automotive fault-protected CAN FD transceiver with inhibit and wake",
+ "meta": [
+  "TI · 통신 · Automotive fault-protected CAN FD transceiver with inhibit and wake",
+  "원본: <a href=\"https://www.ti.com/lit/gpn/TCAN1043-Q1\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://ti.com/product/ko-kr/TCAN1043-Q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TCAN1043-Q1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SLLSEV0G (2017-11 ~ 2024-12); 절대최대·권장·열 표는 일본어판 JAJSE38F에서 읽음"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "저전력 CAN / CAN FD 트랜시버, INH 출력, WAKE 로컬 웨이크, 원격 웨이크, nFAULT"
+      ],
+      [
+       "데이터율",
+       "CAN FD 2 Mbps (G 버전 5 Mbps)"
+      ],
+      [
+       "전원",
+       "VSUP 4.5 ~ 45 V (H 버전 60 V), VCC 4.5 ~ 5.5 V, VIO 2.8 ~ 5.5 V"
+      ],
+      [
+       "버스 보호",
+       "±58 V 버스 폴트 (H 버전 ±70 V), 수신기 공통 모드 ±30 V, IEC ESD ±8 kV"
+      ],
+      [
+       "동작 모드",
+       "Normal, Standby (INH, 웨이크), Sleep (INH, 웨이크)"
+      ],
+      [
+       "기타",
+       "TXD 우세 타임아웃 (최저 9.2 kbps), 열 차단, 루프 지연 110 ns typ"
+      ],
+      [
+       "규격",
+       "ISO 11898-2:2016, IEC 62228-3, SAE J2962-2"
+      ],
+      [
+       "등급 · 온도",
+       "AEC-Q100 Grade 1, TA -55 ~ 125 °C, TJ -55 ~ 150 °C"
+      ],
+      [
+       "패키지",
+       "SOIC-14 (D), VSON-14 (DMT) 4.5 × 3 mm"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VSUP (표준 / H)",
+        "-0.3",
+        "58 / 70",
+        "V",
+        ""
+       ],
+       [
+        "VCC",
+        "-0.3",
+        "7",
+        "V",
+        ""
+       ],
+       [
+        "VIO",
+        "-0.3",
+        "7",
+        "V",
+        ""
+       ],
+       [
+        "CANH, CANL (표준 / H)",
+        "-58 / -70",
+        "58 / 70",
+        "V",
+        "차동 CANH−CANL 동일"
+       ],
+       [
+        "로직 입력·출력 핀",
+        "-0.3",
+        "7",
+        "V",
+        ""
+       ],
+       [
+        "INH (표준 / H)",
+        "-0.3",
+        "58 / 70",
+        "V",
+        "VO ≤ VSUP + 0.3 V"
+       ],
+       [
+        "WAKE (표준 / H)",
+        "-0.3",
+        "58 / 70",
+        "V",
+        "VI ≤ VSUP + 0.3 V"
+       ],
+       [
+        "RXD, nFAULT 출력 전류",
+        "",
+        "8",
+        "mA",
+        ""
+       ],
+       [
+        "INH 출력 전류",
+        "",
+        "4",
+        "mA",
+        ""
+       ],
+       [
+        "WAKE 전류 (GND 시프트, 외부 직렬 저항)",
+        "",
+        "3",
+        "mA",
+        ""
+       ],
+       [
+        "접합 온도 TJ",
+        "-55",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VSUP 표준",
+        "4.5",
+        "",
+        "45",
+        "V"
+       ],
+       [
+        "VSUP H 버전",
+        "4.5",
+        "",
+        "60",
+        "V"
+       ],
+       [
+        "VCC",
+        "4.5",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "VIO",
+        "2.8",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "RXD, nFAULT IOH / IOL",
+        "",
+        "",
+        "-2 / 2",
+        "mA"
+       ],
+       [
+        "INH 출력 전류",
+        "",
+        "",
+        "1",
+        "mA"
+       ],
+       [
+        "주위 온도 TA",
+        "-55",
+        "",
+        "125",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOIC-14 (D) / VSON-14 (DMT) 공통 핀 번호</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "TXD",
+        "CAN 송신 데이터 입력 (로우 = 우세)"
+       ],
+       [
+        "2",
+        "GND",
+        "그라운드"
+       ],
+       [
+        "3",
+        "VCC",
+        "5 V CAN 버스 전원"
+       ],
+       [
+        "4",
+        "RXD",
+        "CAN 수신 데이터 출력 (로우 = 우세), 트라이스테이트 가능"
+       ],
+       [
+        "5",
+        "VIO",
+        "I/O 전원"
+       ],
+       [
+        "6",
+        "EN",
+        "모드 제어 인에이블, 내부 풀다운"
+       ],
+       [
+        "7",
+        "INH",
+        "고전압 출력 — 시스템 레귤레이터 제어"
+       ],
+       [
+        "8",
+        "nFAULT",
+        "폴트 플래그 출력 (액티브 로우)"
+       ],
+       [
+        "9",
+        "WAKE",
+        "고전압 웨이크 입력"
+       ],
+       [
+        "10",
+        "VSUP",
+        "역접속 보호된 배터리 전원 입력"
+       ],
+       [
+        "11",
+        "NC",
+        "내부 연결 없음"
+       ],
+       [
+        "12",
+        "CANL",
+        "CAN 버스 로우 라인"
+       ],
+       [
+        "13",
+        "CANH",
+        "CAN 버스 하이 라인"
+       ],
+       [
+        "14",
+        "nSTB",
+        "스탠바이 모드 제어, 내부 풀다운"
+       ],
+       [
+        "PAD",
+        "Thermal pad",
+        "DMT(VSON)만 — 접속 지침은 읽은 섹션에 없음"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul><li>VSUP은 역접속 보호(다이오드 등) 후 배터리에 연결 — 핀 설명상 'reverse-blocked battery supply'.</li><li>WAKE 핀 GND 시프트 조건에서는 외부 직렬 저항으로 전류 3 mA 이하 제한.</li><li>INH 출력 전류 1 mA 이하(권장) — 레귤레이터 EN 입력 구동용.</li><li>디커플링·종단 부품 값은 읽은 섹션에 없음 — 데이터시트 Typical Application 확인 필요.</li></ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOIC-14 (D) 8.65 × 6 mm: RθJA 78, RθJC(top) 33.6, RθJB 34.7, ΨJT 5.7, ΨJB 34.3 °C/W. VSON-14 (DMT) 4.5 × 3 mm: RθJA 33.1, RθJC(top) 30.5, RθJB 10.8, ΨJT 0.4, ΨJB 10.7, RθJC(bot) 1.3 °C/W. TJ 최대 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul><li>MPN 'TCAN1043-Q1'은 제품군명 — G(5 Mbps), H(±70 V), HG 변형과 D/DMT 패키지 중 주문형 MPN 선택 필요. 핀 JSON은 SOIC-14 (D) 기준.</li><li>TI 제품 페이지에 TCAN1043N-Q1이 핀·소프트웨어 호환 신제품으로, TCAN843-Q1이 저가 대안으로 안내됨.</li><li>배치 설명 'CAN-FD · 웨이크 · 인히빗' 일치. 기본 버전 데이터율은 2 Mbps이므로 5 Mbps가 필요하면 G 버전.</li><li>대기/슬립 전류 값은 읽은 문서에 없음 — 데이터시트 확인 필요.</li></ul>"
+    }
+   ]
+  }
+ ],
+ "alias": [
+  "TCAN1043*",
+  "TCAN1043GDRQ1"
+ ],
+ "src": [
+  "https://ti.com/document-viewer/ja-jp/lit/html/JAJSE38F/GUID-A52E15E3-4C60-4CC4-8482-077B81BA104C"
+ ]
+}

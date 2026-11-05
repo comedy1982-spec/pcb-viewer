@@ -1,0 +1,237 @@
+{
+ "mpn": "TLV76750QWDRBRQ1",
+ "mfr": "TI",
+ "cat": "전원",
+ "price": 0.55,
+ "status": "done",
+ "title": "Automotive 1-A 16-V LDO, 5 V fixed, WSON-8 wettable flank",
+ "meta": [
+  "TI · 전원 · Automotive 1-A, 16-V linear regulator, 5 V fixed output · 참고 단가 약 $0.55 (추정)",
+  "원본: <a href=\"https://www.ti.com/lit/gpn/TLV767-Q1\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (미확인 링크)</a> · <a href=\"https://ti.com/document-viewer/TLV767-Q1/datasheet/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000224517\" target=\"_blank\" rel=\"noopener\">데이터시트 (TI HTML 뷰어)</a> · <a href=\"https://ti.com/product/TLV767-Q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TLV76750QWDRBRQ1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SBVS381A (2020-04, 개정 2020-12)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "1 A LDO, 고정 출력 5 V (TLV767 패밀리: 고정 1.2 ~ 12 V, 가변 0.8 ~ 14.6 V), EN, 폴드백 전류 제한, 과열 보호, 소프트 스타트 500 µs typ"
+      ],
+      [
+       "입력 전압",
+       "VIN 2.5 ~ 16 V (권장), 절대 최대 18 V"
+      ],
+      [
+       "정확도",
+       "±0.5 % (25 °C), ±1 % (부하·온도 전 범위, VIN ≥ 3.0 V)"
+      ],
+      [
+       "드롭아웃",
+       "0.94 typ / 1.5 V max @ 1 A (VIN ≥ 3.0 V)"
+      ],
+      [
+       "전류 제한",
+       "1.1 / 1.37 / 1.6 A, 단락 시 폴드백 150 / 250 / 350 mA"
+      ],
+      [
+       "IQ",
+       "고정형 60 typ / 95 µA max, 셧다운 1.6 / 4 µA"
+      ],
+      [
+       "PSRR · 잡음",
+       "70 dB @ 120 Hz, 60 µVRMS"
+      ],
+      [
+       "등급 · 온도",
+       "AEC-Q100 Grade 1, TA -40 ~ 125 °C, TJ -40 ~ 150 °C"
+      ],
+      [
+       "패키지",
+       "WSON-8 (DRB) 3 × 3 mm, 웨터블 플랭크 (MPN의 'W'), 열 패드"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "html": "<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody>\n    <tr><td>IN</td><td>-0.3</td><td>18</td><td>V</td><td></td></tr>\n    <tr><td>OUT, SNS</td><td>-0.3</td><td>VIN + 0.3</td><td>V</td><td>VIN + 0.3 V와 18 V 중 작은 값</td></tr>\n    <tr><td>EN</td><td>-0.3</td><td>18</td><td>V</td><td></td></tr>\n    <tr><td>출력 전류</td><td colspan=\"2\">내부 제한</td><td>A</td><td></td></tr>\n    <tr><td>TA</td><td>-40</td><td>125</td><td>°C</td><td></td></tr>\n    <tr><td>TJ</td><td>-50</td><td>150</td><td>°C</td><td></td></tr>\n    <tr><td>보관 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr>\n  </tbody></table>"
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VIN",
+        "2.5",
+        "",
+        "16",
+        "V"
+       ],
+       [
+        "VEN",
+        "0",
+        "",
+        "16",
+        "V"
+       ],
+       [
+        "IOUT",
+        "0",
+        "",
+        "1",
+        "A"
+       ],
+       [
+        "COUT (유효 0.5 µF 이상)",
+        "1",
+        "2.2",
+        "220",
+        "µF"
+       ],
+       [
+        "COUT ESR",
+        "2",
+        "",
+        "500",
+        "mΩ"
+       ],
+       [
+        "CIN",
+        "",
+        "1",
+        "",
+        "µF"
+       ],
+       [
+        "TA / TJ",
+        "-40",
+        "",
+        "125 / 150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>WSON-8 (DRB), 고정 출력 버전</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "OUT",
+        "출력 — 출력 커패시터를 OUT/GND 가까이"
+       ],
+       [
+        "2",
+        "NC",
+        "내부 미연결 (개방 또는 GND — 방열 개선)"
+       ],
+       [
+        "3",
+        "SNS",
+        "출력 센스 — OUT 또는 부하점에 연결, 개방 금지"
+       ],
+       [
+        "4",
+        "GND",
+        "그라운드"
+       ],
+       [
+        "5",
+        "EN",
+        "인에이블 (High = 동작, 내부 풀업 — 개방 또는 IN 연결 가능)"
+       ],
+       [
+        "6",
+        "GND",
+        "그라운드 (모든 GND 핀 연결)"
+       ],
+       [
+        "7",
+        "NC",
+        "내부 미연결"
+       ],
+       [
+        "8",
+        "IN",
+        "입력 — 입력 커패시터를 IN/GND 가까이"
+       ],
+       [
+        "PAD",
+        "Thermal pad",
+        "GND 연결 또는 개방, 넓은 GND 플레인 권장"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>COUT 1 ~ 220 µF (일반 2.2 µF), ESR 2 ~ 500 mΩ, DC 바이어스 후 유효 0.5 µF 이상.</li>\n    <li>CIN 1 µF 일반. 소스 임피던스 &gt; 0.5 Ω이면 입력 커패시터 권장.</li>\n    <li>EN: VEN(HIGH) ≥ 1.2 V, VEN(LOW) ≤ 0.4 V, 내부 풀업 200 ~ 800 nA. 디스에이블 시 출력 풀다운 약 1.4 mA.</li>\n    <li>UVLO 상승 2.22 V / 하강 2.09 V typ.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>WSON-8 (DRB) 3 × 3 mm: RθJA 51.9, RθJC(top) 66.2, RθJB 24.4, ΨJT 2.7, ΨJB 24.3, RθJC(bot) 6.9 °C/W. TSD 180 °C (복귀 160 °C) typ. 예: 12 V→5 V 0.3 A에서 2.1 W → 상승 약 109 °C, 12 V 입력 연속 1 A는 열적으로 불가.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>DRB 패키지는 데이터시트상 WSON, 제품 페이지상 VSON으로 표기 — 3 × 3 mm 8핀 열 패드 동일. 웨터블 플랭크로 AOI 검사 가능.</li>\n    <li>드롭아웃이 1 A에서 최대 1.5 V로 큼 — 5 V 출력을 1 A로 쓰려면 VIN 6.5 V 이상 필요 (크랭킹 시 출력 저하).</li>\n    <li>TI 대안: LM1117-Q1 (기능 동일, 핀 배열 다름).</li>\n    <li>SNS 핀을 반드시 OUT에 연결 (개방 금지).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://ti.com/document-viewer/TLV767-Q1/datasheet/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000224517"
+ ],
+ "key": {
+  "spec": {
+   "i": 1,
+   "vin": [
+    6,
+    16
+   ],
+   "vout": 5,
+   "pkg": "VSON-8"
+  },
+  "grade": "Q100"
+ }
+}

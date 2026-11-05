@@ -1,0 +1,300 @@
+{
+ "mpn": "AMC1306M05",
+ "mfr": "TI",
+ "cat": "절연",
+ "price": null,
+ "status": "done",
+ "title": "±50 mV reinforced isolated delta-sigma modulator",
+ "meta": [
+  "TI · 절연 · ±50 mV 입력 강화 절연 ΔΣ 변조기 (션트 전류 측정, CMOS 출력)",
+  "원본: <a href=\"https://www.ti.com/lit/pdf/SBAS734\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.ti.com/product/AMC1306M05\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=AMC1306M05\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SBAS734D (AMC1306E05/E25/M05/M25 공용)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "션트 전압을 1비트 ΔΣ 비트스트림으로 변환해 절연 경계를 넘겨 전달 (외부 클럭 입력, M = 비부호화 CMOS 출력)"
+      ],
+      [
+       "입력 범위",
+       "선형 ±50 mV, 클리핑 ±64 mV"
+      ],
+      [
+       "정확도",
+       "오프셋 최대 ±50 µV (드리프트 최대 1 µV/°C), 이득 오차 최대 ±0.2 % (드리프트 최대 ±40 ppm/°C)"
+      ],
+      [
+       "클럭",
+       "CLKIN 5–21 MHz (AVDD 4.5–5.5 V), 5–20 MHz (AVDD 3.0–5.5 V)"
+      ],
+      [
+       "CMTI",
+       "최소 50 kV/µs, 일반 100 kV/µs"
+      ],
+      [
+       "절연",
+       "강화 절연: VIOTM 7000 VPK, VIORM 2120 VPK, VIOWM 1500 VRMS / 2120 VDC, VISO 5000 VRMS (60 s), VIOSM 12800 VPK"
+      ],
+      [
+       "전원",
+       "AVDD 3.0–5.5 V (고압측), DVDD 2.7–5.5 V (저압측)"
+      ],
+      [
+       "온도",
+       "TA -40 – 125 °C"
+      ],
+      [
+       "패키지",
+       "DWV 8핀 광폭 SOIC (AMC1306M05DWV / DWVR)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "AVDD – AGND",
+        "-0.3",
+        "6.5",
+        "V",
+        ""
+       ],
+       [
+        "DVDD – DGND",
+        "-0.3",
+        "6.5",
+        "V",
+        ""
+       ],
+       [
+        "아날로그 입력 AINP, AINN",
+        "AGND − 6",
+        "AVDD + 0.5",
+        "V",
+        ""
+       ],
+       [
+        "디지털 입력 CLKIN",
+        "DGND − 0.5",
+        "DVDD + 0.5",
+        "V",
+        ""
+       ],
+       [
+        "디지털 출력 DOUT",
+        "DGND − 0.5",
+        "DVDD + 0.5",
+        "V",
+        ""
+       ],
+       [
+        "입력 전류 (전원 핀 제외, 연속)",
+        "-10",
+        "10",
+        "mA",
+        ""
+       ],
+       [
+        "접합 온도 TJ",
+        "",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "저장 온도 Tstg",
+        "-65",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "AVDD (고압측)",
+        "3.0",
+        "5.0",
+        "5.5",
+        "V"
+       ],
+       [
+        "DVDD (저압측)",
+        "2.7",
+        "3.3",
+        "5.5",
+        "V"
+       ],
+       [
+        "차동 입력 선형 범위 VFSR",
+        "-50",
+        "",
+        "50",
+        "mV"
+       ],
+       [
+        "클리핑 입력 VClipping",
+        "",
+        "",
+        "±64",
+        "mV"
+       ],
+       [
+        "입력 공통모드 VCM",
+        "-0.1",
+        "",
+        "AVDD − 2.1",
+        "V"
+       ],
+       [
+        "CLKIN (4.5 V ≤ AVDD ≤ 5.5 V)",
+        "5",
+        "20",
+        "21",
+        "MHz"
+       ],
+       [
+        "CLKIN (3.0 V ≤ AVDD ≤ 5.5 V)",
+        "5",
+        "20",
+        "20",
+        "MHz"
+       ],
+       [
+        "주위 온도 TA",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>DWV 8핀 SOIC (광폭)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "AVDD",
+        "고압측 아날로그 전원 3.0–5.5 V"
+       ],
+       [
+        "2",
+        "AINP",
+        "비반전 아날로그 입력"
+       ],
+       [
+        "3",
+        "AINN",
+        "반전 아날로그 입력"
+       ],
+       [
+        "4",
+        "AGND",
+        "고압측 아날로그 접지"
+       ],
+       [
+        "5",
+        "DGND",
+        "저압측(컨트롤러측) 디지털 접지"
+       ],
+       [
+        "6",
+        "DOUT",
+        "변조기 비트스트림 출력 (M형: 비부호화)"
+       ],
+       [
+        "7",
+        "CLKIN",
+        "변조기 클럭 입력 5–21 MHz, 내부 풀다운 1.5 MΩ 일반"
+       ],
+       [
+        "8",
+        "DVDD",
+        "저압측 디지털 전원 2.7–5.5 V"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>AVDD: 저 ESR 0.1 µF를 핀에 최대한 가깝게, 필요 시 10 µF 추가.</li>\n    <li>DVDD: 0.1 µF를 핀 가까이, 그 뒤에 1–10 µF 추가.</li>\n    <li>데이터시트 예시 회로: C1 = 10 µF, C2 = 0.1 µF, C4 = 0.1 µF, C5 = 2.2 µF; 고압측 전원 제한용 5.1 V 제너(1N751A) + R1 800 Ω.</li>\n    <li>션트 선정: 정격 전류에서 션트 전압 ±50 mV 이내, 과전류 시에도 클리핑 전압(±64 mV)을 넘지 않게.</li>\n    <li>입력 RC 필터는 필수 아님(데이터시트 명시). 고임피던스 소스로 전압 측정 시 AINN에 소스 저항과 같은 값의 직렬 저항 권장.</li>\n    <li>DOUT 비트스트림은 MCU의 SDFM 등 디지털 필터로 데시메이션.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>DWV 8핀 SOIC: RθJA 112.2 °C/W, RθJC(top) 47.6 °C/W, RθJB 60.0 °C/W, ψJT 23.1 °C/W, ψJB 60.0 °C/W. 연면·공간 거리 CLR/CPG ≥ 8.5 mm, DTI ≥ 21 µm, CTI ≥ 600 V, 절연 용량 약 1 pF. TJ 최대 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>션트를 AINP/AINN 가까이 두고 두 입력 배선을 대칭으로 — 켈빈 연결.</li>\n    <li>전원이 들어간 상태에서 입력을 개방(floating)하지 말 것.</li>\n    <li>8.5 mm 연면거리를 살리도록 패키지 아래 고압측–저압측 사이에 동박·부품을 두지 말 것.</li>\n    <li>이 MPN은 산업용(비 -Q1) 버전. 차량 ECU에는 AEC-Q100 판 AMC1306M05-Q1 (SBASAI0) 권장. TI 제품 페이지에 '새 버전 제공' 안내가 표시됨(검색 결과 제목 기준).</li>\n    <li>±250 mV 입력이 필요하면 AMC1306M25, Manchester 부호화 출력은 E05/E25.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.ti.com/lit/pdf/SBAS734"
+ ],
+ "issues": [
+  {
+   "p": "[등급·수명] industrial (non -Q1) variant listed under BMS/inverter automotive products; automotive version AMC1306M05-Q1 (SBASAI0) exists; TI product page title shows \"A newer version of this product is available\"",
+   "fix": "use AMC1306M05-Q1 (or the newer TI successor) for automotive designs; batch cat field is empty (should be 절연)",
+   "url": "https://www.ti.com/lit/pdf/SBAS734"
+  }
+ ]
+}

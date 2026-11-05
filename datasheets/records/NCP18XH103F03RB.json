@@ -1,0 +1,76 @@
+{
+ "mpn": "NCP18XH103F03RB",
+ "mfr": "Murata",
+ "cat": "센서",
+ "price": 0.04,
+ "status": "done",
+ "title": "NTC thermistor 10 kΩ B3380 K 0603",
+ "meta": [
+  "Murata · 센서 · NTC thermistor 10 kΩ B3380 K 0603 · 참고 단가 약 $0.04 (추정)",
+  "원본: <a href=\"https://www.lcsc.com/product-detail/C13564.html\" target=\"_blank\" rel=\"noopener\">LCSC 사양 페이지</a> · <a href=\"https://octopart.com/search?q=NCP18XH103F03RB\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 LCSC C13564 사양(제조사 PDF 직접 열람 불가)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "저항 (25 °C)",
+       "10 kΩ (±1 %는 부품 DB 설명 기준, LCSC 페이지에 저항 공차 미기재)"
+      ],
+      [
+       "B 정수",
+       "B25/50 3380 K, B25/85 3434 K, B25/100 3455 K, B 공차 ±1 %"
+      ],
+      [
+       "정격 전력",
+       "100 mW"
+      ],
+      [
+       "최대 정상 전류",
+       "310 µA"
+      ],
+      [
+       "동작 온도",
+       "-40 ~ +125 °C"
+      ],
+      [
+       "크기",
+       "0603 (1608 metric), 1.6 × 0.8 mm"
+      ],
+      [
+       "AEC-Q200",
+       "명시 없음"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>0603 / 1608 metric, 1.6 × 0.8 mm. 두께·단자 치수는 데이터시트 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>R-T 테이블·열 시정수·방산 상수는 이번에 읽은 자료에 없음 — Murata 데이터시트/SimSurfing의 R-T 표로 ADC 변환 테이블 작성.</li>\n    <li>자기 발열: 정격 전류 310 µA 이하 유지 — 3.3 V 분압 시 10 kΩ 직렬 저항 사용하면 약 165 µA로 여유 있음.</li>\n    <li>동일 사양 차량용·UL 인증 계열로 NCU18XH103F60RB 존재(같은 10 kΩ / B3380 K / 0603).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.lcsc.com/product-detail/C13564.html"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "0603"
+  },
+  "grade": ""
+ }
+}

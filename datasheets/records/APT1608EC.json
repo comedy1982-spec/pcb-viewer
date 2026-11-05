@@ -1,0 +1,179 @@
+{
+ "mpn": "APT1608EC",
+ "mfr": "Kingbright",
+ "cat": "LED",
+ "price": 0.05,
+ "status": "done",
+ "title": "0603 High Efficiency Red Chip LED",
+ "meta": [
+  "Kingbright · LED · 0603 high-efficiency red chip LED · 참고 단가 약 $0.05 (Future Electronics 2k 기준)",
+  "원본: <a href=\"https://www.integrated-circuit.com/pdf/174/751/5.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (Kingbright 원문 재배포본)</a> · <a href=\"https://www.kingbrightusa.com/images/catalog/SPEC/APT1608EC.pdf\" target=\"_blank\" rel=\"noopener\">Kingbright PDF (미확인 링크)</a> · <a href=\"https://www.compel.ru/infosheet/KGB/APT1608EC\" target=\"_blank\" rel=\"noopener\">사양 요약 (Compel)</a> · <a href=\"https://octopart.com/search?q=APT1608EC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Spec No. DSAD0924, Rev. V.15A (2015-04-28). 최신판은 Ver. 18A (2022-02-19, 미열람)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "색·재료",
+       "High Efficiency Red, GaAsP on GaP, 워터 클리어 렌즈"
+      ],
+      [
+       "파장",
+       "λpeak 627 nm typ, λD 617 nm typ, Δλ½ 45 nm typ (IF = 20 mA)"
+      ],
+      [
+       "광도",
+       "Iv 8 mcd min / 15 mcd typ @ 20 mA"
+      ],
+      [
+       "시야각",
+       "2θ½ = 120°"
+      ],
+      [
+       "VF",
+       "2.0 V typ / 2.5 V max @ 20 mA"
+      ],
+      [
+       "IR",
+       "10 µA max @ VR = 5 V"
+      ],
+      [
+       "정전용량",
+       "15 pF typ (VF = 0 V, 1 MHz)"
+      ],
+      [
+       "크기",
+       "1.6 × 0.8 × 0.75 mm (0603 / 1608 metric), 공차 ±0.1 mm"
+      ],
+      [
+       "기타",
+       "MSL 3, 2000 pcs/릴, 리플로 납땜 권장. AEC-Q101 표기 없음"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "소비 전력 PD",
+        "",
+        "75",
+        "mW",
+        "TA = 25 °C"
+       ],
+       [
+        "DC 순방향 전류 IF",
+        "",
+        "30",
+        "mA",
+        ""
+       ],
+       [
+        "피크 순방향 전류",
+        "",
+        "160",
+        "mA",
+        "듀티 1/10, 펄스 폭 0.1 ms"
+       ],
+       [
+        "역전압 VR",
+        "",
+        "5",
+        "V",
+        ""
+       ],
+       [
+        "동작 온도",
+        "−40",
+        "85",
+        "°C",
+        ""
+       ],
+       [
+        "보관 온도",
+        "−40",
+        "85",
+        "°C",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>0603 칩 LED 2단자. 핀 번호는 KiCad LED 관례(1 = K, 2 = A). 캐소드 마크 위치는 원문 외형도로 확인.</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "K",
+        "캐소드"
+       ],
+       [
+        "2",
+        "A",
+        "애노드"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>1608 칩 LED, 1.6 × 0.8 mm, 두께 0.75 mm (±0.1 mm). 권장 납땜 패턴 수치는 외형도 그림에 있음(읽은 텍스트에 수치 없음).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>배포처 값 불일치 정리: 원문 기준 시야각 120°, 617 nm는 도미넌트·627 nm는 피크 파장, MSL 3.</li>\n    <li>동작 온도 상한 85 °C — 차량 실내 고온부(&gt; 85 °C)에는 부적합. 차량용은 AEC-Q101 LED로 교체 검토.</li>\n    <li>전류 제한 저항: R = (VCC − VF) / IF. 20 mA는 시험 조건이며 지시등은 수 mA로 충분. 역전압 5 V를 넘지 않게 할 것.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.integrated-circuit.com/pdf/174/751/5.pdf"
+ ],
+ "issues": [
+  {
+   "p": "[패키지·핀] operating/storage temperature only −40…+85 °C and no AEC-Q101 claim, so unsuitable for automotive ECU interior use above 85 °C",
+   "fix": "flag as non-automotive / suggest an AEC-Q101 0603 red LED for ECU designs",
+   "url": "https://www.integrated-circuit.com/pdf/174/751/5.pdf"
+  },
+  {
+   "p": "[기타] Kingbright PDF link in batch could not be fetched (not in provenance); distributor values conflict (view angle 150° vs 120°, 617 nm vs 627 nm, MSL 3 vs 4)",
+   "fix": "verify against Kingbright DSAD0924 Ver. 18A; no pin table written (anode/cathode numbering unverified)",
+   "url": "https://www.compel.ru/infosheet/KGB/APT1608EC"
+  }
+ ]
+}

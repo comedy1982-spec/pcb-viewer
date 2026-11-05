@@ -1,0 +1,149 @@
+{
+ "mpn": "VND7050AJ",
+ "mfr": "ST",
+ "cat": "스마트 스위치",
+ "price": 2.4,
+ "status": "stub",
+ "title": "Dual 50 mΩ high-side driver with MultiSense",
+ "meta": [
+  "ST · 스마트 스위치 · 2채널 50 mΩ 하이사이드 드라이버, MultiSense 아날로그 피드백 · 참고 단가 약 $2.4 (추정)",
+  "원본: <a href=\"https://www.st.com/resource/en/datasheet/vnd7050aj.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (미확인 링크)</a> · <a href=\"https://www.st.com/en/automotive-analog-and-power/vnd7050aj.html\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://datasheetspdf.com/pdf/985858/STMicroelectronics/VND7050AJ-E/1\" target=\"_blank\" rel=\"noopener\">VND7050AJ-E 데이터시트 발췌</a> · <a href=\"https://octopart.com/search?q=VND7050AJ\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 DocID022469 Rev 10 (2014-10, xonelec 발췌)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "12 V 차량 접지 부하용 2채널 하이사이드 드라이버 (VIPower M0-7), 3 V/5 V CMOS 입력"
+      ],
+      [
+       "동작 전압",
+       "VCC 4–28 V, 과도 최대 40 V"
+      ],
+      [
+       "RON (채널당)",
+       "일반 50 mΩ"
+      ],
+      [
+       "전류 제한",
+       "ILIMH 일반 30 A"
+      ],
+      [
+       "대기 전류",
+       "최대 0.5 µA"
+      ],
+      [
+       "진단",
+       "MultiSense: 부하 전류 비례 미러, VCC, 칩 온도 다중화; 과부하/GND 단락, 열 차단, OFF 개방 부하, VCC 단락 검출"
+      ],
+      [
+       "보호",
+       "저전압 차단, 과전압 클램프, 전류 제한, 고속 열 과도 자기 제한, 과열/전력 제한 래치오프(FaultRST 핀), GND·VCC 손실 보호, 외부 부품으로 역배터리 보호, ESD"
+      ],
+      [
+       "등급",
+       "AEC-Q100"
+      ],
+      [
+       "패키지",
+       "PowerSSO-16 (주문형 VND7050AJTR), 양산 중(Active)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "html": "<p class=\"todo\">원본 PDF 확인 필요 (참고: 같은 칩의 PowerSSO-12 판 VND7050AJ12는 별도 데이터시트이므로 값을 옮겨 쓰지 않음).</p>"
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "동작 전원 전압 VCC",
+        "4",
+        "",
+        "28",
+        "V"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>PowerSSO-16 + 노출 탭. 핀 번호·이름은 원본 데이터시트 Figure(Configuration diagram)로 확인 필요 — 데이터시트 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul><li>데이터시트 확인 필요 (GND 보호 네트워크, MCU I/O 보호 저항, MultiSense 저항).</li></ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>PowerSSO-16. 열저항은 데이터시트 확인 필요.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>단채널 동급: VN7050AJ (같은 50 mΩ, MultiSense, PowerSSO-16).</li>\n    <li>모터(DC 모터) 구동 용도로 분류되어 있으나 하이사이드 스위치이므로 정·역 회전에는 별도 로우사이드/H-브리지 구성이 필요.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.st.com/en/automotive-analog-and-power/vnd7050aj.html"
+ ],
+ "todo": "초안: ST 원본 PDF를 열 수 없어 제품 페이지와 데이터시트 첫 장(특징표·목차, DocID022469 Rev 10, 2014-10)만 읽었습니다. 2차 시도(datasheetspdf, xonelec, alldatasheet, LCSC PDF)에서도 본문을 얻지 못함 — 절대 최대 정격(2.1절), 열 데이터(2.2/5.1절), PowerSSO-16 핀 번호, 전기적 특성은 원본 PDF로 채워야 합니다.",
+ "key": {
+  "spec": {
+   "v": 40,
+   "i": 7,
+   "pkg": "PowerSSO-16"
+  },
+  "grade": "Q100",
+  "basis": "연속 부하 설계값 (열·RON 기준; 전류 제한값 아님) · v = 과도 전원 최대 40 V (페이지 기준)"
+ },
+ "issues": [
+  {
+   "p": "[설명·분류 오류] batch cat \"dcmotor\" but part is a dual high-side smart switch (only with external low-side can drive motor bidirectionally)",
+   "fix": "set cat hs_switch / 스마트 스위치",
+   "url": "https://www.st.com/en/automotive-analog-and-power/vnd7050aj.html"
+  },
+  {
+   "p": "[설명·분류 오류] batch category \"dcmotor\" is wrong: it is a dual-channel high-side smart switch (VIPower M0-7)",
+   "fix": "set cat to hs_switch / 스마트 스위치",
+   "url": "https://www.xonelec.com/mpn/stmicroelectronics/vnd7050aje"
+  }
+ ]
+}

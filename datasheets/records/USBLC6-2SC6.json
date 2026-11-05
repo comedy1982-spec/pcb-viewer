@@ -1,0 +1,250 @@
+{
+ "mpn": "USBLC6-2SC6",
+ "mfr": "ST",
+ "cat": "보호",
+ "price": 0.25,
+ "status": "done",
+ "title": "Very low capacitance ESD protection for USB 2.0",
+ "meta": [
+  "ST · 보호 · 2채널 저용량 ESD 보호 (USB 2.0 데이터 라인 + VBUS) · 참고 단가 약 $0.25 (추정)",
+  "원본: <a href=\"https://www.st.com/content/st_com/en/technical-documents/DS4260.html\" target=\"_blank\" rel=\"noopener\">데이터시트 (DS4260)</a> · <a href=\"https://www.st.com/ja/protection-devices/usblc6-2.html\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=USBLC6-2SC6\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 DS4260, 2021-12-07 개정"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "데이터 라인 2채널 + VBUS 보호용 TVS 다이오드 어레이 (레일-투-레일 구조)"
+      ],
+      [
+       "I/O–GND 용량",
+       "2.5–3.5 pF (VR = 1.65 V), 매칭 ΔC 최대 0.015 pF"
+      ],
+      [
+       "I/O–I/O 용량",
+       "일반 1.2 pF, 최대 1.7 pF"
+      ],
+      [
+       "누설 전류",
+       "IRM 일반 10 nA, 최대 150 nA (VRM = 5.25 V)"
+      ],
+      [
+       "ESD",
+       "IEC 61000-4-2 레벨 4: 접촉 8 kV / 기중 15 kV (특징 항목)"
+      ],
+      [
+       "클램프 전압",
+       "최대 12 V @ 1 A, 최대 17 V @ 5 A (8/20 µs, I/O→GND)"
+      ],
+      [
+       "용도",
+       "USB 2.0 HS (480 Mb/s), USB 1.1, 10/100 이더넷, SIM, 비디오 라인"
+      ],
+      [
+       "패키지",
+       "SOT23-6L (USBLC6-2SC6), SOT-666 (USBLC6-2P6)"
+      ],
+      [
+       "차량 등급",
+       "읽은 문서에 AEC-Q101 표기 없음"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VPP (IEC 61000-4-2 기중)",
+        "",
+        "15",
+        "kV",
+        "Tamb = 25 °C"
+       ],
+       [
+        "VPP (IEC 61000-4-2 접촉)",
+        "",
+        "15",
+        "kV",
+        "추출 텍스트 기준"
+       ],
+       [
+        "VPP (MIL-STD-883G 3015-7)",
+        "",
+        "25",
+        "kV",
+        ""
+       ],
+       [
+        "저장 온도 Tstg",
+        "-55",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "동작 접합 온도 Tj",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "리드 납땜 온도 TL",
+        "",
+        "260",
+        "°C",
+        "10 s, 5 mm"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "역방향 동작 전압 VRM (IRM 측정 조건)",
+        "",
+        "",
+        "5.25",
+        "V"
+       ],
+       [
+        "항복 전압 VBR (IR = 1 mA, VBUS–GND)",
+        "6",
+        "",
+        "",
+        "V"
+       ],
+       [
+        "순방향 전압 VF (IF = 10 mA)",
+        "",
+        "",
+        "1.1",
+        "V"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOT23-6L (상면도)</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "I/O1",
+        "데이터 라인 1 (핀 6과 내부 연결)"
+       ],
+       [
+        "2",
+        "GND",
+        "접지"
+       ],
+       [
+        "3",
+        "I/O2",
+        "데이터 라인 2 (핀 4와 내부 연결)"
+       ],
+       [
+        "4",
+        "I/O2",
+        "데이터 라인 2"
+       ],
+       [
+        "5",
+        "VBUS",
+        "전원 라인 (내부 제너 클램프)"
+       ],
+       [
+        "6",
+        "I/O1",
+        "데이터 라인 1"
+       ]
+      ]
+     }
+    },
+    {
+     "html": "<p class=\"meta\">핀 번호는 데이터시트 기능도의 추출 텍스트에서 읽은 것으로, 그림 배치가 일부 깨져 있었음 — 배치 전 원본 그림으로 한 번 더 확인 권장.</p>"
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>USB 커넥터 쪽에 두고 D+/D−를 I/O1·I/O2에 통과 배선, VBUS 핀은 커넥터 VBUS에 연결.</li>\n    <li>I/O 간 용량 매칭(0.015 pF)이 작아 USB 2.0 HS 신호 무결성 요구를 만족한다고 명시.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOT23-6L, 실장 면적 최대 9 mm² (SOT-666은 2.9 mm²). 읽은 문서에 열저항 값 없음.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>ESD 전류가 GND로 짧게 빠지도록 GND 핀을 접지면에 바로 비아로 연결하고, 커넥터–보호소자–IC 순서로 배치.</li>\n    <li>읽은 데이터시트에 AEC-Q101 언급이 없음 — 차량용이면 ST의 차량 등급 대체품 검토 필요.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.st.com/content/st_com/en/technical-documents/DS4260.html"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "SOT-23-6"
+  },
+  "grade": ""
+ },
+ "issues": [
+  {
+   "p": "[등급·수명] datasheet (DS4260) has no AEC-Q101 mention; used in automotive part list",
+   "fix": "consider an automotive-qualified ESD array if needed",
+   "url": "https://www.st.com/content/st_com/en/technical-documents/DS4260.html"
+  }
+ ]
+}

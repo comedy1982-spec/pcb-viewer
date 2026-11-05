@@ -1,0 +1,326 @@
+{
+ "mpn": "TCAN1044AVDRQ1",
+ "mfr": "TI",
+ "cat": "통신",
+ "price": 0.9,
+ "status": "done",
+ "title": "Automotive fault-protected CAN FD transceiver with standby and VIO",
+ "meta": [
+  "TI · 통신 · Automotive fault-protected CAN FD transceiver with standby mode and VIO · 참고 단가 약 $0.9 (추정)",
+  "원본: <a href=\"https://www.ti.com/document-viewer/lit/html/SLLSFJ3D/GUID-1E00ADFE-29F6-4F59-8BC4-F7463D69B4D9\" target=\"_blank\" rel=\"noopener\">데이터시트 (TI HTML 뷰어)</a> · <a href=\"https://www.ti.com/product/TCAN1044A-Q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TCAN1044AVDRQ1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SLLSFJ3D (2023-08, 개정 2024-10)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "ISO 11898-2:2016 고속 CAN / CAN FD 트랜시버, 저전력 Standby 모드 + 버스 원격 웨이크(WUP). 'V' 접미사 = VIO 레벨 시프트 핀"
+      ],
+      [
+       "데이터율",
+       "최대 8 Mbps (2/5/8 Mbps에서 CAN FD 최적화)"
+      ],
+      [
+       "전원",
+       "VCC 4.5 ~ 5.5 V, VIO 1.7 ~ 5.5 V (6.4절 권장 동작 조건; 9.4절 본문은 1.8 V로 표기)"
+      ],
+      [
+       "버스 보호",
+       "버스 폴트 ±58 V, 수신 공통 모드 ±12 V (제품 페이지)"
+      ],
+      [
+       "공급 전류",
+       "ICC 우세 45 mA typ / 70 mA max (RL 60 Ω), 열성 4.5 / 7.5 mA, Standby ICC ≤ 1.5 µA (VIO 디바이스), IIO Standby 8.5 / 14 µA"
+      ],
+      [
+       "루프 지연",
+       "tPROP(LOOP1) 125 typ / 210 max ns, LOOP2 150 / 210 ns (VIO 2.8 ~ 5.5 V)"
+      ],
+      [
+       "보호",
+       "TXD 우세 타임아웃 1.2 ~ 4.0 ms, UVLO (VCC 하강 3.5 ~ 4.25 V, VIO 하강 1.4 ~ 1.59 V), 과열 차단"
+      ],
+      [
+       "등급 · 온도",
+       "AEC-Q100 Grade 1, 전기 특성 조건 TJ -40 ~ 150 °C"
+      ],
+      [
+       "패키지",
+       "SOIC-8 (D) 4.9 × 6 mm — 이 MPN(…VDRQ1). 패밀리에 VSON-8 (DRB), SOT-23-THN-8 (DDF)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VCC 전원",
+        "-0.3",
+        "6",
+        "V",
+        "6.1절"
+       ],
+       [
+        "VIO 전원",
+        "-0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "VBUS (CANH, CANL)",
+        "-58",
+        "58",
+        "V",
+        ""
+       ],
+       [
+        "VDIFF (CANH–CANL)",
+        "-45",
+        "45",
+        "V",
+        ""
+       ],
+       [
+        "로직 입력 (TXD, STB)",
+        "-0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "RXD 출력 전압",
+        "-0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "IO(RXD)",
+        "-8",
+        "8",
+        "mA",
+        ""
+       ],
+       [
+        "TJ",
+        "-40",
+        "165",
+        "°C",
+        ""
+       ],
+       [
+        "TSTG",
+        "-65",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM 전체 핀",
+        "",
+        "±4000",
+        "V",
+        "AEC-Q100-002, 6.2절"
+       ],
+       [
+        "ESD HBM CANH/CANL–GND",
+        "",
+        "±10000",
+        "V",
+        ""
+       ],
+       [
+        "ESD CDM 전체 핀",
+        "",
+        "±750",
+        "V",
+        "AEC-Q100-011"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "VCC",
+        "4.5",
+        "5",
+        "5.5",
+        "V"
+       ],
+       [
+        "VIO (V 디바이스)",
+        "1.7",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "IOH(RXD), VIO 디바이스",
+        "-1.5",
+        "",
+        "",
+        "mA"
+       ],
+       [
+        "IOL(RXD), VIO 디바이스",
+        "",
+        "",
+        "1.5",
+        "mA"
+       ],
+       [
+        "IOH / IOL(RXD), 비-VIO 디바이스",
+        "-2",
+        "",
+        "2",
+        "mA"
+       ],
+       [
+        "TJ 동작",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8 (D), 표 5-1</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "TXD",
+        "CAN 송신 데이터 입력 (내부 풀업)"
+       ],
+       [
+        "2",
+        "GND",
+        "그라운드"
+       ],
+       [
+        "3",
+        "VCC",
+        "5 V 전원"
+       ],
+       [
+        "4",
+        "RXD",
+        "CAN 수신 데이터 출력 (무전원 시 고임피던스)"
+       ],
+       [
+        "5",
+        "VIO",
+        "I/O 전원 (V 디바이스; 비-V 디바이스에서는 NC)"
+       ],
+       [
+        "6",
+        "CANL",
+        "CAN 버스 로우"
+       ],
+       [
+        "7",
+        "CANH",
+        "CAN 버스 하이"
+       ],
+       [
+        "8",
+        "STB",
+        "Standby 모드 제어 입력 (내부 풀업, High = Standby)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>VCC, VIO 핀 가까이 각각 100 nF 디커플링 (9.4절 \"typically 100nF\").</li>\n    <li>버스 종단은 양 끝 120 Ω(또는 60 Ω+60 Ω 스플릿) — 데이터시트 그림은 \"예시용\"으로 표기.</li>\n    <li>수신 임계값 (Normal): VID ≥ 0.9 V 우세, ≤ 0.5 V 열성. Standby: ≥ 1.15 V 우세, ≤ 0.4 V 열성.</li>\n    <li>STB를 Low로 구동해야 Normal 모드(풀업으로 미연결 시 Standby). 모드 전환 tMODE ≤ 20 µs, 웨이크 필터 0.5 ~ 1.8 µs.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8 (D): RθJA 127.5, RθJC(top) 67.6, RθJB 70.9, ΨJT 19.3, ΨJB 70.2 °C/W (6.5절, 열 순서를 D/DDF/DRB로 해석). DRB(VSON) RθJA 55.2 °C/W, 열 패드는 GND 플레인에 다수 비아.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>배치 설명의 '5 Mbit/s'는 보수적 표기 — 데이터시트는 최대 8 Mbps.</li>\n    <li>VIO로 3.3 V/1.8 V MCU 직결 가능, 레벨 시프터 불필요.</li>\n    <li>TI 제품 페이지 대체품: TCAN844-Q1 (드롭인), TCAN1057A-Q1 (Silent 모드).</li>\n    <li>TXD 우세 타임아웃으로 최저 데이터율 약 9.2 kbps 제한.</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://www.ti.com/document-viewer/lit/html/SLLSFJ3D/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000209932"
+ ],
+ "key": {
+  "spec": {
+   "pkg": "SOIC-8",
+   "fd": 1
+  },
+  "grade": "Q100"
+ },
+ "issues": [
+  {
+   "p": "[설명·분류 오류] desc says 5 Mbit/s; datasheet/product page give up to 8 Mbps",
+   "fix": "update desc (minor)",
+   "url": "https://www.ti.com/product/TCAN1044A-Q1"
+  },
+  {
+   "p": "[설명·분류 오류] description \"CAN-FD 5 Mbit/s\" understates the part: datasheet rates up to 8 Mbps; VIO range is 1.7-5.5 V (6.4 ROC)",
+   "fix": "change to \"CAN-FD 8 Mbit/s · Standby · VIO 1.7–5.5 V\"",
+   "url": "https://www.ti.com/document-viewer/lit/html/SLLSFJ3D/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000209935"
+  }
+ ]
+}

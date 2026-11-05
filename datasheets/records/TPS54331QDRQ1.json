@@ -1,0 +1,311 @@
+{
+ "mpn": "TPS54331QDRQ1",
+ "mfr": "Texas Instruments",
+ "cat": "전원",
+ "price": 1.4,
+ "status": "done",
+ "title": "3-A 28-V non-synchronous step-down converter (automotive)",
+ "meta": [
+  "Texas Instruments · 전원 · 3 A, 3.5–28 V 입력, 570 kHz 비동기 벅 컨버터 (Eco-mode, 차량용) · 참고 단가 약 $1.4 (추정)",
+  "원본: <a href=\"https://ti.com/lit/pdf/slvsab5\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF (TPS54331-Q1, SLVSAB5)</a> · <a href=\"https://www.ti.com/product/TPS54331-Q1\" target=\"_blank\" rel=\"noopener\">제품 페이지</a> · <a href=\"https://octopart.com/search?q=TPS54331QDRQ1\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 SLVSAB5 (2010-11) · 보조: 상용 TPS54331 SLVS839H (2023-10)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "기능",
+       "비동기(외부 캐치 다이오드) 벅 컨버터, 80 mΩ 하이사이드 MOSFET 내장, 전류 모드 제어, 경부하 펄스 스킵 Eco-mode"
+      ],
+      [
+       "입력 전압",
+       "3.5 ~ 28 V (절대 최대 30 V)"
+      ],
+      [
+       "출력",
+       "0.8 V 이상 가변, 연속 3 A"
+      ],
+      [
+       "스위칭 주파수",
+       "570 kHz 고정"
+      ],
+      [
+       "기준 전압",
+       "0.8 V, 초기 ±2%, 온도 전 범위 ±3.5%"
+      ],
+      [
+       "전류 (SLVS839H)",
+       "무스위칭 대기 110 µA 일반 (최대 190 µA), 셧다운 1 µA 일반 (최대 4 µA)"
+      ],
+      [
+       "스위치 전류 제한 (SLVS839H)",
+       "최소 3.5 A, 일반 5.8 A (VIN 12 V)"
+      ],
+      [
+       "보호",
+       "사이클 단위 전류 제한, 주파수 폴드백, 과전압 과도 보호, 열차단, 프로그래머블 UVLO(EN), 가변 소프트 스타트"
+      ],
+      [
+       "등급 / 온도",
+       "차량용 인증(Qualified for Automotive Applications), TA -40 ~ 125 °C, TJ -40 ~ 150 °C. 문서에 AEC-Q100 등급 번호는 표기되지 않음"
+      ],
+      [
+       "패키지",
+       "SOIC-8 (D), 2500개 릴, 마킹 54331Q, MSL 1 / 260 °C"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "절대 최대 정격",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VIN",
+        "-0.3",
+        "30",
+        "V",
+        ""
+       ],
+       [
+        "EN",
+        "-0.3",
+        "6",
+        "V",
+        ""
+       ],
+       [
+        "BOOT",
+        "",
+        "38",
+        "V",
+        ""
+       ],
+       [
+        "VSENSE, COMP, SS",
+        "-0.3",
+        "3",
+        "V",
+        ""
+       ],
+       [
+        "BOOT–PH",
+        "",
+        "8",
+        "V",
+        ""
+       ],
+       [
+        "PH",
+        "-0.6",
+        "30",
+        "V",
+        "10 ns 과도 시 -5 V"
+       ],
+       [
+        "PH / VIN 싱크 전류",
+        "",
+        "9",
+        "A",
+        ""
+       ],
+       [
+        "핀 소스·싱크 전류 (EN, BOOT, VSENSE, COMP, SS)",
+        "",
+        "",
+        "",
+        "추출 텍스트의 단위(µA/mA)가 문서 간 불일치 — PDF 표에서 확인 필요"
+       ],
+       [
+        "동작 접합 온도 TJ",
+        "-40",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "보관 온도",
+        "-65",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "ESD HBM / CDM / MM",
+        "",
+        "1000 / 1000 / 100",
+        "V",
+        ""
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "권장 동작 조건",
+   "blocks": [
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "일반",
+       "최대",
+       "단위"
+      ],
+      "rows": [
+       [
+        "입력 전압 VIN",
+        "3.5",
+        "",
+        "28",
+        "V"
+       ],
+       [
+        "주위 온도 TA",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ],
+       [
+        "접합 온도 TJ",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8 (D), 상면도. 노출 패드 없음</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "BOOT",
+        "부트스트랩: BOOT–PH 사이 0.1 µF"
+       ],
+       [
+        "2",
+        "VIN",
+        "입력 전원 3.5 ~ 28 V"
+       ],
+       [
+        "3",
+        "EN",
+        "1.25 V 미만으로 내리면 디스에이블, 개방 시 enable. 저항 2개로 UVLO 설정"
+       ],
+       [
+        "4",
+        "SS",
+        "소프트 스타트 커패시터 (출력 상승 시간 설정)"
+       ],
+       [
+        "5",
+        "VSENSE",
+        "gm 오차 증폭기 반전 입력 (피드백)"
+       ],
+       [
+        "6",
+        "COMP",
+        "오차 증폭기 출력 / PWM 비교기 입력, 보상 부품 연결"
+       ],
+       [
+        "7",
+        "GND",
+        "접지"
+       ],
+       [
+        "8",
+        "PH",
+        "내부 하이사이드 MOSFET 소스 (스위치 노드)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "응용 회로 · 주변 부품",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li>부트스트랩 커패시터 0.1 µF 세라믹, BOOT–PH 사이.</li>\n    <li>출력 전압: VOUT = 0.8 V × (1 + R5/R6), R6 = R5 × 0.8 V / (VOUT − 0.8 V). 상단 R5 ≈ 10 kΩ 권장. 예: 3.3 V 출력에 10.2 kΩ / 3.24 kΩ (≈3.31 V).</li>\n    <li>EN UVLO (EN 풀업 1 µA, 히스테리시스 전류 3 µA, VEN 1.25 V): Ren1 = (VSTART − VSTOP) / 3 µA, Ren2 = VEN × Ren1 / (VSTOP − VEN + Ren1 × 1 µA). VSTOP은 3.5 V보다 커야 함. (추출 텍스트 기준 — PDF 수식으로 재확인 권장)</li>\n    <li>소프트 스타트: TSS(ms) = CSS(nF) × 0.8 V / 2 µA ≈ 0.4 × CSS(nF). 권장 TSS 1 ~ 10 ms, CSS ≤ 27 nF.</li>\n    <li>캐치 다이오드(PH–GND, 쇼트키 필수): 역전압 &gt; VIN(max) + 0.5 V, 피크 전류 &gt; IOUT(max) + 인덕터 리플의 1/2, 낮은 VF. 예시 B340A (40 V, 3 A, 0.5 V).</li>\n    <li>EN 임계 1.25 V 일반(최대 1.35 V) — SLVS839H 전기적 특성 기준.</li>\n  </ul>"
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>SOIC-8 (D). SLVSAB5: RθJA 100 °C/W, ψJT 5 °C/W (2 in × 1.5 in, 2층, 2 oz 구리, 패키지 아래 열 비아 6개 시험 기판). 참고로 상용 SLVS839H의 JEDEC 기준 값은 RθJA 116.3 °C/W, RθJC(top) 53.7 °C/W, RθJB 57.1 °C/W, ψJB 56.5 °C/W. TJ 최대 150 °C.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul>\n    <li><b>설명 정정:</b> 배치 설명의 '동기 벅'은 틀렸습니다. TPS54331-Q1은 하이사이드 MOSFET만 내장한 비동기(non-synchronous) 벅이며 외부 쇼트키 다이오드가 필요합니다.</li>\n    <li>제품 상태: Active (2025-11 패키지 부록 기준).</li>\n    <li>VIN 절대 최대 30 V이므로 12 V 배터리 직결 시 로드 덤프에 대비한 TVS·전단 보호가 필요합니다.</li>\n    <li>-Q1 문서(2010)는 열저항을 비 JEDEC 시험 기판으로 표기하므로 열 설계 시 기판 조건 차이를 감안하세요.</li>\n    <li>경부하 Eco-mode 진입 임계 약 160 mA 일반(SLVS839H).</li>\n  </ul>"
+    }
+   ]
+  }
+ ],
+ "src": [
+  "https://ti.com/lit/pdf/slvsab5"
+ ],
+ "key": {
+  "spec": {
+   "i": 3,
+   "vin": [
+    3.5,
+    28
+   ],
+   "pkg": "SOIC-8",
+   "sync": 0
+  },
+  "grade": "Q100",
+  "ext": [
+   "인덕터",
+   "캐치 쇼트키"
+  ]
+ },
+ "issues": [
+  {
+   "p": "[설명·분류 오류] batch desc says \"동기 벅\" but device is non-synchronous (external Schottky catch diode required), confirmed in -Q1 datasheet SLVSAB5",
+   "fix": "change desc to \"3 A 비동기 벅 · 3.5–28 V · 570 kHz\"; set pdf field to https://ti.com/lit/pdf/slvsab5",
+   "url": "https://ti.com/lit/pdf/slvsab5"
+  },
+  {
+   "p": "[설명·분류 오류] description wrong: \"3 A 동기 벅\" but TPS54331 is a non-synchronous buck (high-side FET only, external Schottky catch diode required)",
+   "fix": "change desc to \"3 A 비동기 벅 · 3.5–28 V · 570 kHz (외부 쇼트키 필요)\"",
+   "url": "https://ti.com/document-viewer/TPS54331/datasheet/GUID-23ACBC47-8192-4302-8827-5CA6745BBD5C"
+  }
+ ]
+}
