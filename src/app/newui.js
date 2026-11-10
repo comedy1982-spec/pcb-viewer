@@ -237,7 +237,8 @@ async function npGenerate0(o){
       const opts=[].concat(guess.length?[`추천 구현 자동 지정 (${guess.length}개) 후 진행`]:[],pinW.length?[`데이터시트 PDF로 핀 확인 (${pinW[0].mpn}${pinW.length>1?' 외 '+(pinW.length-1):''})`]:[],['그대로 진행 (구현 없는 블록은 회로에서 제외)','1단계에서 직접 고치기']);
       COP.askSrc='np';const a=await copAsk({q:`회로 생성 전 점검 — 오류 ${errs.length} · 경고 ${I.filter(x=>x.sev==='warn').length}. 어떻게 할까요?`,why:'오류(✕)인 블록은 회로에 들어가지 않습니다. 경고(△)는 전원·제어 연결이 빠졌거나(그 핀이 미연결로 남음), 고른 부품의 핀이 데이터시트로 확인되지 않은 블록(Claude 추정 핀 · 기록만)입니다.',opts});
       if(a&&/데이터시트 PDF로 핀 확인/.test(a)){const x=pinW[0];const r=await dsPdfFlow(x.mpn,'np',{});
-        if(r){try{npSay('ok',await npRun(`impl ${x.id} part ${x.mpn}`));}catch(e){npSay('err',e.message||String(e));}npRender();}
+        const blk=NP.arch.blocks.find(b=>b.id===x.id),L0=blk&&blk.impl||[];const keepBlock=L0.length===1&&/^(can|ntc|ldo|pwr_in|hs_switch)$/.test(L0[0].type);
+        if(r){if(keepBlock){NP.planManual=false;archToPlan(true);}else{try{npSay('ok',await npRun(`impl ${x.id} part ${x.mpn}`));}catch(e){npSay('err',e.message||String(e));}}npRender();}
         return r?`${x.mpn}: 데이터시트 핀 ${r.pins.length}개로 다시 연결했습니다${pinW.length>1?` · 남은 부품: ${pinW.slice(1).map(y=>y.mpn).join(', ')}`:''} — [다음: 회로 생성]을 다시 누르세요.`:`${x.mpn}: 핀 표를 읽지 못했습니다 — 그대로 진행하려면 [다음: 회로 생성]에서 "그대로 진행"을 고르세요.`;}
       if(a==null||/직접 고치기/.test(a)){setStep(1);return '1단계에서 고친 뒤 다시 [다음: 회로 생성]을 누르세요. 명령 예:\n'+I.map(x=>'  '+x.fix).join('\n');}
       if(/자동 지정/.test(a)){for(const x of guess){try{npSay('ok',await npRun(`impl ${x.id} ${x.guess}`));}catch(e){npSay('err',e.message||String(e));}}npRender();
@@ -369,6 +370,11 @@ async function npSetPart(b,p){const prev=JSON.parse(JSON.stringify(b.impl||[]));
       NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — ${g.type==='hbridge'?'H-브리지(hbridge)':'3상 인버터(gdrv3)'} 구동 IC를 ${m[0]}로 (FET·션트·부트스트랩·센스 앰프·SPI 자동 연결)${rec&&rec.pins&&rec.pins.length?'':' · 핀 표가 없어 지금은 IR2104로 생성 — datasheet '+p.mpn+' 로 핀 표를 넣으면 반영'}`;}}
   // the library buck block takes its pin-compatible parts directly (inductor · catch diode · compensation stay)
   {const L0=b.impl||[];const bk=L0.find(i=>i.type==='buck');if(bk&&/^TPS54331/i.test(p.mpn||'')){bk.params=Object.assign({},bk.params,{part:p.mpn});NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn} — 벅 회로(TPS54331)와 핀 호환이라 그대로 교체 (인덕터 · 캐치 쇼트키 · 보상 유지)`;}}
+  // blocks that take the pick themselves (CAN · NTC · LDO · input protection · high-side switch): the block keeps its
+  // surrounding parts and uses the picked part when its datasheet pins fit; the check says so when they don't
+  {const L0=b.impl||[];if(L0.length===1&&/^(can|ntc|ldo|pwr_in|hs_switch)$/.test(L0[0].type)){NP.planManual=false;archToPlan(true);npRender();
+    const iss=HWARCH.check(NP.arch).find(x=>x.id===b.id&&x.code==='pinsNone');
+    return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — ${iss?`${L0[0].type} 회로 블록은 기본 부품 유지: ${iss.msg.replace(/^[^:]*:\s*/,'')} → ${iss.fix}`:`${L0[0].type} 회로 블록이 이 부품으로 만들어집니다 (주변 부품 포함)`}`;}}
   const ext=(p.ext&&p.ext.length?p.ext:(typeof PARTRANK!=='undefined'&&PARTRANK.extOf?PARTRANK.extOf(p.note):[]));
   const L=b.impl||[];const single=!L.length||(L.length===1&&NP_SWAP.test(L[0].type))||L.some(i=>i.type==='part');let how='기록 (회로는 라이브러리 블록 구성 유지 · 2단계에서 add part로 교체 가능)';
   if(single&&ext.length){how=`기록만 — ${p.mpn}은 외부 ${ext.join(' · ')}가 필요한 전원 IC라 부품 하나만 넣으면 회로가 불완전합니다 (라이브러리 블록 유지 · 2단계 회로도에서 주변 부품과 함께 설계)`;}

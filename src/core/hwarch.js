@@ -62,7 +62,7 @@ function archFrom(text,name){
     else if(kind.type==='hbridge')addBlock(A,'io','H-Bridge Gate Driver + MOSFET ×4'+sfx,{id,feats:[`외부 N-MOSFET ×4${kind.par>1?' (병렬 '+kind.par+')':''} · ${kind.i} A`,'게이트 드라이버 ×2 · 부트스트랩 · 정/역회전','공통 션트 + 전류 앰프'],impl:[{type:'hbridge',params:Object.assign({i:kind.i},kind.ipk?{ipk:kind.ipk}:{},kind.tpk?{tpk:kind.tpk}:{})}]});
     else addBlock(A,'io','Low-side MOSFET Switch'+sfx,{id,feats:['단방향 · 로우사이드 FET 1개 (≤ 3 A)','과전류 검출 션트'],impl:[{type:'dcmotor',params:{shunt:1}}]});
     link(A,'mcu',id,`Control (PWM / EN)${sfx}`,{kind:'signal'});link(A,'reg',id,`VCC_DRV ${vin} V`,{kind:'power'});}
-  if(curr||temp||hall){addBlock(A,'io',`${curr?'Current Sensing':''}${curr&&(temp||hall)?' & ':''}${temp?'Temp. Sensor':''}${!curr&&!temp&&hall?'Position Sensor':''}`,{id:'sense',feats:[curr?'전류 센싱 (Shunt + Amp)':null,temp?'온도 센서 (NTC)':null,hall?'홀 / 위치 센서':null,'HW Diagnostics'].filter(Boolean),impl:[{type:'vmon',params:{}}]});
+  if(curr||temp||hall){addBlock(A,'io',`${curr?'Current Sensing':''}${curr&&(temp||hall)?' & ':''}${temp?'Temp. Sensor':''}${!curr&&!temp&&hall?'Position Sensor':''}`,{id:'sense',feats:[curr?'전류 센싱 (Shunt + Amp)':null,temp?'온도 센서 (NTC)':null,hall?'홀 / 위치 센서':null,'HW Diagnostics'].filter(Boolean),impl:[curr||hall?{type:'vmon',params:{}}:null,temp?{type:'ntc',params:{n:1}}:null].filter(Boolean)});
     link(A,'sense','mcu','Analog Feedback (ADC)',{kind:'signal'});if(A.blocks.some(b=>b.id==='reg'))link(A,'reg','sense','VCC_SENS 5 V',{kind:'power'});}
   if(flash){addBlock(A,'io','External Flash',{id:'mem',feats:['데이터 로그 · 설정 저장'],impl:[{type:'flash',params:{}}]});link(A,'mcu','mem','SPI',{both:true});}
   if(dbg){addBlock(A,'io','Debug / Calib. Interface',{id:'dbg',feats:[tc?'JTAG / DAP':'SWD / JTAG','UART',xcp?'XCP over CAN':null].filter(Boolean),impl:/uart|시리얼|디버그\s*포트|콘솔/.test(lo)||ecu?[{type:'uart',params:{}}]:[]});link(A,'mcu','dbg','Diagnostic / Debug',{both:true});link(A,'reg','dbg','VCC_MCU 3.3 V',{kind:'power'});}
@@ -119,7 +119,9 @@ function toPlan(A){
   if(typeof NEWPROJ==='undefined')throw new Error('NEWPROJ 필요');const P=NEWPROJ.newPlan(A.name);P.req=A.req;if(A.safety&&A.safety.level&&A.safety.level!=='QM')P.asil=A.safety.level;const log=[];const map=[];
   upgradeMotor(A,log);
   const order=['power','ctrl','comm','io','ext'];
-  order.forEach(g=>A.blocks.filter(b=>b.group===g).forEach(b=>(b.impl||[]).forEach(im=>{try{const x=NEWPROJ.addBlock(P,im.type,im.params||{});map.push({arch:b.id,plan:x.id});}catch(e){log.push(`${b.id}: ${e.message}`);}})));
+  // a part picked for a single-implementation block goes to that block as "pick"; the block uses it when its pins fit
+  const PICK=/^(can|ntc|ldo|pwr_in|hs_switch)$/;
+  order.forEach(g=>A.blocks.filter(b=>b.group===g).forEach(b=>(b.impl||[]).forEach(im=>{try{const pick=b.part&&b.part.mpn&&(b.impl||[]).length===1&&PICK.test(im.type)?{pick:b.part.mpn}:{};const x=NEWPROJ.addBlock(P,im.type,Object.assign({},im.params||{},pick));map.push({arch:b.id,plan:x.id});}catch(e){log.push(`${b.id}: ${e.message}`);}})));
   NEWPROJ.ldoToBuck(P,log,false);
   const motor=A.blocks.some(b=>(b.impl||[]).some(i=>i.type==='bldc'||i.type==='gdrv3'||i.type==='hbridge'));P.strategy=motor?'thermal':A.blocks.some(b=>(b.impl||[]).some(i=>i.type==='can'||i.type==='dcmotor'))?'noise':'balanced';
   const unmapped=A.blocks.filter(b=>!b.ext&&!b.via&&!(b.impl||[]).length).map(b=>b.label);
@@ -132,7 +134,7 @@ function toPlan(A){
    warn noCtrl   actuation / sensing / comm block with no link to a controller block (no control / feedback signal)
    warn isolated block with no link at all
    Every issue carries the console command that fixes it; implGuess() proposes a type from the block's wording. */
-const IMPL_GUESS=[[/ntc|서미스터|thermistor|(pcb|보드|board)\s*온도|온도\s*센서|temp(erature)?\s*sens/i,'ntc'],[/buck|강압|dc-?dc|smps|스위칭/i,'buck'],[/ldo|레귤|regulator|pmic|sbc|전압\s*변환/i,'ldo'],[/watchdog|워치독|supervisor|reset|감시/i,'supervisor'],
+const IMPL_GUESS=[[/ntc|서미스터|thermistor|(pcb|보드|board)\s*온도|온도\s*센서|temp(erature|\.)?\s*sens/i,'ntc'],[/buck|강압|dc-?dc|smps|스위칭/i,'buck'],[/ldo|레귤|regulator|pmic|sbc|전압\s*변환/i,'ldo'],[/watchdog|워치독|supervisor|reset|감시/i,'supervisor'],
   [/can/i,'can'],[/flash|플래시|메모리|eeprom|memory/i,'flash'],[/led|표시등|램프/i,'led'],[/button|버튼|스위치\s*입력|key/i,'button'],[/uart|debug|디버그|jtag|swd|console|콘솔|xcp|calib/i,'uart'],[/i2c|i²c|iic|센서\s*확장|expander/i,'i2c'],
   [/3[-\s]?phase|3상|bldc|pmsm|inverter|인버터|gate\s*driver|게이트/i,'gdrv3'],[/h-?bridge|h\s*브리지|dc\s*모터|dc\s*motor|정\/역|양방향|스텝|stepper|step\s*motor/i,'hbridge'],[/low-?side|로우사이드|솔레노이드|solenoid|밸브|valve|fan|팬|히터|heater|릴레이|relay/i,'dcmotor'],
   [/high-?side|하이사이드|부하\s*스위치|load\s*switch|phase-?cut|차단|relay/i,'hs_switch'],[/sens|센싱|센서|current|전류|temp|온도|monitor|모니터|adc|feedback|피드백|torque|토크|angle|각도|position|위치/i,'vmon'],
@@ -172,7 +174,8 @@ function partChecks(A){const out=[];const look=mpn=>{try{return typeof NEWPROJ!=
     else if(drv&&!/IR2104/i.test(mpn)&&!pinsOf(r))out.push({sev:'warn',code:'pinsNone',id:b.id,label:b.label,mpn,msg:`${lab}: 핀 표가 없어 구동 IC를 IR2104 ×3 스테이지로 대신 만듭니다`,fix:`datasheet ${mpn}  (핀 표를 넣으면 ${mpn} 회로로 생성)`});
     else if(!asPart&&!drv&&!buck&&!inBuilt(mpn)){const keep=(L.map(i=>i.type).join(' · '))||'구현 없음';
       out.push({sev:'warn',code:'pinsNone',id:b.id,label:b.label,mpn,msg:`${lab}: 부품은 기록만 되어 있고 회로는 라이브러리 기본 구성(${keep})으로 만들어집니다${pinsOf(r)?'':' — 핀 정보 없음'}`,
-        fix:pinsOf(r)?`impl ${b.id} part ${mpn}  (외부 부품이 필요한 IC는 2단계 회로도에서 주변 부품과 함께 추가)`:`datasheet ${mpn}  뒤 impl ${b.id} part ${mpn}`});}
+        fix:L.length===1&&/^(can|ntc|ldo|pwr_in|hs_switch)$/.test(L[0].type)?(pinsOf(r)?`핀 이름이 ${L[0].type} 블록 역할과 맞지 않음 — 회로 생성 경고 확인, 또는 2단계 회로도에서 직접 교체`:`datasheet ${mpn}  (데이터시트 PDF로 핀 표를 넣으면 ${L[0].type} 블록이 이 부품으로 만들어짐)`)
+          :pinsOf(r)?`impl ${b.id} part ${mpn}  (외부 부품이 필요한 IC는 2단계 회로도에서 주변 부품과 함께 추가)`:`datasheet ${mpn}  뒤 impl ${b.id} part ${mpn}`});}
     if((asPart||drv||buck||inBuilt(mpn))&&(pinsOf(r)||inBuilt(mpn))&&!(r&&r.src==='ai')){const d=DSLOOK(mpn);if(!d||d.status==='stub')out.push({sev:'info',code:'dsNone',id:b.id,label:b.label,mpn,msg:`${lab}: 핀은 ${r&&r.src==='ds'?'데이터시트 PDF':'라이브러리 회로 블록'}에서 가져왔지만 데이터시트 요약 페이지가 ${d?'초안뿐':'없음'} (사양·절대 최대 정격 미확인)`,fix:`datasheets/records에 ${mpn} 레코드 작성 후 node scripts/dsdb.mjs`});}});
   return out;}
 function checkText(I){if(!I.length)return'점검: 문제 없음 — 모든 블록에 회로 구현과 전원·제어 연결이 있고, 고른 부품의 핀이 확인되었습니다.';const e=I.filter(x=>x.sev==='err'),w=I.filter(x=>x.sev==='warn'),n=I.filter(x=>x.sev==='info');

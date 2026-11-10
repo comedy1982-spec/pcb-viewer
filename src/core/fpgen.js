@@ -5,11 +5,13 @@ const FPGEN=(function(){
 "use strict";
 const r3=v=>Math.round(v*1000)/1000;
 /* package family from a free-form name: 'SOT-23-5', 'SOT23-6', 'TSOT-25', 'SOIC-14', 'TSSOP-20', 'QFN-24 4x4', 'DFN-8', 'DIP-8', 'TO-252', 'SOT-89', 'HDR-1x6' */
-function family(pkg){const s=String(pkg||'').toUpperCase().replace(/\s+/g,'_');let m;
+function family(pkg){const s=String(pkg||'').toUpperCase().replace(/\s+/g,'_').replace(/^PG-/,'');let m;
+  // exposed (thermal) pad on a gull-wing package: H-prefixed (HSOIC, HTSSOP, HSOP), TSDSO, or an -EP / PowerPAD / thermal pad note
+  const epSO=/^(H[A-Z]*SO|TSDSO)|[-_]EP\b|[-_]EP$|POWERPAD|THERMAL/.test(s);
   if((m=s.match(/^(?:T?SOT|SC)-?(23|70|353|363|23-|)-?(\d)?/))&&/SOT|SC/.test(s)){const n=+(s.match(/-(\d)$/)||s.match(/(\d)$/)||[])[1]||3;if(/SOT-?89/.test(s))return{fam:'SOT-89',n:3};if(/SOT-?223/.test(s))return{fam:'SOT-223',n:4};return{fam:'SOT-23',n:n>=3&&n<=8?n:3};}
   if(/SOT-?89/.test(s))return{fam:'SOT-89',n:3};
   if(/SOT-?223/.test(s))return{fam:'SOT-223',n:4};
-  if((m=s.match(/^(SOIC|SO|SOP|SSOP|TSSOP|MSOP|HTSSOP|VSSOP|QSOP)-?(\d+)/)))return{fam:/^(TSSOP|HTSSOP|MSOP|VSSOP|SSOP|QSOP)$/.test(m[1])?'TSSOP':'SOIC',n:+m[2],ep:/^H/.test(m[1])};
+  if((m=s.match(/^(SOIC|SO|SOP|SSOP|TSSOP|MSOP|HTSSOP|VSSOP|QSOP|HSOIC|HSOP|HVSSOP|HMSOP|TSDSO)-?(\d+)/)))return{fam:/^(TSSOP|HTSSOP|MSOP|VSSOP|SSOP|QSOP|HVSSOP|HMSOP|TSDSO)$/.test(m[1])?'TSSOP':'SOIC',n:+m[2],ep:epSO,leads:+m[2]};
   if((m=s.match(/^(QFN|DFN|VQFN|WQFN|UQFN|TQFN|MLF|SON|WSON|VSON|DFN)-?(\d+)/)))return{fam:/^(DFN|SON|WSON|VSON)$/.test(m[1])?'DFN':'QFN',n:+m[2],ep:true,size:(s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/)||[]).slice(1,3).map(Number)};
   if((m=s.match(/^(TQFP|LQFP|QFP|MQFP|HTQFP|HLQFP)-?(\d+)/))){const pm=s.match(/_P(\d+(?:\.\d+)?)MM/),em=s.match(/_EP(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/);
     return{fam:'QFP',n:+m[2],ep:/-\d*EP|_EP\d|^H/.test(s.slice(0,40))||!!em,epSize:em?[+em[1],+em[2]]:null,pitch:pm?+pm[1]:null,size:(s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)MM/)||s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/)||[]).slice(1,3).map(Number)};}
@@ -48,9 +50,9 @@ function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nP
     case'TO-252':return{kind:'ic',stand:0.02,body:[6.6,6.1,2.3],pads:[{n:'1',x:-2.28,y:-4.5,w:1.2,h:2.2},{n:'2',x:0,y:0.6,w:5.6,h:6.6},{n:'3',x:2.28,y:-4.5,w:1.2,h:2.2}],gen:true};
     case'TO-263':return{kind:'ic',stand:0.02,body:[10.2,9.2,4.5],pads:[{n:'1',x:-2.54,y:-7.0,w:1.6,h:3.0},{n:'2',x:0,y:1.0,w:10.0,h:9.0},{n:'3',x:2.54,y:-7.0,w:1.6,h:3.0}],gen:true};
     case'TO-220':return{kind:'ic',stand:0,body:[10.2,4.6,15],pads:[-2.54,0,2.54].map((x,i)=>({n:''+(i+1),x,y:0,w:1.9,h:1.9,round:true,drill:1.0})),gen:true};
-    case'SOIC':{const k=n%2?n+1:n;const half=k/2;const L=half*1.27+0.5;const wide=k>16;return dual(k,1.27,wide?9.4:5.4,1.55,0.6,[wide?7.5:3.9,r3(L),1.5],'ic',f.ep);}
-    case'TSSOP':{const k=n%2?n+1:n;const half=k/2;const pitch=k>=38?0.5:0.65;const L=r3(half*pitch+0.6);return dual(k,pitch,5.8,1.45,pitch<0.6?0.3:0.4,[4.4,L,1.1],'ic',f.ep);}
-    case'DFN':{const k=n%2?n+1:n;const half=k/2;const pitch=k<=8?0.65:0.5;const w=f.size&&f.size[0]||(k<=6?2:3),h=f.size&&f.size[1]||(k<=6?2:3);return dual(k,pitch,r3(w-0.3),0.7,pitch<0.6?0.25:0.3,[w,h,0.8],'ic',true);}
+    case'SOIC':{const k=f.ep&&n%2?n-1:(n%2?n+1:n);const half=k/2;const L=half*1.27+0.5;const wide=k>16;return dual(k,1.27,wide?9.4:5.4,1.55,0.6,[wide?7.5:3.9,r3(L),1.5],'ic',f.ep);}
+    case'TSSOP':{const k=f.ep&&n%2?n-1:(n%2?n+1:n);const half=k/2;const pitch=k>=38?0.5:0.65;const L=r3(half*pitch+0.6);return dual(k,pitch,5.8,1.45,pitch<0.6?0.3:0.4,[4.4,L,1.1],'ic',f.ep);}
+    case'DFN':{const k=n%2?n-1:n; /* the pin count may include the exposed pad (8 leads + pad = 9) */const half=k/2;const pitch=k<=8?0.65:0.5;const w=f.size&&f.size[0]||(k<=6?2:3),h=f.size&&f.size[1]||(k<=6?2:3);return dual(k,pitch,r3(w-0.3),0.7,pitch<0.6?0.25:0.3,[w,h,0.8],'ic',true);}
     case'QFN':{let k=n%4?n+(4-n%4):n;const q=k/4;const size=f.size&&f.size[0]||(k<=16?3:k<=24?4:k<=32?5:k<=48?7:k<=64?9:10);const pitch=r3(Math.min(0.65,Math.max(0.4,(size-1.0)/q)));return quad(k,pitch,r3(size-0.1),0.8,r3(Math.min(0.3,pitch*0.55)),[size,size,0.9],true);}
     case'QFP':{// an exposed pad counts as one extra pin (LQFP-48-1EP → 49 pins: 48 leads + pad 49)
       const ep=!!f.ep||n%4===1;let k=ep&&n%4===1?n-1:n;k=k%4?k+(4-k%4):k;const q=k/4;const size=f.size&&f.size[0]||(k<=32?7:k<=48?7:k<=64?10:k<=100?14:k<=144?20:28);
@@ -66,6 +68,7 @@ function name(pkg,n){const f=family(pkg);if(!f)return null;const k=n&&n>=2?n:f.n
   switch(f.fam){case'CHIP':return f.code;case'SMA':case'SMB':case'SMC':return f.fam;case'SOT-23':return k===3?'SOT-23':'SOT-23-'+k;case'SOT-89':case'SOT-223':case'TO-252':case'TO-263':case'TO-220':return f.fam;
     case'HDR':return`HDR-${f.rows||1}x${Math.ceil(k/(f.rows||1))}`;
     case'QFP':{const ep=!!f.ep||k%4===1;const kk=ep&&k%4===1?k-1:k;return'QFP-'+kk+(ep?'-EP':'')+(f.size&&f.size[0]?'-'+f.size[0]+'x'+f.size[1]:'')+(f.pitch?'-P'+f.pitch:'');}
+    case'SOIC':case'TSSOP':{const kk=f.ep&&k%2?k-1:(k%2?k+1:k);return f.fam+'-'+kk+(f.ep?'-EP':'');}
     default:return f.fam+'-'+k;}}
 /* make sure PCB.FP has a footprint for this package; returns its name (or null when the package is unknown) */
 function ensure(PCB,pkg,n){if(!PCB||!PCB.FP)return null;if(pkg&&PCB.FP[pkg])return pkg;const nm=name(pkg,n);if(!nm)return null;if(!PCB.FP[nm]){const fp=make(pkg,n);if(!fp)return null;lbb(fp);PCB.FP[nm]=fp;}return nm;}

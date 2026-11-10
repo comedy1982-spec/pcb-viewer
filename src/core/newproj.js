@@ -33,18 +33,25 @@ const tvsFor=v=>v<=5.5?'SMAJ5.0A':v<=13?'SMAJ15A':v<=26?'SMAJ28A':'SMAJ58A';
 
 /* ---------- blocks ---------- */
 const LIB={
-  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'입력 TVS: 1 (서지) · loaddump (로드덤프 SMB, ISO 16750-2 중앙 억제 전제) · 0'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'},ign:{def:0,desc:'IGN(KL15) 입력 감지 — 분압 · 필터 · 클램프 → MCU 웨이크업 (1/0)'},uvlo:{def:'off',desc:'입력 저전압 차단: off · auto (12 V계 6.0 V 정지 / 7.0 V 재시작) · 정지 전압 V (재시작 = +1 V) — 1단 벅 EN 분압'},conn:{def:'sep',desc:'외부 커넥터: sep (전원 2핀 + IGN 2핀 따로) · combo (BAT · IGN · GND 3핀 하나, ign=1일 때) · ecu (차량용 ECU 커넥터 하나 — Molex MX150 방수 직각 헤더: 전원 · IGN · 부하 출력 · CAN을 한 커넥터로, 전류에 맞춰 핀 병렬)'}},
+  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'입력 TVS: 1 (서지) · loaddump (로드덤프 SMB, ISO 16750-2 중앙 억제 전제) · 0'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'},ign:{def:0,desc:'IGN(KL15) 입력 감지 — 분압 · 필터 · 클램프 → MCU 웨이크업 (1/0)'},uvlo:{def:'off',desc:'입력 저전압 차단: off · auto (12 V계 6.0 V 정지 / 7.0 V 재시작) · 정지 전압 V (재시작 = +1 V) — 1단 벅 EN 분압'},conn:{def:'sep',desc:'외부 커넥터: sep (전원 2핀 + IGN 2핀 따로) · combo (BAT · IGN · GND 3핀 하나, ign=1일 때) · ecu (차량용 ECU 커넥터 하나 — Molex MX150 방수 직각 헤더: 전원 · IGN · 부하 출력 · CAN을 한 커넥터로, 전류에 맞춰 핀 병렬)'}},
     build(ctx,p){const vin=+p.vin;const rail=railOf(vin);ctx.provide(rail,vin,'입력');const combo=+p.ign&&String(p.conn)==='combo';
       const inJ=(fp,o)=>combo?ctx.part('J','BAT/IGN/GND',fp.replace(/^TERM-2-/,'TERM-3-').replace(/^HDR-1x2$/,'HDR-1x3'),{1:'VIN_RAW',2:'IGN_IN',3:'GND'},Object.assign({},o,{desc:o.desc.replace(/전원 입력/,'전원 입력 커넥터 BAT(KL30) · IGN(KL15) · GND 3핀'),pinNames:{1:'BAT',2:'IGN',3:'GND'}})):ctx.part('J',`${vin}V 입력`,fp,{1:'VIN_RAW',2:'GND'},o);
       const mb=(ctx.plan&&ctx.plan.blocks||[]).filter(b=>b.type==='hbridge'||b.type==='gdrv3');const Im=mb.reduce((a,b)=>a+(+b.params.i||0),0);
       const Impk=mb.reduce((a,b)=>a+peakOf(b.params,+b.params.i||0).Ipk,0),tpkIn=Math.max(0.01,...mb.map(b=>peakOf(b.params,+b.params.i||0).tpk),0.01);
       if(Im>2){const big=bigTerm(Im,Impk);termFp(2,big?7.62:5.08);const n=Math.max(1,Math.ceil(Im/40));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
         if(combo)termFp(3,big?7.62:5.08);inJ(termName(2,big?99:Im),{mpn:big?'':combo?'1729131':'1729128',desc:`${vin} V 전원 입력 (${big?`7.62 mm 단자 — 상시 ${Im} A · 피크 ${Impk} A 정격 품번 지정 필요`:'5.08 mm 단자'} · 상시 ${Im} A${Impk>Im?` · 피크 ${Impk} A ${tpkIn} s`:''})`,pinNames:{1:'+',2:'GND'}});
-        for(let i=0;i<n;i++)ctx.part('Q','SQD50P04-09L','TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:'SQD50P04-09L_GE3',desc:`역전압 보호 P-MOSFET (−40 V · 9 mΩ · AEC-Q101)${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((Im/n)**2)*0.009+0.02).toFixed(2),lk:'batt'});
+        const pf=p.pick?pfetPick(p.pick):null;
+        if(!(p.pick&&!pf&&idealDiode(ctx,p,rail,Im))){
+        for(let i=0;i<n;i++)ctx.part('Q',pf||'SQD50P04-09L','TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:pf||'SQD50P04-09L_GE3',desc:`역전압 보호 P-MOSFET ${pf?pf+' (시스템 설계에서 고른 부품)':'(−40 V · 9 mΩ · AEC-Q101)'}${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((Im/n)**2)*0.009+0.02).toFixed(2),lk:'batt'});
         ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:rail,2:'VIN_PG'},{mpn:'BZT52C12Q-7-F',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'K',2:'A'}});
+        }
         ctx.curr('VIN_RAW',Im);ctx.curr(rail,Im);ctx.peak('VIN_RAW',Impk,tpkIn);ctx.peak(rail,Impk,tpkIn);ctx.curr('GND',Im);ctx.peak('GND',Impk,tpkIn);}
       else{if(combo&&typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'HDR-1x3',3);inJ('HDR-1x2',{mpn:combo?'61300311121':'61300211121',desc:`${vin} V 전원 입력`,pinNames:{1:'+',2:'GND'}});
-      ctx.part('D','SS14','SMA',{1:rail,2:'VIN_RAW'},{mpn:'SS14HE3_A/H',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'K',2:'A'}});}
+      const pf=p.pick?pfetPick(p.pick):null;
+      if(pf){if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
+        ctx.part('Q',pf,'TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:pf,desc:`역전압 보호 P-MOSFET ${pf} (시스템 설계에서 고른 부품)`,pinNames:{1:'G',2:'D',3:'S'},lk:'batt'});
+        ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:rail,2:'VIN_PG'},{mpn:'BZT52C12Q-7-F',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'K',2:'A'}});}
+      else if(!(p.pick&&idealDiode(ctx,p,rail,2)))ctx.part('D','SS14','SMA',{1:rail,2:'VIN_RAW'},{mpn:'SS14HE3_A/H',desc:'역전압 보호 쇼트키 (직렬)',pinNames:{1:'K',2:'A'}});}
       if(String(p.tvs)==='loaddump'){const t=vin<=16?'SMBJ26CA':vin<=32?'SMBJ36CA':'SMBJ58CA';if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'SMB');
         ctx.part('D',t,'SMB',{1:'GND',2:'VIN_RAW'},{mpn:t,desc:`로드덤프 TVS ${t} (양방향 600 W · 역전압 보호 앞단이라 역접속에도 안전 · 중앙 억제 로드덤프 전제, 미억제면 SM8S급 필요)`,pinNames:{1:'A1',2:'A2'}});}
       else if(+p.tvs)ctx.part('D',tvsFor(vin),'SMA',{1:rail,2:'GND'},{desc:`입력 서지 TVS (${tvsFor(vin)})`,pinNames:{1:'K',2:'A'}});
@@ -62,7 +69,7 @@ const LIB={
       ctx.part('J','USB-C','USB-C',{1:'CC1',2:'VBUS',3:'GND',4:d?'USB_DM':null,5:d?'USB_DP':null,6:'GND',S1:'GND',S2:'GND'},{mpn:'USB4105-GF-A',desc:'USB-C 리셉터클',pinNames:{1:'CC1',2:'VBUS',3:'GND',4:'D−',5:'D+',6:'GND',S1:'SHIELD',S2:'SHIELD'}});
       ctx.part('R','5.1kΩ','0603',{1:'CC1',2:'GND'},{desc:'CC 풀다운 (싱크 5 V)'});ctx.cap('VBUS','10µF','VBUS 벌크');
       if(d){ctx.sig('USB_DM','usb_dm','usb');ctx.sig('USB_DP','usb_dp','usb');}}},
-  ldo:{label:'LDO 레귤레이터',desc:'AMS1117 (SOT-223) · 입력/출력 10 µF',params:{vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},vout:{def:3.3,desc:'출력 전압 (3.3 · 5)'},iout:{def:'auto',desc:'예상 부하 전류 [A] (auto = 블록 합)'}},
+  ldo:{label:'LDO 레귤레이터',desc:'AMS1117 (SOT-223) · 입력/출력 10 µF',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},vout:{def:3.3,desc:'출력 전압 (3.3 · 5)'},iout:{def:'auto',desc:'예상 부하 전류 [A] (auto = 블록 합)'}},
     build(ctx,p){const vout=+p.vout;const out=railOf(vout);
       // other rails (9 V hall supply, 8 V, 12 V …): adjustable LM317 (40 V input) + 240 Ω / R2 divider, Vout = 1.25·(1 + R2/240)
       if(vout!==5&&vout!==3.3){const src=p.vin==='auto'?ctx.highest(vout+2):p.vin;ctx.provide(out,vout,'LDO');ctx.use(src);const adj=ctx.uniq('LDO_ADJ');
@@ -73,6 +80,7 @@ const LIB={
         ctx.cap(src,'1µF','LDO 입력 커패시터');ctx.cap(out,'10µF','LDO 출력 커패시터');const vs=ctx.railV?ctx.railV(src):null;if(vs&&vs<vout+2.5)ctx.warn(`${out}: 입력 ${vs} V − ${vout} V 출력 — 드롭아웃 여유 부족 (배터리 저하 시 유지 안 됨)`);return;}
       const mpn=vout===5?'AMS1117-5.0':'AMS1117-3.3';
       const src=p.vin==='auto'?ctx.highest(vout+1.1):p.vin;ctx.provide(out,vout,'LDO');ctx.use(src);
+      if(p.pick&&ldoPick(ctx,p,src,out,vout))return;
       ctx.part('U',mpn,'SOT-223',{1:'GND',2:out,3:src,4:out},{mpn,desc:`${vout} V LDO (입력 ${src})`,pinNames:{1:'GND',2:'VOUT',3:'VIN',4:'VOUT'},ldo:{src,out,vout}});
       ctx.cap(src,'10µF','LDO 입력 커패시터');ctx.cap(out,'10µF','LDO 출력 커패시터');}},
   buck:{label:'벅 컨버터 (DC-DC)',desc:'TPS54331 (3.5–28 V 입력, 3 A, 570 kHz) · 10 µH 인덕터 · MBRA340T3G(SMA) 캐치 다이오드 · 22 µF 출력 · 피드백 분압 · 보상',params:{vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},vout:{def:5,desc:'출력 전압 (5 · 3.3)'},part:{def:'',desc:'핀 호환 부품 (TPS54331DR · TPS54331QDRQ1 · TPS54331D)'}},
@@ -106,14 +114,14 @@ const LIB={
   xtal:{label:'크리스털',desc:'20 MHz 크리스털 + 부하 캡 2개 → MCU OSC 핀',params:{freq:{def:'20MHz',desc:'주파수'},cl:{def:'12pF',desc:'부하 캡 값'}},
     build(ctx,p){ctx.part('Y',p.freq,'XTAL-3225',{1:'XTAL1',2:'GND',3:'XTAL2',4:'GND'},{mpn:'ABM8-20.000MHZ-B2-T',desc:`${p.freq} 크리스털`});
       ctx.part('C',p.cl,'0603',{1:'XTAL1',2:'GND'},{desc:'크리스털 부하 캡'});ctx.part('C',p.cl,'0603',{1:'XTAL2',2:'GND'},{desc:'크리스털 부하 캡'});ctx.xtal('XTAL1','XTAL2');}},
-  can:{label:'CAN 통신',desc:'TLE9251V CAN FD 트랜시버 (VCC 5 V · VIO 3.3 V) · 스플릿 종단 · PESD1CAN TVS · 커넥터',params:{term:{def:1,desc:'스플릿 종단 60 Ω×2 + 4.7 nF (1/0)'},tvs:{def:1,desc:'PESD1CAN (1/0)'}},
+  can:{label:'CAN 통신',desc:'TLE9251V CAN FD 트랜시버 (VCC 5 V · VIO 3.3 V) · 스플릿 종단 · PESD1CAN TVS · 커넥터',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},term:{def:1,desc:'스플릿 종단 60 Ω×2 + 4.7 nF (1/0)'},tvs:{def:1,desc:'PESD1CAN (1/0)'}},
     build(ctx,p){ctx.use('+5V');ctx.use('+3V3');
-      ctx.part('U','TLE9251V','SOIC-8',{1:'CAN_TX',2:'GND',3:'+5V',4:'CAN_RX',5:'+3V3',6:'CANL',7:'CANH',8:'CAN_STB'},{mpn:'TLE9251VSJ',desc:'CAN FD 트랜시버',pinNames:{1:'TxD',2:'GND',3:'VCC',4:'RxD',5:'VIO',6:'CANL',7:'CANH',8:'STB'},P:0.08});
+      if(!(p.pick&&canPick(ctx,p)))ctx.part('U','TLE9251V','SOIC-8',{1:'CAN_TX',2:'GND',3:'+5V',4:'CAN_RX',5:'+3V3',6:'CANL',7:'CANH',8:'CAN_STB'},{mpn:'TLE9251VSJ',desc:'CAN FD 트랜시버',pinNames:{1:'TxD',2:'GND',3:'VCC',4:'RxD',5:'VIO',6:'CANL',7:'CANH',8:'STB'},P:0.08});
       ctx.cap('+5V','100nF','CAN VCC 디커플링');ctx.cap('+3V3','100nF','CAN VIO 디커플링');
       if(+p.term){ctx.part('R','60.4Ω','0603',{1:'CANH',2:'CAN_SPLIT'},{desc:'스플릿 종단'});ctx.part('R','60.4Ω','0603',{1:'CAN_SPLIT',2:'CANL'},{desc:'스플릿 종단'});ctx.part('C','4.7nF','0603',{1:'CAN_SPLIT',2:'GND'},{desc:'스플릿 종단 공통 모드 캡'});}
       if(+p.tvs)ctx.part('D','PESD1CAN','SOT-23',{1:'CANL',2:'CANH',3:'GND'},{desc:'CAN 버스 ESD/TVS (Nexperia PESD1CAN)',pinNames:{1:'CANL',2:'CANH',3:'GND'}});
       ctx.part('J','CAN','HDR-1x4',{1:'CANH',2:'CANL',3:'GND',4:null},{mpn:'61300411121',desc:'CAN 버스 커넥터',pinNames:{1:'CANH',2:'CANL',3:'GND',4:'NC'}});
-      ctx.sig('CAN_TX','can_tx','can');ctx.sig('CAN_RX','can_rx','can');ctx.sig('CAN_STB','gpio_out');}},
+      ctx.sig('CAN_TX','can_tx','can');ctx.sig('CAN_RX','can_rx','can');if(!p._noStb)ctx.sig('CAN_STB','gpio_out');}},
   bldc:{label:'BLDC 3상 드라이버',desc:'DRV8313 (VM 8–60 V, 2.5 A) · 차지 펌프 · VM 벌크 · 홀 센서 입력 · 모터·홀 커넥터',params:{hall:{def:1,desc:'홀 센서 입력 (1/0)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
     build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);
       ctx.part('U','DRV8313','HTSSOP-28',{1:'DRV_CPL',2:'DRV_CPH',3:'DRV_VCP',4:vm,5:'PH_W',6:'GND',7:'GND',8:'PH_V',9:'PH_U',10:'GND',11:vm,14:'GND',15:'DRV_V3P3',16:'DRV_V3P3',17:'DRV_V3P3',18:'NFAULT',20:'GND',22:'EN_U',23:'IN_U',24:'EN_V',25:'IN_V',26:'EN_W',27:'IN_W',28:'GND',29:'GND'},
@@ -193,8 +201,9 @@ const LIB={
     build(ctx,p){const rail=p.rail||'+3V3';ctx.use(rail);const rst=ctx.mcu()==='tc364'?'PORST':'NRST';
       ctx.part('U','TPS3823-33','SOT-23-5',{1:rst,2:rail,3:'GND',4:rail,5:+p.wdt?'WDI':''},{mpn:'TPS3823-33DBVR',desc:'전원 감시 리셋 + 윈도우 워치독 (1.6 s)',pinNames:{1:'RESET',2:'VDD',3:'GND',4:'MR',5:'WDI'}});
       ctx.cap(rail,'100nF','감시 IC 디커플링');if(+p.wdt)ctx.sig('WDI','gpio_out');}},
-  hs_switch:{label:'하이사이드 전원 스위치 (세이프 스테이트)',desc:'P-MOSFET 하이사이드 + N-MOSFET 레벨시프트 · MCU SAFE_EN이 High일 때만 부하 전원 공급 (이중 차단)',params:{rail:{def:'auto',desc:'끊을 전원 레일 (auto = 입력)'}},
+  hs_switch:{label:'하이사이드 전원 스위치 (세이프 스테이트)',desc:'P-MOSFET 하이사이드 + N-MOSFET 레벨시프트 · MCU SAFE_EN이 High일 때만 부하 전원 공급 (이중 차단)',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},rail:{def:'auto',desc:'끊을 전원 레일 (auto = 입력)'}},
     build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);const out=r+'_SW';ctx.provide(out,ctx.railV?ctx.railV(r):12,'스위치');
+      if(p.pick&&hsPick(ctx,p,r,out))return;
       ctx.part('Q','AO3401A','SOT-23',{1:'HS_G',2:out,3:r},{mpn:'AO3401A',desc:'하이사이드 P-MOSFET (부하 전원 차단)',pinNames:{1:'G',2:'D',3:'S'}});
       ctx.part('R','10kΩ','0603',{1:r,2:'HS_G'},{desc:'게이트 풀업 (기본 OFF)'});ctx.part('Q','AO3400A','SOT-23',{1:'SAFE_EN',2:'HS_G',3:'GND'},{mpn:'AO3400A',desc:'레벨 시프트 N-MOSFET'});
       ctx.part('R','10kΩ','0603',{1:'SAFE_EN',2:'GND'},{desc:'SAFE_EN 풀다운 (MCU 리셋 중 OFF)'});ctx.sig('SAFE_EN','gpio_out');}},
@@ -211,9 +220,11 @@ const LIB={
       const prefix=/connector|커넥터/i.test(rec.cat||'')?'J':/mosfet|fet|transistor/i.test(rec.cat||'')?'Q':/diode|tvs/i.test(rec.cat||'')?'D':'U';
       ctx.part(prefix,rec.mpn,fp,pins,{mpn:rec.mpn,desc:(rec.title||rec.desc||'지정 부품')+(rec.src==='ai'?' (Claude 추정 핀 배열)':''),pinNames:names,P:0.05});
       ctx.cap(vcc,'100nF',`${rec.mpn} 디커플링`);sig.forEach(([n,r])=>ctx.sig(n,r));}},
-  ntc:{label:'온도 센서 (NTC)',desc:'NTC 10 kΩ B3435 + 10 kΩ 풀업 (3.3 V) + 100 nF → ADC — 보드 온도 (FET·레귤레이터 근처)',params:{n:{def:1,desc:'센서 수'}},
-    build(ctx,p){const n=Math.max(1,Math.min(4,+p.n||1));ctx.use('+3V3');for(let i=0;i<n;i++){const t=ctx.uniq('TEMP');
-      ctx.part('R','10kΩ','0603',{1:'+3V3',2:t},{desc:'NTC 풀업 (1 %)'});ctx.part('RT','NTC 10k','0603',{1:t,2:'GND'},{mpn:'NCP18XH103F03RB',desc:'NTC 서미스터 10 kΩ B=3380 (보드 온도)',pinNames:{1:'1',2:'2'}});
+  ntc:{label:'온도 센서 (NTC)',desc:'NTC 10 kΩ B3435 + 10 kΩ 풀업 (3.3 V) + 100 nF → ADC — 보드 온도 (FET·레귤레이터 근처)',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},n:{def:1,desc:'센서 수'}},
+    build(ctx,p){const n=Math.max(1,Math.min(4,+p.n||1));ctx.use('+3V3');let warned=false;for(let i=0;i<n;i++){const t=ctx.uniq('TEMP');
+      const pk=p.pick?(i===0||!warned?ntcPick(ctx,p,t):null):null;if(p.pick&&!pk)warned=true;
+      if(pk==='ic'){ctx.sig(t,'adc');continue;}
+      ctx.part('R','10kΩ','0603',{1:'+3V3',2:t},{desc:'NTC 풀업 (1 %)'});if(pk&&pk.size)ctx.part('RT','NTC 10k',pk.size,{1:t,2:'GND'},{mpn:p.pick,desc:`NTC 서미스터 ${p.pick} (시스템 설계에서 고른 부품 · 10 kΩ 기준 — B 상수는 데이터시트로 펌웨어 환산표 확인)`,pinNames:{1:'1',2:'2'}});else ctx.part('RT','NTC 10k','0603',{1:t,2:'GND'},{mpn:'NCP18XH103F03RB',desc:'NTC 서미스터 10 kΩ B=3380 (보드 온도)',pinNames:{1:'1',2:'2'}});
       ctx.part('C','100nF','0603',{1:t,2:'GND'},{desc:'ADC 필터'});ctx.sig(t,'adc');}}},
   vmon:{label:'전압 감시',desc:'100 kΩ/22 kΩ 분압 + 100 nF → ADC (입력 레일 감시)',params:{rail:{def:'auto',desc:'감시할 레일 (auto = 입력)'}},
     build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);ctx.part('R','100kΩ','0603',{1:r,2:'VMON'},{desc:'분압 상단'});ctx.part('R','22kΩ','0603',{1:'VMON',2:'GND'},{desc:'분압 하단'});ctx.part('C','100nF','0603',{1:'VMON',2:'GND'},{desc:'ADC 필터'});ctx.sig('VMON','adc');}}};
@@ -349,6 +360,129 @@ function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){if(pw.f2){fetPkg();const F=pw.f2;
 const SHUNTS=[0.01,0.005,0.002,0.001,0.0005,0.00025];
 function shunt(ctx,net,I,what,vmax,Ipk,tpk){vmax=vmax||0.045;Ipk=Math.max(I,+Ipk||0);const R=SHUNTS.find(r=>r*Ipk<=vmax)||SHUNTS[SHUNTS.length-1];const P=+(I*I*R).toFixed(2);const lab=R>=0.001?(R*1000)+'mΩ':(R*1e6)+'µΩ';
   ctx.part('R',lab,'2512',{1:net,2:'GND'},{mpn:'',desc:`${what} 전류 션트 ${lab} · 상시 ${I} A에서 ${(R*I*1000).toFixed(0)} mV · ${P} W${Ipk>I?` · 피크 ${Ipk} A에서 ${(R*Ipk*1000).toFixed(0)} mV · ${(Ipk*Ipk*R).toFixed(1)} W 순간`:''}${P>2?' (2 W 초과 — 병렬 또는 3 W 2512)':''}`,P,lk:'phase',pk:Ipk>I?{P:+(Ipk*Ipk*R).toFixed(2),t:+tpk||2}:null});return R;}
+/* ---------- parts picked in the system design (block.part → plan param "pick") ----------
+   A library block builds its circuit around the picked part when the part's pin table fits the block's job: pins are wired by
+   their datasheet names (wireByName), the footprint comes from the part's package. Otherwise the block keeps its own part and
+   says why (the pre-generation check also lists such picks as "recorded only"). Pins estimated by Claude are not used here. */
+// pins from the datasheet record (datasheets/records → DSDB) when the part library has none; only records written from the
+// datasheet (done / verified) and one-table, number-per-row pin sections; ranges "8–10" and lists "7, 11" are expanded
+function recordPins(mpn){if(typeof DSDB==='undefined'||typeof DSREC==='undefined'||!DSDB.items)return null;const I=DSDB.items;const m=String(mpn||'').trim();if(!m)return null;
+  let it=I[m];const up=m.replace(/\s*\(.*\)$/,'').toUpperCase();
+  if(!it){const k=Object.keys(I).find(x=>x.toUpperCase()===up);if(k)it=I[k];}
+  if(!it)it=Object.values(I).find(v=>v.alias&&new RegExp('^(?:'+v.alias.trim().split(/\s+/).map(g=>g.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*')).join('|')+')$','i').test(up));
+  if(!it||!it.rec||!/^(done|verified)$/.test(it.status))return null;
+  const tabs=DSREC.pinTables(it.rec);if(tabs.length!==1)return null;const t=tabs[0];if(t.head.length<2||!/이름|name|신호|signal/i.test(t.head[1]))return null;
+  const pins=[],seen=new Set();let bad=false;
+  t.pins.forEach(row=>{const cell=String(row[0]||'').replace(/\s+/g,'');let nm=String(row[1]||'').trim().replace(/\s*\(.*$/,'').split(/\s*\/\s*/)[0].trim();if(/^n\.?c\.?$/i.test(nm))nm='NC';
+    const nums=[];cell.split(',').forEach(part=>{const r=part.match(/^(\d+)[–-](\d+)$/);if(r){for(let i=+r[1];i<=+r[2];i++)nums.push(String(i));}else if(/^(\d{1,3}|[A-Z]{1,2}\d{1,2}|EP|PAD|TAB)$/i.test(part))nums.push(part.toUpperCase());});
+    if(!nums.length||!nm)return;nums.forEach(n=>{if(seen.has(n))bad=true;seen.add(n);pins.push({num:n,name:nm});});});
+  if(bad||pins.length<2)return null;
+  const pin=it.rec.sections.find(x=>/핀/.test(x.h));const ptxt=pin?DSREC.text(JSON.stringify(pin.blocks.filter(b=>b.html))):'';
+  const pkg=(ptxt.match(/\b(?:PG-)?(?:T?SOT|SOIC|SO|HSOIC|SOP|TSSOP|HTSSOP|MSOP|VSSOP|TSDSO|QFN|VQFN|DFN|VSON|WSON|SON|TQFP|LQFP|QFP|TO-?252|TO-?263|DPAK|D2PAK|SC70|SC-70)[- ]?\d+(?:[- ]?\d+)?(?:[- ]EP)?/i)||[])[0]||'';
+  return{mpn:it.rec.mpn,pins,pkg:pkg.replace(/\s+/g,'-')+(/노출 ?패드|exposed|thermal pad|파워패드|PowerPAD/i.test(ptxt)&&!/EP$/i.test(pkg)?'-EP':''),title:it.title,cat:it.cat,src:'record'};}
+function pickRec(mpn){if(!mpn||!NEWPROJ.partLookup)return null;let r=null;try{r=NEWPROJ.partLookup(mpn);}catch(e){r=null;}
+  if(!(r&&r.pins&&r.pins.length)){const rp=recordPins(mpn);if(rp)r=Object.assign({},r||{},rp);}
+  return r&&r.pins&&r.pins.length&&r.src!=='ai'?r:null;}
+// pins by datasheet name: rules [[RegExp on the upper-case name without spaces, net | null (open) | fn(name) → net]], first match wins
+function wireByName(rec,rules){const pins={},names={},miss=[];
+  rec.pins.forEach(q=>{const num=String(q.num),nm=String(q.name||'').trim();names[num]=nm;const u=nm.toUpperCase().replace(/[\s_]/g,'').replace(/[‾̅~]/g,'N');
+    const r=rules.find(([re])=>re.test(u));if(!r){miss.push(nm||num);return;}const v=typeof r[1]==='function'?r[1](u):r[1];if(v===undefined){miss.push(nm||num);return;}pins[num]=v;});
+  return{pins,names,miss};}
+// footprint for a part record: the record's KiCad footprint name, else its package; the exposed pad (EP / PAD / TAB) becomes the
+// footprint's extra pad after the leads
+function recFootprint(rec,pins,names){if(typeof PCB==='undefined'||typeof FPGEN==='undefined')return null;const n=rec.pins.length;
+  const cands=[rec.fp&&String(rec.fp).replace(/^[^:]*:/,''),rec.pkg&&String(rec.pkg).replace(/\s*\(.*$/,'')+(/thermal|EP|노출/i.test(rec.pkg)&&!/EP\b/i.test(rec.pkg)?'-EP':'')].filter(Boolean);
+  const numeric=rec.pins.filter(q=>/^\d+$/.test(String(q.num))).map(q=>+q.num);const maxN=numeric.length?Math.max(...numeric):0;
+  for(const c of cands){let fp=null;try{fp=PCB.FP[c]?c:FPGEN.ensure(PCB,c,n);}catch(e){fp=null;}const F=fp&&PCB.FP[fp];if(!F)continue;
+    const pads=new Set(F.pads.map(x=>String(x.n)));if(!numeric.every(k=>pads.has(String(k))))continue;
+    const extra=F.pads.map(x=>String(x.n)).find(x=>/^\d+$/.test(x)&&+x>maxN);const P={},N={};let ok=true;
+    Object.entries(pins).forEach(([k,v])=>{if(/^\d+$/.test(k)){P[k]=v;N[k]=names[k];}else if(extra){P[extra]=v;N[extra]=names[k]+' (노출 패드)';}else ok=false;});
+    if(ok)return{fp,pins:P,names:N};}
+  return null;}
+function pickNote(rec){return rec.src==='record'?'핀: 데이터시트 레코드':rec.src==='ds'?'핀: 데이터시트 PDF':'핀: 부품 라이브러리';}
+// CAN transceiver picked for the CAN block (TJA1043/1044/1443, TCAN1043/1044, MCP2542 …): TXD/RXD to the MCU CAN, VCC 5 V, VIO
+// 3.3 V, VSUP/VBAT on the protected input rail, STB/EN as MCU outputs, nFAULT/ERR with a pull-up, WAKE tied low through 10 kΩ
+function canPick(ctx,p){const rec=pickRec(p.pick);const keep='CAN 트랜시버는 기본 TLE9251VSJ로 만듭니다';
+  if(!rec){ctx.warn(`${p.pick}: 데이터시트로 확인된 핀 표가 없어 ${keep} — datasheet ${p.pick} 로 핀 표를 넣으면 반영`);return false;}
+  const bat=ctx.highest(0);
+  const w=wireByName(rec,[[/^TXD$/,'CAN_TX'],[/^RXD$/,'CAN_RX'],[/^CANH$/,'CANH'],[/^CANL$/,'CANL'],[/^(GND|VSS|EP|PAD|THERMALPAD|EXPOSEDPAD)$/,'GND'],
+    [/^(VCC|VDD|V5|VCC5V?)$/,'+5V'],[/^(VIO|VCCIO|VDDIO|VIO\/NC)$/,'+3V3'],[/^(VSUP|VBAT|VS|BAT)$/,bat],
+    [/^(STB|STBY|S|NSTB|STBN|NSTBY|SILENT|STANDBY|NSTANDBY)$/,'CAN_STB'],[/^EN$/,'CAN_EN'],[/^(NFAULT|ERR|NERR|ERRN|FAULT|NFLT)$/,'CAN_ERR'],
+    [/^INH$/,null],[/^(WAKE|NWAKE|WAKEN)$/,'CAN_WAKE'],[/^SPLIT$/,+p.term?'CAN_SPLIT':null],[/^(NC|N\.C\.|DNC)$/,null]]);
+  if(w.miss.length){ctx.warn(`${rec.mpn}: 핀 ${w.miss.join(', ')}의 역할을 정하지 못해 ${keep}`);return false;}
+  const v=Object.values(w.pins);const need=['CAN_TX','CAN_RX','CANH','CANL','GND'].filter(n=>!v.includes(n));if(need.length){ctx.warn(`${rec.mpn}: ${need.join(', ')} 핀을 찾지 못해 ${keep}`);return false;}
+  const f=recFootprint(rec,w.pins,w.names);if(!f){ctx.warn(`${rec.mpn}: 패키지(${rec.pkg||'?'}) 풋프린트를 만들 수 없어 ${keep}`);return false;}
+  ctx.part('U',rec.mpn,f.fp,f.pins,{mpn:rec.mpn,desc:`CAN FD 트랜시버 ${rec.mpn} (시스템 설계에서 고른 부품 · ${pickNote(rec)})`,pinNames:f.names,P:0.08});
+  if(v.includes(bat)){ctx.use(bat);ctx.cap(bat,'100nF',`${rec.mpn} VSUP 디커플링 (역접속 보호 뒤 입력 레일)`);}
+  if(v.includes('CAN_EN')){ctx.part('R','10kΩ','0603',{1:'CAN_EN',2:'GND'},{desc:`${rec.mpn} EN 풀다운 (MCU 리셋 중 비활성)`});ctx.sig('CAN_EN','gpio_out');}
+  if(v.includes('CAN_ERR')){ctx.part('R','10kΩ','0603',{1:'CAN_ERR',2:'+3V3'},{desc:`${rec.mpn} 고장 출력 풀업 (오픈 드레인)`});ctx.sig('CAN_ERR','irq_in');}
+  if(v.includes('CAN_WAKE'))ctx.part('R','10kΩ','0603',{1:'CAN_WAKE',2:'GND'},{desc:`${rec.mpn} WAKE 미사용 — 10 kΩ로 GND (로컬 웨이크를 쓰면 스위치 입력으로 바꾸고 데이터시트 전류 제한 확인)`});
+  if(rec.pins.some(q=>/^INH$/i.test(q.name)))ctx.warn(`${rec.mpn}: INH 출력은 개방 — 레귤레이터 EN을 이 핀으로 켜려면 회로도에서 연결`);
+  p._noStb=!v.includes('CAN_STB');
+  return true;}
+// temperature sensor picked for the NTC block: a 2-terminal NTC keeps the pull-up divider (only the part changes, size from the
+// part number or record), an analog sensor IC (VDD / VOUT / GND, e.g. TMP235) replaces the divider
+function ntcPick(ctx,p,t){const mpn=String(p.pick||'');const rec=pickRec(mpn);
+  if(rec&&rec.pins.length===3){const w=wireByName(rec,[[/^(VDD|VCC|V\+|VS)$/,'+3V3'],[/^(VOUT|OUT|VO)$/,t],[/^(GND|VSS)$/,'GND']]);
+    if(!w.miss.length&&Object.values(w.pins).includes(t)){const f=recFootprint(rec,w.pins,w.names);
+      if(f){ctx.part('U',rec.mpn,f.fp,f.pins,{mpn:rec.mpn,desc:`아날로그 온도 센서 ${rec.mpn} (시스템 설계에서 고른 부품 · ${pickNote(rec)})`,pinNames:f.names,P:0.001});ctx.cap('+3V3','100nF',`${rec.mpn} 디커플링`);return 'ic';}}}
+  const size=(String(rec&&rec.pkg||'').match(/\b(0402|0603|0805)\b/)||[])[1]||(/^NC[PU]15/i.test(mpn)?'0402':/^NC[PU]18/i.test(mpn)?'0603':/^NC[PU]21/i.test(mpn)?'0805':null);
+  if(size&&/^(NC[PU]\d|NTC|ERT|B5784|NTCS)/i.test(mpn))return{size};
+  ctx.warn(`${mpn}: 표면실장 NTC(0402/0603/0805)나 3핀 온도 센서 IC로 확인되지 않아 기본 NCP18XH103F03RB를 씁니다`);return null;}
+// LDO picked for a 3.3 / 5 V LDO block (fixed-output version): IN / OUT / GND / EN (tied to IN) and an optional power-good
+// output with a pull-up to the output; parts that need a feedback divider (FB-only pin) or other pins keep the library LDO
+function ldoPick(ctx,p,src,out,vout){const rec=pickRec(p.pick);const keep='기본 AMS1117로 만듭니다';if(!rec){ctx.warn(`${p.pick}: 데이터시트로 확인된 핀 표가 없어 ${keep}`);return false;}
+  const pg='PG_'+out.replace(/[^A-Za-z0-9]/g,'');
+  const w=wireByName(rec,[[/^(IN|VIN|VI|VBAT)$/,src],[/^(OUT|VOUT|VO)$/,out],[/^(GND|VSS|EP|PAD|THERMALPAD|TAB)$/,'GND'],[/^(EN|ENABLE|INH)$/,src],
+    [/^(FB\/NC|NC\/FB|SENSE|NC|N\.C\.|DNC|DELAY|CT|DLY)$/,null],[/^(PG|PGOOD|POK|RESET|NRESET|RO|RST|NRST)$/,pg]]);
+  if(w.miss.length){ctx.warn(`${rec.mpn}: 핀 ${w.miss.join(', ')}의 역할을 정하지 못해 ${keep} (가변형 FB 핀은 분압이 필요)`);return false;}
+  const f=recFootprint(rec,w.pins,w.names);if(!f){ctx.warn(`${rec.mpn}: 패키지(${rec.pkg||'?'}) 풋프린트를 만들 수 없어 ${keep}`);return false;}
+  ctx.part('U',rec.mpn,f.fp,f.pins,{mpn:rec.mpn,desc:`${vout} V LDO ${rec.mpn} 고정 ${vout} V 버전 (입력 ${src} · 시스템 설계에서 고른 부품 · ${pickNote(rec)} — 주문 코드의 출력 전압 확인)`,pinNames:f.names,ldo:{src,out,vout}});
+  ctx.cap(src,'1µF','LDO 입력 커패시터 (≥ 0.5 µF, EMI)');ctx.cap(out,'10µF','LDO 출력 커패시터 (X7R)');
+  if(Object.values(w.pins).includes(pg)){ctx.part('R','10kΩ','0603',{1:pg,2:out},{desc:`${rec.mpn} 파워 굿 풀업 (오픈 드레인)`});ctx.sig(pg,'gpio_in');}
+  return true;}
+// a P-channel MOSFET picked for the input block replaces the reverse-protection P-FET (TO-252 / DPAK, pins G / D / S)
+function pfetPick(mpn){const rec=pickRec(mpn);if(!rec||rec.pins.length!==3)return null;const t=String((rec.title||'')+' '+(rec.desc||'')+' '+(rec.cat||''));
+  if(!/P-?(channel|채널|ch\b)|P-MOSFET|-\d+\s*V/i.test(t)||!/TO-?252|DPAK/i.test(String(rec.pkg||'')+' '+t))return null;
+  const n=rec.pins.map(q=>String(q.name).toUpperCase());return n.includes('G')&&n.includes('D')&&n.includes('S')?rec.mpn:null;}
+// ideal-diode controller picked for the input block (LM74700-Q1, LTC4359 …): N-MOSFET(s) in series instead of the P-FET or
+// Schottky — ANODE/SOURCE on the connector side, CATHODE/OUT on the rail, GATE to the FET gates, VCAP charge-pump capacitor
+function idealDiode(ctx,p,rail,I){const rec=pickRec(p.pick);if(!rec){ctx.warn(`${p.pick}: 데이터시트로 확인된 핀 표가 없어 역전압 보호는 기본 회로로 만듭니다`);return false;}
+  const w=wireByName(rec,[[/^(ANODE|A|SOURCE|IN|VIN)$/,'VIN_RAW'],[/^(CATHODE|K|OUT|VOUT)$/,rail],[/^(GATE|G|DGATE)$/,'VIN_GATE'],[/^VCAP$/,'IDC_VCAP'],
+    [/^(EN|ON)$/,'VIN_RAW'],[/^(SHDN|NSHDN|SHDNN)$/,'VIN_RAW'],[/^(GND|VSS|EP|PAD)$/,'GND'],[/^(NC|N\.C\.|DNC)$/,null]]);
+  if(w.miss.length){ctx.warn(`${rec.mpn}: 핀 ${w.miss.join(', ')}의 역할을 정하지 못해 역전압 보호는 기본 회로로 만듭니다`);return false;}
+  const v=Object.values(w.pins);if(!v.includes('VIN_GATE')||!v.includes(rail)){ctx.warn(`${rec.mpn}: GATE/CATHODE 핀이 없어 역전압 보호는 기본 회로로 만듭니다`);return false;}
+  const f=recFootprint(rec,w.pins,w.names);if(!f){ctx.warn(`${rec.mpn}: 패키지(${rec.pkg||'?'}) 풋프린트를 만들 수 없어 역전압 보호는 기본 회로로 만듭니다`);return false;}
+  if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'TO-252');
+  const n=Math.max(1,Math.ceil(I/40));
+  ctx.part('U',rec.mpn,f.fp,f.pins,{mpn:rec.mpn,desc:`이상적 다이오드 컨트롤러 ${rec.mpn} — 역전압 보호 (시스템 설계에서 고른 부품 · ${pickNote(rec)})`,pinNames:f.names,P:0.01});
+  for(let i=0;i<n;i++)ctx.part('Q','IPD50N06S4L-12','TO-252',{1:'VIN_GATE',2:rail,3:'VIN_RAW'},{mpn:'IPD50N06S4L-12',desc:`이상적 다이오드 N-MOSFET (60 V · AEC-Q101 · 소스 = 커넥터 쪽, 드레인 = 레일)${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((I/n)**2)*0.0117+0.02).toFixed(2),lk:'batt'});
+  if(v.includes('IDC_VCAP'))ctx.part('C','100nF','0603',{1:'IDC_VCAP',2:'VIN_RAW'},{desc:`${rec.mpn} VCAP 차지펌프 커패시터 (≥ 0.1 µF · ≥ 10 × FET Ciss, 50 V)`});
+  ctx.part('C','100nF','0805',{1:'VIN_RAW',2:'GND'},{desc:`${rec.mpn} 입력 커패시터 (≥ 22 nF, 50 V)`});
+  return true;}
+// smart high-side switch picked for the high-side block (PROFET BTS7xxx, VIPower, TPS1Hxx …): inputs from the MCU through
+// 4.7 kΩ, sense output to a 1.2 kΩ sense resistor and a 4.7 kΩ / 220 pF filter to the ADC, GND through 47 Ω (reverse-battery
+// network), 100 nF on VS, 10 nF on each output — values from the PROFET+2 application circuit; others are checked by pin name
+function hsPick(ctx,p,r,out){const rec=pickRec(p.pick);const keep='P-MOSFET 스위치로 만듭니다';if(!rec){ctx.warn(`${p.pick}: 데이터시트로 확인된 핀 표가 없어 ${keep}`);return false;}
+  const outs=[];const ins=[];
+  const w=wireByName(rec,[[/^(VS|VBB|VBAT|VCC|VSUP)$/,r],[/^(OUT|VOUT|OUTPUT)(\d?)$/,u=>{const k=(u.match(/(\d)$/)||[,'0'])[1];if(!outs.includes(k))outs.push(k);return k==='0'?out:out+'_'+k;}],
+    [/^(IN|INPUT|EN)(\d?)$/,u=>{const k=(u.match(/(\d)$/)||[,'0'])[1];if(!ins.includes(k))ins.push(k);return (k==='0'?'SAFE_EN':'SAFE_EN'+k)+'_IN';}],
+    [/^(DEN|DIAEN|DIA_EN|SEN)$/,'HS_DEN'],[/^(DSEL|SEL\d?|SEL0|SEL1)$/,u=>'HS_'+u],[/^(IS|SNS|SENSE|MULTISENSE|CS)$/,'HS_IS'],
+    [/^(GND|EP|PAD)$/,'HS_GND'],[/^(LATCH|FAULTRST)$/,'HS_LATCH'],[/^(NC|N\.C\.|DNC)$/,null]]);
+  if(w.miss.length){ctx.warn(`${rec.mpn}: 핀 ${w.miss.join(', ')}의 역할·값을 정하지 못해 ${keep} (예: 전류 제한 저항 ILIM은 데이터시트 수식 필요)`);return false;}
+  const v=Object.values(w.pins);if(!v.includes(r)||!outs.length||!ins.length){ctx.warn(`${rec.mpn}: 전원·출력·입력 핀을 찾지 못해 ${keep}`);return false;}
+  const f=recFootprint(rec,w.pins,w.names);if(!f){ctx.warn(`${rec.mpn}: 패키지(${rec.pkg||'?'}) 풋프린트를 만들 수 없어 ${keep}`);return false;}
+  ctx.part('U',rec.mpn,f.fp,f.pins,{mpn:rec.mpn,desc:`스마트 하이사이드 스위치 ${rec.mpn} ${outs.length}채널 (시스템 설계에서 고른 부품 · ${pickNote(rec)})${rec.src==='record'?' — 채널·핀 번호는 데이터시트 도면으로 한 번 확인':''}`,pinNames:f.names,P:0.3,lk:'batt'});
+  ctx.part('R','47Ω','0603',{1:'HS_GND',2:'GND'},{desc:`${rec.mpn} GND 저항 (역접속 보호 네트워크)`});ctx.cap(r,'100nF',`${rec.mpn} VS 디커플링`);
+  outs.forEach(k=>{const o=k==='0'?out:out+'_'+k;if(k!=='0')ctx.provide(o,ctx.railV?ctx.railV(r):12,'스위치');ctx.part('C','10nF','0603',{1:o,2:'GND'},{desc:`${rec.mpn} 출력 ${k} ESD/BCI 커패시터`});});
+  const ser=(net,mcu,role,what)=>{ctx.part('R','4.7kΩ','0603',{1:mcu,2:net},{desc:`${rec.mpn} ${what} 직렬 저항 (MCU 보호)`});ctx.sig(mcu,role);};
+  ins.forEach(k=>{const m=k==='0'?'SAFE_EN':'SAFE_EN'+k;ser(m+'_IN',m,'gpio_out',`IN${k}`);ctx.part('R','10kΩ','0603',{1:m,2:'GND'},{desc:`IN${k} 풀다운 (MCU 리셋 중 OFF)`});});
+  if(v.includes('HS_DEN'))ser('HS_DEN','HS_DEN_MCU','gpio_out','DEN');
+  v.filter(x=>/^HS_(DSEL|SEL)/.test(String(x))).filter((x,i,a)=>a.indexOf(x)===i).forEach(x=>ser(x,x+'_MCU','gpio_out',x.replace(/^HS_/,'')));
+  if(v.includes('HS_LATCH'))ctx.part('R','4.7kΩ','0603',{1:'HS_LATCH',2:'GND'},{desc:`${rec.mpn} LATCH/FaultRST — GND (자동 재시도 모드; MCU로 제어하려면 GPIO에 연결)`});
+  if(v.includes('HS_IS')){ctx.part('R','1.2kΩ','0603',{1:'HS_IS',2:'GND'},{desc:`${rec.mpn} 센스 저항 RSENSE (전류 → 전압, kILIS로 환산)`});ctx.part('R','4.7kΩ','0603',{1:'HS_IS',2:'HS_ISADC'},{desc:'센스 보호 저항 RIS_PROT / RADC'});
+    ctx.part('C','220pF','0603',{1:'HS_ISADC',2:'GND'},{desc:'센스 ADC 필터 (RC > 1 µs)'});ctx.sig('HS_ISADC','adc');}
+  return true;}
 /* Allegro 3-phase gate drivers (A4911 · A4918): one chip drives all six FETs, has its own gate-drive regulator (VREG),
    charge pump, bootstrap per phase, three current-sense amplifiers and SPI diagnostics. Pins are wired by name from the
    registered pin table (datasheets/pins.json → KPINS), so a part whose table is missing is reported instead of guessed. */
