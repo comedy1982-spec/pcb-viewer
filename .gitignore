@@ -3,3 +3,4 @@ node_modules/
 *.log
 dist/test.html
 .runs/
+docs/PCB_DESIGN_GUIDELINE.md
