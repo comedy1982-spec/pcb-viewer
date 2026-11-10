@@ -678,6 +678,7 @@ window.addEventListener('dragleave',()=>{dragDepth=Math.max(0,dragDepth-1);if(!d
 window.addEventListener('drop',e=>{if(!e.dataTransfer||!e.dataTransfer.files.length)return;e.preventDefault();if(HS.ws==='hsis'){hsisFiles([...e.dataTransfer.files]);return;}dragDepth=0;$('#drop').classList.remove('over');addFiles([...e.dataTransfer.files]);});
 const fsize=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(0)+' KB':(n/1048576).toFixed(1)+' MB';
 async function addFiles(files){
+  if(typeof projTryFiles==='function'&&await projTryFiles(files))return; // a saved project (.aod.json) opens as a project
   IMP.busy=true;setMsg('파일을 읽는 중…');renderImport();
   for(const f of files){
     try{

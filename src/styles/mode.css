@@ -311,4 +311,8 @@ button[aria-selected="true"]>svg.ic,.steps button.on>svg.ic{color:var(--accent);
 .pl-api{display:grid;grid-template-columns:1fr 1fr 1.4fr auto auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}.pl-api label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
 .pl-api input,.pl-api select{font:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-width:0}.pl-api .pl-m{grid-column:1/-1}
 .pl-list{overflow:auto;max-height:52vh}.pl-tbl td,.pl-tbl th{white-space:nowrap}.pl-tbl td:nth-child(3){white-space:normal;max-width:360px}.pl-tbl tr.on td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+/* home: resume the last autosaved session */
+.home-resume{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px auto 0;max-width:760px;padding:10px 14px;border:1px solid var(--line,#d8dde2);border-radius:12px;background:var(--surface,#fff)}
+.home-resume>div{flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px}.home-resume .hr-t{font-size:13px;color:var(--muted,#5a6872)}
+.proj-io{display:inline-flex;gap:6px;align-items:center;margin-left:8px}body[data-mode=home] .proj-io{display:none}
 </style>
