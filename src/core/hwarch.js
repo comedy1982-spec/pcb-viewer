@@ -148,9 +148,35 @@ function check(A){const out=[];if(!A)return out;try{markVia(A);}catch(e){}const 
     if(has(b)&&(b.group==='io'||b.group==='comm')&&ctrl.size&&!links.some(l=>ctrl.has(l.a)||ctrl.has(l.b))){const m=[...ctrl][0];out.push({sev:'warn',code:'noCtrl',id:b.id,label:b.label,msg:`"${b.label}" 블록이 MCU와 연결되지 않았습니다 (제어·피드백 신호 없음)`,fix:`link ${m} ${b.id} <신호> --both`});}});
   if(!A.blocks.some(b=>b.group==='ctrl'&&has(b)))out.push({sev:'err',code:'noMcu',id:null,label:'',msg:'제어 블록(MCU)이 없거나 구현이 없습니다',fix:'block ctrl "Main MCU" 뒤 impl mcu part=<MPN>'});
   if(!A.blocks.some(b=>b.group==='power'&&has(b)))out.push({sev:'err',code:'noPower',id:null,label:'',msg:'전원 블록(입력·레귤레이터)이 없거나 구현이 없습니다',fix:'block power "Regulator" 뒤 impl reg ldo vout=3.3'});
+  partChecks(A).forEach(x=>out.push(x));
   return out;}
-function checkText(I){if(!I.length)return'점검: 문제 없음 — 모든 블록에 회로 구현과 전원·제어 연결이 있습니다.';const e=I.filter(x=>x.sev==='err'),w=I.filter(x=>x.sev==='warn');
-  return[`점검: 오류 ${e.length} · 경고 ${w.length}`].concat(I.map(x=>`  ${x.sev==='err'?'✕':'△'} ${x.msg}\n      → ${x.fix}`)).join('\n');}
+/* parts picked for blocks whose pins or datasheet are not confirmed:
+   pinsAi   — the circuit is wired from pins Claude estimated (no datasheet behind them) → check against the datasheet
+   pinsNone — the part is only recorded; its pins are unknown, so the circuit uses the library block (or a stand-in IC)
+   dsNone   — pins are known but there is no datasheet summary page (or only a draft) → info only */
+const DSLOOK=(()=>{let re=null;return mpn=>{if(typeof DSDB==='undefined'||!DSDB.items)return null;const I=DSDB.items,m=String(mpn||'').trim();if(!m)return null;
+  if(I[m])return I[m];const base=m.replace(/\s*\(.*\)$/,'');const k=Object.keys(I).find(x=>x.toUpperCase()===base.toUpperCase()||x.replace(/\s*\(.*\)$/,'').toUpperCase()===base.toUpperCase());if(k)return I[k];
+  if(!re)re=Object.entries(I).filter(([,v])=>v.alias).map(([k,v])=>[k,new RegExp('^(?:'+v.alias.trim().split(/\s+/).map(g=>g.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*')).join('|')+')$','i')]);
+  const h=re.find(([,r])=>r.test(base));return h?I[h[0]]:null;};})();
+function partChecks(A){const out=[];const look=mpn=>{try{return typeof NEWPROJ!=='undefined'&&NEWPROJ.partLookup?NEWPROJ.partLookup(mpn):null;}catch(e){return null;}};
+  const pinsOf=r=>!!(r&&r.pins&&r.pins.length);
+  // part numbers the generated circuit will really contain (a library block often uses the very part that was picked)
+  let built=null;if(A.blocks.some(b=>b.part&&b.part.mpn)&&typeof NEWPROJ!=='undefined'){try{const r=NEWPROJ.build(toPlan(A).plan);built=new Set();r.parts.forEach(c=>{[c.mpn,c.val].forEach(v=>{if(v)built.add(String(v).toUpperCase().replace(/\s+/g,''));});});}catch(e){built=null;}}
+  const inBuilt=m=>{if(!built)return false;const k=String(m).toUpperCase().replace(/\s+/g,'');if(built.has(k))return true;for(const x of built)if(x.length>=6&&k.length>=6&&(x.startsWith(k)||k.startsWith(x)))return true;return false;};
+  A.blocks.forEach(b=>{if(b.ext||!b.part||!b.part.mpn)return;const mpn=b.part.mpn,L=b.impl||[],up=s=>String(s||'').toUpperCase();
+    const asPart=L.find(i=>i.type==='part'&&up(i.params&&i.params.mpn)===up(mpn));
+    const drv=L.find(i=>(i.type==='gdrv3'||i.type==='hbridge')&&i.params&&i.params.driver&&up(mpn).includes(up(i.params.driver)));
+    const buck=L.find(i=>i.type==='buck'&&i.params&&up(i.params.part)===up(mpn));
+    const r=look(mpn);const lab=`"${b.label}" ${mpn}`;
+    if(asPart&&r&&r.src==='ai')out.push({sev:'warn',code:'pinsAi',id:b.id,label:b.label,mpn,msg:`${lab}: Claude가 추정한 핀으로 회로를 만듭니다 — 데이터시트로 확인되지 않은 핀 배치`,fix:`datasheet ${mpn}  (데이터시트 PDF로 핀 표 확인 · 다르면 impl ${b.id} part ${mpn} 로 다시 연결)`});
+    else if(drv&&!/IR2104/i.test(mpn)&&!pinsOf(r))out.push({sev:'warn',code:'pinsNone',id:b.id,label:b.label,mpn,msg:`${lab}: 핀 표가 없어 구동 IC를 IR2104 ×3 스테이지로 대신 만듭니다`,fix:`datasheet ${mpn}  (핀 표를 넣으면 ${mpn} 회로로 생성)`});
+    else if(!asPart&&!drv&&!buck&&!inBuilt(mpn)){const keep=(L.map(i=>i.type).join(' · '))||'구현 없음';
+      out.push({sev:'warn',code:'pinsNone',id:b.id,label:b.label,mpn,msg:`${lab}: 부품은 기록만 되어 있고 회로는 라이브러리 기본 구성(${keep})으로 만들어집니다${pinsOf(r)?'':' — 핀 정보 없음'}`,
+        fix:pinsOf(r)?`impl ${b.id} part ${mpn}  (외부 부품이 필요한 IC는 2단계 회로도에서 주변 부품과 함께 추가)`:`datasheet ${mpn}  뒤 impl ${b.id} part ${mpn}`});}
+    if((asPart||drv||buck||inBuilt(mpn))&&(pinsOf(r)||inBuilt(mpn))&&!(r&&r.src==='ai')){const d=DSLOOK(mpn);if(!d||d.status==='stub')out.push({sev:'info',code:'dsNone',id:b.id,label:b.label,mpn,msg:`${lab}: 핀은 ${r&&r.src==='ds'?'데이터시트 PDF':'라이브러리 회로 블록'}에서 가져왔지만 데이터시트 요약 페이지가 ${d?'초안뿐':'없음'} (사양·절대 최대 정격 미확인)`,fix:`datasheets/records에 ${mpn} 레코드 작성 후 node scripts/dsdb.mjs`});}});
+  return out;}
+function checkText(I){if(!I.length)return'점검: 문제 없음 — 모든 블록에 회로 구현과 전원·제어 연결이 있고, 고른 부품의 핀이 확인되었습니다.';const e=I.filter(x=>x.sev==='err'),w=I.filter(x=>x.sev==='warn'),n=I.filter(x=>x.sev==='info');
+  return[`점검: 오류 ${e.length} · 경고 ${w.length}${n.length?' · 참고 '+n.length:''}`].concat(I.map(x=>`  ${x.sev==='err'?'✕':x.sev==='warn'?'△':'○'} ${x.msg}\n      → ${x.fix}`)).join('\n');}
 /* ---- layout: bands top to bottom, blocks centred in each band ---- */
 const LW=150,BW=196,GX=84,BAND=30,PAD=22,LH=15;
 function bh(b){const sw=b.feats.filter(f=>/^SW:/.test(f)).length;const n=Math.min(4,b.feats.length-sw+(sw?1:0));return 34+n*LH+(b.feats.length?6:0);}

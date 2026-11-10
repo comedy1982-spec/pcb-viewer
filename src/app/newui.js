@@ -36,7 +36,7 @@ const NP_HELP=[
   ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
   ['diagram','시스템 다이어그램을 글로 (블록 · 전원 레일 · MCU 신호 · 외부 연결)'],
   ['cands [블록] [순위|MPN]','블록의 주요 소자 후보를 요구사항 기준 순위로 (사양·ASIL·차량용 등급·단가·핀 데이터) · 순위나 MPN을 주면 지정. 오른쪽 선택 패널의 표와 같음'],
-  ['check [--fix]','회로 생성 전 점검: 구현(impl) 없는 블록 · 전원 레일 미연결 · MCU 미연결 · 고립 블록을 고치는 명령과 함께 (--fix: 이름으로 추측한 구현을 자동 지정). [다음: 회로 생성] 때 자동 실행'],
+  ['check [--fix]','회로 생성 전 점검: 구현(impl) 없는 블록 · 전원 레일 미연결 · MCU 미연결 · 고립 블록 · 고른 부품의 핀 확인(Claude 추정 핀 · 기록만 되고 회로에 안 들어간 부품 · 데이터시트 요약 초안)을 고치는 명령과 함께 (--fix: 이름으로 추측한 구현을 자동 지정). [다음: 회로 생성] 때 자동 실행'],
   ['variants · variants pick <cost|std|ext>','회로 안 3가지(저가형 · 표준 · 확장형)를 가격·기능·확장성으로 비교하고 고름 → 2단계'],
   ['generate [cost|std|ext] [--pcb]','다이어그램의 블록으로 회로(부품·넷리스트·회로도)를 생성 → 2단계. PCB 배치·배선은 3단계에서 시작 (--pcb면 이어서 3단계 PCB 시작)'],
   ['undo · clear','계획 되돌리기 · 화면 지우기'],['ai <요청>','Claude가 위 명령으로 계획을 세우거나 고침']];
@@ -233,9 +233,12 @@ async function npGenerate(o){if(!o||!o.variant||typeof progRun!=='function')retu
 async function npGenerate0(o){
   // readiness gate: blocks that would drop out or come out unconnected are shown first, with one-click fixes
   if(!o.variant&&!o.force&&NP.arch&&NP.arch.blocks.length&&!NP.planManual){const I=HWARCH.check(NP.arch);
-    if(I.length){const errs=I.filter(x=>x.sev==='err'),guess=I.filter(x=>x.code==='noImpl'&&x.guess);npSay('out',HWARCH.checkText(I));
-      const opts=[].concat(guess.length?[`추천 구현 자동 지정 (${guess.length}개) 후 진행`]:[],['그대로 진행 (구현 없는 블록은 회로에서 제외)','1단계에서 직접 고치기']);
-      COP.askSrc='np';const a=await copAsk({q:`회로 생성 전 점검 — 오류 ${errs.length} · 경고 ${I.length-errs.length}. 어떻게 할까요?`,why:'오류(✕)인 블록은 회로에 들어가지 않습니다. 경고(△)는 전원·제어 연결이 빠진 블록으로, 회로도에서 그 핀이 미연결로 남습니다.',opts});
+    if(I.some(x=>x.sev!=='info')){const errs=I.filter(x=>x.sev==='err'),guess=I.filter(x=>x.code==='noImpl'&&x.guess),pinW=I.filter(x=>x.code==='pinsAi'||x.code==='pinsNone');npSay('out',HWARCH.checkText(I));
+      const opts=[].concat(guess.length?[`추천 구현 자동 지정 (${guess.length}개) 후 진행`]:[],pinW.length?[`데이터시트 PDF로 핀 확인 (${pinW[0].mpn}${pinW.length>1?' 외 '+(pinW.length-1):''})`]:[],['그대로 진행 (구현 없는 블록은 회로에서 제외)','1단계에서 직접 고치기']);
+      COP.askSrc='np';const a=await copAsk({q:`회로 생성 전 점검 — 오류 ${errs.length} · 경고 ${I.filter(x=>x.sev==='warn').length}. 어떻게 할까요?`,why:'오류(✕)인 블록은 회로에 들어가지 않습니다. 경고(△)는 전원·제어 연결이 빠졌거나(그 핀이 미연결로 남음), 고른 부품의 핀이 데이터시트로 확인되지 않은 블록(Claude 추정 핀 · 기록만)입니다.',opts});
+      if(a&&/데이터시트 PDF로 핀 확인/.test(a)){const x=pinW[0];const r=await dsPdfFlow(x.mpn,'np',{});
+        if(r){try{npSay('ok',await npRun(`impl ${x.id} part ${x.mpn}`));}catch(e){npSay('err',e.message||String(e));}npRender();}
+        return r?`${x.mpn}: 데이터시트 핀 ${r.pins.length}개로 다시 연결했습니다${pinW.length>1?` · 남은 부품: ${pinW.slice(1).map(y=>y.mpn).join(', ')}`:''} — [다음: 회로 생성]을 다시 누르세요.`:`${x.mpn}: 핀 표를 읽지 못했습니다 — 그대로 진행하려면 [다음: 회로 생성]에서 "그대로 진행"을 고르세요.`;}
       if(a==null||/직접 고치기/.test(a)){setStep(1);return '1단계에서 고친 뒤 다시 [다음: 회로 생성]을 누르세요. 명령 예:\n'+I.map(x=>'  '+x.fix).join('\n');}
       if(/자동 지정/.test(a)){for(const x of guess){try{npSay('ok',await npRun(`impl ${x.id} ${x.guess}`));}catch(e){npSay('err',e.message||String(e));}}npRender();
         const rest=HWARCH.check(NP.arch).filter(x=>x.sev==='err');if(rest.length)npSay('out','아직 구현이 없는 블록: '+rest.map(x=>x.label||x.msg).join(', ')+' — 회로에서 제외됩니다.');}}}
