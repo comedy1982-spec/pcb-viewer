@@ -1,0 +1,76 @@
+{
+ "mpn": "CL10C470JB8NNNC",
+ "mfr": "Samsung Electro-Mechanics",
+ "cat": "커패시터",
+ "price": 0.031,
+ "status": "done",
+ "title": "MLCC 47 pF 50 V C0G 0603",
+ "src": [
+  "https://www.futureelectronics.com/p/passives--capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl10c470jb8nnnc-samsung-electro-mechanics-5532460",
+  "https://lcsc.com/product-detail/Multilayer-Ceramic-Capacitors-MLCC-SMD-SMT_SAMSUNG_CL10C470JB8NNNC_47pF-470-5-50V_C1671.html",
+  "https://www.farnell.com/datasheets/4788225.pdf"
+ ],
+ "meta": [
+  "Samsung Electro-Mechanics · 커패시터 · MLCC 47 pF ±5 % 50 V C0G 0603 (1608) · 참고 단가 약 $0.031 (Future Electronics 4k 릴 기준 $0.0308)",
+  "원본: <a href=\"https://www.futureelectronics.com/p/passives--capacitors--ceramic-capacitors--multilayer-ceramic-capacitors/cl10c470jb8nnnc-samsung-electro-mechanics-5532460\" target=\"_blank\" rel=\"noopener\">유통사 사양 (Future Electronics)</a> · <a href=\"https://lcsc.com/product-detail/Multilayer-Ceramic-Capacitors-MLCC-SMD-SMT_SAMSUNG_CL10C470JB8NNNC_47pF-470-5-50V_C1671.html\" target=\"_blank\" rel=\"noopener\">유통사 사양 2</a> · <a href=\"https://octopart.com/search?q=CL10C470JB8NNNC\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 품번 체계·치수: 같은 계열 <a href=\"https://www.farnell.com/datasheets/4788225.pdf\" target=\"_blank\" rel=\"noopener\">CL10B683KB8NNNC 사양서</a> (2020-07-17)"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "값",
+       "47 pF ±5 % (J)"
+      ],
+      [
+       "정격 전압",
+       "50 V (B)"
+      ],
+      [
+       "유전체",
+       "C0G (NP0): 0 ± 30 ppm/°C, −55 ~ +125 °C"
+      ],
+      [
+       "절연 저항",
+       "10 GΩ (유통사 기재)"
+      ],
+      [
+       "등급",
+       "품번 코드 9번째 항목 N = 일반(Normal) 제품 — AEC-Q200 아님 (Samsung 품번 체계)"
+      ],
+      [
+       "크기",
+       "0603 (1608): L 1.6 mm, W 0.8 mm, 두께 코드 8 = 0.8 mm (Samsung 품번 체계)"
+      ],
+      [
+       "포장",
+       "릴 4,000개 (C = 7\" 종이 릴)"
+      ],
+      [
+       "상태",
+       "Active (Future Electronics)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>0603 (1608 metric), L 1.6 × W 0.8 mm, 두께 0.8 mm 계열. 단자 Cu / Ni·Sn 도금 (계열 사양서). 치수 공차는 Samsung 개별 사양서 확인 필요 (같은 계열 CL10B683KB8NNNC: L 1.60±0.10, W 0.80±0.10, T 0.80±0.10, BW 0.30±0.20 mm).</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul><li>일반 등급 — 차량 ECU 양산에는 같은 값의 AEC-Q200 자동차 등급 Samsung 품번으로 교체 검토.</li><li>C0G(Class I)는 DC 바이어스·경년 용량 변화가 사실상 없음 — 크리스털 부하 커패시터, RF/필터, 타이밍 용도에 적합.</li></ul>"
+    }
+   ]
+  }
+ ]
+}

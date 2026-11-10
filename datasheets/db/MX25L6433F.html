@@ -16,44 +16,37 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </head>
 <body>
 <!-- generated from datasheets/records/MX25L6433F.json by scripts/dsdb.mjs — edit the record, not this page -->
-<article data-mpn="MX25L6433F" data-mfr="Macronix" data-cat="메모리" data-price="0.85" data-status="stub" data-alias="MX25L6433F* MX25L6433FM2I-08GTR" data-src="https://pdf.elecfans.com/MCNIX/MX25L6433FM2I-08Q.html">
+<article data-mpn="MX25L6433F" data-mfr="Macronix" data-cat="메모리" data-price="0.85" data-status="done" data-alias="MX25L6433F* MX25L6433FM2I-08GTR" data-src="https://dtsheet.com/doc/1273226/mx25l6433f https://pdf.elecfans.com/MCNIX/MX25L6433FM2I-08Q.html">
 <h1>MX25L6433F</h1>
-<p class="meta">Macronix · 메모리 · 3 V 64 Mbit SPI / Dual / Quad NOR flash (MXSMIO) · 참고 단가 약 $0.85 (추정)</p>
-<p class="meta">원본: <a href="https://pdf.elecfans.com/MCNIX/MX25L6433FM2I-08Q.html" target="_blank" rel="noopener">J/K 등급 데이터시트 (사본)</a> · <a href="https://dtsheet.com/doc/1273226/mx25l6433f" target="_blank" rel="noopener">I 등급 데이터시트 (일부)</a> · <a href="https://www.futureelectronics.com/p/memory--flash--norflash/mx25l6433fmi-08gtr-macronix-7080086" target="_blank" rel="noopener">Future Electronics</a> · <a href="https://octopart.com/search?q=MX25L6433F" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 PM2399 Rev. 1.1 (2019-07-30, J/K grade) / PM2130 Rev. 1.3 (2015-03-17)</p>
-<p class="todo">절대 최대 정격 표, 정전 용량, 프로그램/소거 시간(tPP·tSE·tBE·tCE) 값은 읽은 텍스트에서 확인하지 못함 — Macronix 원본 PDF 확인 필요. 2차 시도: dtsheet.com 사본(PM2130 Rev. 1.3, 2015-03-17)도 텍스트가 SFDP 표 11에서 끊겨 12장 전기 사양 미도달, eeworld는 봇 차단. 데이터시트 1장 기준 VCC 2.65 – 3.6 V는 확인.</p>
-<div class="ds-issues"><b>알려진 문제</b><ul><li>[기타] WebFetch PDF text extraction stops at ~68 k characters (≈ first 50 pages), so electrical-spec chapters at the back of long datasheets cannot be reached with offset — <i>fill these sections manually from the PDFs (or via a non-truncating PDF reader)</i> <a href="https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf" target="_blank" rel="noopener">근거</a></li></ul></div>
-<p class="meta ds-key">부품 선택 기준값 (MX25L6433FM2I-08GTR): SOP-8-208mil</p>
+<p class="meta">Macronix · 메모리 · 3 V 64 Mbit SPI / Dual / Quad NOR flash (MXSMIO), 8-SOP 200 mil, I 등급 · 참고 단가 약 $0.85 (추정)</p>
+<p class="meta">원본: <a href="https://dtsheet.com/doc/1273226/mx25l6433f" target="_blank" rel="noopener">I 등급 데이터시트 (dtsheet 사본, PM2130)</a> · <a href="https://pdf.elecfans.com/MCNIX/MX25L6433FM2I-08Q.html" target="_blank" rel="noopener">J/K 등급 데이터시트 (사본)</a> · <a href="https://www.futureelectronics.com/p/memory--flash--norflash/mx25l6433fmi-08gtr-macronix-7080086" target="_blank" rel="noopener">Future Electronics</a> · <a href="https://octopart.com/search?q=MX25L6433FM2I-08GTR" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 PM2130 Rev. 1.3 (2015-03-17) / PM2399 Rev. 1.1 (2019-07-30, J/K grade)</p>
+<p class="meta ds-key">부품 선택 기준값 (MX25L6433FM2I-08GTR): SOP-8 (200 mil)</p>
 <h2>핵심 사양</h2>
 <dl>
   <dt>용량</dt><dd>64 Mbit (8,388,608 × 8), 256 B 페이지, 4 KB 섹터 × 2048, 32 KB 블록 × 256, 64 KB 블록 × 128</dd>
   <dt>VCC</dt><dd>2.65 ~ 3.6 V (읽기·소거·프로그램)</dd>
-  <dt>클록</dt><dd>일반 READ 50 MHz, FAST READ 133 MHz (105 °C) / 120 MHz (125 °C), 2READ/4READ 80 ~ 133 MHz (더미 사이클 설정에 따라)</dd>
+  <dt>클록 (I 등급)</dt><dd>일반 READ fRSCLK 50 MHz · FAST_READ fSCLK 133 MHz · 2READ/DREAD fT 133 MHz · 4READ/QREAD fQ 133 MHz (더미 사이클 설정에 따라 낮아짐 — J/K 문서 기준 80 ~ 133 MHz)</dd>
   <dt>인터페이스</dt><dd>SPI 모드 0/3, 단일·듀얼·쿼드 I/O, 8 Kbit 보안 OTP</dd>
-  <dt>내구성</dt><dd>100,000 회 소거/프로그램, 데이터 보존 20년</dd>
-  <dt>전류 (J/K)</dt><dd>대기 ISB1 10 µA typ, 딥 파워다운 3 µA typ, 읽기 ICC1 (50 MHz) 10 mA typ, 프로그램/소거 10 mA typ / 15 mA max</dd>
-  <dt>온도 등급</dt><dd>I: −40 ~ +85 °C (Future 표기) · J: −40 ~ +105 °C · K: −40 ~ +125 °C</dd>
-  <dt>패키지</dt><dd>M = 16-SOP 300 mil · M2 = 8-SOP 200 mil · ZN = 8-WSON 6×5 mm · Z2 = 8-WSON 8×6 mm (그 외 TFBGA-24, WLCSP)</dd>
+  <dt>전류 (I 등급)</dt><dd>대기 ISB1 10 µA typ / 50 µA max · 딥 파워다운 ISB2 3 µA typ / 20 µA max · 읽기 2.5 mA typ / 5 mA max (50 MHz), 10 mA typ / 17 mA max (133 MHz, 4 × I/O) · 프로그램/소거 10 mA typ / 15 mA max</dd>
+  <dt>내구성 / 보존</dt><dd>100,000 회 소거/프로그램, 데이터 보존 20년 (55 °C)</dd>
+  <dt>온도 등급</dt><dd>I: −40 ~ +85 °C · J: −40 ~ +105 °C · K: −40 ~ +125 °C (J/K는 별도 문서)</dd>
+  <dt>주문 코드</dt><dd>MX25L6433FM2I-08G = 8-SOP 200 mil, 133 MHz, −40 ~ 85 °C, RoHS·할로겐 프리 · 끝의 TR은 테이프 앤 릴 포장(읽은 문서에 정의 없음)</dd>
+  <dt>패키지</dt><dd>M2 = 8-SOP 200 mil (그 외 M = 16-SOP 300 mil, ZN = 8-WSON 6×5 mm, XC = 24-TFBGA, WLCSP)</dd>
 </dl>
 <h2>절대 최대 정격</h2>
-<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>저장 온도</td><td>−65</td><td>150</td><td>°C</td><td>Future Electronics 표기</td></tr><tr><td>VCC·I/O 전압</td><td></td><td></td><td>V</td><td>데이터시트 확인 필요</td></tr><tr><td>래치업</td><td></td><td>100</td><td>mA</td><td>−1 V ~ VCC + 1 V</td></tr></tbody></table>
+<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>VCC (GND 기준)</td><td>-0.5</td><td>4.6</td><td>V</td><td></td></tr><tr><td>입력·출력 전압</td><td>-0.5</td><td>4.6</td><td>V</td><td></td></tr><tr><td>과도 전압 (모든 핀)</td><td>-2.0</td><td></td><td>V</td><td>20 ns 이하, 최대 VCC + 2.0 V</td></tr><tr><td>동작 주위 온도 (I)</td><td>-40</td><td>85</td><td>°C</td><td></td></tr><tr><td>저장 온도</td><td>-65</td><td>150</td><td>°C</td><td></td></tr><tr><td>래치업 전류 (VCC 제외 핀)</td><td>-100</td><td>100</td><td>mA</td><td>VCC = 3.0 V, 핀별 1개씩</td></tr><tr><td>래치업 입력 전압 (SO)</td><td>-1.0</td><td></td><td>V</td><td>최대 VCC + 1.0 V</td></tr></tbody></table>
 <h2>권장 동작 조건</h2>
-<table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>VCC</td><td>2.65</td><td>3.0</td><td>3.6</td><td>V</td></tr><tr><td>VIL</td><td></td><td></td><td>0.8</td><td>V</td></tr><tr><td>VIH</td><td>0.7 VCC</td><td></td><td></td><td>V</td></tr><tr><td>동작 온도 (I 등급)</td><td>−40</td><td></td><td>85</td><td>°C</td></tr></tbody></table>
+<table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>VCC</td><td>2.65</td><td></td><td>3.6</td><td>V</td></tr><tr><td>동작 온도 (I 등급)</td><td>-40</td><td></td><td>85</td><td>°C</td></tr><tr><td>VIL</td><td>-0.5</td><td></td><td>0.8</td><td>V</td></tr><tr><td>VIH</td><td>0.7 VCC</td><td></td><td>VCC + 0.4</td><td>V</td></tr><tr><td>tVSL (VCC min → 동작)</td><td>800</td><td></td><td></td><td>µs</td></tr><tr><td>VWI (쓰기 금지 전압)</td><td>1.5</td><td></td><td>2.5</td><td>V</td></tr><tr><td>VPWD (재투입 전 VCC 하강)</td><td></td><td></td><td>0.9</td><td>V</td></tr><tr><td>tPWD (VPWD 이하 유지)</td><td>300</td><td></td><td></td><td>µs</td></tr><tr><td>tVR (VCC 상승 시간)</td><td>20</td><td></td><td>500000</td><td>µs/V</td></tr></tbody></table>
+<p>CIN 6 pF, COUT 8 pF (25 °C, 1 MHz) · 누설 ±2 µA · VOL 0.4 V max (1.6 mA) · VOH VCC − 0.2 V min (−100 µA).</p>
 <h2>핀 배치</h2>
-<p>8-SOP 200 mil (M2) / 8-WSON (ZN, Z2) 공통</p>
+<p>8-SOP 200 mil (M2) / 8-WSON (ZN) 공통</p>
 <table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1</td><td>CS#</td><td>칩 선택 (액티브 로우)</td></tr><tr><td>2</td><td>SO/SIO1</td><td>직렬 데이터 출력 / I/O1</td></tr><tr><td>3</td><td>WP#/SIO2</td><td>쓰기 보호 (액티브 로우) / I/O2 (쿼드)</td></tr><tr><td>4</td><td>GND</td><td>GND</td></tr><tr><td>5</td><td>SI/SIO0</td><td>직렬 데이터 입력 / I/O0</td></tr><tr><td>6</td><td>SCLK</td><td>클록 입력</td></tr><tr><td>7</td><td>HOLD#/SIO3</td><td>홀드 / I/O3 (쿼드)</td></tr><tr><td>8</td><td>VCC</td><td>전원 (+3.0 V 공칭)</td></tr></tbody></table>
 <h2>응용 회로 · 주변 부품</h2>
-<ul>
-    <li>WP#/SIO2, HOLD#/SIO3: 핀이 외부에 연결되지 않았을 때만 내부 풀업 활성 — 연결 시 내부 풀업이 꺼지므로 단일 SPI로 쓸 때 외부 풀업 저항 권장.</li>
-    <li>VCC 디커플링 값은 읽은 문서에 없음 — 데이터시트 확인 필요 (일반적으로 VCC 핀 근처 세라믹 배치).</li>
-  </ul>
+<ul><li>WP#/SIO2, HOLD#/SIO3: 핀이 외부에 연결되지 않았을 때만 내부 풀업 활성 — 연결 시 내부 풀업이 꺼지므로 단일 SPI로 쓸 때 외부 풀업 저항 권장.</li><li>전원 투입: VCC 최소값 도달 후 tVSL 800 µs 동안 선택 금지, VCC 상승 시간 20 µs/V ~ 500 ms/V. 재투입 시 VCC를 0.9 V 이하로 300 µs 이상 내려야 함.</li><li>디커플링: 읽은 문서에 값 없음 — VCC 핀 가까이 0.1 µF 세라믹(일반 관행).</li></ul>
 <h2>패키지 · 열</h2>
-<p>8-SOP 200 mil, 16-SOP 300 mil, 8-WSON 6×5 / 8×6 mm. WSON 노출 패드 처리·열저항은 데이터시트 확인 필요.</p>
+<p>8-SOP 200 mil, 16-SOP 300 mil, 8-WSON 6×5 mm, 24-TFBGA 6×8 mm. 치수 수치·열저항은 읽은 사본에서 추출되지 않음(도면만).</p>
 <h2>설계 메모</h2>
-<ul>
-    <li>MPN에 패키지·등급 접미사가 없음 — 주문 시 예: MX25L6433FM2I-08G (8-SOP, I 등급), MX25L6433FM2J-08G (105 °C), K 등급은 125 °C 고온용. 속도 코드 08 = 133 MHz, 09 = 120 MHz; G/Q = RoHS·할로겐 프리.</li>
-    <li>참고 가격: Future Electronics MX25L6433FMI-08GTR (16-SOP) 1,000개 $1.95.</li>
-    <li>쓰기·소거 중단(suspend) 지연 20 µs, 바이트 프로그램 tBP max 100 µs (J/K 문서).</li>
-  </ul>
+<ul><li>Macronix는 이 패키지를 "8-SOP 200 mil"로 표기 — 툴의 key.spec 'SOP-8-208mil' 표기와 이름이 다름. 몸체 폭 치수(도면)를 원본으로 확인 후 풋프린트 선택.</li><li>산업용(I, −40 ~ 85 °C) — 차량 ECU 고온 영역에는 J(105 °C)/K(125 °C) 등급 검토.</li><li>프로그램/소거 시간 표(Table 15)는 사본 텍스트가 섞여 행·열 대응을 확인할 수 없어 수치를 싣지 않음 — 원본 PDF 확인 필요. 참고: 쓰기·소거 중단(suspend) 지연 20 µs, 바이트 프로그램 tBP max 100 µs (J/K 문서).</li><li>참고 가격: Future Electronics MX25L6433FMI-08GTR (16-SOP) 1,000개 $1.95.</li></ul>
 </article>
 </body>
 </html>

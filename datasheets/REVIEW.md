@@ -245,3 +245,18 @@
 | USB4105-GF-A | earlier page used distributor values that conflict with GCT drawing Rev B (48 V / 20,000 cycles vs drawing 20 V DC / 10,000 cycles); fixed on page | none further | [링크](https://www.farnell.com/cad/3307614.pdf) |  |
 | W25Q32JVSSIQ | same QE=1 "IQ" behaviour (JEDEC ID 4016h; IM = 7016h) | check /WP,/HOLD usage; all fetchable copies truncate before section 9 (electrical) | [링크](https://store.comet.bg/download-file.php?id=23239) |  |
 | W25Q64JVSSIQ | manufacturer datasheet could not be fetched (winbond/lcsc PDF links blocked by provenance); pins not written | rerun with fetchable W25Q64JV PDF | [링크](https://www.lcsc.com/product-detail/C179171.html) | 반영 → W25Q64JVSSIQ TR |
+
+## 2026-11-10 데이터시트 보강 중 찾은 회로 라이브러리 문제 (미반영 — 코드 변경 필요)
+
+| 부품 | 문제 | 제안 | 근거 | 상태 |
+|---|---|---|---|---|
+| CL10B332/472/102KB8NNNC, CL10C470/120JB8NNNC | 품번 등급 N = 일반 제품, AEC-Q200 아님 — 차량용 회로 블록에 사용 | Samsung 차량용(AEC-Q200) 품번으로 교체 | https://www.farnell.com/datasheets/4788225.pdf | |
+| AO3401A | 소비자용(AEC-Q101 아님), VGS ±12 V | AEC-Q101 P-FET로 교체 | https://pdf.jiepei.com/ao3401a-22358522.html | |
+| ES1D | 제조사 미지정, AEC-Q101 근거 없음 | 차량용 품번(예: 제조사 지정 -Q 품번) 지정 | https://static.chipdip.ru/lib/889/DOC031889301.pdf | |
+| ABM8-20.000MHZ-B2-T | B 등급 −20~70 °C, AEC-Q200 아님; 패드 1/3 = XTAL, 2/4 = GND 가정 미확인 | 차량용 −40~125 °C 크리스털로 교체, 패드 확인 | https://static.chipdip.ru/lib/005/DOC044005838.pdf | |
+| 1729128 | 생성기가 15 A까지 사용(bigTerm), 정격 13.5 A (IEC) / 10 A (UL), 최대 100 °C | 10 A 초과 시 더 큰 단자대 | https://nonprod.docs.rs-online.com/7267/0900766b81712b91.pdf | |
+| EEE-FK1V471SP | Digi-Key 상태 "Not For New Designs" | 후속 품번 확인 | https://www.digikey.fi/en/products/detail/panasonic-industry/EEE-FK1V471SP/5805045 | |
+| WSL25122L000FEA | AEC-Q200은 계열에 "available"로만 표기 | Vishay에 품번별 확인 또는 -Q 품번 | https://static.chipdip.ru/lib/880/DOC035880370.pdf | |
+| STM32G474RET6 | 산업용(−40~85 °C), AEC-Q100 아님 — 차량용 MCU 후보 목록에 있음 | 차량용 품번(예: -T6 이상 등급 확인) 또는 후보에서 비차량용 표시 | https://nl.rs-online.com/web/p/microcontrollers/1939861 | |
+| TC387QP / TC397XX | TA 125 °C · 최대 부하에서 TJ ≈ 154–160 °C > 150 °C | 열 해석에서 경고, 방열 · 부하 제한 | https://www.farnell.com/datasheets/4117212.pdf | |
+| R7F702301BEBBA (RH850/U2A8) | B 변형은 SVR 없음 → VDD 1.09 V 외부 공급 필요 | 전원 토폴로지에서 내장 레귤레이터 가정 금지 | https://www.renesas.com/ja/document/dst/rh850u2a-renesas-microcontroller-datasheet?r=1546621 | |

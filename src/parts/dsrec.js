@@ -94,7 +94,7 @@ const DSREC = (() => {
   }
 
   /* package names → one comparable key: "SOIC-8" = "SO-8" = "8-SOIC" = "SO8"; "LQFP-48" = "48-LQFP" = "LQFP48"; "SOT-23-8" = "SOT23-8" */
-  const PKSYN = [[/^(SOIC|SOICN|SOP|SO|SOIC_N)$/, 'SO'], [/^(µMAX|UMAX|MSOP|µSOP)$/, 'MSOP'], [/^(TSOT|SOT)$/, 'SOT'], [/^(VSON|WSON|SON)$/, 'SON'], [/^(LQFP|HLQFP|HDQFP|QFP|PQFP|SPQFP)$/, 'QFP'], [/^(BGA|NFBGA|MAPBGA|FBGA)$/, 'BGA']];
+  const PKSYN = [[/^(SOIC|SOICN|SOP|SO|SOIC_N)$/, 'SO'], [/^(µMAX|UMAX|MSOP|µSOP)$/, 'MSOP'], [/^(TSOT|SOT)$/, 'SOT'], [/^(VSON|WSON|SON)$/, 'SON'], [/^(LQFP|HLQFP|HDQFP|TQFP|QFP|PQFP|SPQFP)$/, 'QFP'], [/^(BGA|NFBGA|MAPBGA|FBGA)$/, 'BGA']];
   const syn = (l) => { for (const [re, v] of PKSYN) if (re.test(l)) return v; return l; };
   function pkgKey(p) { const m = String(p).toUpperCase().replace(/^PG-/, '').match(/^([A-ZΜµ]+)[\s_-]*((?:\d+[\s_-]*)+)/); return m ? syn(m[1].replace('Μ', 'µ')) + m[2].replace(/\D+/g, '-').replace(/-$/, '') : ''; }
   function pkgKeys(t) { const out = new Set(); const T = String(t).toUpperCase().replace(/Μ/g, 'µ');

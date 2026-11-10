@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ES1D · 1 A 200 V ultra-fast recovery rectifier, SMA (DO-214AC)</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+.ds-issues{background:#fdecea;border:1px solid #e8a39b;border-radius:8px;padding:6px 12px;font-size:13px;margin:8px 0}.ds-issues ul{margin:4px 0 2px 18px;padding:0}
+.ds-verified{color:#2e7d32}
+</style>
+</head>
+<body>
+<!-- generated from datasheets/records/ES1D.json by scripts/dsdb.mjs — edit the record, not this page -->
+<article data-mpn="ES1D" data-mfr="onsemi" data-cat="다이오드" data-price="0.05" data-status="done" data-src="https://pdf.elecfans.com/ONSEMI/ES1D.html https://static.chipdip.ru/lib/889/DOC031889301.pdf">
+<h1>ES1D</h1>
+<p class="meta">onsemi · 다이오드 · 1 A 200 V 초고속 회복 정류 다이오드, trr 15 ns, SMA · 참고 단가 약 $0.05 (추정)</p>
+<p class="meta">원본: <a href="https://static.chipdip.ru/lib/889/DOC031889301.pdf" target="_blank" rel="noopener">데이터시트 PDF (onsemi ES1A–ES1D)</a> · <a href="https://octopart.com/search?q=ES1D" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · onsemi ES1D/D Rev. 4 (2019-07), 패키지 도면 98AON13440G (CASE 403AE)</p>
+<h2>핵심 사양</h2>
+<dl>
+  <dt>기능</dt><dd>초고속 회복(ultra-fast) 정류 다이오드, ES1A–ES1D 시리즈 중 200 V 품목</dd>
+  <dt>역전압</dt><dd>VRRM 200 V</dd>
+  <dt>순전류</dt><dd>IF(AV) 1.0 A (TA 120 °C) · IFSM 30 A (8.3 ms 반정현파 1회)</dd>
+  <dt>순전압</dt><dd>VF 0.92 V @ IF 1.0 A (TJ 25 °C)</dd>
+  <dt>역회복</dt><dd>trr 15 ns (IF 0.5 A, IR 1.0 A, IRR 0.25 A)</dd>
+  <dt>역누설</dt><dd>IR 5.0 µA (25 °C) / 100 µA (100 °C), 정격 VR</dd>
+  <dt>용량</dt><dd>CT 7.0 pF (VR 4.0 V, 1 MHz)</dd>
+  <dt>등급</dt><dd>AEC-Q101 언급 없음 (상용 등급) · Pb-free, RoHS</dd>
+  <dt>온도</dt><dd>TJ −50 ~ +150 °C</dd>
+  <dt>패키지</dt><dd>SMA (DO-214AC), 캐소드 색 띠, 마킹 ES1D</dd>
+  <dt>제조사</dt><dd>이 레코드는 onsemi 기준. Vishay·Diodes 등 타사 ES1D도 동등품이나 IF(AV) 조건·IFSM·trr·VF가 다를 수 있으므로 해당 데이터시트 확인</dd>
+</dl>
+<h2>절대 최대 정격</h2>
+<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>반복 피크 역전압 VRRM</td><td></td><td>200</td><td>V</td><td></td></tr><tr><td>평균 정류 전류 IF(AV)</td><td></td><td>1.0</td><td>A</td><td>TA = 120 °C</td></tr><tr><td>비반복 서지 전류 IFSM</td><td></td><td>30</td><td>A</td><td>8.3 ms 반정현파 1회</td></tr><tr><td>전력 손실 PD</td><td></td><td>1.47</td><td>W</td><td></td></tr><tr><td>동작 접합 온도 TJ</td><td>−50</td><td>150</td><td>°C</td><td></td></tr><tr><td>보관 온도 Tstg</td><td>−50</td><td>150</td><td>°C</td><td></td></tr></tbody></table>
+<h2>핀 배치</h2>
+<p>SMA (DO-214AC) 2단자. 캐소드 쪽에 색 띠. 데이터시트는 핀 번호를 지정하지 않음 (CAD 라이브러리마다 1/2 할당이 다르므로 K/A로 확인).</p>
+<table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>K</td><td>캐소드</td><td>띠 표시 쪽</td></tr><tr><td>A</td><td>애노드</td><td></td></tr></tbody></table>
+<h2>응용 회로 · 주변 부품</h2>
+<ul><li>스위칭 전원의 정류·프리휠, 릴레이/솔레노이드 플라이백, 역극성 보호 등에 사용.</li><li>trr 15 ns로 수백 kHz 스위칭에 적합하나, VF 0.92 V로 저전압 대전류 경로에서는 쇼트키보다 손실이 큼.</li></ul>
+<h2>패키지 · 열</h2>
+<p>SMA (DO-214AC, JEDEC DO-214 AC 변형), 최대 높이 2.50 mm. RθJA 85 °C/W · RθJL 35 °C/W (FR-4 실장) · PD 1.47 W · TJ 최대 150 °C. 테이프·릴 7500개.</p>
+<h2>설계 메모</h2>
+<ul><li>IF(AV) 1 A는 TA 120 °C 조건 정격 — 실제 허용 전류는 패드 동박 면적과 주위 온도에 좌우됨.</li><li>차량용(AEC-Q101) 필요 시 AEC-Q101 인증 ES1D 변형품(타사 포함)을 별도 선정하고 해당 데이터시트로 수치 재확인.</li><li>회로 생성기는 제조사를 지정하지 않음 — 타사 ES1D 사용 시 VF·trr·IFSM 차이 확인.</li></ul>
+</article>
+</body>
+</html>

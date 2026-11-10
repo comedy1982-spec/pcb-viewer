@@ -16,11 +16,10 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </head>
 <body>
 <!-- generated from datasheets/records/AM2634-Q1.json by scripts/dsdb.mjs — edit the record, not this page -->
-<article data-mpn="AM2634-Q1" data-mfr="TI" data-cat="MCU" data-price="14" data-status="stub" data-src="https://docs.ampnuts.ru/ti.com.datasheet/AM2634-Q1/Data_sheet_AM2634-Q1.PDF">
+<article data-mpn="AM2634-Q1" data-mfr="TI" data-cat="MCU" data-price="14" data-status="done" data-src="https://www.ti.com/document-viewer/AM2631/datasheet/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000309483 https://ti.com/document-viewer/AM2631/datasheet/GUID-XXXXXXXX-SF0T-XXXX-XXXX-000000309484 https://www.ti.com/document-viewer/lit/html/SPRABJ8D/GUID-7E6A71B4-51B4-4B3F-9E12-FA97D1CB066B https://docs.ampnuts.ru/ti.com.datasheet/AM2634-Q1/Data_sheet_AM2634-Q1.PDF">
 <h1>AM2634-Q1</h1>
 <p class="meta">TI · MCU · Sitara AM263x 4코어 Arm Cortex-R5F 실시간 제어 MCU · 참고 단가 약 $14 (추정)</p>
-<p class="meta">원본: <a href="https://docs.ampnuts.ru/ti.com.datasheet/AM2634-Q1/Data_sheet_AM2634-Q1.PDF" target="_blank" rel="noopener">데이터시트 PDF (SPRSP74A 사본)</a> · <a href="https://www.ti.com/document-viewer/lit/html/SPRSP74E/GUID-FBCA0180-0D73-4E4F-85C0-36EC732411A8" target="_blank" rel="noopener">최신 데이터시트 (TI 문서 뷰어)</a> · <a href="https://octopart.com/search?q=AM2634-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 SPRSP74A (2022-06, Advance Information); TI 최신판은 SPRSP74E/F (Production Data)</p>
-<p class="todo">초안 (2차 시도: TI 문서 뷰어 SPRSP74D/E/F의 6장 페이지는 목차만 반환되어 본문을 얻지 못함): 읽은 PDF는 2022년 사전 정보(Advance Information)판이라 6.1 절대 최대 정격, 6.5 권장 동작 조건, 6.10 열저항, XTAL 사양이 빠져 있습니다. 최신 SPRSP74(Production Data)에서 채우고 기능 값도 대조하세요.</p>
+<p class="meta">원본: <a href="https://docs.ampnuts.ru/ti.com.datasheet/AM2634-Q1/Data_sheet_AM2634-Q1.PDF" target="_blank" rel="noopener">데이터시트 PDF (SPRSP74A 사본)</a> · <a href="https://www.ti.com/document-viewer/lit/html/SPRSP74E/GUID-FBCA0180-0D73-4E4F-85C0-36EC732411A8" target="_blank" rel="noopener">최신 데이터시트 (TI 문서 뷰어)</a> · <a href="https://octopart.com/search?q=AM2634-Q1" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 기능 요약은 SPRSP74A (2022-06, Advance Information), 정격·동작 조건은 SPRSP74E/F (Production Data, TI 문서 뷰어), 디커플링은 SPRABJ8D</p>
 <div class="ds-issues"><b>알려진 문제</b><ul><li>[기타] only the 2022 Advance-Information datasheet copy (SPRSP74A) could be read; TI current rev is SPRSP74E/F — <i>fill abs-max/ROC/thermal from current rev</i> <a href="https://www.ti.com/document-viewer/lit/html/SPRSP74E/GUID-FBCA0180-0D73-4E4F-85C0-36EC732411A8" target="_blank" rel="noopener">근거</a></li></ul></div>
 <p class="meta ds-key">부품 선택 기준값: nFBGA-324 · Q100 · feat [&quot;fd&quot;,&quot;motor&quot;,&quot;eth&quot;]</p>
 <h2>핵심 사양</h2>
@@ -36,27 +35,34 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
   <dt>패키지</dt><dd>ZCZ 324볼 nFBGA, 15.0 × 15.0 mm, 0.8 mm 피치</dd>
 </dl>
 <h2>절대 최대 정격</h2>
-<p class="todo">데이터시트 확인 필요 (최신 SPRSP74 6.1절).</p>
+<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>VDD (1.2 V SoC 코어)</td><td>-0.5</td><td>1.5</td><td>V</td><td></td></tr><tr><td>VDDAR1/2/3 (1.2 V SRAM 어레이)</td><td>-0.5</td><td>1.5</td><td>V</td><td></td></tr><tr><td>VDDS18 (1.8 V IO 바이어스)</td><td>-0.5</td><td>2.1</td><td>V</td><td>바이어스 LDO 출력을 보드로 연결</td></tr><tr><td>VDDS33 (3.3 V IO)</td><td>-0.5</td><td>4.0</td><td>V</td><td></td></tr><tr><td>VDDA18_OSC_PLL (1.8 V PLL 아날로그)</td><td>-0.5</td><td>2.1</td><td>V</td><td></td></tr><tr><td>VDDA33 (3.3 V 아날로그)</td><td>-0.5</td><td>4.0</td><td>V</td><td></td></tr><tr><td>VDDA18 (1.8 V 아날로그)</td><td>-0.5</td><td>2.1</td><td>V</td><td></td></tr><tr><td>IO 핀 정상상태 전압 (3.3 V LVCMOS · I2C 오픈드레인)</td><td>-0.3</td><td></td><td>V</td><td>최대 VDDS33 + 0.3 V</td></tr><tr><td>XTAL 패드 전압</td><td>-0.5</td><td>2.1</td><td>V</td><td></td></tr><tr><td>과도 오버/언더슈트 (기타 IO)</td><td>-0.3</td><td></td><td>V</td><td>최대 VDDS33 + 0.2 × VDDS33, 신호 주기 20 % 이내</td></tr><tr><td>래치업 전류 주입 (IO 핀당)</td><td></td><td>100</td><td>mA</td><td>±100 mA, Class II (150 °C)</td></tr><tr><td>IOUT 디지털 출력 전류 (핀당)</td><td>-20</td><td>20</td><td>mA</td><td></td></tr><tr><td>Tstg 보관 온도</td><td>-55</td><td>155</td><td>°C</td><td></td></tr></tbody></table>
+<p>SPRSP74E/F 6.1절. 모든 전압은 VSS 기준.</p>
 <h2>권장 동작 조건</h2>
-<p class="todo">데이터시트 확인 필요 (6.5절). 읽은 판에서 확인된 것: 디지털 I/O 레일 VDDSHV0 3.3 V, 아날로그 입력 레일 VDDA_CIO 3.3 V, ADC VREF 1.8 V, DAC_VREF 3.3 V.</p>
+<table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>VDD (1.2 V 코어)</td><td>1.140</td><td>1.200</td><td>1.260</td><td>V</td></tr><tr><td>VDDAR1/2/3 (SRAM 어레이)</td><td>1.140</td><td>1.200</td><td>1.260</td><td>V</td></tr><tr><td>VDDS18 (1.8 V IO 바이어스)</td><td>1.710</td><td>1.800</td><td>1.890</td><td>V</td></tr><tr><td>VDDS33 (3.3 V IO)</td><td>3.135</td><td>3.300</td><td>3.465</td><td>V</td></tr><tr><td>VDDA18_OSC_PLL</td><td>1.710</td><td>1.800</td><td>1.890</td><td>V</td></tr><tr><td>VDDA33 (3.3 V 아날로그)</td><td>3.135</td><td>3.300</td><td>3.465</td><td>V</td></tr><tr><td>VDDA18 (1.8 V 아날로그)</td><td>1.710</td><td>1.800</td><td>1.890</td><td>V</td></tr><tr><td>TJ — Industrial (A)</td><td>-40</td><td></td><td>105</td><td>°C</td></tr><tr><td>TJ — Automotive (I)</td><td>-40</td><td></td><td>125</td><td>°C</td></tr><tr><td>TJ — Extended Automotive (M)</td><td>-40</td><td></td><td>150</td><td>°C</td></tr></tbody></table>
+<p>SPRSP74F 6.5절. 3.3 V 레일 허용 범위는 ±5 % (3.135 – 3.465 V)로 좁음 — 전원 IC 정확도 확인.</p>
 <h2>핀 배치</h2>
 <p>ZCZ 324볼 BGA — 핀 표는 생략하고 그룹만 요약 (정확한 볼 번호는 데이터시트 Pin Attributes 표 참조).</p>
 <ul>
-    <li>전원: 코어, 3.3 V I/O(VDDSHV0), 아날로그(VDDA_CIO), ADC/DAC 기준전압(ADCx_VREF, DAC_VREF0/1)</li>
-    <li>클럭: XTAL_XI / XTAL_XO (주파수는 데이터시트 확인 필요)</li>
+    <li>전원: VDD (1.2 V 코어), VDDAR1–3 (1.2 V SRAM), VDDS33 (3.3 V IO), VDDS18 / VDDS18_LDO (1.8 V IO 바이어스, 내부 LDO 출력을 보드로 연결), VDDA33 (3.3 V 아날로그), VDDA18 / VDDA18_LDO (1.8 V 아날로그 LDO), VDDA18_OSC_PLL (PLL용, LC 필터), VSS/VSSA</li>
+    <li>ADC/DAC 기준전압: ADCx_VREF, DAC_VREF</li>
+    <li>클럭: XTAL_XI / XTAL_XO (XTAL 패드는 1.8 V 도메인, 절대 최대 2.1 V)</li>
     <li>아날로그 입력: ADC0–4 각 6입력, CMPSS 입력 공유</li>
     <li>제어 I/O: EPWM, ECAP, EQEP, SDFM 핀 (멀티플렉싱)</li>
     <li>통신: MCAN0–3, RMII/RGMII + MDIO, UART/SPI/I2C 등</li>
   </ul>
 <h2>응용 회로 · 주변 부품</h2>
-<ul><li>디커플링, 전원 시퀀스(7.11절 참조), XTAL 부하 용량은 데이터시트 확인 필요.</li></ul>
+<p>ZCZ 패키지 디커플링 시작값 (AM26x 하드웨어 설계 가이드 SPRABJ8D 표 2-7, TI는 PDN 시뮬레이션·측정 권장):</p>
+<table><thead><tr><th>레일</th><th>구성</th></tr></thead><tbody><tr><td>VDD (코어)</td><td>0.1 µF 0201 X5R × 17 + 3.3 µF 0603 X5R × 3</td></tr><tr><td>VDDAR[3:1]</td><td>3.3 µF × 2 + 0.1 µF × 3</td></tr><tr><td>VDDS18_LDO</td><td>3.3 µF × 1 + 0.1 µF × 1</td></tr><tr><td>VDDS18</td><td>0.1 µF × 4</td></tr><tr><td>VDDA18_LDO</td><td>4.7 µF 0603 × 1 + 0.1 µF × 1</td></tr><tr><td>VDDA18</td><td>0.1 µF × 2</td></tr><tr><td>VDDA18_OSC_PLL</td><td>LC 필터: 페라이트 비드 (BLM18EG121SN1D) + 0.1 µF</td></tr><tr><td>VDDS33</td><td>0.1 µF × 7 + 3.3 µF × 1</td></tr><tr><td>VDDA33</td><td>페라이트 비드 + 0.1 µF × 3 + 3.3 µF × 1</td></tr><tr><td>시스템 3.3 V LC 필터</td><td>3.3 µF + 0.1 µF</td></tr></tbody></table>
+<ul><li>ZCZ는 OSPI/QSPI 플래시 IO가 3.3 V만 지원 (ZFG/ZNC/ZEJ는 1.8 V도 가능, 설계 가이드).</li><li>XTAL 부하 용량·주파수, 전원 시퀀스는 데이터시트 6.11.4 / 7장 확인 필요 (이번에 해당 페이지를 읽지 못함).</li></ul>
 <h2>패키지 · 열</h2>
-<p>ZCZ nFBGA 324볼, 15.0 × 15.0 mm, 0.8 mm 피치, 45 nm 공정. RθJA/RθJC는 데이터시트 확인 필요.</p>
+<p>ZCZ nFBGA 324볼, 15.0 × 15.0 mm, 0.8 mm 피치. TJ 상한은 온도 등급별 105/125/150 °C (6.5절). Tstg -55 ~ 155 °C. RθJA/RθJC 값은 6.10.1 Package Thermal Characteristics 페이지 본문을 얻지 못해 미기재.</p>
 <h2>설계 메모</h2>
 <ul>
     <li>0.8 mm 피치 324볼 → 볼 사이 비아 배선과 다층(통상 6층 이상) 기판 고려.</li>
-    <li>같은 핀 배치 계열: AM2631-Q1, AM2632-Q1 (같은 데이터시트, 코어 수 등 차이는 데이터시트 비교표 확인).</li>
-    <li>읽은 사본은 사전 정보판이므로 값 확정 전 반드시 TI 최신 Production Data판과 대조.</li>
+    <li>같은 핀 배치 계열: AM2631-Q1, AM2632-Q1 (같은 데이터시트).</li>
+    <li>1.2 V(VDD/VDDAR), 3.3 V(VDDS33/VDDA33) 외부 공급이 필요하고, 1.8 V 레일(VDDS18, VDDA18)은 내부 LDO 출력(_LDO 핀)을 보드로 연결 — 설계 가이드의 전원 구성(이산 DC-DC 또는 PMIC) 참조.</li>
+    <li>주문 품번의 온도 등급 문자(A/I/M)에 따라 TJ 상한이 105/125/150 °C로 다름 — 차량용은 I 또는 M 선택.</li>
+    <li>열저항(RθJA 등)은 미확보 — 데이터시트 6.10.1 확인.</li>
   </ul>
 </article>
 </body>

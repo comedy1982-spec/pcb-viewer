@@ -248,7 +248,7 @@
    "h": "설계 메모",
    "blocks": [
     {
-     "html": "<ul>\n    <li>차량용은 NCV21671 접두사 사용 (예: NCV21671DM050R2G, NCV21671SQ100T2G). 배치 파일의 \"NCS21671\"은 기본 품번이라 이득·패키지 미지정 — 주문 품번 확정 필요.</li>\n    <li>주문 품번: SC70-6 = NCS21671SQ025/050/100/200T2G (3000/릴), Micro10 = NCS21671DM025/050/100/200R2G (4000/릴). 제품 상태 Active.</li>\n    <li>출력 스윙 V<sub>S</sub>−35 mV / 2.5 mV(max, 10 kΩ) — ADC 풀스케일 여유 확보. 최대 용량성 부하 1 nF.</li>\n  </ul>"
+     "html": "<ul>\n    <li>차량용은 NCV21671 접두사 사용 (예: NCV21671DM050R2G, NCV21671SQ100T2G). 배치 파일의 \"NCS21671\"은 기본 품번이라 이득·패키지 미지정 — 주문 품번 확정 필요.</li>\n    <li>주문 품번: SC70-6 = NCS21671SQ025/050/100/200T2G (3000/릴), Micro10 = NCS21671DM025/050/100/200R2G (4000/릴). 제품 상태 Active.</li>\n    <li>출력 스윙 V<sub>S</sub>−35 mV / 2.5 mV(max, 10 kΩ) — ADC 풀스케일 여유 확보. 최대 용량성 부하 1 nF.</li>\n    <li>NCV21671SQ050T2G 확인: 이득 50 V/V, SC70-6 (SC-88 / SOT-363), 3000/릴, AEC-Q100, TA −40~125 °C (주문 정보 표 + Digi-Key). SC70-6 판에는 EN·CIN 필터 핀이 없습니다.</li>\n  </ul>"
     }
    ]
   }
@@ -261,5 +261,5 @@
  "src": [
   "https://www.mouser.com/pdfDocs/NCS21671-D-2.pdf"
  ],
- "todo": "핀 번호 미확인: 읽은 PDF 텍스트에서 Figure 2(핀 배치도)의 번호가 깨져 핀 이름만 확보. Micro10·SC70-6 핀 번호는 원본 PDF 그림으로 확인 필요. 2차 시도: mouser NCS21671-D-2.pdf를 다시 읽었으나 Figure 2 텍스트가 여전히 번호·이름이 섞여 나옴(\"SC70−6 1 4 3 2 8 5 6 IN− 7 IN+ NC Micro−10 …\") — 핀 번호 확정 불가, 다른 사본은 검색되지 않음."
+ "todo": "SC70-6·Micro10 핀 번호 미확인: mouser NCS21671-D-2.pdf를 3차로 다시 읽었으나 Figure 2 텍스트가 번호·이름이 섞여 나오고(\"SC70−6 1 4 3 2 8 5 6 IN− 7 IN+ NC …\") 핀 설명표에는 번호 열이 없음. onsemi 원본 PDF(onsemi.com/pub/Collateral/NCS21671-D.PDF)는 가져오기 승인 안 됨, onsemi 제품 페이지는 바이너리로 읽기 불가. 원본 Figure 2로 핀 번호 확인 필요."
 }

@@ -1,0 +1,133 @@
+{
+ "mpn": "61300511121",
+ "mfr": "Würth Elektronik",
+ "cat": "커넥터",
+ "price": 0.2,
+ "status": "done",
+ "title": "WR-PHD 2.54 mm pin header, 1x5 straight THT",
+ "src": [
+  "https://ph.rs-online.com/web/p/pcb-headers/8281597",
+  "https://www.datasheets.com/wurth-electronics/61300511121",
+  "https://www.element14.cn/en-CN/wurth-elektronik/61300511121/header-2-54mm-pin-tht-vertical/dp/2356157",
+  "https://www.zenkaeurope.com/products/detail/connectors-interconnects/rectangular-connectors-headers-male-pins/61300111121"
+ ],
+ "meta": [
+  "Würth Elektronik · 커넥터 · WR-PHD 2.54 mm 1열 5핀 스트레이트 THT 핀 헤더 · 참고 단가 약 $0.2 (추정)",
+  "원본: <a href=\"https://www.we-online.com/katalog/datasheet/61300511121.pdf\" target=\"_blank\" rel=\"noopener\">WE 데이터시트 PDF</a> (열람 차단, 미확인) · <a href=\"https://www.element14.cn/en-CN/wurth-elektronik/61300511121/header-2-54mm-pin-tht-vertical/dp/2356157\" target=\"_blank\" rel=\"noopener\">element14 사양</a> · <a href=\"https://ph.rs-online.com/web/p/pcb-headers/8281597\" target=\"_blank\" rel=\"noopener\">RS 사양</a> · <a href=\"https://www.datasheets.com/wurth-electronics/61300511121\" target=\"_blank\" rel=\"noopener\">datasheets.com 사양</a> · <a href=\"https://www.zenkaeurope.com/products/detail/connectors-interconnects/rectangular-connectors-headers-male-pins/61300111121\" target=\"_blank\" rel=\"noopener\">Zenka 시리즈 치수</a> · <a href=\"https://octopart.com/search?q=61300511121\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a>"
+ ],
+ "sections": [
+  {
+   "h": "핵심 사양",
+   "blocks": [
+    {
+     "dl": [
+      [
+       "형태",
+       "WR-PHD 핀 헤더, 1열 5핀, 수직(스트레이트), 비슈라우드, 수(male), 스루홀 솔더"
+      ],
+      [
+       "피치",
+       "2.54 mm (1열)"
+      ],
+      [
+       "정격 전류",
+       "3 A (WR-PHD 시리즈 공통, 유통사 표기)"
+      ],
+      [
+       "사용 전압",
+       "250 V AC"
+      ],
+      [
+       "접촉 저항",
+       "최대 20 mΩ"
+      ],
+      [
+       "절연 저항",
+       "&gt; 1000 MΩ"
+      ],
+      [
+       "재질",
+       "접점 구리 합금(스탬핑), 금도금 · 절연체 PA6T(element14/Farnell) — RS·Zenka는 PBT/폴리아마이드로 표기, 흑색, UL94 V-0"
+      ],
+      [
+       "핀 길이",
+       "결합측 6.00 mm, 테일(PCB측) 3.00 mm, 절연체 높이 2.54 mm, 접점 전체 11.54 mm (시리즈 공통 치수, Zenka 1핀 품번 61300111121 표기 · RS 6 mm / 3 mm와 일치)"
+      ],
+      [
+       "삽발 횟수",
+       "25회 (WR-PHD 시리즈 유통사 표기)"
+      ],
+      [
+       "동작 온도",
+       "−40 … +105 °C (RS·element14·datasheets.com) — 일부 유통사는 +125 °C로 표기, 105 °C를 기준으로 사용"
+      ],
+      [
+       "등급",
+       "AEC-Q200 대상 아님(수동 커넥터). 품질 Class 3 (CECC 75 301-802), JEDEC 무연 웨이브 솔더링"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "h": "핀 배치",
+   "blocks": [
+    {
+     "html": "<p>1×5, 2.54 mm 피치 스루홀. 핀은 한 줄로 1 … 5 순차 번호.</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "1",
+        "단순 접점 (1열 순차 번호)"
+       ],
+       [
+        "2",
+        "2",
+        "단순 접점 (1열 순차 번호)"
+       ],
+       [
+        "3",
+        "3",
+        "단순 접점 (1열 순차 번호)"
+       ],
+       [
+        "4",
+        "4",
+        "단순 접점 (1열 순차 번호)"
+       ],
+       [
+        "5",
+        "5",
+        "단순 접점 (1열 순차 번호)"
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h": "패키지 · 열",
+   "blocks": [
+    {
+     "html": "<p>1×5, 2.54 mm 피치. 절연체 높이 2.54 mm, PCB 위 핀 6.00 mm, PCB 아래 테일 3.00 mm. 몸체 길이는 핀 수 × 2.54 mm ≈ 12.70 mm (피치 배수 — 원본 도면 미확인). 권장 홀 지름·핀 단면 치수는 WE 원본 PDF를 열지 못해 미확인 — 일반 0.64 mm 각핀용 Ø1.0 mm 홀(KiCad PinHeader_1x05_P2.54mm_Vertical)이 관례.</p>"
+    }
+   ]
+  },
+  {
+   "h": "설계 메모",
+   "blocks": [
+    {
+     "html": "<ul><li>결합 상대: WR-PHD 2.54 mm 1열 암(female) 소켓 헤더 또는 2.54 mm 하우징 케이블. 금도금 25회 삽발 등급이라 상시 탈착 용도로는 부적합.</li><li>디버그/프로그래밍(UART·SWD)·센서 배선용. 진동·방수가 필요한 차량 외부 하네스 커넥터로는 부적합 — 기판 내부/시험용으로 한정.</li><li>3 A/핀은 상온 기준 유통사 수치. 고온(105 °C 근처)에서는 디레이팅 곡선을 WE 데이터시트로 확인.</li><li>동일 시리즈: 2핀 61300211121, 4핀 61300411121, 8핀 61300811121.</li><li>회로 생성기는 홀 센서 커넥터(공급·H1·H2·H3·GND)로 사용 — 핀 1 = 공급, 5 = GND 배치는 설계상 약속이며 헤더 자체에는 기능이 없음.</li></ul>"
+    }
+   ]
+  }
+ ]
+}

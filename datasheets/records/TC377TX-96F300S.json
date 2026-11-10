@@ -3,11 +3,11 @@
  "mfr": "Infineon",
  "cat": "MCU",
  "price": 19,
- "status": "stub",
+ "status": "done",
  "title": "AURIX TC37xEXT 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, dual Ethernet, LFBGA-292",
  "meta": [
   "Infineon · MCU · AURIX TC37xEXT 32-bit TriCore 3-core MCU, 300 MHz, 6 MB Flash, dual Ethernet, LFBGA-292 · 참고 단가 약 $19 (추정)",
-  "원본: <a href=\"https://www.mouser.com/datasheet/2/196/Infineon_SAK_TC377TX_96F300S_AB_DataSheet_v01_00_E-3363897.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.digikey.ie/en/products/detail/infineon-technologies/TC377TX96F300SABKXUMA1/13563772\" target=\"_blank\" rel=\"noopener\">Digi-Key 제품 페이지 (미확인 링크)</a> · <a href=\"https://documentation.infineon.com/aurixtc3xx/docs/nho1702366509393\" target=\"_blank\" rel=\"noopener\">TC3xx 문서 페이지</a> · <a href=\"https://octopart.com/search?q=TC377TX-96F300S\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TC37xEXT AB-Step Data Sheet V1.0 (2019-10)"
+  "원본: <a href=\"https://www.mouser.com/datasheet/2/196/Infineon_SAK_TC377TX_96F300S_AB_DataSheet_v01_00_E-3363897.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.infineon.com/assets/row/public/documents/10/49/infineon-aurix-tc37xext-addendum-datasheet-en.pdf\" target=\"_blank\" rel=\"noopener\">TC37xEXT 변형 부록 v1.4</a> · <a href=\"https://www.irf.com/cms/de/product/microcontroller/32-bit-tricore-microcontroller/32-bit-tricore-aurix-tc3xx/aurix-family-tc37xtx/sak-tc377tx-96f300s-ab/\" target=\"_blank\" rel=\"noopener\">Infineon 제품 페이지</a> · <a href=\"https://documentation.infineon.com/aurixtc3xx/docs/nho1702366509393\" target=\"_blank\" rel=\"noopener\">TC3xx 문서 페이지</a> · <a href=\"https://octopart.com/search?q=TC377TX-96F300S\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TC37xEXT AB-Step Data Sheet V1.0 (2019-10) · TC37xEXT Variants Addendum v1.4 (2020-11)"
  ],
  "sections": [
   {
@@ -16,28 +16,36 @@
     {
      "dl": [
       [
+       "품번",
+       "SAK-TC377TX-96F300S AB (부록: 표준 생산, 주문 코드 TC377TX96F300SABKXUMA1)"
+      ],
+      [
        "코어",
-       "TriCore TC1.6.2 3개 + 락스텝 체커 3개 (TC37xEXT 계열 표), 최대 300 MHz (전 온도 범위)"
+       "TriCore TC1.6.2 3개 + 락스텝 체커 3개 (3/3), 최대 300 MHz, CPU당 I-캐시 32 KB / D-캐시 16 KB"
       ],
       [
        "메모리",
-       "PFLASH 6 MB (3 MB×2 뱅크), DFLASH 256 KB + 128 KB, DSPR CPU0/1 240 KB·CPU2 96 KB, PSPR 64 KB, DLMU 64 KB, DAM 32 KB, 확장 메모리 TCM 2 MB / XCM 1 MB / XTM 16 KB"
+       "PFLASH 6 MB, DFLASH0 256 KB, SRAM 992 KB (DSPR CPU0/1 240 KB·기타 96 KB, PSPR 64 KB, DLMU CPU당 64 KB, DAM 32 KB), EMEM 3072 KB"
       ],
       [
        "ADC",
-       "EVADC 주 그룹 4/32채널 + 보조 그룹 4/64채널, DSADC 6채널"
+       "EVADC 주 그룹 4/32채널 + 보조 그룹 4/60채널, Fast compare 4, EDSADC 6채널"
       ],
       [
        "통신",
-       "이더넷 MAC 2개 (10/100/1000 Mbit, RMII/MII/RGMII), MCMCAN 3모듈×4노드, ASCLIN 12, QSPI 5, FlexRay 1/2채널, SENT 15, PSI5 2 + PSI5-S 1"
+       "이더넷 2 × 1 Gbit/s, MCMCAN 3모듈/3×4노드 (CAN FD), FlexRay 1/2채널, ASCLIN 12, QSPI 5 (LVDS 2), HSSL 1, MSC 2, SENT 15, PSI5 2 + PSI5-S, SDMMC 있음, I2C 1 (제품 페이지)"
       ],
       [
        "안전·보안",
-       "HSM+ (일부 변형은 선택), ASIL D"
+       "HSM 있음 (eVITA full), SMU, IOM, ISO 26262 ASIL-D 지원 (제품 페이지)"
+      ],
+      [
+       "전원",
+       "단일 5 V 또는 3.3 V (V<sub>EXT</sub>), 내장 EVR: EVR33 LDO → V<sub>DDP3</sub>, EVRC 벅 DC-DC (외부 MOSFET + 인덕터) → V<sub>DD</sub> 1.25 V"
       ],
       [
        "온도",
-       "계열 표: T<sub>A</sub> −40 … +150 °C. SAK 접두 = −40 … +125 °C (TC3xx 변형 부록의 접두 규칙)"
+       "SAK: T<sub>A</sub> −40 … +125 °C, T<sub>J</sub> −40 … +150 °C (SAL 변형은 T<sub>A</sub> 150 °C)"
       ],
       [
        "패키지",
@@ -61,25 +69,88 @@
       ],
       "rows": [
        [
-        "V<sub>EXT</sub> / V<sub>DDM</sub> / V<sub>DDP3</sub> / V<sub>DD</sub> 공급 전압",
-        "",
-        "",
-        "V",
-        "데이터시트 확인 필요 (데이터시트 p.389)"
-       ],
-       [
-        "입력 전압 · 핀 주입 전류",
-        "",
-        "",
-        "",
-        "데이터시트 확인 필요"
-       ],
-       [
-        "저장 온도 · 접합 온도",
-        "",
-        "",
+        "저장 온도 T<sub>ST</sub>",
+        "-65",
+        "150",
         "°C",
-        "데이터시트 확인 필요"
+        "T<sub>J</sub>=150 °C에서 최대 65 h"
+       ],
+       [
+        "V<sub>DD</sub> (코어) – V<sub>SS</sub>, 누적 2.8 h 이내",
+        "",
+        "1.65",
+        "V",
+        ""
+       ],
+       [
+        "V<sub>DD</sub> (코어) – V<sub>SS</sub>, 누적 72 h 이내",
+        "",
+        "1.45",
+        "V",
+        ""
+       ],
+       [
+        "V<sub>DDP3</sub> – V<sub>SS</sub>",
+        "",
+        "4.43",
+        "V",
+        ""
+       ],
+       [
+        "V<sub>EXT</sub>, V<sub>DDM</sub>, V<sub>FLEX</sub>, V<sub>EVRSB</sub> – V<sub>SS</sub>, 누적 2.8 h 이내",
+        "",
+        "6.75",
+        "V",
+        ""
+       ],
+       [
+        "V<sub>EXT</sub>, V<sub>DDM</sub>, V<sub>FLEX</sub>, V<sub>EVRSB</sub> – V<sub>SS</sub>, 누적 72 h 이내",
+        "",
+        "5.6",
+        "V",
+        ""
+       ],
+       [
+        "입력 전압 V<sub>IN</sub> (아날로그·class S 및 기타 입력)",
+        "-0.7",
+        "6.75",
+        "V",
+        ""
+       ],
+       [
+        "과부하 시 핀당 입력 전류 I<sub>IN</sub>",
+        "-10",
+        "10",
+        "mA",
+        ""
+       ],
+       [
+        "과부하 시 입력 전류 합 ΣI<sub>IN</sub>",
+        "-100",
+        "100",
+        "mA",
+        ""
+       ],
+       [
+        "디지털 핀 과부하 전류 (신뢰성 한도)",
+        "-5",
+        "5",
+        "mA",
+        "±15 mA는 1 ms 펄스 최대 20회 (3.3절)"
+       ],
+       [
+        "아날로그 입력 과부하 전류 (신뢰성 한도)",
+        "-3",
+        "3",
+        "mA",
+        "±5 mA는 수명 중 60 h 이내, 아날로그 합 ±20 mA"
+       ],
+       [
+        "정적 핀 출력 전류 (strong 드라이버, 듀티 100 %)",
+        "",
+        "5",
+        "mA",
+        "medium 드라이버 2.5 mA"
        ]
       ]
      }
@@ -100,18 +171,123 @@
       ],
       "rows": [
        [
-        "동작 주파수 f<sub>CPU</sub>",
+        "SRI·CPU 주파수 f<sub>SRI</sub>, f<sub>CPUx</sub>",
         "",
         "",
         "300",
         "MHz"
        ],
        [
-        "공급 전압 (p.393 Operating Conditions)",
+        "SPB 주파수 f<sub>SPB</sub>",
         "",
         "",
+        "100",
+        "MHz"
+       ],
+       [
+        "GTM 주파수 f<sub>GTM</sub>",
         "",
-        "V – 데이터시트 확인 필요"
+        "",
+        "200",
+        "MHz"
+       ],
+       [
+        "ADC 주파수 f<sub>ADC</sub>",
+        "",
+        "",
+        "160",
+        "MHz"
+       ],
+       [
+        "CAN 주파수 f<sub>CAN</sub>",
+        "",
+        "",
+        "80",
+        "MHz"
+       ],
+       [
+        "주변 온도 T<sub>A</sub> (SAK)",
+        "-40",
+        "",
+        "125",
+        "°C"
+       ],
+       [
+        "접합 온도 T<sub>J</sub> (SAK)",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ],
+       [
+        "코어 V<sub>DD</sub> (외부 공급 시)",
+        "1.125",
+        "1.25",
+        "1.375",
+        "V"
+       ],
+       [
+        "ADC 공급 V<sub>DDM</sub>",
+        "2.97",
+        "5.0",
+        "5.5",
+        "V"
+       ],
+       [
+        "외부 공급 V<sub>EXT</sub> (5 V 공칭)",
+        "4.5",
+        "5.0",
+        "5.5",
+        "V"
+       ],
+       [
+        "외부 공급 V<sub>EXT</sub> (3.3 V 공칭, V<sub>DDP3</sub> 외부·EVR33 off)",
+        "2.97",
+        "3.3",
+        "3.63",
+        "V"
+       ],
+       [
+        "외부 공급 V<sub>EXT</sub> (크랭킹, 플래시 크랭킹 모드)",
+        "3.6",
+        "",
+        "4.5",
+        "V"
+       ],
+       [
+        "플렉스 포트 V<sub>FLEX</sub> (3.3 V 패드)",
+        "2.97",
+        "",
+        "4.0",
+        "V"
+       ],
+       [
+        "플렉스 포트 V<sub>FLEX</sub> (5 V 패드)",
+        "4.5",
+        "5.0",
+        "5.5",
+        "V"
+       ],
+       [
+        "플래시 공급 V<sub>DDP3</sub>",
+        "2.97",
+        "3.3",
+        "3.63",
+        "V"
+       ],
+       [
+        "대기 공급 V<sub>EVRSB</sub>",
+        "2.97",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "아날로그 접지 V<sub>SSM</sub>",
+        "-0.1",
+        "0",
+        "0.1",
+        "V"
        ]
       ]
      }
@@ -122,35 +298,50 @@
    "h": "핀 배치",
    "blocks": [
     {
-     "html": "<p>PG-LFBGA-292 (TX 핀아웃, 그림 2-2) · BGA이므로 핀 그룹만 정리합니다.</p>"
+     "html": "<p>PG-LFBGA-292, TX 핀아웃 (TE와 다름) · BGA이므로 볼 번호 없이 핀 그룹만 정리합니다.</p>"
     },
     {
      "table": {
       "head": [
-       "핀",
+       "그룹",
        "이름",
        "기능"
       ],
       "rows": [
        [
-        "—",
-        "VDD, VEXT, VDDP3, VFLEX, VSS",
-        "전원·접지 볼"
+        "전원",
+        "VEXT, VDD, VDDP3, VFLEX, VEVRSB, VSS",
+        "V<sub>EXT</sub> 5 V/3.3 V, V<sub>DD</sub> 1.25 V 코어, V<sub>DDP3</sub> 3.3 V 플래시, V<sub>FLEX</sub> 플렉스 패드, V<sub>EVRSB</sub> 대기 (범위는 권장 동작 조건 표)"
        ],
        [
-        "—",
-        "VDDM, VAREF, VAGND, AN0–AN47",
+        "ADC",
+        "VDDM, VSSM, VAREF, VAGND, AN 입력",
         "ADC 공급·기준·아날로그 입력"
        ],
        [
-        "—",
-        "P00–P02, P10, P11, P13–P15, P20–P23, P32–P34",
-        "GPIO 포트 (이더넷 RGMII 등 다중화)"
+        "EVRC",
+        "P32.0/VGATE1N, P32.1/VGATE1P",
+        "외부 DC-DC MOSFET 게이트 구동"
        ],
        [
-        "—",
-        "XTAL1/XTAL2, PORST, ESR0/ESR1, TMS/TCK/TRST",
-        "클럭·리셋·디버그 (볼 위치 데이터시트 확인 필요)"
+        "클럭",
+        "XTAL1, XTAL2",
+        "메인 오실레이터"
+       ],
+       [
+        "리셋·상태",
+        "PORST, ESR0, ESR1",
+        "파워온 리셋, 외부 서비스 요청"
+       ],
+       [
+        "디버그",
+        "TMS/DAP1, TCK/DAP0, TRST",
+        "JTAG / DAP"
+       ],
+       [
+        "포트",
+        "P00–P02, P10, P11, P13–P15, P20–P23, P32–P34",
+        "GPIO (이더넷 RGMII/RMII 등 다중화)"
        ]
       ]
      }
@@ -161,7 +352,7 @@
    "h": "응용 회로 · 주변 부품",
    "blocks": [
     {
-     "html": "<ul>\n    <li>EVR·디커플링 외부 부품 값: 데이터시트 확인 필요.</li>\n  </ul>"
+     "html": "<ul><li>EVRC 벅 DC-DC (외부 P/N MOSFET, VGATE1N/P): f<sub>DCDC</sub> 1.6 / 1.82 / 2.0 MHz (기동 500 kHz 개루프), 출력 최대 1.5 A (LPM 100 mA).</li><li>EVRC 외부 부품 (I<sub>DDDC</sub> 1.5 A 기준): 인덕터 2.31 / 3.3 / 4.29 µH @1.82 MHz (3.29 / 4.7 / 6.11 µH @0.8 MHz), DCR ≤ 0.2 Ω, 포화 전류 ≥ I<sub>DDDC</sub> + 400 mA. 출력 C 15.4 / 22 / 29.7 µF @1.82 MHz (20.8 / 32 / 43.2 µF @0.8 MHz), 입력 C 6.5 / 10 / 13.5 µF (500 mA면 4.42 / 6.8 / 9.18 µF), ESR ≤ 50 mΩ, 커패시터 공차 ±35 % (DC 바이어스 포함), 커패시터–레일 배선 ≤ 25 mΩ.</li><li>EVR33 사용 시 V<sub>DDP3</sub>에 외부 유도성 부하 금지.</li><li>소비: P<sub>D</sub> 최대 1855 mW (max power pattern) / 1425 mW (real pattern) — TE/TX 공통. EVRC 동작 시 전체 전류 약 430 mA (V<sub>EXT</sub> 3.3 V) / 320 mA (5 V), T<sub>J</sub> 150 °C.</li><li>EVR33 LDO (V<sub>EXT</sub> → V<sub>DDP3</sub> 3.3 V): 출력 커패시터 1.45 / 2.2 / 3 µF (최소/일반/최대), ESR ≤ 100 mΩ (0.5–10 MHz), 최대 60 mA (크랭킹 저전압 모드 40 mA). C<sub>OUT</sub> 앞 핀 가까이에 100 nF 추가, 핀–커패시터 배선 저항 &lt; 100 mΩ.</li><li>V<sub>EVRSB</sub>에 100 nF 이상 커패시터 필수 (대기 모드에서 2.6 V까지 강하 허용).</li><li>공급 램프: V<sub>EXT</sub>/V<sub>EVRSB</sub>, V<sub>DDP3</sub>, V<sub>DD</sub>, V<sub>DDM</sub> 8.3·10<sup>−6</sup> … 100 V/ms.</li><li>PLL 공급 잡음 (System/Peripheral PLL): 300 kHz 미만 100 mV<sub>pp</sub>, 300 kHz 이상 40 mV<sub>pp</sub> 이하. 공급 블로킹 커패시터는 공급 핀에 최대한 가깝게, 전원/접지 플레인 사용.</li><li>클럭: XTAL1/XTAL2 메인 오실레이터 (주파수 범위·부하 커패시터는 읽은 부분에 없음 — 데이터시트 OSC_XTAL 절 확인).</li><li>리셋·안전: PORST (파워온 리셋 입력, 전원 이상 시 강한 풀다운), ESR0 (기본 오픈드레인), ESR1 (리셋/NMI 트리거). TLF35584 같은 안전 PMIC와 조합할 때 연결은 각 데이터시트 확인.</li></ul>"
     }
    ]
   },
@@ -169,7 +360,7 @@
    "h": "패키지 · 열",
    "blocks": [
     {
-     "html": "<p>PG-LFBGA-292. 열저항·T<sub>J</sub> 최대: 데이터시트 확인 필요.</p>"
+     "html": "<p>PG-LFBGA-292. 열저항 (표 3-73, 최대): R<sub>θJA</sub> 22 K/W, R<sub>θJCT</sub> 5 K/W, R<sub>θJCB</sub> 4.5 K/W. T<sub>J</sub> 최대 150 °C (SAK), T<sub>J</sub> = T<sub>A</sub> + R<sub>θJA</sub> × P<sub>D</sub>.</p>"
     }
    ]
   },
@@ -177,15 +368,16 @@
    "h": "설계 메모",
    "blocks": [
     {
-     "html": "<ul>\n    <li>TX는 TC37xEXT(확장 메모리·이더넷 2개) 칩입니다. TC37x 부록 v1.4에는 TC377TX가 없고 TC377TP(이더넷 1개)만 있습니다. 핀아웃도 TP와 TX가 다르므로 혼용하지 마세요.</li>\n    <li>읽은 데이터시트 발췌에 판매 코드 SAK-TC377TX-96F300S가 직접 나오지 않아 변형별 값(ADC 채널 수 등)은 TC37xEXT 부록으로 확인이 필요합니다.</li>\n  </ul>"
+     "html": "<ul><li>TX는 TC37xEXT(확장 메모리·이더넷 2개) 칩입니다. TC37x 부록 v1.4에는 TC377TX가 없고 TC377TP(이더넷 1개)만 있습니다. 핀아웃도 TP와 TX가 다르므로 혼용하지 마세요.</li><li>이전 초안의 보조 ADC 채널 수 64는 계열 최대치 — TC377TX 부록 값은 4/60채널.</li><li>열 확인: R<sub>θJA</sub> 22 K/W로 T<sub>A</sub> 125 °C에서 P<sub>D</sub> 1.425 W (real)면 T<sub>J</sub> ≈ 156 °C로 150 °C 초과. 고온 ECU에서는 방열(열 비아·케이스 접촉) 또는 T<sub>A</sub>/부하 저감 필요.</li><li>절대 최대 정격의 V<sub>DD</sub>·V<sub>EXT</sub> 한계는 시간 제한형(2.8 h/72 h)입니다. 5 V 레일 과전압 보호를 5.6 V 이하로 설계하세요.</li></ul>"
     }
    ]
   }
  ],
  "src": [
-  "https://www.mouser.com/datasheet/2/196/Infineon_SAK_TC377TX_96F300S_AB_DataSheet_v01_00_E-3363897.pdf"
+  "https://www.mouser.com/datasheet/2/196/Infineon_SAK_TC377TX_96F300S_AB_DataSheet_v01_00_E-3363897.pdf",
+  "https://www.infineon.com/assets/row/public/documents/10/49/infineon-aurix-tc37xext-addendum-datasheet-en.pdf",
+  "https://www.irf.com/cms/de/product/microcontroller/32-bit-tricore-microcontroller/32-bit-tricore-aurix-tc3xx/aurix-family-tc37xtx/sak-tc377tx-96f300s-ab/"
  ],
- "todo": "미완: 절대 최대 정격(3.2절 p.389), 동작 조건(3.4절 p.393), 전원 전류(3.12절 p.431), 공급 기동(3.13절 p.438), 패키지 파라미터·열저항(3.32.1절 p.496), EVR 외부 부품 값은 원본 PDF에서 채워야 함. 2차 시도(2026-10): Mouser·Farnell·Infineon dgdl/assets 사본 모두 WebFetch 텍스트 추출이 약 68 k자(데이터시트 앞 50여 쪽, 2장 핀 표 중간)에서 끊겨 3장 전기 사양에 도달하지 못함(offset 지정 시 '읽을 내용 없음'). alldatasheet 페이지 분할본은 사이트 차단. 변형 값은 TC37xEXT 계열 표 1-1 기준.",
  "key": {
   "spec": {
    "pkg": "LFBGA-292",
@@ -204,12 +396,6 @@
    "p": "[기타] TC37x 부록 v1.4에 없음; TX는 TC37xEXT 칩(이더넷 2개, 확장 메모리)이고 LFBGA-292 핀아웃이 TC377TP와 다름",
    "fix": "DB에서 TC37xEXT로 분류하고 TP와 풋프린트/핀맵 공유 금지",
    "url": "https://community.infineon.com/gfawx74859/attachments/gfawx74859/AURIX/3700/1/TC37x_Data_Sheet_Addendum_v1.4.pdf"
-  },
-  {
-   "p": "[기타] WebFetch PDF text extraction stops at ~68 k characters (≈ first 50 pages), so electrical-spec chapters at the back of long datasheets cannot be reached with offset",
-   "fix": "fill these sections manually from the PDFs (or via a non-truncating PDF reader)",
-   "url": "https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf",
-   "also": "TC377TX-96F300S / TC387QP-160F300S / TC397XX-256F300S / TLE9879QXA40 / MX25L6433F"
   }
  ]
 }

@@ -134,7 +134,7 @@
  "src": [
   "https://www.allegromicro.com/-/media/files/datasheets/a4918-1a-datasheet-sf.pdf?sc_lang=en"
  ],
- "todo": "공개된 것은 요약판(short-form) 데이터시트뿐이라 절대 최대 정격, 전기적 특성, 48핀 핀 번호표, 권장 외부 부품 값, RθJA, 동작 온도 범위가 빠져 있습니다. 전체판(Allegro 요청)으로 확인 필요. 핀 테이블 JSON도 미작성. (2차 시도: bomkey 사본도 A4918-1A-DS Rev.2 2024-04-11 요약판이며 개정 이력에 \"Unabridged Datasheet\"가 별도로 있음 — Allegro에 전체판 요청 필요.)",
+ "todo": "공개된 것은 요약판(short-form) 데이터시트뿐이라 절대 최대 정격, 전기적 특성, 48핀 핀 번호표, 권장 외부 부품 값, RθJA, 동작 온도 범위가 빠져 있습니다. 전체판(Allegro 요청)으로 확인 필요. 핀 테이블 JSON도 미작성. (2차 시도: bomkey 사본도 A4918-1A-DS Rev.2 2024-04-11 요약판이며 개정 이력에 \"Unabridged Datasheet\"가 별도로 있음 — Allegro에 전체판 요청 필요.) 3차 시도(2026-11): Allegro 제품 페이지는 여전히 \"Preview Datasheet\"(요약판)만 공개하고 전체판은 요청 양식(go.allegromicro.com/motors/datasheet-product-request)으로만 배포.",
  "key": {
   "spec": {
    "v": 50,

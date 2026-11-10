@@ -20,9 +20,9 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 <h1>AT25SF641B-SHB-T</h1>
 <p class="meta">Renesas · 메모리 · 64-Mbit SPI serial NOR flash (dual/quad I/O) · 참고 단가 약 $1.4 (추정)</p>
 <p class="meta">원본: <a href="https://www.renesas.com/en/document/dst/at25sf641b-datasheet?r=1608816" target="_blank" rel="noopener">데이터시트 PDF (미확인 링크)</a> · <a href="https://www.renesas.com/en/products/at25sf641b/part-details/at25sf641b-shb-b" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=AT25SF641B-SHB-T" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 DS-AT25SF641B-191 Rev. G (2023-10-04)</p>
-<p class="todo">데이터시트 표지·특징 목록과 Renesas 제품 페이지만 읽음. 2차 시도: jiepei(1/61쪽만), eeworld(봇 차단), qdatasheet(소개만), Renesas 문서 링크(접근 승인 안 됨) — 절대 최대 정격, DC 특성(동작 전류), 페이지 프로그램 시간, 8핀 SOIC 핀 배치는 여전히 원본 PDF에서 확인 필요.</p>
+<p class="todo">절대 최대 정격, DC/AC 특성(명령별 최대 클럭, 동작 전류), 프로그램/소거 최대 시간, 전원 투입 타이밍, 8핀 SOIC 핀 번호표, 주문 코드(-SHB-T) 해석, 패키지 치수 모두 원본 PDF 미확인. 3차 시도(2026-11): Renesas 문서 링크 https://www.renesas.com/ja/document/dst/at25sf641b-datasheet?r=1608816 및 renesas.cn 사본, LCSC PDF https://www.lcsc.com/datasheet/C1852089.pdf 는 가져오기 승인 거부, eeworld 봇 차단, jiepei는 1쪽만, chipdip DOC031831068은 AT25SF041B(다른 부품). Renesas DS-AT25SF641B Rev. G PDF를 직접 받아 채워야 함.</p>
 <div class="ds-issues"><b>알려진 문제</b><ul><li>[등급·수명] batch desc says &quot;차량용&quot; but datasheet/product page give industrial -40..+85 °C, no AEC-Q100; Digi-Key lists 108 MHz vs datasheet 133 MHz — <i>drop &quot;차량용&quot; / pick an AEC-Q100 SPI NOR for ECU use</i> <a href="https://pdf.jiepei.com/at25sf641b-45852966.html" target="_blank" rel="noopener">근거</a></li><li>[등급·수명] description says &quot;차량용&quot; but datasheet cover/product page give industrial -40~85 °C only, no AEC-Q100 — <i>drop &quot;차량용&quot; or substitute an AEC-Q100 SPI NOR</i> <a href="https://pdf.jiepei.com/at25sf641b-45852966.html" target="_blank" rel="noopener">근거</a></li></ul></div>
-<p class="meta ds-key">부품 선택 기준값: SOIC-8 · Q100</p>
+<p class="meta ds-key">부품 선택 기준값: SOIC-8</p>
 <h2>핵심 사양</h2>
 <dl>
   <dt>기능</dt><dd>64 Mbit (8 MB) SPI 시리얼 NOR 플래시, SPI 모드 0/3</dd>
@@ -49,8 +49,9 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 <p>SOIC 0.208" 8-pad (5.18 × 7.70 mm, 1.27 mm 피치). 다른 패키지: UDFN 5 × 6 × 0.6 mm (-MHB), 다이/웨이퍼.</p>
 <h2>설계 메모</h2>
 <ul>
-    <li>부품 DB 설명의 "차량용"은 데이터시트와 맞지 않음: 산업용 −40~85 °C이며 AEC-Q100 언급 없음. 차량 ECU에는 AEC-Q100 등급의 SPI NOR로 대체 검토.</li>
-    <li>Digi-Key는 108 MHz로 표기하나 데이터시트 특징 목록은 133 MHz — 사용 명령별 최대 주파수를 원본에서 확인.</li>
+    <li>부품 DB 설명의 "차량용"은 데이터시트와 맞지 않음: 산업용 −40~85 °C이며 AEC-Q100 언급 없음(툴 key.grade = Q100과도 불일치). 차량 ECU에는 AEC-Q100 등급의 SPI NOR로 대체 검토.</li>
+    <li>최대 클럭 표기가 출처마다 다름: 데이터시트 특징 목록·Renesas 제품 페이지 133 MHz, Digi-Key 108 MHz(-SHB-T) / 104 MHz(-SHB-B), LCSC 104 MHz — 사용 명령별 최대 주파수를 원본 AC 표에서 확인.</li>
+    <li>LCSC 표기 소거 시간(4 KB 60 ms, 32 KB 120 ms, 칩 25 s)은 데이터시트 특징 목록(65 ms, 150 ms, 30 s)과 다름 — 데이터시트 값 우선.</li>
     <li>Renesas 수명 정보: Active, Longevity 2030 Jan.</li>
   </ul>
 </article>

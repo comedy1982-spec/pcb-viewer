@@ -116,15 +116,16 @@
    "h": "설계 메모",
    "blocks": [
     {
-     "html": "<ul>\n    <li>단채널 동급: VN7050AJ (같은 50 mΩ, MultiSense, PowerSSO-16).</li>\n    <li>모터(DC 모터) 구동 용도로 분류되어 있으나 하이사이드 스위치이므로 정·역 회전에는 별도 로우사이드/H-브리지 구성이 필요.</li>\n  </ul>"
+     "html": "<ul>\n    <li>단채널 동급: VN7050AJ (같은 50 mΩ, MultiSense, PowerSSO-16).</li>\n    <li>모터(DC 모터) 구동 용도로 분류되어 있으나 하이사이드 스위치이므로 정·역 회전에는 별도 로우사이드/H-브리지 구성이 필요.</li>\n    <li>원본 문서는 DocID027396 (alldatasheet 사본 Rev 1, 핀 기능표: VCC, OUTPUT0,1, GND, INPUT0,1, MultiSense, SEn, SEL0,1, FaultRST — 번호 없음). EV-VND7050AJ 데이터 브리프(DocID026360 Rev 2)도 소자 핀 번호는 제공하지 않음.</li>\n    <li>VND7050AJ12(PowerSSO-12, DocID027585)는 별개 패키지 — 그 값(예: Rthj-board 6.4 °C/W, VCC 38 V DC)을 PowerSSO-16 판에 옮기지 마세요.</li>\n  </ul>"
     }
    ]
   }
  ],
  "src": [
-  "https://www.st.com/en/automotive-analog-and-power/vnd7050aj.html"
+  "https://www.st.com/en/automotive-analog-and-power/vnd7050aj.html",
+  "https://html.alldatasheet.net/html-pdf/797879/STMICROELECTRONICS/VND7050AJTR/9764/5/VND7050AJTR.html"
  ],
- "todo": "초안: ST 원본 PDF를 열 수 없어 제품 페이지와 데이터시트 첫 장(특징표·목차, DocID022469 Rev 10, 2014-10)만 읽었습니다. 2차 시도(datasheetspdf, xonelec, alldatasheet, LCSC PDF)에서도 본문을 얻지 못함 — 절대 최대 정격(2.1절), 열 데이터(2.2/5.1절), PowerSSO-16 핀 번호, 전기적 특성은 원본 PDF로 채워야 합니다.",
+ "todo": "3차 시도(2026-11)도 실패: ST PDF·LCSC 사본(lcsc.com/datasheet/C443997.pdf)·alldatasheet 6쪽 이후는 가져오기 승인 안 됨, datasheetspdf·datasheets.com·xonelec은 1쪽 요약뿐, alldatasheet 5쪽(DocID027396 Rev 1)은 핀 기능표(번호 없음)만. 남은 항목: 절대 최대 정격 전체, 열 데이터, PowerSSO-16 핀 번호(Figure 2), 전기적 특성(RON 150 °C, K 계수, 클램프), 응용 부품값. 원본 DocID027396 PDF를 사람이 내려받아 확인 필요.",
  "key": {
   "spec": {
    "v": 40,

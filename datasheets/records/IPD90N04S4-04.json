@@ -7,7 +7,7 @@
  "title": "40 V 90 A OptiMOS-T2 N-channel MOSFET",
  "meta": [
   "Infineon · 트랜지스터 · OptiMOS-T2 N-채널 MOSFET, 40 V, 90 A, 4.1 mΩ max, DPAK · 참고 단가 약 $1.1 (추정)",
-  "원본: <a href=\"https://pdf.elecfans.com/EUPEC/IPD90N04S4-04.html\" target=\"_blank\" rel=\"noopener\">데이터시트 사본</a> · <a href=\"https://uk.farnell.com/infineon/ipd90n04s404atma1/mosfet-aec-q101-n-ch-40v-to-252/dp/2709873\" target=\"_blank\" rel=\"noopener\">배포처 페이지 (미확인 링크)</a> · <a href=\"https://octopart.com/search?q=IPD90N04S4-04\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Rev. 1.0, 2010-04-06 (Final)"
+  "원본: <a href=\"https://pdf.elecfans.com/EUPEC/IPD90N04S4-04.html\" target=\"_blank\" rel=\"noopener\">데이터시트 사본</a> · <a href=\"https://www.rlocman.ru/i/File/2017/10/01/Infineon-IPD90N04S4_04-DS-v01_00-en.pdf\" target=\"_blank\" rel=\"noopener\">Infineon PDF 사본 v01_00 (미확인 링크)</a> · <a href=\"https://uk.farnell.com/infineon/ipd90n04s404atma1/mosfet-aec-q101-n-ch-40v-to-252/dp/2709873\" target=\"_blank\" rel=\"noopener\">배포처 페이지 (IPD90N04S404ATMA1)</a> · <a href=\"https://octopart.com/search?q=IPD90N04S4-04\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 Rev. 1.0, 2010-04-06 (Final)"
  ],
  "sections": [
   {
@@ -72,11 +72,18 @@
         ""
        ],
        [
-        "ID",
+        "ID (TC 25 °C)",
         "",
-        "90 / 81",
+        "90",
         "A",
-        "TC 25 / 100 °C, VGS 10 V"
+        "VGS 10 V"
+       ],
+       [
+        "ID (TC 100 °C)",
+        "",
+        "81",
+        "A",
+        "VGS 10 V"
        ],
        [
         "ID,pulse",
@@ -206,7 +213,7 @@
    "h": "핀 배치",
    "blocks": [
     {
-     "html": "<p>PG-TO252-3-313 (DPAK). 핀 번호별 G/D/S는 데이터시트 확인 필요 (위 안내 참고).</p>"
+     "html": "<p>PG-TO252-3-313 (DPAK, 3단자 + 탭). 핀 번호별 G/D/S 할당은 읽은 텍스트 사본에 없음(그림) — 원본 PDF 확인 전에는 풋프린트 핀맵을 확정하지 마세요.</p>"
     }
    ]
   },
@@ -236,9 +243,11 @@
   }
  ],
  "src": [
-  "https://pdf.elecfans.com/EUPEC/IPD90N04S4-04.html"
+  "https://pdf.elecfans.com/EUPEC/IPD90N04S4-04.html",
+  "https://www.radiolocman.com/datasheet/data.html?di=382103",
+  "https://uk.farnell.com/infineon/ipd90n04s404atma1/mosfet-aec-q101-n-ch-40v-to-252/dp/2709873"
  ],
- "todo": "남은 항목: PG-TO252-3-313 핀 배치(1/2·탭/3 = G/D/S)는 읽은 사본 텍스트에 없었습니다(그림). 원본 PDF 제품 요약 그림으로 확인하세요. 패키지 치수도 미확인.",
+ "todo": "핀 배치(1 / 2·탭 / 3 = G / D / S)와 PG-TO252-3-313 외형 치수는 읽은 텍스트 사본(elecfans, radiolocman 요약, Farnell)에 없음 — 그림으로만 존재. 원본 PDF(rlocman.ru 사본, Farnell 경유 4donline.ihs.com 링크)는 이 환경에서 접근 차단. Infineon 원본 PDF 1쪽 제품 요약 그림과 패키지 외형도로 확인 필요.",
  "key": {
   "spec": {
    "v": 40,

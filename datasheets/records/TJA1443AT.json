@@ -221,15 +221,17 @@
    "h": "설계 메모",
    "blocks": [
     {
-     "html": "<ul>\n    <li>부품 DB/작업 예시에서 'SO8'로 가정한 경우 오류 — TJA1443AT는 14핀 SO14(SOT108-1)입니다(element14: 14 pins, SOIC). SO8 풋프린트를 쓰면 안 됨.</li>\n    <li>TJA1043T 소켓에 드롭인 대체 가능(배포처 설명). 11번 핀은 TJA1043의 SPLIT 대신 n.c.(미확인) — SPLIT 종단 회로를 쓰던 설계는 확인 필요.</li>\n    <li>LCSC·Farnell 모두 SOIC-14 / 14핀, 동작 −40 … +150 °C, AEC-Q100으로 표기.</li>\n    <li>참고 단가: element14 1,000개 ₩1,029 (약 $0.75, 환율 추정).</li>\n  </ul>"
+     "html": "<ul>\n    <li>부품 DB/작업 예시에서 'SO8'로 가정한 경우 오류 — TJA1443AT는 14핀 SO14(SOT108-1)입니다(element14: 14 pins, SOIC). SO8 풋프린트를 쓰면 안 됨.</li>\n    <li>TJA1043T 소켓에 드롭인 대체 가능(배포처 설명). 11번 핀은 TJA1043의 SPLIT 대신 n.c.(미확인) — SPLIT 종단 회로를 쓰던 설계는 확인 필요.</li>\n    <li>LCSC·Farnell 모두 SOIC-14 / 14핀, 동작 −40 … +150 °C, AEC-Q100으로 표기.</li>\n    <li>참고 단가: element14 1,000개 ₩1,029 (약 $0.75, 환율 추정).</li>\n    <li>패키지 확인: TJA1443AT = SO14, HVSON14 판은 TJA1443ATK, Grade 0 판은 TJR1443AT/ATK (NXP 제품 페이지 관련 품번). TJA144x 계열에서 TJA1443 = Sleep 모드 변형(TJA1441 기본, TJA1442 Standby, TJA1448 2채널) — Mouser 계열 소개.</li>\n  </ul>"
     }
    ]
   }
  ],
  "src": [
-  "https://xonelec.com/mpn/nxp/tja1443atk0z"
+  "https://xonelec.com/mpn/nxp/tja1443atk0z",
+  "https://www.flux.ai/adrian95/tja1443at0z.md",
+  "https://www.mouser.in/new/nxp-semiconductors/nxp-tja144x-transceivers/"
  ],
- "todo": "2차 시도(2026-10)에도 NXP 데이터시트 원문을 읽지 못함: cn.nxp.com/docs/en/data-sheet/TJA1443.pdf → www.nxp.com 리다이렉트, LCSC가 링크한 www.nxp.com.cn/docs/en/data-sheet/TJA1443.pdf와 Farnell 사본 farnell.com/datasheets/3190576.pdf는 가져오기 차단. 남은 항목: Limiting values 전체, VBAT·VIO 동작 범위, 모드별 소비 전류, 핀 기능 설명(핀 번호는 flux.ai 라이브러리 기준 미확인), Rth(vj-a), WAKE 직렬 저항·INH·디커플링 권장값. 위 두 사본 중 하나를 사람이 내려받아 확인 필요.",
+ "todo": "3차 시도(2026-11)도 NXP 원문 미열람: cn.nxp.com/docs/en/data-sheet/TJA1443.pdf → nxp.com 홈 리다이렉트, www.nxp.com/docs/en/data-sheet/TJA1443.pdf(flux.ai 링크)는 가져오기 승인 안 됨, chipdip·dtsheet 검색 결과는 TJA1044/TJA1145 문서. 남은 항목: Limiting values 전체, VBAT·VIO 동작 범위, 모드별 소비 전류, 핀 기능 설명(핀 번호는 flux.ai 라이브러리 기준 미확인), Rth(vj-a), WAKE 직렬 저항·INH·디커플링 권장값. NXP TJA1443 PDF를 사람이 내려받아 확인 필요.",
  "issues": [
   {
    "p": "[패키지·핀] package is SO14 (SOT108-1, 14 pins), not SO8 (the BRIEF pins example shows TJA1443AT as SO8 with TXD/GND pins); pinout is TJA1043-compatible 14-pin (TXD,GND,VCC,RXD,VIO,EN,INH,ERR_N,WAKE,VBAT,n.c.,CANL,CANH,STB_N per flux.ai, unverified)",

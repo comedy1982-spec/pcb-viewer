@@ -3,11 +3,11 @@
  "mfr": "Infineon",
  "cat": "MCU",
  "price": 36,
- "status": "stub",
+ "status": "done",
  "title": "AURIX TC39x 32-bit TriCore 6-core MCU, 300 MHz, 16 MB Flash, LFBGA-292",
  "meta": [
   "Infineon · MCU · AURIX TC39x 32-bit TriCore 6-core MCU, 300 MHz, 16 MB Flash, LFBGA-292 · 참고 단가 약 $36 (추정)",
-  "원본: <a href=\"https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.farnell.com/datasheets/2920461.pdf\" target=\"_blank\" rel=\"noopener\">변형 부록 (TC39x variants)</a> · <a href=\"https://www.lcsc.com/product-detail/C538883.html\" target=\"_blank\" rel=\"noopener\">LCSC 제품 페이지</a> · <a href=\"https://documentation.infineon.com/aurixtc3xx/docs/nho1702366509393\" target=\"_blank\" rel=\"noopener\">TC3xx 문서 페이지</a> · <a href=\"https://octopart.com/search?q=TC397XX-256F300S\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TC39x BC/BD-Step Data Sheet V1.2 (2021-03) · TC39x Variants Addendum v1.3 (2019-06)"
+  "원본: <a href=\"https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf\" target=\"_blank\" rel=\"noopener\">데이터시트 PDF</a> · <a href=\"https://www.farnell.com/datasheets/2920461.pdf\" target=\"_blank\" rel=\"noopener\">변형 부록 (TC39x variants)</a> · <a href=\"https://www.digikey.fi/en/products/detail/infineon-technologies/TC397XX256F300SBDKXUMA2/20841755\" target=\"_blank\" rel=\"noopener\">Digi-Key 제품 페이지 (TC397XX256F300SBDKXUMA2)</a> · <a href=\"https://www.lcsc.com/product-detail/C538883.html\" target=\"_blank\" rel=\"noopener\">LCSC 제품 페이지</a> · <a href=\"https://documentation.infineon.com/aurixtc3xx/docs/nho1702366509393\" target=\"_blank\" rel=\"noopener\">TC3xx 문서 페이지</a> · <a href=\"https://octopart.com/search?q=TC397XX-256F300S\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 TC39x BC/BD-Step Data Sheet V1.2 (2021-03) · TC39x Variants Addendum v1.3 (2019-06)"
  ],
  "sections": [
   {
@@ -37,7 +37,7 @@
       ],
       [
        "전원",
-       "EVR 내장, Single Supply / External Supply 모드, 5 V/3.3 V 전환 패드. I/O 5 V CMOS / 3.3 V CMOS / LVDS"
+       "V<sub>EXT</sub> 5 V (4.5–5.5 V) 또는 3.3 V 단일 공급, EVRC (DCDC)가 V<sub>DD</sub> 1.25 V, EVR33이 V<sub>DDP3</sub> 3.3 V 생성 (Single/External Supply 모드). 5 V/3.3 V 전환 패드. I/O 5 V CMOS / 3.3 V CMOS / LVDS"
       ],
       [
        "온도",
@@ -45,7 +45,11 @@
       ],
       [
        "패키지",
-       "PG-LFBGA-292 (0.8 mm 볼 피치), 스텝 BD/BC"
+       "PG-LFBGA-292-10 (0.8 mm 볼 피치), 스텝 BD/BC. Digi-Key (TC397XX256F300SBDKXUMA2): 16 MB Flash, RAM 2.52 MB, 300 MHz, −40…125 °C, Active"
+      ],
+      [
+       "소비 전력",
+       "I<sub>DDRAIL</sub> 최대 1640 mA (max pattern, T<sub>J</sub> 150 °C) / 1372 mA (real), I<sub>DDTOT</sub> 1536 mA (real, 150 °C), P<sub>D</sub> 최대 3220 mW (max) / 2500 mW (real) / 2240 mW (ADAS, T<sub>J</sub> 125 °C), I<sub>STANDBY</sub> 130 µA (25 °C)"
       ]
      ]
     }
@@ -65,25 +69,95 @@
       ],
       "rows": [
        [
-        "V<sub>EXT</sub> / V<sub>DDM</sub> / V<sub>DDP3</sub> / V<sub>DD</sub> 공급 전압",
-        "",
-        "",
-        "V",
-        "데이터시트 확인 필요 (데이터시트 3.2절, p.406)"
-       ],
-       [
-        "입력 전압 · 핀 주입 전류",
-        "",
-        "",
-        "",
-        "데이터시트 확인 필요"
-       ],
-       [
-        "저장 온도 · 접합 온도",
-        "",
-        "",
+        "저장 온도 T<sub>ST</sub>",
+        "-65",
+        "150",
         "°C",
-        "데이터시트 확인 필요"
+        "T<sub>J</sub>=150 °C에서 최대 65 h"
+       ],
+       [
+        "V<sub>DD</sub> (코어) – V<sub>SS</sub>, 누적 2.8 h 이내",
+        "",
+        "1.65",
+        "V",
+        ""
+       ],
+       [
+        "V<sub>DD</sub> (코어) – V<sub>SS</sub>, 누적 72 h 이내",
+        "",
+        "1.45",
+        "V",
+        ""
+       ],
+       [
+        "V<sub>DDP3</sub> – V<sub>SS</sub>",
+        "",
+        "4.43",
+        "V",
+        ""
+       ],
+       [
+        "V<sub>EXT</sub>, V<sub>DDM</sub>, V<sub>FLEX</sub>, V<sub>EVRSB</sub> – V<sub>SS</sub>, 누적 2.8 h 이내",
+        "",
+        "6.75",
+        "V",
+        ""
+       ],
+       [
+        "V<sub>EXT</sub>, V<sub>DDM</sub>, V<sub>FLEX</sub>, V<sub>EVRSB</sub> – V<sub>SS</sub>, 누적 72 h 이내",
+        "",
+        "5.6",
+        "V",
+        ""
+       ],
+       [
+        "입력 전압 V<sub>IN</sub> (아날로그·class S 및 기타 입력)",
+        "-0.7",
+        "6.75",
+        "V",
+        ""
+       ],
+       [
+        "과부하 시 핀당 입력 전류 I<sub>IN</sub>",
+        "-10",
+        "10",
+        "mA",
+        ""
+       ],
+       [
+        "과부하 시 입력 전류 합 ΣI<sub>IN</sub>",
+        "-100",
+        "100",
+        "mA",
+        ""
+       ],
+       [
+        "디지털 핀 과부하 전류 (신뢰성 한도)",
+        "-5",
+        "5",
+        "mA",
+        "±15 mA는 1 ms 펄스 최대 20회 (3.3절)"
+       ],
+       [
+        "LVDS 핀 과부하 전류",
+        "-3",
+        "3",
+        "mA",
+        "3.3절"
+       ],
+       [
+        "아날로그 입력 과부하 전류 I<sub>INANA</sub>",
+        "-3",
+        "3",
+        "mA",
+        "±5 mA는 수명 중 60 h 이내"
+       ],
+       [
+        "전체 과부하 전류 합 ΣI<sub>INS</sub>",
+        "-100",
+        "100",
+        "mA",
+        "3.3절"
        ]
       ]
      }
@@ -104,10 +178,17 @@
       ],
       "rows": [
        [
-        "동작 주파수 f<sub>CPU</sub>",
+        "SRI·CPU 주파수 f<sub>SRI</sub>, f<sub>CPUx</sub>",
         "",
         "",
         "300",
+        "MHz"
+       ],
+       [
+        "SPB 주파수 f<sub>SPB</sub>",
+        "",
+        "",
+        "100",
         "MHz"
        ],
        [
@@ -118,11 +199,81 @@
         "°C"
        ],
        [
-        "공급 전압 (3.4절, p.410)",
+        "접합 온도 T<sub>J</sub> (SAK)",
+        "-40",
+        "",
+        "150",
+        "°C"
+       ],
+       [
+        "코어 V<sub>DD</sub> (외부 공급 시)",
+        "1.125",
+        "1.25",
+        "1.375",
+        "V"
+       ],
+       [
+        "ADC 공급 V<sub>DDM</sub>",
+        "2.97",
+        "5.0",
+        "5.5",
+        "V"
+       ],
+       [
+        "외부 공급 V<sub>EXT</sub> (5 V 공칭)",
+        "4.5",
+        "5.0",
+        "5.5",
+        "V"
+       ],
+       [
+        "외부 공급 V<sub>EXT</sub> (3.3 V 공칭, V<sub>DDP3</sub> 외부·EVR33 off)",
+        "2.97",
+        "3.3",
+        "3.63",
+        "V"
+       ],
+       [
+        "플렉스 포트 V<sub>FLEX</sub> (3.3 V 패드 파라미터)",
+        "2.97",
+        "",
+        "4.0",
+        "V"
+       ],
+       [
+        "플렉스 포트 V<sub>FLEX</sub> (5 V 패드 파라미터)",
+        "4.5",
+        "5.0",
+        "5.5",
+        "V"
+       ],
+       [
+        "플래시 공급 V<sub>DDP3</sub>",
+        "2.97",
+        "3.3",
+        "3.63",
+        "V"
+       ],
+       [
+        "대기 공급 V<sub>EVRSB</sub>",
+        "2.97",
+        "",
+        "5.5",
+        "V"
+       ],
+       [
+        "아날로그 접지 V<sub>SSM</sub>",
+        "-0.1",
+        "0",
+        "0.1",
+        "V"
+       ],
+       [
+        "패드 상태 확정 전압 V<sub>DDPPA</sub>",
+        "1.3",
         "",
         "",
-        "",
-        "V – 데이터시트 확인 필요"
+        "V"
        ]
       ]
      }
@@ -182,7 +333,7 @@
    "h": "응용 회로 · 주변 부품",
    "blocks": [
     {
-     "html": "<ul>\n    <li>EVR 외부 부품과 디커플링 값: 데이터시트 확인 필요 (데이터시트 3장).</li>\n  </ul>"
+     "html": "<ul><li>공급 모드 (3.13절): (a) V<sub>EXT</sub> 5 V 단일 공급 — EVRC (DCDC)가 V<sub>DD</sub>, EVR33 (LDO)이 V<sub>DDP3</sub> 생성 · (e) V<sub>EXT</sub>=V<sub>DDP3</sub>=3.3 V 단일 공급 · (d) V<sub>EXT</sub> 5 V + V<sub>DD</sub> 외부 · (h) V<sub>EXT</sub>, V<sub>DDP3</sub>, V<sub>DD</sub> 모두 외부. 기동 중 외부 레귤레이터 전류는 100 mA/100 µs로 제한.</li><li>EVR33 LDO: 출력 커패시터 1.45 / 2.2 / 3 µF (최소/일반/최대), ESR ≤ 100 mΩ (0.5–10 MHz), 출력 2.97–3.63 V.</li><li>EVRC SMPS: f<sub>DCDC</sub> 1.6 / 1.82 / 2.0 MHz. 1.82 MHz 기준 출력 15.4 / 22 / 29.7 µF, 인덕터 2.31 / 3.3 / 4.29 µH; 0.8 MHz 기준 출력 20.8 / 32 / 43.2 µF, 인덕터 3.29 / 4.7 / 6.11 µH. 입력 6.5 / 10 / 13.5 µF. 커패시터 ESR ≤ 50 mΩ, 인덕터 DCR ≤ 0.2 Ω.</li><li>V<sub>EVRSB</sub>에 100 nF 커패시터 필수 (대기 모드에서 2.6 V까지 강하 허용).</li><li>1차 저전압 감시: V<sub>EXT</sub> 2.86 / 2.92 / 2.97 V, V<sub>DDP3</sub> 2.86 / 2.90 / 2.97 V, V<sub>DD</sub> 1.08 / 1.105 / 1.125 V.</li><li>리셋: PORST 최소 유지 t<sub>POA</sub> 1 ms, 콜드 파워온 부팅 t<sub>BP</sub> 최대 3.1 ms (dV<sub>EXT</sub>/dt=1 V/ms, EVR 기동 포함).</li><li>전원 전류 (표 3-27): I<sub>DDP3RAIL</sub> 60 / 50 mA, I<sub>EXTRAIL</sub> 60 / 54 mA (max / real), I<sub>DDM</sub> 60 mA, I<sub>EVRSB</sub> 8 mA. Real pattern: T<sub>J</sub> 150 °C, 300 MHz, V<sub>DD</sub> 1.275 V. 1.6 A급 코어 전류이므로 EVRC 인덕터 포화 전류와 V<sub>DD</sub> 플레인 저항에 여유를 두세요.</li></ul>"
     }
    ]
   },
@@ -190,7 +341,7 @@
    "h": "패키지 · 열",
    "blocks": [
     {
-     "html": "<p>PG-LFBGA-292. 데이터시트 목차에 별도 열 특성 절이 없고, 열저항 값은 데이터시트 확인 필요. 패키지 외형은 3.34절(p.517).</p>"
+     "html": "<p>PG-LFBGA-292-10 (0.8 mm 볼 피치). 열저항 (패키지 파라미터 표, 최대값, cold plate 방식): R<sub>θJA</sub> 14 K/W, R<sub>θJCB</sub> 4 K/W, R<sub>θJCT</sub> 5 K/W. T<sub>J</sub> 최대 150 °C (SAK).</p><p>품질: MSL 3 (J-STD-020C, 240 °C), ESD HBM 2000 V (AGBT 패드 1000 V), CDM 500 V (모서리 볼 750 V, AGBT 250 V), 최대 동작 수명 t<sub>OP</sub> 24500 h.</p>"
     }
    ]
   },
@@ -198,15 +349,16 @@
    "h": "설계 메모",
    "blocks": [
     {
-     "html": "<ul>\n    <li>ASCLIN 수는 데이터시트 기능 목록(8)과 표 1-1/부록(12)이 다릅니다. 부록 값 12를 썼습니다.</li>\n    <li>LFBGA-516 패키지 변형은 TC399입니다. TC397은 LFBGA-292입니다.</li>\n  </ul>"
+     "html": "<ul>\n    <li>ASCLIN 수는 데이터시트 기능 목록(8)과 표 1-1/부록(12)이 다릅니다. 부록 값 12를 썼습니다.</li>\n    <li>LFBGA-516 패키지 변형은 TC399입니다. TC397은 LFBGA-292입니다.</li>\n  <li>열 확인: R<sub>θJA</sub> 14 K/W로 T<sub>A</sub> 125 °C, P<sub>D</sub> 2.5 W (real)이면 T<sub>J</sub> ≈ 160 °C로 150 °C를 넘습니다. 고온 환경에서는 방열 설계 (히트싱크·열 비아) 또는 부하 저감이 필요합니다.</li><li>절대 최대 정격의 V<sub>DD</sub>·V<sub>EXT</sub> 한계는 시간 제한형(2.8 h/72 h)입니다. 5 V 레일 과전압 보호를 5.6 V 이하로 설계하세요.</li></ul>"
     }
    ]
   }
  ],
  "src": [
-  "https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf"
+  "https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf",
+  "https://www.farnell.com/datasheets/2920461.pdf",
+  "https://www.digikey.fi/en/products/detail/infineon-technologies/TC397XX256F300SBDKXUMA2/20841755"
  ],
- "todo": "읽은 문서(데이터시트 앞부분·변형 부록)에서 기능 사양과 패키지만 확인했습니다. 전기 사양 장(절대 최대 정격, 동작 조건, 전원 전류, 열저항, EVR 외부 부품)은 PDF 뒷부분에 있어 읽지 못했습니다. 이 값들을 원본 PDF에서 채운 뒤 data-status를 \"done\"으로 바꾸세요. 2차 시도(2026-10): Mouser·Farnell·Infineon dgdl/assets 사본 모두 WebFetch 텍스트 추출이 약 68 k자(데이터시트 앞 50여 쪽, 2장 핀 표 중간)에서 끊겨 3장 전기 사양에 도달하지 못함(offset 지정 시 '읽을 내용 없음'). alldatasheet 페이지 분할본은 사이트 차단.",
  "key": {
   "spec": {
    "pkg": "LFBGA-292",
@@ -219,13 +371,5 @@
    ]
   },
   "grade": "Q100"
- },
- "issues": [
-  {
-   "p": "[기타] WebFetch PDF text extraction stops at ~68 k characters (≈ first 50 pages), so electrical-spec chapters at the back of long datasheets cannot be reached with offset",
-   "fix": "fill these sections manually from the PDFs (or via a non-truncating PDF reader)",
-   "url": "https://www.mouser.com/datasheet/2/196/Infineon_TC39x_DataSheet_v01_02_EN-3223935.pdf",
-   "also": "TC377TX-96F300S / TC387QP-160F300S / TC397XX-256F300S / TLE9879QXA40 / MX25L6433F"
-  }
- ]
+ }
 }

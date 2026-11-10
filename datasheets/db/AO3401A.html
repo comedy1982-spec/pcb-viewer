@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AO3401A · −30 V P-channel trench MOSFET, SOT-23</title>
+<style>
+body{font-family:"IBM Plex Sans KR",system-ui,sans-serif;max-width:860px;margin:32px auto;padding:0 20px;line-height:1.55;color:#1b1f23}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #d8dde2;padding-bottom:4px}
+.meta{color:#5a6872;font-size:13px}dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:8px 0}dt{color:#5a6872}dd{margin:0}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;padding:4px 8px;text-align:left}
+.todo{background:#fff6dd;border:1px dashed #d9a62b;border-radius:8px;padding:8px 12px;font-size:13px}
+.ds-issues{background:#fdecea;border:1px solid #e8a39b;border-radius:8px;padding:6px 12px;font-size:13px;margin:8px 0}.ds-issues ul{margin:4px 0 2px 18px;padding:0}
+.ds-verified{color:#2e7d32}
+</style>
+</head>
+<body>
+<!-- generated from datasheets/records/AO3401A.json by scripts/dsdb.mjs — edit the record, not this page -->
+<article data-mpn="AO3401A" data-mfr="Alpha &amp; Omega Semiconductor" data-cat="트랜지스터" data-price="0.05" data-status="done" data-src="https://static.datasheets.com/doc/6022655-alpha-omega-ao3401a-ds.pdf https://pdf.jiepei.com/ao3401a-22358522.html https://components101.com/mosfets/ao3401a-p-channel-mosfet-pinout-datasheet">
+<h1>AO3401A</h1>
+<p class="meta">Alpha & Omega Semiconductor · 트랜지스터 · −30 V P채널 MOSFET, 2.5 V 게이트 구동, SOT-23 · 참고 단가 약 $0.05 (추정)</p>
+<p class="meta">원본: <a href="https://static.datasheets.com/doc/6022655-alpha-omega-ao3401a-ds.pdf" target="_blank" rel="noopener">데이터시트 PDF (Rev0 2007-04)</a> · <a href="https://pdf.jiepei.com/ao3401a-22358522.html" target="_blank" rel="noopener">최신 판 요약</a> · <a href="https://octopart.com/search?q=AO3401A" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 개정판마다 정격 값이 다름 (아래 설계 메모)</p>
+<h2>핵심 사양</h2>
+<dl>
+  <dt>기능</dt><dd>P채널 인핸스먼트 트렌치 MOSFET, 로드 스위치용, 게이트 구동 −2.5 V부터</dd>
+  <dt>전압</dt><dd>VDS −30 V · VGS ±12 V</dd>
+  <dt>전류</dt><dd>ID −4 A (TA 25 °C) / −3.2 A (70 °C), IDM −27 A (최신 판) · 구판 Rev0: −4.3 / −3.8 / −25 A</dd>
+  <dt>RDS(on) max</dt><dd>최신 판: < 50 mΩ (−10 V) · < 60 mΩ (−4.5 V) · < 85 mΩ (−2.5 V). Rev0: 44 / 55 / 80 mΩ max (typ 36 / 44 / 62) — Rev0 요약표는 −10 V에서 &lt; 46 mΩ로 표기해 판 안에서도 다름, 최신 판 값 사용 권장</dd>
+  <dt>VGS(th)</dt><dd>−0.6 / −1 / −1.3 V (min/typ/max, ID −250 µA, Rev0)</dd>
+  <dt>게이트 전하</dt><dd>Qg 9.3 nC typ (−4.5 V) · Ciss 933 pF typ (VDS −15 V) · Rg 6 Ω typ (Rev0)</dd>
+  <dt>바디 다이오드</dt><dd>VSD −0.75 typ / −1 V max @ −1 A · IS −2 A · trr 21 ns typ (Rev0)</dd>
+  <dt>등급</dt><dd>AEC-Q101 아님 (소비자 시장용으로 설계·인증) · Pb-free, RoHS</dd>
+  <dt>온도</dt><dd>TJ −55 ~ 150 °C</dd>
+  <dt>패키지</dt><dd>SOT-23 (TO-236)</dd>
+</dl>
+<h2>절대 최대 정격</h2>
+<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>VDS</td><td>−30</td><td></td><td>V</td><td></td></tr><tr><td>VGS</td><td>−12</td><td>12</td><td>V</td><td></td></tr><tr><td>ID (TA 25 °C)</td><td>−4</td><td></td><td>A</td><td>최신 판 (Rev0: −4.3 A)</td></tr><tr><td>ID (TA 70 °C)</td><td>−3.2</td><td></td><td>A</td><td>최신 판 (Rev0: −3.8 A)</td></tr><tr><td>IDM 펄스</td><td>−27</td><td></td><td>A</td><td>최신 판 (Rev0: −25 A)</td></tr><tr><td>PD (TA 25 °C)</td><td></td><td>1.4</td><td>W</td><td></td></tr><tr><td>PD (TA 70 °C)</td><td></td><td>0.9</td><td>W</td><td></td></tr><tr><td>TJ, Tstg</td><td>−55</td><td>150</td><td>°C</td><td></td></tr></tbody></table>
+<h2>권장 동작 조건</h2>
+<p>데이터시트에 별도 권장 동작 조건 표 없음. RDS(on) 보증 게이트 전압: −10 V, −4.5 V, −2.5 V.</p>
+<h2>핀 배치</h2>
+<p>SOT-23-3</p>
+<table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1</td><td>G</td><td>게이트</td></tr><tr><td>2</td><td>S</td><td>소스</td></tr><tr><td>3</td><td>D</td><td>드레인</td></tr></tbody></table>
+<p class="meta">AOS 데이터시트는 G/D/S 그림만 표시하고 번호는 명시하지 않음; 번호는 components101 핀아웃과 교차 확인.</p>
+<h2>응용 회로 · 주변 부품</h2>
+<ul><li>하이사이드 로드 스위치: S를 전원, D를 부하 측. 게이트를 S로 풀업(10–100 kΩ), NPN/N-MOSFET으로 게이트를 끌어내려 ON.</li><li>VGS 절대 최대 ±12 V — 12 V 이상 전원에서는 게이트-소스 제너/분압 필수.</li><li>역극성 보호용 이상적 다이오드로도 사용 가능 (D를 입력, S를 부하, 게이트를 GND로 — VGS 제한 필요).</li></ul>
+<h2>패키지 · 열</h2>
+<p>SOT-23. 최신 판 RθJA 70 typ / 90 max °C/W (t ≤ 10 s), 100 / 125 °C/W (정상 상태), RθJL 63 / 80 °C/W. (Rev0: 65/90, 85/125, 43/80.) TJ 최대 150 °C.</p>
+<h2>설계 메모</h2>
+<ul><li>개정판에 따라 ID·RDS(on)·RθJA 값이 다름 — 설계에는 최신 판의 보수적 값(ID −4 A, RDS(on) 50/60/85 mΩ max) 사용.</li><li>차량용 등급 아님 — 차량 ECU에는 AEC-Q101 P-MOSFET 대체 검토.</li><li>VGS ±12 V 한계로 12 V 배터리 직결 게이트 구동 불가.</li></ul>
+</article>
+</body>
+</html>

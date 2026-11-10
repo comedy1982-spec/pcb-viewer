@@ -178,15 +178,17 @@
    "h": "설계 메모",
    "blocks": [
     {
-     "html": "<ul>\n    <li>배치 설명의 160 MHz는 PGE(LQFP-144) 기준이며, ZWT(BGA)는 180 MHz입니다.</li>\n    <li>제품 페이지에는 SIL 3 인증이 표기되어 있고, ASIL D 언급은 TMS570LS1227 개발 키트에만 보였습니다. 배치 설명의 'ASIL D'는 안전 매뉴얼로 확인하세요.</li>\n    <li>MPN 'TMS570LS1224'는 제품군 이름입니다. 주문 품목 예: TMS5701224CPGEQQ1 (144-LQFP, 검색 결과 기준).</li>\n    <li>이더넷·FlexRay가 필요하면 TMS570LS1227 / TMS570LS3137 (ZWT)을 검토하세요(장치 비교표).</li>\n  </ul>"
+     "html": "<ul>\n    <li>배치 설명의 160 MHz는 PGE(LQFP-144) 기준이며, ZWT(BGA)는 180 MHz입니다.</li>\n    <li>제품 페이지에는 SIL 3 인증이 표기되어 있고, ASIL D 언급은 TMS570LS1227 개발 키트에만 보였습니다. 배치 설명의 'ASIL D'는 안전 매뉴얼로 확인하세요.</li>\n    <li>MPN 'TMS570LS1224'는 제품군 이름입니다. 주문 품목 예: TMS5701224CPGEQQ1 (144-LQFP, 검색 결과 기준).</li>\n    <li>이더넷·FlexRay가 필요하면 TMS570LS1227 / TMS570LS3137 (ZWT)을 검토하세요(장치 비교표).</li>\n  <li>LQFP-144 확인: 도구가 가정한 PGE(144핀 LQFP, 22 × 22 mm)는 TI 제품 페이지에 등재된 패키지이며 상태 ACTIVE (데이터시트 Rev. B, 2015-02-28).</li></ul>"
     }
    ]
   }
  ],
  "src": [
-  "https://html.alldatasheet.net/html-pdf/846425/TI1/TMS570LS1224PGE/538/8/TMS570LS1224PGE.html"
+  "https://html.alldatasheet.net/html-pdf/846425/TI1/TMS570LS1224PGE/538/8/TMS570LS1224PGE.html",
+  "https://www.ti.com/product/TMS570LS1224",
+  "https://lcsc.com/product-detail/Microcontrollers-MCU-MPU-SOC_Texas-Instruments-TMS5701224CPGEQQ1_C544638.html"
  ],
- "todo": "미완: 절대 최대 정격, 권장 동작 조건 전체 표, 열 저항(PGE/ZWT)을 읽지 못했습니다(TI PDF 접근 차단). 데이터시트 5장 확인 필요. 2차 시도: radiolocman(SPNS190B, PDF는 TI 리디렉트만 제공), alldatasheet HTML 사본(8/169쪽, 다른 쪽 링크 없음)으로도 해당 표를 얻지 못함.",
+ "todo": "미완: 절대 최대 정격, 권장 동작 조건 전체 표, 열 저항(PGE/ZWT), 전원 핀 번호를 읽지 못했습니다. 데이터시트 SPNS190B 5장 확인 필요. 3차 시도(2026-11): SPNS190은 TI 문서 뷰어(HTML)에 없음(검색 시 SPNS141/164/165 등 다른 TMS570만 나옴), alldatasheet HTML 사본은 1·8쪽만 검색에 노출, LCSC PDF(www.lcsc.com/datasheet/C544638.pdf)는 접근 승인 거부로 읽지 못함. 패키지는 확인됨: TI 제품 페이지 기준 PGE 144핀 LQFP(22 × 22 mm)와 ZWT 337볼 NFBGA — 도구 key.spec pkg LQFP-144(PGE) 맞음, 예: TMS5701224CPGEQQ1 (LCSC: LQFP-144, 160 MHz).",
  "key": {
   "spec": {
    "pkg": "LQFP-144",

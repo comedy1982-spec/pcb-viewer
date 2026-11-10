@@ -53,7 +53,7 @@
       ],
       [
        "상태",
-       "양산 중, ST 장기 공급 약속 2034-05까지"
+       "Active (L9788 트레이, L9788TR 테이프·릴), ST 10년 공급 약속 2024-05-28부터 2034-05까지"
       ]
      ]
     }
@@ -103,7 +103,7 @@
  "src": [
   "https://st.com/en/automotive-analog-and-power/l9788.html"
  ],
- "todo": "데이터시트 PDF를 열지 못해 제품 페이지 정보만 반영했습니다. 절대 최대 정격, 동작 전압 범위, 열저항, 핀 번호별 배치(LQFP100-EP)는 데이터시트에서 채워야 합니다. 2차 시도: datasheetspdf.com·alldatasheet 사본은 표지·특징 쪽만 제공(LQFP100 14 × 14 × 1.4 mm EP, AEC-Q100 확인) — 절대 최대 정격·열·핀 표는 여전히 없음.",
+ "todo": "데이터시트 PDF를 열지 못해 제품 페이지 정보만 반영했습니다. 절대 최대 정격, 동작 전압 범위, 열저항, 핀 번호별 배치(LQFP100-EP)는 데이터시트에서 채워야 합니다. 2차 시도: datasheetspdf.com·alldatasheet 사본은 표지·특징 쪽만 제공(LQFP100 14 × 14 × 1.4 mm EP, AEC-Q100 확인) — 절대 최대 정격·열·핀 표는 여전히 없음. 3차 시도(2026-11): st.com 데이터시트 PDF와 Mouser 사본(pdfDocs/l9788_DS.pdf)은 접근 차단, globalspec은 로그인 필요. ST 제품 페이지로 양산 상태(Active, 10년 공급 약속 2034-05까지) 확인.",
  "issues": [
   {
    "p": "[설명·분류 오류] desc \"SBC · CAN · LIN · LDO\" is wrong: L9788 is an engine-management multifunction IC (4-cyl EMS: injector/ignition/heater drivers, pre-boost/buck, 5 V 1 A LDO, 3 trackers, CAN-FD, K-Line), LQFP100-EP 14x14",

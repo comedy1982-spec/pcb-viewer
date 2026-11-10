@@ -187,7 +187,8 @@
   }
  ],
  "src": [
-  "https://pdf.elecfans.com/EUPEC/IAUC60N04S6N050HATMA1.html"
+  "https://pdf.elecfans.com/EUPEC/IAUC60N04S6N050HATMA1.html",
+  "https://xonstorage.blob.core.windows.net/pdf/infineon_iauc60n04s6n050hatma1_apr22_xonlink.pdf"
  ],
- "todo": "남은 항목: 핀 배치(패드별 G1/S1/G2/S2/드레인/위상 노드)는 외형도 그림이라 읽은 사본에서 텍스트로 확인하지 못했습니다. 원본 PDF의 패키지 그림으로 확인하세요. 60 A 정격의 온도 조건과 RthJA 값의 열 위치도 재확인 필요. (2차 확인 2026-10: RS·Digi-Key 페이지에는 '8핀 하프브리지'만 있고 핀별 매핑 없음. RS 데이터시트 사본 docs.rs-online.com/e3cb/A700000009016761.pdf는 접근 승인되지 않아 읽지 못함.)"
+ "todo": "핀 배치 미완: PG-TDSON-8-57 하프브리지의 패드별 G1/S1(=위상)/G2/S2/드레인 매핑이 데이터시트에서 그림으로만 있어 텍스트로 확인 불가 (3차 확인 2026-11: Infineon 원본 dgdl 링크는 fetch 승인 불가, xonlink 사본 https://xonstorage.blob.core.windows.net/pdf/infineon_iauc60n04s6n050hatma1_apr22_xonlink.pdf 텍스트에도 핀 매핑·외형 치수 없음; RS/zenode 페이지도 매핑 없음). 원본 PDF 1쪽 내부 회로도와 8쪽 외형도로 채우세요. 또한 ID 60 A(DC)·칩 한계 74 A의 TC 조건이 추출 텍스트에 표시되지 않음(2s2p, Ta 85 °C에서 16 A만 조건 명시). 구성은 하프브리지(상·하 N-채널 2개)로 확인됨."
 }

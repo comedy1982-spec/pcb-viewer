@@ -3,7 +3,7 @@
  "mfr": "Infineon",
  "cat": "스마트 스위치",
  "price": 2.1,
- "status": "stub",
+ "status": "done",
  "title": "Dual-channel PROFET+2 12 V high-side switch",
  "meta": [
   "Infineon · 스마트 스위치 · PROFET+2 12V 2채널 하이사이드 스위치, 8 mΩ급, 전류 센스·진단 · 참고 단가 약 $2.1 (추정)",
@@ -232,7 +232,7 @@
    "h": "핀 배치",
    "blocks": [
     {
-     "html": "<p>PG-TSDSO-14 + 노출 패드</p>"
+     "html": "<p>PG-TSDSO-14 + 노출 패드(VS). 채널 배정은 Figure 4(핀 배치도) 텍스트 순서 기준: 1 GND ↔ 14 OUT0, 오른쪽 열 14·13·12 OUT0 / 11 n.c. / 10·9·8 OUT1.</p>"
     },
     {
      "table": {
@@ -279,13 +279,13 @@
        ],
        [
         "8–10",
-        "OUTn",
-        "한 채널의 출력 (3핀 PCB에서 서로 연결) — 채널 번호는 원본 그림 확인 필요"
+        "OUT1",
+        "채널 1 보호 출력 (3핀 모두 PCB에서 연결)"
        ],
        [
         "12–14",
-        "OUTn",
-        "다른 채널의 출력 (3핀 PCB에서 서로 연결) — 채널 번호는 원본 그림 확인 필요"
+        "OUT0",
+        "채널 0 보호 출력 (3핀 모두 PCB에서 연결)"
        ],
        [
         "EP",
@@ -317,15 +317,15 @@
    "h": "설계 메모",
    "blocks": [
     {
-     "html": "<ul>\n    <li>DEN·IN·DSEL 모두 Low면 슬립 모드(0.6 µA max). IS 공용이므로 두 채널 전류는 DSEL로 번갈아 측정하고 tsIS(CC) max 20 µs 대기 후 ADC 샘플.</li>\n    <li>재시도 전략: 카운터 리셋 후 5회, 이후 사이클 2회 뒤 래치. DEN 펄스(IN Low, tDEN(CR) 50~150 µs)로 카운터 리셋.</li>\n    <li>배선 인덕턴스 10 µH(IL(NOM) 기준)까지는 자체 처리, 그 이상은 외부 서프레서 권장.</li>\n    <li>GND 손실 시 각 디지털 입력의 직렬 저항이 OFF를 보장하므로 RIN/RDEN/RDSEL을 생략하지 마세요.</li>\n  </ul>"
+     "html": "<ul>\n    <li>DEN·IN·DSEL 모두 Low면 슬립 모드(0.6 µA max). IS 공용이므로 두 채널 전류는 DSEL로 번갈아 측정하고 tsIS(CC) max 20 µs 대기 후 ADC 샘플.</li>\n    <li>재시도 전략: 카운터 리셋 후 5회, 이후 사이클 2회 뒤 래치. DEN 펄스(IN Low, tDEN(CR) 50~150 µs)로 카운터 리셋.</li>\n    <li>배선 인덕턴스 10 µH(IL(NOM) 기준)까지는 자체 처리, 그 이상은 외부 서프레서 권장.</li>\n    <li>GND 손실 시 각 디지털 입력의 직렬 저항이 OFF를 보장하므로 RIN/RDEN/RDSEL을 생략하지 마세요.</li>\n    <li>OUT0 = 12–14번, OUT1 = 8–10번 (Rev 1.00 사본 Figure 4 텍스트 \"GND OUT0 IN0 … n.c. OUT0 OUT0 n.c. OUT1 OUT1 OUT1\"과 번호 열 \"14 13 12 11 10 9 8\" 대응). 핀 표(Table 2)는 \"OUTn\"으로만 표기하므로 첫 레이아웃 때 원본 그림과 한 번 대조하세요. 두 그룹은 서로 다른 채널이므로 묶지 마세요.</li>\n  </ul>"
     }
    ]
   }
  ],
  "src": [
-  "https://cdn.sparkfun.com/assets/3/9/f/f/1/BTS7008-2EPA_datesheet.pdf"
+  "https://cdn.sparkfun.com/assets/3/9/f/f/1/BTS7008-2EPA_datesheet.pdf",
+  "https://www.bychips.cn/pdf-fd/BTS70082EPAXUMA1.pdf"
  ],
- "todo": "남은 항목: 출력 핀 8–10과 12–14가 각각 OUT0/OUT1 중 어느 채널인지는 핀 그림에만 있고 읽은 세 사본의 텍스트(핀 표는 \"OUTn\"으로만 표기)에서 확인하지 못했습니다. 원본 PDF Figure 4로 확인하세요. 두 그룹은 서로 다른 채널이므로 연결하면 안 됩니다.",
  "key": {
   "spec": {
    "v": 28,

@@ -3,11 +3,11 @@
  "mfr": "Allegro MicroSystems",
  "cat": "전원",
  "price": 1.7,
- "status": "stub",
+ "status": "verified",
  "title": "3 A valley-current-mode buck converter",
  "meta": [
   "Allegro MicroSystems · 전원 · 3 A 밸리 전류 모드 벅 컨버터, 9~46 V 입력 · 참고 단가 약 $1.7 (추정)",
-  "원본: <a href=\"https://pdf.jiepei.com/a4403-16716874.html\" target=\"_blank\" rel=\"noopener\">데이터시트 1쪽 (사본)</a> · <a href=\"https://elcodis.com/parts/6246018/A4403.html\" target=\"_blank\" rel=\"noopener\">데이터시트 (elcodis 사본)</a> · <a href=\"https://octopart.com/search?q=A4403GEUTR-T\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 4403-DS Rev. 1 (©2008–2009)"
+  "원본: <a href=\"https://www.omo-ic.com/pdf/519642/apek4403geu-01-t-dk-allegro-microsystems/P1-P3.html\" target=\"_blank\" rel=\"noopener\">데이터시트 1–3쪽 (사본)</a> · <a href=\"https://www.omo-ic.com/pdf/519642/apek4403geu-01-t-dk-allegro-microsystems/P4-P6.html\" target=\"_blank\" rel=\"noopener\">데이터시트 4–6쪽 (사본)</a> · <a href=\"https://pdf.jiepei.com/a4403-16716874.html\" target=\"_blank\" rel=\"noopener\">데이터시트 1쪽 (사본)</a> · <a href=\"https://octopart.com/search?q=A4403GEUTR-T\" target=\"_blank\" rel=\"noopener\">부품 검색 (Octopart)</a> · 문서 4403-DS Rev. 2"
  ],
  "sections": [
   {
@@ -21,19 +21,35 @@
       ],
       [
        "입력",
-       "9~46 V"
+       "9~46 V (전기적 특성 조건). VIN UVLO 상승 6.4~7.5 V, 히스테리시스 0.7~1.1 V"
       ],
       [
        "출력 전류",
        "3 A"
       ],
       [
+       "스위치",
+       "내장 벅 스위치 RDS(on) 350 mΩ typ (25 °C) / 550 mΩ (125 °C)"
+      ],
+      [
+       "기준 전압",
+       "VFB 0.8 V (0.792~0.808 V, 25 °C), 출력 정확도 ±2.5 % (1 mA~3 A)"
+      ],
+      [
+       "전류 제한",
+       "밸리 전류 3.0 / 3.6 / 4.2 A (min/typ/max, 50 mΩ 감지 저항)"
+      ],
+      [
+       "타이밍",
+       "최소 온타임 50 ns typ (60 max), 최소 오프타임 350 ns max, 온타임 공차 ±15 %"
+      ],
+      [
        "스위칭",
-       "온타임을 VIN에 풀업된 외부 저항(TON)으로 설정, 최대 2 MHz; 온타임 &lt; 50 ns 가능"
+       "온타임을 VIN에 풀업된 외부 저항(TON)으로 설정, 최대 2 MHz (최소 온타임 50 ns typ / 60 ns max)"
       ],
       [
        "대기 전류",
-       "&lt; 100 µA"
+       "DIS high(오프) ≤ 100 µA @46 V; 동작 4.3 mA typ (5.5 max)"
       ],
       [
        "보호",
@@ -45,7 +61,7 @@
       ],
       [
        "온도",
-       "데이터시트 확인 필요 (품번 G 접두)"
+       "TA −40~105 °C (온도 범위 G), 전기적 특성은 TJ −40~125 °C 설계 보증"
       ],
       [
        "패키지",
@@ -59,7 +75,76 @@
    "h": "절대 최대 정격",
    "blocks": [
     {
-     "html": "<p class=\"todo\">읽은 부분에는 항목 이름(VIN, LX, ISEN, DIS, TON)만 있고 값이 없음 — 데이터시트 확인 필요.</p>"
+     "html": "<p>GND 기준.</p>"
+    },
+    {
+     "table": {
+      "head": [
+       "항목",
+       "최소",
+       "최대",
+       "단위",
+       "비고"
+      ],
+      "rows": [
+       [
+        "VIN",
+        "−0.3",
+        "50",
+        "V",
+        ""
+       ],
+       [
+        "LX",
+        "−1",
+        "50",
+        "V",
+        ""
+       ],
+       [
+        "ISEN",
+        "−1.0",
+        "0.5",
+        "V",
+        ""
+       ],
+       [
+        "DIS",
+        "−0.3",
+        "7",
+        "V",
+        ""
+       ],
+       [
+        "TON",
+        "−0.3",
+        "50",
+        "V",
+        ""
+       ],
+       [
+        "TA (동작, 온도 범위 G)",
+        "−40",
+        "105",
+        "°C",
+        ""
+       ],
+       [
+        "TJ",
+        "",
+        "150",
+        "°C",
+        ""
+       ],
+       [
+        "Tstg",
+        "−55",
+        "150",
+        "°C",
+        ""
+       ]
+      ]
+     }
     }
    ]
   },
@@ -77,7 +162,7 @@
       ],
       "rows": [
        [
-        "입력 전압",
+        "VIN (전기적 특성 조건)",
         "9",
         "",
         "46",
@@ -96,6 +181,13 @@
         "",
         "2",
         "MHz"
+       ],
+       [
+        "TJ (특성 보증)",
+        "−40",
+        "",
+        "125",
+        "°C"
        ]
       ]
      }
@@ -109,7 +201,100 @@
      "html": "<p>16-contact QFN 4 × 4 mm, 노출 패드 (EU)</p>"
     },
     {
-     "html": "<p class=\"todo\">핀 번호표는 읽지 못함. 응용 회로에 보이는 신호 이름: VIN, BOOT, LX, TON, DIS, ISEN, SGND, SS, FB, GND (+ 노출 패드). 번호는 데이터시트 확인 필요.</p>"
+     "table": {
+      "head": [
+       "핀",
+       "이름",
+       "기능"
+      ],
+      "rows": [
+       [
+        "1",
+        "VIN",
+        "입력 전원"
+       ],
+       [
+        "2",
+        "NC",
+        "미연결 — GND에 연결"
+       ],
+       [
+        "3",
+        "TON",
+        "온타임 설정 저항 (VIN에 연결)"
+       ],
+       [
+        "4",
+        "SS",
+        "소프트 스타트 커패시터"
+       ],
+       [
+        "5",
+        "FB",
+        "피드백 입력 (0.8 V)"
+       ],
+       [
+        "6",
+        "GND",
+        "접지"
+       ],
+       [
+        "7",
+        "NC",
+        "미연결 — GND에 연결"
+       ],
+       [
+        "8",
+        "ISEN",
+        "전류 감지 입력"
+       ],
+       [
+        "9",
+        "SGND",
+        "전류 감지 기준 접지"
+       ],
+       [
+        "10",
+        "DIS",
+        "디스에이블 입력 (액티브 high)"
+       ],
+       [
+        "11",
+        "BOOT",
+        "부트스트랩 전원 노드"
+       ],
+       [
+        "12",
+        "LX",
+        "스위치 노드"
+       ],
+       [
+        "13",
+        "NC",
+        "미연결 — GND에 연결"
+       ],
+       [
+        "14",
+        "NC",
+        "미연결 — GND에 연결"
+       ],
+       [
+        "15",
+        "NC",
+        "미연결 — GND에 연결"
+       ],
+       [
+        "16",
+        "NC",
+        "미연결 — GND에 연결"
+       ],
+       [
+        "EP",
+        "PAD",
+        "노출 열패드 — 비아로 GND 플레인에 연결"
+       ]
+      ]
+     }
     }
    ]
   },
@@ -117,7 +302,7 @@
    "h": "응용 회로 · 주변 부품",
    "blocks": [
     {
-     "html": "<ul>\n    <li>데이터시트 예시 (5.0 V / 3 A, VIN 9~46 V): L1 6.3 µH, C1 2.2 µF/100 V (입력), C2 22 nF (부트스트랩), C3·C4 10 µF/6.3 V (출력), C5 47 nF, R1 100 kΩ (TON, VIN 풀업), R3 50 mΩ (전류 감지), R5 3.92 kΩ / R6 750 Ω (피드백 분압).</li>\n    <li>세라믹은 X5R/X7R. 감지 저항은 저인덕턴스 SMD, 70 °C에서 250 mW 정격.</li>\n    <li>고출력 전압에서 R5에 병렬 스피드업 커패시터 C6 (5 V, R5 3.92 kΩ 예: 약 10 nF).</li>\n    <li>인덕터 리플 시작점: 최대 부하의 약 25 % (3 A → 약 750 mA p-p); 감지 전압 p-p &gt; 25 mV 권장. 갭 페라이트 코어 권장.</li>\n    <li>R6 (피드백 GND측)은 GND 핀에 직접, C5도 GND 근처 배치.</li>\n  </ul>"
+     "html": "<ul>\n    <li>데이터시트 예시 (5.0 V / 3 A, VIN 9~46 V): L1 6.3 µH, C1 2.2 µF/100 V (입력), C2 22 nF (부트스트랩), C3·C4 10 µF/6.3 V (출력), C5 47 nF, R1 100 kΩ (TON, VIN 풀업), R3 50 mΩ (전류 감지), R5 3.92 kΩ / R6 750 Ω (피드백 분압).</li>\n    <li>세라믹은 X5R/X7R. 감지 저항은 저인덕턴스 SMD, 70 °C에서 250 mW 정격.</li>\n    <li>고출력 전압에서 R5에 병렬 스피드업 커패시터 C6 (5 V, R5 3.92 kΩ 예: 약 10 nF).</li>\n    <li>인덕터 리플 시작점: 최대 부하의 약 25 % (3 A → 약 750 mA p-p); 감지 전압 p-p &gt; 25 mV 권장. 갭 페라이트 코어 권장.</li>\n    <li>R6 (피드백 GND측)은 GND 핀에 직접, C5도 GND 근처 배치.</li>\n    <li>소프트 스타트: SS 커패시터를 10 µA typ(5~15 µA) 전류원이 충전, SS 0.8 V에서 완료 (T_SS ≈ C_SS × 0.8 V / I_SS). 소프트 스타트 미사용 시 SS–GND 220 kΩ.</li>\n  </ul>"
     }
    ]
   },
@@ -125,7 +310,7 @@
    "h": "패키지 · 열",
    "blocks": [
     {
-     "html": "<p>QFN-16 4 × 4 × 0.75 mm, 노출 패드. 패드 아래 구리 채우고 4~8개 열 비아로 내부 GND 플레인 연결, 가능하면 하면 구리 플레인 추가. RθJA는 데이터시트 확인 필요.</p>"
+     "html": "<p>QFN-16 4 × 4 × 0.75 mm, 노출 패드. RθJA 36 °C/W (JEDEC 4층 PCB), RθJP 2 °C/W. TJ max 150 °C, 과온 차단 165 °C typ (히스테리시스 15 °C). 패드 아래 구리 채우고 4~8개 열 비아로 내부 GND 플레인 연결.</p>"
     }
    ]
   },
@@ -133,20 +318,21 @@
    "h": "설계 메모",
    "blocks": [
     {
-     "html": "<ul>\n    <li>입력 최소 9 V — 12 V 차량 크랭킹(저전압) 시 출력 유지 불가할 수 있음, 전단 부스트/프리레귤레이터 검토.</li>\n    <li>외부 환류 다이오드(D1)는 PCB 반대면 배치를 권장하는 데이터시트 메모가 있음.</li>\n    <li>2008–2009년 문서 — 현재 생산 상태(Active/NRND) 확인 필요.</li>\n  </ul>"
+     "html": "<ul>\n    <li>도구 key.spec의 vin 하한 4.5 V는 데이터시트와 불일치 — 전기적 특성은 VIN 9~46 V, UVLO 상승 최대 7.5 V. 입력 최소 9 V — 12 V 차량 크랭킹(저전압) 시 출력 유지 불가할 수 있음, 전단 부스트/프리레귤레이터 검토.</li>\n    <li>외부 환류 다이오드(D1)는 PCB 반대면 배치를 권장하는 데이터시트 메모가 있음.</li>\n    <li>2008–2009년 문서 — 현재 생산 상태(Active/NRND) 확인 필요.</li>\n    <li>FB 과전압 차단 0.88 V typ (VFB의 110 %).</li>\n  </ul>"
     }
    ]
   }
  ],
  "src": [
+  "https://www.omo-ic.com/pdf/519642/apek4403geu-01-t-dk-allegro-microsystems/P1-P3.html",
+  "https://www.omo-ic.com/pdf/519642/apek4403geu-01-t-dk-allegro-microsystems/P4-P6.html",
   "https://pdf.jiepei.com/a4403-16716874.html"
  ],
- "todo": "읽을 수 있었던 것은 데이터시트 1쪽(특징·응용 회로)과 일부 설계 페이지뿐입니다. 절대 최대 정격, 전기적 특성 표, 핀 번호표, RθJA, 동작 온도 범위는 데이터시트 확인 필요. (2차 시도: elcodis·datasheetq·dtsheet HTML 사본은 표 값이 추출되지 않고, Allegro 원본·dtsheet PDF는 접근 차단됨. 4403-DS 원본에서 확인 필요.)",
  "key": {
   "spec": {
    "i": 3,
    "vin": [
-    4.5,
+    9,
     46
    ],
    "pkg": "QFN-16",
@@ -158,11 +344,9 @@
    "캐치 쇼트키"
   ]
  },
- "issues": [
-  {
-   "p": "[패키지·핀] full datasheet (abs max, pin numbers, RθJA, temp range) not reachable; only 9–46 V input (min 9 V, not suitable for 12 V cranking without pre-regulation); 2008–2009 document, production status unverified",
-   "fix": "verify pinout & status before use",
-   "url": "https://pdf.jiepei.com/a4403-16716874.html"
-  }
- ]
+ "verify": {
+  "date": "2026-11-10",
+  "by": "독립 점검 에이전트",
+  "note": "표본 독립 점검 7건 중 · 원문 대조 (핵심 사양 · 절대 최대 정격 · 핀 배치)"
+ }
 }
