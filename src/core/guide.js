@@ -68,6 +68,7 @@ const presetKey=s=>PRESET_ALIAS[String(s||'').toLowerCase().replace(/[\s_-]/g,''
 function prio(w){return w>=9?{tier:0,label:'P0 (최우선)'}:w>=8?{tier:1,label:'P1 (핵심)'}:w>=6?{tier:2,label:'P2 (권장)'}:{tier:3,label:'P3 (일반)'};}
 // per-board state: preset, weights, manual decisions
 function state(B){if(!B.guide)B.guide={preset:'default',w:Object.assign({},PRESETS.default.w),over:{}};return B.guide;}
+function setZoning(B,m){const k=String(m||'').toLowerCase();const v=/^(strict|엄격|hard)$/.test(k)?'strict':/^(relaxed|완화|soft|loose)$/.test(k)?'relaxed':null;if(!v)throw new Error('zoning: relaxed(완화) | strict(엄격)');state(B).zoning=v;return v;}
 function setPreset(B,k){const key=presetKey(k);if(!key)throw new Error('프리셋: default · motor · ecu · highspeed');const g=state(B);g.preset=key;g.w=Object.assign({},PRESETS[key].w);return key;}
 function setWeight(B,key,w){if(!RULES.find(r=>r.key===key))throw new Error('알 수 없는 규칙: '+key);const g=state(B);g.w[key]=Math.max(1,Math.min(10,Math.round(+w)||1));return g.w[key];}
 function set(B,key,status,note,by){if(!RULES.find(r=>r.key===key))throw new Error('알 수 없는 규칙: '+key);const g=state(B);
@@ -204,13 +205,20 @@ function checkPcb(B,key,X){
       st.filter(L=>L.role==='gnd'&&L.k!=='T'&&L.k!=='B').forEach(L=>{let cut=0;segsOf(B,L.k).forEach(q=>{if(q.net&&!isGnd(q.net))cut+=len(q);});if(cut>0.5){notes.push(`${PCB.cuName(L.k)} GND 플레인에 다른 넷 트랙 ${cut.toFixed(0)} mm (분할)`);sc-=0.2;}});
       const sym=st.every((L,i)=>plane(L.role)===plane(st[n-1-i].role));if(!sym){notes.push('플레인 위치가 상하 대칭이 아님 (휨)');sc-=0.15;}
       sc=Math.max(0,sc);return{status:sc>=0.999?'pass':sc>=0.6?'partial':'fail',score:sc,ev:`${n}층 ${st.map(L=>`${PCB.cuName(L.k)}:${L.role==='gnd'?'GND':L.role==='pwr'?'PWR':'SIG'}`).join(' / ')}${notes.length?' · '+notes.join(' · '):' — 신호층마다 인접 GND, 전원–GND 인접, 상하 대칭'}`,fix:sc<1?'스택업을 L1 신호 / L2 GND / L3 전원 / L4 신호(4층) 순으로, GND 플레인 층의 트랙은 다른 층으로':'',manualNote:'유전체(코어 · 프리프레그) 두께 대칭은 제조사 스택업 표로 확인'};}
-    case'pl_zoning':{const C=AUTOPLACE.classify(B).list;const big=x=>!x.two&&!x.c.pads.every(p=>p.drill);const by=f=>C.filter(x=>f(x)).map(x=>x.c);
+    case'pl_zoning':{const mode=state(B).zoning==='strict'?'strict':'relaxed';const C=AUTOPLACE.classify(B).list;const big=x=>!x.two&&!x.c.pads.every(p=>p.drill);const by=f=>C.filter(x=>f(x)).map(x=>x.c);
+      // zone layout drawn by the floorplan (B.zones): share of parts that sit inside their own zone
+      let zt='',zsc=null;const Z=B.zones&&B.zones.on!==false&&B.zones.rects&&typeof AUTOPLACE.zoneReport==='function'?AUTOPLACE.zoneReport(B):null;
+      if(Z&&Z.length){const n=Z.reduce((t,z)=>t+z.parts,0),o=Z.reduce((t,z)=>t+z.out.length,0);zsc=n?1-o/n:null;zt=` · 기능 구획 ${Z.length}개(${B.zones.hard?'강제':'권장'}) 안에 든 부품 ${n-o}/${n}${o?' · 밖: '+Z.flatMap(z=>z.out).slice(0,5).join(' '):''}`;}
       const G={파워:by(x=>(x.reg||x.fet||x.driver||x.noisy)&&!x.two),디지털:by(x=>x.mcu||(x.ic&&!x.reg&&!x.driver&&!x.sens&&!x.conn)),아날로그:by(x=>x.sens&&big(x)),커넥터:by(x=>x.conn)};
       const bb=Object.fromEntries(Object.entries(G).map(([k,v])=>[k,bbUnion(v)]));const pairs=[['파워','아날로그'],['파워','디지털'],['디지털','아날로그']].filter(([a,b])=>bb[a]&&bb[b]);
-      if(!pairs.length)return{status:'na',ev:'구역을 나눌 만큼 부품군이 없음'};
+      if(!pairs.length&&zsc==null)return{status:'na',ev:'구역을 나눌 만큼 부품군이 없음'};
       const rows=pairs.map(([a,b])=>{const o=bbOver(bb[a],bb[b]);const f=o/Math.max(1e-6,Math.min(bbArea(bb[a]),bbArea(bb[b])));return{a,b,f,gap:bbGap(bb[a],bb[b])};});
-      const w=r=>r.a==='파워'&&r.b==='아날로그'?2:1;const sc=Math.max(0,1-rows.reduce((t,r)=>t+r.f*w(r),0)/rows.reduce((t,r)=>t+w(r),0)*1.5);
-      return{status:sc>=0.85?'pass':sc>=0.5?'partial':'fail',score:sc,ev:`구역 (부품 수) ${Object.entries(G).map(([k,v])=>`${k} ${v.length}`).join(' · ')} — `+rows.map(r=>`${r.a}↔${r.b} ${r.f>0?'겹침 '+(r.f*100).toFixed(0)+'%':'간격 '+r.gap.toFixed(1)+' mm'}`).join(' · '),fix:sc<0.85?'place --strategy noise 로 파워 · 아날로그 구역을 떼거나 floorplan 구역을 지정':'',manualNote:'신호 · 전력 흐름 방향(입력 → 출력 한 방향)은 배치도를 보고 확인'};}
+      // relaxed (default): only power ↔ analog separation is essential; power ↔ digital may share area (small ECU boards), digital ↔ analog lightly
+      const W=mode==='strict'?{'파워아날로그':2,'파워디지털':1,'디지털아날로그':1}:{'파워아날로그':2,'파워디지털':0.25,'디지털아날로그':0.5};const free=mode==='strict'?0:0.25;
+      const w=r=>W[r.a+r.b];const pen=rows.length?rows.reduce((t,r)=>t+Math.max(0,r.f-(r.a==='파워'&&r.b==='아날로그'?0:free))*w(r),0)/rows.reduce((t,r)=>t+w(r),0)*1.5:0;
+      let sc=Math.max(0,1-pen);if(zsc!=null)sc=rows.length?Math.max(sc,0.5*sc+0.5*zsc):zsc;const P=mode==='strict'?0.85:0.75;
+      return{status:sc>=P?'pass':sc>=0.45?'partial':'fail',score:Math.min(1,sc/P),ev:`[${mode==='strict'?'엄격':'완화'}] 구역 (부품 수) ${Object.entries(G).map(([k,v])=>`${k} ${v.length}`).join(' · ')} — `+rows.map(r=>`${r.a}↔${r.b} ${r.f>0?'겹침 '+(r.f*100).toFixed(0)+'%':'간격 '+r.gap.toFixed(1)+' mm'}`).join(' · ')+zt,
+        fix:sc<P?'PCB 시작 카드의 「기능 구획」을 권장/강제로 두고 다시 배치 (CLI: zone auto → zone hard → reset), 또는 place --strategy noise':'',manualNote:`판정 모드 ${mode==='strict'?'엄격: 파워·디지털·아날로그 모두 분리':'완화: 파워↔아날로그만 엄격, 파워↔디지털은 25 %까지 겹쳐도 감점 없음'} (guide zoning strict|relaxed) · 신호·전력 흐름 방향은 배치도로 확인`};}
     case'pl_conn_edge':{const cs=B.comps.filter(c=>isConn(c)&&c.pads.length>=2);if(!cs.length)return{status:'na',ev:'커넥터 없음'};
       const rows=cs.map(c=>({ref:c.ref,d:bbEdge(B,c.bb)}));const far=rows.filter(r=>r.d>3);const sc=1-far.length/rows.length;
       return{status:sc>=0.999?'pass':sc>=0.5?'partial':'fail',score:sc,ev:`커넥터 ${rows.length}개 중 외곽 3 mm 이내 ${rows.length-far.length}${far.length?' · 안쪽: '+far.slice(0,5).map(r=>`${r.ref} ${r.d.toFixed(1)} mm`).join(', '):''}`,fix:far.length?'커넥터를 보드 가장자리로 옮기고 고정 (move · lock)':'',manualNote:'마운팅 홀 · 스위치 · LED 위치와 배치 고정(Lock)은 기구 도면으로 확인'};}
@@ -359,6 +367,6 @@ function evaluate(B,opts){
   return{scope,preset:g.preset,presetLabel:PRESETS[g.preset].label,pct,crit,passed,applicable:app,manual,total:res.length,verdict,rules:res};
 }
 const sev=r=>({fail:0,manual:1,partial:2,pass:3,na:4}[r.status]);
-return{RULES,PRESETS,presetKey,prio,state,setPreset,setWeight,set,evaluate,partsOf};
+return{RULES,PRESETS,presetKey,prio,state,setZoning,setPreset,setWeight,set,evaluate,partsOf};
 })();
 if(typeof module!=='undefined')module.exports=GUIDE;

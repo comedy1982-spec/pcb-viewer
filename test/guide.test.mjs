@@ -70,3 +70,13 @@ test('in-house PCB guideline rules (stack-up, crystal, silk, via-in-pad, decap v
   B4.fab = { vippo: true };
   assert.equal(Object.fromEntries(GUIDE.evaluate(B4, { scope: 'pcb' }).rules.map(x => [x.key, x])).dfm_via_in_pad.status, 'pass');
 });
+
+test('zone separation is judged relaxed by default and strict on request', () => {
+  const B = board(SAMPLE_TC364);
+  const z = () => GUIDE.evaluate(B, { scope: 'pcb' }).rules.find(x => x.key === 'pl_zoning');
+  const relaxed = z(); assert.match(relaxed.ev, /완화/);
+  assert.equal(GUIDE.setZoning(B, 'strict'), 'strict');
+  const strict = z(); assert.match(strict.ev, /엄격/);
+  assert.ok(strict.score <= relaxed.score);
+  assert.throws(() => GUIDE.setZoning(B, 'nope'));
+});

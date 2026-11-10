@@ -124,15 +124,16 @@ function guideRun(a,scope,ctx){
   const B=BD;const sub=(a._[0]||'check').toLowerCase();const sheets=()=>BD.schSheets||(typeof schData==='function'&&schData()?schData().sheets:null);
   if(sub==='rules')return GUIDE.RULES.filter(r=>scope==='all'||r.scope===scope||a.all).map(r=>{const w=GUIDE.state(B).w[r.key];return`${r.key.padEnd(15)} ${GUIDE.prio(w).label} · 중요도 ${w} · [${r.cat}] ${r.title}\n    ${r.desc}\n    참조: ${r.ref}`;}).join('\n');
   if(sub==='presets')return Object.entries(GUIDE.PRESETS).map(([k,v])=>`${k.padEnd(10)} ${v.label}${GUIDE.state(B).preset===k?'  ← 지금':''}`).join('\n');
+  if(sub==='zoning'){if(!a._[1]){const m=GUIDE.state(B).zoning||'relaxed';return`구역 분리 판정: ${m==='strict'?'엄격 (파워·디지털·아날로그 모두 분리)':'완화 (파워↔아날로그만 엄격, 파워↔디지털 겹침 25 %까지 허용)'} — guide zoning strict|relaxed`;}const m=GUIDE.setZoning(B,a._[1]);return`구역 분리 판정을 ${m==='strict'?'엄격':'완화'}으로 바꿨습니다. guide check로 다시 점검하세요.`;}
   if(sub==='preset'){const k=GUIDE.setPreset(B,a._[1]);return`프리셋 ${k} (${GUIDE.PRESETS[k].label}) — 중요도를 바꿨습니다. guide check로 다시 점검하세요.`;}
   if(sub==='weight'){const w=GUIDE.setWeight(B,a._[1],a._[2]);return`${a._[1]} 중요도 ${w} (${GUIDE.prio(w).label})`;}
   if(sub==='set'){const st=String(a._[2]||'').toLowerCase();const o=GUIDE.set(B,a._[1],st,a.note?String(a.note):a._.slice(3).join(' '),ctx&&ctx.by||'user');return o?`${a._[1]} → ${GUIDE_WORD[o.status]}${o.note?' ('+o.note+')':''} · 판정자 ${o.by==='ai'?'AI':'사용자'}`:`${a._[1]} → 자동 판정으로 되돌림`;}
   if(sub==='show'){const r=GUIDE.evaluate(B,{scope:'all',sheets:sheets()}).rules.find(x=>x.key===a._[1]);if(!r)throw new Error('알 수 없는 규칙: '+a._[1]);
     return`${r.title} [${r.key}] · ${r.prio} · 중요도 ${r.w}\n${r.desc}\n참조: ${r.ref}\n상태: ${GUIDE_WORD[r.status]}${r.score!=null?` (점수 ${r.score.toFixed(2)})`:''}\n근거: ${r.ev}${r.fix?`\n조치: ${r.fix}`:''}${r.manualNote?`\n자동으로 못 보는 부분: ${r.manualNote}`:''}${r.by?`\n수동 판정: ${r.by==='ai'?'AI':'사용자'} → ${GUIDE_WORD[r.status]} (자동 판정 ${GUIDE_WORD[r.auto.status]})${r.note?' · '+r.note:''}`:''}`;}
   if(sub==='check'){if(a.preset)GUIDE.setPreset(B,a.preset);return GUIDE.evaluate(B,{scope:a.all?'all':scope,sheets:sheets()});}
-  throw new Error('guide [check|rules|presets|preset <이름>|weight <규칙> <1-10>|set <규칙> pass|fail|na|auto [--note 메모]|show <규칙>]');
+  throw new Error('guide [check|rules|presets|preset <이름>|zoning relaxed|strict|weight <규칙> <1-10>|set <규칙> pass|fail|na|auto [--note 메모]|show <규칙>]');
 }
-const GUIDE_HELP=['guide [check] [--preset motor|ecu|highspeed|default] [--all] [--ai|--det] · guide rules · guide presets · guide preset <이름> · guide weight <규칙> <1-10> · guide set <규칙> pass|fail|na|auto [--note 메모] · guide show <규칙>','설계 가이드라인 점검: 규칙별 P0–P3 우선순위·가중치·준수율·판정. 결정론은 보드·회로도에서 자동 판정, AI 모드는 결과를 Claude가 검토해 수동 확인 항목을 판단하고 개선 명령을 제안'];
+const GUIDE_HELP=['guide [check] [--preset motor|ecu|highspeed|default] [--all] [--ai|--det] · guide rules · guide presets · guide preset <이름> · guide zoning relaxed|strict · guide weight <규칙> <1-10> · guide set <규칙> pass|fail|na|auto [--note 메모] · guide show <규칙>','설계 가이드라인 점검: 규칙별 P0–P3 우선순위·가중치·준수율·판정. 결정론은 보드·회로도에서 자동 판정, AI 모드는 결과를 Claude가 검토해 수동 확인 항목을 판단하고 개선 명령을 제안'];
 const GUIDE_AI=`You are reviewing a PCB / schematic design-guideline check inside a viewer. The deterministic results are below. Your job:
 1. For rules marked "수동 확인" (manual) or "일부" (partial), decide only when the evidence lines (or one extra inspection command) justify it, and record it with "guide set <key> pass|fail --note \\"짧은 근거\\""; otherwise leave them for the user.
 2. Do not change the board or schematic unless the user explicitly asked for fixes.

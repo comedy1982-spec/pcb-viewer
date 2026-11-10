@@ -423,7 +423,7 @@ async function cliRun(line,quiet,by){
     case'zone':{const sub=String(a._[0]||'').toLowerCase();
       if(sub==='auto'||!BD.zones&&sub&&sub!=='off'){let groups=BD.zones&&BD.zones.groupOf;if(!groups&&BD.newPlan&&typeof NEWPROJ!=='undefined'){const r=NEWPROJ.build(BD.newPlan);groups=NEWPROJ.partGroups(BD.newPlan,r.parts);}
         if(!groups)throw new Error('부품의 기능 그룹을 알 수 없습니다 (신규 설계로 만든 보드에서 사용)');const Z=AUTOPLACE.floorplan(BD,groups,{template:a._[1]==='motor'||a._[1]==='general'?a._[1]:undefined});if(!Z)throw new Error('영역을 나눌 부품이 없습니다');
-        const hard=BD.zones&&BD.zones.hard;BD.zones=Z;if(hard)Z.hard=true;}
+        const hard=BD.zones&&BD.zones.hard;BD.zones=Z;if(sub==='hard'||hard&&sub!=='soft')Z.hard=true;}
       else if(sub==='off'){if(BD.zones)BD.zones.on=false;refresh(false);return'기능 영역 끔 — 배치에 영향 없음 (zone on으로 다시)';}
       else if(sub==='on'){if(!BD.zones)throw new Error('영역이 없습니다 — zone auto');BD.zones.on=true;}
       else if(sub==='hard'||sub==='soft'){if(!BD.zones)throw new Error('영역이 없습니다 — zone auto');BD.zones.hard=sub==='hard';}

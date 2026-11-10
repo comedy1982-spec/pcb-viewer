@@ -7555,6 +7555,7 @@ const presetKey=s=>PRESET_ALIAS[String(s||'').toLowerCase().replace(/[\s_-]/g,''
 function prio(w){return w>=9?{tier:0,label:'P0 (최우선)'}:w>=8?{tier:1,label:'P1 (핵심)'}:w>=6?{tier:2,label:'P2 (권장)'}:{tier:3,label:'P3 (일반)'};}
 // per-board state: preset, weights, manual decisions
 function state(B){if(!B.guide)B.guide={preset:'default',w:Object.assign({},PRESETS.default.w),over:{}};return B.guide;}
+function setZoning(B,m){const k=String(m||'').toLowerCase();const v=/^(strict|엄격|hard)$/.test(k)?'strict':/^(relaxed|완화|soft|loose)$/.test(k)?'relaxed':null;if(!v)throw new Error('zoning: relaxed(완화) | strict(엄격)');state(B).zoning=v;return v;}
 function setPreset(B,k){const key=presetKey(k);if(!key)throw new Error('프리셋: default · motor · ecu · highspeed');const g=state(B);g.preset=key;g.w=Object.assign({},PRESETS[key].w);return key;}
 function setWeight(B,key,w){if(!RULES.find(r=>r.key===key))throw new Error('알 수 없는 규칙: '+key);const g=state(B);g.w[key]=Math.max(1,Math.min(10,Math.round(+w)||1));return g.w[key];}
 function set(B,key,status,note,by){if(!RULES.find(r=>r.key===key))throw new Error('알 수 없는 규칙: '+key);const g=state(B);
@@ -7691,13 +7692,20 @@ function checkPcb(B,key,X){
       st.filter(L=>L.role==='gnd'&&L.k!=='T'&&L.k!=='B').forEach(L=>{let cut=0;segsOf(B,L.k).forEach(q=>{if(q.net&&!isGnd(q.net))cut+=len(q);});if(cut>0.5){notes.push(`${PCB.cuName(L.k)} GND 플레인에 다른 넷 트랙 ${cut.toFixed(0)} mm (분할)`);sc-=0.2;}});
       const sym=st.every((L,i)=>plane(L.role)===plane(st[n-1-i].role));if(!sym){notes.push('플레인 위치가 상하 대칭이 아님 (휨)');sc-=0.15;}
       sc=Math.max(0,sc);return{status:sc>=0.999?'pass':sc>=0.6?'partial':'fail',score:sc,ev:`${n}층 ${st.map(L=>`${PCB.cuName(L.k)}:${L.role==='gnd'?'GND':L.role==='pwr'?'PWR':'SIG'}`).join(' / ')}${notes.length?' · '+notes.join(' · '):' — 신호층마다 인접 GND, 전원–GND 인접, 상하 대칭'}`,fix:sc<1?'스택업을 L1 신호 / L2 GND / L3 전원 / L4 신호(4층) 순으로, GND 플레인 층의 트랙은 다른 층으로':'',manualNote:'유전체(코어 · 프리프레그) 두께 대칭은 제조사 스택업 표로 확인'};}
-    case'pl_zoning':{const C=AUTOPLACE.classify(B).list;const big=x=>!x.two&&!x.c.pads.every(p=>p.drill);const by=f=>C.filter(x=>f(x)).map(x=>x.c);
+    case'pl_zoning':{const mode=state(B).zoning==='strict'?'strict':'relaxed';const C=AUTOPLACE.classify(B).list;const big=x=>!x.two&&!x.c.pads.every(p=>p.drill);const by=f=>C.filter(x=>f(x)).map(x=>x.c);
+      // zone layout drawn by the floorplan (B.zones): share of parts that sit inside their own zone
+      let zt='',zsc=null;const Z=B.zones&&B.zones.on!==false&&B.zones.rects&&typeof AUTOPLACE.zoneReport==='function'?AUTOPLACE.zoneReport(B):null;
+      if(Z&&Z.length){const n=Z.reduce((t,z)=>t+z.parts,0),o=Z.reduce((t,z)=>t+z.out.length,0);zsc=n?1-o/n:null;zt=` · 기능 구획 ${Z.length}개(${B.zones.hard?'강제':'권장'}) 안에 든 부품 ${n-o}/${n}${o?' · 밖: '+Z.flatMap(z=>z.out).slice(0,5).join(' '):''}`;}
       const G={파워:by(x=>(x.reg||x.fet||x.driver||x.noisy)&&!x.two),디지털:by(x=>x.mcu||(x.ic&&!x.reg&&!x.driver&&!x.sens&&!x.conn)),아날로그:by(x=>x.sens&&big(x)),커넥터:by(x=>x.conn)};
       const bb=Object.fromEntries(Object.entries(G).map(([k,v])=>[k,bbUnion(v)]));const pairs=[['파워','아날로그'],['파워','디지털'],['디지털','아날로그']].filter(([a,b])=>bb[a]&&bb[b]);
-      if(!pairs.length)return{status:'na',ev:'구역을 나눌 만큼 부품군이 없음'};
+      if(!pairs.length&&zsc==null)return{status:'na',ev:'구역을 나눌 만큼 부품군이 없음'};
       const rows=pairs.map(([a,b])=>{const o=bbOver(bb[a],bb[b]);const f=o/Math.max(1e-6,Math.min(bbArea(bb[a]),bbArea(bb[b])));return{a,b,f,gap:bbGap(bb[a],bb[b])};});
-      const w=r=>r.a==='파워'&&r.b==='아날로그'?2:1;const sc=Math.max(0,1-rows.reduce((t,r)=>t+r.f*w(r),0)/rows.reduce((t,r)=>t+w(r),0)*1.5);
-      return{status:sc>=0.85?'pass':sc>=0.5?'partial':'fail',score:sc,ev:`구역 (부품 수) ${Object.entries(G).map(([k,v])=>`${k} ${v.length}`).join(' · ')} — `+rows.map(r=>`${r.a}↔${r.b} ${r.f>0?'겹침 '+(r.f*100).toFixed(0)+'%':'간격 '+r.gap.toFixed(1)+' mm'}`).join(' · '),fix:sc<0.85?'place --strategy noise 로 파워 · 아날로그 구역을 떼거나 floorplan 구역을 지정':'',manualNote:'신호 · 전력 흐름 방향(입력 → 출력 한 방향)은 배치도를 보고 확인'};}
+      // relaxed (default): only power ↔ analog separation is essential; power ↔ digital may share area (small ECU boards), digital ↔ analog lightly
+      const W=mode==='strict'?{'파워아날로그':2,'파워디지털':1,'디지털아날로그':1}:{'파워아날로그':2,'파워디지털':0.25,'디지털아날로그':0.5};const free=mode==='strict'?0:0.25;
+      const w=r=>W[r.a+r.b];const pen=rows.length?rows.reduce((t,r)=>t+Math.max(0,r.f-(r.a==='파워'&&r.b==='아날로그'?0:free))*w(r),0)/rows.reduce((t,r)=>t+w(r),0)*1.5:0;
+      let sc=Math.max(0,1-pen);if(zsc!=null)sc=rows.length?Math.max(sc,0.5*sc+0.5*zsc):zsc;const P=mode==='strict'?0.85:0.75;
+      return{status:sc>=P?'pass':sc>=0.45?'partial':'fail',score:Math.min(1,sc/P),ev:`[${mode==='strict'?'엄격':'완화'}] 구역 (부품 수) ${Object.entries(G).map(([k,v])=>`${k} ${v.length}`).join(' · ')} — `+rows.map(r=>`${r.a}↔${r.b} ${r.f>0?'겹침 '+(r.f*100).toFixed(0)+'%':'간격 '+r.gap.toFixed(1)+' mm'}`).join(' · ')+zt,
+        fix:sc<P?'PCB 시작 카드의 「기능 구획」을 권장/강제로 두고 다시 배치 (CLI: zone auto → zone hard → reset), 또는 place --strategy noise':'',manualNote:`판정 모드 ${mode==='strict'?'엄격: 파워·디지털·아날로그 모두 분리':'완화: 파워↔아날로그만 엄격, 파워↔디지털은 25 %까지 겹쳐도 감점 없음'} (guide zoning strict|relaxed) · 신호·전력 흐름 방향은 배치도로 확인`};}
     case'pl_conn_edge':{const cs=B.comps.filter(c=>isConn(c)&&c.pads.length>=2);if(!cs.length)return{status:'na',ev:'커넥터 없음'};
       const rows=cs.map(c=>({ref:c.ref,d:bbEdge(B,c.bb)}));const far=rows.filter(r=>r.d>3);const sc=1-far.length/rows.length;
       return{status:sc>=0.999?'pass':sc>=0.5?'partial':'fail',score:sc,ev:`커넥터 ${rows.length}개 중 외곽 3 mm 이내 ${rows.length-far.length}${far.length?' · 안쪽: '+far.slice(0,5).map(r=>`${r.ref} ${r.d.toFixed(1)} mm`).join(', '):''}`,fix:far.length?'커넥터를 보드 가장자리로 옮기고 고정 (move · lock)':'',manualNote:'마운팅 홀 · 스위치 · LED 위치와 배치 고정(Lock)은 기구 도면으로 확인'};}
@@ -7846,7 +7854,7 @@ function evaluate(B,opts){
   return{scope,preset:g.preset,presetLabel:PRESETS[g.preset].label,pct,crit,passed,applicable:app,manual,total:res.length,verdict,rules:res};
 }
 const sev=r=>({fail:0,manual:1,partial:2,pass:3,na:4}[r.status]);
-return{RULES,PRESETS,presetKey,prio,state,setPreset,setWeight,set,evaluate,partsOf};
+return{RULES,PRESETS,presetKey,prio,state,setZoning,setPreset,setWeight,set,evaluate,partsOf};
 })();
 
 
@@ -16687,15 +16695,16 @@ function guideRun(a,scope,ctx){
   const B=BD;const sub=(a._[0]||'check').toLowerCase();const sheets=()=>BD.schSheets||(typeof schData==='function'&&schData()?schData().sheets:null);
   if(sub==='rules')return GUIDE.RULES.filter(r=>scope==='all'||r.scope===scope||a.all).map(r=>{const w=GUIDE.state(B).w[r.key];return`${r.key.padEnd(15)} ${GUIDE.prio(w).label} · 중요도 ${w} · [${r.cat}] ${r.title}\n    ${r.desc}\n    참조: ${r.ref}`;}).join('\n');
   if(sub==='presets')return Object.entries(GUIDE.PRESETS).map(([k,v])=>`${k.padEnd(10)} ${v.label}${GUIDE.state(B).preset===k?'  ← 지금':''}`).join('\n');
+  if(sub==='zoning'){if(!a._[1]){const m=GUIDE.state(B).zoning||'relaxed';return`구역 분리 판정: ${m==='strict'?'엄격 (파워·디지털·아날로그 모두 분리)':'완화 (파워↔아날로그만 엄격, 파워↔디지털 겹침 25 %까지 허용)'} — guide zoning strict|relaxed`;}const m=GUIDE.setZoning(B,a._[1]);return`구역 분리 판정을 ${m==='strict'?'엄격':'완화'}으로 바꿨습니다. guide check로 다시 점검하세요.`;}
   if(sub==='preset'){const k=GUIDE.setPreset(B,a._[1]);return`프리셋 ${k} (${GUIDE.PRESETS[k].label}) — 중요도를 바꿨습니다. guide check로 다시 점검하세요.`;}
   if(sub==='weight'){const w=GUIDE.setWeight(B,a._[1],a._[2]);return`${a._[1]} 중요도 ${w} (${GUIDE.prio(w).label})`;}
   if(sub==='set'){const st=String(a._[2]||'').toLowerCase();const o=GUIDE.set(B,a._[1],st,a.note?String(a.note):a._.slice(3).join(' '),ctx&&ctx.by||'user');return o?`${a._[1]} → ${GUIDE_WORD[o.status]}${o.note?' ('+o.note+')':''} · 판정자 ${o.by==='ai'?'AI':'사용자'}`:`${a._[1]} → 자동 판정으로 되돌림`;}
   if(sub==='show'){const r=GUIDE.evaluate(B,{scope:'all',sheets:sheets()}).rules.find(x=>x.key===a._[1]);if(!r)throw new Error('알 수 없는 규칙: '+a._[1]);
     return`${r.title} [${r.key}] · ${r.prio} · 중요도 ${r.w}\n${r.desc}\n참조: ${r.ref}\n상태: ${GUIDE_WORD[r.status]}${r.score!=null?` (점수 ${r.score.toFixed(2)})`:''}\n근거: ${r.ev}${r.fix?`\n조치: ${r.fix}`:''}${r.manualNote?`\n자동으로 못 보는 부분: ${r.manualNote}`:''}${r.by?`\n수동 판정: ${r.by==='ai'?'AI':'사용자'} → ${GUIDE_WORD[r.status]} (자동 판정 ${GUIDE_WORD[r.auto.status]})${r.note?' · '+r.note:''}`:''}`;}
   if(sub==='check'){if(a.preset)GUIDE.setPreset(B,a.preset);return GUIDE.evaluate(B,{scope:a.all?'all':scope,sheets:sheets()});}
-  throw new Error('guide [check|rules|presets|preset <이름>|weight <규칙> <1-10>|set <규칙> pass|fail|na|auto [--note 메모]|show <규칙>]');
+  throw new Error('guide [check|rules|presets|preset <이름>|zoning relaxed|strict|weight <규칙> <1-10>|set <규칙> pass|fail|na|auto [--note 메모]|show <규칙>]');
 }
-const GUIDE_HELP=['guide [check] [--preset motor|ecu|highspeed|default] [--all] [--ai|--det] · guide rules · guide presets · guide preset <이름> · guide weight <규칙> <1-10> · guide set <규칙> pass|fail|na|auto [--note 메모] · guide show <규칙>','설계 가이드라인 점검: 규칙별 P0–P3 우선순위·가중치·준수율·판정. 결정론은 보드·회로도에서 자동 판정, AI 모드는 결과를 Claude가 검토해 수동 확인 항목을 판단하고 개선 명령을 제안'];
+const GUIDE_HELP=['guide [check] [--preset motor|ecu|highspeed|default] [--all] [--ai|--det] · guide rules · guide presets · guide preset <이름> · guide zoning relaxed|strict · guide weight <규칙> <1-10> · guide set <규칙> pass|fail|na|auto [--note 메모] · guide show <규칙>','설계 가이드라인 점검: 규칙별 P0–P3 우선순위·가중치·준수율·판정. 결정론은 보드·회로도에서 자동 판정, AI 모드는 결과를 Claude가 검토해 수동 확인 항목을 판단하고 개선 명령을 제안'];
 const GUIDE_AI=`You are reviewing a PCB / schematic design-guideline check inside a viewer. The deterministic results are below. Your job:
 1. For rules marked "수동 확인" (manual) or "일부" (partial), decide only when the evidence lines (or one extra inspection command) justify it, and record it with "guide set <key> pass|fail --note \\"짧은 근거\\""; otherwise leave them for the user.
 2. Do not change the board or schematic unless the user explicitly asked for fixes.
@@ -17126,7 +17135,7 @@ async function cliRun(line,quiet,by){
     case'zone':{const sub=String(a._[0]||'').toLowerCase();
       if(sub==='auto'||!BD.zones&&sub&&sub!=='off'){let groups=BD.zones&&BD.zones.groupOf;if(!groups&&BD.newPlan&&typeof NEWPROJ!=='undefined'){const r=NEWPROJ.build(BD.newPlan);groups=NEWPROJ.partGroups(BD.newPlan,r.parts);}
         if(!groups)throw new Error('부품의 기능 그룹을 알 수 없습니다 (신규 설계로 만든 보드에서 사용)');const Z=AUTOPLACE.floorplan(BD,groups,{template:a._[1]==='motor'||a._[1]==='general'?a._[1]:undefined});if(!Z)throw new Error('영역을 나눌 부품이 없습니다');
-        const hard=BD.zones&&BD.zones.hard;BD.zones=Z;if(hard)Z.hard=true;}
+        const hard=BD.zones&&BD.zones.hard;BD.zones=Z;if(sub==='hard'||hard&&sub!=='soft')Z.hard=true;}
       else if(sub==='off'){if(BD.zones)BD.zones.on=false;refresh(false);return'기능 영역 끔 — 배치에 영향 없음 (zone on으로 다시)';}
       else if(sub==='on'){if(!BD.zones)throw new Error('영역이 없습니다 — zone auto');BD.zones.on=true;}
       else if(sub==='hard'||sub==='soft'){if(!BD.zones)throw new Error('영역이 없습니다 — zone auto');BD.zones.hard=sub==='hard';}
@@ -17907,7 +17916,7 @@ async function npGenerate0(o){
   toast(`${P.name}: 부품 ${B.comps.length}개로 회로를 만들었습니다. 회로도를 검토한 뒤 3단계에서 PCB를 시작하세요.`);
   return'회로 생성 완료 — 2단계(회로도)에서 검토·수정하고, 3단계 PCB에서 배치·배선을 시작합니다.';
 }
-const pcbPlanText=p=>`${p.layers||2}층 · ${p.min?'크기 최소화':p.board?`${p.board.w} × ${p.board.h} mm`:'크기 자동'} · ${AUTOPLACE.STRATS[p.strategy]?AUTOPLACE.STRATS[p.strategy].label:p.strategy} 배치 · 자동 배선 ${p.route===false?'끔':'켬'}`;
+const pcbPlanText=p=>`${p.layers||2}층 · 기능 구획 ${p.zone==='hard'?'강제':p.zone==='off'?'끔':'권장'} · ${p.min?'크기 최소화':p.board?`${p.board.w} × ${p.board.h} mm`:'크기 자동'} · ${AUTOPLACE.STRATS[p.strategy]?AUTOPLACE.STRATS[p.strategy].label:p.strategy} 배치 · 자동 배선 ${p.route===false?'끔':'켬'}`;
 /* ---------- step 3 gate: the PCB is started explicitly (layers, size, strategy, routing), the console shows each command ---------- */
 function pcbGatePaint(){
   const show=!!(BD&&BD.pcbPending&&!BD.blank&&HS.ws==='board'&&S.sch!=='full');let el=$('#pcbGate');
@@ -17923,6 +17932,7 @@ function pcbGatePaint(){
       <label>보드 모양 <select name="shape">${Object.entries(PCBEDIT.SHAPES).filter(([k])=>k!=='poly').map(([k,v])=>`<option value="${k}"${k===(p.shape||'rect')?' selected':''}>${v}</option>`).join('')}</select></label>
       <label class="pg-sh">모양 값 <input type="text" name="shapeArg" placeholder="corner R · circle 지름 · L/T 절개 가로x세로 [tr|tl|br|bl]" value="${esc(p.shapeArg||'')}"></label>
       <label>배치 전략 <select name="s">${Object.entries(AUTOPLACE.STRATS).map(([k,v])=>`<option value="${k}"${k===p.strategy?' selected':''}>${v.label}</option>`).join('')}</select></label>
+      <label title="파워스테이지 · 전원부 · MCU부 · 통신 · 센싱 · 입력을 보드 위 구획으로 나눠 배치합니다. 권장은 구획 밖 부품에 벌점만 주고(완화), 강제는 구획 안으로 거의 묶습니다.">기능 구획 <select name="zone">${[['soft','권장 (완화 · 기본)'],['hard','강제 (엄격 분리)'],['off','끔 (구획 없이)']].map(([k,v])=>`<option value="${k}"${k===(p.zone||'soft')?' selected':''}>${v}</option>`).join('')}</select></label>
       <label class="chkl"><input type="checkbox" name="route"${p.route!==false?' checked':''}> 이어서 자동 배선${'' }</label>
       <label class="chkl" title="기본은 상단 단면 조립(리플로 1회, 가장 저렴). 양면이면 수동소자·소형 IC를 하단에도 놓아 보드가 작아지지만 조립 공정이 2회가 됩니다."><input type="checkbox" name="both"${p.both?' checked':''}> 양면 배치 (하단에 수동소자·소형 IC)</label></div>
     <p class="lead pg-note">PCB 단계에서는 배선을 위해 MCU 핀 배정을 바꾸는 등 회로를 함께 고칠 수 있습니다 (CLI pinswap · 분할 보기에서 회로도 편집).</p>
@@ -17930,7 +17940,7 @@ function pcbGatePaint(){
   $('#vp').appendChild(el);const F=el.querySelector('[data-f]');const wh=F.querySelector('.pg-wh');const sz=F.querySelector('[name=size]');const shp=F.querySelector('[name=shape]'),sha=F.querySelector('.pg-sh');const upd=()=>{wh.hidden=sz.value!=='fix';sha.hidden=shp.value==='rect'||shp.value==='oval';const ph={round:'모서리 R (mm) · 비우면 10%',circle:'지름 (mm) · 비우면 가로',L:'절개 가로x세로 [tr|tl|br|bl]',T:'기둥 가로x세로',hex:'폭(평행면 간) mm',oct:'폭 mm'};sha.querySelector('input').placeholder=ph[shp.value]||'';};sz.addEventListener('change',upd);shp.addEventListener('change',upd);upd();
   el.querySelector('[data-sch]').addEventListener('click',()=>setStep(2));
   el.querySelector('[data-cli]').addEventListener('click',()=>{if(S.view!=='T'&&S.view!=='B')setView('T');cliToggle(true);});
-  const read=()=>{const d=new FormData(F);return{layers:+d.get('layers'),min:d.get('size')==='min',board:d.get('size')==='fix'?{w:+d.get('w'),h:+d.get('h')}:null,strategy:d.get('s'),route:!!d.get('route'),both:!!d.get('both'),shape:d.get('shape')||'rect',shapeArg:(d.get('shapeArg')||'').trim()};};
+  const read=()=>{const d=new FormData(F);return{layers:+d.get('layers'),min:d.get('size')==='min',board:d.get('size')==='fix'?{w:+d.get('w'),h:+d.get('h')}:null,strategy:d.get('s'),route:!!d.get('route'),both:!!d.get('both'),zone:d.get('zone')||'soft',shape:d.get('shape')||'rect',shapeArg:(d.get('shapeArg')||'').trim()};};
   F.addEventListener('submit',e=>{e.preventDefault();const q=read();BD.pcbPlan=q;pcbStart(q);});
   el.querySelector('[data-fast]').addEventListener('click',()=>{const q=Object.assign(read(),{fast:true});BD.pcbPlan=q;pcbStart(q);});
 }
@@ -17941,6 +17951,8 @@ async function pcbStart(p){
   if(p.board&&!p.min)cmds.push(`board size ${p.board.w} ${p.board.h} --anchor center`);
   {if(p.shape&&p.shape!=='rect'){const w=p.board?p.board.w:BD.W,h=p.board?p.board.h:BD.H;const arg=String(p.shapeArg||'');const num=parseFloat(arg);const cut=(arg.match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/)||[])[0];const at=(arg.match(/\b(tr|tl|br|bl)\b/i)||[])[1];
       cmds.push(p.shape==='round'?`board shape round ${w} ${h}${isFinite(num)?' --corner '+num:''}`:p.shape==='circle'?`board shape circle ${isFinite(num)?num:Math.min(w,h)}`:p.shape==='hex'||p.shape==='oct'?`board shape ${p.shape} ${isFinite(num)?num:w}`:p.shape==='L'||p.shape==='T'?`board shape ${p.shape} ${w} ${h}${cut?' --cut '+cut.replace(/\s/g,''):''}${at?' --at '+at:''}`:`board shape ${p.shape} ${w} ${h}`);}}
+  // functional zones: soft (default, relaxed guideline check) · hard (strict) · off
+  {const zm=p.zone||'soft';if(BD.zones||BD.newPlan){cmds.push(`zone ${zm}`);if(typeof GUIDE!=='undefined')GUIDE.setZoning(BD,zm==='hard'?'strict':'relaxed');}}
   // fast: fewer placement iterations, routing with 3 rip-up rounds, a short negotiated pass and no post-optimisation
   const FAST=' --effort 0.5',FASTR=' --rounds 3 --pf-rounds 4 --pf-time 20',FULLR=' --gloss';
   if(p.min&&!p.fast)cmds.push(`board minimize --strategy ${p.strategy}${p.both?' --both':''}${p.route?' --route --gloss':''}`);
