@@ -123,9 +123,15 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
     const blk=fh+(shW?0.9+shW:0)+1.0;let P=Math.max(blk+1.5,9);if(P*R.length>H)P=blk;
     R.sort((a,b)=>padX(b.ph)-padX(a.ph));R.forEach((r,k)=>rowAt(r,k,top,P,fx,fRot,fh,shW));
     const fR=Math.max(...R.map(r=>r.c.bb[2]));keepout.push([fR+0.2,term.bb[3]+0.2,rect[2]-edge,top]);
+    // load lanes beside the column, one per output: split between the outputs' contacts, each lane from its contacts down to
+    // its own FET row; past the nearer FETs a lane takes the full strip. The power fill claims them first, so the output that
+    // runs past the other FET (ELD− past ELD+) keeps its width instead of the first-grown copper closing it off.
+    const lanes=[];{const X1=rect[2]-edge,X0=fR+0.2;const cx=R.map(r=>padX(r.ph));const yC=Math.min(...lp.map(p=>p.y-p.h/2));
+      R.forEach((r,k)=>{const xa=k===R.length-1?X0:(cx[k]+cx[k+1])/2,xb=k===0?X1:(cx[k-1]+cx[k])/2;if(xb-xa<1)return;lanes.push({net:r.ph,rect:[+xa.toFixed(2),+yC.toFixed(2),+xb.toFixed(2),+(r.c.bb[3]).toFixed(2)]});
+        const nxt=R[k+1];if(nxt&&r.c.bb[3]>nxt.c.bb[3]+1)lanes.push({net:r.ph,rect:[+X0.toFixed(2),+(nxt.c.bb[3]+0.6).toFixed(2),+xb.toFixed(2),+(r.c.bb[3]).toFixed(2)]});});}
     const planeBus=o.planes&&o.planes.has(bat);const busX1=fx-fw/2-0.4,busX0=busX1-Math.max(3,o.busW||4);if(!planeBus)keepout.push([busX0,yIn-1,busX1,top]);
     const drv=placeDrv(busX0);
-    return{fixed,keepout,bus:planeBus?null:[busX0,rect[1],busX1,top],net:bat,fit:P*R.length<=H+0.01,planeBus,driver:drv?drv.ref:null};}
+    return{fixed,keepout,bus:planeBus?null:[busX0,rect[1],busX1,top],net:bat,fit:P*R.length<=H+0.01,planeBus,driver:drv?drv.ref:null,lanes};}
   // motor terminal: pads in a vertical line on the outer (right) edge of the zone
   // a right-angle connector (body beside its pins, e.g. the one ECU connector) turns its body — the mating face — to the board edge
   const tRot=bestRot(term,c=>{const xs=c.pads.map(p=>p.x),ys=c.pads.map(p=>p.y);const px=xs.reduce((a,b)=>a+b,0)/xs.length;const bx=c.body&&c.body.cx!=null?c.body.cx:px;
@@ -234,7 +240,7 @@ function place(B,opts){
     const Imax=Math.max(0,...Object.values(B.netCurrent||{}).map(Number));const Pk=Object.values(B.netPeak||{}).sort((a,b)=>b.I-a.I)[0]||null;const need=typeof CURRENT!=='undefined'&&Imax?(CURRENT.needWidth?CURRENT.needWidth(Imax,Pk,{oz:B.oz||1,dT:B.dT||10,dTpk:B.dTpk||40,tb:B.t}).w:CURRENT.ipcWidth(Imax,{oz:B.oz||1,dT:B.dT||10})):4;
     const planes=new Set(PCB.stackOf(B).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));
     try{macro=powerMacro(B,col,{busW:Math.min(8,need),planes});}catch(e){macro=null;}
-    if(macro){B.powerBus=macro.bus?{rect:macro.bus,net:macro.net}:null;opts=Object.assign({},opts,{fixed:(opts.fixed||[]).concat(macro.fixed),keepout:(opts.keepout||[]).concat(macro.keepout)});}else B.powerBus=null;}
+    if(macro){B.powerBus=macro.bus?{rect:macro.bus,net:macro.net}:null;B.powerLanes=macro.lanes&&macro.lanes.length?macro.lanes:null;opts=Object.assign({},opts,{fixed:(opts.fixed||[]).concat(macro.fixed),keepout:(opts.keepout||[]).concat(macro.keepout)});}else{B.powerBus=null;B.powerLanes=null;}}
   const info=classify(B,opts);const R=rng(opts.seed!=null?opts.seed:1);
   const fixed=new Set((opts.fixed||[]).map(String));const only=opts.only?new Set(opts.only.map(String)):null;
   const movable=info.list.filter(o=>!fixed.has(o.ref)&&(!only||only.has(o.ref)));

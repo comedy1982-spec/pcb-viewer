@@ -20,6 +20,7 @@ function save(B,meta){const keys=PCB.cuKeys(B);const nets=[];const ni=n=>{if(n==
   S.pours=[];keys.forEach((k,L)=>B.layers[k+'.cu'].forEach(p=>{if(p.t==='pour')S.pours.push([L,JSON.parse(JSON.stringify(p))]);}));
   if(B.powerReport)S.powerReport=JSON.parse(JSON.stringify(B.powerReport));
   if(B.powerBus)S.powerBus=JSON.parse(JSON.stringify(B.powerBus));
+  if(B.powerLanes)S.powerLanes=JSON.parse(JSON.stringify(B.powerLanes));
   return S;}
 /* restore onto B (the board generated from the same plan): layers, placement, copper, vias. Returns the parts it could
    not find (should be none). */
@@ -41,6 +42,7 @@ function apply(B,S){if(!S||S.v!==1)throw new Error('스냅샷 형식이 다릅�
   if(S.pours){keys.forEach(k=>{B.layers[k+'.cu']=B.layers[k+'.cu'].filter(p=>p.t!=='pour');});S.pours.slice().reverse().forEach(([L,p])=>{B.layers[keys[L]+'.cu'].unshift(JSON.parse(JSON.stringify(p)));});}
   if(S.powerReport)B.powerReport=JSON.parse(JSON.stringify(S.powerReport));
   if(S.powerBus)B.powerBus=JSON.parse(JSON.stringify(S.powerBus));
+  B.powerLanes=S.powerLanes?JSON.parse(JSON.stringify(S.powerLanes)):null;
   B.pcbPending=false;PCBEDIT.rebuildNets(B);return{missing:miss};}
 return{save,apply};
 })();

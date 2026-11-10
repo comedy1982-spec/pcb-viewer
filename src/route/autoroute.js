@@ -551,8 +551,13 @@ function powerFill(B,o){o=Object.assign({layer:0,clr:0.25,esc:0.9,grid:0.1,stitc
   (o.claim||[]).forEach(c=>{const k=nets.indexOf(c.net);if(k<0)return;const r=c.rect;for(let y=Math.max(Y0,Math.ceil((r[1]-G.oy)/g));y<=Math.min(Y1,Math.floor((r[3]-G.oy)/g));y++)for(let x=Math.max(X0,Math.ceil((r[0]-G.ox)/g));x<=Math.min(X1,Math.floor((r[2]-G.ox)/g));x++){const i=y*G.nx+x;
       if(own[i]>=0||blocked[i])continue;const v=occ[i];if(v!==0&&v!==id[k])continue;own[i]=k;Q.push(i);}});
   if(o.width){const order=nets.map((n,k)=>k).filter(k=>o.width[nets[k]]>0).sort((a,b)=>(o.width[nets[b]]||0)-(o.width[nets[a]]||0));
-    order.forEach(k=>{const lim=Math.ceil(o.width[nets[k]]/2/g);const dep=new Map();const q=[];for(let i=0;i<G.N;i++)if(own[i]===k&&seed[i]){q.push(i);dep.set(i,0);}
-      for(let h=0;h<q.length;h++){const i=q[h],d0=dep.get(i);if(d0>=lim)continue;const x=i%G.nx;for(const j of [x>X0?i-1:-1,x<X1?i+1:-1,i-G.nx,i+G.nx]){if(j<0||j>=G.N||own[j]>=0||blocked[j]||!inR(j))continue;const v=occ[j];if(v!==0&&v!==id[k])continue;own[j]=k;dep.set(j,d0+1);q.push(j);Q.push(j);}}});}
+    // all corridor nets grow together, one cell ring per step (breadth-first from every seed at once): two straps running side by
+    // side split the space between them instead of the first net taking all of it (ELD H-bridge: ELD+ and ELD- both rise beside
+    // the FET column; growing one net to its full width first left the other a 0.2 mm sliver)
+    const lim=nets.map(n=>o.width[n]>0?Math.ceil(o.width[n]/2/g):0);const dep=new Int32Array(G.N);const q=[];
+    for(let i=0;i<G.N;i++){const k=own[i];if(k>=0&&seed[i]&&lim[k]>0)q.push(i);}
+    for(let h=0;h<q.length;h++){const i=q[h],k=own[i],d0=dep[i];if(d0>=lim[k])continue;const x=i%G.nx;for(const j of [x>X0?i-1:-1,x<X1?i+1:-1,i-G.nx,i+G.nx]){if(j<0||j>=G.N||own[j]>=0||blocked[j]||!inR(j))continue;const v=occ[j];if(v!==0&&v!==id[k])continue;own[j]=k;dep[j]=d0+1;q.push(j);Q.push(j);}}
+    void order;}
   for(let h=0;h<Q.length;h++){const i=Q[h],k=own[i];const x=i%G.nx;const nb=[x>X0?i-1:-1,x<X1?i+1:-1,i-G.nx,i+G.nx];
     for(const j of nb){if(j<0||j>=G.N||own[j]>=0||blocked[j]||!inR(j))continue;const v=occ[j];if(v!==0&&v!==id[k])continue;own[j]=k;Q.push(j);}}
   // gap between different fill nets ≥ clearance

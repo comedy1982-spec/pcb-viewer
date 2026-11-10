@@ -194,7 +194,7 @@ function powerFill(B,WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.p
   if(ml){const had=B.layers[keys[NL-1]+'.cu'].some(p=>p.t==='pour'&&!p.plane);B.layers[keys[NL-1]+'.cu']=B.layers[keys[NL-1]+'.cu'].filter(p=>!(p.t==='pour'&&!p.plane));
     // bottom-side pads counted on that pour (no via of their own) now need one down to their inner plane
     if(had&&AUTOPLACE.fanout){const f=AUTOPLACE.fanout(B,{clear:cl,width:0.3,via});refan=f.vias;}}
-  const fs=layers.map(l=>AUTOROUTE.powerFill(B,{nets:fillNets,rect,clr:cl,via,width,layer:l,claim:B.powerBus&&B.nets[B.powerBus.net]&&l===0?[B.powerBus]:[]}));
+  const fs=layers.map(l=>AUTOROUTE.powerFill(B,{nets:fillNets,rect,clr:cl,via,width,layer:l,claim:(B.powerBus&&B.nets[B.powerBus.net]&&l===0?[B.powerBus]:[]).concat((B.powerLanes||[]).filter(c=>B.nets[c.net]&&fillNets.includes(c.net)))}));
   const tb=ml?AUTOROUTE.stitchLayers(B,fillNets.filter(n=>!PW.planes.has(n)&&WW[n].cls!=='gnd'),{via}):0;
   const pr=AUTOROUTE.pruneIslands?AUTOROUTE.pruneIslands(B,hi):{fills:0,vias:0};
   const BP1=AUTOROUTE.bottleneckPrep(B);const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return;const need=WW[n].ipc!=null?WW[n].ipc:CURRENT.ipcWidth(WW[n].I,{oz,dT});const pk=WW[n].pk||null;

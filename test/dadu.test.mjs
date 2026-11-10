@@ -169,3 +169,8 @@ test('ELD only A4911 H-bridge example snapshot restores: DRC 0, nothing unconnec
   assert.ok(B.powerReport.nets.filter(n => n.width !== '직결').every(n => n.width >= n.need));
   assert.ok((B.powerReport.viaChk || []).every(v => v.ok));
 });
+test('ELD H-bridge: each output gets its own lane beside the FET column and both outputs meet the width', () => {
+  const S = load().SNAP_ELD6;const L = S.powerLanes;assert.ok(L && L.length >= 2);
+  assert.deepEqual([...new Set(L.map(l => l.net))].sort(), ['HB_A', 'HB_B']);
+  const w = Object.fromEntries(S.powerReport.nets.map(n => [n.net, n.width]));assert.ok(w.HB_A >= 2.3 && w.HB_B >= 2.3, JSON.stringify(w));
+});
