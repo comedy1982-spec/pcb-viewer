@@ -107,7 +107,7 @@ async function routeJob(B,a,ui){
     const NLc=PCB.cuKeys(B).length;avoid=PW.route.map(n=>({net:n,r:Math.min(4,PW.need[n]/2),layers:ml?[0,NLc-1]:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
     // output lanes (ECU connector H-bridge / inverter): other nets — the other outputs' straps included — stay out of a lane on
     // both outer layers, so a strap routed diagonally to its contact cannot cut the neighbouring lane's fill in two
-    (B.powerLanes||[]).forEach(c=>{if(!B.nets[c.net])return;const b=c.rect;avoid.push({net:c.net,r:0.2,layers:ml?[0,NLc-1]:[0],shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L:ml?[0,NLc-1]:[0]}]});});
+    if(a['lane-avoid'])(B.powerLanes||[]).forEach(c=>{if(!B.nets[c.net])return;const b=c.rect;avoid.push({net:c.net,r:0.2,layers:ml?[0,NLc-1]:[0],shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L:ml?[0,NLc-1]:[0]}]});});
     if(B.powerBus&&B.nets[B.powerBus.net]){const b=B.powerBus.rect;avoid.push({net:B.powerBus.net,r:0.2,layers:[0],shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L:[0]}]});}
     // multilayer: the bottom layer of the whole stage ∪ input region carries phase / supply copper — every other net pays
     // to cross it there (it has the inner signal layers), so a single signal track cannot cut the phase fill in two

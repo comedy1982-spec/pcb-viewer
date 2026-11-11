@@ -311,6 +311,14 @@ function place(B,opts){
       const tk=[],tg=[];a.c.pads.forEach((p,k)=>{if(p.net===o.rail)tk.push(k);else if(isGnd(p.net))tg.push(k);});
       const w=st.decap*(o.bulk?(a.driver?1.2:0.35):1);
       const id=DEC.length;DEC.push({ci,ai,a,rk,gk,tk,tg,w});decOf[ci].push(id);if(ai!=null)decOf[ai].push(id);});}
+  // pin caps: a two-pin capacitor whose own net reaches only one IC (charge-pump flying caps CPH–CPL, VCP storage, bootstrap
+  // BST–SH, VREG …) is pulled to that IC pin like a decoupling cap — the annealer otherwise only sees a short two-pin net and may
+  // leave it across the board (DRV8334 VCP cap 15 mm from its pin, then unroutable)
+  {const deg={};B.comps.forEach(c=>c.pads.forEach(p=>{if(p.net)(deg[p.net]=deg[p.net]||new Set()).add(c.ref);}));
+    info.list.filter(o=>o.two&&/^C/i.test(o.ref)&&!o.decap).forEach(o=>{const ci=idx.get(o.ref);if(ci==null)return;
+      for(let rk=0;rk<o.c.pads.length;rk++){const net=o.c.pads[rk].net;if(!net||isGnd(net))continue;const owners=[...(deg[net]||[])].filter(r=>r!==o.ref);if(owners.length!==1)continue;
+        const a=info.byRef?info.byRef[owners[0]]:info.list.find(x=>x.ref===owners[0]);if(!a||!a.ic||a.conn)continue;const tk=[];a.c.pads.forEach((p,k)=>{if(p.net===net)tk.push(k);});
+        const ai=idx.get(a.ref);const id=DEC.length;DEC.push({ci,ai,a,rk,gk:-1,tk,tg:[],w:st.decap});decOf[ci].push(id);if(ai!=null)decOf[ai].push(id);break;}});}
   const ROLE=movable;
   // pairs that may sit closer than the usual spacing: a decap and the IC it serves, a crystal and its MCU
   info.list.forEach((o,k)=>{o._id=k;});const TG=new Map();const tg=(a,b,g)=>{TG.set(a._id*100000+b._id,g);TG.set(b._id*100000+a._id,g);};

@@ -94,7 +94,7 @@ test('continuous + peak current: requirement words, block params, parts by peak,
   assert.equal(g.params.i, 10);assert.equal(+g.params.ipk, 40);assert.equal(+g.params.tpk, 2);
   const plan = HWARCH.toPlan(R.arch).plan;const r = NEWPROJ.build(plan);
   const sh = r.parts.find(c => /U상 전류 션트/.test(c.desc));assert.equal(sh.val, '1mΩ', 'shunt range covers the 40 A peak');assert.ok(sh.P <= 0.11, 'shunt loss at 10 A');
-  assert.ok(r.parts.find(c => c.val === 'SQD50P04-09L').P < 1.0, 'reverse FET loss at 10 A');
+  assert.ok(r.parts.find(c => c.val === 'IPB180P04P4L-02').P < 1.0, 'reverse FET loss at 10 A (40 A peak → D2PAK-7)');
   assert.ok(r.parts.some(c => /TERM-3-7\.62/.test(c.fp)), 'terminals sized for the peak');
   const { B } = NEWPROJ.toBoard(plan, { place: false });
   assert.equal(B.netCurrent.PH_U, 10);assert.deepEqual(B.netPeak.PH_U, { I: 40, t: 2 });assert.equal(B.lossIpk, 40);
