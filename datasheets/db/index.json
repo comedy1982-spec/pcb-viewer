@@ -640,6 +640,14 @@
       "status": "done",
       "title": "2.5 A triple half-bridge motor driver, 60 V"
     },
+    "DRV8334-Q1": {
+      "file": "datasheets/db/DRV8334-Q1.html",
+      "mfr": "Texas Instruments",
+      "cat": "게이트 드라이버",
+      "price": 4,
+      "status": "done",
+      "title": "Automotive 12/24 V 3-phase smart gate driver with current sensing, SPI, HTQFP-48"
+    },
     "DRV8343SPHPRQ1": {
       "file": "datasheets/db/DRV8343SPHPRQ1.html",
       "mfr": "Texas Instruments",

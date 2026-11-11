@@ -69,3 +69,17 @@ test('footprints: exposed pad after the leads (HSOIC-8, HTSSOP-16, TSDSO-14, VSO
     assert.equal(PCB.FP[fp].pads.length, pads, `${pkg} → ${fp}`);
   }
 });
+
+test('DRV8334-Q1 as the 3-phase gate driver: every pin wired by name, datasheet external components', () => {
+  const { PRODUCTS, HWARCH, NEWPROJ } = load();
+  const prof = PRODUCTS.detect('Dadu');const fq = prof.questions.find(q => q.key === 'fet');
+  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, { cur: '~20 A (팬 · 소형 펌프)', fet: fq.options[0].label }, 'Dadu').arch).plan;
+  plan.blocks.find(b => b.type === 'gdrv3').params.driver = 'DRV8334';
+  const B = NEWPROJ.toBoard(plan, { place: false }).B;const u = B.comps.find(c => c.val === 'DRV8334-Q1');
+  assert.ok(u && u.pads.length === 49 && u.pads.every(p => p.net));
+  const net = n => u.pads.find(p => p.n === n).net;
+  assert.equal(net('31'), '+12V');assert.equal(net('35'), '+12V');assert.equal(net('38'), 'PH_U_HO');assert.equal(net('37'), 'PH_U');assert.equal(net('36'), 'PH_U_VB');assert.equal(net('40'), 'PH_U_LSS');
+  assert.ok(!B.comps.some(c => /IR2104/.test(c.val)));
+  const cap = (a, b) => B.comps.some(c => c.pads.length === 2 && [a, b].every(n => c.pads.some(p => p.net === n)) && /µF/.test(c.val));
+  assert.ok(cap('PH_CPH', 'PH_CPL') && cap('PH_CPTH', 'PH_CPTL') && cap('PH_VCP', '+12V') && cap('PH_GVDD', 'GND') && cap('PH_U_VB', 'PH_U'));
+});

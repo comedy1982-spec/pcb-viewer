@@ -126,9 +126,13 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
     // load lanes beside the column, one per output: split between the outputs' contacts, each lane from its contacts down to
     // its own FET row; past the nearer FETs a lane takes the full strip. The power fill claims them first, so the output that
     // runs past the other FET (ELD− past ELD+) keeps its width instead of the first-grown copper closing it off.
-    const lanes=[];{const X1=rect[2]-edge,X0=fR+0.2;const cx=R.map(r=>padX(r.ph));const yC=Math.min(...lp.map(p=>p.y-p.h/2));
-      R.forEach((r,k)=>{const xa=k===R.length-1?X0:(cx[k]+cx[k+1])/2,xb=k===0?X1:(cx[k-1]+cx[k])/2;if(xb-xa<1)return;lanes.push({net:r.ph,rect:[+xa.toFixed(2),+yC.toFixed(2),+xb.toFixed(2),+(r.c.bb[3]).toFixed(2)]});
-        const nxt=R[k+1];if(nxt&&r.c.bb[3]>nxt.c.bb[3]+1)lanes.push({net:r.ph,rect:[+X0.toFixed(2),+(nxt.c.bb[3]+0.6).toFixed(2),+xb.toFixed(2),+(r.c.bb[3]).toFixed(2)]});});}
+    // at the contacts the lanes split between neighbouring outputs' contacts; past the contact rows the strip is shared equally
+    // (three outputs on a 3.5 mm contact pitch would otherwise leave the middle lane ~3 mm wide for its whole run)
+    const lanes=[];{const X1=rect[2]-edge,X0=fR+0.2;const cx=R.map(r=>padX(r.ph));const yC=Math.min(...lp.map(p=>p.y-p.h/2)),yS=Math.max(...lp.map(p=>p.y+p.h/2))+1.0;const n=R.length,wq=(X1-X0)/n;const f=v=>+v.toFixed(2);
+      R.forEach((r,k)=>{const xa=k===n-1?X0:(cx[k]+cx[k+1])/2,xb=k===0?X1:(cx[k-1]+cx[k])/2;const ea=X0+(n-1-k)*wq,eb=X0+(n-k)*wq;const yE=r.c.bb[3];
+        if(xb-xa>=1)lanes.push({net:r.ph,rect:[f(xa),f(yC),f(xb),f(Math.min(yS,yE))]});
+        if(yE>yS)lanes.push({net:r.ph,rect:[f(ea),f(yS),f(eb),f(yE)]});
+        const nxt=R[k+1];if(nxt&&r.c.bb[3]>nxt.c.bb[3]+1)lanes.push({net:r.ph,rect:[f(X0),f(Math.max(yS,nxt.c.bb[3]+0.6)),f(eb),f(yE)]});});}
     const planeBus=o.planes&&o.planes.has(bat);const busX1=fx-fw/2-0.4,busX0=busX1-Math.max(3,o.busW||4);if(!planeBus)keepout.push([busX0,yIn-1,busX1,top]);
     const drv=placeDrv(busX0);
     return{fixed,keepout,bus:planeBus?null:[busX0,rect[1],busX1,top],net:bat,fit:P*R.length<=H+0.01,planeBus,driver:drv?drv.ref:null,lanes};}

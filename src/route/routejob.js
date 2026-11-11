@@ -100,10 +100,14 @@ async function routeJob(B,a,ui){
       const pw1=first.filter(n=>PW.route.includes(n)),st1=first.filter(n=>!PW.route.includes(n));
       // power nets on the top layer only (their width comes from the fill there), then the stage's drive nets anywhere
       const NL0=PCB.cuKeys(B).length,avB=ml?[{net:null,r:0,layers:[NL0-1],shapes:[{k:'rect',x:(R0[0]+R0[2])/2,y:(R0[1]+R0[3])/2,hw:(R0[2]-R0[0])/2,hh:(R0[3]-R0[1])/2,ang:0,L:[NL0-1]}]}]:null;
-      for(const [list,extra] of [[pw1,{innerCost:30}],[st1,{netBottom:undefined,avoid:avB,avoidCost:6}]]){if(!list.length)continue;const it1=AUTOROUTE.jobRR(B,list,Object.assign({width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6},extra));
+      const NLl=PCB.cuKeys(B).length,avL=(B.powerLanes||[]).filter(c=>B.nets[c.net]).map(c=>{const b=c.rect,L=ml?[0,NLl-1]:[0];return{net:c.net,r:0.2,layers:L,shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L}]};});
+      for(const [list,extra] of [[pw1,avL.length?{innerCost:30,avoid:avL,avoidCost:6}:{innerCost:30}],[st1,{netBottom:undefined,avoid:avB,avoidCost:6}]]){if(!list.length)continue;const it1=AUTOROUTE.jobRR(B,list,Object.assign({width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6},extra));
       for(;;){const q=it1.next();if(q.done)break;if(ui.stopped())break;}}PCBEDIT.rebuildNets(B);}
     const SS=AUTOROUTE.shapesOfBoard(B);const R=PW.rect;const inR=s=>{const x=s.k==='cap'?(s.a[0]+s.b[0])/2:s.x,y=s.k==='cap'?(s.a[1]+s.b[1])/2:s.y;return x>=R[0]-1&&x<=R[2]+1&&y>=R[1]-1&&y<=R[3]+1;};
     const NLc=PCB.cuKeys(B).length;avoid=PW.route.map(n=>({net:n,r:Math.min(4,PW.need[n]/2),layers:ml?[0,NLc-1]:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
+    // output lanes (ECU connector H-bridge / inverter): other nets — the other outputs' straps included — stay out of a lane on
+    // both outer layers, so a strap routed diagonally to its contact cannot cut the neighbouring lane's fill in two
+    (B.powerLanes||[]).forEach(c=>{if(!B.nets[c.net])return;const b=c.rect;avoid.push({net:c.net,r:0.2,layers:ml?[0,NLc-1]:[0],shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L:ml?[0,NLc-1]:[0]}]});});
     if(B.powerBus&&B.nets[B.powerBus.net]){const b=B.powerBus.rect;avoid.push({net:B.powerBus.net,r:0.2,layers:[0],shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L:[0]}]});}
     // multilayer: the bottom layer of the whole stage ∪ input region carries phase / supply copper — every other net pays
     // to cross it there (it has the inner signal layers), so a single signal track cannot cut the phase fill in two

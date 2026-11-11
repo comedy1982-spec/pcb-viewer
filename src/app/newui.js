@@ -368,7 +368,7 @@ const NP_SWAP=/^(can|bldc|dcmotor|hs_switch|vmon|uart|i2c|flash|led|button)$/;
 async function npSetPart(b,p){const prev=JSON.parse(JSON.stringify(b.impl||[]));b.part={mpn:p.mpn,mfr:p.mfr||'',note:p.note||''};
   b.feats=(b.feats||[]).filter(f=>!/^부품: /.test(f));b.feats.push(`부품: ${p.mpn}${p.mfr?' ('+p.mfr+')':''}`);
   // Allegro 3-phase drivers drive the whole inverter block: keep gdrv3 (FETs · shunts · bootstrap) and switch its driver
-  {const L0=b.impl||[];const g=L0.find(i=>i.type==='gdrv3'||i.type==='hbridge');const m=String(p.mpn||'').toUpperCase().match(/A491[18]|IR2104/);
+  {const L0=b.impl||[];const g=L0.find(i=>i.type==='gdrv3'||i.type==='hbridge');const m=String(p.mpn||'').toUpperCase().match(/A491[18]|IR2104|DRV8334/);
     if(g&&m){g.params=Object.assign({},g.params,{driver:m[0]});const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(p.mpn):null;
       NP.planManual=false;archToPlan(true);npRender();return`${b.id} ${p.mpn}${p.mfr?' ('+p.mfr+')':''} — ${g.type==='hbridge'?'H-브리지(hbridge)':'3상 인버터(gdrv3)'} 구동 IC를 ${m[0]}로 (FET·션트·부트스트랩·센스 앰프·SPI 자동 연결)${rec&&rec.pins&&rec.pins.length?'':' · 핀 표가 없어 지금은 IR2104로 생성 — datasheet '+p.mpn+' 로 핀 표를 넣으면 반영'}`;}}
   // the library buck block takes its pin-compatible parts directly (inductor · catch diode · compensation stay)

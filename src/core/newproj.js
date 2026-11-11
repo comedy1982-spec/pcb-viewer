@@ -141,7 +141,7 @@ const LIB={
     params:{i:{def:10,desc:'모터 상시(연속) 전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'},shunt:{def:1,desc:'전류 검출 (1/0)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×4) · IAUC60N04S6N050H (하프브리지 ×2) · IPG20N04S4L-07 (듀얼 ×2)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×2) · A4911 · A4918 (Allegro 3상 중 2레그 사용 · SPI 진단 · 센스 앰프 ×2)'},load:{def:'motor',desc:'부하: motor (DC 모터) · solenoid (솔레노이드 — 정/역 극성 구동, 끌 때 역기전력은 FET 바디 다이오드로 VM 회생)'},out:{def:'auto',desc:'출력 단자 이름 (auto = 모터 · 솔레노이드는 ELD 등)'}},
     build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||10);const{Ipk,tpk}=peakOf(p,I);const k=ctx.uniq('HB');const N=x=>k==='HB'?'HB_'+x:k+'_'+x;
       const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,fetChoice(ctx,p,I,V,k),Ipk);const sn=+p.shunt;
-      let drv=allegroDrv(p.driver);pwr.tpk=tpk;if(drv&&!allegro3(ctx,drv,vm,I,pwr,N,{legs:{A:'A',B:'B'}}))drv=null;
+      let drv=allegroDrv(p.driver);pwr.tpk=tpk;if(drv&&!allegro3(ctx,drv,vm,I,pwr,N,{legs:{A:'A',B:'B'}}))drv=null;if(!drv&&/8334/.test(String(p.driver||''))&&ti8334(ctx,vm,I,pwr,N,{legs:{A:'A',B:'B'}}))drv='DRV8334';
       if(!drv&&V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
       const ret=sn?N('SNS'):'GND';
       if(!drv)['A','B'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO');
@@ -158,10 +158,10 @@ const LIB={
       ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(drv)return;if(sn)ctx.curr(ret,I);
       ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
   gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
-    params:{i:{def:20,desc:'상시(연속) 상전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 상전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×3) · A4911 · A4918 (Allegro 3상 · SPI 진단 · 센스 앰프 ×3 내장)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
+    params:{i:{def:20,desc:'상시(연속) 상전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 상전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×3) · A4911 · A4918 (Allegro 3상 · SPI 진단 · 센스 앰프 ×3 내장) · DRV8334 (TI 3상 · SPI · 센스 앰프 ×3, 4.5–60 V)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
     build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||20);const{Ipk,tpk}=peakOf(p,I);const k=ctx.uniq('PH');const N=x=>k==='PH'?'PH_'+x:k+'_'+x;
       const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,fetChoice(ctx,p,I,V,k),Ipk);pwr.tpk=tpk;
-      let drv=allegroDrv(p.driver);if(drv&&!allegro3(ctx,drv,vm,I,pwr,N))drv=null; // no pin table → IR2104 stage instead (warned)
+      let drv=allegroDrv(p.driver);if(drv&&!allegro3(ctx,drv,vm,I,pwr,N))drv=null;if(!drv&&/8334/.test(String(p.driver||''))&&ti8334(ctx,vm,I,pwr,N))drv='DRV8334'; // no pin table → IR2104 stage instead (warned)
       if(!drv&&V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
       if(!drv)['U','V','W'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
         ctx.part('U','IR2104S','SOIC-8',{1:vm,2:N('IN_'+h),3:N('EN'),4:'GND',5:lo,6:ph,7:ho,8:vb},{mpn:'IR2104STRPBF',desc:`하프브리지 게이트 드라이버 (${h}상)`,pinNames:{1:'VCC',2:'IN',3:'nSD',4:'COM',5:'LO',6:'VS',7:'HO',8:'VB'},P:0.05});
@@ -178,6 +178,12 @@ const LIB={
         ['A','B','C'].forEach(x=>{const raw=N('HALL_'+x+(hv>5?'_IN':''));if(hv>5){ctx.part('R','1kΩ','0603',{1:raw,2:N('HALL_'+x)},{desc:'홀 입력 직렬 저항 (과전압 전류 제한)'});ctx.part('D','BAT54S','SOT-23',{1:'GND',2:'+3V3',3:N('HALL_'+x)},{mpn:'BAT54S',desc:'홀 입력 클램프 (GND·3.3 V)',pinNames:{1:'A1',2:'K2',3:'K1/A2'}});
             ctx.part('C','1nF','0603',{1:raw,2:'GND'},{desc:'홀 커넥터 측 필터'});}
           ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:N('HALL_'+x)},{desc:'홀 출력 풀업'});ctx.part('C','1nF','0603',{1:N('HALL_'+x),2:'GND'},{desc:'홀 입력 필터'});ctx.sig(N('HALL_'+x),'irq_in');});}}},
+  spare:{label:'예비 I/O (아날로그 입력 · PWM 출력)',desc:'예비 아날로그 입력 (직렬 1 kΩ + 10 nF + BAT54S 클램프 → ADC) · 예비 PWM 출력 (MCU → 100 Ω 직렬 · ESD) · 2핀 커넥터',params:{ain:{def:1,desc:'예비 아날로그 입력 (1/0)'},pwm:{def:1,desc:'예비 PWM 출력 (1/0)'}},
+    build(ctx,p){const vs=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vs);const k=ctx.uniq('SPARE');const N=x=>k==='SPARE'?'SPARE_'+x:k+'_'+x;const J={};let i=1;const nm={};
+      if(+p.ain){const raw=N('AIN_IN'),ain=N('AIN');ctx.part('R','1kΩ','0603',{1:raw,2:ain},{desc:'예비 아날로그 입력 직렬 저항 (과전압 전류 제한)'});ctx.part('C','10nF','0603',{1:ain,2:'GND'},{desc:'예비 아날로그 입력 RC 필터'});
+        ctx.part('D','BAT54S','SOT-23',{1:'GND',2:vs,3:ain},{mpn:'BAT54S',desc:'예비 아날로그 입력 클램프 (GND · 3.3 V)',pinNames:{1:'A1',2:'K2',3:'K1/A2'}});ctx.sig(ain,'adc');J[i]=raw;nm[i]='SPARE_AIN';i++;}
+      if(+p.pwm){const pw=N('PWM'),out=N('PWM_OUT');ctx.part('R','100Ω','0603',{1:pw,2:out},{desc:'예비 PWM 출력 직렬 저항 (단락 · ESD 전류 제한)'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'예비 PWM 출력 ESD · EMC 캡'});ctx.sig(pw,'pwm');J[i]=out;nm[i]='SPARE_PWM';i++;}
+      if(i>1)ctx.part('J','SPARE','HDR-1x'+(i-1),J,{mpn:'',desc:'예비 I/O 커넥터',pinNames:nm});}},
   dcmotor:{label:'DC 모터 (로우사이드 FET)',desc:'AO3400A + 게이트 저항·풀다운 + 플라이백 SS14 + 0.1 Ω 션트 + RC 필터 → ADC',params:{shunt:{def:1,desc:'전류 검출 (1/0)'}},
     build(ctx,p){const vm=ctx.highest(3);ctx.use(vm);const s=+p.shunt;
       ctx.part('J','모터','HDR-1x2',{1:vm,2:'MOT_N'},{mpn:'61300211121',desc:'DC 모터 커넥터',pinNames:{1:'+',2:'−'}});
@@ -312,19 +318,22 @@ function mx150Fp(n){if(typeof PCB==='undefined'||!PCB.FP)return'MX150-2x'+n/2+'-
 function ecuConnector(plan,parts,curr,peak,warn){
   const J=parts.filter(c=>/^J/.test(c.ref));const pick=f=>J.filter(f);
   const inJ=pick(c=>Object.values(c.pins).includes('VIN_RAW')),ignJ=pick(c=>c.val==='IGN'),canJ=pick(c=>c.val==='CAN'&&Object.values(c.pins).includes('CANH'));
-  const ldB=new Set(plan.blocks.filter(b=>/^(hbridge|gdrv3|dcmotor|bldc)$/.test(b.type)).map(b=>b.id));const outJ=pick(c=>ldB.has(c.block));
+  const ldB=new Set(plan.blocks.filter(b=>/^(hbridge|gdrv3|dcmotor|bldc)$/.test(b.type)).map(b=>b.id));const hallJ=pick(c=>c.val==='홀'),spJ=pick(c=>c.val==='SPARE');const outJ=pick(c=>ldB.has(c.block)&&c.val!=='홀');
   if(!inJ.length){warn.push('ECU 커넥터: 전원 입력 커넥터가 없어 합치지 않았습니다');return;}
   const need=(net)=>{const I=+curr[net]||0,pk=peak[net]?+peak[net].I:I;return Math.max(1,Math.ceil(I/(MX150.iMax*0.8)),Math.ceil(pk/MX150.iMax));};
-  const sig=[];const add=(name,net)=>{if(net&&!sig.some(s=>s.net===net))sig.push({name,net,n:need(net)});};
+  const sig=[];const add=(name,net,own)=>{if(net&&(own||!sig.some(s=>s.net===net&&!s.own)))sig.push({name,net,n:own?1:need(net),own:!!own});};
   add('BAT','VIN_RAW');add('GND','GND');
   outJ.forEach(c=>Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>add((c.pinNames&&c.pinNames[k])||c.val+k,c.pins[k])));
   if(Object.values(inJ[0].pins).includes('IGN_IN')||ignJ.length)add('IGN','IGN_IN');
   if(canJ.length){add('CAN_H','CANH');add('CAN_L','CANL');}
+  // hall sensor: its supply, three outputs and its own ground contact (sensor return, not shared with the power ground)
+  hallJ.forEach(c=>{const L={H1:'HALL_U',H2:'HALL_V',H3:'HALL_W',GND:'HALL_GND'};Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>{const nm0=(c.pinNames&&c.pinNames[k])||'';add(L[nm0]||nm0,c.pins[k],true);});});
+  spJ.forEach(c=>Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>add((c.pinNames&&c.pinNames[k])||'SPARE'+k,c.pins[k],true)));
   // contacts by column (inner row + outer row): a power signal with parallel contacts takes whole columns, so its copper enters
   // on the inner pad and the outer pad hangs on it — no other net between them. Single contacts pair up; CAN_H / CAN_L share one column.
   sig.forEach(s=>{if(s.n>1&&s.n%2)s.n++;});
   // column order from one end: supply and ground, the small signals, then the load outputs at the far end (the power stage sits there)
-  const cols=[];const whole=s=>{for(let i=0;i<s.n/2;i++)cols.push([s,s]);};const isLoad=s=>!/^(VIN_RAW|GND)$/.test(s.net);
+  const cols=[];const whole=s=>{for(let i=0;i<s.n/2;i++)cols.push([s,s]);};const isLoad=s=>!s.own&&!/^(VIN_RAW|GND)$/.test(s.net);
   sig.filter(s=>s.n>1&&!isLoad(s)).forEach(whole);
   const can=sig.filter(s=>s.n===1&&/^CAN/.test(s.net)),one=sig.filter(s=>s.n===1&&!/^CAN/.test(s.net));if(one.length%2)one.push(null);
   for(let i=0;i<one.length;i+=2)cols.push([one[i],one[i+1]]);if(can.length===2)cols.push([can[0],can[1]]);else can.forEach(c=>cols.push([c,null]));
@@ -332,7 +341,7 @@ function ecuConnector(plan,parts,curr,peak,warn){
   const n=MX150.sizes.find(v=>v>=cols.length*2);if(!n){warn.push(`ECU 커넥터: 접점 ${cols.length*2}개 — MX150 20핀을 넘어 합치지 않았습니다`);return;}
   while(cols.length<n/2)cols.push([null,null]);const c2=n/2;
   const pins={},names={};cols.forEach((cl,i)=>{[0,1].forEach(r=>{const k=r*c2+i+1,s=cl[r];names[k]=s?s.name:'NC';if(s)pins[k]=s.net;});});
-  const fp=mx150Fp(n);const all=inJ.concat(ignJ,canJ,outJ);const blk=inJ[0].block;
+  const fp=mx150Fp(n);const all=inJ.concat(ignJ,canJ,outJ,hallJ,spJ);const blk=inJ[0].block;
   const at=parts.indexOf(inJ[0]);for(const c of all){const i=parts.indexOf(c);if(i>=0)parts.splice(i,1);}
   const I0=+curr.VIN_RAW||0,pk0=peak.VIN_RAW?+peak.VIN_RAW.I:I0;
   parts.splice(Math.max(0,Math.min(at,parts.length)),0,{ref:'J1',val:'ECU',fp,pins,mpn:'034830'+String(n).padStart(2,'0')+'01',desc:`ECU 커넥터 Molex MX150 방수 직각 헤더 2열 ${n}핀 (34830 계열 · 품번은 계열 규칙으로 추정 · 3.50 mm · 접점당 최대 15 A · IP67/IP69K) — ${sig.map(s=>s.name+(s.n>1?'×'+s.n:'')).join(' · ')} · 상대 커넥터 MX150 리셉터클 33472-${String(n).padStart(2,'0')}xx · 품번 · 풋프린트 치수는 Molex 도면으로 확인`,pinNames:names,block:blk,P:0,mcu:false});
@@ -545,6 +554,54 @@ function allegro3(ctx,drv,vm,I,pwr,N,o){o=o||{};const mpn=ALLEGRO[drv];const rec
   if(vadc<4.9){const ok=lo(1.5)>=0.3&&hi(1.5)<=Math.min(4.8,vadc-0.2);
     ctx.warn(`${drv}: MCU ADC ${vadc} V — 센스 앰프 기본 오프셋 2.5 V면 ±${I} A에서 ${lo(2.5)}~${hi(2.5)} V로 넘칠 수 있음 → 초기화에서 SPI로 SAO = 11 (VOOS 1.5 V) · 이득 20 설정 시 ${lo(1.5)}~${hi(1.5)} V${ok?' (범위 안)':' — 그래도 넘침, 이득을 낮추세요'} · OOS도 ADC로 읽어 빼기`);}
   ctx.warn(`${drv}: VREG 기본 8 V(VRG = 0) — 부트스트랩 ${cbLab}는 8 V 기준 계산, 11 V(VRG = 1)로 바꾸면 여유가 더 커짐`);
+  return true;}
+/* TI DRV8334-Q1 (SLVSHC8A): 3-phase smart gate driver — PVDD/VDRAIN from the bridge supply, GVDD charge pump (CPH–CPL), trickle
+   charge pump (CPTH–CPTL, VCP–VDRAIN) for 100 % duty, bootstrap per phase, three low-side sense amplifiers SPx/SNx → SOx
+   (referenced to VREF), SPI, DRVOFF / nSLEEP / nFAULT. Component values from the datasheet "External Components" table. */
+function ti8334(ctx,vm,I,pwr,N,o){o=o||{};const mpn='DRV8334-Q1';const rec=NEWPROJ.partLookup?NEWPROJ.partLookup(mpn):null;
+  if(!rec||!(rec.pins&&rec.pins.length)){ctx.warn(`${mpn}: 핀 표가 없어 IR2104 ×3 스테이지로 대신 만들었습니다`);return false;}
+  const num={};rec.pins.forEach(q=>{const nm=String(q.name||'').toUpperCase();(num[nm]=num[nm]||[]).push(String(q.num));});
+  const pins={};const set=(nm,net)=>{(num[nm.toUpperCase()]||[]).forEach(n=>{pins[n]=net;});};
+  const miss=['PVDD','VDRAIN','GVDD','CPH','CPL','CPTH','CPTL','VCP','VREF','DRVOFF','NSLEEP','NFAULT','SDI','SDO','SCLK','NSCS','GND','AGND'].filter(x=>!num[x]);
+  if(miss.length){ctx.warn(`${mpn}: 핀 표에 ${miss.join(', ')} 핀이 없어 회로를 만들지 못했습니다`);return false;}
+  const vio=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vio);
+  // CBST > 20 × Qg / (VGHx − VSHx) — GVDD ≈ 10–11 V class, take 10 V; the datasheet's default is 1.0 µF 20 V
+  const qg=((pwr.f2&&pwr.f2.qg)||(pwr.f&&pwr.f.qg)||60)*(pwr.par||1);const cbMin=20*qg/10;const CB=[1000,2200].find(v=>v>=cbMin)||2200;const cbLab=(CB/1000)+'µF';
+  set('PVDD',vm);set('VDRAIN',vm);set('GND','GND');set('AGND','GND');set('PAD','GND');set('GVDD',N('GVDD'));set('CPH',N('CPH'));set('CPL',N('CPL'));set('CPTH',N('CPTH'));set('CPTL',N('CPTL'));set('VCP',N('VCP'));
+  set('VREF',vio);set('DRVOFF',N('DRVOFF'));set('NSLEEP',N('NSLEEP'));set('NFAULT',N('NFAULT'));set('SDI',N('SDI'));set('SDO',N('SDO'));set('SCLK',N('SCK'));set('NSCS',N('NSCS'));
+  const PH=o.legs||{A:'U',B:'V',C:'W'};const unused=['A','B','C'].filter(x=>!PH[x]);const LG=h=>o.legs?h+' 레그':h+'상';
+  Object.entries(PH).forEach(([x,h])=>{set('GH'+x,N(h+'_HO'));set('GL'+x,N(h+'_LO'));set('SH'+x,N(h));set('BST'+x,N(h+'_VB'));set('SL'+x,N(h+'_LSS'));set('INH'+x,N('INH_'+h));set('INL'+x,N('INL_'+h));
+    set('SP'+x,N(h+'_SNSP'));set('SN'+x,N(h+'_SNSM'));set('SO'+x,N('ISNS_'+h+'_AMP'));});
+  unused.forEach(x=>{set('SH'+x,'GND');set('BST'+x,N('BST'+x+'_UNUSED'));set('SL'+x,'GND');set('INH'+x,'GND');set('INL'+x,'GND');set('SP'+x,'GND');set('SN'+x,'GND');});
+  const fpName=String(rec.fp||'').replace(/^[^:]*:/,'');
+  ctx.part('U','DRV8334-Q1',(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'?FPGEN.ensure(PCB,fpName||rec.pkg,rec.pins.length)||FPGEN.ensure(PCB,rec.pkg,rec.pins.length):'')||'QFP-48-EP',pins,
+    {mpn,desc:`3상 스마트 게이트 드라이버 (TI DRV8334-Q1 · ${Object.keys(PH).length}레그 · SPI 진단 · 로우사이드 센스 앰프 ×${Object.keys(PH).length} · 4.5–60 V)${unused.length?' · 미사용 '+unused.join('·')+' 레그 SPI로 마스크':''}`,P:0.3});
+  unused.forEach(x=>ctx.part('C','100nF','0402',{1:N('BST'+x+'_UNUSED'),2:'GND'},{desc:`DRV8334 미사용 ${x} 레그 BST${x} (SH${x} = GND, 노드 고정용)`}));
+  ctx.part('C','10µF','1206',{1:vm,2:'GND'},{desc:'DRV8334 CPVDD 10 µF 세라믹 (PVDD 핀 옆, 데이터시트 외부 부품 표)'});
+  ctx.part('C','1µF','0603',{1:vm,2:'GND'},{desc:'DRV8334 CVDRAIN 1 µF (VDRAIN 핀 옆)'});
+  ctx.part('C','10µF','0805',{1:N('GVDD'),2:'GND'},{desc:'DRV8334 CGVDD 10 µF 세라믹 25 V'});
+  ctx.part('C','1µF','0603',{1:N('CPH'),2:N('CPL')},{desc:'DRV8334 CCP_FLY 1.0 µF (CPH–CPL, 핀 바로 옆) 25 V'});
+  ctx.part('C','1µF','0603',{1:N('CPTH'),2:N('CPTL')},{desc:'DRV8334 CCPT_FLY 1.0 µF (CPTH–CPTL) 25 V'});
+  ctx.part('C','1µF','0805',{1:N('VCP'),2:vm},{desc:'DRV8334 CVCP 1.0 µF (VCP–VDRAIN) 25 V'});
+  ctx.part('C','100nF','0402',{1:vio,2:'GND'},{desc:'DRV8334 CVREF 0.1 µF (VREF 핀 옆)'});
+  let Rs=0.002;
+  Object.entries(PH).forEach(([x,h])=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
+    ctx.part('C',cbLab,'0805',{1:vb,2:ph},{desc:`부트스트랩 BST${x}–SH${x} (${LG(h)} · ${cbLab} 25 V — CBST > 20 × Qg ${qg} nC / 10 V)`});
+    fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);
+    // sense common mode ±2 V: shunt sized for ≤ 60 mV at the peak current; SPx/SNx as a Kelvin pair from the shunt ends (net ties)
+    Rs=shunt(ctx,ret,I,LG(h),0.06,pwr.Ipk,pwr.tpk);
+    ctx.part('R','0Ω','0402',{1:N(h+'_SNSM'),2:'GND'},{desc:`센스 켈빈 넷 타이 SN${x} (${LG(h)} — 션트 GND 패드에 붙여 배치)`});
+    ctx.part('R','0Ω','0402',{1:N(h+'_SNSP'),2:ret},{desc:`센스 켈빈 넷 타이 SP${x} (${LG(h)} — 션트 노드, 평행 켈빈 선)`});
+    ctx.part('R','0Ω','0402',{1:N(h+'_LSS'),2:ret},{desc:`SL${x} 넷 타이 (${LG(h)} — 로우사이드 FET 소스에 직접, VDS 감지)`});
+    const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
+    ctx.part('R','160Ω','0402',{1:amp,2:out},{desc:'DRV8334 RSO 160 Ω 출력 필터'});ctx.part('C','470pF','0402',{1:out,2:'GND'},{desc:'DRV8334 CSO 470 pF 출력 필터'});ctx.sig(out,'adc');
+    ctx.curr(ph,I);ctx.curr(ret,I);ctx.peak(ph,pwr.Ipk||I,pwr.tpk||2);ctx.peak(ret,pwr.Ipk||I,pwr.tpk||2);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
+  ctx.part('R','10kΩ','0402',{1:N('NFAULT'),2:vio},{desc:'DRV8334 RnFAULT 10 kΩ 풀업 (MCU I/O 전원)'});
+  ctx.part('R','10kΩ','0402',{1:N('DRVOFF'),2:vio},{desc:'DRVOFF 풀업 — MCU 리셋 중 게이트 OFF (액티브 하이 차단)'});
+  ctx.part('R','10kΩ','0402',{1:N('NSLEEP'),2:'GND'},{desc:'nSLEEP 풀다운 — MCU가 깨울 때까지 슬립'});
+  ctx.sig(N('DRVOFF'),'gpio_out');ctx.sig(N('NSLEEP'),'gpio_out');ctx.sig(N('NFAULT'),'irq_in');
+  ctx.sig(N('SCK'),'spi_sck','spi2');ctx.sig(N('SDI'),'spi_mosi','spi2');ctx.sig(N('SDO'),'spi_miso','spi2');ctx.sig(N('NSCS'),'gpio_out');
+  ctx.warn(`DRV8334-Q1: 센스 앰프 출력은 VREF(${vio}) 기준 — 이득은 SPI로 설정 (9단계), 션트 ${Rs*1000} mΩ에서 ±${I} A면 ±${(Rs*I*1000).toFixed(0)} mV 입력 · 주문 품번(E/Q 등급)과 노출 패드 치수는 패키지 도면으로 확인`);
   return true;}
 function shuntAmp(ctx,net,out,I,what,Ipk,tpk){Ipk=Math.max(I,+Ipk||0);const R=shunt(ctx,net,I,what,0.045,Ipk,tpk);
   const vs=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vs);const amp=out+'_AMP';
