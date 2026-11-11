@@ -9,7 +9,7 @@ test('power topology of Dadu: KL30 → reverse FET → +12V → buck +5V → LDO
   const M = POWERTOPO.build(B, { units: POWERTOPO.unitsFromPlan(B.newPlan, R.arch), motorI: 20 });
   assert.deepEqual(M.roots.map(r => r.net), ['VIN_RAW']);
   const src = n => M.rails[n].src && M.rails[n].src.c.val;
-  assert.match(src('+12V'), /SQD50P04/);assert.equal(M.rails['+12V'].src.kind, 'switch');
+  assert.match(src('+12V'), /IPB180P04/);assert.equal(M.rails['+12V'].src.kind, 'switch');
   assert.equal(src('+5V'), 'TPS54331');assert.equal(M.rails['+5V'].src.kind, 'buck');
   assert.match(src('+3V3'), /AMS1117/);assert.match(src('+9V'), /LM317/);
   assert.ok(M.rails['+3V3'].loads.some(l => /TC364/.test(l.label) && l.I > 0.3));

@@ -1,5 +1,5 @@
 {
-  "built": "2026-11-10",
+  "built": "2026-11-11",
   "items": {
     "1729128": {
       "file": "datasheets/db/1729128.html",
@@ -902,6 +902,14 @@
       "price": 1.9,
       "status": "done",
       "title": "Automotive current-sense amplifier with enhanced PWM rejection, gain 50"
+    },
+    "IPB180P04P4L-02": {
+      "file": "datasheets/db/IPB180P04P4L-02.html",
+      "mfr": "Infineon",
+      "cat": "트랜지스터",
+      "price": 3.5,
+      "status": "done",
+      "title": "-40 V P-channel OptiMOS-P2 MOSFET, D2PAK 7-pin"
     },
     "IPD90N04S4-04": {
       "file": "datasheets/db/IPD90N04S4-04.html",

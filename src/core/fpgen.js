@@ -16,6 +16,7 @@ function family(pkg){const s=String(pkg||'').toUpperCase().replace(/\s+/g,'_').r
   if((m=s.match(/^(TQFP|LQFP|QFP|MQFP|HTQFP|HLQFP)-?(\d+)/))){const pm=s.match(/_P(\d+(?:\.\d+)?)MM/),em=s.match(/_EP(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/);
     return{fam:'QFP',n:+m[2],ep:/-\d*EP|_EP\d|^H/.test(s.slice(0,40))||!!em,epSize:em?[+em[1],+em[2]]:null,pitch:pm?+pm[1]:null,size:(s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)MM/)||s.match(/(?:^|[_-])(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/)||[]).slice(1,3).map(Number)};}
   if((m=s.match(/^(DIP|PDIP|DIL)-?(\d+)/)))return{fam:'DIP',n:+m[2]};
+  if(/^(TO-?263|D2PAK)-?7/.test(s))return{fam:'TO-263-7',n:7};
   if((m=s.match(/^(TO-?252|DPAK|TO-?263|D2PAK|TO-?220)/)))return{fam:/263|D2/.test(s)?'TO-263':/220/.test(s)?'TO-220':'TO-252',n:3};
   if((m=s.match(/^(HDR|HEADER|PIN|JST|CONN?)[-_]?(\d+)X(\d+)/)))return{fam:'HDR',rows:+m[2],n:+m[2]*+m[3],pitch:/JST|PH/.test(s)?2.0:2.54};
   if((m=s.match(/^(\d{4})$/))&&['0201','0402','0603','0805','1206','1210','2010','2512'].includes(m[1]))return{fam:'CHIP',code:m[1],n:2};
@@ -48,6 +49,9 @@ function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nP
     case'SOT-89':return{kind:'ic',stand:0.05,body:[4.5,2.5,1.5],pads:[{n:'1',x:-1.5,y:-2.0,w:1.0,h:1.4},{n:'2',x:0,y:-1.1,w:1.6,h:3.2},{n:'3',x:1.5,y:-2.0,w:1.0,h:1.4}],gen:true};
     case'SOT-223':return{kind:'ic',stand:0.1,body:[6.5,3.5,1.7],pads:[{n:'1',x:-2.3,y:-3.15,w:0.95,h:2},{n:'2',x:0,y:-3.15,w:0.95,h:2},{n:'3',x:2.3,y:-3.15,w:0.95,h:2},{n:'4',x:0,y:3.15,w:3.3,h:2}],gen:true};
     case'TO-252':return{kind:'ic',stand:0.02,body:[6.6,6.1,2.3],pads:[{n:'1',x:-2.28,y:-4.5,w:1.2,h:2.2},{n:'2',x:0,y:0.6,w:5.6,h:6.6},{n:'3',x:2.28,y:-4.5,w:1.2,h:2.2}],gen:true};
+    // D2PAK-7 (TO-263-7, Infineon PG-TO263-7-3): gate 1, five source leads 2 3 5 6 7 at 1.27 mm, drain = tab (pin 4, no lead pad).
+    // Generic land pattern on the 3-lead TO-263 grid — confirm lead and tab pads against the maker's package drawing before release
+    case'TO-263-7':{const pads=[1,2,3,5,6,7].map(k=>({n:''+k,x:r3((k-4)*1.27),y:-7.0,w:0.8,h:3.0}));pads.push({n:'4',x:0,y:1.0,w:10.0,h:9.0});return{kind:'ic',stand:0.02,body:[10.2,9.2,4.5],pads,gen:true};}
     case'TO-263':return{kind:'ic',stand:0.02,body:[10.2,9.2,4.5],pads:[{n:'1',x:-2.54,y:-7.0,w:1.6,h:3.0},{n:'2',x:0,y:1.0,w:10.0,h:9.0},{n:'3',x:2.54,y:-7.0,w:1.6,h:3.0}],gen:true};
     case'TO-220':return{kind:'ic',stand:0,body:[10.2,4.6,15],pads:[-2.54,0,2.54].map((x,i)=>({n:''+(i+1),x,y:0,w:1.9,h:1.9,round:true,drill:1.0})),gen:true};
     case'SOIC':{const k=f.ep&&n%2?n-1:(n%2?n+1:n);const half=k/2;const L=half*1.27+0.5;const wide=k>16;return dual(k,1.27,wide?9.4:5.4,1.55,0.6,[wide?7.5:3.9,r3(L),1.5],'ic',f.ep);}
@@ -65,7 +69,7 @@ function make(pkg,nPins){const f=family(pkg);if(!f)return null;const n=nPins&&nP
   return null;}
 /* a canonical footprint name for the library key */
 function name(pkg,n){const f=family(pkg);if(!f)return null;const k=n&&n>=2?n:f.n;
-  switch(f.fam){case'CHIP':return f.code;case'SMA':case'SMB':case'SMC':return f.fam;case'SOT-23':return k===3?'SOT-23':'SOT-23-'+k;case'SOT-89':case'SOT-223':case'TO-252':case'TO-263':case'TO-220':return f.fam;
+  switch(f.fam){case'CHIP':return f.code;case'SMA':case'SMB':case'SMC':return f.fam;case'SOT-23':return k===3?'SOT-23':'SOT-23-'+k;case'SOT-89':case'SOT-223':case'TO-252':case'TO-263':case'TO-263-7':case'TO-220':return f.fam;
     case'HDR':return`HDR-${f.rows||1}x${Math.ceil(k/(f.rows||1))}`;
     case'QFP':{const ep=!!f.ep||k%4===1;const kk=ep&&k%4===1?k-1:k;return'QFP-'+kk+(ep?'-EP':'')+(f.size&&f.size[0]?'-'+f.size[0]+'x'+f.size[1]:'')+(f.pitch?'-P'+f.pitch:'');}
     case'SOIC':case'TSSOP':{const kk=f.ep&&k%2?k-1:(k%2?k+1:k);return f.fam+'-'+kk+(f.ep?'-EP':'');}

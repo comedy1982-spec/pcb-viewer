@@ -5,7 +5,7 @@ const { PRODUCTS, HWARCH, NEWPROJ, BOARDSNAP, SNAP_DADU8, SNAP_DADU8B, SNAP_DADU
 function fresh(m) {
   const prof = PRODUCTS.detect(m.profile);
   const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[m.fet || 0].label;
-  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;const g3 = plan.blocks.find(b => b.type === 'gdrv3');if (g3) g3.params = Object.assign({}, g3.params, { driver: m.driver || 'IR2104' });plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };
+  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;if (m.pwrIn) { const pi = plan.blocks.find(b => b.type === 'pwr_in'); if (pi) pi.params = Object.assign({}, pi.params, m.pwrIn); }const g3 = plan.blocks.find(b => b.type === 'gdrv3');if (g3) g3.params = Object.assign({}, g3.params, { driver: m.driver || 'IR2104' });plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };
   return NEWPROJ.toBoard(plan, { place: false }).B;
 }
 test('Dadu 8-layer example: the stored layout restores onto the generated board — every part found, nothing open, DRC clean, 20 A widths met', () => {
@@ -41,4 +41,13 @@ test('Dadu A4911 example: 90 × 60 mm 8 layers, restores with DRC 0, power width
   assert.ok(B.comps.some(c => c.val === 'A4911'));assert.equal(PCBEDIT.drc(B).length, 0);
   assert.deepEqual(PCBEDIT.ratsnest(B).map(x => x.net), ['PH_INL_U']);
   for (const n of B.powerReport.nets) assert.ok(n.width === '직결' || n.width >= n.need, n.net + ' ' + n.width);
+});
+
+test('20 A supply input picks the D2PAK-7 reverse FET (five source leads); an older snapshot can pin the DPAK', () => {
+  const prof = PRODUCTS.detect('Dadu');const fq = prof.questions.find(q => q.key === 'fet');const ans = { cur: '~20 A (팬 · 소형 펌프)' };if (fq) ans.fet = fq.options[0].label;
+  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, 'Dadu').arch).plan;
+  const q = NEWPROJ.toBoard(plan, { place: false }).B.comps.find(c => /역전압 보호 P-MOSFET/.test(c.desc || ''));
+  assert.equal(q.mpn, 'IPB180P04P4L-02');assert.equal(q.fp, 'TO-263-7');assert.equal(q.pads.filter(p => p.net === '+12V').length, 5);
+  plan.blocks.find(b => b.type === 'pwr_in').params.revq = 'dpak';
+  const q2 = NEWPROJ.toBoard(plan, { place: false }).B.comps.find(c => /역전압 보호 P-MOSFET/.test(c.desc || ''));assert.equal(q2.fp, 'TO-252');
 });

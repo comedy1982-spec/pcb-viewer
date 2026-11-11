@@ -75,7 +75,7 @@ test('transient thermal: settles to the steady solution, follows a step, and par
   const R = PRODUCTS.apply(PRODUCTS.detect('Dadu'), { cur: '~20 A (팬 · 소형 펌프)' }, 'Dadu');
   const { B } = NEWPROJ.toBoard(HWARCH.toPlan(R.arch).plan, { place: false });
   assert.equal(B.lossI0, 20);
-  assert.ok(B.comps.some(c => c.lk === 'batt' && /SQD50P04/.test(c.val)), 'reverse FET scales with battery current');
+  assert.ok(B.comps.some(c => c.lk === 'batt' && /SQD50P04|IPB180P04/.test(c.val)), 'reverse FET scales with battery current');
   assert.ok(B.comps.filter(c => c.lk === 'phase').length >= 6, 'bridge FETs and shunts scale with phase current');
 });
 test('continuous + peak current: requirement words, block params, parts by peak, losses by continuous, widths for the peak', () => {
