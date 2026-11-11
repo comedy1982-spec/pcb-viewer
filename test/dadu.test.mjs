@@ -174,3 +174,19 @@ test('ELD H-bridge: each output gets its own lane beside the FET column and both
   assert.deepEqual([...new Set(L.map(l => l.net))].sort(), ['HB_A', 'HB_B']);
   const w = Object.fromEntries(S.powerReport.nets.map(n => [n.net, n.width]));assert.ok(w.HB_A >= 2.3 && w.HB_B >= 2.3, JSON.stringify(w));
 });
+
+test('Dadu ECU-connector example (DRV8334, MX150 20-pin, 10 A / 30 A, 8 layers) restores: DRC 0, nothing open, widths and vias rated', () => {
+  const L = load();const { BOARDSNAP, PCBEDIT } = L;const S = L.SNAP_DADU8E;const m = S.meta;
+  const prof = PRODUCTS.detect(m.profile);const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[m.fet || 0].label;
+  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;
+  (m.params || []).forEach(t => { const q = t.match(/^([\w]+)\.([\w]+)=(.*)$/);if (q) plan.blocks.filter(b => b.type === q[1]).forEach(b => { b.params = Object.assign({}, b.params, { [q[2]]: q[3] }); }); });
+  (m.add || []).forEach(t => NEWPROJ.addBlock(plan, t, {}));plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };plan.name = m.name;
+  const { B } = NEWPROJ.toBoard(plan, { place: false });const r = BOARDSNAP.apply(B, S);
+  assert.equal(r.missing.length, 0);assert.equal(PCBEDIT.drc(B).length, 0);assert.equal(PCBEDIT.ratsnest(B).length, 0);
+  const J = B.comps.find(c => c.val === 'ECU');assert.equal(J.pads.length, 20);
+  ['PH_HALL_A_IN', 'PH_HALL_B_IN', 'PH_HALL_C_IN', '+9V', 'CANH', 'CANL', 'SPARE_AIN_IN', 'SPARE_PWM_OUT', 'PH_U', 'PH_V', 'PH_W', 'VIN_RAW'].forEach(n => assert.ok(J.pads.some(p => p.net === n), n));
+  assert.equal(J.pads.filter(p => p.net === 'GND').length, 3, 'two power ground contacts + the hall sensor ground');
+  assert.ok(B.comps.some(c => c.val === 'DRV8334-Q1'));
+  assert.ok(B.powerReport.nets.filter(n => n.width !== '직결').every(n => n.width >= n.need));
+  assert.ok((B.powerReport.viaChk || []).every(v => v.ok));
+});

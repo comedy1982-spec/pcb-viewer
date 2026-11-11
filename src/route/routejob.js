@@ -21,11 +21,11 @@ function placeJob(B,a,scratch,ui){
   const st=a.strategy;if(B.pcbPending){scratch=true;B.pcbPending=false;}
   const fixed=(a.fixed||[]).filter(r=>B.byRef[r]);const only=a.only?String(a.only).split(/[,\s]+/).filter(Boolean):null;
   const cleared=AUTOPLACE.clearCopper(B,{keepZones:!scratch&&!!a['keep-zones']});const pour=AUTOPLACE.ensurePour(B);
-  let r=AUTOPLACE.place(B,{strategy:st,scratch,seed:a.seed!=null?+a.seed:(scratch?1+Math.floor(Math.random()*1e6):1),both:!!a.both,topGroups:a.top&&a.top!==true?String(a.top).split(','):null,effort:a.effort?+a.effort:1,fixed,only,power:a.pwrMap||null});
+  let r=AUTOPLACE.place(B,{strategy:st,scratch,seed:a.seed!=null?+a.seed:(scratch?1+Math.floor(Math.random()*1e6):1),both:!!a.both,pincap:!a['no-pincap'],drvGap:a['drv-gap']!=null&&a['drv-gap']!==true?+a['drv-gap']:undefined,topGroups:a.top&&a.top!==true?String(a.top).split(','):null,effort:a.effort?+a.effort:1,fixed,only,power:a.pwrMap||null});
   // parts that found no room: grow the board 10 % at a time (up to 3× the area) and place again — unless --no-grow
   let grown='';if(scratch&&r.fails.length&&a.grow!==false&&!a['no-grow']){const W0=B.W,H0=B.H;let k=0;
     while(r.fails.length&&k<12&&B.W*B.H<W0*H0*3){k++;const W=Math.ceil(B.W*1.1*2)/2,H=Math.ceil(B.H*1.1*2)/2;PCBEDIT.resizeBoard(B,W,H,{anchor:'center'});AUTOPLACE.clearCopper(B);AUTOPLACE.ensurePour(B);
-      r=AUTOPLACE.place(B,{strategy:st,scratch:true,seed:a.seed!=null?+a.seed:1+k*7919,both:!!a.both,topGroups:a.top&&a.top!==true?String(a.top).split(','):null,effort:a.effort?+a.effort:1,fixed,only,power:a.pwrMap||null});}
+      r=AUTOPLACE.place(B,{strategy:st,scratch:true,seed:a.seed!=null?+a.seed:1+k*7919,both:!!a.both,pincap:!a['no-pincap'],drvGap:a['drv-gap']!=null&&a['drv-gap']!==true?+a['drv-gap']:undefined,topGroups:a.top&&a.top!==true?String(a.top).split(','):null,effort:a.effort?+a.effort:1,fixed,only,power:a.pwrMap||null});}
     if(k)grown=`보드가 ${f1(W0)} × ${f1(H0)} mm로는 부족해 ${f1(B.W)} × ${f1(B.H)} mm로 키웠습니다${r.fails.length?' (그래도 겹치는 부품 있음)':''}.\n`;}
   const m=AUTOPLACE.metrics(B,{power:a.pwrMap||null});
   

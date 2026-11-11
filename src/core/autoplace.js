@@ -243,7 +243,7 @@ function place(B,opts){
     const col=[Math.min(...rs.map(r=>r[0])),Math.min(...rs.map(r=>r[1])),Math.max(...rs.map(r=>r[2])),Math.max(...rs.map(r=>r[3]))];
     const Imax=Math.max(0,...Object.values(B.netCurrent||{}).map(Number));const Pk=Object.values(B.netPeak||{}).sort((a,b)=>b.I-a.I)[0]||null;const need=typeof CURRENT!=='undefined'&&Imax?(CURRENT.needWidth?CURRENT.needWidth(Imax,Pk,{oz:B.oz||1,dT:B.dT||10,dTpk:B.dTpk||40,tb:B.t}).w:CURRENT.ipcWidth(Imax,{oz:B.oz||1,dT:B.dT||10})):4;
     const planes=new Set(PCB.stackOf(B).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));
-    try{macro=powerMacro(B,col,{busW:Math.min(8,need),planes});}catch(e){macro=null;}
+    try{macro=powerMacro(B,col,{busW:Math.min(8,need),planes,drvGap:opts.drvGap});}catch(e){macro=null;}
     if(macro){B.powerBus=macro.bus?{rect:macro.bus,net:macro.net}:null;B.powerLanes=macro.lanes&&macro.lanes.length?macro.lanes:null;opts=Object.assign({},opts,{fixed:(opts.fixed||[]).concat(macro.fixed),keepout:(opts.keepout||[]).concat(macro.keepout)});}else{B.powerBus=null;B.powerLanes=null;}}
   const info=classify(B,opts);const R=rng(opts.seed!=null?opts.seed:1);
   const fixed=new Set((opts.fixed||[]).map(String));const only=opts.only?new Set(opts.only.map(String)):null;
@@ -314,7 +314,7 @@ function place(B,opts){
   // pin caps: a two-pin capacitor whose own net reaches only one IC (charge-pump flying caps CPH–CPL, VCP storage, bootstrap
   // BST–SH, VREG …) is pulled to that IC pin like a decoupling cap — the annealer otherwise only sees a short two-pin net and may
   // leave it across the board (DRV8334 VCP cap 15 mm from its pin, then unroutable)
-  {const deg={};B.comps.forEach(c=>c.pads.forEach(p=>{if(p.net)(deg[p.net]=deg[p.net]||new Set()).add(c.ref);}));
+  if(opts.pincap!==false){const deg={};B.comps.forEach(c=>c.pads.forEach(p=>{if(p.net)(deg[p.net]=deg[p.net]||new Set()).add(c.ref);}));
     info.list.filter(o=>o.two&&/^C/i.test(o.ref)&&!o.decap).forEach(o=>{const ci=idx.get(o.ref);if(ci==null)return;
       for(let rk=0;rk<o.c.pads.length;rk++){const net=o.c.pads[rk].net;if(!net||isGnd(net))continue;const owners=[...(deg[net]||[])].filter(r=>r!==o.ref);if(owners.length!==1)continue;
         const a=info.byRef?info.byRef[owners[0]]:info.list.find(x=>x.ref===owners[0]);if(!a||!a.ic||a.conn)continue;const tk=[];a.c.pads.forEach((p,k)=>{if(p.net===net)tk.push(k);});
