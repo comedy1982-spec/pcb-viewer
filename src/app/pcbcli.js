@@ -16,7 +16,7 @@ const CLI_HELP=[
   ['board stack','층 구성(스택업)과 플레인 넷 보기'],
   ['board minimize [--route] [--strategy S] [--both] [--seeds 2] [--tries 4] [--grow|--no-grow] [--maxgrow 3] [--margin 1] [--keep]','가장 작은 보드 크기 탐색 후 재배치(--route 면 배선까지). 부품이 원래 크기에 안 들어가면 원래 면적의 3배까지 키워 가며 배치 (--no-grow 면 멈춤)'],
   ['strategies','배치 전략 설명 (balanced · thermal · noise · compact)'],
-  ['reset [--strategy S] [--seed N] [--both] [--route] [--no-grow]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 자리가 모자라면 보드를 10 %씩 키워(최대 3배 면적) 다시 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립). --route면 이어서 자동 배선'],
+  ['reset [--strategy S] [--seed N] [--both] [--top sense,mcu] [--route] [--no-grow]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 자리가 모자라면 보드를 10 %씩 키워(최대 3배 면적) 다시 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립), --top 그룹(input · power · mcu · comm · sense …)은 상단에 둠. --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
   ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90] [--dir 1.5] [--mst] [--gloss] [--par auto|N|0]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔 · --mst: 다핀 넷을 MST 순서(짧은 핀 쌍부터)로 — 기본 끔(실측 효과 미미) · --dir N: 층별 선호 방향(홀수 신호층 수평·짝수 수직, 역방향 N배 비용 — 기본 끔, DCM-10A 실측에서 비아 +25%): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
   ['unroute','자동 배선한 트랙·비아 지우기'],

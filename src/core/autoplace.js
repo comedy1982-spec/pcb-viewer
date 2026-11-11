@@ -276,7 +276,7 @@ function place(B,opts){
   // parts there, and the parts of those groups stay on top
   const PZ=ZN&&ZN.rects&&ZN.rects.stage?[ZN.rects.stage,ZN.rects.input].filter(Boolean).reduce((a,r)=>a?[Math.min(a[0],r[0]),Math.min(a[1],r[1]),Math.max(a[2],r[2]),Math.max(a[3],r[3])]:r.slice(),null):null;
   const pzOv=A=>PZ?Math.max(0,Math.min(A[2],PZ[2])-Math.max(A[0],PZ[0]))*Math.max(0,Math.min(A[3],PZ[3])-Math.max(A[1],PZ[1])):0;
-  const inPG=o=>!!(ZN&&ZN.groupOf&&/^(stage|input)$/.test(ZN.groupOf[o.ref]||''));
+  const inPG=o=>!!(ZN&&ZN.groupOf&&(/^(stage|input)$/.test(ZN.groupOf[o.ref]||'')||(opts.topGroups||[]).includes(ZN.groupOf[o.ref]))); // --top g1,g2: those zone groups stay on top
   const canB=movable.map(o=>!inPG(o)&&both&&!o.tht&&!o.elcap&&!o.conn&&(o.two||(opts.bothIcs!==false&&small(o)&&!o.mcu&&!o.driver&&!o.reg&&!o.fet&&!(o.P>0.3))));
   // obstacles: fixed parts and mounting holes
   const obst=[];(opts.keepout||[]).forEach(k=>obst.push({bb:k.slice(),side:'T',halo:0.3,cx:(k[0]+k[2])/2,cy:(k[1]+k[3])/2}));info.list.forEach(o=>{if(idx.has(o.ref))return;obst.push({bb:o.c.bb.slice(),side:o.tht?'both':o.c.side,halo:o.halo,o,cx:(o.c.bb[0]+o.c.bb[2])/2,cy:(o.c.bb[1]+o.c.bb[3])/2});});

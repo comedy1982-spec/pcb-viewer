@@ -7205,7 +7205,7 @@ function place(B,opts){
   // parts there, and the parts of those groups stay on top
   const PZ=ZN&&ZN.rects&&ZN.rects.stage?[ZN.rects.stage,ZN.rects.input].filter(Boolean).reduce((a,r)=>a?[Math.min(a[0],r[0]),Math.min(a[1],r[1]),Math.max(a[2],r[2]),Math.max(a[3],r[3])]:r.slice(),null):null;
   const pzOv=A=>PZ?Math.max(0,Math.min(A[2],PZ[2])-Math.max(A[0],PZ[0]))*Math.max(0,Math.min(A[3],PZ[3])-Math.max(A[1],PZ[1])):0;
-  const inPG=o=>!!(ZN&&ZN.groupOf&&/^(stage|input)$/.test(ZN.groupOf[o.ref]||''));
+  const inPG=o=>!!(ZN&&ZN.groupOf&&(/^(stage|input)$/.test(ZN.groupOf[o.ref]||'')||(opts.topGroups||[]).includes(ZN.groupOf[o.ref]))); // --top g1,g2: those zone groups stay on top
   const canB=movable.map(o=>!inPG(o)&&both&&!o.tht&&!o.elcap&&!o.conn&&(o.two||(opts.bothIcs!==false&&small(o)&&!o.mcu&&!o.driver&&!o.reg&&!o.fet&&!(o.P>0.3))));
   // obstacles: fixed parts and mounting holes
   const obst=[];(opts.keepout||[]).forEach(k=>obst.push({bb:k.slice(),side:'T',halo:0.3,cx:(k[0]+k[2])/2,cy:(k[1]+k[3])/2}));info.list.forEach(o=>{if(idx.has(o.ref))return;obst.push({bb:o.c.bb.slice(),side:o.tht?'both':o.c.side,halo:o.halo,o,cx:(o.c.bb[0]+o.c.bb[2])/2,cy:(o.c.bb[1]+o.c.bb[3])/2});});
@@ -12216,11 +12216,11 @@ function placeJob(B,a,scratch,ui){
   const st=a.strategy;if(B.pcbPending){scratch=true;B.pcbPending=false;}
   const fixed=(a.fixed||[]).filter(r=>B.byRef[r]);const only=a.only?String(a.only).split(/[,\s]+/).filter(Boolean):null;
   const cleared=AUTOPLACE.clearCopper(B,{keepZones:!scratch&&!!a['keep-zones']});const pour=AUTOPLACE.ensurePour(B);
-  let r=AUTOPLACE.place(B,{strategy:st,scratch,seed:a.seed!=null?+a.seed:(scratch?1+Math.floor(Math.random()*1e6):1),both:!!a.both,effort:a.effort?+a.effort:1,fixed,only,power:a.pwrMap||null});
+  let r=AUTOPLACE.place(B,{strategy:st,scratch,seed:a.seed!=null?+a.seed:(scratch?1+Math.floor(Math.random()*1e6):1),both:!!a.both,topGroups:a.top&&a.top!==true?String(a.top).split(','):null,effort:a.effort?+a.effort:1,fixed,only,power:a.pwrMap||null});
   // parts that found no room: grow the board 10 % at a time (up to 3× the area) and place again — unless --no-grow
   let grown='';if(scratch&&r.fails.length&&a.grow!==false&&!a['no-grow']){const W0=B.W,H0=B.H;let k=0;
     while(r.fails.length&&k<12&&B.W*B.H<W0*H0*3){k++;const W=Math.ceil(B.W*1.1*2)/2,H=Math.ceil(B.H*1.1*2)/2;PCBEDIT.resizeBoard(B,W,H,{anchor:'center'});AUTOPLACE.clearCopper(B);AUTOPLACE.ensurePour(B);
-      r=AUTOPLACE.place(B,{strategy:st,scratch:true,seed:a.seed!=null?+a.seed:1+k*7919,both:!!a.both,effort:a.effort?+a.effort:1,fixed,only,power:a.pwrMap||null});}
+      r=AUTOPLACE.place(B,{strategy:st,scratch:true,seed:a.seed!=null?+a.seed:1+k*7919,both:!!a.both,topGroups:a.top&&a.top!==true?String(a.top).split(','):null,effort:a.effort?+a.effort:1,fixed,only,power:a.pwrMap||null});}
     if(k)grown=`보드가 ${f1(W0)} × ${f1(H0)} mm로는 부족해 ${f1(B.W)} × ${f1(B.H)} mm로 키웠습니다${r.fails.length?' (그래도 겹치는 부품 있음)':''}.\n`;}
   const m=AUTOPLACE.metrics(B,{power:a.pwrMap||null});
   
@@ -16749,7 +16749,7 @@ const CLI_HELP=[
   ['board stack','층 구성(스택업)과 플레인 넷 보기'],
   ['board minimize [--route] [--strategy S] [--both] [--seeds 2] [--tries 4] [--grow|--no-grow] [--maxgrow 3] [--margin 1] [--keep]','가장 작은 보드 크기 탐색 후 재배치(--route 면 배선까지). 부품이 원래 크기에 안 들어가면 원래 면적의 3배까지 키워 가며 배치 (--no-grow 면 멈춤)'],
   ['strategies','배치 전략 설명 (balanced · thermal · noise · compact)'],
-  ['reset [--strategy S] [--seed N] [--both] [--route] [--no-grow]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 자리가 모자라면 보드를 10 %씩 키워(최대 3배 면적) 다시 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립). --route면 이어서 자동 배선'],
+  ['reset [--strategy S] [--seed N] [--both] [--top sense,mcu] [--route] [--no-grow]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 자리가 모자라면 보드를 10 %씩 키워(최대 3배 면적) 다시 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립), --top 그룹(input · power · mcu · comm · sense …)은 상단에 둠. --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
   ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90] [--dir 1.5] [--mst] [--gloss] [--par auto|N|0]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔 · --mst: 다핀 넷을 MST 순서(짧은 핀 쌍부터)로 — 기본 끔(실측 효과 미미) · --dir N: 층별 선호 방향(홀수 신호층 수평·짝수 수직, 역방향 N배 비용 — 기본 끔, DCM-10A 실측에서 비아 +25%): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
