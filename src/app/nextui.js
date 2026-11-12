@@ -34,7 +34,7 @@ function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP
   if(!m.blank){
     const dB=m.bomRef&&m.bom!=null?m.bom-m.bomRef.v:null;
     T.push(tile('bom','BOM 참고가',m.bom!=null?'$'+f(m.bom,2):'—',dB!=null&&Math.abs(dB)>=0.005?`${m.bomRef.label} 대비 ${dB>0?'+':'−'}$${f(Math.abs(dB),2)}`:`부품 ${m.parts} · 단가 ${m.bomN}종`,dB>0.5?'warn':'','참고 단가 합 (추정) · 데이터시트 탭'));
-    T.push(tile('guide','가이드라인',m.gPct!=null?f(m.gPct)+'%':'—',m.gPct!=null?`${m.gVerdict.split(' ')[0]} · 미준수 ${m.gFail}`:'',m.gCrit?'err':m.gPct!=null&&m.gPct<75?'warn':'ok','회로·PCB 설계 가이드라인 점검'));
+    T.push(tile('guide','가이드라인',m.gPct!=null?f(m.gPct)+'%':'—',m.gPct!=null?`${m.gVerdict.split(' ')[0]} · 미준수 ${m.gFail}`:'',m.gCrit?'err':m.gPct!=null&&m.gPct<75?'warn':'ok','가이드라인 점수 — 누르면 규칙별 세부 점수'));
     if(m.pcb){T.push(tile('drc','DRC',m.drc==null?'—':m.drc,m.open!=null?`미배선 ${m.open} · ${BD.copperLayers||2}층`:`${BD.copperLayers||2}층`,m.drc>0?'err':m.drc===0?'ok':'','배치·배선 규칙 검사 (누르면 목록)'));}
     else T.push(tile('pcb','PCB','3단계','배치·배선 전','', 'PCB 설계 시작'));
     T.push(tile('hsis','HSIS',m.hsis?`${m.hsis.ok}/${m.hsis.n}`:'—',m.hsis?(m.hsis.err?`오류 ${m.hsis.err}`:'모두 정상'):'HSIS 없음',m.hsis&&m.hsis.err?'err':m.hsis?'ok':'','HW/SW 인터페이스 사양 검사'));
@@ -45,7 +45,7 @@ function nxStripPaint(){const el=$('#strip');if(!el)return;const mode=typeof APP
   const html=T.join('');if(el.dataset.h!==html){el.dataset.h=html;el.innerHTML=`<div class="st-row">${html}</div>`;}}
 {const el=$('#strip');if(el)el.addEventListener('click',e=>{const b=e.target.closest('[data-st]');if(!b)return;const k=b.dataset.st;
   if(k==='sys'||k==='ans')setStep(1);else if(k==='pcb')setStep(3);else if(k==='bom'){if(typeof dockTab==='function')dockTab('ds');}
-  else if(k==='guide'){if(typeof copSubmit==='function'){setStep(BD.pcbPending?2:3);copSubmit('guide check');}}
+  else if(k==='guide'){if(typeof gdOpen==='function')gdOpen();else if(typeof copSubmit==='function'){setStep(BD.pcbPending?2:3);copSubmit('guide check');}}
   else if(k==='drc'){setStep(3);if(typeof peDrcList==='function'){if(!PE.on&&typeof peBegin==='function')peBegin();peDrcList();}}
   else if(k==='hsis')setWorkspace('hsis');else if(k==='tj'){setStep(3);if(typeof dockTab==='function')dockTab('sim');if(typeof SR!=='undefined'){SR.tab='th';if(typeof renderSim==='function')renderSim();}}
   else if(k==='house')setStep(4);else if(k==='mb')setWorkspace('mb');else if(k==='safety'){setStep(2);setTimeout(()=>copSubmit('safety check',{src:'sch'}),300);}});}
