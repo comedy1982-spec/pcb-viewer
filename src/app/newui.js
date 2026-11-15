@@ -509,7 +509,7 @@ function sysRender(){if(typeof POPS!=='undefined'&&[...POPS].some(C=>C.kind==='s
   {const dl=$('#sysSvgDl');if(dl)dl.textContent=SYS.view==='safety'?'엑셀 저장':'SVG 저장';}
   if(SYS.view==='hw'){const A=sysArch();SYS.A=A;
     if(!A){host.innerHTML='<p class="lead" style="padding:20px">요구사항을 적고 [블록 다이어그램 만들기]를 누르세요.</p>';return;}
-    if(SYS.sel&&!A.blocks.some(b=>b.id===SYS.sel))SYS.sel=null;host.innerHTML=HWARCH.svg(A,{sel:SYS.sel});
+    if(SYS.sel&&!A.blocks.some(b=>b.id===SYS.sel))SYS.sel=null;host.innerHTML=HWARCH.svg(A,{sel:SYS.sel,thr:sysThrBadges()});
     $('#sysTitle').textContent=(A.name||'시스템')+' · HW 블록 다이어그램';
     $('#sysSrc').textContent=`${A.fromBoard&&!NP.arch?'보드에서 추출 (부품 번호 제외)':'아키텍처'} · 블록 ${A.blocks.length} · 인터페이스 ${A.links.length}`;}
   else if(SYS.view==='power'){const M=sysPowerModel();
@@ -544,7 +544,37 @@ function sysThrModel(R){if(typeof DIAGTHR==='undefined')return null;let parts=[]
   else if(BD&&BD.comps)parts=BD.comps.map(c=>({ref:c.ref,val:c.val,mpn:c.mpn,desc:c.desc,lk:c.lk,pins:Object.fromEntries(c.pads.map((p,i)=>[p.n||i,p.net]))}));
   if(!parts.length)return null;const mb=NP.plan&&(NP.plan.blocks||[]).find(b=>/^(gdrv3|hbridge)$/.test(b.type));let I=+(BD&&BD.lossI0)||10,Ipk=+(BD&&BD.lossIpk)||I,tpk=+(BD&&BD.lossTpk)||2;
   if(mb){I=+mb.params.i||I;const pk=NEWPROJ.peakOf(mb.params,I);Ipk=pk.Ipk;tpk=pk.tpk;}
-  const ft=(R&&R.sgs||[]).map(g=>+g.ftti).filter(x=>x>0);return DIAGTHR.compute(parts,{I,Ipk,tpk,ftti:ft.length?Math.min(...ft):null,assume:SYS.dta||{}});}
+  const ft=(R&&R.sgs||[]).map(g=>+g.ftti).filter(x=>x>0);const rq=sysThrReq(I,Ipk,tpk,!!mb);const as=Object.assign({},rq,SYS.dta||{});
+  if(SYS.dta&&SYS.dta.vop)as.vopSrc='사용자 입력';if(SYS.dta&&(SYS.dta.Tmin!=null||SYS.dta.Tmax!=null))as.tSrc='사용자 입력';
+  const T=DIAGTHR.compute(parts,{I,Ipk,tpk,ftti:ft.length?Math.min(...ft):null,assume:as});T.req=rq;T.parts=parts;
+  // rows → circuit blocks (plan) → HW blocks (architecture)
+  const P=NP.plan&&NP.plan.blocks?NP.plan:null;let map=[];try{if(NP.arch&&P)map=HWARCH.toPlan(NP.arch).map||[];}catch(e){}
+  T.rows.forEach(r=>{const pb=[...new Set(r.refs.map(ref=>(parts.find(c=>c.ref===ref)||{}).block).filter(Boolean))];r.pblocks=pb;
+    r.ablocks=[...new Set(pb.map(id=>(map.find(m=>m.plan===id)||{}).arch).filter(Boolean))];
+    r.ablockLabels=r.ablocks.map(id=>{const b=NP.arch&&NP.arch.blocks.find(x=>x.id===id);return b?b.label:id;});
+    r.blockLabels=pb.map(id=>{const b=P&&P.blocks.find(x=>x.id===id);return b?(NEWPROJ.LIB[b.type]?NEWPROJ.LIB[b.type].label:b.type):id;});});
+  T.rows.sort((a,b)=>String(a.ablockLabels[0]||'~').localeCompare(String(b.ablockLabels[0]||'~')));
+  return T;}
+/* per HW block: how many diagnostic thresholds, and the worst tolerance verdict (err > na > warn > ok) */
+function sysThrBadges(){try{const T=sysThrModel(sysSafetyModel());if(!T)return null;SYS.thrT=T;const o={};const rk={err:3,na:2,warn:1,ok:0};
+  T.rows.forEach(r=>(r.ablocks||[]).forEach(id=>{const x=o[id]||(o[id]={n:0,bad:0,tone:'ok',t:[]});x.n++;if(r.tone==='err')x.bad++;if(rk[r.tone]>rk[x.tone])x.tone=r.tone;x.t.push(`${r.tone==='err'?'✕':r.tone==='na'?'–':r.tone==='warn'?'△':'✓'} ${r.title}`);}));
+  Object.values(o).forEach(x=>{x.title='진단 임계값 (HW 공차 최악 조합)\n'+x.t.join('\n');});return o;}catch(e){return null;}}
+function sysThrRowsHTML(rows){const tl={err:'✕ 공차 초과',warn:'△ 가정값 포함',ok:'✓ 여유 충분',na:'– 데이터 없음'};const f=(v,d)=>(+v).toFixed(d==null?2:d);
+  return rows.map(r=>`<div class="thr-r ${r.tone}"><div class="thr-h"><b>${esc(r.title)}</b><span class="thr-t ${r.tone}">${tl[r.tone]||''}</span></div>
+    ${r.blockLabels&&r.blockLabels.length?`<div class="thr-k">회로 블록: ${esc([...new Set(r.blockLabels)].join(' · '))} · 부품 ${esc(r.refs.join(' '))}</div>`:''}
+    ${r.basis?`<div class="thr-k">경계값: ${esc(r.basis)}</div>`:''}<div class="thr-k">온도 범위: ${esc(r.temp||'')}</div>
+    <div class="thr-k">공차 체인: ${esc((r.chain||[]).join(' · '))}</div>
+    <div class="thr-k">정상 범위(최악): ${esc(r.normal||'')}</div><div class="thr-k">임계값: <b>${esc(r.thr||'')}</b> → 실제 판정 범위 ${esc(r.detect||'')}</div>
+    ${r.lo||r.hi?`<div class="thr-bar">${[r.lo,r.hi].filter(Boolean).map(m=>`<span class="${m.m<0?'neg':''}">${esc(m.name)} ${f(m.v)} ${m.u} — 여유 ${m.m<0?'−':'+'}${f(Math.abs(m.m),m.u==='V'?2:1)} ${m.u}</span>`).join('')}</div>`:''}
+    ${r.margin?`<div class="thr-k">${esc(r.margin)}</div>`:''}${r.advice&&r.advice!=='정상'?`<div class="thr-a">→ ${esc(r.advice)}</div>`:''}</div>`).join('');}
+/* safety-threshold boundaries from the requirements: operating voltage, phase currents, ambient temperature (with their source) */
+function sysThrReq(I,Ipk,tpk,motor){const A=NP.arch||{};const txt=String(A.req||(NP.plan&&NP.plan.req)||'');const pin=NP.plan&&(NP.plan.blocks||[]).find(b=>b.type==='pwr_in');const vin=pin?+pin.params.vin||12:12;const o={};
+  const mv=txt.match(/(\d+(?:\.\d+)?)\s*(?:V\s*)?[–~\-]\s*(\d+(?:\.\d+)?)\s*V\b(?![^,.]{0,12}(?:홀|hall|9 ?V))/i);
+  if(mv&&+mv[2]>+mv[1]&&+mv[2]<=60){o.vop=[+mv[1],+mv[2]];o.vopSrc=`요구사항 "${mv[0]}"`;}
+  else{const v=vin>=20?[18,32]:[9,16];o.vop=v;o.vopSrc=`요구사항 ${vin} V 계통 → 정상 동작 ${v[0]}–${v[1]} V (ISO 16750-2 기본값)`;}
+  const mt=txt.match(/(-\s?\d+)\s*(?:°C|℃)?\s*[~–]\s*\+?(\d+)\s*(?:°C|℃)/);
+  if(mt){o.Tmin=+mt[1].replace(/\s/g,'');o.Tmax=+mt[2];o.tSrc=`요구사항 "${mt[0]}"`;}else{o.Tmin=-40;o.Tmax=125;o.tSrc='요구사항에 없음 → AEC-Q Grade 1 기본값';}
+  o.iSrc=motor?`요구사항: 상시 ${I} A · 피크 ${Ipk} A ${tpk} s`:'기본값';return o;}
 /* power topology of the current design: the board when there is one, otherwise the board generated from the plan (not placed) */
 function sysPowerModel(){if(typeof POWERTOPO==='undefined')return null;let B=BD&&!BD.blank&&BD.comps&&BD.comps.length?BD:null,from='board';
   // a board that is not this plan's (an example left open while designing a new one) must not stand in for the plan — same rule as the parts view
@@ -589,6 +619,7 @@ function sysSelPaint(){const box=$('#sysSel');if(!box)return;
       <label class="fld"><span>그룹</span><select data-ar="group">${HWARCH.GROUPS.map(g=>`<option value="${g[0]}"${g[0]===b.group?' selected':''}>${esc(g[1])} · ${esc(g[2])}</option>`).join('')}</select></label>
       <label class="fld"><span>기능 (줄마다 하나)</span><textarea data-ar="feats" rows="3">${esc(b.feats.join('\n'))}</textarea></label>
       <label class="fld"><span>ASIL (시스템 ${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</span><select data-ar="asil"><option value="auto"${b.asil?'':' selected'}>상속 (${typeof SAFETY!=='undefined'?SAFETY.level(A):'QM'})</option>${['QM','A','B','C','D'].map(l=>`<option value="${l}"${b.asil===l?' selected':''}>ASIL ${l}</option>`).join('')}</select></label>${typeof SGARCH!=='undefined'&&SGARCH.goals(A).length?`<div class="np-sg">${SGARCH.goals(A).map(g=>`<label class="chkl" title="${esc(g.text)}"><input type="checkbox" data-sg="${g.id}"${(b.sg||[]).includes(g.id)?' checked':''}> ${g.id} <span class="ms">ASIL ${g.asil}</span></label>`).join('')}</div>`:''}`:`<div class="np-bd">${esc(b.feats.join(' · '))}${b.asil?' · ASIL '+esc(b.asil):''}${b.sg&&b.sg.length?' · '+esc(b.sg.join(' · ')):''}</div>`}
+      ${(()=>{const T=SYS.thrT;const rows=T?T.rows.filter(r=>(r.ablocks||[]).includes(b.id)):[];return rows.length?`<details class="thr-sel" open><summary>진단 임계값 · HW 공차 최악 조합 (${rows.length})</summary>${sysThrRowsHTML(rows)}</details>`:'';})()}
       <ul class="sys-io">${io.map(l=>{const o=N(l.a===b.id?l.b:l.a);return`<li><span class="k-${l.kind==='bus'?'ext':l.kind}">${l.a===b.id?(l.both?'↔':'→'):(l.both?'↔':'←')}</span> ${esc(o?o.label:'')} <span class="mono">${esc(l.label)}</span></li>`;}).join('')}</ul>
       ${editable&&!b.ext?`<div class="np-bd" style="margin-top:6px">회로 구현 (2단계): <b>${(b.impl||[]).map(i=>esc(NEWPROJ.LIB[i.type]?NEWPROJ.LIB[i.type].label:i.type)).join(' + ')||'없음'}</b></div>
       <div class="np-add"><select data-ar="impl"><option value="">회로 블록 지정…</option>${Object.entries(NEWPROJ.LIB).map(([k,v])=>`<option value="${k}">${esc(v.label)}</option>`).join('')}<option value="none">구현 지우기</option></select></div>`:''}

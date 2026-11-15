@@ -16,7 +16,7 @@ const SPEC={
   A4911:{src:'DS',csa:{vios:1e-3,dvios:2e-6,ea:1.6,ead:30e-6,evo:0.075,dvoo:135e-6,gains:[10,15,20,25,30,35,40,50],sao:[0,0,0.1,0.1,0.2,0.3,0.4,0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5],vmax:4.8},
     vds:{step:0.05,max:3.15,hsOff:[0.15,0.3],lsOff:[0.15,0.2]},oct:{step:0.3,rel:[0.8/0.9,1.08/0.9]},vregUV:[5.5,5.7,5.9],vregUV11:[6.9,7.18,7.4],bootUV:[55,66],vbbUV:4.0,tjw:[125,135,145],tjf:[165,175,185]},
   'NCP18XH103F03RB':{src:'DS',r25:10e3,tol:1,B:3380,btol:1},
-  'TPS3823':{src:'가정',note:'TI TPS3823-33 전형값 2.93 V · 1.6 s — 최소/최대는 데이터시트 표로 확인',vit:[2.89,2.93,2.97],twd:[1.1,1.6,2.3],td:[0.14,0.2,0.28]},
+  'TPS3823':{src:'DS',note:'TI TPS3823-33-Q1 데이터시트 (datasheets/records/TPS3823-33QDBVRQ1): VIT− 2.84 / 2.93 / 3.00 V (-40~125 °C) · tWD 0.9 / 1.6 / 2.5 s · td 120 / 200 / 300 ms',vit:[2.84,2.93,3.00],twd:[0.9,1.6,2.5],td:[0.12,0.2,0.3]},
   'TPS54331':{src:'가정',note:'EN 1.25 V · 풀업 1 µA · 히스테리시스 3 µA는 데이터시트 값, 범위는 가정',ven:[1.2,1.25,1.3],i1:[0.7e-6,1e-6,1.3e-6],ih:[2.5e-6,3e-6,3.5e-6],vstopMin:3.5},
   'AMS1117':{src:'가정',note:'AMS1117-3.3 출력 ±2 % (라인 · 부하 · 온도 포함, 일반값)',tol:2},
   ADC:{src:'가정',note:'TC3xx EVADC 12비트 TUE ±4 LSB (데이터시트 확인)',bits:12,tue:4},
@@ -38,26 +38,43 @@ function rVal(v){const m=String(v||'').replace(/Ω|ohm/i,'').trim().match(/^(\d+
 /* resistor as a corner parameter: initial tolerance + TCR over the temperature range */
 function resP(c,A,tcr){const R=rVal(c.val);const t=rTol(c,A)/100,dT=Math.max(A.Tmax-A.Tref,A.Tref-A.Tmin),k=(tcr||A.rTCR)*1e-6*dT;return Pr(`${c.ref} ${c.val} ±${rTol(c,A)} %${tcr!==0?` · ${tcr||A.rTCR} ppm`:''}`,R,R*(1-t-k),R*(1+t+k),rTol(c,A)===A.rTol&&!/^RC\d{4}F/i.test(c.mpn||'')?'가정':'DS');}
 const pinOf=(c,n)=>Object.keys(c.pins||{}).find(k=>c.pins[k]===n);
+/* voltage ratings of the parts that sit on a rail: datasheet key figure (max input / rating), else "NN V" in a MOSFET / TVS description */
+function vRatings(parts,net){if(!net)return[];const K=typeof DSKEY!=='undefined'?DSKEY:{};const out=[];
+  parts.forEach(c=>{if(!Object.values(c.pins||{}).includes(net)||/^(R|C|CP|L|FB|J|TP|D)\d/i.test(c.ref))return;const k=K[c.mpn]||K[c.val];let v=null,what='';
+    if(k&&k.spec){if(Array.isArray(k.spec.vin)&&k.spec.vin[1]){v=+k.spec.vin[1];what='최대 입력 (DS)';}else if(k.spec.v){v=+k.spec.v;what='정격 (DS)';}}
+    if(v==null&&/MOSFET|FET/i.test(c.desc||'')){const m=String(c.desc).match(/[−-]?(\d+)\s*V\b/);if(m){v=+m[1];what='VDS (부품 설명)';}}
+    out.push({ref:c.ref,val:c.val,v,what:v==null?'정격 미확인':what});});
+  return out.sort((a,b)=>(a.v==null)-(b.v==null)||a.v-b.v);}
 const has=(c,n)=>Object.values(c.pins||{}).includes(n);
 /* ---- the calculators ---- */
 function compute(parts,o){o=o||{};const A=Object.assign({},DEF,o.assume||{});const out=[];const fs=1<<SPEC.ADC.bits;
   const E24=[1,1.1,1.2,1.3,1.5,1.6,1.8,2,2.2,2.4,2.7,3,3.3,3.6,3.9,4.3,4.7,5.1,5.6,6.2,6.8,7.5,8.2,9.1];const e24=v=>{const d=Math.pow(10,Math.floor(Math.log10(v)));return E24.map(e=>e*d).concat([10*d]).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);};const kLab=v=>v>=1e6?+(v/1e6).toFixed(2)+'MΩ':v>=1e3?+(v/1e3).toFixed(1)+'kΩ':v+'Ω';
   const vref=3.3,vrefT=(parts.some(c=>/AMS1117/i.test(c.val))?SPEC.AMS1117.tol:A.vrefTol||2)/100;const tue=A.tue!=null?+A.tue:SPEC.ADC.tue;const lsb=vref/fs;
   const Iop=+o.I||10,Ipk=+o.Ipk||Iop,tpk=+o.tpk||2,ftti=o.ftti||null;const R=(x,d)=>+(+x).toFixed(d==null?2:d);const code=v=>Math.round(v/vref*fs);
-  const row=(r)=>{out.push(Object.assign({ok:true,src:[]},r));};
+  const refsOf=r=>{const t=[r.title].concat(r.chain||[]).join(' ');const set=new Set(parts.filter(c=>t.includes(c.ref+' '+c.val)||t.includes(c.ref+' '+(c.mpn||'\u0000'))).map(c=>c.ref));
+    const by=f=>parts.filter(f).forEach(c=>set.add(c.ref));
+    if(/^(drv_|cur_ocp|cur_vds)/.test(r.mech))by(c=>/A491[18]|DRV83/.test(c.val));if(/^cur_vds/.test(r.mech))by(c=>/^Q/.test(c.ref)&&/MOSFET/.test(c.desc||'')&&!/역전압|역접속/.test(c.desc||''));
+    if(/^cur_(range|sum)/.test(r.mech)){by(c=>/^R/.test(c.ref)&&/션트/.test(c.desc||''));by(c=>/A491[18]|DRV83/.test(c.val));}
+    if(/^sbc_/.test(r.mech))by(c=>/TPS3823/.test(c.val));if(/^ntc_/.test(r.mech))by(c=>/^RT/.test(c.ref));if(/^pin_/.test(r.mech))by(c=>/TPS54331|LMR|TLF/.test(c.val));return[...set];};
+  const basisOf=r=>/^vbat/.test(r.mech)?`정상 ${A.vop.join('–')} V (${A.vopSrc||'기본값'})`:/^cur_/.test(r.mech)?`상시 ${Iop} A · 피크 ${Ipk} A ${tpk} s (${A.iSrc||'기본값'})`:/^ntc_/.test(r.mech)?`보드 한계 ${A.ntc.join(' / ')} °C · 측정 ${A.ntcRange.join('…')} °C`:/^sbc_uv/.test(r.mech)?`MCU 최소 ${SPEC.MCUIO.vmin} V · +3V3 레일 −${SPEC.AMS1117.tol} %`:/^sbc_wdt/.test(r.mech)?(ftti?`FTTI ${ftti} ms (안전 목표)`:'FTTI 요구 없음'):'';
+  const row=(r)=>{const x=Object.assign({ok:true,src:[]},r);x.refs=refsOf(x);x.basis=x.basis||basisOf(x);x.temp=`${A.Tmin}…${A.Tmax} °C (${A.tSrc||'기본값'})`;
+    x.tone=x.ok===null?'na':!x.ok?'err':(x.src||[]).includes('가정')||(x.chain||[]).some(c=>/가정/.test(c))?'warn':'ok';out.push(x);};
   // 1 VBAT monitor: divider → ADC (absolute — the ADC reference error counts)
   const rt=parts.find(c=>/^R/.test(c.ref)&&has(c,'VMON')&&!has(c,'GND')),rb=parts.find(c=>/^R/.test(c.ref)&&has(c,'VMON')&&has(c,'GND'));
   if(rt&&rb){const Pt=resP(rt,A),Pb=resP(rb,A);const kN=Pb.nom/(Pt.nom+Pb.nom);
     const meas=V=>{const ps=[Pt,Pb,Pr('VAREF ±'+vrefT*100+' %',vref,vref*(1-vrefT),vref*(1+vrefT),'가정'),P('ADC TUE ±'+tue+' LSB',0,tue*lsb,'가정')];
       return eva(ps,([rt_,rb_,vr,e])=>{const va=V*rb_/(rt_+rb_)+e;return va/vr*vref/kN;});};
     const fsV=vref/kN;const [lo,hi]=A.vop;const eL=meas(lo),eH=meas(hi);
+    // protection limit: the lowest voltage rating among the parts powered from the monitored rail (datasheet key figures)
+    const railN=Object.values(rt.pins||{}).find(n=>n&&n!=='VMON');const allR=vRatings(parts,railN),rated=allR.filter(x=>x.v!=null),unr=allR.filter(x=>x.v==null);const vLim=rated.length?rated[0]:null;
     const uv=(eL.lo)*(1-A.margin/100),ov=(eH.hi)*(1+A.margin/100);
     const dUV=meas(uv),dOV=meas(ov);// true voltage that reads uv: invert with the band — approximate by symmetric error at that point
     const errUV=Math.max(dUV.hi-uv,uv-dUV.lo),errOV=Math.max(dOV.hi-ov,ov-dOV.lo);
     row({mech:'vbat_rng',block:'cur',title:'VBAT 저전압 · 과전압 (분압 → ADC)',chain:[Pt.name,Pb.name,'VAREF +3V3 ±'+vrefT*100+' %','ADC 12비트 TUE ±'+tue+' LSB'],
       normal:`정상 ${lo}–${hi} V에서 읽힘 ${R(eL.lo)}–${R(eH.hi)} V (오차 ±${R(Math.max(eL.hi-lo,lo-eL.lo))} / ±${R(Math.max(eH.hi-hi,hi-eH.lo))} V)`,
       thr:`UV ${R(uv)} V (ADC ${code(uv*kN)}) · OV ${R(ov)} V (ADC ${code(ov*kN)})`,detect:`UV 실제 ${R(uv-errUV)}–${R(uv+errUV)} V에서 판정 · OV 실제 ${R(ov-errOV)}–${R(ov+errOV)} V`,
-      margin:`ADC 풀스케일 ${R(fsV,1)} V — OV 임계 대비 ${R(fsV-ov-errOV,1)} V 여유`,ok:ov+errOV<fsV*0.98,
+      margin:`ADC 풀스케일 ${R(fsV,1)} V — OV 임계 대비 ${R(fsV-ov-errOV,1)} V 여유${vLim?` · 보호 한계 ${vLim.v} V (${vLim.ref} ${vLim.what}) 대비 ${R(vLim.v-ov-errOV,1)} V`:''}${unr.length?` · 정격 미확인 ${unr.map(x=>x.ref+' '+x.val).join(', ')}`:''}`,ok:ov+errOV<fsV*0.98&&(!vLim||ov+errOV<vLim.v),
+      lo:{name:'정상 최저 (요구사항)',v:lo,m:uv-errUV>0?lo-(uv+errUV):0,u:'V'},hi:{name:vLim&&vLim.v<fsV?`보호 한계 ${vLim.ref} ${vLim.v} V`:'ADC 풀스케일 (측정 상한)',v:vLim?Math.min(vLim.v,fsV):fsV,m:(vLim?Math.min(vLim.v,fsV*0.98):fsV*0.98)-(ov+errOV),u:'V'},ratings:allR.slice(0,8),
       advice:ov+errOV<fsV*0.98?`로드덤프(최대 수십 V)는 ADC 범위를 넘으므로 포화 = 과전압으로 처리. 입력 주입 전류 (40 V−3.3)/${rVal(rt.val)/1e3} kΩ = ${R((40-3.3)/rVal(rt.val)*1e3,2)} mA`:(()=>{const fsT=(ov+errOV)*1.25;const rbN=e24(rVal(rt.val)/(fsT/vref-1));return`과전압 판정이 ADC 풀스케일 ${R(fsV,1)} V에 닿음 — 하단 저항 ${rb.val} → ${kLab(rbN)} (풀스케일 약 ${R(vref*(rVal(rt.val)+rbN)/rbN,1)} V)로 바꾸면 OV 판정이 범위 안`;})(),
       rss:`RSS 오차 ±${R((eL.rssHi-eL.rssLo)/2)} V @ ${lo} V`,src:[Pt.src,Pb.src,'가정']});}
   // 2 NTC board temperature: ratiometric to +3V3 (VAREF = +3V3 → reference cancels), Beta model
@@ -112,12 +129,18 @@ function compute(parts,o){o=o||{};const A=Object.assign({},DEF,o.assume||{});con
       row({mech:'cur_vds',block:'gate',title:`VDS 단락 감시 — ${side==='HS'?'하이사이드 VTH':'로우사이드 VTL'} (A4911)`,chain:[`${fets[0].val} RDS(on) 최대 ${R(F.max*1e3,1)} mΩ × ${SPEC.FET.kHot} (150 °C) · 전형 ${R(F.typ*1e3,1)} mΩ × ${SPEC.FET.kCold} (−40 °C)`,`임계 오차 ±${s.of*1000} mV (${s.v<1?'< 1 V':'≥ 1 V'})`],
         normal:`피크 ${Ipk} A · 고온에서 VDS 최대 ${R(vdsPk,3)} V`,thr:`${side==='HS'?'VTH':'VTL'} = ${s.n} (${R(s.v,2)} V)`,detect:`실제 ${R(iMin,0)}–${R(iMax,0)} A에서 단락 판정`,margin:`FET 펄스 ${F.ipk} A 대비 상한 ${R(iMax/F.ipk*100,0)} %`,ok:iMax<=F.ipk,
         advice:'RDS(on)가 온도로 2배 넘게 변해 VDS 감시는 정밀 과전류가 아닌 단락 보호 — 과전류 판정은 션트 쪽으로',src:['DS',SPEC.FET.src]});});}
+  // DRV8334-Q1: its sense amplifiers' gain error / offset / gain steps are not in the datasheet record yet
+  {const shunts=parts.filter(c=>/^R/.test(c.ref)&&/션트/.test(c.desc||'')&&/m[ΩO]|µΩ/.test(c.val));const d8=parts.find(c=>/DRV8334/.test(c.val));
+    if(d8&&shunts.length){const sh=shunts[0];const t=rTol(sh,A);row({mech:'cur_range',block:'cur',title:`${shunts.length>=3?'상전류':'레그(부하) 전류'} 측정 · SW 과전류 (션트 → DRV8334 CSA → ADC)`,
+      chain:[`${sh.ref} ${sh.val} ±${t} % · TCR ${A.shTCR} ppm`,'DRV8334 CSA 이득 오차 · 오프셋 · 이득 단계 — 데이터 없음',`VAREF ±${vrefT*100} %`,`ADC TUE ±${tue} LSB`],
+      normal:`피크 ${Ipk} A · 상시 ${Iop} A`,thr:'계산 불가',detect:'계산 불가',margin:'',ok:null,
+      advice:'DRV8334-Q1 데이터시트 전기적 특성(전류 센스 앰프: 이득 오차 · 입력 오프셋 · 드리프트 · 선형 출력 범위)을 기록에 넣으면 최악 오차와 과전류 임계를 계산합니다',src:['데이터 없음']});}}
   // 5 MCU supply supervisor
   const sup=parts.find(c=>/TPS3823/.test(c.val));
   if(sup){const S=SPEC.TPS3823;const rail=3.3,rt=(SPEC.AMS1117.tol)/100;const railMin=rail*(1-rt);
-    row({mech:'sbc_uv',block:'sbc',title:'MCU 전원 저전압 리셋 (TPS3823-33)',chain:[`VIT− ${S.vit.join(' / ')} V (${S.src})`,`+3V3 LDO ±${SPEC.AMS1117.tol} %`,`MCU 최소 동작 ${SPEC.MCUIO.vmin} V (가정)`],
+    row({mech:'sbc_uv',block:'sbc',title:'MCU 전원 저전압 리셋 (TPS3823-33)',chain:[`VIT− ${S.vit.join(' / ')} V (${S.src})`,`+3V3 LDO ±${SPEC.AMS1117.tol} % (${SPEC.AMS1117.src})`,`MCU 최소 동작 ${SPEC.MCUIO.vmin} V (TC364 V_EXT 3.3 V 최소, DS)`],
       normal:`레일 최저 ${R(railMin,3)} V`,thr:`고정 ${S.vit[1]} V`,detect:`실제 ${S.vit[0]}–${S.vit[2]} V에서 리셋`,margin:`오리셋 여유 ${R((railMin-S.vit[2])*1000,0)} mV · MCU 최소까지 ${R((S.vit[0]-SPEC.MCUIO.vmin)*1000,0)} mV`,
-      ok:railMin>S.vit[2]&&S.vit[0]>=SPEC.MCUIO.vmin,advice:S.vit[0]<SPEC.MCUIO.vmin?'감시 하한이 MCU 최소 동작 전압보다 낮을 수 있음 — 그 사이 구간은 MCU 내부 저전압 감시(EVR)로 덮거나 임계가 높은 감시 IC 선택':'정상',src:[S.src]});
+      ok:railMin>S.vit[2]&&S.vit[0]>=SPEC.MCUIO.vmin,lo:{name:'MCU 최소 동작',v:SPEC.MCUIO.vmin,m:S.vit[0]-SPEC.MCUIO.vmin,u:'V'},hi:{name:'+3V3 레일 최저',v:railMin,m:railMin-S.vit[2],u:'V'},advice:S.vit[0]<SPEC.MCUIO.vmin?'감시 하한이 MCU 최소 동작 전압보다 낮을 수 있음 — 그 사이 구간은 MCU 내부 저전압 감시(EVR)로 덮거나 임계가 높은 감시 IC 선택':'정상',src:[S.src,SPEC.AMS1117.src]});
     const twd=S.twd;row({mech:'sbc_wdt',block:'sbc',title:'외부 워치독 (TPS3823 WDI)',chain:[`tWD ${twd.join(' / ')} s (${S.src})`,`리셋 지속 ${S.td.join(' / ')} s`],normal:`정상 서비스 주기는 tWD 최소보다 짧아야`,
       thr:`WDI 토글 ≤ ${R(twd[0]/2,2)} s (tWD 최소의 ½)`,detect:`멈춤 후 ${twd[0]}–${twd[2]} s 안에 리셋`,margin:ftti?`가장 짧은 FTTI ${ftti} ms 대비 ${R(twd[2]*1000/ftti,0)}배 느림`:'',ok:!ftti||twd[2]*1000<=ftti,
       advice:ftti&&twd[2]*1000>ftti?'외부 워치독은 FTTI 안의 검출에 쓸 수 없음 — FTTI 안 검출은 내부 워치독 · SMU · 프로그램 흐름 감시가 맡고, 외부 WDT는 독립 감시(잠재 고장 · 공통 원인) 역할':'FTTI 안',src:[S.src]});}
@@ -144,13 +167,13 @@ function compute(parts,o){o=o||{};const A=Object.assign({},DEF,o.assume||{});con
 /* ---- table / HTML ---- */
 const MLAB={vbat_rng:'VBAT 범위',ntc_derate:'과열 디레이팅',ntc_range:'NTC open · short',cur_range:'상전류 범위 · SW 과전류',cur_sum:'Σi ≈ 0',cur_ocp:'HW 과전류 (OCT)',cur_vds:'VDS 단락',sbc_uv:'MCU 전원 UV',sbc_wdt:'외부 워치독',pin_uvlo:'입력 UVLO',pin_ign:'IGN 감지',drv_uv:'드라이버 UV',drv_temp:'드라이버 과열'};
 function aoa(R){return[['메커니즘','항목','측정 체인 · 공차','정상 범위 (최악)','권장 임계값','고장 판정 범위','여유 · 참고','판정','조언','출처']].concat(R.rows.map(r=>[MLAB[r.mech]||r.mech,r.title,r.chain.join(' / '),r.normal,r.thr,r.detect,r.margin,r.ok?'OK':'점검',r.advice||'',[...new Set(r.src)].join(', ')]));}
-function text(R){return R.rows.map(r=>`${r.ok?'✓':'⚠'} ${r.title}\n   체인: ${r.chain.join(' · ')}\n   정상: ${r.normal}\n   임계: ${r.thr}\n   판정: ${r.detect}${r.margin?`\n   여유: ${r.margin}`:''}${r.advice?`\n   → ${r.advice}`:''}`).join('\n');}
+function text(R){return R.rows.map(r=>`${r.ok===null?'–':r.ok?'✓':'⚠'} ${r.title}${r.basis?`\n   경계: ${r.basis}`:''}\n   체인: ${r.chain.join(' · ')}\n   정상: ${r.normal}\n   임계: ${r.thr}\n   판정: ${r.detect}${r.margin?`\n   여유: ${r.margin}`:''}${r.advice?`\n   → ${r.advice}`:''}`).join('\n');}
 const h=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function html(R){const A=R.assume;const inp=(k,v,w,lab)=>`<label style="display:inline-flex;gap:4px;align-items:center;margin:0 10px 6px 0;font-size:12px">${lab}<input data-dta="${k}" value="${h(v)}" style="width:${w||54}px;font:inherit;padding:2px 4px"></label>`;
   return`<div class="sm"><div style="margin:0 0 8px;font-size:12px">${inp('Tmin',A.Tmin,44,'온도 °C')}${inp('Tmax',A.Tmax,44,'~')}${inp('rTol',A.rTol,40,'저항 기본 %')}${inp('rTCR',A.rTCR,48,'TCR ppm')}${inp('shTol',A.shTol,40,'션트 %')}${inp('margin',A.margin,40,'여유 %')}${inp('vop',A.vop.join('-'),60,'정상 VBAT V')}${inp('ntc',A.ntc.join('/'),60,'보드 한계 °C')}${inp('tue',R.spec.ADC.tue,36,'ADC TUE LSB')}</div>
-  <table><tr><th>메커니즘</th><th>측정 체인 · 공차</th><th>정상 범위 (최악)</th><th>권장 임계값</th><th>고장 판정 범위</th><th>여유 · 조언</th></tr>
-  ${R.rows.map(r=>`<tr${r.ok?'':' style="background:color-mix(in srgb,#c4521a 9%,transparent)"'}><td><b>${h(r.title)}</b><div class="sm-st">${r.ok?'✓ OK':'⚠ 점검'} · ${h([...new Set(r.src)].join(', '))}</div></td><td>${r.chain.map(x=>`<div class="sm-st">${h(x)}</div>`).join('')}</td><td>${h(r.normal)}</td><td><b>${h(r.thr)}</b></td><td>${h(r.detect)}</td><td>${h(r.margin)}${r.advice?`<div class="sm-st" style="margin-top:3px">→ ${h(r.advice)}</div>`:''}</td></tr>`).join('')}</table>
+  <table><tr><th>HW 블록 · 회로 블록</th><th>메커니즘</th><th>측정 체인 · 공차</th><th>정상 범위 (최악)</th><th>권장 임계값</th><th>고장 판정 범위</th><th>여유 · 조언</th></tr>
+  ${R.rows.map(r=>`<tr${r.ok===false?' style="background:color-mix(in srgb,#c4521a 9%,transparent)"':''}><td><b>${h((r.ablockLabels||[]).join(' · ')||'—')}</b><div class="sm-st">${h([...new Set(r.blockLabels||[])].join(' · '))}</div><div class="sm-st">${h((r.refs||[]).join(' '))}</div></td><td><b>${h(r.title)}</b><div class="sm-st">${r.ok===null?'– 데이터 없음':r.ok?(r.tone==='warn'?'△ OK (가정값 포함)':'✓ OK'):'⚠ 공차 초과'}${r.basis?' · 경계 '+h(r.basis):''} · ${h([...new Set(r.src)].join(', '))}</div></td><td>${r.chain.map(x=>`<div class="sm-st">${h(x)}</div>`).join('')}</td><td>${h(r.normal)}</td><td><b>${h(r.thr)}</b></td><td>${h(r.detect)}</td><td>${h(r.margin)}${r.advice?`<div class="sm-st" style="margin-top:3px">→ ${h(r.advice)}</div>`:''}</td></tr>`).join('')}</table>
   <p class="sm-st" style="margin-top:8px">최악 조합(EVA): 모든 공차를 동시에 최악으로 — 보수적. "가정" 출처는 데이터시트 최소/최대로 바꾸세요(SPEC). 측정 오차만 다루며 필터 지연 · 노이즈 · 샘플링은 별도.</p></div>`;}
-return{SPEC,DEF,compute,eva,text,aoa,html,MLAB};
+return{SPEC,DEF,compute,eva,text,aoa,html,MLAB,vRatings};
 })();
 if(typeof module!=='undefined')module.exports=DIAGTHR;
