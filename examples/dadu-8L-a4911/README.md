@@ -37,3 +37,13 @@ node scripts/pcbrun.cjs --param gdrv3.driver=A4911 --cmds "board layers 8; board
 ## 주의
 - 입력 · 모터 단자 품번 미지정(정격 20 A 이상으로 지정).
 - 같은 설정의 다른 시드: 31677은 미연결 0이지만 PH_V 4.81 mm(부족), 나머지는 미연결 1~3.
+
+
+## v1.109.0 다시 배치 · 배선
+TPS3823 리셋 IC 핀 배치를 데이터시트대로 고쳤습니다(1 RESET · 2 GND · 3 MR → VDD · 4 WDI · 5 VDD). 이전 판은 +3V3이 GND 핀에 연결돼 있었습니다. 회로 생성 때의 자동 보강(인터페이스 풀 저항 · 커넥터 ESD · 커패시터 품번 교체)도 반영해 다시 배치 · 배선했습니다.
+```
+node scripts/pcbrun.cjs --profile Dadu --param gdrv3.driver=A4911 \
+  --cmds "board layers 8; board size 90 60 --anchor center; reset --strategy compact --both --no-pincap --seed 2; route"
+```
+결과: 90 × 60 mm · 8층 · 아래층 부품 49개 · 미연결 1 · DRC 0 · 전류 폭(유효/필요 mm) PH_U 10.45/6.14 · PH_V 10.5/6.14 · PH_W 9.82/6.14 · VIN_RAW 22.5/6.14 · PH_U_SNS 직결/6.14 · PH_V_SNS 직결/6.14
+미연결 1건(PH_W_HO, 게이트 신호)은 손으로 마무리해야 합니다. 이전 판도 1건(PH_INL_U)이 남아 있었습니다.

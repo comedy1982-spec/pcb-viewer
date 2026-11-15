@@ -35,11 +35,11 @@ test('Dadu double-sided example: 85 × 55 mm, parts on the bottom, restores clea
   assert.equal(PCBEDIT.drc(B).length, 0);
   for (const n of B.powerReport.nets) assert.ok(n.width === '직결' || n.width >= n.need, n.net + ' ' + n.width);
 });
-test('Dadu A4911 example: 90 × 60 mm 8 layers, restores with DRC 0, power widths met and only the one documented PWM connection open', () => {
+test('Dadu A4911 example: 90 × 60 mm 8 layers, restores with DRC 0, power widths met and only the one documented gate connection open (PH_W_HO)', () => {
   const B = fresh(SNAP_DADU8C.meta);const r = BOARDSNAP.apply(B, SNAP_DADU8C);
   assert.deepEqual(r.missing, []);assert.equal(B.W, 90);assert.equal(B.H, 60);
   assert.ok(B.comps.some(c => c.val === 'A4911'));assert.equal(PCBEDIT.drc(B).length, 0);
-  assert.deepEqual(PCBEDIT.ratsnest(B).map(x => x.net), ['PH_INL_U']);
+  assert.deepEqual(PCBEDIT.ratsnest(B).map(x => x.net), ['PH_W_HO']);
   for (const n of B.powerReport.nets) assert.ok(n.width === '직결' || n.width >= n.need, n.net + ' ' + n.width);
 });
 

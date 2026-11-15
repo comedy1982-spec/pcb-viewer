@@ -36,3 +36,12 @@ F.Cu 신호 · In1 GND · In2 신호 · In3 GND · In4 +12V 평면 · In5 신호
 ## 주의
 - 입력 · 모터 단자는 7.62 mm 피치 2 · 3핀 — 품번 미지정(제조 전에 정격 20 A 이상 단자로 지정).
 - 자동 배치에 무작위성이 있어 다시 돌리면 배치 · 폭 수치가 조금 달라짐(같은 설정 2회 모두 미연결 0 · DRC 0 · 모든 전력 넷 ✓).
+
+
+## v1.109.0 다시 배치 · 배선
+TPS3823 리셋 IC 핀 배치를 데이터시트대로 고쳤습니다(1 RESET · 2 GND · 3 MR → VDD · 4 WDI · 5 VDD). 이전 판은 +3V3이 GND 핀에 연결돼 있었습니다. 회로 생성 때의 자동 보강(인터페이스 풀 저항 · 커넥터 ESD · 커패시터 품번 교체)도 반영해 다시 배치 · 배선했습니다.
+```
+node scripts/pcbrun.cjs --profile Dadu --param gdrv3.driver=IR2104 \
+  --cmds "board layers 8; board size 100 65 --anchor center; reset --strategy compact --seed 2; route"
+```
+결과: 100 × 65 mm · 8층 · 아래층 부품 0개 · 미연결 0 · DRC 0 · 전류 폭(유효/필요 mm) PH_U 9.98/6.14 · PH_V 10.12/6.14 · PH_W 8.95/6.14 · VIN_RAW 24.17/6.14 · PH_U_SNS 직결/6.14 · PH_V_SNS 직결/6.14

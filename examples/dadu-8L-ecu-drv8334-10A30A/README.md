@@ -42,3 +42,13 @@ node scripts/pcbrun.cjs --profile Dadu --cur "~10 A (소형 팬 · 펌프)" \
 - 같은 설정의 다른 시드(1 · 2 · 3 · 9)는 미연결 2–12개가 남았습니다. 이 구조는 아직 시드에 따라 결과가 크게 갈립니다.
 - V 상은 MX150 3.5 mm 접점 열 사이 가운데라, 커넥터 구간 폭이 층당 2.2 mm입니다.
 - DRV8334 주문 품번(E/Q 온도 등급)과 HTQFP 노출 패드 치수는 TI 패키지 도면으로 확인해야 합니다.
+
+
+## v1.109.0 다시 배치 · 배선
+TPS3823 리셋 IC 핀 배치를 데이터시트대로 고쳤습니다(1 RESET · 2 GND · 3 MR → VDD · 4 WDI · 5 VDD). 이전 판은 +3V3이 GND 핀에 연결돼 있었습니다. 회로 생성 때의 자동 보강(인터페이스 풀 저항 · 커넥터 ESD · 커패시터 품번 교체)도 반영해 다시 배치 · 배선했습니다.
+```
+node scripts/pcbrun.cjs --profile Dadu --cur "~10 A (소형 팬 · 펌프)" --param pwr_in.conn=ecu,gdrv3.driver=DRV8334,gdrv3.i=10,gdrv3.ipk=30,gdrv3.tpk=2 --add spare --w 100 --h 70 \
+  --cmds "board layers 8; board size 105 75 --anchor center; reset --strategy compact --both --top sense,power --drv-gap 12 --seed 2; route"
+```
+결과: 105 × 75 mm · 8층 · 아래층 부품 21개 · 미연결 0 · DRC 0 · 전류 폭(유효/필요 mm) PH_U 6.06/3.51 · PH_V 4.4/3.51 · PH_W 8.73/3.51 · VIN_RAW 14.66/3.51 · PH_U_SNS 직결/3.51 · PH_V_SNS 직결/3.51
+보드가 100 × 70 → 105 × 75 mm(면적 +12.5 %)로 커졌습니다. 100 × 70에서는 시드 16개 모두 미연결 1–10건이 남았습니다. KiCad 파일 이름도 바뀌었습니다.

@@ -18,8 +18,12 @@ test('power sequencing / cranking: rail hold-up voltages, IC states while cranki
   const drv = S.cons.find(x => /DRV8334/.test(x.mpn));assert.equal(drv.crank, '로직 · SPI만 (게이트 구동 정지)');assert.equal(drv.vbStart != null, true);
   // TPS3823-33 VIT− min 2.86 V (record) under the TC364 3.3 V minimum 2.97 V
   assert.ok(S.findings.some(f => f.code === 'sup_window' && /2\.86/.test(f.msg)));
-  // the supervisor block's pin numbers disagree with the TPS3823 datasheet / KiCad (pin 2 = GND, pin 5 = VDD)
-  assert.ok(S.findings.some(f => f.code === 'pinmap' && /TPS3823/.test(f.msg) && /2번 회로 VDD \/ DS GND/.test(f.msg)));
+  // supply / ground pins agree with the datasheet records (TPS3823 fixed in v1.109.0: pin 2 = GND, pin 5 = VDD) and the supervisor's VDD is on +3V3
+  assert.ok(!S.findings.some(f => f.code === 'pinmap'), S.findings.filter(f => f.code === 'pinmap').map(f => f.msg).join('\n'));
+  assert.ok(S.cons.some(x => /TPS3823/.test(x.mpn) && x.net === '+3V3'));
+  // a swapped supply pin is caught: put the TPS3823 VDD name on pin 2 (the datasheet's GND)
+  const bad = JSON.parse(JSON.stringify(r));const u = bad.parts.find(c => /TPS3823/.test(c.mpn));u.pinNames = { 1: 'RESET', 2: 'VDD', 3: 'GND', 4: 'MR', 5: 'WDI' };u.pins = { 1: u.pins[1], 2: '+3V3', 3: 'GND', 4: '+3V3', 5: 'WDI' };
+  assert.ok(L.PWRSEQ.run(bad, P, {}).findings.some(f => f.code === 'pinmap' && /2번 회로 VDD \/ DS GND/.test(f.msg)));
   // reset-safe driver inputs: missing without the generator's pulls, fixed with them
   assert.ok(S.findings.some(f => f.code === 'seq_unsafe'));
   P.ifaceFix = true;assert.ok(!NEWPROJ.build(P).pwrseq.findings.some(f => f.code === 'seq_unsafe'));
@@ -31,5 +35,5 @@ test('guideline rule sch_pwrseq reads the sequencing result kept on a generated 
   const L = load();const { NEWPROJ, GUIDE, SCH } = L;const P = plan(L, 'A4911');P.ifaceFix = true;
   const B = NEWPROJ.toBoard(P, { place: false }).B;assert.ok(B.pwrseq);
   const g = GUIDE.evaluate(B, { scope: 'sch', sheets: SCH.build(B, null).sheets }).rules.find(x => x.key === 'sch_pwrseq');
-  assert.equal(g.status, 'fail');assert.match(g.ev, /핀 배치/);
+  assert.equal(g.status, 'partial');assert.match(g.ev, /레일 조정 유지 불가/);assert.ok(g.score > 0.7 && g.score < 1);
 });

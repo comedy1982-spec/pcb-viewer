@@ -35,3 +35,13 @@ node scripts/pcbrun.cjs --profile "ELD only" --cur "~7 A (ELD 솔레노이드)" 
 - 내층 평면 GND · +12V +2.9 °C, 전력 비아 12곳 모두 통과(션트 R16 · R25 GND 비아 5 · 6개). 미연결 0 · DRC 0 · 아래층 부품 36개.
 - 같은 조건 시드 4도 통과, 시드 1 · 2 · 6은 신호 미배선 3–4개.
 - v1.98.0 전에는 ELD−(HB_B)가 ELD+ FET 옆을 지나며 0.2 mm로 막혀(먼저 자란 ELD+ 동박이 통로를 다 차지) 모든 시드가 실패했습니다. 출력마다 통로(lane)를 먼저 확보하도록 고쳤습니다.
+
+
+## v1.109.0 다시 배치 · 배선
+TPS3823 리셋 IC 핀 배치를 데이터시트대로 고쳤습니다(1 RESET · 2 GND · 3 MR → VDD · 4 WDI · 5 VDD). 이전 판은 +3V3이 GND 핀에 연결돼 있었습니다. 회로 생성 때의 자동 보강(인터페이스 풀 저항 · 커넥터 ESD · 커패시터 품번 교체)도 반영해 다시 배치 · 배선했습니다.
+```
+node scripts/pcbrun.cjs --profile "ELD only" --cur "~7 A (ELD 솔레노이드)" --w 80 --h 55 \
+  --cmds "board layers 6; board size 80 55 --anchor center; reset --strategy compact --both --no-pincap --seed 2; route"
+```
+결과: 80 × 55 mm · 6층 · 아래층 부품 37개 · 미연결 0 · DRC 0 · 전류 폭(유효/필요 mm) HB_A 7.53/2.3 · HB_B 5.6/2.3 · VIN_RAW 14/2.3 · HB_A_SNS 직결/2.3 · HB_B_SNS 직결/2.3
+션트 R16 · R25의 GND 귀환 비아가 각 3개(0.2 mm)뿐이라 7 A에서 +35 °C로 비아 점검에 걸립니다(이전 판은 통과). 나머지 비아 · 동박 폭은 통과합니다.

@@ -30,3 +30,12 @@ node scripts/pcbrun.cjs --cur "~10 A (소형 팬 · 펌프)" --param "gdrv3.driv
 
 ## 미세 피치 핀 탈출 순서 (v1.80.1)
 이전 시드 23 결과는 미연결 2곳(SPI SDO · V상 게이트)이 남았습니다. SDO는 0.5 mm 피치 QFP 두 개(TC364 · A4911)에서 SCK · SDI 사이에 낀 핀이라, 이웃이 먼저 배선되며 양쪽 핀 앞 자리를 다 차지해 한 가닥도 나가지 못했습니다. 배선 순서에 "연속된 신호 핀 구간의 가운데 핀부터" 규칙을 넣은 뒤 같은 시드 23은 미연결 1, 시드 11은 미연결 0이 되었습니다.
+
+
+## v1.109.0 다시 배치 · 배선
+TPS3823 리셋 IC 핀 배치를 데이터시트대로 고쳤습니다(1 RESET · 2 GND · 3 MR → VDD · 4 WDI · 5 VDD). 이전 판은 +3V3이 GND 핀에 연결돼 있었습니다. 회로 생성 때의 자동 보강(인터페이스 풀 저항 · 커넥터 ESD · 커패시터 품번 교체)도 반영해 다시 배치 · 배선했습니다.
+```
+node scripts/pcbrun.cjs --profile Dadu --cur "~10 A (소형 팬 · 펌프)" --param gdrv3.driver=A4911,gdrv3.ipk=40,gdrv3.tpk=2 \
+  --cmds "board layers 8; board size 90 60 --anchor center; reset --strategy compact --both --seed 1; route"
+```
+결과: 90 × 60 mm · 8층 · 아래층 부품 46개 · 미연결 0 · DRC 0 · 전류 폭(유효/필요 mm) PH_U 9.96/4.44 · PH_V 9.7/4.44 · PH_W 8.62/4.44 · VIN_RAW 28.12/4.44 · PH_U_SNS 직결/4.44 · PH_V_SNS 직결/4.44
