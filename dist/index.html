@@ -7635,6 +7635,131 @@ return{run,text,SPEC,SAFE,connProt,protText,ESD_PART};
 
 </script>
 <script>
+/* ---------- capacitors: voltage derating, transient withstand, DC bias, temperature range, part number vs footprint ----------
+   Runs on generated parts or a board. The rating, dielectric, size and tolerance come from the part number (Samsung CL ·
+   Murata GRM/GCM/GCJ · TDK C/CGA · Panasonic EEE-F aluminium); a capacitor without a decodable part number is listed as
+   "정격 미확인". The voltage across each capacitor is worked out from its nets:
+     battery-side nets  steady = requirement VBAT max (default 16 V) · transient = jump start 24 V (ISO 16750-2, 12 V system)
+                        or the suppressed load dump 35 V when the input TVS is the load-dump one
+     regulated rails    nominal + 5 %
+     gate-drive nodes   (GVDD / VREG / charge pump / bootstrap) the driver's datasheet limit
+     connector signals  short to battery (transient) · the connector's highest supply (steady)
+     other signals      ≤ 5 V (assumption)
+   Limits (common automotive derating practice): class II MLCC steady ≤ 50 % of rating (≤ 80 % = check), class I and
+   aluminium ≤ 80 %; every transient ≤ the rating (≥ 90 % = no margin). Effective capacitance in the worst case
+   = nominal × DC bias × (1 − tolerance) × (1 − temperature coefficient) × (1 − ageing). The DC bias curve is an
+   approximation from the part's volume and capacitance (±30 %) — confirm with the maker's curve. */
+const CAPCHECK=(function(){
+"use strict";
+const SAM_SIZE={'05':'0402','10':'0603','21':'0805','31':'1206','32':'1210','43':'1812'};
+const MUR_SIZE={'15':'0402','18':'0603','21':'0805','31':'1206','32':'1210','43':'1812'};
+const TDK_SIZE={'2':'0402','3':'0603','4':'0805','5':'1206','6':'1210','7':'1808','8':'1812'};
+const TDK_MM={'1005':'0402','1608':'0603','2012':'0805','3216':'1206','3225':'1210','4532':'1812'};
+const SAM_V={R:4,Q:6.3,P:10,O:16,A:25,L:35,B:50,C:100,D:200,E:250};
+const SAM_D={A:'X5R',B:'X7R',C:'C0G',F:'Y5V'};
+const VCODE={'0G':4,'0J':6.3,'1A':10,'1C':16,'1E':25,'1V':35,'1H':50,'1J':63,'2A':100};
+const MUR_D={R6:'X5R',R7:'X7R',C7:'X7S',C8:'X6S',D7:'X7T',L8:'X8L',R9:'X8R','5C':'C0G',C6:'X5S'};
+const TOL={B:0.1e-12,C:0.25e-12,D:0.5,F:1,G:2,J:5,K:10,M:20,Z:80};
+/* dielectric: max temperature, capacitance change over its range, class */
+const DIEL={X5R:{t:85,tc:0.15,cl:2},X5S:{t:85,tc:0.22,cl:2},X6S:{t:105,tc:0.22,cl:2},X7R:{t:125,tc:0.15,cl:2},X7S:{t:125,tc:0.22,cl:2},X7T:{t:125,tc:0.33,cl:2},
+  X8R:{t:150,tc:0.15,cl:2},X8L:{t:150,tc:0.40,cl:2},Y5V:{t:85,tc:0.82,cl:2},C0G:{t:125,tc:0,cl:1},ALU:{t:105,tc:0.10,cl:0}};
+const VOL={'0402':0.25,'0603':1.02,'0805':3.1,'1206':8.2,'1210':20,'1808':16,'1812':40};
+const code3=s=>{s=String(s);if(/R/.test(s))return parseFloat(s.replace('R','.'))*1e-12;return+s.slice(0,2)*Math.pow(10,+s[2])*1e-12;};
+/* part number → {mfr, size, diel, vr, c, tol} (null when the series is not known) */
+function decode(mpn){const m0=String(mpn||'').toUpperCase().replace(/\s/g,'');let m;
+  if((m=m0.match(/^CL(05|10|21|31|32|43)([A-Z])(\d{3}|\dR\d)([A-Z])([A-Z])/)))return{mfr:'Samsung',size:SAM_SIZE[m[1]],diel:SAM_D[m[2]]||null,c:code3(m[3]),tol:TOL[m[4]]||10,vr:SAM_V[m[5]]||null};
+  if((m=m0.match(/^G(?:RM|CM|CJ|CB|RT|CQ)(\d{2})\w(\w{2})(\d[A-Z])(\d{3}|\dR\d)([A-Z])/)))return{mfr:'Murata',size:MUR_SIZE[m[1]],diel:MUR_D[m[2]]||null,vr:VCODE[m[3]]||null,c:code3(m[4]),tol:TOL[m[5]]||10};
+  if((m=m0.match(/^CGA(\d)[A-Z]\d(X\d[A-Z]|C0G|NP0)(\d[A-Z])(\d{3}|\dR\d)([A-Z])/)))return{mfr:'TDK',size:TDK_SIZE[m[1]],diel:m[2]==='NP0'?'C0G':m[2],vr:VCODE[m[3]]||null,c:code3(m[4]),tol:TOL[m[5]]||10};
+  if((m=m0.match(/^C(1005|1608|2012|3216|3225|4532)(X\d[A-Z]|C0G|NP0)(\d[A-Z])(\d{3}|\dR\d)([A-Z])/)))return{mfr:'TDK',size:TDK_MM[m[1]],diel:m[2]==='NP0'?'C0G':m[2],vr:VCODE[m[3]]||null,c:code3(m[4]),tol:TOL[m[5]]||10};
+  if((m=m0.match(/^EEE-?F[A-Z]{1,2}(\d[A-Z])(\d{3})/)))return{mfr:'Panasonic',size:null,diel:'ALU',vr:VCODE[m[1]]||null,c:+m[2].slice(0,2)*Math.pow(10,+m[2][2])*1e-6,tol:20};
+  return null;}
+/* fraction of the capacitance left at a DC voltage (class II MLCC; approximation from volume and capacitance) */
+function dcBias(d,V){if(!d||!DIEL[d.diel]||DIEL[d.diel].cl!==2||!d.size||!VOL[d.size]||!d.c||!d.vr)return 1;
+  const uF=d.c*1e6,V0=Math.max(10*Math.sqrt(VOL[d.size]/uF),0.4*d.vr);return 1/(1+Math.pow(Math.max(V,0)/V0,1.3));}
+/* gate-drive / switcher nodes: the voltage across a capacitor on one of these pins (datasheet records) */
+const NODE=[
+  {key:'DRV8334',re:/^(GVDD|VCP|CPH|CPL|CPTH|CPTL|BST[A-C])$/i,v:18,src:'DRV8334-Q1 GVDD 절대 최대 18 V (조정값 기록 없음 — 상한으로)'},
+  {key:'A4911',re:/^(VREG|CP1|CP2|C[ABC])$/i,v:11.7,src:'A4911 VREG 최대 11.7 V (VRG = 1, 권장 동작 조건)'},
+  {key:'TPS54331',re:/^BOOT$/i,v:8,src:'TPS54331 BOOT–PH 절대 최대 8 V'}];
+const isGnd=n=>/^(A|D|P)?GND|^VSS|^0V$/i.test(n||'');
+const railV=n=>{const m=String(n||'').match(/^\+(\d+)V(\d*)$/);return m?+(m[1]+(m[2]?'.'+m[2]:'')):null;};
+const capVal=v=>{const m=String(v||'').replace(/\s/g,'').match(/^([\d.]+)(p|n|µ|u|m)?F/);return m?+m[1]*({p:1e-12,n:1e-9,'µ':1e-6,u:1e-6,m:1e-3}[m[2]]||1):null;};
+const fmtC=c=>c>=1e-6?+(c*1e6).toPrecision(3)+' µF':c>=1e-9?+(c*1e9).toPrecision(3)+' nF':+(c*1e12).toPrecision(3)+' pF';
+const STORE=/벌크|입력 커패시터|출력 커패시터|저장|GVDD|VREG|CPVDD|CVDRAIN|부트스트랩|차지\s?펌프|CVCP|FLY|디커플링 10|LDO/;
+/* pin names: the datasheet record (NEWPROJ.partLookup) first, then the part's own pin names */
+function norm(B,lookup){lookup=lookup||(typeof NEWPROJ!=='undefined'&&NEWPROJ.partLookup)||null;return(B.comps||B.parts||[]).map(c=>{let T={};
+  if(lookup&&/^U\d/i.test(c.ref)){try{const rec=lookup(c.mpn)||lookup(c.val);(rec&&rec.pins||[]).forEach(q=>{T[String(q.num)]=String(q.name||'');});}catch(e){}}
+  const nm=n=>T[String(n)]||(c.pinNames||c.pn||{})[n]||'';
+  const pads=c.pads?c.pads.map(p=>({n:p.n,net:p.net||null,fn:T[String(p.n)]||p.fn||nm(p.n)})):Object.entries(c.pins||{}).map(([n,net])=>({n,net:net||null,fn:nm(n)}));return{ref:c.ref,val:c.val||c.value,fp:c.fp||c.footprint||'',mpn:c.mpn||'',desc:c.desc||c.description||'',pads,src:c};});}
+/* opt: vbat (steady max), vin (nominal system voltage), loaddump (bool), bat (extra battery-side net names), rails {net: V}, Tmax */
+function run(B,opt){opt=opt||{};const comps=norm(B,opt.lookup);const vin=+opt.vin||12;const vbat=+opt.vbat||(vin>16?32:16);
+  const jump=vin<=16?24:Math.round(vbat*1.5);const ld=opt.loaddump?(vin<=16?35:58):0;const vtrB=Math.max(jump,ld,vbat);
+  const trSrc=ld?`로드덤프(중앙 억제) ${ld} V · ISO 16750-2`:vin<=16?'점프 스타트 24 V · ISO 16750-2':`과도 ${jump} V (가정 1.5 × VBAT)`;
+  const Tmax=opt.Tmax!=null?+opt.Tmax:125;const tSrc=opt.tSrc||(opt.Tmax!=null?'요구사항':'기본값 (차량용)');
+  const bat=new Set(opt.bat||[]);const rails=opt.rails||{};
+  const isBat=n=>bat.has(n)||/^(VIN|VIN_RAW|VIN_PG|VBAT|KL30|VBB|PVDD|VM)$/i.test(n||'')||(railV(n)!=null&&railV(n)>=9&&Math.abs(railV(n)-vin)<0.6);
+  const conn=comps.filter(c=>/^J\d/i.test(c.ref));const onConn=n=>conn.find(j=>j.pads.some(p=>p.net===n));
+  const ics=comps.filter(c=>/^U\d/i.test(c.ref));
+  const nodeOf=n=>{for(const u of ics){const p=u.pads.find(q=>q.net===n);if(!p)continue;const k=NODE.find(x=>(String(u.val)+' '+u.mpn).toUpperCase().includes(x.key)&&x.re.test(p.fn));if(k)return k;}return null;};
+  const netV=n=>{if(!n||isGnd(n))return{vop:0,vtr:0,src:'GND'};
+    if(isBat(n))return{vop:vbat,vtr:vtrB,src:`배터리 측 — 정상 최대 ${vbat} V · ${trSrc}`,bat:true};
+    const r=rails[n]!=null?rails[n]:railV(n);if(r!=null){const v=+(r*1.05).toFixed(2);return{vop:v,vtr:v,src:`레일 ${r} V + 5 %`};}
+    const j=onConn(n);if(j){const sup=Math.max(5,...j.pads.map(p=>p.net).filter(x=>x&&!isBat(x)).map(x=>rails[x]!=null?rails[x]:railV(x)||0));return{vop:sup,vtr:vtrB,src:`${j.ref} 커넥터 신호 — 정상 ≤ ${sup} V · 배터리 단락 ${vtrB} V`};}
+    if(/^VDD/i.test(n))return{vop:5,vtr:5,src:'MCU 내부 레일 (≤ 5 V 가정)'};
+    return{vop:5,vtr:5,src:'신호 (≤ 5 V 가정)'};};
+  const rows=[],out=[];
+  comps.filter(c=>/^C(P)?\d/i.test(c.ref)&&c.pads.length===2).forEach(c=>{const[a,b]=c.pads.map(p=>p.net);const d=decode(c.mpn);const cN=capVal(c.val);
+    // voltage across: gate-drive node on either side → the driver limit; otherwise the larger side (one side GND → that net)
+    const nd=nodeOf(a)||nodeOf(b);let V;if(nd)V={vop:nd.v,vtr:nd.v,src:nd.src};else{const A=netV(a),Bv=netV(b);V=isGnd(a)?Bv:isGnd(b)?A:(A.vtr>=Bv.vtr?A:Bv);if(!isGnd(a)&&!isGnd(b)&&!nd&&/부트스트랩/.test(c.desc))V={vop:15,vtr:15,src:'부트스트랩 (게이트 전원 ≤ 15 V 가정)'};}
+    const row={ref:c.ref,val:c.val,fp:c.fp,mpn:c.mpn,nets:[a,b],desc:c.desc,vop:V.vop,vtr:V.vtr,vsrc:V.src,d,issues:[]};rows.push(row);
+    const add=(sev,code,msg,fix)=>{const f={sev,code,ref:c.ref,net:isGnd(a)?b:a,msg:`${c.ref} ${c.val}${c.mpn?' '+c.mpn:''}: ${msg}`,fix};out.push(f);row.issues.push(f);};
+    if(!d||!d.vr){row.status='na';if(!c.mpn)add('info','no_rating','품번 없음 — 정격 전압 · 유전체 미확인','정격 전압 · 유전체가 정해진 품번 지정');else add('info','no_rating',`품번 체계를 몰라 정격 미확인 (${c.mpn})`,'데이터시트로 정격 전압 확인');return;}
+    const D=DIEL[d.diel]||null,cl2=!D||D.cl===2,lim=cl2?0.5:0.8,hard=cl2?0.8:0.9;const k=V.vop/d.vr;row.vr=d.vr;row.ratio=+k.toFixed(2);
+    if(V.vtr>d.vr)add('err','over',`과도 ${V.vtr} V > 정격 ${d.vr} V (${V.src})`,`정격 ${need(V,cl2)} V 이상 품번으로`);
+    else if(k>hard)add('err','derate',`정상 최대 ${V.vop} V = 정격 ${d.vr} V의 ${Math.round(k*100)} % (${cl2?'MLCC 2종':'1종 · 전해'} 한도 ${Math.round(lim*100)} %)`,`정격 ${need(V,cl2)} V 이상 품번으로`);
+    else if(k>lim)add('warn','derate',`정상 최대 ${V.vop} V = 정격 ${d.vr} V의 ${Math.round(k*100)} % (권장 ≤ ${Math.round(lim*100)} %)`,`정격 ${need(V,cl2)} V 이상 품번으로`);
+    else if(V.vtr>0.9*d.vr)add('warn','margin',`과도 ${V.vtr} V가 정격 ${d.vr} V의 ${Math.round(V.vtr/d.vr*100)} % — 여유 10 % 미만 (${V.src})`,`정격 ${need(V,cl2)} V 이상 품번으로`);
+    if(D&&Tmax>D.t)add('warn','temp',`${d.diel==='ALU'?'알루미늄 전해':d.diel} 정격 온도 ${D.t} °C < 동작 온도 상한 ${Tmax} °C (${tSrc})`,d.diel==='ALU'?`${Tmax} °C 정격 차량용 전해(하이브리드 폴리머 등)로 하거나, 부품 위치 온도로 수명 계산 (10 °C마다 수명 ½)`:`${Tmax<=125?'X7R · X7S':'X8R'} 유전체 품번으로`);
+    if(d.size&&/^(0402|0603|0805|1206|1210|1812)$/.test(c.fp)&&d.size!==c.fp)add('warn','pkg',`품번 크기 ${d.size} ≠ 풋프린트 ${c.fp}`,`풋프린트를 ${d.size}로 하거나 ${c.fp} 크기 품번으로`);
+    if(cN&&d.c&&Math.abs(d.c-cN)/cN>0.05)add('warn','value',`품번 용량 ${fmtC(d.c)} ≠ 회로 값 ${c.val}`,'품번 또는 값을 맞춤');
+    const cb=dcBias(d,V.vop),tol=(d.tol||10)/100,tc=D?D.tc:0.15,age=cl2?0.05:0;const eff=cb*(1-tol)*(1-tc)*(1-age);
+    row.dcb=+cb.toFixed(2);row.effMin=(cN||d.c)*eff;row.effRatio=+eff.toFixed(2);
+    if(cl2&&STORE.test(c.desc)&&cb<0.5)add('warn','dcbias',`최악 실효 용량 ${fmtC(row.effMin)} (공칭의 ${Math.round(eff*100)} % — DC 바이어스 ${Math.round((1-cb)*100)} % 감소 @ ${V.vop} V · 공차 ${Math.round(tol*100)} % · 온도 ${Math.round(tc*100)} % · 노화 5 %)`,'정격 전압이 높거나 큰 패키지 품번, 또는 병렬 추가 — 제조사 DC 바이어스 곡선으로 확인');
+    row.status=row.issues.some(f=>f.sev==='err')?'err':row.issues.some(f=>f.sev==='warn')?'warn':'ok';});
+  const n=k=>out.filter(f=>f.sev===k).length;
+  return{rows,findings:out,err:n('err'),warn:n('warn'),info:n('info'),vbat,vtr:vtrB,trSrc,Tmax,tSrc};}
+function need(V,cl2){const x=Math.max(V.vop/(cl2?0.5:0.8),V.vtr/0.9);return[6.3,10,16,25,35,50,63,100].find(v=>v>=x)||100;}
+/* known orderable parts for the generator's fixes: [mpn, value, footprint] (rating, dielectric from the part number) */
+const ALT=[['CGA6P3X7S1H106K250AB','10µF','1210'],['CGA6M3X7R1H225K200AB','2.2µF','1210'],['CGA3E3X7R1H105K080AB','1µF','0603'],['GCM21BR71A106KE22L','10µF','0805'],
+  ['GCM32EC71E226KE36L','22µF','1210'],['GCM188R71H104KA57D','100nF','0603'],['GCM188R71C474KA55D','470nF','0603'],['CGA4J3X7R1H474K125AB','470nF','0805'],['CL10B104KB8NNNC','100nF','0603'],['CL05B104KO5NNNC','100nF','0402'],
+  ['CL10B103KB8NNNC','10nF','0603'],['CL10B102KB8NNNC','1nF','0603'],['CL10B683KB8NNNC','68nF','0603'],['CL10B472KB8NNNC','4.7nF','0603'],['CL10B332KB8NNNC','3.3nF','0603'],
+  ['CL05B102KB5NNNC','1nF','0402'],['CL05B103KB5NNNC','10nF','0402'],['CL05C470JB5NNNC','47pF','0402'],['CL05C120JB5NNNC','12pF','0402'],['EEE-FK1V471SP','470µF','CP-SMD-10x10']];
+const AREA={'0402':0.5,'0603':1.28,'0805':2.5,'1206':5.12,'1210':8,'CP-SMD-10x10':100};
+/* generator fix on the part list (in place): pick a known part of the same value that passes, same footprint first, then the
+   smallest; a 22 µF that has none becomes two 10 µF 50 V in parallel. Returns the changes. */
+function fix(parts,opt,addPart){const R=run({parts},opt);const ch=[];
+  R.rows.filter(r=>r.status==='err'||r.status==='warn').forEach(r=>{const c=parts.find(p=>p.ref===r.ref);if(!c)return;const codes=r.issues.map(f=>f.code);
+    if(!codes.some(x=>/over|derate|margin|temp|pkg|value/.test(x)))return;
+    const t0=r.d&&DIEL[r.d.diel]?DIEL[r.d.diel].t:0;
+    const ok=m=>{const d=decode(m[0]),D=DIEL[d.diel],cl2=D.cl===2;return r.vtr<=0.9*d.vr&&r.vop/d.vr<=(cl2?0.5:0.8)&&D.t>=(D.cl===0?Math.min(R.Tmax,t0):R.Tmax);};
+    const cand=ALT.filter(m=>m[1]===c.val&&ok(m)).sort((x,y)=>(x[2]!==c.fp)-(y[2]!==c.fp)||(AREA[x[2]]||9)-(AREA[y[2]]||9));
+    const was=`${c.val} ${c.fp} ${c.mpn||'-'}`;
+    if(cand.length&&cand[0][0]!==c.mpn){const m=cand[0];c.mpn=m[0];c.fp=m[2];const d=decode(m[0]);c.desc=(c.desc||'')+` (커패시터 점검: ${d.vr} V ${d.diel})`;ch.push({ref:c.ref,from:was,to:`${c.val} ${m[2]} ${m[0]}`,why:r.issues.map(f=>f.code).join(',')});return;}
+    if(c.val==='22µF'&&addPart){const m=ALT[0];if(!ok(m))return;const d=decode(m[0]);c.val='10µF';c.mpn=m[0];c.fp=m[2];const base=c.desc||'';c.desc=base+` (커패시터 점검: 22 µF ${r.d?r.d.vr+' V':''} → 10 µF ${d.vr} V ${d.diel} × 2 병렬)`;
+      const np=addPart('C','10µF',m[2],Object.assign({},c.pins),{mpn:m[0],desc:base+` (커패시터 점검: 22 µF → 10 µF ${d.vr} V × 2 병렬의 두 번째)`});if(np&&c.block)np.block=c.block;
+      ch.push({ref:c.ref,from:was,to:`10µF ${m[2]} ${m[0]} × 2`,why:r.issues.map(f=>f.code).join(','),added:np?np.ref:null});return;}
+    // a part number whose size disagrees with the footprint: the footprint follows the ordered part
+    if(codes.includes('pkg')&&r.d&&r.d.size){c.fp=r.d.size;ch.push({ref:c.ref,from:was,to:`${c.val} ${r.d.size} ${c.mpn}`,why:'pkg'});}});
+  return ch;}
+const SEV={err:'✕',warn:'△',info:'·'};
+function text(R){const L=[`커패시터 정격 · DC 바이어스 (배터리 정상 ${R.vbat} V · 과도 ${R.vtr} V ${R.trSrc} · 상한 ${R.Tmax} °C): ${R.rows.length}개 — 오류 ${R.err} · 확인 ${R.warn}`];
+  R.findings.filter(f=>f.sev!=='info').forEach(f=>L.push(`${SEV[f.sev]} ${f.msg}\n   → ${f.fix}`));const na=R.findings.filter(f=>f.code==='no_rating');if(na.length)L.push(`· 정격 미확인 ${na.length}개 (${na.map(f=>f.ref).join(' ')})`);return L.join('\n');}
+return{decode,dcBias,run,fix,text,ALT,DIEL,NODE};
+})();
+
+
+</script>
+<script>
 /* PCB / circuit design guidelines: weighted rules with P0–P3 priority, domain presets and a compliance score
    (after the "PCB 통합 설계 가이드라인 & Datasheet 우선순위 선정기"). Every rule is checked deterministically from the
    board (and the schematic for circuit rules) where the data allows; rules the data cannot settle come back as
@@ -7688,6 +7813,7 @@ const RULES=[
   {key:'sch_can_term',scope:'sch',cat:'회로',w:7,title:'CAN 버스 종단(120Ω 또는 60Ω+60Ω 스플릿 + 4.7nF)',desc:'CANH–CANL 사이 종단 또는 스플릿 종단 (하네스 끝단이면 해당 없음)',ref:"CAN Transceiver Datasheet 'Bus Termination'"},
   {key:'sch_reset',scope:'sch',cat:'회로',w:6,title:'리셋 핀 풀업',desc:'NRST/PORST/RESET 넷에 전원으로 가는 풀업 저항',ref:"MCU Datasheet 'Reset Circuit'"},
   {key:'sch_iface',scope:'sch',cat:'회로',w:8,title:'블록 간 인터페이스: 로직 레벨 · 리셋 중 기본 상태 · 오픈 드레인 풀업 · 커넥터 배터리 단락',desc:'다른 I/O 전원 사이 신호의 레벨, MCU 리셋 중 게이트 · 드라이버 · CAN 대기 입력의 안전 상태용 풀 저항, 오픈 드레인 출력의 풀업, 떠 있는 입력, 외부 커넥터 신호가 배터리에 단락될 때 MCU 핀 주입 전류',ref:'부품 데이터시트 핀 기능 · 권장 동작 조건 (IFCHECK)'},
+  {key:'sch_cap',scope:'sch',cat:'회로',w:7,title:'커패시터 정격 전압 디레이팅 · 과도 내압 · DC 바이어스 · 온도 범위',desc:'캡마다 걸리는 최대 전압이 정격의 50 % 이하(MLCC 2종, 1종 · 전해 80 %), 점프 스타트 · 로드덤프 과도가 정격 안, DC 바이어스 후 실효 용량, 유전체 정격 온도, 품번 크기와 풋프린트 일치',ref:'부품 품번 정격 · ISO 16750-2 (점프 스타트 · 로드덤프) · 차량용 디레이팅 관례 (CAPCHECK)'},
   {key:'sch_erc',scope:'sch',cat:'회로',w:8,title:'ERC 0건 (미연결 핀은 NC 표시)',desc:'떠 있는 배선, 연결 안 된 핀, 핀 없는 라벨이 없는지',ref:'KiCad ERC'}];
 const PRESETS={
   default:{label:'표준 밸런스',w:{rt_priority:8,rt_return_via:8,rt_edge_keepout:6,pw_agnd_star:8,th_via_array:7,ds_footprint:10,ds_thermal_pad:9,rt_return_path:10,pl_sw_loop:10,ds_kelvin:9,pl_decoupling:9,pw_solid_gnd:9,pl_esd_tvs:8,rt_diff_pair:8,pw_via_amp:8,rt_3w:7,rt_45deg:6,sch_decap:9,sch_bulk:7,sch_xtal:8,sch_tvs:8,sch_can_term:7,sch_reset:6,sch_erc:8}},
@@ -7695,7 +7821,7 @@ const PRESETS={
   ecu:{label:'전장 ECU (CISPR 25/EMC/신뢰성)',w:{rt_priority:9,rt_return_via:9,rt_edge_keepout:8,pw_agnd_star:9,th_via_array:8,ds_footprint:10,ds_thermal_pad:9,rt_return_path:10,pl_sw_loop:10,ds_kelvin:9,pl_decoupling:10,pw_solid_gnd:10,pl_esd_tvs:10,rt_diff_pair:9,pw_via_amp:8,rt_3w:9,rt_45deg:7,sch_decap:10,sch_bulk:8,sch_xtal:8,sch_tvs:10,sch_can_term:9,sch_reset:7,sch_erc:9}},
   highspeed:{label:'고속 신호 (SI/임피던스)',w:{rt_priority:9,rt_return_via:10,rt_edge_keepout:8,pw_agnd_star:7,th_via_array:6,ds_footprint:10,ds_thermal_pad:7,rt_return_path:10,pl_sw_loop:8,ds_kelvin:6,pl_decoupling:9,pw_solid_gnd:10,pl_esd_tvs:8,rt_diff_pair:10,pw_via_amp:7,rt_3w:10,rt_45deg:8,sch_decap:10,sch_bulk:7,sch_xtal:9,sch_tvs:8,sch_can_term:8,sch_reset:6,sch_erc:8}}};
 // every preset carries every rule (rules added later take their default weight); domain presets emphasise their rules
-Object.values(PRESETS).forEach(P=>RULES.forEach(r=>{if(P.w[r.key]==null)P.w[r.key]=r.w;}));PRESETS.motor.w.sch_iface=9;
+Object.values(PRESETS).forEach(P=>RULES.forEach(r=>{if(P.w[r.key]==null)P.w[r.key]=r.w;}));PRESETS.motor.w.sch_iface=9;PRESETS.motor.w.sch_cap=8;PRESETS.ecu.w.sch_cap=9;
 Object.assign(PRESETS.motor.w,{th_spread:9,pw_via_web:8,pl_zoning:9,rt_fb_route:8});
 Object.assign(PRESETS.ecu.w,{pl_zoning:9,pl_xtal:9,cu_stitch:8,dfa_edge_mlcc:8,su_stackup:9,cu_dead:8});
 Object.assign(PRESETS.highspeed.w,{rt_stub:9,rt_orthogonal:9,su_stackup:10,pw_via_web:9,cu_stitch:8});
@@ -7959,6 +8085,12 @@ function checkSch(B,key,X){
       const sc=Math.max(0,1-R.err*0.25-R.warn*0.06);
       return{status:R.err?'fail':'partial',score:sc,ev:`오류 ${R.err} · 확인 ${R.warn}: `+R.findings.slice(0,6).map(f=>`${f.sev==='err'?'✕':'△'} ${f.net} ${f.code==='od_pullup'?'오픈 드레인 풀업 없음':f.code==='default_float'?'리셋 중 떠 있음':f.code==='default_wrong'?'리셋 중 반대 상태':f.code==='level_over'?'레벨 초과':f.code==='level_under'?'VIH 미달 가능':f.code==='multi_drive'?'출력 충돌':f.code==='stb_inject'?'배터리 단락 시 MCU 주입 초과':'입력 떠 있음'}`).join(' · ')+(R.findings.length>6?' …':''),
         fix:R.findings.slice(0,3).map(f=>f.fix).join(' / '),manualNote:'부품 내부 풀 저항 · 5 V 허용 여부는 데이터시트로 확인'};}
+    case'sch_cap':{if(typeof CAPCHECK==='undefined')return{status:'manual',ev:'커패시터 점검 모듈 없음'};const P=B.newPlan||{};const pw=(P.blocks||[]).find(b=>b.type==='pwr_in');const vin=pw?+(pw.params.vin||12):12;
+      const R=CAPCHECK.run(B,{vin,vbat:(P.vop&&P.vop[1])||undefined,loaddump:!!(pw&&String(pw.params.tvs)==='loaddump'),Tmax:P.tmax!=null?+P.tmax:undefined});
+      if(!R.rows.length)return{status:'na',ev:'커패시터 없음'};const na=R.rows.filter(r=>r.status==='na').length;const head=`${R.rows.length}개 (정격 미확인 ${na}) · 배터리 ${R.vbat} V · 과도 ${R.vtr} V · 상한 ${R.Tmax} °C`;
+      if(!R.err&&!R.warn)return{status:'pass',score:1,ev:`문제 없음 — ${head}`};const rated=Math.max(1,R.rows.length-na),wc=R.rows.filter(r=>r.status==='warn').length;const sc=Math.max(0,1-R.err*0.25-wc/rated);const bad=R.findings.filter(f=>f.sev!=='info');
+      return{status:R.err?'fail':'partial',score:sc,ev:`오류 ${R.err} · 확인 ${R.warn} (${head}): `+bad.slice(0,6).map(f=>`${f.sev==='err'?'✕':'△'} ${f.ref} ${({over:'과도 > 정격',derate:'디레이팅 초과',margin:'과도 여유 부족',temp:'정격 온도 부족',pkg:'품번 ≠ 풋프린트',value:'품번 용량 ≠ 값',dcbias:'DC 바이어스 감소 큼'})[f.code]||f.code}`).join(' · ')+(bad.length>6?' …':''),
+        fix:bad.slice(0,3).map(f=>f.fix).join(' / '),manualNote:'DC 바이어스는 근사(±30 %) — 제조사 곡선으로 확인'};}
     case'sch_decap':{const isReg=c=>c.pins.some(p=>/^(VIN|VI)$/i.test(p.name))&&c.pins.some(p=>/^(VOUT|VO)$/i.test(p.name));const ics=parts.filter(c=>/^U|^IC/i.test(c.ref)&&c.pins.length>=4&&!isConn(c)&&!isReg(c));const rows=[];
       ics.forEach(c=>{const rails=[...new Set(c.pins.map(p=>p.net).filter(n=>n&&!isGnd(n)&&cls(B,n)==='전원'))];rails.forEach(r=>rows.push({ref:c.ref,rail:r,ok:capsOn(r,1.01e-6).length>0}));});
       if(!rows.length)return{status:'na',ev:'전원 레일을 쓰는 IC 없음'};const bad=rows.filter(r=>!r.ok);const sc=1-bad.length/rows.length;
@@ -8729,9 +8861,16 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
   parts.forEach(c=>{if(!(c.mpn||'').trim()){const m=defaultMpn(c);if(m)c.mpn=m;}});
   // functional-safety part policy: an ASIL plan swaps commercial parts for automotive drop-ins (same package & pinout)
   if(asil&&typeof PARTLIB!=='undefined'){let n=0;parts.forEach(c=>{const alt=PARTLIB.autoAlt(c.mpn||c.val);if(alt&&alt.mpn&&alt.dropIn){const rec=alt.rec;if(/^U|^Q|^D/.test(c.ref)&&rec&&rec.mpn!==c.val)c.val=rec.mpn;c.mpn=alt.mpn;c.desc=(c.desc||'')+` (ASIL ${asil}: ${rec&&rec.grade?rec.grade:'AEC'} 대체)`;n++;}else if(alt&&alt.hint&&/^U/.test(c.ref))warn.push(`${c.ref} ${c.val}: ${alt.hint}`);});if(n)warn.push(`ASIL ${asil} 부품 정책: 상용 부품 ${n}개를 차량용(AEC) 핀 호환 부품으로 바꿨습니다 (safety parts 로 확인)`);}
+  // capacitors: voltage derating · transient (jump start / load dump) · DC bias · temperature range · part number vs footprint,
+  // on the final part numbers (after defaults and the ASIL swap). The generate step (plan.ifaceFix) swaps in a passing known part.
+  let caps=null;if(typeof CAPCHECK!=='undefined'){try{const pw=plan.blocks.find(b=>b.type==='pwr_in');const vin=pw?+(pw.params.vin||12):12;
+      const bat=Object.entries(rails).filter(([,x])=>{const b=plan.blocks.find(q=>q.id===x.block);return b&&b.type==='pwr_in';}).map(([k])=>k).concat(['VIN_RAW','VIN_PG']);
+      const copt={vin,vbat:(plan.vop&&plan.vop[1])||(vin>16?32:16),loaddump:!!(pw&&String(pw.params.tvs)==='loaddump'),bat,rails:Object.fromEntries(Object.entries(rails).map(([k,x])=>[k,x.v])),Tmax:plan.tmax!=null?+plan.tmax:undefined};
+      let changed=[];if(plan.ifaceFix===true)changed=CAPCHECK.fix(parts,copt,(t,v,fp,pins,o)=>ctx.part(t,v,fp,pins,o));
+      caps=CAPCHECK.run({parts},copt);caps.fixed=changed;caps.opt=copt;}catch(e){caps=null;}} // reported on its own (r.caps), not in warn
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
-  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
+  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,caps,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
 }
 /* ---------- package shrink (plan.shrink: 0 off · 1 표준 · 2 최대) ----------
    Swaps a part for a smaller package only where the replacement's pinout is known (KiCad 10 symbol / datasheet) and the
@@ -18186,6 +18325,7 @@ async function npGenerate0(o){
   npSet(prog,`회로 생성 [${V.label}]: 부품 ${B.comps.length}개 · BOM 약 $${V.m.partsPrice} (예상 단가 $${V.m.price}) · 넷 ${Object.keys(B.nets).length}개 · 회로도 ${sheets?sheets.length:0}쪽 · MCU 핀 배정 ${r.assigned.length}개\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>'\n  △ '+x.title).join('')}\nPCB 조건(3단계에서 적용): ${pcbPlanText(B.pcbPlan)}`);
   if(r.iface){const fx=r.iface.fixed||[];const left=r.iface.findings;if(fx.length||left.length)npSay(left.some(f=>f.sev==='err')?'err':'ok',`블록 간 인터페이스 점검: ${fx.length?`풀 저항 ${fx.length}개 자동 추가 (${fx.map(f=>`${f.net}→${f.pull.to==='GND'?'GND':f.pull.to}`).join(', ')})`:''}${fx.length&&left.length?' · ':''}${left.length?`남은 항목 ${left.length}개:\n`+left.map(f=>`${f.sev==='err'?'✕':'△'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('\n'):' — 남은 문제 없음'}`);}
   if(r.iface&&r.iface.prot){const pr=r.iface.prot;const left=pr.findings.filter(f=>f.sev!=='info');if((pr.added||[]).length||left.length)npSay(left.some(f=>f.sev==='err')?'err':'ok',`외부 커넥터 신호 보호 (배터리 단락 ${pr.vbat} V 기준): ${(pr.added||[]).length?`ESD/TVS(24 V급) 자동 추가 — ${pr.added.join(', ')}`:''}${left.length?`\n남은 항목 ${left.length}개:\n`+left.map(f=>`${f.sev==='err'?'✕':'△'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('\n'):' · 남은 문제 없음'}`);}
+  if(r.caps){const C=r.caps,fx=C.fixed||[];const left=C.findings.filter(f=>f.sev!=='info');if(fx.length||left.length)npSay(left.some(f=>f.sev==='err')?'err':'ok',`커패시터 정격 · DC 바이어스 (배터리 ${C.vbat} V · 과도 ${C.vtr} V ${C.trSrc} · 상한 ${C.Tmax} °C): ${fx.length?`${fx.length}개 품번 교체 — `+fx.slice(0,8).map(x=>`${x.ref} ${x.from} → ${x.to}`).join(' · ')+(fx.length>8?' …':''):''}${left.length?`\n남은 항목 ${left.length}개:\n`+left.map(f=>`${f.sev==='err'?'✕':'△'} ${f.msg}\n   → ${f.fix}`).join('\n'):' · 남은 문제 없음'}`);}
   SYS.src='plan';setStep(2);
   if(o.pcb){setStep(3);await pcbStart(B.pcbPlan);return'회로 생성 후 PCB 설계를 시작했습니다 — 결과는 배치·배선 CLI에 있습니다.';}
   toast(`${P.name}: 부품 ${B.comps.length}개로 회로를 만들었습니다. 회로도를 검토한 뒤 3단계에서 PCB를 시작하세요.`);

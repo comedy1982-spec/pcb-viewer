@@ -711,9 +711,16 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
   parts.forEach(c=>{if(!(c.mpn||'').trim()){const m=defaultMpn(c);if(m)c.mpn=m;}});
   // functional-safety part policy: an ASIL plan swaps commercial parts for automotive drop-ins (same package & pinout)
   if(asil&&typeof PARTLIB!=='undefined'){let n=0;parts.forEach(c=>{const alt=PARTLIB.autoAlt(c.mpn||c.val);if(alt&&alt.mpn&&alt.dropIn){const rec=alt.rec;if(/^U|^Q|^D/.test(c.ref)&&rec&&rec.mpn!==c.val)c.val=rec.mpn;c.mpn=alt.mpn;c.desc=(c.desc||'')+` (ASIL ${asil}: ${rec&&rec.grade?rec.grade:'AEC'} 대체)`;n++;}else if(alt&&alt.hint&&/^U/.test(c.ref))warn.push(`${c.ref} ${c.val}: ${alt.hint}`);});if(n)warn.push(`ASIL ${asil} 부품 정책: 상용 부품 ${n}개를 차량용(AEC) 핀 호환 부품으로 바꿨습니다 (safety parts 로 확인)`);}
+  // capacitors: voltage derating · transient (jump start / load dump) · DC bias · temperature range · part number vs footprint,
+  // on the final part numbers (after defaults and the ASIL swap). The generate step (plan.ifaceFix) swaps in a passing known part.
+  let caps=null;if(typeof CAPCHECK!=='undefined'){try{const pw=plan.blocks.find(b=>b.type==='pwr_in');const vin=pw?+(pw.params.vin||12):12;
+      const bat=Object.entries(rails).filter(([,x])=>{const b=plan.blocks.find(q=>q.id===x.block);return b&&b.type==='pwr_in';}).map(([k])=>k).concat(['VIN_RAW','VIN_PG']);
+      const copt={vin,vbat:(plan.vop&&plan.vop[1])||(vin>16?32:16),loaddump:!!(pw&&String(pw.params.tvs)==='loaddump'),bat,rails:Object.fromEntries(Object.entries(rails).map(([k,x])=>[k,x.v])),Tmax:plan.tmax!=null?+plan.tmax:undefined};
+      let changed=[];if(plan.ifaceFix===true)changed=CAPCHECK.fix(parts,copt,(t,v,fp,pins,o)=>ctx.part(t,v,fp,pins,o));
+      caps=CAPCHECK.run({parts},copt);caps.fixed=changed;caps.opt=copt;}catch(e){caps=null;}} // reported on its own (r.caps), not in warn
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
-  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
+  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,caps,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
 }
 /* ---------- package shrink (plan.shrink: 0 off · 1 표준 · 2 최대) ----------
    Swaps a part for a smaller package only where the replacement's pinout is known (KiCad 10 symbol / datasheet) and the
