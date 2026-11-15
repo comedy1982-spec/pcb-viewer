@@ -45,3 +45,9 @@ node scripts/pcbrun.cjs --profile "ELD only" --cur "~7 A (ELD 솔레노이드)" 
 ```
 결과: 80 × 55 mm · 6층 · 아래층 부품 37개 · 미연결 0 · DRC 0 · 전류 폭(유효/필요 mm) HB_A 7.53/2.3 · HB_B 5.6/2.3 · VIN_RAW 14/2.3 · HB_A_SNS 직결/2.3 · HB_B_SNS 직결/2.3
 션트 R16 · R25의 GND 귀환 비아가 각 3개(0.2 mm)뿐이라 7 A에서 +35 °C로 비아 점검에 걸립니다(이전 판은 통과). 나머지 비아 · 동박 폭은 통과합니다.
+
+## v1.111.0 원래 설정(시드 5)으로 복귀
+배선기에 "막는 넷 뜯고 실패한 넷부터 재배선" 단계가 들어가, 원래 설정 그대로 통과합니다: 미연결 0 · DRC 0 · 전류 폭 · 비아 전류 모두 통과(v1.109.0의 션트 GND 비아 미달 해소).
+```
+... --cmds "board layers 6; board size 80 55 --anchor center; reset --strategy compact --both --seed 5; route"
+```

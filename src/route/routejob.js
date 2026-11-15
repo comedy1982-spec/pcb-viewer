@@ -4,6 +4,15 @@
    main thread (pcbcli.js wraps it with undo, repaint and the progress line) or inside a Web Worker (ROUTEJOB.workerMain —
    the board travels as JSON, the result comes back as a BOARDSNAP), so a long job never freezes the page. */
 const ROUTEJOB=(function(){
+/* victims for a rip-up: signal nets whose auto copper lies within 0.9 mm of a failed net's pad (weight 6, 5, … by count) or
+   within 1.2 mm of its open connection's straight line (weight by how much); the K heaviest */
+function victims(B,failed,K,isPw){const sd=(px,py,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy;let t=l?((px-a[0])*dx+(py-a[1])*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(px-a[0]-t*dx,py-a[1]-t*dy);};
+  const ss=(a,b,c,d)=>{let m=Infinity;const n=Math.max(2,Math.ceil(Math.hypot(d[0]-c[0],d[1]-c[1])/0.4));for(let i=0;i<=n;i++){const t=i/n;m=Math.min(m,sd(c[0]+(d[0]-c[0])*t,c[1]+(d[1]-c[1])*t,a,b));}return m;};
+  const F=new Set(failed);const prims=[];PCB.cuKeys(B).forEach(k=>B.layers[k+'.cu'].forEach(p=>{if(!p.net||!p.auto||p.fill||p.fan||F.has(p.net)||isPw(p.net))return;if(p.t==='seg')prims.push([p.net,p.a,p.b]);else if(p.t==='path')for(let i=1;i<p.pts.length;i++)prims.push([p.net,p.pts[i-1],p.pts[i]]);}));
+  const w={};const rats=PCBEDIT.ratsnest(B,failed);
+  failed.forEach(n=>{((B.nets[n]&&B.nets[n].pads)||[]).forEach(p=>{const R=Math.max(p.w,p.h)/2+0.9;const c={};prims.forEach(q=>{if(sd(p.x,p.y,q[1],q[2])<R)c[q[0]]=(c[q[0]]||0)+1;});Object.keys(c).sort((x,y)=>c[y]-c[x]).slice(0,6).forEach((m,i)=>{w[m]=(w[m]||0)+6-i;});});});
+  rats.forEach(r=>{const c={};prims.forEach(q=>{if(ss(r.a,r.b,q[1],q[2])<1.2)c[q[0]]=(c[q[0]]||0)+1;});Object.keys(c).forEach(m=>{w[m]=(w[m]||0)+Math.min(4,c[m]/2);});});
+  return Object.keys(w).sort((x,y)=>w[y]-w[x]).slice(0,K);}
 const iwOn=(a,B)=>a.iw!=null?!!a.iw&&a.iw!=='off':!a['no-iw']&&!!(B.newPlan||B.netCurrent);
 "use strict";
 const f1=v=>(Math.round(v*10)/10).toFixed(1);
@@ -134,7 +143,7 @@ async function routeJob(B,a,ui){
       if(out){let nt=0,nv=0,okN=0;const routed=new Set();out.forEach((o,i)=>{o.tracks.forEach(t=>{const side=t._side;delete t._side;B.layers[side+'.cu'].push(t);nt++;});o.vias.forEach(v=>{B.vias.push(v);nv++;});(o.res&&o.res.results||[]).forEach(r=>{if(r.ok){okN++;routed.add(r.net);}});});
         PCBEDIT.rebuildNets(B);const still=new Set(AUTOROUTE.openNets(B).map(o=>o.net));nets=nets.filter(n=>still.has(n));
         lines.push(`병렬 배선: 워커 ${R.groups.length}개 (${R.groups.map(g=>g.nets.length).join('+')} 넷 · 전역 ${R.global.length}) → ${okN}개 연결 · 트랙 ${nt} · 비아 ${nv} · ${((performance.now()-tP)/1000).toFixed(1)} s (워커 안 ${out.map(o=>(o.ms/1000).toFixed(1)).join('/')} s)`);}}}
-  const it=AUTOROUTE.jobRR(B,nets,{rounds:a.rounds!=null?+a.rounds:(PW&&PW.nets.length?8:undefined),width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,keepOrder,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(B.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||a.mst===true,sealLim:a.seal!=null?+a.seal:undefined,...(a.grid?{grid:+a.grid}:{})});
+  const optRR={rounds:a.rounds!=null?+a.rounds:(PW&&PW.nets.length?8:undefined),width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,keepOrder,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(B.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||a.mst===true,sealLim:a.seal!=null?+a.seal:undefined,...(a.grid?{grid:+a.grid}:{})};const it=AUTOROUTE.jobRR(B,nets,optRR);
   const t0=performance.now();let r,last=performance.now();
   for(;;){r=it.next();if(r.done)break;const p=r.value;
     if(performance.now()-last>80){ui.set(p.phase==='route'?`배선 중… ${p.i+1}/${p.total} · ${p.net}`:`막힌 넷 다시 배선 ${p.round}/${p.max} · ${p.net} (완료 ${p.ok}/${p.total})`);await ui.tick();last=performance.now();}
@@ -143,7 +152,7 @@ async function routeJob(B,a,ui){
   // that then shares a cell is re-routed with rising congestion prices until the conflicts are gone
   let pfNote='';if(!a['no-pf']&&a.pf!==false&&!ui.stopped()){PCBEDIT.rebuildNets(B);const open1=AUTOROUTE.openNets(B).filter(o=>nets.includes(o.net)).length;
     if(open1){ui.set(`협상 배선(PathFinder) 준비… 미배선 ${open1}개`);await ui.tick();
-      const it3=AUTOROUTE.jobPF(B,nets,{width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(B.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||a.mst===true,sealLim:a.seal!=null?+a.seal:undefined,...(a.grid?{grid:+a.grid}:{}),pfRounds:a['pf-rounds']?+a['pf-rounds']:(PW&&PW.nets.length?8:14),pfTimeMs:a['pf-time']?+a['pf-time']*1000:(PW&&PW.nets.length?30000:90000)});
+      var optPF={width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom,avoid,avoidCost:6,W:WW,edgeBand,edgeCost:1.5,clear:clr,via,laneVia:ml?2:0,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:(ml?600000:300000),bottomCost:st==='noise'?1.6:1.05,viaCost:(B.copperLayers||2)>2?1.2:2,dirCost,mst:a.mst===true||a.mst===true,sealLim:a.seal!=null?+a.seal:undefined,...(a.grid?{grid:+a.grid}:{}),pfRounds:a['pf-rounds']?+a['pf-rounds']:(PW&&PW.nets.length?8:14),pfTimeMs:a['pf-time']?+a['pf-time']*1000:(PW&&PW.nets.length?30000:90000)};const it3=AUTOROUTE.jobPF(B,nets,optPF);
       let r3,last3=performance.now();for(;;){r3=it3.next();if(r3.done)break;const p=r3.value;
         if(performance.now()-last3>80){ui.set(`협상 배선 라운드 ${p.round}/${p.max} · ${p.i+1}/${p.total} ${p.net} (충돌 ${p.conflicts} · 미배선 ${p.open})`);await ui.tick();last3=performance.now();}
         if(ui.stopped())break;}
@@ -169,6 +178,21 @@ async function routeJob(B,a,ui){
     if(r1>r0){AUTOROUTE.copperRestore(B,snap3);PCBEDIT.rebuildNets(B);}else{const still=new Set(AUTOROUTE.openNets(B).map(o=>o.net));const fixed=thinOpen.filter(n=>!still.has(n));
       if(fixed.length)lines.push(`미세 피치 핀 탈출 — 신호 폭 ${sig} mm로 다시 배선: ${fixed.join(', ')}`);}
     open=AUTOROUTE.openNets(B).filter(o=>nets.includes(o.net));}
+  // stage 4 — victim rip-up (the rule version of "the agent names the nets to rip"): the nets still open go first after the
+  // signal nets that surround their pads or stand on their straight corridors are taken off — 8 victims, then 16; a round is
+  // kept only when fewer connections stay open. Wider than the rip-up of stage 1 (3 nets near the pads, 3 tries per net).
+  if(open.length&&!a['no-victim']&&a.victim!==false&&!ripL.length&&!ui.stopped()){const isPw=n=>prioOf(n)===0||(PW&&(PW.nets.includes(n)||PW.planes.has(n)));
+    for(const K of[8,16]){const failed=[...new Set(open.map(o=>o.net))].filter(n=>!isPw(n)).slice(0,6);if(!failed.length)break;const vict=victims(B,failed,K,isPw);if(!vict.length)break;
+      ui.set(`막는 넷 ${vict.length}개를 뜯고 실패한 ${failed.length}개 넷부터 다시 배선…`);await ui.tick();
+      const snapV=AUTOROUTE.copperSnap(B);const r0=PCBEDIT.ratsnest(B).length;const set=new Set(failed.concat(vict));const kill=[];
+      PCB.cuKeys(B).forEach(k=>B.layers[k+'.cu'].forEach(p=>{if(p.auto&&!p.fan&&!p.fill&&set.has(p.net))kill.push(p);}));B.vias.forEach(v=>{if(v.auto&&!v.fan&&set.has(v.net))kill.push(v);});AUTOROUTE.unroute(B,kill);PCBEDIT.rebuildNets(B);
+      const list=failed.concat(vict);const itV=AUTOROUTE.jobRR(B,list,Object.assign({},optRR,{keepOrder:true,rounds:8,maxExp:K>8?1200000:optRR.maxExp}));let lastV=performance.now();
+      for(;;){const q=itV.next();if(q.done)break;if(performance.now()-lastV>120){await ui.tick();lastV=performance.now();}if(ui.stopped())break;}
+      PCBEDIT.rebuildNets(B);if(typeof optPF!=='undefined'&&optPF&&AUTOROUTE.openNets(B).some(o=>set.has(o.net))&&!ui.stopped()){const itP=AUTOROUTE.jobPF(B,list,optPF);for(;;){const q=itP.next();if(q.done)break;}PCBEDIT.rebuildNets(B);}
+      const r1=PCBEDIT.ratsnest(B).length;
+      if(r1>=r0){AUTOROUTE.copperRestore(B,snapV);PCBEDIT.rebuildNets(B);lines.push(`막는 넷 ${vict.length}개 뜯고 재배선: 미연결 ${r0} → ${r1} — 나아지지 않아 되돌림`);}
+      else{lines.push(`막는 넷 ${vict.length}개(${vict.slice(0,6).join(', ')}${vict.length>6?' …':''})를 뜯고 ${failed.join(', ')}부터 재배선: 미연결 ${r0} → ${r1}`);}
+      open=AUTOROUTE.openNets(B).filter(o=>nets.includes(o.net));if(!open.length)break;}}
   const stopped=!!ui.stopped();ui.set(`${stopped?'중지함 — ':''}배선 ${nets.length-open.length}/${nets.length} 넷 · ${(ms/1000).toFixed(1)} s${res?` · 트랙 ${f1(res.len)} mm · 비아 ${res.vias}개${res.rounds?` · 다시 배선 ${res.rounds}회`:''}`:''}`);
   if(open.length)lines.push(`미배선 ${open.length}개: ${open.slice(0,10).map(o=>o.net).join(', ')}${open.length>10?' …':''} → place로 간격을 바꾸거나 board size로 보드를 키우고 다시 route`);
   // return vias next to the layer changes of clock / analog nets
