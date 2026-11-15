@@ -40,6 +40,7 @@ if (!fs.existsSync(html) || fs.statSync(html).mtimeMs < fs.statSync(path.join(ro
   });
   r.tag = tag;r.steps = steps;r.ok = !r.rats && !r.drc && r.power.every(x => x.ok);r.errors = errs.slice(0, 3);
   if (arg('snap')) fs.writeFileSync(path.join(out, tag + '.snap.json'), await p.evaluate(m => JSON.stringify(BOARDSNAP.save(window.__BD(), m)), { name: arg('profile', 'Dadu'), profile: arg('profile', 'Dadu'), fet: +arg('fet', 0), cur: arg('cur', '~20 A (팬 · 소형 펌프)'), shrink: +arg('shrink', 2), strategy: 'compact', W: +arg('w', 100), H: +arg('h', 65), params: String(arg('param', '') || '').split(',').filter(Boolean), add: String(arg('add', '') || '').split(',').filter(Boolean), ifaceFix: true }));
+  if (arg('log')) fs.writeFileSync(path.join(out, tag + '.cli.txt'), await p.evaluate(() => window.__CLI().log.map(e => e.k + ': ' + e.t).join('\n')));
   if (arg('kicad')) fs.writeFileSync(path.join(out, tag + '.kicad_pcb'), await p.evaluate(() => PCBEDIT.toKicadPcb(window.__BD(), { title: window.__BD().name })));
   if (arg('shots')) { await p.locator('#v-top').click().catch(() => {});await p.waitForTimeout(1000);await p.screenshot({ path: path.join(out, tag + '_top.png') });await p.locator('#v-bot').click().catch(() => {});await p.waitForTimeout(1000);await p.screenshot({ path: path.join(out, tag + '_bot.png') }); }
   console.log(JSON.stringify(r));await b.close();process.exit(r.ok ? 0 : 1);

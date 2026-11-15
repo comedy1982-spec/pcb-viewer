@@ -86,6 +86,7 @@ ${script(stripExport(read('src/core/sgarch.js')))}
 ${script(stripExport(read('src/core/dspdf.js')))}
 ${scriptW(stripExport(read('src/core/current.js')))}
 ${scriptW(stripExport(read('src/route/routejob.js')))}
+${script(stripExport(read('src/route/routediag.js')))}
 ${script(stripExport(read('src/hsis/testgen.js')))}
 ${script(stripExport(read('src/hsis/sample-hsis.js')))}
 ${script(viewer)}

@@ -47,3 +47,6 @@ node scripts/pcbrun.cjs --profile Dadu --param gdrv3.driver=A4911 \
 ```
 결과: 90 × 60 mm · 8층 · 아래층 부품 49개 · 미연결 1 · DRC 0 · 전류 폭(유효/필요 mm) PH_U 10.45/6.14 · PH_V 10.5/6.14 · PH_W 9.82/6.14 · VIN_RAW 22.5/6.14 · PH_U_SNS 직결/6.14 · PH_V_SNS 직결/6.14
 미연결 1건(PH_W_HO, 게이트 신호)은 손으로 마무리해야 합니다. 이전 판도 1건(PH_INL_U)이 남아 있었습니다.
+
+## v1.110.0 감독 배선으로 미연결 0
+같은 배치(시드 2 · `--no-pincap`)에 `route --ai`를 써서 남아 있던 PH_W_HO 1건을 해결했습니다. 미연결 0 · DRC 0 · 전류 폭 · 비아 통과.

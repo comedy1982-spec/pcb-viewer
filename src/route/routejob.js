@@ -4,6 +4,7 @@
    main thread (pcbcli.js wraps it with undo, repaint and the progress line) or inside a Web Worker (ROUTEJOB.workerMain —
    the board travels as JSON, the result comes back as a BOARDSNAP), so a long job never freezes the page. */
 const ROUTEJOB=(function(){
+const iwOn=(a,B)=>a.iw!=null?!!a.iw&&a.iw!=='off':!a['no-iw']&&!!(B.newPlan||B.netCurrent);
 "use strict";
 const f1=v=>(Math.round(v*10)/10).toFixed(1);
 function placeText(r,m,scratch){
@@ -57,8 +58,14 @@ async function routeJob(B,a,ui){
   if(ml&&B.zones&&B.zones.on!==false&&B.zones.rects&&B.zones.rects.stage&&a.fill!==false&&!a['no-fill']){const kB=PCB.cuKeys(B).slice(-1)[0]+'.cu';B.layers[kB]=B.layers[kB].filter(p=>!(p.t==='pour'&&!p.plane));}
   // fine-pitch pins of plane nets get their via after the signals have escaped
   const fan=AUTOPLACE.fanout(B,{thermal:st==='thermal',clear:clr,width:Math.min(0.4,pwr),via,skipFine:true});
+  // supervisor remedy: --rip N1,N2 removes those nets' auto copper first (they re-route after the nets named in --first)
+  const ripL=a.rip&&a.rip!==true?String(a.rip).split(/[,\s]+/).filter(n=>B.nets[n]&&!/^(GND|AGND|PGND)$/i.test(n)):[];
+  // a rip (or --refill) also lifts the power fill and its stitching vias: they were laid after the signals and now stand where the
+  // ripped nets need room — the fill is rebuilt at the end of this route around the new tracks
+  if((ripL.length||a.refill)&&iwOn(a,B)&&a.fill!==false&&!a['no-fill']){PCB.cuKeys(B).forEach(k=>{B.layers[k+'.cu']=B.layers[k+'.cu'].filter(p=>!p.fill);});B.vias=B.vias.filter(v=>!v.stitch);PCBEDIT.rebuildNets(B);}
+  if(ripL.length){const rp=new Set(ripL);const kill=[];PCB.cuKeys(B).forEach(k=>B.layers[k+'.cu'].forEach(p=>{if(p.auto&&!p.fan&&!p.fill&&rp.has(p.net))kill.push(p);}));B.vias.forEach(v=>{if(v.auto&&!v.fan&&rp.has(v.net))kill.push(v);});AUTOROUTE.unroute(B,kill);PCBEDIT.rebuildNets(B);}
   let nets=AUTOROUTE.openNets(B).map(o=>o.net);
-  if(a.nets){const want=new Set(String(a.nets).split(/[,\s]+/));nets=nets.filter(n=>want.has(n));}
+  if(a.nets){const want=new Set(String(a.nets).split(/[,\s]+/).concat(ripL));nets=nets.filter(n=>want.has(n));}
   const lines=[`${PCB.stackOf(B).some(x=>x.role==='pwr')?'GND·전원 플레인':'GND'} 팬아웃 비아 ${fan.vias}개${fan.fail.length?` (자리 없음: ${fan.fail.slice(0,6).join(', ')})`:''}`];
   if(!nets.length){const f2=AUTOPLACE.fanout(B,{thermal:st==='thermal',clear:clr,width:Math.min(0.4,pwr),via});lines[0]+=` · 미세 피치 핀 비아 ${f2.vias}개`;PCBEDIT.rebuildNets(B);return lines.concat('배선할 열린 넷이 없습니다.').join('\n');}
   // noise: switching and supply loops first and short, keep the ground plane whole (bottom layer costs more)
@@ -82,6 +89,7 @@ async function routeJob(B,a,ui){
     nets=nets.map(n=>({n,r:sw&&sw.has(n)?0:prioOf(n),d:depth[n]||0,e:AUTOROUTE.estimate(B,n)})).sort((x,y)=>x.r-y.r||y.d-x.d||x.e-y.e).map(x=>x.n);keepOrder=true;
     {const k=Object.values(depth).filter(v=>v>0).length;if(k)lines.push(`미세 피치 핀 탈출 순서: 가운데 핀부터 ${k}개 넷`);}
     const cnt=[0,0,0,0];nets.forEach(n=>cnt[prioOf(n)]++);lines.push(`배선 순서: ${AUTOROUTE.PRIO_LABEL.map((l,i)=>`${i+1}. ${l} ${cnt[i]}`).join(' → ')}`);}
+  if(a.first&&a.first!==true){const f=String(a.first).split(/[,\s]+/).filter(n=>nets.includes(n));if(f.length){nets=f.concat(nets.filter(n=>!f.includes(n)));keepOrder=true;lines.push(`먼저 배선: ${f.join(', ')}${ripL.length?` · 뜯은 넷 ${ripL.join(', ')}`:''}`);}}
   const prog=ui.say('out',`배선 준비 중… (${nets.length}개 넷)`);await ui.tick();
   // power stage: the high-current nets are routed first on the top layer, then every other net pays to cross a corridor
   // around them (half the IPC width), so the copper fill added at the end is not cut by signal tracks

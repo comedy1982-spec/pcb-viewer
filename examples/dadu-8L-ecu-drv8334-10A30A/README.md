@@ -52,3 +52,10 @@ node scripts/pcbrun.cjs --profile Dadu --cur "~10 A (소형 팬 · 펌프)" --pa
 ```
 결과: 105 × 75 mm · 8층 · 아래층 부품 21개 · 미연결 0 · DRC 0 · 전류 폭(유효/필요 mm) PH_U 6.06/3.51 · PH_V 4.4/3.51 · PH_W 8.73/3.51 · VIN_RAW 14.66/3.51 · PH_U_SNS 직결/3.51 · PH_V_SNS 직결/3.51
 보드가 100 × 70 → 105 × 75 mm(면적 +12.5 %)로 커졌습니다. 100 × 70에서는 시드 16개 모두 미연결 1–10건이 남았습니다. KiCad 파일 이름도 바뀌었습니다.
+
+## v1.110.0 감독 배선으로 100 × 70 mm 복귀
+v1.109.0에서 105 × 75로 키웠던 보드를 감독 배선(`route --ai`)으로 다시 100 × 70에 맞췄습니다. 미연결 0 · DRC 0 · 전류 폭 · 비아 통과.
+```
+... --cmds "board layers 8; board size 100 70 --anchor center; reset --strategy compact --both --top sense,power --drv-gap 12 --seed 16; route --ai"
+```
+1차 배선 후 PH_NSCS 1건이 남았고, 처방 1회(핀 주변 · 통로 넷 8개와 전력 동박을 걷고 PH_NSCS부터 재배선)로 해결됐습니다.
