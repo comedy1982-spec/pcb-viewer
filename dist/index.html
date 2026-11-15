@@ -13037,6 +13037,7 @@ function pitchOf(c,p){let m=Infinity;c.pads.forEach(q=>{if(q!==p){const d=Math.h
 function diagnose(B,opt){opt=opt||{};const rats=opt.rats||PCBEDIT.ratsnest(B);const drc=opt.drc||PCBEDIT.drc(B);const keys=PCB.cuKeys(B);const W=opt.width||1.2;
   const stack=(PCB.stackOf?PCB.stackOf(B):[]);const lname=i=>keys[i]==='T'?'위(L1)':i===keys.length-1?`아래(L${i+1})`:`L${i+1}`;
   const prims=[];keys.forEach((k,li)=>B.layers[k+'.cu'].forEach(p=>{if(!p.net)return;if(p.t==='seg')prims.push({net:p.net,li,a:p.a,b:p.b,auto:!!p.auto,fill:!!p.fill});else if(p.t==='path')for(let i=1;i<p.pts.length;i++)prims.push({net:p.net,li,a:p.pts[i-1],b:p.pts[i],auto:!!p.auto,fill:!!p.fill});}));
+  const planeNets=new Set(stack.filter(x=>x.net&&x.role!=='sig').map(x=>x.net).concat(Object.keys(B.nets||{}).filter(n=>/^(GND|AGND|PGND)$/i.test(n))));
   const isPwr=n=>/^(GND|AGND|PGND|VDD|VIN|VBAT)|^\+/i.test(n)||(B.netClass&&B.netClass(n)==='전원');
   const open=rats.slice(0,opt.max||8).map(r=>{const A=endOf(B,r.a,r.net),E=endOf(B,r.b,r.net);
     // other nets' copper on the corridor, per net and layer
@@ -13051,6 +13052,11 @@ function diagnose(B,opt){opt=opt||{};const rats=opt.rats||PCBEDIT.ratsnest(B);co
     // rippable signal copper right at each end pad (the neighbours that sealed the pin in)
     const near=e=>{if(!e.pad)return[];const p=e.pad,R=Math.max(p.w,p.h)/2+0.9;const s={};prims.forEach(q=>{if(q.net!==r.net&&q.auto&&!q.fill&&segDist(p.x,p.y,q.a,q.b)<R)s[q.net]=(s[q.net]||0)+1;});return Object.keys(s).filter(n=>!isPwr(n)).sort((x,y)=>s[y]-s[x]).slice(0,6);};
     A.boxed=boxed(A);E.boxed=boxed(E);A.near=near(A);E.near=near(E);
+    // a two-pin part at an end: would turning it 180° shorten (uncross) its two connections? gain = mm saved, by nearest same-net pad
+    const flip=e=>{const c=e.comp;if(!c||c.pads.length!==2||c.locked||!/^(R|C|D|L|FB)\d/i.test(c.ref))return null;const[p,q]=c.pads;
+      const nearest=(net,x,y)=>{if(!net||isPwr(net)&&planeNets.has(net))return 0;let m=Infinity;B.comps.forEach(o=>{if(o===c)return;o.pads.forEach(t=>{if(t.net===net){const d=Math.hypot(t.x-x,t.y-y);if(d<m)m=d;}});});return isFinite(m)?m:0;};
+      const cur=nearest(p.net,p.x,p.y)+nearest(q.net,q.x,q.y),sw=nearest(p.net,q.x,q.y)+nearest(q.net,p.x,p.y);return{ref:c.ref,nets:[p.net,q.net].filter(Boolean),gain:+(cur-sw).toFixed(2)};};
+    A.flip=flip(A);E.flip=flip(E);
     const cls=B.netClass?B.netClass(r.net):'';const mcuEnd=A.mcu?A:E.mcu?E:null;
     const strip=e=>{const o=Object.assign({},e);delete o.pad;delete o.comp;return o;};
     return{net:r.net,len:+r.len.toFixed(1),cls,a:strip(A),b:strip(E),blockers,parts,swap:!!mcuEnd&&cls!=='전원'&&!/^(\+|GND|VDD|VIN)/i.test(r.net),mcuPin:mcuEnd?`${mcuEnd.ref}.${mcuEnd.pin}`:null};});
@@ -13065,6 +13071,7 @@ function text(D){const L=[`보드 ${f1(D.W)} × ${f1(D.H)} mm · ${D.layers}층 
   D.open.forEach((o,i)=>{L.push(`${i+1}. [${o.net}] ${o.cls||''} · 직선 ${o.len} mm`);L.push(`   끝 A: ${E(o.a)}`);L.push(`   끝 B: ${E(o.b)}`);
     L.push(`   통로를 막는 넷: ${o.blockers.length?o.blockers.map(b=>`${b.net}(${b.layers.join('·')||'비아'}${b.via?` 비아${b.via}`:''}${b.rip?'':' · 고정'})`).join(', '):'없음'}`);
     if(o.parts.length)L.push(`   통로 위 부품: ${o.parts.map(p=>`${p.ref} ${p.val||''} @${p.x},${p.y} ${p.side==='B'?'아래':'위'}${p.movable?' · 옮길 수 있음':''}`).join(', ')}`);
+    [o.a,o.b].forEach(e=>{if(e.flip&&e.flip.gain>-0.5)L.push(`   ${e.flip.ref}를 180° 돌리면 두 연결이 ${e.flip.gain>=0?e.flip.gain+' mm 짧아짐 (교차 풀림 가능)':(-e.flip.gain)+' mm 길어짐'} — rotate ${e.flip.ref} 180 후보`);});
     if(o.swap)L.push(`   MCU 핀 ${o.mcuPin} — pinswap 후보`);});
   if(D.rats>D.open.length)L.push(`… 외 ${D.rats-D.open.length}건`);
   if(D.drcMsgs.length)L.push('DRC: '+D.drcMsgs.join(' / '));
@@ -13084,6 +13091,10 @@ function plan(D,B,hist,opt){hist=hist||{};opt=opt||{};const out=[];const seen=ne
   const ripSet=k=>{const w={};D.open.forEach(o=>{[o.a,o.b].forEach(e=>(e.near||[]).forEach((n,i)=>{w[n]=(w[n]||0)+6-i;}));o.blockers.filter(b=>b.rip).forEach(b=>{w[b.net]=(w[b.net]||0)+Math.min(4,b.n/2);});});
     return Object.keys(w).filter(n=>!nets.includes(n)).sort((x,y)=>w[y]-w[x]).slice(0,k);};
   const key=nets.slice().sort().join(',');
+  // 0: a two-pin part at a failed net's end that would uncross by turning 180° — turn it, lift what surrounds it, route the failed nets first
+  {const c=[];D.open.forEach(o=>[o.a,o.b].forEach(e=>{if(e.flip&&e.flip.gain>-0.5&&!G.includes('rot:'+e.flip.ref)&&!c.some(x=>x.ref===e.flip.ref))c.push(e.flip);}));c.sort((x,y)=>y.gain-x.gain);
+    if(c.length){const f=c[0];G.push('rot:'+f.ref);const rp=ripSet(8).filter(n=>!f.nets.includes(n));const ns=[...new Set(nets.concat(f.nets.filter(n=>!/^(GND|AGND|PGND)$/i.test(n))))];
+      out.push({net:nets.join(','),kind:'rot',cmd:`rotate ${f.ref} 180 --no-route`,then:`route --nets ${ns.join(',')}${rp.length?' --rip '+rp.join(','):' --refill'} --first ${nets.join(',')}`,why:`${f.ref}를 180° 돌려 교차를 풀고(${f.gain} mm), 주변 넷을 뜯어 실패한 넷부터 다시 배선`});return out;}}
   if(nets.length&&!G.includes('ripall:'+key)){G.push('ripall:'+key);const rp=ripSet(8);if(rp.length){out.push({net:nets.join(','),kind:'ripall',cmd:`route --nets ${nets.join(',')} --rip ${rp.join(',')} --first ${nets.join(',')}`,why:`실패한 ${nets.length}개 넷의 핀 주변 · 통로 배선 ${rp.length}개를 뜯고, 실패한 넷부터 다시 배선`});return out;}}
   if(nets.length&&!G.includes('ripwide:'+key)){G.push('ripwide:'+key);const rp=ripSet(16);if(rp.length>8){out.push({net:nets.join(','),kind:'ripwide',cmd:`route --nets ${nets.join(',')} --rip ${rp.join(',')} --first ${nets.join(',')} --exp 1200000`,why:`더 넓게 ${rp.length}개를 뜯고 깊게 탐색`});return out;}}
   // 3…: per net — MCU pin swap, a small part off the corridor, deeper search
@@ -13096,6 +13107,7 @@ function plan(D,B,hist,opt){hist=hist||{};opt=opt||{};const out=[];const seen=ne
 const SYS=`You supervise a PCB auto-router. The algorithmic router (A* on a grid, rip-up and re-route, negotiated congestion) has finished and left problems. You get a diagnosis; prescribe fixes by calling the run_cli tool, one console command per call. Tools you should use:
 - route --nets A,B --rip N1,N2,… --first A,B : remove the auto-routed copper of nets N1,N2,… then route A,B first and the ripped nets after them. Best first move: name ALL open nets together and rip the nets listed as "핀을 둘러싼 배선" at their end pins plus the rippable "통로를 막는 넷" (not marked 고정), 6–12 nets. A fine-pitch pin sealed in by its neighbours needs those neighbours ripped.
 - pinswap --nets NET --apply --route : re-assign the MCU pin of NET to a free pin nearer its peer and route it (changes the circuit; only for signals whose end is an MCU pin — "pinswap 후보").
+- rotate REF 180 --no-route : turn a two-pin part end-for-end when the diagnosis says "rotate REF 180 후보" (its two connections cross); follow it with route --nets <its nets and the open nets> --rip <surrounding nets> --first <open nets>.
 - move REF x y [deg] : move a small part (marked 옮길 수 있음) 0.5–1.5 mm off the corridor; its nets re-route by themselves. Keep parts inside the board and off other parts.
 - route --nets NET --exp 2400000 : deeper search for one net.
 - unroute is NOT allowed (it removes everything). reset / board size / board layers are NOT allowed unless the diagnosis is hopeless — then say so in your answer instead of doing it.

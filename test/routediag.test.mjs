@@ -15,6 +15,8 @@ test('routing diagnosis and the rule supervisor: an open net is described by its
   const D = ROUTEDIAG.diagnose(B);assert.ok(D.rats >= 1);assert.equal(D.ok, false);assert.equal(D.score, D.rats * 1000);
   const o = D.open.find(x => x.net === net);assert.ok(o);assert.ok(o.a.ref && o.b.ref);assert.ok([o.a, o.b].some(e => /^U/.test(e.ref) && e.pitch <= 0.65), 'one end is the gate driver pin');
   assert.ok(o.blockers.length > 0);assert.ok(o.blockers.every(b => b.net !== net));assert.ok(!o.blockers.some(b => /^GND$/.test(b.net) && b.rip), 'ground is never offered for rip-up');
+  // the two-pin part at the other end carries its 180° turn figure (mm saved by nearest same-net pads)
+  const fl = [o.a, o.b].map(e => e.flip).find(Boolean);assert.ok(fl && /^R\d+$/.test(fl.ref) && typeof fl.gain === 'number' && fl.nets.includes(net));
   const T = ROUTEDIAG.text(D);assert.match(T, /\[PH_W_HO\]/);assert.match(T, /통로를 막는 넷/);
   // the plan: rip around the failed net and route it first; asked again for the same nets it moves on to other remedies and finally runs out
   const hist = {};const p1 = ROUTEDIAG.plan(D, B, hist);assert.equal(p1.length, 1);assert.equal(p1[0].kind, 'ripall');assert.match(p1[0].cmd, /^route --nets \S*PH_W_HO\S* --rip \S+ --first \S*PH_W_HO/);assert.ok(!/--rip \S*(GND|\+12V)/.test(p1[0].cmd));
