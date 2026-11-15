@@ -689,6 +689,13 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
       if(c)put(s,c.n);else warn.push(`${s.net}: ${MCU_PINS.ROLES[role]||role} 가능한 MCU 핀이 남지 않음`);}));
     assigned.forEach(a=>{pinmap[a.net]=a;});}
   else if(sigs.length)warn.push('MCU 블록이 없어 제어 신호를 연결하지 못했습니다 (add mcu)');
+  // interfaces between blocks: open-drain outputs get their pull-up, control inputs of power stages / bus transceivers get the pull
+  // that holds them in the safe state while the MCU is in reset (plan.ifaceFix = true from the generate step; saved boards replay without it unless their snapshot says so)
+  let iface=null;if(typeof IFCHECK!=='undefined'){try{iface=IFCHECK.run({parts});const fixed=[];
+      if(plan.ifaceFix===true){const seen=new Set();iface.findings.filter(f=>f.pull&&(f.code==='od_pullup'||f.code==='default_float')).forEach(f=>{if(seen.has(f.net))return;seen.add(f.net);
+          ctx.part('R','10kΩ','0402',{1:f.net,2:f.pull.to},{desc:`인터페이스 ${f.pull.to==='GND'?'풀다운':'풀업'} — ${f.pull.why} (블록 간 점검 자동 추가)`});{const np=parts[parts.length-1],ow=parts.find(c=>c.ref===f.refs[0]);if(np&&ow&&ow.block)np.block=ow.block;}fixed.push(f);});
+        if(fixed.length)iface=Object.assign(IFCHECK.run({parts}),{fixed});}
+      iface.findings.forEach(f=>warn.push(`인터페이스 ${f.sev==='err'?'✕':'△'} ${f.net}: ${f.msg} → ${f.fix}`));}catch(e){iface=null;}}
   // board size from the part area
   let area=0;parts.forEach(c=>{const f=PCB.FP[c.fp];const b=f?f.lbb:[-1,-1,1,1];area+=(b[2]-b[0]+1.6)*(b[3]-b[1]+1.6);});
   let W,H;if(plan.board){W=plan.board.w;H=plan.board.h;}else{const A=Math.max(1200,area*4.2);W=Math.ceil(Math.sqrt(A*1.6)/5)*5;H=Math.ceil(A/W/5)*5;}
@@ -698,7 +705,7 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
   if(asil&&typeof PARTLIB!=='undefined'){let n=0;parts.forEach(c=>{const alt=PARTLIB.autoAlt(c.mpn||c.val);if(alt&&alt.mpn&&alt.dropIn){const rec=alt.rec;if(/^U|^Q|^D/.test(c.ref)&&rec&&rec.mpn!==c.val)c.val=rec.mpn;c.mpn=alt.mpn;c.desc=(c.desc||'')+` (ASIL ${asil}: ${rec&&rec.grade?rec.grade:'AEC'} 대체)`;n++;}else if(alt&&alt.hint&&/^U/.test(c.ref))warn.push(`${c.ref} ${c.val}: ${alt.hint}`);});if(n)warn.push(`ASIL ${asil} 부품 정책: 상용 부품 ${n}개를 차량용(AEC) 핀 호환 부품으로 바꿨습니다 (safety parts 로 확인)`);}
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
-  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
+  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
 }
 /* ---------- package shrink (plan.shrink: 0 off · 1 표준 · 2 최대) ----------
    Swaps a part for a smaller package only where the replacement's pinout is known (KiCad 10 symbol / datasheet) and the

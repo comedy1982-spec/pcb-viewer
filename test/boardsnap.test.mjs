@@ -5,7 +5,7 @@ const { PRODUCTS, HWARCH, NEWPROJ, BOARDSNAP, SNAP_DADU8, SNAP_DADU8B, SNAP_DADU
 function fresh(m) {
   const prof = PRODUCTS.detect(m.profile);
   const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[m.fet || 0].label;
-  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;if (m.pwrIn) { const pi = plan.blocks.find(b => b.type === 'pwr_in'); if (pi) pi.params = Object.assign({}, pi.params, m.pwrIn); }const g3 = plan.blocks.find(b => b.type === 'gdrv3');if (g3) g3.params = Object.assign({}, g3.params, { driver: m.driver || 'IR2104' });plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };
+  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;if (m.pwrIn) { const pi = plan.blocks.find(b => b.type === 'pwr_in'); if (pi) pi.params = Object.assign({}, pi.params, m.pwrIn); }const g3 = plan.blocks.find(b => b.type === 'gdrv3');if (g3) g3.params = Object.assign({}, g3.params, { driver: m.driver || 'IR2104' });plan.ifaceFix = m.ifaceFix === true;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };
   return NEWPROJ.toBoard(plan, { place: false }).B;
 }
 test('Dadu 8-layer example: the stored layout restores onto the generated board — every part found, nothing open, DRC clean, 20 A widths met', () => {

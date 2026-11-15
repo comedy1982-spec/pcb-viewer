@@ -250,12 +250,13 @@ async function npGenerate0(o){
   const st=o.strategy?AUTOPLACE.strategy(o.strategy):P.strategy;
   const prog=npSay('out','부품을 고르고 넷리스트·회로도를 만드는 중…');await new Promise(r=>setTimeout(r,20));
   // step 2 is the circuit only: parts, nets and schematic. Placement and routing wait for step 3 (B.pcbPending).
-  const{B,r}=NEWPROJ.toBoard(P,{place:false});B.pcbPending=true;B.variant=V.key;B.variantLabel=`${V.label} (${V.tag})`;
+  P.ifaceFix=true;const{B,r}=NEWPROJ.toBoard(P,{place:false});B.pcbPending=true;B.ifaceFix=true;B.variant=V.key;B.variantLabel=`${V.label} (${V.tag})`;
   B.pcbPlan=Object.assign({layers:2,min:false,route:true},P.pcb||{},{strategy:st||'balanced',board:P.board?{w:P.board.w,h:P.board.h}:null});
   if(BD&&BD.pid)B.pid=BD.pid;B.notes.push(`새 설계: ${P.blocks.length}개 블록에서 부품 ${r.parts.length}개와 회로도를 만들었습니다. 부품 배치·배선은 3단계(PCB)에서 시작합니다.`);r.warn.forEach(w=>B.warnings.push(w));
   setBoard(B);
   const sheets=BD.schSheets||(schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:'sch',sheets});
   npSet(prog,`회로 생성 [${V.label}]: 부품 ${B.comps.length}개 · BOM 약 $${V.m.partsPrice} (예상 단가 $${V.m.price}) · 넷 ${Object.keys(B.nets).length}개 · 회로도 ${sheets?sheets.length:0}쪽 · MCU 핀 배정 ${r.assigned.length}개\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>'\n  △ '+x.title).join('')}\nPCB 조건(3단계에서 적용): ${pcbPlanText(B.pcbPlan)}`);
+  if(r.iface){const fx=r.iface.fixed||[];const left=r.iface.findings;if(fx.length||left.length)npSay(left.some(f=>f.sev==='err')?'err':'ok',`블록 간 인터페이스 점검: ${fx.length?`풀 저항 ${fx.length}개 자동 추가 (${fx.map(f=>`${f.net}→${f.pull.to==='GND'?'GND':f.pull.to}`).join(', ')})`:''}${fx.length&&left.length?' · ':''}${left.length?`남은 항목 ${left.length}개:\n`+left.map(f=>`${f.sev==='err'?'✕':'△'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('\n'):' — 남은 문제 없음'}`);}
   SYS.src='plan';setStep(2);
   if(o.pcb){setStep(3);await pcbStart(B.pcbPlan);return'회로 생성 후 PCB 설계를 시작했습니다 — 결과는 배치·배선 CLI에 있습니다.';}
   toast(`${P.name}: 부품 ${B.comps.length}개로 회로를 만들었습니다. 회로도를 검토한 뒤 3단계에서 PCB를 시작하세요.`);

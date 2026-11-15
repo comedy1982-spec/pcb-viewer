@@ -7534,6 +7534,78 @@ return{ZONES,floorplan,zoneReport,zonesFit,powerMacro,STRATS,ALIAS,strategy,clas
 
 </script>
 <script>
+/* ---------- interfaces between blocks: logic levels, default states during reset, open-drain pull-ups, floating inputs ----------
+   Runs on a generated board (parts + nets). Pin directions come from the part's pin table (datasheet records / KiCad pins);
+   an IC's I/O voltage is the rail on its I/O-supply pin. The MCU's pins are GPIO at its V_EXT rail. Findings carry the net,
+   the parts on both ends, what can go wrong and the fix. Severity: err = will misbehave / can damage, warn = check, info = note. */
+const IFCHECK=(function(){
+"use strict";
+/* part notes that pin tables do not carry (datasheet facts; 'src' says where from) */
+const SPEC={
+  'DRV8334':{src:'DRV8334-Q1 SLVSHC8A 권장 동작 조건',od:['NFAULT','SDO'],in55:true,note:'로직 입력 0–5.5 V (권장) · nFAULT · SDO 오픈 드레인'},
+  'A4911':{src:'A4911 데이터시트',od:['FF1','FF2','NFAULT'],in55:true},
+  'TLE9251':{src:'TLE9251V 데이터시트',vio:'VIO'},
+  'TPS3823':{src:'TPS3823 데이터시트',pp:['RESET']}};
+const spec=c=>{const k=Object.keys(SPEC).find(k=>String(c.val||'').toUpperCase().includes(k)||String(c.mpn||'').toUpperCase().includes(k));return k?SPEC[k]:null;};
+/* control inputs whose level during MCU reset decides whether the power stage / bus is safe; level = the safe state */
+const SAFE=[
+  {re:/^(DRVOFF|DIS|DISABLE)$/i,lvl:'H',why:'게이트 차단 입력 — 리셋 중 High(차단)여야'},
+  {re:/^(N?SLEEP|EN|ENABLE|RESETN|NRESET)$/i,drv:true,lvl:'L',why:'드라이버 활성 입력 — 리셋 중 Low(꺼짐)여야'},
+  {re:/^(INH|INL|IN|HIN|LIN|PWM)[A-C1-3]?(_[UVW])?$|^IN[HL][ABC]$|^[HL]I[ABC123]?$/i,drv:true,lvl:'L',why:'게이트 PWM 입력 — 리셋 중 Low(FET OFF)여야'},
+  {re:/^(STB|NSTB|S)$/i,can:true,lvl:'H',why:'CAN 대기 입력 — 리셋 중 High(대기)여야 버스를 방해하지 않음'}];
+const isGnd=n=>/^(A|D|P)?GND|^VSS|^0V$/i.test(n||'');
+const railV=n=>{const s=String(n||'');let m=s.match(/^\+?(\d+)V(\d+)?$/i);if(m)return+(m[1]+'.'+(m[2]||0));m=s.match(/^\+?(\d+(?:\.\d+)?)V\b/i);if(m)return+m[1];if(/^VDD$/i.test(s))return null;return null;};
+const isRail=n=>railV(n)!=null||/^(VBAT|VIN_RAW|VCC|VDD)/i.test(n||'');
+function pinsOf(c,lookup){const rec=lookup?(lookup(c.mpn)||lookup(c.val)):null;const T={};(rec&&rec.pins||[]).forEach(p=>{T[String(p.num)]={name:String(p.name||'').toUpperCase(),type:String(p.type||'')};});
+  return c.pads.map(p=>Object.assign({n:String(p.n),net:p.net,fn:p.fn||''},T[String(p.n)]||{name:String((c.pinNames&&c.pinNames[p.n])||p.fn||'').toUpperCase(),type:''}));}
+function run(B,opt){opt=opt||{};const lookup=opt.lookup||(typeof NEWPROJ!=='undefined'?NEWPROJ.partLookup:null);const out=[];
+  // a board (comps with pads) or the generator's part list (pins {num: net})
+  const comps=(B.comps||B.parts||[]).map(c=>c.pads?c:Object.assign({},c,{pads:Object.entries(c.pins||{}).map(([n,net])=>({n,net:net||null}))}));const byNet={};
+  const ICs=comps.filter(c=>/^(U|IC)\d/i.test(c.ref)).map(c=>{const P=pinsOf(c,lookup);const mcu=/TC3|TC2|STM32|S32K|RH850|AURIX|MCU/i.test((c.val||'')+' '+(c.desc||''))&&c.pads.length>=32;const S=spec(c);
+    // I/O voltage: a VIO-type pin first, then the logic supply; MCU = its V_EXT / VDDP3 rail
+    let io=null;const sup=P.filter(p=>p.net&&!isGnd(p.net)&&railV(p.net)!=null);
+    const vioP=sup.find(p=>/^(VIO|VCCIO|VDDIO|VL|VLOGIC|IOREF)$/.test(p.name));
+    if(vioP)io=railV(vioP.net);else if(mcu){const r=sup.map(p=>railV(p.net)).filter(v=>v>=3&&v<=5.5);io=r.length?Math.min(...r):null;}
+    else{const lg=sup.filter(p=>/^(VCC|VDD|VEXT|VDDP\d?|VS|V\+)$/.test(p.name)&&railV(p.net)<=5.5);io=lg.length?Math.min(...lg.map(p=>railV(p.net))):null;}
+    const ioNet=io==null?null:(sup.find(p=>railV(p.net)===io)||{}).net||null;return{c,P,mcu,S,io,ioNet};});
+  ICs.forEach(x=>x.P.forEach(p=>{if(p.net)(byNet[p.net]=byNet[p.net]||[]).push({ic:x,p});}));
+  const resOn=n=>comps.filter(c=>/^R\d/i.test(c.ref)&&c.pads.length===2&&c.pads.some(p=>p.net===n)).map(c=>({c,other:c.pads.find(p=>p.net!==n)}));
+  const pullOf=n=>{const R=resOn(n);const up=R.filter(r=>r.other&&isRail(r.other.net)),dn=R.filter(r=>r.other&&isGnd(r.other.net));return{up,dn};};
+  const add=(sev,code,net,msg,fix,refs,pull)=>out.push({sev,code,net,msg,fix,refs:[...new Set(refs||[])],pull:pull||null});
+  const label=x=>`${x.ic.c.ref} ${x.ic.c.val}.${x.p.name||x.p.n}`;
+  const isOD=x=>/open_(collector|drain|emitter)/.test(x.p.type)||(x.ic.S&&(x.ic.S.od||[]).includes(x.p.name));
+  const isOut=x=>x.p.type==='out'||x.p.type==='tri_state'||isOD(x)||(x.ic.S&&(x.ic.S.pp||[]).includes(x.p.name));
+  const isIn=x=>x.p.type==='in'||x.p.type==='input';
+  Object.entries(byNet).forEach(([net,L])=>{if(isGnd(net)||isRail(net))return;const mcuEnds=L.filter(x=>x.ic.mcu),others=L.filter(x=>!x.ic.mcu);
+    // 1 open-drain output needs a pull-up
+    L.filter(isOD).forEach(x=>{const {up}=pullOf(net);if(!up.length)add('err','od_pullup',net,`${label(x)}는 오픈 드레인 출력인데 ${net} 넷에 풀업 저항이 없음 — 항상 Low로 읽히거나 떠 있음`,`${net}에 10 kΩ 풀업을 수신 쪽 I/O 전원(${(mcuEnds[0]&&mcuEnds[0].ic.io)||3.3} V 레일)으로 추가${mcuEnds.length?' (MCU 내부 풀업은 수 십 kΩ · 리셋 중 꺼질 수 있음)':''}`,L.map(y=>y.ic.c.ref),{to:(mcuEnds[0]&&mcuEnds[0].ic.ioNet)||(L.find(y=>y.ic.ioNet)||{ic:{}}).ic.ioNet||'+3V3',why:`${label(x)} 오픈 드레인 풀업`});});
+    // 2 logic levels between ICs on different I/O rails
+    const drivers=L.filter(x=>isOut(x)&&!isOD(x)).concat(mcuEnds.filter(()=>others.some(isIn)));
+    const recv=L.filter(isIn).concat(mcuEnds.filter(()=>others.some(isOut)));
+    drivers.forEach(d=>recv.forEach(r=>{if(d===r||d.ic===r.ic||d.ic.io==null||r.ic.io==null)return;const Vd=d.ic.io,Vr=r.ic.io;
+      if(Vd>Vr+0.3&&!(r.ic.S&&r.ic.S.in55&&Vd<=5.5))add('err','level_over',net,`${label(d)} (${Vd} V 출력) → ${label(r)} (${Vr} V I/O) — 수신 핀 허용 전압 초과 가능`,`레벨 변환(분압 · 버퍼 · 변환 IC)을 넣거나 ${d.ic.c.ref}의 I/O 전원을 ${Vr} V로 — 수신 핀이 ${Vd} V 허용(5 V tolerant)이면 데이터시트 근거로 무시`,[d.ic.c.ref,r.ic.c.ref]);
+      else if(Vd<0.7*Vr&&!(r.ic.S&&r.ic.S.in55&&Vd>=3))add('warn','level_under',net,`${label(d)} (${Vd} V 출력) → ${label(r)} (${Vr} V I/O) — CMOS VIH(0.7 × ${Vr} = ${(0.7*Vr).toFixed(2)} V) 미달 가능`,`수신 핀 VIH를 데이터시트로 확인 (TTL 호환이면 OK) — 아니면 레벨 변환`,[d.ic.c.ref,r.ic.c.ref]);}));
+    // 3 default state of control inputs while the MCU is in reset (its pins float or are weak pulls)
+    if(mcuEnds.length)others.forEach(x=>{const nm=x.p.name;const rule=SAFE.find(s=>s.re.test(nm)&&(!s.drv||/게이트|드라이버|DRV|A49|IR21|브리지/i.test((x.ic.c.desc||'')+x.ic.c.val))&&(!s.can||/CAN|TLE925|TJA|MCP25/i.test((x.ic.c.desc||'')+x.ic.c.val)));if(!rule)return;
+      const {up,dn}=pullOf(net);const ok=rule.lvl==='H'?up.length:dn.length,wrong=rule.lvl==='H'?dn.length:up.length;
+      if(wrong&&!ok)add('err','default_wrong',net,`${label(x)}: ${rule.why} — 그런데 ${rule.lvl==='H'?'풀다운':'풀업'}이 달려 리셋 중 반대 상태`,`${net}의 풀 저항을 ${rule.lvl==='H'?'전원(풀업)':'GND(풀다운)'} 쪽으로`,[x.ic.c.ref].concat((rule.lvl==='H'?dn:up).map(r=>r.c.ref)));
+      else if(!ok)add('warn','default_float',net,`${label(x)}: ${rule.why} — ${net}에 풀 저항이 없어 MCU 리셋 · 부팅 중 상태가 MCU 핀 기본값에 맡겨짐`,`${net}에 10 kΩ ${rule.lvl==='H'?'풀업':'풀다운'} 추가 (부품 내부 풀 저항이 있으면 데이터시트 근거로 생략)`,[x.ic.c.ref].concat(mcuEnds.map(y=>y.ic.c.ref)),{to:rule.lvl==='H'?(mcuEnds[0].ic.ioNet||'+3V3'):'GND',why:`${label(x)} 리셋 중 ${rule.lvl==='H'?'High':'Low'} 고정`});});
+    // 4 two push-pull outputs driving one net
+    const pp=L.filter(x=>(x.p.type==='out')&&!isOD(x));if(pp.length>1)add('err','multi_drive',net,`${pp.map(label).join(' · ')} — 푸시풀 출력 ${pp.length}개가 한 넷을 구동 (충돌)`,`하나를 입력으로 바꾸거나 직렬 저항 · 와이어드 OR(오픈 드레인)로`,pp.map(x=>x.ic.c.ref));
+  });
+  // 5 IC inputs left floating (no net, or alone on their net)
+  ICs.forEach(x=>x.P.forEach(p=>{if(!isIn({p,ic:x}))return;const alone=!p.net||!comps.some(o=>o.ref!==x.c.ref&&o.pads.some(q=>q.net===p.net))&&x.c.pads.filter(q=>q.net===p.net).length<=1;
+    if(alone&&!/^NC$|^DNC$|^N\.?C\.?$/i.test(p.name))add('warn','in_float',p.net||'(미연결)',`${x.c.ref} ${x.c.val}.${p.name||p.n} 입력이 연결 없이 떠 있음`,`쓰지 않는 입력은 데이터시트 권장대로 GND / 전원에 묶거나 풀 저항`,[x.c.ref]);}));
+  const n=k=>out.filter(f=>f.sev===k).length;
+  return{findings:out,err:n('err'),warn:n('warn'),io:ICs.filter(x=>x.io!=null).map(x=>({ref:x.c.ref,val:x.c.val,io:x.io})),checked:Object.keys(byNet).length};}
+function text(R){if(!R.findings.length)return`블록 간 인터페이스: 문제 없음 (I/O 전압 ${R.io.map(x=>`${x.ref} ${x.io} V`).join(' · ')})`;
+  return`블록 간 인터페이스: 오류 ${R.err} · 확인 ${R.warn}\n`+R.findings.map(f=>`${f.sev==='err'?'✕':'△'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('\n');}
+return{run,text,SPEC,SAFE};
+})();
+
+
+</script>
+<script>
 /* PCB / circuit design guidelines: weighted rules with P0–P3 priority, domain presets and a compliance score
    (after the "PCB 통합 설계 가이드라인 & Datasheet 우선순위 선정기"). Every rule is checked deterministically from the
    board (and the schematic for circuit rules) where the data allows; rules the data cannot settle come back as
@@ -7586,6 +7658,7 @@ const RULES=[
   {key:'sch_tvs',scope:'sch',cat:'회로',w:8,title:'외부 커넥터 신호의 TVS/ESD 보호',desc:'커넥터로 나가는 신호 넷마다 TVS/ESD 다이오드',ref:'TVS / ESD Application Note'},
   {key:'sch_can_term',scope:'sch',cat:'회로',w:7,title:'CAN 버스 종단(120Ω 또는 60Ω+60Ω 스플릿 + 4.7nF)',desc:'CANH–CANL 사이 종단 또는 스플릿 종단 (하네스 끝단이면 해당 없음)',ref:"CAN Transceiver Datasheet 'Bus Termination'"},
   {key:'sch_reset',scope:'sch',cat:'회로',w:6,title:'리셋 핀 풀업',desc:'NRST/PORST/RESET 넷에 전원으로 가는 풀업 저항',ref:"MCU Datasheet 'Reset Circuit'"},
+  {key:'sch_iface',scope:'sch',cat:'회로',w:8,title:'블록 간 인터페이스: 로직 레벨 · 리셋 중 기본 상태 · 오픈 드레인 풀업',desc:'다른 I/O 전원 사이 신호의 레벨, MCU 리셋 중 게이트 · 드라이버 · CAN 대기 입력의 안전 상태용 풀 저항, 오픈 드레인 출력의 풀업, 떠 있는 입력',ref:'부품 데이터시트 핀 기능 · 권장 동작 조건 (IFCHECK)'},
   {key:'sch_erc',scope:'sch',cat:'회로',w:8,title:'ERC 0건 (미연결 핀은 NC 표시)',desc:'떠 있는 배선, 연결 안 된 핀, 핀 없는 라벨이 없는지',ref:'KiCad ERC'}];
 const PRESETS={
   default:{label:'표준 밸런스',w:{rt_priority:8,rt_return_via:8,rt_edge_keepout:6,pw_agnd_star:8,th_via_array:7,ds_footprint:10,ds_thermal_pad:9,rt_return_path:10,pl_sw_loop:10,ds_kelvin:9,pl_decoupling:9,pw_solid_gnd:9,pl_esd_tvs:8,rt_diff_pair:8,pw_via_amp:8,rt_3w:7,rt_45deg:6,sch_decap:9,sch_bulk:7,sch_xtal:8,sch_tvs:8,sch_can_term:7,sch_reset:6,sch_erc:8}},
@@ -7593,7 +7666,7 @@ const PRESETS={
   ecu:{label:'전장 ECU (CISPR 25/EMC/신뢰성)',w:{rt_priority:9,rt_return_via:9,rt_edge_keepout:8,pw_agnd_star:9,th_via_array:8,ds_footprint:10,ds_thermal_pad:9,rt_return_path:10,pl_sw_loop:10,ds_kelvin:9,pl_decoupling:10,pw_solid_gnd:10,pl_esd_tvs:10,rt_diff_pair:9,pw_via_amp:8,rt_3w:9,rt_45deg:7,sch_decap:10,sch_bulk:8,sch_xtal:8,sch_tvs:10,sch_can_term:9,sch_reset:7,sch_erc:9}},
   highspeed:{label:'고속 신호 (SI/임피던스)',w:{rt_priority:9,rt_return_via:10,rt_edge_keepout:8,pw_agnd_star:7,th_via_array:6,ds_footprint:10,ds_thermal_pad:7,rt_return_path:10,pl_sw_loop:8,ds_kelvin:6,pl_decoupling:9,pw_solid_gnd:10,pl_esd_tvs:8,rt_diff_pair:10,pw_via_amp:7,rt_3w:10,rt_45deg:8,sch_decap:10,sch_bulk:7,sch_xtal:9,sch_tvs:8,sch_can_term:8,sch_reset:6,sch_erc:8}}};
 // every preset carries every rule (rules added later take their default weight); domain presets emphasise their rules
-Object.values(PRESETS).forEach(P=>RULES.forEach(r=>{if(P.w[r.key]==null)P.w[r.key]=r.w;}));
+Object.values(PRESETS).forEach(P=>RULES.forEach(r=>{if(P.w[r.key]==null)P.w[r.key]=r.w;}));PRESETS.motor.w.sch_iface=9;
 Object.assign(PRESETS.motor.w,{th_spread:9,pw_via_web:8,pl_zoning:9,rt_fb_route:8});
 Object.assign(PRESETS.ecu.w,{pl_zoning:9,pl_xtal:9,cu_stitch:8,dfa_edge_mlcc:8,su_stackup:9,cu_dead:8});
 Object.assign(PRESETS.highspeed.w,{rt_stub:9,rt_orthogonal:9,su_stackup:10,pw_via_web:9,cu_stitch:8});
@@ -7852,6 +7925,11 @@ function checkPcb(B,key,X){
 function checkSch(B,key,X){
   const parts=X.parts,N=X.nets;const capsOn=(n,max)=>parts.filter(c=>/^C/i.test(c.ref)&&c.pins.length===2&&c.pins.some(p=>p.net===n)&&c.pins.some(p=>isGnd(p.net))&&(max==null||(parseC(c.val)||0)<=max));
   switch(key){
+    case'sch_iface':{if(typeof IFCHECK==='undefined')return{status:'manual',ev:'인터페이스 점검 모듈 없음'};const R=IFCHECK.run(B);const fx=B.ifaceFix?' · 생성 때 풀 저항 자동 추가됨':'';
+      if(!R.findings.length)return{status:'pass',score:1,ev:`문제 없음 — I/O 전압 ${R.io.map(x=>`${x.ref} ${x.io} V`).join(' · ')||'-'}${fx}`};
+      const sc=Math.max(0,1-R.err*0.25-R.warn*0.06);
+      return{status:R.err?'fail':'partial',score:sc,ev:`오류 ${R.err} · 확인 ${R.warn}: `+R.findings.slice(0,6).map(f=>`${f.sev==='err'?'✕':'△'} ${f.net} ${f.code==='od_pullup'?'오픈 드레인 풀업 없음':f.code==='default_float'?'리셋 중 떠 있음':f.code==='default_wrong'?'리셋 중 반대 상태':f.code==='level_over'?'레벨 초과':f.code==='level_under'?'VIH 미달 가능':f.code==='multi_drive'?'출력 충돌':'입력 떠 있음'}`).join(' · ')+(R.findings.length>6?' …':''),
+        fix:R.findings.slice(0,3).map(f=>f.fix).join(' / '),manualNote:'부품 내부 풀 저항 · 5 V 허용 여부는 데이터시트로 확인'};}
     case'sch_decap':{const isReg=c=>c.pins.some(p=>/^(VIN|VI)$/i.test(p.name))&&c.pins.some(p=>/^(VOUT|VO)$/i.test(p.name));const ics=parts.filter(c=>/^U|^IC/i.test(c.ref)&&c.pins.length>=4&&!isConn(c)&&!isReg(c));const rows=[];
       ics.forEach(c=>{const rails=[...new Set(c.pins.map(p=>p.net).filter(n=>n&&!isGnd(n)&&cls(B,n)==='전원'))];rails.forEach(r=>rows.push({ref:c.ref,rail:r,ok:capsOn(r,1.01e-6).length>0}));});
       if(!rows.length)return{status:'na',ev:'전원 레일을 쓰는 IC 없음'};const bad=rows.filter(r=>!r.ok);const sc=1-bad.length/rows.length;
@@ -8600,6 +8678,13 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
       if(c)put(s,c.n);else warn.push(`${s.net}: ${MCU_PINS.ROLES[role]||role} 가능한 MCU 핀이 남지 않음`);}));
     assigned.forEach(a=>{pinmap[a.net]=a;});}
   else if(sigs.length)warn.push('MCU 블록이 없어 제어 신호를 연결하지 못했습니다 (add mcu)');
+  // interfaces between blocks: open-drain outputs get their pull-up, control inputs of power stages / bus transceivers get the pull
+  // that holds them in the safe state while the MCU is in reset (plan.ifaceFix = true from the generate step; saved boards replay without it unless their snapshot says so)
+  let iface=null;if(typeof IFCHECK!=='undefined'){try{iface=IFCHECK.run({parts});const fixed=[];
+      if(plan.ifaceFix===true){const seen=new Set();iface.findings.filter(f=>f.pull&&(f.code==='od_pullup'||f.code==='default_float')).forEach(f=>{if(seen.has(f.net))return;seen.add(f.net);
+          ctx.part('R','10kΩ','0402',{1:f.net,2:f.pull.to},{desc:`인터페이스 ${f.pull.to==='GND'?'풀다운':'풀업'} — ${f.pull.why} (블록 간 점검 자동 추가)`});{const np=parts[parts.length-1],ow=parts.find(c=>c.ref===f.refs[0]);if(np&&ow&&ow.block)np.block=ow.block;}fixed.push(f);});
+        if(fixed.length)iface=Object.assign(IFCHECK.run({parts}),{fixed});}
+      iface.findings.forEach(f=>warn.push(`인터페이스 ${f.sev==='err'?'✕':'△'} ${f.net}: ${f.msg} → ${f.fix}`));}catch(e){iface=null;}}
   // board size from the part area
   let area=0;parts.forEach(c=>{const f=PCB.FP[c.fp];const b=f?f.lbb:[-1,-1,1,1];area+=(b[2]-b[0]+1.6)*(b[3]-b[1]+1.6);});
   let W,H;if(plan.board){W=plan.board.w;H=plan.board.h;}else{const A=Math.max(1200,area*4.2);W=Math.ceil(Math.sqrt(A*1.6)/5)*5;H=Math.ceil(A/W/5)*5;}
@@ -8609,7 +8694,7 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
   if(asil&&typeof PARTLIB!=='undefined'){let n=0;parts.forEach(c=>{const alt=PARTLIB.autoAlt(c.mpn||c.val);if(alt&&alt.mpn&&alt.dropIn){const rec=alt.rec;if(/^U|^Q|^D/.test(c.ref)&&rec&&rec.mpn!==c.val)c.val=rec.mpn;c.mpn=alt.mpn;c.desc=(c.desc||'')+` (ASIL ${asil}: ${rec&&rec.grade?rec.grade:'AEC'} 대체)`;n++;}else if(alt&&alt.hint&&/^U/.test(c.ref))warn.push(`${c.ref} ${c.val}: ${alt.hint}`);});if(n)warn.push(`ASIL ${asil} 부품 정책: 상용 부품 ${n}개를 차량용(AEC) 핀 호환 부품으로 바꿨습니다 (safety parts 로 확인)`);}
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
-  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
+  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
 }
 /* ---------- package shrink (plan.shrink: 0 off · 1 표준 · 2 최대) ----------
    Swaps a part for a smaller package only where the replacement's pinout is known (KiCad 10 symbol / datasheet) and the
@@ -13732,7 +13817,7 @@ function boardFromSnap(S){const m=S.meta;const prof=PRODUCTS.detect(m.profile);c
   const R=PRODUCTS.apply(prof,ans,m.profile);
   // the snapshot's motor-stage settings go into the diagram too, so a later edit that regenerates the plan keeps them
   (R.arch.blocks||[]).forEach(b=>(b.impl||[]).forEach(im=>{if(im.type==='gdrv3')im.params=Object.assign({},im.params,{driver:m.driver||'IR2104'},m.gdrv3||{});}));
-  const plan=HWARCH.toPlan(R.arch).plan;if(m.pwrIn){const pi=plan.blocks.find(b=>b.type==='pwr_in');if(pi)pi.params=Object.assign({},pi.params,m.pwrIn);}const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'},m.gdrv3||{});(m.params||[]).forEach(t=>{const q=String(t).match(/^([\w]+)\.([\w]+)=(.*)$/);if(q)plan.blocks.filter(b=>b.type===q[1]||b.id===q[1]).forEach(b=>{b.params=Object.assign({},b.params,{[q[2]]:q[3]});});});(m.add||[]).forEach(t=>NEWPROJ.addBlock(plan,t,{}));plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
+  const plan=HWARCH.toPlan(R.arch).plan;plan.ifaceFix=m.ifaceFix===true;if(m.pwrIn){const pi=plan.blocks.find(b=>b.type==='pwr_in');if(pi)pi.params=Object.assign({},pi.params,m.pwrIn);}const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'},m.gdrv3||{});(m.params||[]).forEach(t=>{const q=String(t).match(/^([\w]+)\.([\w]+)=(.*)$/);if(q)plan.blocks.filter(b=>b.type===q[1]||b.id===q[1]).forEach(b=>{b.params=Object.assign({},b.params,{[q[2]]:q[3]});});});(m.add||[]).forEach(t=>NEWPROJ.addBlock(plan,t,{}));plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
   const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+m.profile.toLowerCase().replace(/\s+/g,'-')+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch:R.arch};}
 const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C],dadu8d:['Dadu A4911 상시 10 A · 피크 40 A · 90 × 60',()=>SNAP_DADU8D],eld6:['ELD only A4911 H-브리지 7 A / 20 A · 80 × 55',()=>SNAP_ELD6],dadu8e:['Dadu ECU 커넥터 · DRV8334 · 10 A / 30 A · 100 × 70',()=>SNAP_DADU8E]};
 function loadSnapExample(which){const r=boardFromSnap(SNAP_EXAMPLES[which][1]());
@@ -18056,12 +18141,13 @@ async function npGenerate0(o){
   const st=o.strategy?AUTOPLACE.strategy(o.strategy):P.strategy;
   const prog=npSay('out','부품을 고르고 넷리스트·회로도를 만드는 중…');await new Promise(r=>setTimeout(r,20));
   // step 2 is the circuit only: parts, nets and schematic. Placement and routing wait for step 3 (B.pcbPending).
-  const{B,r}=NEWPROJ.toBoard(P,{place:false});B.pcbPending=true;B.variant=V.key;B.variantLabel=`${V.label} (${V.tag})`;
+  P.ifaceFix=true;const{B,r}=NEWPROJ.toBoard(P,{place:false});B.pcbPending=true;B.ifaceFix=true;B.variant=V.key;B.variantLabel=`${V.label} (${V.tag})`;
   B.pcbPlan=Object.assign({layers:2,min:false,route:true},P.pcb||{},{strategy:st||'balanced',board:P.board?{w:P.board.w,h:P.board.h}:null});
   if(BD&&BD.pid)B.pid=BD.pid;B.notes.push(`새 설계: ${P.blocks.length}개 블록에서 부품 ${r.parts.length}개와 회로도를 만들었습니다. 부품 배치·배선은 3단계(PCB)에서 시작합니다.`);r.warn.forEach(w=>B.warnings.push(w));
   setBoard(B);
   const sheets=BD.schSheets||(schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:'sch',sheets});
   npSet(prog,`회로 생성 [${V.label}]: 부품 ${B.comps.length}개 · BOM 약 $${V.m.partsPrice} (예상 단가 $${V.m.price}) · 넷 ${Object.keys(B.nets).length}개 · 회로도 ${sheets?sheets.length:0}쪽 · MCU 핀 배정 ${r.assigned.length}개\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>'\n  △ '+x.title).join('')}\nPCB 조건(3단계에서 적용): ${pcbPlanText(B.pcbPlan)}`);
+  if(r.iface){const fx=r.iface.fixed||[];const left=r.iface.findings;if(fx.length||left.length)npSay(left.some(f=>f.sev==='err')?'err':'ok',`블록 간 인터페이스 점검: ${fx.length?`풀 저항 ${fx.length}개 자동 추가 (${fx.map(f=>`${f.net}→${f.pull.to==='GND'?'GND':f.pull.to}`).join(', ')})`:''}${fx.length&&left.length?' · ':''}${left.length?`남은 항목 ${left.length}개:\n`+left.map(f=>`${f.sev==='err'?'✕':'△'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('\n'):' — 남은 문제 없음'}`);}
   SYS.src='plan';setStep(2);
   if(o.pcb){setStep(3);await pcbStart(B.pcbPlan);return'회로 생성 후 PCB 설계를 시작했습니다 — 결과는 배치·배선 CLI에 있습니다.';}
   toast(`${P.name}: 부품 ${B.comps.length}개로 회로를 만들었습니다. 회로도를 검토한 뒤 3단계에서 PCB를 시작하세요.`);
