@@ -7598,9 +7598,38 @@ function run(B,opt){opt=opt||{};const lookup=opt.lookup||(typeof NEWPROJ!=='unde
     if(alone&&!/^NC$|^DNC$|^N\.?C\.?$/i.test(p.name))add('warn','in_float',p.net||'(미연결)',`${x.c.ref} ${x.c.val}.${p.name||p.n} 입력이 연결 없이 떠 있음`,`쓰지 않는 입력은 데이터시트 권장대로 GND / 전원에 묶거나 풀 저항`,[x.c.ref]);}));
   const n=k=>out.filter(f=>f.sev===k).length;
   return{findings:out,err:n('err'),warn:n('warn'),io:ICs.filter(x=>x.io!=null).map(x=>({ref:x.c.ref,val:x.c.val,io:x.io})),checked:Object.keys(byNet).length};}
+/* ---------- external connector signals: ESD / transient protection at the pin and short-to-battery injection into the MCU ----------
+   An external connector is any J except debug / programming headers. A signal net on it (not ground, not a supply rail, not a
+   high-current power net) is protected when a TVS / ESD diode sits on that very net. Short to battery: the line may meet the
+   battery maximum (requirement, default 16 V); the series resistance between the pin and the MCU must hold the MCU's injection
+   current below its limit (TC3xx: digital ±5 mA, analog ±3 mA — TC364 datasheet record), unless an external clamp diode takes it. */
+const ESD_PART={mpn:'PESD1CAN',src:'Nexperia PESD1CAN: VRWM 24 V (배터리 단락 · 점프 스타트 견딤), IEC 61000-4-2 접촉 23 kV, Cd 11 pF',pins:{a:1,b:2,gnd:3},names:{1:'K1',2:'K2',3:'K'}};
+function connProt(B,opt){opt=opt||{};const vbat=opt.vbat||16;const iDig=opt.iDig||5e-3,iAna=opt.iAna||3e-3;const curr=opt.curr||{};const out=[];
+  const comps=(B.comps||B.parts||[]).map(c=>c.pads?c:Object.assign({},c,{pads:Object.entries(c.pins||{}).map(([n,net])=>({n,net:net||null}))}));
+  const on=(c,n)=>c.pads.some(p=>p.net===n);const isDbg=c=>/디버그|DAP|JTAG|SWD|UART|프로그래밍|TAG-?CONNECT/i.test((c.desc||'')+' '+c.val);
+  const isTvs=c=>/^D/i.test(c.ref)&&/TVS|ESD|PESD|TPD\d|SMAJ|SMBJ|ESD\d/i.test((c.desc||'')+' '+c.val+' '+(c.mpn||''));
+  const mcu=comps.find(c=>/TC3|TC2|STM32|S32K|RH850|AURIX/i.test((c.val||'')+' '+(c.desc||''))&&c.pads.length>=32);
+  const J=comps.filter(c=>/^J\d/i.test(c.ref)&&!isDbg(c));const seen=new Set();const sig=[],sup=[];
+  J.forEach(j=>j.pads.forEach(p=>{const n=p.net;if(!n||seen.has(n)||isGnd(n))return;seen.add(n);
+    if(railV(n)!=null||/^(VBAT|VIN|VIN_RAW|KL30|KL15|BAT)/i.test(n)){if(railV(n)!=null&&railV(n)<=12)sup.push({n,j});return;}
+    if((+curr[n]||0)>=1)return;sig.push({n,j});}));
+  sig.forEach(({n,j})=>{const prot=comps.some(c=>isTvs(c)&&on(c,n));
+    // path to the MCU: directly, or through one series resistor (+ an optional clamp diode on the MCU side)
+    let rs=null,via=null,clamp=false,ana=false;if(mcu&&on(mcu,n))rs=0;
+    else comps.filter(c=>/^R\d/i.test(c.ref)&&c.pads.length===2&&on(c,n)).forEach(r=>{const o=r.pads.find(p=>p.net!==n);if(!o||!o.net)return;const n2=o.net;
+      const reach=mcu&&on(mcu,n2)||comps.some(c=>/^R\d/i.test(c.ref)&&c.ref!==r.ref&&c.pads.length===2&&on(c,n2)&&mcu&&on(mcu,(c.pads.find(q=>q.net!==n2)||{}).net));
+      if(!reach)return;const v=rOhm(r.val);if(v==null)return;if(rs==null||v>rs){rs=v;via=r;clamp=comps.some(c=>/^D/i.test(c.ref)&&/클램프|BAT54|clamp/i.test((c.desc||'')+c.val)&&on(c,n2));ana=/아날로그|ADC|AIN/i.test((r.desc||'')+n);}});
+    if(!prot)out.push({sev:'warn',code:'esd_missing',net:n,conn:j.ref,msg:`${j.ref} 커넥터 신호 ${n}에 ESD/TVS 다이오드가 없음`,fix:`커넥터 핀 가까이 ${ESD_PART.mpn}(2채널 · VRWM 24 V) — 배터리 단락에도 견디는 24 V급`,add:true});
+    if(rs!=null&&!clamp){const lim=ana?iAna:iDig;const vio=3.3;const i=(vbat-vio-0.3)/Math.max(rs,1e-3);const rmin=(vbat-vio-0.3)/lim;
+      if(i>lim)out.push({sev:rs===0?'err':'warn',code:'stb_inject',net:n,conn:j.ref,msg:`${n}가 배터리(${vbat} V)에 단락되면 MCU 핀 주입 전류 ${rs===0?'제한 없음':(i*1000).toFixed(0)+' mA'} (직렬 ${rs===0?'없음':via.ref+' '+via.val}) — 허용 ±${lim*1000} mA (${ana?'아날로그':'디지털'} 핀, TC364 데이터시트)`,
+        fix:`직렬 저항을 ${(rmin/1000).toFixed(1)} kΩ 이상으로 하거나 MCU 쪽에 클램프 다이오드(예: BAT54S → 3.3 V · GND) — 클램프 전류가 3.3 V 레일로 흘러들므로 레일 최소 부하가 그보다 커야`});}});
+  sup.forEach(({n,j})=>out.push({sev:'info',code:'supply_out',net:n,conn:j.ref,msg:`${j.ref}로 나가는 센서 공급 ${n}: 외부 단락(GND · 배터리) 시 레귤레이터 보호 확인`,fix:'전류 제한 · 역류 차단 다이오드 · 배터리 단락 시 레귤레이터 출력 허용 전압(데이터시트) 확인'}));
+  const n=k=>out.filter(f=>f.sev===k).length;return{findings:out,err:n('err'),warn:n('warn'),signals:sig.map(x=>x.n),vbat};}
+const rOhm=v=>{const m=String(v||'').replace(/Ω|ohm/i,'').trim().match(/^(\d+(?:\.\d+)?)\s*([kKmM]?)/);if(!m)return null;return +m[1]*({k:1e3,K:1e3,M:1e6,m:1e-3,'':1}[m[2]]);};
+function protText(R){if(!R.findings.length)return`외부 커넥터 신호 보호: 문제 없음 (${R.signals.length}개 신호)`;return`외부 커넥터 신호 보호 (배터리 단락 ${R.vbat} V 기준): `+R.findings.map(f=>`\n${f.sev==='err'?'✕':f.sev==='warn'?'△':'·'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('');}
 function text(R){if(!R.findings.length)return`블록 간 인터페이스: 문제 없음 (I/O 전압 ${R.io.map(x=>`${x.ref} ${x.io} V`).join(' · ')})`;
   return`블록 간 인터페이스: 오류 ${R.err} · 확인 ${R.warn}\n`+R.findings.map(f=>`${f.sev==='err'?'✕':'△'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('\n');}
-return{run,text,SPEC,SAFE};
+return{run,text,SPEC,SAFE,connProt,protText,ESD_PART};
 })();
 
 
@@ -7658,7 +7687,7 @@ const RULES=[
   {key:'sch_tvs',scope:'sch',cat:'회로',w:8,title:'외부 커넥터 신호의 TVS/ESD 보호',desc:'커넥터로 나가는 신호 넷마다 TVS/ESD 다이오드',ref:'TVS / ESD Application Note'},
   {key:'sch_can_term',scope:'sch',cat:'회로',w:7,title:'CAN 버스 종단(120Ω 또는 60Ω+60Ω 스플릿 + 4.7nF)',desc:'CANH–CANL 사이 종단 또는 스플릿 종단 (하네스 끝단이면 해당 없음)',ref:"CAN Transceiver Datasheet 'Bus Termination'"},
   {key:'sch_reset',scope:'sch',cat:'회로',w:6,title:'리셋 핀 풀업',desc:'NRST/PORST/RESET 넷에 전원으로 가는 풀업 저항',ref:"MCU Datasheet 'Reset Circuit'"},
-  {key:'sch_iface',scope:'sch',cat:'회로',w:8,title:'블록 간 인터페이스: 로직 레벨 · 리셋 중 기본 상태 · 오픈 드레인 풀업',desc:'다른 I/O 전원 사이 신호의 레벨, MCU 리셋 중 게이트 · 드라이버 · CAN 대기 입력의 안전 상태용 풀 저항, 오픈 드레인 출력의 풀업, 떠 있는 입력',ref:'부품 데이터시트 핀 기능 · 권장 동작 조건 (IFCHECK)'},
+  {key:'sch_iface',scope:'sch',cat:'회로',w:8,title:'블록 간 인터페이스: 로직 레벨 · 리셋 중 기본 상태 · 오픈 드레인 풀업 · 커넥터 배터리 단락',desc:'다른 I/O 전원 사이 신호의 레벨, MCU 리셋 중 게이트 · 드라이버 · CAN 대기 입력의 안전 상태용 풀 저항, 오픈 드레인 출력의 풀업, 떠 있는 입력, 외부 커넥터 신호가 배터리에 단락될 때 MCU 핀 주입 전류',ref:'부품 데이터시트 핀 기능 · 권장 동작 조건 (IFCHECK)'},
   {key:'sch_erc',scope:'sch',cat:'회로',w:8,title:'ERC 0건 (미연결 핀은 NC 표시)',desc:'떠 있는 배선, 연결 안 된 핀, 핀 없는 라벨이 없는지',ref:'KiCad ERC'}];
 const PRESETS={
   default:{label:'표준 밸런스',w:{rt_priority:8,rt_return_via:8,rt_edge_keepout:6,pw_agnd_star:8,th_via_array:7,ds_footprint:10,ds_thermal_pad:9,rt_return_path:10,pl_sw_loop:10,ds_kelvin:9,pl_decoupling:9,pw_solid_gnd:9,pl_esd_tvs:8,rt_diff_pair:8,pw_via_amp:8,rt_3w:7,rt_45deg:6,sch_decap:9,sch_bulk:7,sch_xtal:8,sch_tvs:8,sch_can_term:7,sch_reset:6,sch_erc:8}},
@@ -7925,10 +7954,10 @@ function checkPcb(B,key,X){
 function checkSch(B,key,X){
   const parts=X.parts,N=X.nets;const capsOn=(n,max)=>parts.filter(c=>/^C/i.test(c.ref)&&c.pins.length===2&&c.pins.some(p=>p.net===n)&&c.pins.some(p=>isGnd(p.net))&&(max==null||(parseC(c.val)||0)<=max));
   switch(key){
-    case'sch_iface':{if(typeof IFCHECK==='undefined')return{status:'manual',ev:'인터페이스 점검 모듈 없음'};const R=IFCHECK.run(B);const fx=B.ifaceFix?' · 생성 때 풀 저항 자동 추가됨':'';
+    case'sch_iface':{if(typeof IFCHECK==='undefined')return{status:'manual',ev:'인터페이스 점검 모듈 없음'};const R=IFCHECK.run(B);{const cp=IFCHECK.connProt(B,{curr:B.netCurrent||{}});cp.findings.filter(f=>f.code==='stb_inject').forEach(f=>{R.findings.push(f);if(f.sev==='err')R.err++;else R.warn++;});}const fx=B.ifaceFix?' · 생성 때 풀 저항 자동 추가됨':'';
       if(!R.findings.length)return{status:'pass',score:1,ev:`문제 없음 — I/O 전압 ${R.io.map(x=>`${x.ref} ${x.io} V`).join(' · ')||'-'}${fx}`};
       const sc=Math.max(0,1-R.err*0.25-R.warn*0.06);
-      return{status:R.err?'fail':'partial',score:sc,ev:`오류 ${R.err} · 확인 ${R.warn}: `+R.findings.slice(0,6).map(f=>`${f.sev==='err'?'✕':'△'} ${f.net} ${f.code==='od_pullup'?'오픈 드레인 풀업 없음':f.code==='default_float'?'리셋 중 떠 있음':f.code==='default_wrong'?'리셋 중 반대 상태':f.code==='level_over'?'레벨 초과':f.code==='level_under'?'VIH 미달 가능':f.code==='multi_drive'?'출력 충돌':'입력 떠 있음'}`).join(' · ')+(R.findings.length>6?' …':''),
+      return{status:R.err?'fail':'partial',score:sc,ev:`오류 ${R.err} · 확인 ${R.warn}: `+R.findings.slice(0,6).map(f=>`${f.sev==='err'?'✕':'△'} ${f.net} ${f.code==='od_pullup'?'오픈 드레인 풀업 없음':f.code==='default_float'?'리셋 중 떠 있음':f.code==='default_wrong'?'리셋 중 반대 상태':f.code==='level_over'?'레벨 초과':f.code==='level_under'?'VIH 미달 가능':f.code==='multi_drive'?'출력 충돌':f.code==='stb_inject'?'배터리 단락 시 MCU 주입 초과':'입력 떠 있음'}`).join(' · ')+(R.findings.length>6?' …':''),
         fix:R.findings.slice(0,3).map(f=>f.fix).join(' / '),manualNote:'부품 내부 풀 저항 · 5 V 허용 여부는 데이터시트로 확인'};}
     case'sch_decap':{const isReg=c=>c.pins.some(p=>/^(VIN|VI)$/i.test(p.name))&&c.pins.some(p=>/^(VOUT|VO)$/i.test(p.name));const ics=parts.filter(c=>/^U|^IC/i.test(c.ref)&&c.pins.length>=4&&!isConn(c)&&!isReg(c));const rows=[];
       ics.forEach(c=>{const rails=[...new Set(c.pins.map(p=>p.net).filter(n=>n&&!isGnd(n)&&cls(B,n)==='전원'))];rails.forEach(r=>rows.push({ref:c.ref,rail:r,ok:capsOn(r,1.01e-6).length>0}));});
@@ -8167,11 +8196,11 @@ const LIB={
         ['A','B','C'].forEach(x=>{const raw=N('HALL_'+x+(hv>5?'_IN':''));if(hv>5){ctx.part('R','1kΩ','0603',{1:raw,2:N('HALL_'+x)},{desc:'홀 입력 직렬 저항 (과전압 전류 제한)'});ctx.part('D','BAT54S','SOT-23',{1:'GND',2:'+3V3',3:N('HALL_'+x)},{mpn:'BAT54S',desc:'홀 입력 클램프 (GND·3.3 V)',pinNames:{1:'A1',2:'K2',3:'K1/A2'}});
             ctx.part('C','1nF','0603',{1:raw,2:'GND'},{desc:'홀 커넥터 측 필터'});}
           ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:N('HALL_'+x)},{desc:'홀 출력 풀업'});ctx.part('C','1nF','0603',{1:N('HALL_'+x),2:'GND'},{desc:'홀 입력 필터'});ctx.sig(N('HALL_'+x),'irq_in');});}}},
-  spare:{label:'예비 I/O (아날로그 입력 · PWM 출력)',desc:'예비 아날로그 입력 (직렬 1 kΩ + 10 nF + BAT54S 클램프 → ADC) · 예비 PWM 출력 (MCU → 100 Ω 직렬 · ESD) · 2핀 커넥터',params:{ain:{def:1,desc:'예비 아날로그 입력 (1/0)'},pwm:{def:1,desc:'예비 PWM 출력 (1/0)'}},
+  spare:{label:'예비 I/O (아날로그 입력 · PWM 출력)',desc:'예비 아날로그 입력 (직렬 1 kΩ + 10 nF + BAT54S 클램프 → ADC) · 예비 PWM 출력 (MCU → 2.7 kΩ 직렬 · 1 nF) · 2핀 커넥터',params:{ain:{def:1,desc:'예비 아날로그 입력 (1/0)'},pwm:{def:1,desc:'예비 PWM 출력 (1/0)'}},
     build(ctx,p){const vs=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vs);const k=ctx.uniq('SPARE');const N=x=>k==='SPARE'?'SPARE_'+x:k+'_'+x;const J={};let i=1;const nm={};
       if(+p.ain){const raw=N('AIN_IN'),ain=N('AIN');ctx.part('R','1kΩ','0603',{1:raw,2:ain},{desc:'예비 아날로그 입력 직렬 저항 (과전압 전류 제한)'});ctx.part('C','10nF','0603',{1:ain,2:'GND'},{desc:'예비 아날로그 입력 RC 필터'});
         ctx.part('D','BAT54S','SOT-23',{1:'GND',2:vs,3:ain},{mpn:'BAT54S',desc:'예비 아날로그 입력 클램프 (GND · 3.3 V)',pinNames:{1:'A1',2:'K2',3:'K1/A2'}});ctx.sig(ain,'adc');J[i]=raw;nm[i]='SPARE_AIN';i++;}
-      if(+p.pwm){const pw=N('PWM'),out=N('PWM_OUT');ctx.part('R','100Ω','0603',{1:pw,2:out},{desc:'예비 PWM 출력 직렬 저항 (단락 · ESD 전류 제한)'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'예비 PWM 출력 ESD · EMC 캡'});ctx.sig(pw,'pwm');J[i]=out;nm[i]='SPARE_PWM';i++;}
+      if(+p.pwm){const pw=N('PWM'),out=N('PWM_OUT');ctx.part('R','2.7kΩ','0603',{1:pw,2:out},{desc:'예비 PWM 출력 직렬 저항 2.7 kΩ — 배터리 단락(16 V) 시 MCU 핀 주입 ≤ 5 mA (TC364 한도) · RC 2.7 µs로 kHz PWM 통과'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'예비 PWM 출력 ESD · EMC 캡'});ctx.sig(pw,'pwm');J[i]=out;nm[i]='SPARE_PWM';i++;}
       if(i>1)ctx.part('J','SPARE','HDR-1x'+(i-1),J,{mpn:'',desc:'예비 I/O 커넥터',pinNames:nm});}},
   dcmotor:{label:'DC 모터 (로우사이드 FET)',desc:'AO3400A + 게이트 저항·풀다운 + 플라이백 SS14 + 0.1 Ω 션트 + RC 필터 → ADC',params:{shunt:{def:1,desc:'전류 검출 (1/0)'}},
     build(ctx,p){const vm=ctx.highest(3);ctx.use(vm);const s=+p.shunt;
@@ -8684,7 +8713,15 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
       if(plan.ifaceFix===true){const seen=new Set();iface.findings.filter(f=>f.pull&&(f.code==='od_pullup'||f.code==='default_float')).forEach(f=>{if(seen.has(f.net))return;seen.add(f.net);
           ctx.part('R','10kΩ','0402',{1:f.net,2:f.pull.to},{desc:`인터페이스 ${f.pull.to==='GND'?'풀다운':'풀업'} — ${f.pull.why} (블록 간 점검 자동 추가)`});{const np=parts[parts.length-1],ow=parts.find(c=>c.ref===f.refs[0]);if(np&&ow&&ow.block)np.block=ow.block;}fixed.push(f);});
         if(fixed.length)iface=Object.assign(IFCHECK.run({parts}),{fixed});}
-      iface.findings.forEach(f=>warn.push(`인터페이스 ${f.sev==='err'?'✕':'△'} ${f.net}: ${f.msg} → ${f.fix}`));}catch(e){iface=null;}}
+      iface.findings.forEach(f=>warn.push(`인터페이스 ${f.sev==='err'?'✕':'△'} ${f.net}: ${f.msg} → ${f.fix}`));}catch(e){iface=null;}
+    // external connector signals: a 24 V-class dual ESD diode at the pin for every unprotected signal (two signals per part)
+    try{const vmax=(plan.vop&&plan.vop[1])||16;let pr=IFCHECK.connProt({parts},{vbat:vmax,curr});const added=[];
+      if(plan.ifaceFix===true){const need=pr.findings.filter(f=>f.add);for(let i=0;i<need.length;i+=2){const a=need[i],b2=need[i+1];const E=IFCHECK.ESD_PART;
+          ctx.part('D',E.mpn,'SOT-23',{[E.pins.a]:a.net,[E.pins.b]:b2?b2.net:a.net,[E.pins.gnd]:'GND'},{mpn:E.mpn,desc:`커넥터 신호 ESD/TVS — ${a.net}${b2?' · '+b2.net:' (두 채널 병렬)'} (${a.conn} 핀 가까이 · 24 V급, 블록 간 점검 자동 추가)`,pinNames:E.names});
+          const np=parts[parts.length-1],ow=parts.find(c=>c.ref===a.conn);if(np&&ow&&ow.block)np.block=ow.block;added.push(a.net);if(b2)added.push(b2.net);}
+        if(added.length)pr=IFCHECK.connProt({parts},{vbat:vmax,curr});}
+      pr.added=added;if(iface)iface.prot=pr;else iface={findings:[],prot:pr};
+      pr.findings.filter(f=>f.sev!=='info').forEach(f=>warn.push(`커넥터 보호 ${f.sev==='err'?'✕':'△'} ${f.net}: ${f.msg} → ${f.fix}`));}catch(e){}}
   // board size from the part area
   let area=0;parts.forEach(c=>{const f=PCB.FP[c.fp];const b=f?f.lbb:[-1,-1,1,1];area+=(b[2]-b[0]+1.6)*(b[3]-b[1]+1.6);});
   let W,H;if(plan.board){W=plan.board.w;H=plan.board.h;}else{const A=Math.max(1200,area*4.2);W=Math.ceil(Math.sqrt(A*1.6)/5)*5;H=Math.ceil(A/W/5)*5;}
@@ -18148,6 +18185,7 @@ async function npGenerate0(o){
   const sheets=BD.schSheets||(schData()&&schData().sheets);const g=GUIDE.evaluate(BD,{scope:'sch',sheets});
   npSet(prog,`회로 생성 [${V.label}]: 부품 ${B.comps.length}개 · BOM 약 $${V.m.partsPrice} (예상 단가 $${V.m.price}) · 넷 ${Object.keys(B.nets).length}개 · 회로도 ${sheets?sheets.length:0}쪽 · MCU 핀 배정 ${r.assigned.length}개\n회로 가이드라인 ${g.pct.toFixed(0)}% · ${g.verdict}${g.rules.filter(x=>x.status==='fail'||x.status==='partial').slice(0,3).map(x=>'\n  △ '+x.title).join('')}\nPCB 조건(3단계에서 적용): ${pcbPlanText(B.pcbPlan)}`);
   if(r.iface){const fx=r.iface.fixed||[];const left=r.iface.findings;if(fx.length||left.length)npSay(left.some(f=>f.sev==='err')?'err':'ok',`블록 간 인터페이스 점검: ${fx.length?`풀 저항 ${fx.length}개 자동 추가 (${fx.map(f=>`${f.net}→${f.pull.to==='GND'?'GND':f.pull.to}`).join(', ')})`:''}${fx.length&&left.length?' · ':''}${left.length?`남은 항목 ${left.length}개:\n`+left.map(f=>`${f.sev==='err'?'✕':'△'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('\n'):' — 남은 문제 없음'}`);}
+  if(r.iface&&r.iface.prot){const pr=r.iface.prot;const left=pr.findings.filter(f=>f.sev!=='info');if((pr.added||[]).length||left.length)npSay(left.some(f=>f.sev==='err')?'err':'ok',`외부 커넥터 신호 보호 (배터리 단락 ${pr.vbat} V 기준): ${(pr.added||[]).length?`ESD/TVS(24 V급) 자동 추가 — ${pr.added.join(', ')}`:''}${left.length?`\n남은 항목 ${left.length}개:\n`+left.map(f=>`${f.sev==='err'?'✕':'△'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('\n'):' · 남은 문제 없음'}`);}
   SYS.src='plan';setStep(2);
   if(o.pcb){setStep(3);await pcbStart(B.pcbPlan);return'회로 생성 후 PCB 설계를 시작했습니다 — 결과는 배치·배선 CLI에 있습니다.';}
   toast(`${P.name}: 부품 ${B.comps.length}개로 회로를 만들었습니다. 회로도를 검토한 뒤 3단계에서 PCB를 시작하세요.`);

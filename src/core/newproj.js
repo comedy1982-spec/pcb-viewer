@@ -178,11 +178,11 @@ const LIB={
         ['A','B','C'].forEach(x=>{const raw=N('HALL_'+x+(hv>5?'_IN':''));if(hv>5){ctx.part('R','1kΩ','0603',{1:raw,2:N('HALL_'+x)},{desc:'홀 입력 직렬 저항 (과전압 전류 제한)'});ctx.part('D','BAT54S','SOT-23',{1:'GND',2:'+3V3',3:N('HALL_'+x)},{mpn:'BAT54S',desc:'홀 입력 클램프 (GND·3.3 V)',pinNames:{1:'A1',2:'K2',3:'K1/A2'}});
             ctx.part('C','1nF','0603',{1:raw,2:'GND'},{desc:'홀 커넥터 측 필터'});}
           ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:N('HALL_'+x)},{desc:'홀 출력 풀업'});ctx.part('C','1nF','0603',{1:N('HALL_'+x),2:'GND'},{desc:'홀 입력 필터'});ctx.sig(N('HALL_'+x),'irq_in');});}}},
-  spare:{label:'예비 I/O (아날로그 입력 · PWM 출력)',desc:'예비 아날로그 입력 (직렬 1 kΩ + 10 nF + BAT54S 클램프 → ADC) · 예비 PWM 출력 (MCU → 100 Ω 직렬 · ESD) · 2핀 커넥터',params:{ain:{def:1,desc:'예비 아날로그 입력 (1/0)'},pwm:{def:1,desc:'예비 PWM 출력 (1/0)'}},
+  spare:{label:'예비 I/O (아날로그 입력 · PWM 출력)',desc:'예비 아날로그 입력 (직렬 1 kΩ + 10 nF + BAT54S 클램프 → ADC) · 예비 PWM 출력 (MCU → 2.7 kΩ 직렬 · 1 nF) · 2핀 커넥터',params:{ain:{def:1,desc:'예비 아날로그 입력 (1/0)'},pwm:{def:1,desc:'예비 PWM 출력 (1/0)'}},
     build(ctx,p){const vs=ctx.railNear?ctx.railNear(3.3):'+3V3';ctx.use(vs);const k=ctx.uniq('SPARE');const N=x=>k==='SPARE'?'SPARE_'+x:k+'_'+x;const J={};let i=1;const nm={};
       if(+p.ain){const raw=N('AIN_IN'),ain=N('AIN');ctx.part('R','1kΩ','0603',{1:raw,2:ain},{desc:'예비 아날로그 입력 직렬 저항 (과전압 전류 제한)'});ctx.part('C','10nF','0603',{1:ain,2:'GND'},{desc:'예비 아날로그 입력 RC 필터'});
         ctx.part('D','BAT54S','SOT-23',{1:'GND',2:vs,3:ain},{mpn:'BAT54S',desc:'예비 아날로그 입력 클램프 (GND · 3.3 V)',pinNames:{1:'A1',2:'K2',3:'K1/A2'}});ctx.sig(ain,'adc');J[i]=raw;nm[i]='SPARE_AIN';i++;}
-      if(+p.pwm){const pw=N('PWM'),out=N('PWM_OUT');ctx.part('R','100Ω','0603',{1:pw,2:out},{desc:'예비 PWM 출력 직렬 저항 (단락 · ESD 전류 제한)'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'예비 PWM 출력 ESD · EMC 캡'});ctx.sig(pw,'pwm');J[i]=out;nm[i]='SPARE_PWM';i++;}
+      if(+p.pwm){const pw=N('PWM'),out=N('PWM_OUT');ctx.part('R','2.7kΩ','0603',{1:pw,2:out},{desc:'예비 PWM 출력 직렬 저항 2.7 kΩ — 배터리 단락(16 V) 시 MCU 핀 주입 ≤ 5 mA (TC364 한도) · RC 2.7 µs로 kHz PWM 통과'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'예비 PWM 출력 ESD · EMC 캡'});ctx.sig(pw,'pwm');J[i]=out;nm[i]='SPARE_PWM';i++;}
       if(i>1)ctx.part('J','SPARE','HDR-1x'+(i-1),J,{mpn:'',desc:'예비 I/O 커넥터',pinNames:nm});}},
   dcmotor:{label:'DC 모터 (로우사이드 FET)',desc:'AO3400A + 게이트 저항·풀다운 + 플라이백 SS14 + 0.1 Ω 션트 + RC 필터 → ADC',params:{shunt:{def:1,desc:'전류 검출 (1/0)'}},
     build(ctx,p){const vm=ctx.highest(3);ctx.use(vm);const s=+p.shunt;
@@ -695,7 +695,15 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
       if(plan.ifaceFix===true){const seen=new Set();iface.findings.filter(f=>f.pull&&(f.code==='od_pullup'||f.code==='default_float')).forEach(f=>{if(seen.has(f.net))return;seen.add(f.net);
           ctx.part('R','10kΩ','0402',{1:f.net,2:f.pull.to},{desc:`인터페이스 ${f.pull.to==='GND'?'풀다운':'풀업'} — ${f.pull.why} (블록 간 점검 자동 추가)`});{const np=parts[parts.length-1],ow=parts.find(c=>c.ref===f.refs[0]);if(np&&ow&&ow.block)np.block=ow.block;}fixed.push(f);});
         if(fixed.length)iface=Object.assign(IFCHECK.run({parts}),{fixed});}
-      iface.findings.forEach(f=>warn.push(`인터페이스 ${f.sev==='err'?'✕':'△'} ${f.net}: ${f.msg} → ${f.fix}`));}catch(e){iface=null;}}
+      iface.findings.forEach(f=>warn.push(`인터페이스 ${f.sev==='err'?'✕':'△'} ${f.net}: ${f.msg} → ${f.fix}`));}catch(e){iface=null;}
+    // external connector signals: a 24 V-class dual ESD diode at the pin for every unprotected signal (two signals per part)
+    try{const vmax=(plan.vop&&plan.vop[1])||16;let pr=IFCHECK.connProt({parts},{vbat:vmax,curr});const added=[];
+      if(plan.ifaceFix===true){const need=pr.findings.filter(f=>f.add);for(let i=0;i<need.length;i+=2){const a=need[i],b2=need[i+1];const E=IFCHECK.ESD_PART;
+          ctx.part('D',E.mpn,'SOT-23',{[E.pins.a]:a.net,[E.pins.b]:b2?b2.net:a.net,[E.pins.gnd]:'GND'},{mpn:E.mpn,desc:`커넥터 신호 ESD/TVS — ${a.net}${b2?' · '+b2.net:' (두 채널 병렬)'} (${a.conn} 핀 가까이 · 24 V급, 블록 간 점검 자동 추가)`,pinNames:E.names});
+          const np=parts[parts.length-1],ow=parts.find(c=>c.ref===a.conn);if(np&&ow&&ow.block)np.block=ow.block;added.push(a.net);if(b2)added.push(b2.net);}
+        if(added.length)pr=IFCHECK.connProt({parts},{vbat:vmax,curr});}
+      pr.added=added;if(iface)iface.prot=pr;else iface={findings:[],prot:pr};
+      pr.findings.filter(f=>f.sev!=='info').forEach(f=>warn.push(`커넥터 보호 ${f.sev==='err'?'✕':'△'} ${f.net}: ${f.msg} → ${f.fix}`));}catch(e){}}
   // board size from the part area
   let area=0;parts.forEach(c=>{const f=PCB.FP[c.fp];const b=f?f.lbb:[-1,-1,1,1];area+=(b[2]-b[0]+1.6)*(b[3]-b[1]+1.6);});
   let W,H;if(plan.board){W=plan.board.w;H=plan.board.h;}else{const A=Math.max(1200,area*4.2);W=Math.ceil(Math.sqrt(A*1.6)/5)*5;H=Math.ceil(A/W/5)*5;}

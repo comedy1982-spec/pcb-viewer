@@ -62,8 +62,37 @@ function run(B,opt){opt=opt||{};const lookup=opt.lookup||(typeof NEWPROJ!=='unde
     if(alone&&!/^NC$|^DNC$|^N\.?C\.?$/i.test(p.name))add('warn','in_float',p.net||'(미연결)',`${x.c.ref} ${x.c.val}.${p.name||p.n} 입력이 연결 없이 떠 있음`,`쓰지 않는 입력은 데이터시트 권장대로 GND / 전원에 묶거나 풀 저항`,[x.c.ref]);}));
   const n=k=>out.filter(f=>f.sev===k).length;
   return{findings:out,err:n('err'),warn:n('warn'),io:ICs.filter(x=>x.io!=null).map(x=>({ref:x.c.ref,val:x.c.val,io:x.io})),checked:Object.keys(byNet).length};}
+/* ---------- external connector signals: ESD / transient protection at the pin and short-to-battery injection into the MCU ----------
+   An external connector is any J except debug / programming headers. A signal net on it (not ground, not a supply rail, not a
+   high-current power net) is protected when a TVS / ESD diode sits on that very net. Short to battery: the line may meet the
+   battery maximum (requirement, default 16 V); the series resistance between the pin and the MCU must hold the MCU's injection
+   current below its limit (TC3xx: digital ±5 mA, analog ±3 mA — TC364 datasheet record), unless an external clamp diode takes it. */
+const ESD_PART={mpn:'PESD1CAN',src:'Nexperia PESD1CAN: VRWM 24 V (배터리 단락 · 점프 스타트 견딤), IEC 61000-4-2 접촉 23 kV, Cd 11 pF',pins:{a:1,b:2,gnd:3},names:{1:'K1',2:'K2',3:'K'}};
+function connProt(B,opt){opt=opt||{};const vbat=opt.vbat||16;const iDig=opt.iDig||5e-3,iAna=opt.iAna||3e-3;const curr=opt.curr||{};const out=[];
+  const comps=(B.comps||B.parts||[]).map(c=>c.pads?c:Object.assign({},c,{pads:Object.entries(c.pins||{}).map(([n,net])=>({n,net:net||null}))}));
+  const on=(c,n)=>c.pads.some(p=>p.net===n);const isDbg=c=>/디버그|DAP|JTAG|SWD|UART|프로그래밍|TAG-?CONNECT/i.test((c.desc||'')+' '+c.val);
+  const isTvs=c=>/^D/i.test(c.ref)&&/TVS|ESD|PESD|TPD\d|SMAJ|SMBJ|ESD\d/i.test((c.desc||'')+' '+c.val+' '+(c.mpn||''));
+  const mcu=comps.find(c=>/TC3|TC2|STM32|S32K|RH850|AURIX/i.test((c.val||'')+' '+(c.desc||''))&&c.pads.length>=32);
+  const J=comps.filter(c=>/^J\d/i.test(c.ref)&&!isDbg(c));const seen=new Set();const sig=[],sup=[];
+  J.forEach(j=>j.pads.forEach(p=>{const n=p.net;if(!n||seen.has(n)||isGnd(n))return;seen.add(n);
+    if(railV(n)!=null||/^(VBAT|VIN|VIN_RAW|KL30|KL15|BAT)/i.test(n)){if(railV(n)!=null&&railV(n)<=12)sup.push({n,j});return;}
+    if((+curr[n]||0)>=1)return;sig.push({n,j});}));
+  sig.forEach(({n,j})=>{const prot=comps.some(c=>isTvs(c)&&on(c,n));
+    // path to the MCU: directly, or through one series resistor (+ an optional clamp diode on the MCU side)
+    let rs=null,via=null,clamp=false,ana=false;if(mcu&&on(mcu,n))rs=0;
+    else comps.filter(c=>/^R\d/i.test(c.ref)&&c.pads.length===2&&on(c,n)).forEach(r=>{const o=r.pads.find(p=>p.net!==n);if(!o||!o.net)return;const n2=o.net;
+      const reach=mcu&&on(mcu,n2)||comps.some(c=>/^R\d/i.test(c.ref)&&c.ref!==r.ref&&c.pads.length===2&&on(c,n2)&&mcu&&on(mcu,(c.pads.find(q=>q.net!==n2)||{}).net));
+      if(!reach)return;const v=rOhm(r.val);if(v==null)return;if(rs==null||v>rs){rs=v;via=r;clamp=comps.some(c=>/^D/i.test(c.ref)&&/클램프|BAT54|clamp/i.test((c.desc||'')+c.val)&&on(c,n2));ana=/아날로그|ADC|AIN/i.test((r.desc||'')+n);}});
+    if(!prot)out.push({sev:'warn',code:'esd_missing',net:n,conn:j.ref,msg:`${j.ref} 커넥터 신호 ${n}에 ESD/TVS 다이오드가 없음`,fix:`커넥터 핀 가까이 ${ESD_PART.mpn}(2채널 · VRWM 24 V) — 배터리 단락에도 견디는 24 V급`,add:true});
+    if(rs!=null&&!clamp){const lim=ana?iAna:iDig;const vio=3.3;const i=(vbat-vio-0.3)/Math.max(rs,1e-3);const rmin=(vbat-vio-0.3)/lim;
+      if(i>lim)out.push({sev:rs===0?'err':'warn',code:'stb_inject',net:n,conn:j.ref,msg:`${n}가 배터리(${vbat} V)에 단락되면 MCU 핀 주입 전류 ${rs===0?'제한 없음':(i*1000).toFixed(0)+' mA'} (직렬 ${rs===0?'없음':via.ref+' '+via.val}) — 허용 ±${lim*1000} mA (${ana?'아날로그':'디지털'} 핀, TC364 데이터시트)`,
+        fix:`직렬 저항을 ${(rmin/1000).toFixed(1)} kΩ 이상으로 하거나 MCU 쪽에 클램프 다이오드(예: BAT54S → 3.3 V · GND) — 클램프 전류가 3.3 V 레일로 흘러들므로 레일 최소 부하가 그보다 커야`});}});
+  sup.forEach(({n,j})=>out.push({sev:'info',code:'supply_out',net:n,conn:j.ref,msg:`${j.ref}로 나가는 센서 공급 ${n}: 외부 단락(GND · 배터리) 시 레귤레이터 보호 확인`,fix:'전류 제한 · 역류 차단 다이오드 · 배터리 단락 시 레귤레이터 출력 허용 전압(데이터시트) 확인'}));
+  const n=k=>out.filter(f=>f.sev===k).length;return{findings:out,err:n('err'),warn:n('warn'),signals:sig.map(x=>x.n),vbat};}
+const rOhm=v=>{const m=String(v||'').replace(/Ω|ohm/i,'').trim().match(/^(\d+(?:\.\d+)?)\s*([kKmM]?)/);if(!m)return null;return +m[1]*({k:1e3,K:1e3,M:1e6,m:1e-3,'':1}[m[2]]);};
+function protText(R){if(!R.findings.length)return`외부 커넥터 신호 보호: 문제 없음 (${R.signals.length}개 신호)`;return`외부 커넥터 신호 보호 (배터리 단락 ${R.vbat} V 기준): `+R.findings.map(f=>`\n${f.sev==='err'?'✕':f.sev==='warn'?'△':'·'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('');}
 function text(R){if(!R.findings.length)return`블록 간 인터페이스: 문제 없음 (I/O 전압 ${R.io.map(x=>`${x.ref} ${x.io} V`).join(' · ')})`;
   return`블록 간 인터페이스: 오류 ${R.err} · 확인 ${R.warn}\n`+R.findings.map(f=>`${f.sev==='err'?'✕':'△'} [${f.net}] ${f.msg}\n   → ${f.fix}`).join('\n');}
-return{run,text,SPEC,SAFE};
+return{run,text,SPEC,SAFE,connProt,protText,ESD_PART};
 })();
 if(typeof module!=='undefined')module.exports=IFCHECK;
