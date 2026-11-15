@@ -52,6 +52,7 @@ const RULES=[
   {key:'sch_reset',scope:'sch',cat:'회로',w:6,title:'리셋 핀 풀업',desc:'NRST/PORST/RESET 넷에 전원으로 가는 풀업 저항',ref:"MCU Datasheet 'Reset Circuit'"},
   {key:'sch_iface',scope:'sch',cat:'회로',w:8,title:'블록 간 인터페이스: 로직 레벨 · 리셋 중 기본 상태 · 오픈 드레인 풀업 · 커넥터 배터리 단락',desc:'다른 I/O 전원 사이 신호의 레벨, MCU 리셋 중 게이트 · 드라이버 · CAN 대기 입력의 안전 상태용 풀 저항, 오픈 드레인 출력의 풀업, 떠 있는 입력, 외부 커넥터 신호가 배터리에 단락될 때 MCU 핀 주입 전류',ref:'부품 데이터시트 핀 기능 · 권장 동작 조건 (IFCHECK)'},
   {key:'sch_cap',scope:'sch',cat:'회로',w:7,title:'커패시터 정격 전압 디레이팅 · 과도 내압 · DC 바이어스 · 온도 범위',desc:'캡마다 걸리는 최대 전압이 정격의 50 % 이하(MLCC 2종, 1종 · 전해 80 %), 점프 스타트 · 로드덤프 과도가 정격 안, DC 바이어스 후 실효 용량, 유전체 정격 온도, 품번 크기와 풋프린트 일치',ref:'부품 품번 정격 · ISO 16750-2 (점프 스타트 · 로드덤프) · 차량용 디레이팅 관례 (CAPCHECK)'},
+  {key:'sch_pwrseq',scope:'sch',cat:'회로',w:8,title:'전원 시퀀싱 · 크랭킹: 배터리 저하 시 레일 · IC 공급 범위, 리셋 임계, 전원 핀 배치',desc:'정상 최저 배터리에서 모든 레일 조정 유지와 IC 최소 공급, 크랭킹 중 기능별 상태, 감시 IC 임계가 MCU 최소 공급 위인지, 배터리로 먼저 켜지는 파워 스테이지의 리셋 중 안전 상태, 전원 · GND 핀 배치가 데이터시트와 같은지',ref:'레귤레이터 드롭아웃 · IC 권장 동작 조건 (데이터시트 기록) · 차량 시동 프로파일 (PWRSEQ)'},
   {key:'sch_erc',scope:'sch',cat:'회로',w:8,title:'ERC 0건 (미연결 핀은 NC 표시)',desc:'떠 있는 배선, 연결 안 된 핀, 핀 없는 라벨이 없는지',ref:'KiCad ERC'}];
 const PRESETS={
   default:{label:'표준 밸런스',w:{rt_priority:8,rt_return_via:8,rt_edge_keepout:6,pw_agnd_star:8,th_via_array:7,ds_footprint:10,ds_thermal_pad:9,rt_return_path:10,pl_sw_loop:10,ds_kelvin:9,pl_decoupling:9,pw_solid_gnd:9,pl_esd_tvs:8,rt_diff_pair:8,pw_via_amp:8,rt_3w:7,rt_45deg:6,sch_decap:9,sch_bulk:7,sch_xtal:8,sch_tvs:8,sch_can_term:7,sch_reset:6,sch_erc:8}},
@@ -59,7 +60,7 @@ const PRESETS={
   ecu:{label:'전장 ECU (CISPR 25/EMC/신뢰성)',w:{rt_priority:9,rt_return_via:9,rt_edge_keepout:8,pw_agnd_star:9,th_via_array:8,ds_footprint:10,ds_thermal_pad:9,rt_return_path:10,pl_sw_loop:10,ds_kelvin:9,pl_decoupling:10,pw_solid_gnd:10,pl_esd_tvs:10,rt_diff_pair:9,pw_via_amp:8,rt_3w:9,rt_45deg:7,sch_decap:10,sch_bulk:8,sch_xtal:8,sch_tvs:10,sch_can_term:9,sch_reset:7,sch_erc:9}},
   highspeed:{label:'고속 신호 (SI/임피던스)',w:{rt_priority:9,rt_return_via:10,rt_edge_keepout:8,pw_agnd_star:7,th_via_array:6,ds_footprint:10,ds_thermal_pad:7,rt_return_path:10,pl_sw_loop:8,ds_kelvin:6,pl_decoupling:9,pw_solid_gnd:10,pl_esd_tvs:8,rt_diff_pair:10,pw_via_amp:7,rt_3w:10,rt_45deg:8,sch_decap:10,sch_bulk:7,sch_xtal:9,sch_tvs:8,sch_can_term:8,sch_reset:6,sch_erc:8}}};
 // every preset carries every rule (rules added later take their default weight); domain presets emphasise their rules
-Object.values(PRESETS).forEach(P=>RULES.forEach(r=>{if(P.w[r.key]==null)P.w[r.key]=r.w;}));PRESETS.motor.w.sch_iface=9;PRESETS.motor.w.sch_cap=8;PRESETS.ecu.w.sch_cap=9;
+Object.values(PRESETS).forEach(P=>RULES.forEach(r=>{if(P.w[r.key]==null)P.w[r.key]=r.w;}));PRESETS.motor.w.sch_iface=9;PRESETS.motor.w.sch_cap=8;PRESETS.ecu.w.sch_cap=9;PRESETS.motor.w.sch_pwrseq=9;PRESETS.ecu.w.sch_pwrseq=10;
 Object.assign(PRESETS.motor.w,{th_spread:9,pw_via_web:8,pl_zoning:9,rt_fb_route:8});
 Object.assign(PRESETS.ecu.w,{pl_zoning:9,pl_xtal:9,cu_stitch:8,dfa_edge_mlcc:8,su_stackup:9,cu_dead:8});
 Object.assign(PRESETS.highspeed.w,{rt_stub:9,rt_orthogonal:9,su_stackup:10,pw_via_web:9,cu_stitch:8});
@@ -329,6 +330,11 @@ function checkSch(B,key,X){
       if(!R.err&&!R.warn)return{status:'pass',score:1,ev:`문제 없음 — ${head}`};const rated=Math.max(1,R.rows.length-na),wc=R.rows.filter(r=>r.status==='warn').length;const sc=Math.max(0,1-R.err*0.25-wc/rated);const bad=R.findings.filter(f=>f.sev!=='info');
       return{status:R.err?'fail':'partial',score:sc,ev:`오류 ${R.err} · 확인 ${R.warn} (${head}): `+bad.slice(0,6).map(f=>`${f.sev==='err'?'✕':'△'} ${f.ref} ${({over:'과도 > 정격',derate:'디레이팅 초과',margin:'과도 여유 부족',temp:'정격 온도 부족',pkg:'품번 ≠ 풋프린트',value:'품번 용량 ≠ 값',dcbias:'DC 바이어스 감소 큼'})[f.code]||f.code}`).join(' · ')+(bad.length>6?' …':''),
         fix:bad.slice(0,3).map(f=>f.fix).join(' / '),manualNote:'DC 바이어스는 근사(±30 %) — 제조사 곡선으로 확인'};}
+    case'sch_pwrseq':{const S=B.pwrseq;if(!S)return{status:'na',ev:'회로 생성 정보 없음 (신규 설계 보드에서만 판정)'};const bad=S.findings.filter(f=>f.sev!=='info');
+      const head=`정상 최저 ${S.vop[0]} V · 크랭킹 ${S.vcrank} V — `+S.rails.map(r=>`${r.rail} 유지 ${r.vbMin==null?'—':r.vbMin+' V'}`).join(' · ');
+      if(!bad.length)return{status:'pass',score:1,ev:`문제 없음 (${head})`};const sc=Math.max(0,1-S.err*0.25-S.warn*0.08);
+      return{status:S.err?'fail':'partial',score:sc,ev:`오류 ${S.err} · 확인 ${S.warn} (${head}): `+bad.slice(0,5).map(f=>`${f.sev==='err'?'✕':'△'} ${({pinmap:'핀 배치 ≠ 데이터시트',low_supply:'정상 범위 공급 부족',rail_low:'레일 조정 유지 불가',sup_window:'리셋 임계 < MCU 최소',sup_high:'리셋 임계 높음',seq_unsafe:'리셋 중 파워 스테이지 비안전'})[f.code]||f.code} ${f.ref||f.net||''}`).join(' · '),
+        fix:bad.slice(0,3).map(f=>f.fix).join(' / '),manualNote:'크랭킹 최저 전압은 차량 시동 프로파일(요구사항)로 확인'};}
     case'sch_decap':{const isReg=c=>c.pins.some(p=>/^(VIN|VI)$/i.test(p.name))&&c.pins.some(p=>/^(VOUT|VO)$/i.test(p.name));const ics=parts.filter(c=>/^U|^IC/i.test(c.ref)&&c.pins.length>=4&&!isConn(c)&&!isReg(c));const rows=[];
       ics.forEach(c=>{const rails=[...new Set(c.pins.map(p=>p.net).filter(n=>n&&!isGnd(n)&&cls(B,n)==='전원'))];rails.forEach(r=>rows.push({ref:c.ref,rail:r,ok:capsOn(r,1.01e-6).length>0}));});
       if(!rows.length)return{status:'na',ev:'전원 레일을 쓰는 IC 없음'};const bad=rows.filter(r=>!r.ok);const sc=1-bad.length/rows.length;

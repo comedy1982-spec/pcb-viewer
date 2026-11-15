@@ -718,9 +718,11 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
       const copt={vin,vbat:(plan.vop&&plan.vop[1])||(vin>16?32:16),loaddump:!!(pw&&String(pw.params.tvs)==='loaddump'),bat,rails:Object.fromEntries(Object.entries(rails).map(([k,x])=>[k,x.v])),Tmax:plan.tmax!=null?+plan.tmax:undefined};
       let changed=[];if(plan.ifaceFix===true)changed=CAPCHECK.fix(parts,copt,(t,v,fp,pins,o)=>ctx.part(t,v,fp,pins,o));
       caps=CAPCHECK.run({parts},copt);caps.fixed=changed;caps.opt=copt;}catch(e){caps=null;}} // reported on its own (r.caps), not in warn
+  // power sequencing and cranking: rails and IC supplies as the battery sags, supervisor window, reset-safe power stage
+  let pwrseq=null;if(typeof PWRSEQ!=='undefined'){try{pwrseq=PWRSEQ.run({parts,rails,curr},plan,{iface});}catch(e){pwrseq=null;}}
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
-  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,caps,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
+  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,caps,pwrseq,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
 }
 /* ---------- package shrink (plan.shrink: 0 off · 1 표준 · 2 최대) ----------
    Swaps a part for a smaller package only where the replacement's pinout is known (KiCad 10 symbol / datasheet) and the
@@ -796,7 +798,7 @@ const GROUP_OF={pwr_in:'input',usb_in:'input',ldo:'power',buck:'power',superviso
   gdrv3:'stage',hbridge:'stage',bldc:'stage',dcmotor:'stage',hs_switch:'stage',vmon:'sense',ntc:'sense'};
 function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks.find(x=>x.id===c.block);let k=b?GROUP_OF[b.type]:null;
     if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';g[c.ref]=k||null;});return g;}
-function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));
+function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));if(r.pwrseq)B.pwrseq=r.pwrseq;
   // dissipation the generator worked out (FET conduction · regulator loss · shunt I²R · IC typical) travels with the part — the thermal analysis starts from it
   {const PM=Object.fromEntries(r.parts.filter(c=>c.P>0).map(c=>[c.ref,c]));B.comps.forEach(c=>{const q=PM[c.ref];if(q){c.P=q.P;if(q.lk)c.lk=q.lk;}});
    // the current those losses were worked out at (motor blocks' phase current) — a current profile scales them from here

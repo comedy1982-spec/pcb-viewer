@@ -54,6 +54,7 @@ ${scriptW(stripExport(read('src/core/pcbedit.js')))}
 ${scriptW(stripExport(read('src/core/autoplace.js')))}
 ${script(stripExport(read('src/core/ifcheck.js')))}
 ${script(stripExport(read('src/core/capcheck.js')))}
+${script(stripExport(read('src/core/pwrseq.js')))}
 ${script(stripExport(read('src/core/guide.js')))}
 ${script(stripExport(read('src/core/newproj.js')))}
 ${scriptW(stripExport(read('src/core/boardsnap.js')))}
