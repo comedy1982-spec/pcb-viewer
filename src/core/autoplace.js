@@ -457,8 +457,17 @@ function place(B,opts){
     f.p.x=(c.bb[0]+c.bb[2])/2+ox;f.p.y=(c.bb[1]+c.bb[3])/2+oy;
     // keep it on the board
     f.p.x=Math.max(ob[0]+1,Math.min(ob[2]-1,f.p.x));f.p.y=Math.max(ob[1]+1,Math.min(ob[3]-1,f.p.y));});
+  // two-pin parts end-for-end: where turning a part 180° brings both pads nearer their nets' other pads, its two connections
+  // cross (bootstrap cap / gate resistor against the driver's pin order) — turn it. Two passes, since a turn changes its neighbours' sums.
+  let untangled=0;if(opts.untangle===true){PCBEDIT.rebuildNets(B);const pl=new Set((PCB.stackOf?PCB.stackOf(B):[]).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));const isPl=n=>!n||pl.has(n)||/^(GND|AGND|PGND|DGND)$/i.test(n);
+    const near=(c,net,x,y)=>{if(isPl(net))return 0;let m=Infinity;const P=(B.nets[net]&&B.nets[net].pads)||[];for(const t of P){if(c.pads.includes(t))continue;const d=Math.hypot(t.x-x,t.y-y);if(d<m)m=d;}return isFinite(m)?m:0;};
+    for(let pass=0;pass<2;pass++){let k=0;movable.forEach(o=>{const c=o.c;if(c.pads.length!==2||!/^(R|C|D|L|FB)\d/i.test(c.ref))return;const[p,q]=c.pads;if(p.net===q.net||isPl(p.net)||isPl(q.net))return; // a pad on a plane net reaches it anywhere: no crossing to undo
+        const cur=near(c,p.net,p.x,p.y)+near(c,q.net,q.x,q.y),sw=near(c,p.net,q.x,q.y)+near(c,q.net,p.x,p.y);
+        if(cur-sw>(opts.untangleMin!=null?opts.untangleMin:0.15)){const cx=(p.x+q.x)/2,cy=(p.y+q.y)/2;PCBEDIT.rotate(B,c,180);const nx=(c.pads[0].x+c.pads[1].x)/2,ny=(c.pads[0].y+c.pads[1].y)/2;if(Math.hypot(nx-cx,ny-cy)>1e-6)PCBEDIT.move(B,c,cx-nx,cy-ny);k++;}});
+      untangled+=k;if(!k)break;PCBEDIT.rebuildNets(B);}
+    }
   PCBEDIT.rebuildNets(B);
-  return{moved:n,strategy:sk,label:STRATS[sk].label,iters,accepted:acc,cost:finalCost,fails,bottom:movable.filter((_,i)=>V[i]>=4).map(o=>o.ref),info,macro};
+  return{moved:n,untangled,strategy:sk,label:STRATS[sk].label,iters,accepted:acc,cost:finalCost,fails,bottom:movable.filter((_,i)=>V[i]>=4).map(o=>o.ref),info,macro};
 }
 
 /* ---------- metrics of the current placement ---------- */
