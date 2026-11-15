@@ -23,6 +23,7 @@ if (!fs.existsSync(html) || fs.statSync(html).mtimeMs < fs.statSync(path.join(ro
   fs.writeFileSync(html, dist.replace('function setBoard(B){', 'window.__setBoard=setBoard;window.__cli=(l)=>cliExec(l);window.__BD=()=>BD;window.__CLI=()=>CLI;\nfunction setBoard(B){'));
 (async () => {
   const b = await chromium.launch();const p = await b.newPage({ viewport: { width: 1500, height: 950 } });const errs = [];p.on('pageerror', e => errs.push(e.message));
+  if (arg('init')) await p.addInitScript({ path: arg('init') }); // e.g. a stand-in for window.claude to exercise the Claude paths
   await p.goto('file://' + html);await p.waitForTimeout(1000);await p.click('#homeOpen').catch(() => {});await p.waitForTimeout(600);
   await p.evaluate(o => {
     const prof = PRODUCTS.detect(o.profile);const ans = { cur: o.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[o.fet].label;
