@@ -663,6 +663,22 @@ function bridgeRats(B,o){o=Object.assign({clear:0.15,width:0.25,maxLen:4},o||{})
           B.layers[keys[L]+'.cu'].push(t);added++;for(let i=1;i<pts.length;i++)gadd({k:'cap',a:pts[i-1],b:pts[i],r:w/2,L:[L],net:r.net});return;}}});
     PCBEDIT.rebuildNets(B);}
   return{added};}
+/* vias on the rim of a power terminal's pads, for a net that has an inner plane (GND, the supply plane): the via centre lies inside
+   the pad or up to (via radius − overlap) outside its edge, so the via barrel overlaps the pad and needs no other copper — used
+   where the pad is too small for a via grid and no fill of the net surrounds it. Placed only where every layer is clear of other
+   nets (the router's via occupancy) and other vias keep their spacing. o: via, overlap (0.15), gap (via-to-via edge 0.15), max */
+function rimVias(B,net,pads,o){o=Object.assign({via:{d:0.6,drill:0.3},overlap:0.15,gap:0.15,grid:0.05,max:6},o||{});
+  const P=prepare(B,{grid:o.grid,clear:0.15,width:{signal:0.1,power:0.1},via:o.via});const G=P.G,g=G.g,k=P.idOf(net);let n=0;const e=o.via.d/2-o.overlap;
+  const cand=[];pads.forEach(p=>{const a=(p.ang||0)*D2R,ca=Math.cos(a),sa=Math.sin(a);const hx=p.w/2+e,hy=p.h/2+e;const st=Math.max(g,0.1);
+    for(let u=-hx;u<=hx+1e-9;u+=st)for(let v=-hy;v<=hy+1e-9;v+=st){const ex=Math.max(0,Math.abs(u)-p.w/2),ey=Math.max(0,Math.abs(v)-p.h/2);if(Math.hypot(ex,ey)>e+1e-9)continue;
+      cand.push({x:p.x+u*ca-v*sa,y:p.y+u*sa+v*ca,out:Math.hypot(ex,ey),c:Math.hypot(u,v)});}});
+  // inside the pad first (nearest the centre), then the rim
+  cand.sort((a,b)=>(a.out>0)-(b.out>0)||a.out-b.out||a.c-b.c);
+  for(const q of cand){if(n>=o.max)break;const ci=Math.round((q.x-G.ox)/g),cj=Math.round((q.y-G.oy)/g);if(ci<0||cj<0||ci>=G.nx||cj>=G.ny)continue;const idx=cj*G.nx+ci;
+    if(G.occV.some(arr=>arr[idx]!==0&&arr[idx]!==k))continue;const x=+(G.ox+ci*g).toFixed(3),y=+(G.oy+cj*g).toFixed(3);
+    if(B.vias.some(v=>Math.hypot(v.x-x,v.y-y)<(v.d||0.45)/2+o.via.d/2+o.gap))continue;
+    B.vias.push({x,y,d:o.via.d,drill:o.via.drill,net,stitch:true,inpad:q.out===0,rim:q.out>0});n++;}
+  if(n&&typeof PCBEDIT!=='undefined')try{PCBEDIT.rebuildNets(B);}catch(err){}releaseGrid(P.G);return n;}
 function padVias(B,nets,o){o=Object.assign({via:{d:0.45,drill:0.2},pitch:1.0,minArea:2.5,grid:0.05},o||{});const keys=PC.cuKeys(B),NL=keys.length;
   const P=prepare(B,{grid:o.grid,clear:0.15,width:{signal:0.1,power:0.1},via:o.via});const G=P.G;let n=0;const want=new Set(nets);
   B.comps.forEach(c=>c.pads.forEach(p=>{if(!want.has(p.net)||p.drill||p.w*p.h<o.minArea)return;const k=P.idOf(p.net);const sh=padShape(p,NL);const a=(p.ang||0)*D2R,ca=Math.cos(a),sa=Math.sin(a);
@@ -697,6 +713,6 @@ function workerMain(){self.onmessage=e=>{const m=e.data;wasmInit().then(()=>{try
       self.postMessage({id:m.id,ok:true,changed,tracks,vias,res:r.value,ms:Date.now()-t0});}
     else self.postMessage({id:m.id,ok:false,err:'unknown cmd'});}
   catch(err){self.postMessage({id:m.id,ok:false,err:String(err&&err.message||err)});}});};}
-return{pack,unpack,workerMain,prepareFast,wasmInit,WASM,releaseGrid,bridgeRats,pruneIslands,padVias,stitchLayers,powerFill,bottleneck,bottleneckPrep,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+return{pack,unpack,workerMain,prepareFast,wasmInit,WASM,releaseGrid,bridgeRats,pruneIslands,rimVias,padVias,stitchLayers,powerFill,bottleneck,bottleneckPrep,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

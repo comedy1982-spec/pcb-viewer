@@ -247,18 +247,25 @@ function powerFill(B,WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.p
   AUTOROUTE.releaseGrid(BP1.G);  let VC=ml&&CURRENT.viaCheck?CURRENT.viaCheck(B,{nets:hi,I:Ic,pk:Pk,share}):[];
   // terminals whose vias run too hot: add 0.6 / 0.3 mm vias in the net's copper around them (to the bottom copper, or down to the
   // net's plane), widening the search once; then check again
-  let farm=0;if(ml&&VC.some(v=>!v.ok)&&AUTOROUTE.stitchLayers){const pv={d:0.6,drill:0.3};
+  let farm=0,rim=0;if(ml&&VC.some(v=>!v.ok)&&AUTOROUTE.stitchLayers){const pv={d:0.6,drill:0.3};
     for(const R of [2.5,4]){const bad=VC.filter(v=>!v.ok);if(!bad.length)break;
       bad.forEach(v=>{const c=B.byRef?B.byRef[v.ref]:B.comps.find(q=>q.ref===v.ref);if(!c)return;const ps=c.pads.filter(p=>p.net===v.net);if(!ps.length)return;
         const rects=ps.map(p=>{const h=Math.max(p.w,p.h)/2+R;return[p.x-h,p.y-h,p.x+h,p.y+h];});const plane=PW.planes.has(v.net)||WW[v.net].cls==='gnd';
         try{farm+=AUTOROUTE.stitchLayers(B,[v.net],{via:pv,step:0.9,la:0,lb:plane?0:NL-1,rects});}catch(e){}});
-      VC=CURRENT.viaCheck(B,{nets:hi,I:Ic,pk:Pk,share});}}const PC=ml&&CURRENT.planeCheck?CURRENT.planeCheck(B,{I:Ic,pk:Pk}):[];
-  B.powerReport={oz,dT,nets:rep,fill:area,vias:fs.reduce((a,f)=>a+f.vias,0)+tb+pv-pr.vias,padVias:pv,pruned:pr,planes:[...PW.planes],viaChk:VC,planeChk:PC,viaFarm:farm,at:Date.now()};
+      VC=CURRENT.viaCheck(B,{nets:hi,I:Ic,pk:Pk,share});}
+    // still too hot on a net with an inner plane: vias on the rim of the terminal's own pads (no surrounding fill needed), a few at
+    // a time until the check passes
+    if(AUTOROUTE.rimVias)for(let pass=0;pass<4;pass++){const bad=VC.filter(v=>!v.ok&&(PW.planes.has(v.net)||WW[v.net].cls==='gnd'));if(!bad.length)break;let add=0;
+      bad.forEach(v=>{const c=B.byRef?B.byRef[v.ref]:B.comps.find(q=>q.ref===v.ref);if(!c)return;const ps=c.pads.filter(p=>p.net===v.net&&!p.drill);if(!ps.length)return;
+        try{const k=AUTOROUTE.rimVias(B,v.net,ps,{via:pv,max:3});add+=k;rim+=k;}catch(e){}});
+      if(!add)break;VC=CURRENT.viaCheck(B,{nets:hi,I:Ic,pk:Pk,share});}
+    farm+=rim;}const PC=ml&&CURRENT.planeCheck?CURRENT.planeCheck(B,{I:Ic,pk:Pk}):[];
+  B.powerReport={oz,dT,nets:rep,fill:area,vias:fs.reduce((a,f)=>a+f.vias,0)+tb+pv-pr.vias,padVias:pv,pruned:pr,planes:[...PW.planes],viaChk:VC,planeChk:PC,viaFarm:farm,viaRim:rim,at:Date.now()};
   const bad=rep.filter(x=>!x.ok);const vworst={};VC.forEach(v=>{const w=vworst[v.net];if(!w||(!v.ok&&w.ok)||(v.ok===w.ok&&(v.rise+v.riseP)>(w.rise+w.riseP)))vworst[v.net]=v;});const vbad=VC.filter(v=>!v.ok);
   return`전력 동박(${oz} oz · 상시 ΔT ${dT} °C${Object.keys(B.netPeak||{}).length?` · 피크 ΔT ${B.dTpk||40} °C`:''} · ${ml?'위·아래층':'위층'}${PW.planes.size?' · 평면 '+[...PW.planes].join(', '):''}): ${Object.entries(area).map(([n,a])=>n+' '+a.toFixed(0)+' mm²').join(' · ')} · 스티칭 비아 ${B.powerReport.vias}개 (패드 안 ${pv})${pr.fills?` · 고립 동박 ${pr.fills}조각 제거`:''}${refan?` · 아래층 패드 평면 비아 ${refan}개`:''}\n`+
     rep.map(x=>`  ${x.ok?'✓':'✕'} ${x.net} 상시 ${x.I} A${x.pk?` · 피크 ${x.pk.I} A ${x.pk.t} s`:''} — 유효 폭 ${typeof x.width==='string'?x.width:x.width+' mm'+(x.layers&&x.layers.length>1?` (위 ${x.layers[0]} + 아래 ${x.layers[1]})`:'')}${x.open?' (위층 단자 사이 끊김)':''} / 필요 ${x.need} mm${x.by==='peak'?' (피크 기준)':''}${x.rise!=null?` → 상시 +${Math.min(999,x.rise)} °C`:''}${x.pk&&x.pk.rise!=null?` · 피크 끝 +${Math.min(999,+(x.rise+x.pk.rise).toFixed(1))} °C (한도 ${B.dTpk||40})`:''}`).join('\n')+
     (PC.length?'\n  내층 평면 (1 oz · 단면 ≈ 보드 짧은 변 ½ × 층 수): '+PC.map(x=>`${x.ok?'✓':'✕'} ${x.net} ${x.layers}층 ${x.w} mm — 상시 +${x.rise} °C${x.pk?` · 피크 끝 +${+(x.rise+x.riseP).toFixed(1)} °C`:''}`).join(' · '):'')+
-    (Object.keys(vworst).length?`\n  단자 비아 (층을 바꾸는 몫 · 가장 나쁜 단자, 도금 25 µm${farm?` · 부족한 단자에 0.6/0.3 mm 비아 ${farm}개 추가`:''}): `+Object.values(vworst).map(v=>v.lead?`✓ ${v.net} ${v.ref} 관통 리드`:v.n?`${v.ok?'✓':'✕'} ${v.net} ${v.ref} ${v.n}개${v.th?`(관통 ${v.th})`:''} ⌀${v.drill} · 몫 ${Math.round(v.share*100)}% — ${v.Iv} A/개 +${v.rise} °C${v.Ivpk!=null?` · 피크 ${v.Ivpk} A/개 끝 +${+(v.rise+v.riseP).toFixed(1)} °C`:''}`:`✕ ${v.net} ${v.ref} 비아 없음`).join(' · '):'')+
+    (Object.keys(vworst).length?`\n  단자 비아 (층을 바꾸는 몫 · 가장 나쁜 단자, 도금 25 µm${farm?` · 부족한 단자에 0.6/0.3 mm 비아 ${farm}개 추가${rim?` (그중 ${rim}개는 패드 테두리 · 안쪽)`:''}`:''}): `+Object.values(vworst).map(v=>v.lead?`✓ ${v.net} ${v.ref} 관통 리드`:v.n?`${v.ok?'✓':'✕'} ${v.net} ${v.ref} ${v.n}개${v.th?`(관통 ${v.th})`:''} ⌀${v.drill} · 몫 ${Math.round(v.share*100)}% — ${v.Iv} A/개 +${v.rise} °C${v.Ivpk!=null?` · 피크 ${v.Ivpk} A/개 끝 +${+(v.rise+v.riseP).toFixed(1)} °C`:''}`:`✕ ${v.net} ${v.ref} 비아 없음`).join(' · '):'')+
     (bad.length?`\n→ 전류 경로 부족 ${bad.length}개: 보드를 키우거나(board size) 층을 늘리세요(board layers)`:'')+(vbad.length?`\n→ 비아 부족 ${vbad.length}곳: ${vbad.slice(0,6).map(v=>v.net+' '+v.ref).join(', ')} — 패드 옆 비아를 늘리세요`:'');}
 async function glossJob(B,a,ui,quiet){a=a||{};if(B.pcbPending)throw new Error('배치·배선 뒤에 실행하세요.');
   const ml=(B.copperLayers||2)>2;const via=ml?{d:0.45,drill:0.2}:{d:0.6,drill:0.3};const clr=a.clear?+a.clear:ml?0.15:0.2;const sig=a.signal?+a.signal:0.2,pwr=a.power?+a.power:0.3;

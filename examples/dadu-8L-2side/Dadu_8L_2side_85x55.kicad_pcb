@@ -10440,4 +10440,5 @@
  (via (at 93.2 71.8) (size 0.45) (drill 0.2) (layers "F.Cu" "B.Cu") (net 66) (tstamp "429ca142-0000-4000-8000-000000009186"))
  (via (at 74 70.6) (size 0.45) (drill 0.2) (layers "F.Cu" "B.Cu") (net 66) (tstamp "e0d41af3-0000-4000-8000-000000009187"))
  (via (at 78.8 70.6) (size 0.45) (drill 0.2) (layers "F.Cu" "B.Cu") (net 66) (tstamp "7f0b94a4-0000-4000-8000-000000009188"))
+ (via (at 81.55 56.85) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 21) (tstamp "1d430e55-0000-4000-8000-000000009189"))
 )

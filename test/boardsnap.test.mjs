@@ -57,3 +57,8 @@ test('every saved example carries the reset fix: the reset IC output and the MCU
   const B = fresh(L.SNAP_DADU8.meta);L.BOARDSNAP.apply(B, L.SNAP_DADU8);const pads = B.nets.PORST.pads.map(p => B.comps.find(c => c.pads.includes(p)).val);
   assert.ok(pads.some(v => /TPS3823/.test(v)) && pads.some(v => /TC364/.test(v)), pads.join(' '));assert.equal(L.PCBEDIT.ratsnest(B, ['PORST']).length, 0);
 });
+
+test('pad-rim vias: the shunt ground returns of the Dadu 8-layer example carry their current (every power terminal rated), DRC clean', () => {
+  const L = load();const S = L.SNAP_DADU8;const B = fresh(S.meta);L.BOARDSNAP.apply(B, S);const bad = (B.powerReport.viaChk || []).filter(v => !v.ok);
+  assert.equal(bad.length, 0, bad.map(v => v.net + ' ' + v.ref).join(', '));assert.ok(B.powerReport.viaRim > 0);assert.equal(L.PCBEDIT.drc(B).length, 0);
+});
