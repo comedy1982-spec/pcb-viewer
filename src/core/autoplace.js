@@ -294,7 +294,7 @@ function place(B,opts){
     if(pins.length+fx.length<2||!pins.length)return;
     let w=cls(nm)==='전원'?st.pwr*(pins.length+fx.length>10?0.5:1):1;
     // high-current nets (motor supply, phases, shunt nodes): keep the power loop short — pulls FETs, shunts, bulk caps and terminals together
-    const Ihi=B.netCurrent&&+B.netCurrent[nm]||0;if(Ihi>=2)w=Math.max(w,1.5+Math.min(Ihi,60)/20);if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
+    const Ihi=Math.max(B.netCurrent&&+B.netCurrent[nm]||0,B.netCurrentFull&&+B.netCurrentFull[nm]||0);if(Ihi>=2)w=Math.max(w,1.5+Math.min(Ihi,60)/20);if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
     // a fixed single-chip gate driver's private pin nets (bootstrap cap, RC filter, VREG / pump cap, pull-ups): the one passive on
     // the net sits right at the pin — otherwise its other, high-current end (phase) drags it to the FETs, 25 mm from the driver
     // (the 0 Ω sense / LSS net ties too: the long run from the shunt to the tie carries no current, so the Kelvin point stays at the

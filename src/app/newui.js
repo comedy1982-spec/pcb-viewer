@@ -33,7 +33,7 @@ const NP_HELP=[
   ['set pwr_in ign 1 · uvlo auto|6 · tvs loaddump','입력단 옵션: IGN(KL15) 감지 → MCU 웨이크업 · 저전압 차단(벅 EN 분압) · 로드덤프 TVS (말로: "IGN 추가", "저전압 차단 6V", "로드덤프 보호")'],
   ['add <블록> [--파라미터 값]','블록 추가 (예: add led --n 3 --color 빨강, add ldo --vout 5, add pwr_in --vin 24)'],
   ['set <블록ID> <파라미터> <값> · remove <블록ID>','블록 수정·삭제 (ID는 plan에 표시)'],['mcu <stm32|tc364>','MCU 바꾸기'],
-  ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
+  ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · board thermal [--tamb 85] [--std 2221|2152] · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 주위 온도 · 전류 폭 기준(board thermal) · 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
   ['diagram','시스템 다이어그램을 글로 (블록 · 전원 레일 · MCU 신호 · 외부 연결)'],
   ['cands [블록] [순위|MPN]','블록의 주요 소자 후보를 요구사항 기준 순위로 (사양·ASIL·차량용 등급·단가·핀 데이터) · 순위나 MPN을 주면 지정. 오른쪽 선택 패널의 표와 같음'],
   ['check [--fix]','회로 생성 전 점검: 구현(impl) 없는 블록 · 전원 레일 미연결 · MCU 미연결 · 고립 블록 · 고른 부품의 핀 확인(Claude 추정 핀 · 기록만 되고 회로에 안 들어간 부품 · 데이터시트 요약 초안)을 고치는 명령과 함께 (--fix: 이름으로 추측한 구현을 자동 지정). [다음: 회로 생성] 때 자동 실행'],
@@ -157,6 +157,8 @@ async function npRun(line,by){
       const live=()=>BD&&!BD.pcbPending&&BD.newPlan?'\n지금 보드는 이미 PCB가 배치돼 있습니다. 3단계 배치·배선 CLI에서 같은 명령(board layers / board minimize --route)을 실행하면 바로 바뀝니다.':(BD&&BD.pcbPending?(BD.pcbPlan=Object.assign(BD.pcbPlan||{},P.pcb,P.board?{board:{w:P.board.w,h:P.board.h}}:{}),''):'');
       if(s0==='layers'||s0==='layer'){const n=+a._[1];if(!PCB.STACKS[n])throw new Error('board layers <2|4|6|8|10>');P.pcb.layers=n;npRender();return`PCB 조건: ${n}층 (${PCB.STACKS[n].map(x=>x==='sig'?'S':x==='gnd'?'GND':'PWR').join('·')}) — 3단계 PCB 시작 때 적용`+live();}
       if(/^(min|minimize|minimise|최소|최소화)$/.test(s0)){P.board=null;P.pcb.min=true;npRender();return'PCB 조건: 보드 크기 최소화 — 3단계에서 부품이 들어가고 배선되는 가장 작은 크기를 찾습니다.'+live();}
+      if(/^(thermal|temp|열|온도)$/.test(s0)){if(a.tamb!=null)P.pcb.tamb=+a.tamb;if(a.tmax!=null)P.pcb.tmax=+a.tmax;if(a.tmaxpk!=null)P.pcb.tmaxpk=+a.tmaxpk;if(a.std!=null){if(!/^(2221|2152)$/.test(String(a.std)))throw new Error('board thermal --std 2221|2152');P.pcb.std=String(a.std);}if(a.plane!=null)P.pcb.plane=+a.plane;npRender();
+        const bg=P.pcb.tamb!=null&&typeof CURRENT!=='undefined'?CURRENT.budget(P.pcb.tamb,P.pcb.tmax,P.pcb.tmaxpk):null;return`PCB 조건: ${bg?`주위 ${P.pcb.tamb} °C → 허용 온도 상승 상시 ${bg.dT} °C · 피크 ${bg.dTpk} °C`:'주위 온도 미지정 (모터 보드 ΔT 20 / 40 °C)'} · 전류 폭 기준 IPC-${P.pcb.std||'2221'}${P.pcb.plane?` · 플레인 ${P.pcb.plane} mm`:''} — 회로 생성 때 적용`;}
       if(s0==='route'){P.pcb.route=!/^(off|0|false|no)$/i.test(a._[1]||'on');npRender();return`PCB 조건: 자동 배선 ${P.pcb.route?'켬':'끔'}`;}
       if(a._[0]==='auto'||!a._.length){P.board=null;P.pcb.min=false;}else{let w=+a._[0],h=+a._[1];if(!h&&/x|×/i.test(a._[0])){[w,h]=a._[0].split(/x|×/i).map(Number);}if(!(w>=20&&h>=20))throw new Error('board <가로> <세로> (mm, 20 이상) 또는 board auto');P.board={w,h};P.pcb.min=false;}npRender();return(P.board?`보드 ${P.board.w} × ${P.board.h} mm`:'보드 크기 자동')+' — 3단계 PCB 시작 때 적용';}
     case'strategy':{const k=AUTOPLACE.strategy(a._[0]);if(!k)throw new Error('balanced · thermal · noise · compact');npPush();npEnsure().strategy=k;npRender();return'배치 전략 '+k;}

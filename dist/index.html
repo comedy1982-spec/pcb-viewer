@@ -7268,7 +7268,7 @@ function place(B,opts){
     if(pins.length+fx.length<2||!pins.length)return;
     let w=cls(nm)==='전원'?st.pwr*(pins.length+fx.length>10?0.5:1):1;
     // high-current nets (motor supply, phases, shunt nodes): keep the power loop short — pulls FETs, shunts, bulk caps and terminals together
-    const Ihi=B.netCurrent&&+B.netCurrent[nm]||0;if(Ihi>=2)w=Math.max(w,1.5+Math.min(Ihi,60)/20);if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
+    const Ihi=Math.max(B.netCurrent&&+B.netCurrent[nm]||0,B.netCurrentFull&&+B.netCurrentFull[nm]||0);if(Ihi>=2)w=Math.max(w,1.5+Math.min(Ihi,60)/20);if(swSet.has(nm))w*=st.sw;if(/XTAL|OSC|XIN|XOUT|XI$|XO$|XTAL[12]/i.test(nm))w*=st.xt;
     // a fixed single-chip gate driver's private pin nets (bootstrap cap, RC filter, VREG / pump cap, pull-ups): the one passive on
     // the net sits right at the pin — otherwise its other, high-current end (phase) drags it to the FETs, 25 mm from the driver
     // (the 0 Ω sense / LSS net ties too: the long run from the shunt to the tie carries no current, so the Kelvin point stays at the
@@ -8349,7 +8349,7 @@ const LIB={
         else for(let i=0;i<n;i++)ctx.part('Q',pf||'SQD50P04-09L','TO-252',{1:'VIN_PG',2:'VIN_RAW',3:rail},{mpn:pf||'SQD50P04-09L_GE3',desc:`역전압 보호 P-MOSFET ${pf?pf+' (시스템 설계에서 고른 부품)':'(−40 V · 9 mΩ · AEC-Q101)'}${n>1?' · 병렬 '+n:''}`,pinNames:{1:'G',2:'D',3:'S'},P:+(((Im/n)**2)*0.009+0.02).toFixed(2),lk:'batt'});
         ctx.part('R','10kΩ','0603',{1:'VIN_PG',2:'GND'},{desc:'역전압 P-FET 게이트 풀다운 (정극성이면 ON)'});ctx.part('D','BZT52C12','SOD-123',{1:rail,2:'VIN_PG'},{mpn:'BZT52C12Q-7-F',desc:'게이트–소스 12 V 클램프 제너',pinNames:{1:'K',2:'A'}});
         }
-        ctx.curr('VIN_RAW',Im);ctx.curr(rail,Im);ctx.peak('VIN_RAW',Impk,tpkIn);ctx.peak(rail,Impk,tpkIn);ctx.curr('GND',Im);ctx.peak('GND',Impk,tpkIn);}
+        const Imw=mb.reduce((a,b)=>{const i=+b.params.i||0,q=peakOf(b.params,i),u=i>0?copperOf({plan:ctx.plan},b.params,i,q.Ipk,q.tpk,false):null;return a+(u?u.Iw:i);},0);ctx.curr('VIN_RAW',Imw);ctx.curr(rail,Imw);ctx.peak('VIN_RAW',Impk,tpkIn);ctx.peak(rail,Impk,tpkIn);ctx.curr('GND',Imw);ctx.peak('GND',Impk,tpkIn);}
       else{if(combo&&typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'HDR-1x3',3);inJ('HDR-1x2',{mpn:combo?'61300311121':'61300211121',desc:`${vin} V 전원 입력`,pinNames:{1:'+',2:'GND'}});
       const pf=p.pick?pfetPick(p.pick):null;
       if(pf){if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){FPGEN.ensure(PCB,'TO-252');FPGEN.ensure(PCB,'SOD-123');}
@@ -8440,9 +8440,9 @@ const LIB={
       ctx.part('J','모터·홀','HDR-1x8',J,{mpn:'61300811121',desc:'BLDC 상(W V U) + 홀(H1–H3) + 5 V',pinNames:{1:'W',2:'V',3:'U',4:'H1',5:'H2',6:'H3',7:'5V',8:'GND'}});
       if(h){ctx.use('+5V');['A','B','C'].forEach(x=>{ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:'HALL_'+x},{desc:'홀 출력 풀업 (오픈 컬렉터)'});ctx.part('C','1nF','0603',{1:'HALL_'+x,2:'GND'},{desc:'홀 입력 필터'});ctx.sig('HALL_'+x,'irq_in');});}}},
   hbridge:{label:'H-브리지 (게이트 드라이버 + 외부 N-MOSFET 4개)',desc:'하프브리지 게이트 드라이버 ×2 (IR2104S: 부트스트랩 다이오드·캡, 데드타임 내장) + N-MOSFET ×4 (DPAK, 전류 등급에 맞춰 병렬) + 게이트 저항·G-S 풀다운 + 로우사이드 공통 션트 + 전류 앰프(INA181-Q1 ×50) → ADC + VM 벌크/세라믹 + 모터 단자(5.08 mm) · 정/역회전 PWM',
-    params:{i:{def:10,desc:'모터 상시(연속) 전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'},shunt:{def:1,desc:'전류 검출 (1/0)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×4) · IAUC60N04S6N050H (하프브리지 ×2) · IPG20N04S4L-07 (듀얼 ×2)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×2) · A4911 · A4918 (Allegro 3상 중 2레그 사용 · SPI 진단 · 센스 앰프 ×2)'},load:{def:'motor',desc:'부하: motor (DC 모터) · solenoid (솔레노이드 — 정/역 극성 구동, 끌 때 역기전력은 FET 바디 다이오드로 VM 회생)'},out:{def:'auto',desc:'출력 단자 이름 (auto = 모터 · 솔레노이드는 ELD 등)'}},
-    build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||10);const{Ipk,tpk}=peakOf(p,I);const k=ctx.uniq('HB');const N=x=>k==='HB'?'HB_'+x:k+'_'+x;
-      const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,fetChoice(ctx,p,I,V,k),Ipk);const sn=+p.shunt;
+    params:{i:{def:10,desc:'모터 상시(연속) 전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},tper:{def:0,desc:'피크 반복 주기 s (0 = 단발 · 값을 주면 상시 전류 대신 RMS로 패턴 폭 계산)'},prof:{def:'',desc:'추가 전류 구간 "A@초/주기초, …" (예: 40@2/30, 60@0.1) — RMS와 구간별 피크 온도 상승에 반영'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'},shunt:{def:1,desc:'전류 검출 (1/0)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×4) · IAUC60N04S6N050H (하프브리지 ×2) · IPG20N04S4L-07 (듀얼 ×2)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×2) · A4911 · A4918 (Allegro 3상 중 2레그 사용 · SPI 진단 · 센스 앰프 ×2)'},load:{def:'motor',desc:'부하: motor (DC 모터) · solenoid (솔레노이드 — 정/역 극성 구동, 끌 때 역기전력은 FET 바디 다이오드로 VM 회생)'},out:{def:'auto',desc:'출력 단자 이름 (auto = 모터 · 솔레노이드는 ELD 등)'}},
+    build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||10);const{Ipk,tpk}=peakOf(p,I);ctx._cu=copperOf(ctx,p,I,Ipk,tpk,false);const k=ctx.uniq('HB');const N=x=>k==='HB'?'HB_'+x:k+'_'+x;
+      const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,fetChoice(ctx,p,I,V,k),Ipk);if(ctx._cu)ctx._cu.par=pwr.par||1;const sn=+p.shunt;
       let drv=allegroDrv(p.driver);pwr.tpk=tpk;if(drv&&!allegro3(ctx,drv,vm,I,pwr,N,{legs:{A:'A',B:'B'}}))drv=null;if(!drv&&/8334/.test(String(p.driver||''))&&ti8334(ctx,vm,I,pwr,N,{legs:{A:'A',B:'B'}}))drv='DRV8334';
       if(!drv&&V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
       const ret=sn?N('SNS'):'GND';
@@ -8460,9 +8460,9 @@ const LIB={
       ctx.curr(N('A'),I);ctx.curr(N('B'),I);ctx.curr(vm,I);if(drv)return;if(sn)ctx.curr(ret,I);
       ctx.sig(N('INA'),'pwm');ctx.sig(N('INB'),'pwm');ctx.sig(N('EN'),'gpio_out');}},
   gdrv3:{label:'3상 인버터 (게이트 드라이버 + 외부 N-MOSFET 6개)',desc:'하프브리지 게이트 드라이버 ×3 (IR2104S) + N-MOSFET ×6 (DPAK, 병렬) + 게이트 저항·풀다운 + 레그별 로우사이드 션트 ×3 + 전류 앰프 ×3 → ADC + VM 벌크/세라믹 + 상 단자(5.08 mm) + 홀 입력(선택)',
-    params:{i:{def:20,desc:'상시(연속) 상전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 상전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×3) · A4911 · A4918 (Allegro 3상 · SPI 진단 · 센스 앰프 ×3 내장) · DRV8334 (TI 3상 · SPI · 센스 앰프 ×3, 4.5–60 V)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
-    build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||20);const{Ipk,tpk}=peakOf(p,I);const k=ctx.uniq('PH');const N=x=>k==='PH'?'PH_'+x:k+'_'+x;
-      const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,fetChoice(ctx,p,I,V,k),Ipk);pwr.tpk=tpk;
+    params:{i:{def:20,desc:'상시(연속) 상전류 A — 손실 · 발열 · 상시 패턴 폭'},ipk:{def:'auto',desc:'피크 상전류 A (기동 · 구속 · 과부하, auto = 상시와 같음) — FET · 션트 범위 · 단자 · 피크 패턴 폭'},tpk:{def:2,desc:'피크 지속 시간 s (패턴의 피크 온도 상승 계산)'},tper:{def:0,desc:'피크 반복 주기 s (0 = 단발 · 값을 주면 상시 전류 대신 RMS로 패턴 폭 계산)'},prof:{def:'',desc:'추가 전류 구간 "A@초/주기초, …" (예: 40@2/30, 60@0.1) — RMS와 구간별 피크 온도 상승에 반영'},hall:{def:1,desc:'홀 센서 입력 (1/0)'},hallv:{def:5,desc:'홀 센서 공급 전압 V (5 · 9 · 12 — 그 레일이 있어야 함)'},fet:{def:'single',desc:'MOSFET 패키지: single (DPAK ×6) · IAUC60N04S6N050H (하프브리지 ×3) · IPG20N04S4L-07 (듀얼 ×3)'},driver:{def:'IR2104',desc:'게이트 드라이버: IR2104 (하프브리지 ×3) · A4911 · A4918 (Allegro 3상 · SPI 진단 · 센스 앰프 ×3 내장) · DRV8334 (TI 3상 · SPI · 센스 앰프 ×3, 4.5–60 V)'},vm:{def:'auto',desc:'VM 레일 (auto = 입력 레일)'}},
+    build(ctx,p){const vm=p.vm==='auto'?ctx.highest(8):p.vm;ctx.use(vm);const I=Math.max(1,+p.i||20);const{Ipk,tpk}=peakOf(p,I);ctx._cu=copperOf(ctx,p,I,Ipk,tpk,true);const k=ctx.uniq('PH');const N=x=>k==='PH'?'PH_'+x:k+'_'+x;
+      const V=ctx.railV?ctx.railV(vm):12;const pwr=motorPower(ctx,I,V,fetChoice(ctx,p,I,V,k),Ipk);pwr.tpk=tpk;if(ctx._cu)ctx._cu.par=pwr.par||1;
       let drv=allegroDrv(p.driver);if(drv&&!allegro3(ctx,drv,vm,I,pwr,N))drv=null;if(!drv&&/8334/.test(String(p.driver||''))&&ti8334(ctx,vm,I,pwr,N))drv='DRV8334'; // no pin table → IR2104 stage instead (warned)
       if(!drv&&V&&V<10)ctx.warn(`${k}: VM ${V} V — IR2104 VCC는 10 V 이상 필요 (게이트 전원 별도 레일)`);
       if(!drv)['U','V','W'].forEach(h=>{const ph=N(h),vb=N(h+'_VB'),ho=N(h+'_HO'),lo=N(h+'_LO'),ret=N(h+'_SNS');
@@ -8471,7 +8471,7 @@ const LIB={
         ctx.part('D','ES1D','SMA',{1:vb,2:vm},{mpn:'ES1D',desc:`부트스트랩 다이오드 (${h})`,pinNames:{1:'K',2:'A'}});
         ctx.part('C','1µF','0805',{1:vb,2:ph},{desc:`부트스트랩 캡 VB–VS (${h})`});
         fets(ctx,pwr,ho,lo,vm,ph,ret,h,N);shuntAmp(ctx,ret,N('ISNS_'+h),I,h+'상',Ipk,tpk);
-        ctx.curr(ph,I);ctx.curr(ret,I);ctx.peak(ph,Ipk,tpk);ctx.peak(ret,Ipk,tpk);ctx.sig(N('IN_'+h),'pwm','pwm3');});
+        ctx.curr(ph,I);ctx.curr(ret,I,'leg');ctx.peak(ph,Ipk,tpk);ctx.peak(ret,Ipk,tpk);ctx.sig(N('IN_'+h),'pwm','pwm3');});
       bulk(ctx,vm,I,'3상 인버터');ctx.curr(vm,I);ctx.peak(vm,Ipk,tpk);
       if(!drv){ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'nSD 풀다운 (MCU 리셋 중 인버터 OFF)'});ctx.sig(N('EN'),'gpio_out');}
       const big=bigTerm(I,Ipk);termFp(3,big?7.62:5.08);ctx.part('J','모터 상',termName(3,big?99:I),{1:N('U'),2:N('V'),3:N('W')},{mpn:big?'':'1729131',desc:`3상 모터 단자 (${big?'7.62 mm — 상시 '+I+' A · 피크 '+Ipk+' A 정격 품번 지정 필요':'5.08 mm'} · 상시 ${I} A${Ipk>I?` · 피크 ${Ipk} A ${tpk} s`:''})`,pinNames:{1:'U',2:'V',3:'W'}});
@@ -8577,7 +8577,7 @@ const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'
 const blockKey=s=>{const k=String(s||'').toLowerCase();return LIB[k]?k:BLOCK_ALIAS[k]||null;};
 
 /* ---------- plan ---------- */
-function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true};}
+function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2};}
 function addBlock(plan,type,params){const k=blockKey(type);if(!k)throw new Error(`블록: ${Object.keys(LIB).join(', ')}`);const L=LIB[k];const p={};Object.entries(L.params).forEach(([n,d])=>{p[n]=d.def;});
   Object.entries(params||{}).forEach(([n,v])=>{if(!(n in L.params))throw new Error(`${k} 블록 파라미터: ${Object.keys(L.params).join(', ')||'(없음)'}`);p[n]=v;});
   if(k==='mcu'&&plan.blocks.some(b=>b.type==='mcu'))throw new Error('MCU는 하나만 넣을 수 있습니다 (set으로 바꾸기)');
@@ -8636,6 +8636,14 @@ function motorPower0(ctx,I,V,fet){const F=fet&&FET2[fet];
 const termName=(n,I)=>`TERM-${n}-${I>15?'7.62':'5.08'}`;
 // 5.08 mm terminals carry ~15 A continuous and about twice that for a few seconds
 const bigTerm=(I,Ipk)=>I>15||(+Ipk||0)>30;
+// copper-sizing currents of a motor block (plans with curModel 2): the RMS of the current profile (i, the main peak when it repeats
+// every tper seconds, and the extra peaks in prof "I@t/T, …") instead of the continuous value, and for a sinusoidal 3-phase bridge the
+// share one switch position carries — each of the high and low side conducts the phase current for half of every PWM period on
+// average over an electrical cycle, so its RMS is I/√2 (leg-return / shunt nets, FET and shunt terminals). Peaks stay at their full
+// value (a stalled rotor holds one leg at the peak). The DC link keeps the phase value: average 1.06·M·cosφ·I plus the bulk-cap ripple.
+function copperOf(ctx,p,I,Ipk,tpk,three){if(!(ctx.plan&&ctx.plan.curModel===2)||typeof CURRENT==='undefined'||!CURRENT.profile)return null;
+  const PF=CURRENT.profile(I,p.prof,{I:Ipk,t:tpk,T:+p.tper||0});const hi=PF.peaks.length?PF.peaks[0].I:Ipk;if(hi>Ipk&&ctx.warn)ctx.warn(`전류 프로파일의 ${hi} A가 ipk ${Ipk} A보다 큼 — FET · 션트 · 단자는 ipk로 정하므로 ipk를 ${hi} A로 올리세요`);
+  return{I0:I,Iw:Math.max(I,PF.rms),kl:three?Math.SQRT1_2:1,par:1,Ipk:Math.max(Ipk,hi),more:PF.peaks.filter(x=>!(x.I===Ipk&&x.t===tpk)).map(x=>({I:x.I,t:x.t})),rms:PF.rms,duty:PF.duty};}
 // peak current of a motor block: ipk (auto = continuous) and how long it lasts
 function peakOf(p,I){const v=p&&p.ipk;const mx=String(v||'').match(/^[x×]\s*(\d+(?:\.\d+)?)$/i);const Ipk=v==null||v==='auto'||v===''?I:mx?I*+mx[1]:Math.max(I,parseFloat(v)||I);return{Ipk,tpk:Math.max(0.01,+(p&&p.tpk)||2)};}
 function termFp(n,pitch){if(typeof PCB==='undefined'||!PCB.FP)return;pitch=pitch||5.08;const k=`TERM-${n}-${pitch.toFixed(2)}`;if(PCB.FP[k])return;const p=pitch,y0=(n-1)/2*p;const big=p>6;
@@ -8697,7 +8705,7 @@ function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){if(pw.f2){fetPkg();const F=pw.f2;
     for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
       ctx.part('R','10Ω','0603',{1:ho,2:hg},{desc:`하이사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:hg,2:ph},{desc:'하이사이드 G-S 풀다운'});
       ctx.part('R','10Ω','0603',{1:lo,2:lg},{desc:`로우사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:lg,2:ret},{desc:'로우사이드 G-S 풀다운'});
-      ctx.part('Q',F.mpn,'TDSON-8-2FET',F.pin(hg,lg,vm,ph,ret),{mpn:F.mpn,desc:`${h}상 ${F.kind==='hb'?'하프브리지':'듀얼'} MOSFET (상·하 FET 2개) ${F.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:F.names,P:+(pw.Pq*1.1).toFixed(2),lk:'phase'});}
+      /* both switches in one package: its phase pad carries the whole phase current */(ctx.part('Q',F.mpn,'TDSON-8-2FET',F.pin(hg,lg,vm,ph,ret),{mpn:F.mpn,desc:`${h}상 ${F.kind==='hb'?'하프브리지':'듀얼'} MOSFET (상·하 FET 2개) ${F.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:F.names,P:+(pw.Pq*1.1).toFixed(2),lk:'phase'})||{}).Itx=ph;}
     return;}
   for(let j=0;j<pw.par;j++){const t=pw.par>1?'_'+(j+1):'';const hg=N(h+'_HG'+t),lg=N(h+'_LG'+t);
     ctx.part('R','10Ω','0603',{1:ho,2:hg},{desc:`하이사이드 게이트 저항 (${h}${t})`});ctx.part('R','10kΩ','0603',{1:hg,2:ph},{desc:'하이사이드 G-S 풀다운'});
@@ -8894,7 +8902,7 @@ function allegro3(ctx,drv,vm,I,pwr,N,o){o=o||{};const mpn=ALLEGRO[drv];const rec
     ctx.part('R','0Ω','0402',{1:N(h+'_SNSP'),2:ret},{desc:`센스 켈빈 넷 타이 CS${cs}P (${LG(h)} — A4911 핀 옆, 션트 노드까지는 전류 없는 켈빈 선)`});
     ctx.part('R','0Ω','0402',{1:N(h+'_LSS'),2:ret},{desc:`LSS 넷 타이 (${LG(h)} — A4911 핀 옆, 로우사이드 FET 소스에서 독립 연결)`});const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
     ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');
-    ctx.curr(ph,I);ctx.curr(ret,I);ctx.peak(ph,pwr.Ipk||I,pwr.tpk||2);ctx.peak(ret,pwr.Ipk||I,pwr.tpk||2);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
+    ctx.curr(ph,I);ctx.curr(ret,I,'leg');ctx.peak(ph,pwr.Ipk||I,pwr.tpk||2);ctx.peak(ret,pwr.Ipk||I,pwr.tpk||2);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
   ctx.part('R','10kΩ','0603',{1:N('DIAG'),2:vio},{desc:`${drv} DIAG 오픈 드레인 풀업 (10~20 kΩ)`});
   ctx.part('R','10kΩ','0603',{1:N('EN'),2:'GND'},{desc:'ENABLE 풀다운 (MCU 리셋 중 게이트 OFF)'});
   ctx.sig(N('EN'),'gpio_out');ctx.sig(N('RESETN'),'gpio_out');ctx.sig(N('DIAG'),'irq_in');ctx.sig(N('ISNS_OOS'),'adc'); // CSxO is referenced to OOS: read both, subtract
@@ -8945,7 +8953,7 @@ function ti8334(ctx,vm,I,pwr,N,o){o=o||{};const mpn='DRV8334-Q1';const rec=NEWPR
     ctx.part('R','0Ω','0402',{1:N(h+'_LSS'),2:ret},{desc:`SL${x} 넷 타이 (${LG(h)} — 로우사이드 FET 소스에 직접, VDS 감지)`});
     const amp=N('ISNS_'+h+'_AMP'),out=N('ISNS_'+h);
     ctx.part('R','160Ω','0402',{1:amp,2:out},{desc:'DRV8334 RSO 160 Ω 출력 필터'});ctx.part('C','470pF','0402',{1:out,2:'GND'},{desc:'DRV8334 CSO 470 pF 출력 필터'});ctx.sig(out,'adc');
-    ctx.curr(ph,I);ctx.curr(ret,I);ctx.peak(ph,pwr.Ipk||I,pwr.tpk||2);ctx.peak(ret,pwr.Ipk||I,pwr.tpk||2);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
+    ctx.curr(ph,I);ctx.curr(ret,I,'leg');ctx.peak(ph,pwr.Ipk||I,pwr.tpk||2);ctx.peak(ret,pwr.Ipk||I,pwr.tpk||2);ctx.sig(N('INH_'+h),'pwm','pwm6');ctx.sig(N('INL_'+h),'pwm','pwm6');});
   ctx.part('R','10kΩ','0402',{1:N('NFAULT'),2:vio},{desc:'DRV8334 RnFAULT 10 kΩ 풀업 (MCU I/O 전원)'});
   ctx.part('R','10kΩ','0402',{1:N('DRVOFF'),2:vio},{desc:'DRVOFF 풀업 — MCU 리셋 중 게이트 OFF (액티브 하이 차단)'});
   ctx.part('R','10kΩ','0402',{1:N('NSLEEP'),2:'GND'},{desc:'nSLEEP 풀다운 — MCU가 깨울 때까지 슬립'});
@@ -8980,21 +8988,24 @@ function inputOptions(plan){const t=String(plan&&plan.req||'');const i=(plan.blo
   if(dflt('tvs',1)&&/로드\s*덤프|load\s*dump/i.test(t)){P.tvs='loaddump';ch=1;}
   if(!ch)return plan;const blocks=plan.blocks.slice();blocks[i]=Object.assign({},blocks[i],{params:P});return Object.assign({},plan,{blocks});}
 function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&&String(plan.asil).toUpperCase()!=='QM'?String(plan.asil).toUpperCase():null;
-  const parts=[],warn=[],rails={},used=new Set(),sigs=[],fixedPins={},xt=[],curr={},peak={};let mcu=null;const cnt={};const uq={};
+  const parts=[],warn=[],rails={},used=new Set(),sigs=[],fixedPins={},xt=[],curr={},currFull={},peak={};let mcu=null;const cnt={};const uq={};
   const has=t=>plan.blocks.some(b=>b.type===t);
   const shrinkLog=[];const ctx={plan,shrinkLog,
-    part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,lk:o.lk,pk:o.pk,ldo:o.ldo,buck:o.buck,mcu:!!o.mcu};parts.push(c);return c;},
+    part(prefix,val,fp,pins,o){o=o||{};cnt[prefix]=(cnt[prefix]||0)+1;const ref=prefix+cnt[prefix];const c={ref,val,fp,pins:Object.fromEntries(Object.entries(pins).filter(([,v])=>v)),mpn:o.mpn||(prefix==='C'?capMpn[val]:prefix==='R'?rMpn(val):'')||'',desc:o.desc||'',pinNames:o.pinNames||null,block:ctx._b,P:o.P||0,lk:o.lk,pk:o.pk,ldo:o.ldo,buck:o.buck,mcu:!!o.mcu};{const u=ctx._cu;if(u&&o.lk==='phase'&&(prefix==='Q'||prefix==='R')){const n=prefix==='Q'?Math.max(1,u.par||1):1;c.It=+(u.Iw*u.kl/n).toFixed(2);c.Itpk=+(u.Ipk/n).toFixed(2);}}parts.push(c);return c;},
     cap(rail,val,desc){if(!rail)return;used.add(rail);return ctx.part('C',val,capFp(val),{1:rail,2:'GND'},{desc,mpn:capMpn[val]});},
     provide(rail,v,by){rails[rail]={v,by,block:ctx._b};},railV(r){return rails[r]?rails[r].v:(typeof SIM!=='undefined'&&SIM.nominalV?SIM.nominalV(r):0);},use(r){if(r)used.add(r);},has,
     railNear(v){const r=Object.entries(rails).filter(([,x])=>x.v>0).sort((a,b)=>Math.abs(a[1].v-v)-Math.abs(b[1].v-v))[0];return r?r[0]:ctx.highest(0);},
     highest(min){const r=Object.entries(rails).filter(([,x])=>x.v>=min).sort((a,b)=>b[1].v-a[1].v)[0];if(!r){warn.push(`${min} V 이상 레일이 없음 — 전원 블록을 먼저 넣으세요`);return'+12V';}return r[0];},
     setMcu(k){mcu=k;},mcu(){return mcu;},warn(t){warn.push(t);},mcuPin(n,net){fixedPins[n]=net;},need(t){if(!has(t))warn.push(`${t} 블록이 필요합니다 (예: add ${t})`);},
-    sig(net,role,group){sigs.push({net,role,group:group||null,block:ctx._b});},xtal(a,b){xt.push(a,b);},curr(net,I){if(net&&I>0)curr[net]=Math.max(curr[net]||0,+I);},
-    peak(net,I,t){if(!net||!(I>0))return;const o=peak[net];if(!o||I>o.I)peak[net]={I:+I,t:+t||2};},
+    sig(net,role,group){sigs.push({net,role,group:group||null,block:ctx._b});},xtal(a,b){xt.push(a,b);},curr(net,I,kind){const u=ctx._cu;if(u&&I>0){const f=I*(u.Iw/u.I0);if(kind==='leg'&&u.kl<1&&net)currFull[net]=Math.max(currFull[net]||0,+f.toFixed(2));I=f*(kind==='leg'?u.kl:1);}if(net&&I>0)curr[net]=Math.max(curr[net]||0,+(+I).toFixed(2));},
+    // peaks: the highest one, plus lower ones that last longer (plans with curModel 2; a block's profile adds its own)
+    peak(net,I,t){if(!net||!(I>0))return;const add=(I,t)=>{const o=peak[net];if(!o){peak[net]={I:+I,t:+t||2};return;}if(!ctx._cu){if(I>o.I)peak[net]={I:+I,t:+t||2};return;}
+        if(I>o.I){const m=(o.more||[]).concat(t<o.t?[{I:o.I,t:o.t}]:[]);peak[net]=m.length?{I:+I,t:+t,more:m}:{I:+I,t:+t};}else if(I===o.I)o.t=Math.max(o.t,+t);else if(t>o.t&&!(o.more||[]).some(m=>m.I>=I&&m.t>=t))(o.more=o.more||[]).push({I:+I,t:+t});};
+      add(I,t);if(ctx._cu)ctx._cu.more.forEach(x=>add(x.I,x.t));},
     uniq(base){uq[base]=(uq[base]||0)+1;return uq[base]===1&&base!=='LED'&&base!=='BTN'?base:base+uq[base];}};
   // power first (rails), then MCU, then the rest
   const order=['pwr_in','usb_in','buck','ldo','mcu','xtal'];const bl=plan.blocks.slice().sort((a,b)=>{const i=order.indexOf(a.type),j=order.indexOf(b.type);return(i<0?9:i)-(j<0?9:j);});
-  bl.forEach(b=>{ctx._b=b.id;try{LIB[b.type].build(ctx,b.params);}catch(e){warn.push(`${b.id}: ${e.message}`);}});
+  bl.forEach(b=>{ctx._b=b.id;ctx._cu=null;try{LIB[b.type].build(ctx,b.params);}catch(e){warn.push(`${b.id}: ${e.message}`);}ctx._cu=null;});
   {const pi=plan.blocks.find(b=>b.type==='pwr_in');if(pi&&String(pi.params&&pi.params.conn)==='ecu')ecuConnector(plan,parts,curr,peak,warn);}
   // rails used but never produced
   used.forEach(r=>{if(r!=='GND'&&r!=='VDD'&&!rails[r])warn.push(`${r} 레일을 만드는 블록이 없음 (예: add ldo --vout ${r==='+5V'?5:3.3})`);});
@@ -9072,7 +9083,7 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
   let pwrseq=null;if(typeof PWRSEQ!=='undefined'){try{pwrseq=PWRSEQ.run({parts,rails,curr},plan,{iface});}catch(e){pwrseq=null;}}
   const spec={_source:'신규 설계',_demo:null,board:{name:plan.name,width:W,height:H,thickness:1.6,corner:2,holes:W>=35&&H>=30?[[3.5,3.5,3.2],[W-3.5,3.5,3.2],[3.5,H-3.5,3.2],[W-3.5,H-3.5,3.2]]:[]},
     components:parts.map((c,i)=>({ref:c.ref,value:c.val,footprint:c.fp,side:'top',x:6+(i%12)*6,y:6+Math.floor(i/12)*6,rotation:0,mpn:c.mpn,description:c.desc,pins:c.pins,pinNames:c.pinNames||undefined}))};
-  return{spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,caps,pwrseq,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
+  return{currFull,spec,parts,warn,rails,pinmap,assigned,sigs,mcu,area,W,H,curr,peak,iface,caps,pwrseq,power:parts.filter(c=>c.P).map(c=>({ref:c.ref,P:c.P})),shrink:shr};
 }
 /* ---------- package shrink (plan.shrink: 0 off · 1 표준 · 2 최대) ----------
    Swaps a part for a smaller package only where the replacement's pinout is known (KiCad 10 symbol / datasheet) and the
@@ -9151,14 +9162,20 @@ function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));if(r.pwrseq)B.pwrseq=r.pwrseq;
   // dissipation the generator worked out (FET conduction · regulator loss · shunt I²R · IC typical) travels with the part — the thermal analysis starts from it
   {const PM=Object.fromEntries(r.parts.filter(c=>c.P>0).map(c=>[c.ref,c]));B.comps.forEach(c=>{const q=PM[c.ref];if(q){c.P=q.P;if(q.lk)c.lk=q.lk;}});
+   // terminal currents of the bridge switches and shunts (curModel 2): what their vias carry
+   {const TM=Object.fromEntries(r.parts.filter(c=>c.It>0).map(c=>[c.ref,c]));B.comps.forEach(c=>{const q=TM[c.ref];if(q){c.It=q.It;c.Itpk=q.Itpk;if(q.Itx)c.Itx=q.Itx;}});}
    // the current those losses were worked out at (motor blocks' phase current) — a current profile scales them from here
    const mbs=plan.blocks.filter(b=>/^(gdrv3|hbridge|dcmotor|bldc)$/.test(b.type));const I0=mbs.reduce((a,b)=>a+(+b.params.i||0),0);if(I0>0){B.lossI0=I0;B.lossIpk=mbs.reduce((a,b)=>a+peakOf(b.params,+b.params.i||0).Ipk,0);B.lossTpk=Math.max(...mbs.map(b=>peakOf(b.params,+b.params.i||0).tpk));}}
   r.groups=partGroups(plan,r.parts);
   // copper weight / allowed temperature rise for the current-based widths: motor boards default to 2 oz · ΔT 20 °C
-  const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
+  const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(plan.curModel===2)B.curModel=2;if(String(pc.std)==='2152')B.ipcStd='2152';if(+pc.plane>0)B.planeDist=+pc.plane;if(+pc.k>0)B.kFr4=+pc.k;if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
   if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});
+  // leg-return nets: the whole phase current still passes the node (one switch at a time) — placement pull and routing keep-out stay sized for it
+  if(r.currFull&&Object.keys(r.currFull).length)B.netCurrentFull=r.currFull;
   // peak currents (start · stall · overload) and how long they last: the copper is sized for the continuous current and checked / widened for the peak
   {const pk=Object.fromEntries(Object.entries(r.peak||{}).filter(([n,o])=>!(r.curr&&r.curr[n]!=null)||o.I>+r.curr[n]));if(Object.keys(pk).length)B.netPeak=pk;B.dTpk=+pc.dTpk||40;}
+  // ambient temperature → allowed rises (board limits 105 °C steady / 125 °C during a peak unless set); explicit dT / dTpk win
+  if(pc.tamb!=null&&pc.tamb!==''&&isFinite(+pc.tamb)&&typeof CURRENT!=='undefined'&&CURRENT.budget){const bg=CURRENT.budget(+pc.tamb,pc.tmax,pc.tmaxpk);B.tamb=+pc.tamb;if(!(+pc.dT>0))B.dT=bg.dT;if(!(+pc.dTpk>0))B.dTpk=bg.dTpk;if(bg.tight)r.warn.push(`주위 온도 ${pc.tamb} °C에서 기판 한계(${bg.tmax} / ${bg.tmaxpk} °C)까지 여유가 거의 없음 — 허용 온도 상승을 ${bg.dT} / ${bg.dTpk} °C로 제한`);}
   if(typeof AUTOPLACE!=='undefined'&&opts.place!==false){PCBEDIT.prepare(B);AUTOPLACE.ensurePour(B);const power={};r.power.forEach(x=>{power[x.ref]=x.P;});
     r.place=AUTOPLACE.place(B,{strategy:opts.strategy||plan.strategy||'balanced',scratch:true,seed:opts.seed||1,power});r.macro=r.place.macro;}
   return{B,r};}
@@ -12660,7 +12677,7 @@ return{parse,tables,candidates,linesOf,row,packages,sectionText,aiPrompt,fromAi,
 
 </script>
 <script data-w>
-/* ---------- net current estimate → IPC-2221 track width ----------
+/* ---------- net current estimate → IPC-2221 / IPC-2152 track width ----------
    Which net carries how much current is read off the board: rails by name/voltage, the parts on them (regulators,
    drivers, MCU, transceivers, LEDs …) by part number or description, motor phases by name. Widths follow IPC-2221
    (external / internal layers, copper weight, allowed temperature rise). Rough early-design numbers: a load table,
@@ -12672,6 +12689,42 @@ function ipcWidth(I,o){o=o||{};const k=o.inner?0.024:0.048,dT=o.dT||10,oz=o.oz||
   const A=Math.pow(I/(k*Math.pow(dT,0.44)),1/0.725);const wMil=A/(1.378*oz);return +(wMil*0.0254).toFixed(2);}
 function ipcCurrent(w,o){o=o||{};const k=o.inner?0.024:0.048,dT=o.dT||10,oz=o.oz||1;const A=(w/0.0254)*1.378*oz;return +(k*Math.pow(dT,0.44)*Math.pow(A,0.725)).toFixed(2);}
 function ipcRise(w,I,o){o=o||{};const k=o.inner?0.024:0.048,oz=o.oz||1;if(!(w>0)||!(I>0))return 0;const A=(w/0.0254)*1.378*oz;return +Math.pow(I/(k*Math.pow(A,0.725)),1/0.44).toFixed(1);}
+/* ---- IPC-2152: universal chart (still air, no plane, 70 mil FR-4, 3 oz) × modifiers ----
+   Curve fits of the IPC-2152 charts as published with the open NinjaCalc calculator (mbedded.ninja): unadjusted area [mil²] =
+   (I / (a·ΔT^b))^(1/(c·ΔT^d)); × copper-weight modifier (5th-order polynomial in the current, coefficients cubic in oz; 3 oz = 1) ×
+   board-thickness modifier 24.93·t[mil]^−0.755 × plane modifier 0.00313·d[mil] + 0.4045 (a copper plane d away; none = 1) ×
+   conductivity modifier −1.421·k[BTU/(ft·h·°F)] + 1.196. Chart ranges: 0.5–3 oz, board 0.72–2.36 mm, plane 0.144–2.4 mm,
+   k 0.18–0.34 W/m·K; inputs are clamped to them and the copper-weight polynomial is not evaluated past 30 A (it diverges).
+   Inner and outer layers share the chart. Without a plane it asks for about 2.6× the IPC-2221 outer area at 20 A — the
+   IPC-2221 outer chart is the optimistic one; with a plane 0.15–0.25 mm away the two come out close. */
+const TM=[[9.8453567795e-1,-2.2281787548e-1,2.0061423196e-1,-4.1541116264e-2],[-1.657194921e-2,1.7520059279e-4,-5.0615234096e-3,2.281483634e-3],[8.8711317661e-4,1.3631745743e-3,-2.237330971e-4,-1.0974218613e-4],[-6.6729255031e-6,-1.4976736827e-4,5.8082340133e-5,-2.4728159584e-6],[-7.9576264561e-7,5.5788354958e-6,-2.4912026388e-6,2.4000295954e-7],[1.6619678738e-8,-7.1122635445e-8,3.3800191741e-8,-3.9797591878e-9]];
+const clampN=(x,a,b)=>Math.min(b,Math.max(a,x));
+function mods2152(I,o){o=o||{};const oz=clampN(o.oz||1,0.5,3),Ic=clampN(I,0.1,30);const tm=oz>=3?1:clampN(TM.reduce((a,r,i)=>a+r.reduce((b,c,j)=>b+c*Math.pow(oz,j),0)*Math.pow(Ic,i),0),0.7,1);
+  const bm=24.929779905*Math.pow(clampN(o.tb||1.6,0.72,2.36)/0.0254,-0.75501997929);const pm=o.plane>0?0.0031298662911*clampN(o.plane,0.144,2.4)/0.0254+0.40450883823:1;
+  const km=-1.4210148167*clampN(o.k||0.25,0.18,0.34)/1.730735+1.1958174134;return{t:+tm.toFixed(3),board:+bm.toFixed(3),plane:+pm.toFixed(3),k:+km.toFixed(3),all:tm*bm*pm*km};}
+function area2152(I,dT){return Math.pow(I/(8.9710902134e-2*Math.pow(dT,3.9379253898e-1)),1/(5.0382053698e-1*Math.pow(dT,3.8495772461e-2)));} // mil², unadjusted
+function ipc2152Width(I,o){o=o||{};if(!(I>0))return 0;const dT=o.dT||10,oz=o.oz||1;const A=area2152(I,dT)*mods2152(I,o).all;return +(A/(1.378*oz)*0.0254).toFixed(2);}
+function ipc2152Rise(w,I,o){o=o||{};if(!(w>0)||!(I>0))return 0;let lo=0.2,hi=400;if(ipc2152Width(I,Object.assign({},o,{dT:hi}))>w)return hi;if(ipc2152Width(I,Object.assign({},o,{dT:lo}))<=w)return lo;
+  for(let k=0;k<40;k++){const m=Math.sqrt(lo*hi);if(ipc2152Width(I,Object.assign({},o,{dT:m}))<=w)hi=m;else lo=m;}return +hi.toFixed(1);}
+/* one entry for both standards: o.std '2152' → IPC-2152 with o.tb / o.plane / o.k, anything else → IPC-2221 (o.inner) */
+function wFor(I,o){return o&&o.std==='2152'?ipc2152Width(I,o):ipcWidth(I,o);}
+function riseFor(w,I,o){return o&&o.std==='2152'?ipc2152Rise(w,I,o):ipcRise(w,I,o);}
+/* the board's conditions: copper weight, allowed rises, standard, board thickness, distance to the nearest plane (inner planes
+   spread evenly through the board unless B.planeDist says otherwise; a 2-layer board has none) */
+function env(B,opt){opt=opt||{};const NL=B.copperLayers||(B.stack?B.stack.length:2)||2;const std=opt.std||B.ipcStd||'2221';
+  const plane=B.planeDist>0?+B.planeDist:(NL>2&&(B.stack||[]).some(x=>x.net&&x.role!=='sig')?(B.t||1.6)/(NL-1):0);
+  return{std,oz:opt.oz||B.oz||1,dT:opt.dT||B.dT||10,dTpk:opt.dTpk||B.dTpk||40,tb:B.t||1.6,plane:std==='2152'?plane:0,k:B.kFr4||0.25};}
+/* ---- current profile ----
+   A load is a continuous current plus peaks "I@t/T" (I amps for t seconds every T seconds; no /T = a single event), e.g.
+   "40@2/30, 60@0.1". Copper heats with I², so what the steady-state chart needs is the RMS over the cycle:
+   Irms² = Icont²·(1 − Σ t/T) + Σ I²·t/T. Every peak is still checked on its own for the rise during the peak. */
+function profile(I,str,main){const pk=[];if(main&&main.I>I&&main.t>0)pk.push({I:+main.I,t:+main.t,T:+main.T>0?+main.T:0});
+  String(str||'').split(/[,;]/).forEach(x=>{const m=x.trim().match(/^(\d+(?:\.\d+)?)\s*A?\s*@\s*(\d+(?:\.\d+)?)\s*(ms|s)?\s*(?:\/\s*(\d+(?:\.\d+)?)\s*(ms|s)?)?$/i);if(!m)return;
+    const t=+m[2]*(/^ms$/i.test(m[3]||'')?1e-3:1),T=m[4]?+m[4]*(/^ms$/i.test(m[5]||'')?1e-3:1):0;if(+m[1]>0&&t>0)pk.push({I:+m[1],t,T:T>t?T:0});});
+  let d=0,q=0;pk.forEach(x=>{if(x.T>0&&x.I>I){d+=x.t/x.T;q+=x.I*x.I*x.t/x.T;}});d=Math.min(1,d);const rms=Math.sqrt(I*I*(1-d)+q);
+  return{I,rms:+rms.toFixed(2),duty:+d.toFixed(3),peaks:pk.filter(x=>x.I>I).sort((a,b)=>b.I-a.I)};}
+/* allowed rises from the ambient and the board's limits: steady = tmax − tamb, during a peak = tmaxpk − tamb (FR-4: 105 / 125 °C) */
+function budget(tamb,tmax,tmaxpk){tamb=+tamb;tmax=+tmax||105;tmaxpk=+tmaxpk||Math.max(tmax,125);const dT=tmax-tamb,dTpk=tmaxpk-tamb;return{dT:Math.max(5,+dT.toFixed(1)),dTpk:Math.max(10,+dTpk.toFixed(1)),tight:dT<5||dTpk<10,tamb,tmax,tmaxpk};}
 /* ---- peak current for a few seconds (start · stall · overload) ----
    Temperature rise of a conductor (total width w mm, outer copper oz) carrying Ipk for t seconds: copper heats with almost no
    time to shed it, so the rise is set by heat capacity, not by the IPC steady-state chart. Joule heat I²ρ/A per length goes into
@@ -12680,11 +12733,12 @@ function ipcRise(w,I,o){o=o||{};const k=o.inner?0.024:0.048,oz=o.oz||1;if(!(w>0)
 function peakRise(w,Ipk,t,o){o=o||{};if(!(w>0)||!(Ipk>0)||!(t>0))return 0;const oz=o.oz||1,tb=(o.tb||1.6)*1e-3;const W=w*1e-3,A=W*35e-6*oz;
   const d=Math.min(0.886*Math.sqrt(1.5e-7*t),tb/2);/* effective depth of a semi-infinite solid under constant flux: √(π·α·t)/2 */const C=A*3.45e6+W*d*2.0e6;return +(Ipk*Ipk*1.72e-8*t/(A*C)).toFixed(1);}
 /* width for a continuous current I (IPC rise ≤ dT) that also keeps continuous rise + peak rise ≤ dTpk while Ipk flows for t s */
-function needWidth(I,pk,o){o=o||{};const oz=o.oz||1,dT=o.dT||10,dTpk=o.dTpk||40;const w0=ipcWidth(I,{oz,dT});
-  if(!pk||!(pk.I>I))return{w:w0,by:'cont',rise:I>0?ipcRise(w0,I,{oz}):0,riseP:0};
-  const tot=w=>(I>0?ipcRise(w,I,{oz}):0)+peakRise(w,pk.I,pk.t,{oz,tb:o.tb});
-  let lo=Math.max(0.05,w0),hi=Math.max(lo,ipcWidth(pk.I,{oz,dT:Math.min(dT,dTpk)}))*1.5;if(tot(lo)<=dTpk)return{w:lo,by:'cont',rise:ipcRise(lo,I,{oz}),riseP:peakRise(lo,pk.I,pk.t,{oz,tb:o.tb})};
-  for(let k=0;k<40;k++){const m=(lo+hi)/2;if(tot(m)<=dTpk)hi=m;else lo=m;}const w=+hi.toFixed(2);return{w,by:'peak',rise:I>0?ipcRise(w,I,{oz}):0,riseP:peakRise(w,pk.I,pk.t,{oz,tb:o.tb})};}
+function needWidth(I,pk,o){o=o||{};const oz=o.oz||1,dT=o.dT||10,dTpk=o.dTpk||40;const e=Object.assign({},o,{oz,dT});const w0=wFor(I,e);
+  const pks=(pk?[pk].concat(pk.more||[]):[]).filter(x=>x&&x.I>I&&x.t>0);
+  if(!pks.length)return{w:w0,by:'cont',rise:I>0?riseFor(w0,I,e):0,riseP:0};
+  const rp=w=>Math.max(...pks.map(x=>peakRise(w,x.I,x.t,{oz,tb:o.tb})));const tot=w=>(I>0?riseFor(w,I,e):0)+rp(w);
+  let lo=Math.max(0.05,w0),hi=Math.max(lo,ipcWidth(pks[0].I,{oz,dT:Math.min(dT,dTpk)}),wFor(pks[0].I,Object.assign({},e,{dT:Math.min(dT,dTpk)})))*1.5;if(tot(lo)<=dTpk)return{w:lo,by:'cont',rise:riseFor(lo,I,e),riseP:rp(lo)};
+  for(let k=0;k<40;k++){const m=(lo+hi)/2;if(tot(m)<=dTpk)hi=m;else lo=m;}const w=+hi.toFixed(2);return{w,by:'peak',rise:I>0?riseFor(w,I,e):0,riseP:rp(w)};}
 /* ---- vias carrying power current ----
    A plated via is a copper tube: width π·drill, thickness = plating (25 µm ≈ 0.71 oz). Its rise follows the same rules as a track
    (IPC-2221 outer chart — what common via calculators use) plus the peak rise for the peak current over its duration.
@@ -12703,8 +12757,10 @@ function viaCheck(B,o){o=o||{};const r=o.r!=null?o.r:2.5,dT=o.dT||B.dT||10,dTpk=
   // without circuit tags: FETs, milliohm shunts and big-pad connectors
   const tagged=B.comps.some(c=>c.lk);const isTerm=c=>/^J\d/i.test(c.ref)&&(/전원 입력|모터|power|motor|battery|배터리/i.test(c.desc||'')||c.pads.some(p=>p.drill>=1.3));
   const power=c=>tagged?(!!c.lk||isTerm(c)||/^F\d/i.test(c.ref)):(/^Q\d/i.test(c.ref)||(/^R\d/i.test(c.ref)&&/[mµu]Ω|mohm/i.test(c.val||''))||isTerm(c)||/^F\d/i.test(c.ref));
-  (o.nets||[]).forEach(n=>{const I0=+((o.I||{})[n]||0);if(!(I0>0))return;const sh=o.share&&o.share[n]!=null?+o.share[n]:1;if(!(sh>0))return;const I=I0*sh;const pk0=(o.pk||{})[n]||null;const pk=pk0?{I:pk0.I*sh,t:pk0.t}:null;const vs=(B.vias||[]).filter(v=>v.net===n);
-    B.comps.filter(power).forEach(c=>{const ps=c.pads.filter(p=>p.net===n);if(!ps.length)return;
+  (o.nets||[]).forEach(n=>{const I0=+((o.I||{})[n]||0);if(!(I0>0))return;const sh=o.share&&o.share[n]!=null?+o.share[n]:1;if(!(sh>0))return;const pk0=(o.pk||{})[n]||null;const vs=(B.vias||[]).filter(v=>v.net===n);
+    B.comps.filter(power).forEach(c0=>{const ps=c0.pads.filter(p=>p.net===n);if(!ps.length)return;const c=c0;
+      // a bridge switch or shunt carries its own share of the net current (c.It / c.Itpk from the circuit: per-switch RMS, per parallel part)
+      const own=c.It>0&&c.Itx!==n;const I=own?Math.min(I0,c.It)*sh:I0*sh;const pk=pk0?{I:(own&&c.Itpk>0?Math.min(pk0.I,c.Itpk):pk0.I)*sh,t:pk0.t}:null;
       const th=ps.filter(p=>p.drill);const near=vs.filter(v=>ps.some(p=>inRect(v,p)));const nb=near.length+th.length;
       const dr=near.length?near.reduce((a,v)=>a+(v.drill||0.3),0)/near.length:th.reduce((a,p)=>a+(+p.drill),0)/th.length;
       if(!nb){out.push({net:n,ref:c.ref,n:0,I,ok:false,msg:'비아 없음'});return;}
@@ -12763,21 +12819,21 @@ function netCurrents(B,opt){opt=opt||{};const out={};const rails={};const Im=mot
   nets.forEach(n=>{const o=out[n];if(o.cls==='sig'&&!o.I)o.I=0.02;if(o.cls==='gnd'){o.I=Math.max(...Object.values(out).filter(x=>x.cls==='rail'||x.cls==='phase').map(x=>x.I),0);o.loads=['플레인/동박면 귀환 (모터 전류 포함)'];}});
   return out;}
 /* ---- widths per net, with the user's overrides (B.netWidth: net → mm, B.netCurrent: net → A) ---- */
-function widths(B,opt){opt=opt||{};const oz=opt.oz||B.oz||1,dT=opt.dT||10,cap=opt.cap||3;const cur=netCurrents(B,opt);const out={};const dTpk=opt.dTpk||B.dTpk||40;
-  Object.keys(cur).forEach(n=>{const c=cur[n];const I=B.netCurrent&&B.netCurrent[n]!=null?+B.netCurrent[n]:c.I;const pk=B.netPeak&&B.netPeak[n]||null;const nw=needWidth(I,pk,{oz,dT,dTpk,tb:B.t});const ipc=nw.w;
+function widths(B,opt){opt=opt||{};const E=env(B,{oz:opt.oz,dT:opt.dT||10,dTpk:opt.dTpk,std:opt.std});const oz=E.oz,dT=E.dT,dTpk=E.dTpk,cap=opt.cap||3;const cur=netCurrents(B,opt);const out={};
+  Object.keys(cur).forEach(n=>{const c=cur[n];const I=B.netCurrent&&B.netCurrent[n]!=null?+B.netCurrent[n]:c.I;const pk=B.netPeak&&B.netPeak[n]||null;const nw=needWidth(I,pk,E);const ipc=nw.w;
     let w=B.netWidth&&B.netWidth[n]!=null?+B.netWidth[n]:ipc;const min=c.cls==='rail'||c.cls==='phase'?0.3:0.2;w=Math.max(min,w);
-    out[n]={I:+I.toFixed(3),pk,by:nw.by,riseP:nw.riseP,cls:c.cls,v:c.v,ipc,w:+Math.min(cap,w).toFixed(2),pour:ipc>cap,loads:c.loads,manual:!!(B.netWidth&&B.netWidth[n]!=null),manualI:!!(B.netCurrent&&B.netCurrent[n]!=null)};});
+    const If=B.netCurrentFull&&+B.netCurrentFull[n]>I?+B.netCurrentFull[n]:0;out[n]={I:+I.toFixed(3),pk,std:E.std,full:If||undefined,ipcFull:If?needWidth(If,pk,E).w:undefined,by:nw.by,riseP:nw.riseP,cls:c.cls,v:c.v,ipc,w:+Math.min(cap,w).toFixed(2),pour:ipc>cap,loads:c.loads,manual:!!(B.netWidth&&B.netWidth[n]!=null),manualI:!!(B.netCurrent&&B.netCurrent[n]!=null)};});
   return out;}
 /* ---- check: routed tracks narrower than the current needs ---- */
 function check(B,opt){opt=opt||{};const W=widths(B,opt);const out=[];const keys=(typeof PCB!=='undefined'?PCB.cuKeys(B):['T','B']);
   Object.keys(W).forEach(n=>{const w=W[n];if(w.cls!=='rail'&&w.cls!=='phase'||w.I<0.5)return;let minW=null;keys.forEach(k=>(B.layers[k+'.cu']||[]).forEach(p=>{if(p.net!==n||!(p.t==='seg'||p.t==='path'))return;if(minW==null||p.w<minW)minW=p.w;}));
-    if(minW==null)return;const need=w.ipc;if(minW<need*0.85){const oz=opt.oz||1;const rise=ipcRise(minW,w.I,{oz});const rp=w.pk?peakRise(minW,w.pk.I,w.pk.t,{oz,tb:B.t}):0;out.push({net:n,I:w.I,w:minW,need,rise,riseP:rp,msg:`${n}: 트랙 ${minW} mm 에 ${w.I} A → 온도 상승 약 ${rise} °C${w.pk?` · 피크 ${w.pk.I} A ${w.pk.t} s 동안 +${rp} °C`:''} (권장 ${need} mm${w.by==='peak'?' — 피크 기준':''}${w.pour?' → 동박면 권장':''})`});}});
+    if(minW==null)return;const need=w.ipc;if(minW<need*0.85){const E=env(B,{oz:opt.oz,dT:opt.dT||10,std:opt.std});const oz=E.oz;const rise=riseFor(minW,w.I,E);const rp=w.pk?peakRise(minW,w.pk.I,w.pk.t,{oz,tb:B.t}):0;out.push({net:n,I:w.I,w:minW,need,rise,riseP:rp,msg:`${n}: 트랙 ${minW} mm 에 ${w.I} A → 온도 상승 약 ${rise} °C${w.pk?` · 피크 ${w.pk.I} A ${w.pk.t} s 동안 +${rp} °C`:''} (권장 ${need} mm${w.by==='peak'?' — 피크 기준':''}${w.pour?' → 동박면 권장':''})`});}});
   return out;}
 function text(B,opt){const W=widths(B,opt);const rows=Object.entries(W).filter(([n,w])=>w.cls!=='sig').sort((a,b)=>b[1].I-a[1].I);
-  const L=[`넷 전류 · 폭 (IPC-2221 상시, ${opt&&opt.oz||B.oz||1} oz, ΔT ${opt&&opt.dT||B.dT||10} °C · 피크는 ${B.dTpk||40} °C 이내) — 추정값`];
+  const E=env(B,opt||{});const L=[`넷 전류 · 폭 (${E.std==='2152'?`IPC-2152${E.plane?` · 플레인 ${E.plane.toFixed(2)} mm`:' · 플레인 없음'}`:'IPC-2221'} 상시, ${E.oz} oz, ΔT ${opt&&opt.dT||B.dT||10} °C · 피크는 ${B.dTpk||40} °C 이내${B.tamb!=null?` · 주위 ${B.tamb} °C`:''}) — 추정값`];
   rows.forEach(([n,w])=>L.push(`  ${n.padEnd(12)} ${w.cls==='gnd'?'접지':w.cls==='phase'?'모터상':'전원'}${w.v!=null?' '+w.v+' V':''}  ${w.I.toFixed(2)} A${w.pk?` (피크 ${w.pk.I} A ${w.pk.t} s → +${w.riseP} °C)`:''} → 권장 ${w.ipc} mm${w.by==='peak'?' [피크 기준]':''}${w.pour?' (동박면)':''}${w.manual?` · 지정 ${w.w} mm`:''}${w.manualI?' · 전류 지정':''}${w.loads.length?'  ← '+w.loads.slice(0,3).join(', '):''}`));
   const sig=Object.values(W).filter(w=>w.cls==='sig').length;L.push(`  신호 넷 ${sig}개: 0.02 A → 0.2 mm`);return L.join('\n');}
-return{viaRise,viaCheck,planeCheck,ipcWidth,ipcCurrent,ipcRise,peakRise,needWidth,partLoad,railV,isRail,isPhase,netCurrents,widths,check,text,LOADS};
+return{ipc2152Width,ipc2152Rise,mods2152,area2152,wFor,riseFor,env,profile,budget,viaRise,viaCheck,planeCheck,ipcWidth,ipcCurrent,ipcRise,peakRise,needWidth,partLoad,railV,isRail,isPhase,netCurrents,widths,check,text,LOADS};
 })();
 
 
@@ -12907,7 +12963,7 @@ async function routeJob(B,a,ui){
       for(const [list,extra] of [[pw1,avL.length?{innerCost:30,avoid:avL,avoidCost:6}:{innerCost:30}],[st1,{netBottom:undefined,avoid:avB,avoidCost:6}]]){if(!list.length)continue;const it1=AUTOROUTE.jobRR(B,list,Object.assign({width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6},extra));
       for(;;){const q=it1.next();if(q.done)break;if(ui.stopped())break;}}PCBEDIT.rebuildNets(B);}
     const SS=AUTOROUTE.shapesOfBoard(B);const R=PW.rect;const inR=s=>{const x=s.k==='cap'?(s.a[0]+s.b[0])/2:s.x,y=s.k==='cap'?(s.a[1]+s.b[1])/2:s.y;return x>=R[0]-1&&x<=R[2]+1&&y>=R[1]-1&&y<=R[3]+1;};
-    const NLc=PCB.cuKeys(B).length;avoid=PW.route.map(n=>({net:n,r:Math.min(4,PW.need[n]/2),layers:ml?[0,NLc-1]:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
+    const NLc=PCB.cuKeys(B).length;avoid=PW.route.map(n=>({net:n,r:Math.min(4,(WW[n].ipcFull||PW.need[n])/2),layers:ml?[0,NLc-1]:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
     // output lanes (ECU connector H-bridge / inverter): other nets — the other outputs' straps included — stay out of a lane on
     // both outer layers, so a strap routed diagonally to its contact cannot cut the neighbouring lane's fill in two
     if(a['lane-avoid'])(B.powerLanes||[]).forEach(c=>{if(!B.nets[c.net])return;const b=c.rect;avoid.push({net:c.net,r:0.2,layers:ml?[0,NLc-1]:[0],shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L:ml?[0,NLc-1]:[0]}]});});
@@ -13022,7 +13078,7 @@ function powerFill(B,WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.p
   const BP1=AUTOROUTE.bottleneckPrep(B);const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return;const need=WW[n].ipc!=null?WW[n].ipc:CURRENT.ipcWidth(WW[n].I,{oz,dT});const pk=WW[n].pk||null;
     const bs=layers.map(l=>AUTOROUTE.bottleneck(B,n,{layer:l,proj:l!==0,P:BP1}));const dir=bs[0].terms.length>=2&&!bs[0].open&&bs[0].width==null;
     const ws=bs.map(b=>b.width!=null&&!b.open?b.width:0);const eff=+ws.reduce((x,y)=>x+y,0).toFixed(2);
-    rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,layers:ws,open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.ipcRise(eff,WW[n].I,{oz}):null,pk:pk?{I:pk.I,t:pk.t,rise:!dir&&eff?CURRENT.peakRise(eff,pk.I,pk.t,{oz,tb:B.t}):null}:null,by:WW[n].by,terms:bs[0].terms});});
+    rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,layers:ws,open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.riseFor(eff,WW[n].I,CURRENT.env(B,{oz,dT})):null,pk:pk?{I:pk.I,t:pk.t,rise:!dir&&eff?CURRENT.peakRise(eff,pk.I,pk.t,{oz,tb:B.t}):null}:null,by:WW[n].by,terms:bs[0].terms});});
   const area={};fs.forEach((f,i)=>f.area.forEach(x=>{area[x.net]=(area[x.net]||0)+x.mm2;}));
   // vias at each power terminal (current changing layers) and the inner planes, at the continuous and the peak current
   const Ic={},Pk={};hi.forEach(n=>{Ic[n]=WW[n].I;if(WW[n].pk)Pk[n]=WW[n].pk;});// share of a net's current that has to change layers at a terminal: top + bottom copper in parallel → the bottom share; a plane net
@@ -13047,7 +13103,7 @@ function powerFill(B,WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.p
     farm+=rim;}const PC=ml&&CURRENT.planeCheck?CURRENT.planeCheck(B,{I:Ic,pk:Pk}):[];
   B.powerReport={oz,dT,nets:rep,fill:area,vias:fs.reduce((a,f)=>a+f.vias,0)+tb+pv-pr.vias,padVias:pv,pruned:pr,planes:[...PW.planes],viaChk:VC,planeChk:PC,viaFarm:farm,viaRim:rim,at:Date.now()};
   const bad=rep.filter(x=>!x.ok);const vworst={};VC.forEach(v=>{const w=vworst[v.net];if(!w||(!v.ok&&w.ok)||(v.ok===w.ok&&(v.rise+v.riseP)>(w.rise+w.riseP)))vworst[v.net]=v;});const vbad=VC.filter(v=>!v.ok);
-  return`전력 동박(${oz} oz · 상시 ΔT ${dT} °C${Object.keys(B.netPeak||{}).length?` · 피크 ΔT ${B.dTpk||40} °C`:''} · ${ml?'위·아래층':'위층'}${PW.planes.size?' · 평면 '+[...PW.planes].join(', '):''}): ${Object.entries(area).map(([n,a])=>n+' '+a.toFixed(0)+' mm²').join(' · ')} · 스티칭 비아 ${B.powerReport.vias}개 (패드 안 ${pv})${pr.fills?` · 고립 동박 ${pr.fills}조각 제거`:''}${refan?` · 아래층 패드 평면 비아 ${refan}개`:''}\n`+
+  return`전력 동박(${B.ipcStd==='2152'?'IPC-2152 · ':''}${oz} oz · 상시 ΔT ${dT} °C${B.tamb!=null?` · 주위 ${B.tamb} °C`:''}${Object.keys(B.netPeak||{}).length?` · 피크 ΔT ${B.dTpk||40} °C`:''} · ${ml?'위·아래층':'위층'}${PW.planes.size?' · 평면 '+[...PW.planes].join(', '):''}): ${Object.entries(area).map(([n,a])=>n+' '+a.toFixed(0)+' mm²').join(' · ')} · 스티칭 비아 ${B.powerReport.vias}개 (패드 안 ${pv})${pr.fills?` · 고립 동박 ${pr.fills}조각 제거`:''}${refan?` · 아래층 패드 평면 비아 ${refan}개`:''}\n`+
     rep.map(x=>`  ${x.ok?'✓':'✕'} ${x.net} 상시 ${x.I} A${x.pk?` · 피크 ${x.pk.I} A ${x.pk.t} s`:''} — 유효 폭 ${typeof x.width==='string'?x.width:x.width+' mm'+(x.layers&&x.layers.length>1?` (위 ${x.layers[0]} + 아래 ${x.layers[1]})`:'')}${x.open?' (위층 단자 사이 끊김)':''} / 필요 ${x.need} mm${x.by==='peak'?' (피크 기준)':''}${x.rise!=null?` → 상시 +${Math.min(999,x.rise)} °C`:''}${x.pk&&x.pk.rise!=null?` · 피크 끝 +${Math.min(999,+(x.rise+x.pk.rise).toFixed(1))} °C (한도 ${B.dTpk||40})`:''}`).join('\n')+
     (PC.length?'\n  내층 평면 (1 oz · 단면 ≈ 보드 짧은 변 ½ × 층 수): '+PC.map(x=>`${x.ok?'✓':'✕'} ${x.net} ${x.layers}층 ${x.w} mm — 상시 +${x.rise} °C${x.pk?` · 피크 끝 +${+(x.rise+x.riseP).toFixed(1)} °C`:''}`).join(' · '):'')+
     (Object.keys(vworst).length?`\n  단자 비아 (층을 바꾸는 몫 · 가장 나쁜 단자, 도금 25 µm${farm?` · 부족한 단자에 0.6/0.3 mm 비아 ${farm}개 추가${rim?` (그중 ${rim}개는 패드 테두리 · 안쪽)`:''}`:''}): `+Object.values(vworst).map(v=>v.lead?`✓ ${v.net} ${v.ref} 관통 리드`:v.n?`${v.ok?'✓':'✕'} ${v.net} ${v.ref} ${v.n}개${v.th?`(관통 ${v.th})`:''} ⌀${v.drill} · 몫 ${Math.round(v.share*100)}% — ${v.Iv} A/개 +${v.rise} °C${v.Ivpk!=null?` · 피크 ${v.Ivpk} A/개 끝 +${+(v.rise+v.riseP).toFixed(1)} °C`:''}`:`✕ ${v.net} ${v.ref} 비아 없음`).join(' · '):'')+
@@ -14346,7 +14402,7 @@ function boardFromSnap(S){const m=S.meta;const prof=PRODUCTS.detect(m.profile);c
   const R=PRODUCTS.apply(prof,ans,m.profile);
   // the snapshot's motor-stage settings go into the diagram too, so a later edit that regenerates the plan keeps them
   (R.arch.blocks||[]).forEach(b=>(b.impl||[]).forEach(im=>{if(im.type==='gdrv3')im.params=Object.assign({},im.params,{driver:m.driver||'IR2104'},m.gdrv3||{});}));
-  const plan=HWARCH.toPlan(R.arch).plan;plan.ifaceFix=m.ifaceFix===true;plan.rstFix=m.rstFix===true;if(m.pwrIn){const pi=plan.blocks.find(b=>b.type==='pwr_in');if(pi)pi.params=Object.assign({},pi.params,m.pwrIn);}const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'},m.gdrv3||{});(m.params||[]).forEach(t=>{const q=String(t).match(/^([\w]+)\.([\w]+)=(.*)$/);if(q)plan.blocks.filter(b=>b.type===q[1]||b.id===q[1]).forEach(b=>{b.params=Object.assign({},b.params,{[q[2]]:q[3]});});});(m.add||[]).forEach(t=>NEWPROJ.addBlock(plan,t,{}));plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
+  const plan=HWARCH.toPlan(R.arch).plan;plan.ifaceFix=m.ifaceFix===true;plan.rstFix=m.rstFix===true;plan.curModel=m.curModel===2?2:1;if(m.pcb)plan.pcb=Object.assign({},plan.pcb,m.pcb);if(m.pwrIn){const pi=plan.blocks.find(b=>b.type==='pwr_in');if(pi)pi.params=Object.assign({},pi.params,m.pwrIn);}const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'},m.gdrv3||{});(m.params||[]).forEach(t=>{const q=String(t).match(/^([\w]+)\.([\w]+)=(.*)$/);if(q)plan.blocks.filter(b=>b.type===q[1]||b.id===q[1]).forEach(b=>{b.params=Object.assign({},b.params,{[q[2]]:q[3]});});});(m.add||[]).forEach(t=>NEWPROJ.addBlock(plan,t,{}));plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
   const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+m.profile.toLowerCase().replace(/\s+/g,'-')+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch:R.arch};}
 const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C],dadu8d:['Dadu A4911 상시 10 A · 피크 40 A · 90 × 60',()=>SNAP_DADU8D],eld6:['ELD only A4911 H-브리지 7 A / 20 A · 80 × 55',()=>SNAP_ELD6],dadu8e:['Dadu ECU 커넥터 · DRV8334 · 10 A / 30 A · 100 × 70',()=>SNAP_DADU8E]};
 function loadSnapExample(which){const r=boardFromSnap(SNAP_EXAMPLES[which][1]());
@@ -17500,7 +17556,7 @@ const CLI_HELP=[
   ['diag','배선 진단: 남은 연결마다 양 끝 핀, 통로를 막는 넷(층) · 부품, 핀 주변 혼잡, MCU 핀 교환 후보, 전류 폭 · 비아 미달'],
   ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90] [--dir 1.5] [--mst] [--gloss] [--par auto|N|0]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔 · --mst: 다핀 넷을 MST 순서(짧은 핀 쌍부터)로 — 기본 끔(실측 효과 미미) · --dir N: 층별 선호 방향(홀수 신호층 수평·짝수 수직, 역방향 N배 비용 — 기본 끔, DCM-10A 실측에서 비아 +25%): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
-  ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
+  ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10] [--tamb 85 [--tmax 105 --tmaxpk 125]] [--std 2221|2152 [--plane mm]]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 (--tamb 주위 온도에서 허용 온도 상승 계산 · --std 2152 는 IPC-2152: 플레인 거리 · 보드 두께 반영) · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
   ['gloss [--passes 1] [--via 3] [--all] [--par auto|N|0]','사후 최적화: 넷을 하나씩 다른 넷은 고정한 채 비아 비용 3배로 다시 깔아 비아가 줄거나(같으면 길이가 줄면) 채택 · DRC·연결 악화 시 되돌림. route --gloss 로 배선에 이어 실행'],
   ['fix [--maxgrow 1.5] [--maxlayers 6] [--no-grow] [--no-layers] [--pinswap]','미배선 자동 개선: 비용이 적은 순서로 시도하고 다 배선되면 멈춤 — ① 전부 다시 배선(짧은 넷 먼저) ② 다른 시드로 재배치 ③ 다른 전략 ④ 보드 10·20·35·50% 키움 ⑤ 층 늘림(2→4→6) ⑥ (--pinswap) MCU 핀 재배정. 가장 좋은 결과를 남기고 한 번에 되돌리기. autofix on|off: 배선 뒤 미배선이 남으면 자동 실행(기본 켬)'],
@@ -17927,6 +17983,8 @@ async function cliRun(line,quiet,by){
     case 'diag':return ROUTEDIAG.text(ROUTEDIAG.diagnose(BD));
     case 'unroute':return cliUnroute();
     case 'width':{if(typeof CURRENT==='undefined')throw new Error('전류 모듈 없음');if(a.oz){BD.oz=Math.max(0.5,+a.oz);}if(a.dt){BD.dT=Math.max(5,+a.dt);}
+      if(a.std!=null){if(!/^(2221|2152)$/.test(String(a.std)))throw new Error('width --std 2221|2152');if(String(a.std)==='2152')BD.ipcStd='2152';else delete BD.ipcStd;}if(a.plane!=null){if(+a.plane>0)BD.planeDist=+a.plane;else delete BD.planeDist;}
+      if(a.tamb!=null){const bg=CURRENT.budget(+a.tamb,a.tmax,a.tmaxpk);BD.tamb=+a.tamb;BD.dT=bg.dT;BD.dTpk=bg.dTpk;cliSay('out',`주위 ${a.tamb} °C · 기판 한계 ${bg.tmax} / ${bg.tmaxpk} °C → 허용 온도 상승 상시 ${bg.dT} °C · 피크 ${bg.dTpk} °C${bg.tight?' (여유가 거의 없음 — 최소값으로 제한)':''}`);}
       const net=a._[0];if(net){const key=cliNetFind(net);if(!key)throw new Error('넷 '+net+' 없음'+cliNetHint(net));
         BD.netWidth=BD.netWidth||{};BD.netCurrent=BD.netCurrent||{};
         if(a.current!=null){BD.netCurrent[key]=+a.current;delete BD.netWidth[key];}
@@ -18496,7 +18554,7 @@ const NP_HELP=[
   ['set pwr_in ign 1 · uvlo auto|6 · tvs loaddump','입력단 옵션: IGN(KL15) 감지 → MCU 웨이크업 · 저전압 차단(벅 EN 분압) · 로드덤프 TVS (말로: "IGN 추가", "저전압 차단 6V", "로드덤프 보호")'],
   ['add <블록> [--파라미터 값]','블록 추가 (예: add led --n 3 --color 빨강, add ldo --vout 5, add pwr_in --vin 24)'],
   ['set <블록ID> <파라미터> <값> · remove <블록ID>','블록 수정·삭제 (ID는 plan에 표시)'],['mcu <stm32|tc364>','MCU 바꾸기'],
-  ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
+  ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · board thermal [--tamb 85] [--std 2221|2152] · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 주위 온도 · 전류 폭 기준(board thermal) · 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
   ['diagram','시스템 다이어그램을 글로 (블록 · 전원 레일 · MCU 신호 · 외부 연결)'],
   ['cands [블록] [순위|MPN]','블록의 주요 소자 후보를 요구사항 기준 순위로 (사양·ASIL·차량용 등급·단가·핀 데이터) · 순위나 MPN을 주면 지정. 오른쪽 선택 패널의 표와 같음'],
   ['check [--fix]','회로 생성 전 점검: 구현(impl) 없는 블록 · 전원 레일 미연결 · MCU 미연결 · 고립 블록 · 고른 부품의 핀 확인(Claude 추정 핀 · 기록만 되고 회로에 안 들어간 부품 · 데이터시트 요약 초안)을 고치는 명령과 함께 (--fix: 이름으로 추측한 구현을 자동 지정). [다음: 회로 생성] 때 자동 실행'],
@@ -18620,6 +18678,8 @@ async function npRun(line,by){
       const live=()=>BD&&!BD.pcbPending&&BD.newPlan?'\n지금 보드는 이미 PCB가 배치돼 있습니다. 3단계 배치·배선 CLI에서 같은 명령(board layers / board minimize --route)을 실행하면 바로 바뀝니다.':(BD&&BD.pcbPending?(BD.pcbPlan=Object.assign(BD.pcbPlan||{},P.pcb,P.board?{board:{w:P.board.w,h:P.board.h}}:{}),''):'');
       if(s0==='layers'||s0==='layer'){const n=+a._[1];if(!PCB.STACKS[n])throw new Error('board layers <2|4|6|8|10>');P.pcb.layers=n;npRender();return`PCB 조건: ${n}층 (${PCB.STACKS[n].map(x=>x==='sig'?'S':x==='gnd'?'GND':'PWR').join('·')}) — 3단계 PCB 시작 때 적용`+live();}
       if(/^(min|minimize|minimise|최소|최소화)$/.test(s0)){P.board=null;P.pcb.min=true;npRender();return'PCB 조건: 보드 크기 최소화 — 3단계에서 부품이 들어가고 배선되는 가장 작은 크기를 찾습니다.'+live();}
+      if(/^(thermal|temp|열|온도)$/.test(s0)){if(a.tamb!=null)P.pcb.tamb=+a.tamb;if(a.tmax!=null)P.pcb.tmax=+a.tmax;if(a.tmaxpk!=null)P.pcb.tmaxpk=+a.tmaxpk;if(a.std!=null){if(!/^(2221|2152)$/.test(String(a.std)))throw new Error('board thermal --std 2221|2152');P.pcb.std=String(a.std);}if(a.plane!=null)P.pcb.plane=+a.plane;npRender();
+        const bg=P.pcb.tamb!=null&&typeof CURRENT!=='undefined'?CURRENT.budget(P.pcb.tamb,P.pcb.tmax,P.pcb.tmaxpk):null;return`PCB 조건: ${bg?`주위 ${P.pcb.tamb} °C → 허용 온도 상승 상시 ${bg.dT} °C · 피크 ${bg.dTpk} °C`:'주위 온도 미지정 (모터 보드 ΔT 20 / 40 °C)'} · 전류 폭 기준 IPC-${P.pcb.std||'2221'}${P.pcb.plane?` · 플레인 ${P.pcb.plane} mm`:''} — 회로 생성 때 적용`;}
       if(s0==='route'){P.pcb.route=!/^(off|0|false|no)$/i.test(a._[1]||'on');npRender();return`PCB 조건: 자동 배선 ${P.pcb.route?'켬':'끔'}`;}
       if(a._[0]==='auto'||!a._.length){P.board=null;P.pcb.min=false;}else{let w=+a._[0],h=+a._[1];if(!h&&/x|×/i.test(a._[0])){[w,h]=a._[0].split(/x|×/i).map(Number);}if(!(w>=20&&h>=20))throw new Error('board <가로> <세로> (mm, 20 이상) 또는 board auto');P.board={w,h};P.pcb.min=false;}npRender();return(P.board?`보드 ${P.board.w} × ${P.board.h} mm`:'보드 크기 자동')+' — 3단계 PCB 시작 때 적용';}
     case'strategy':{const k=AUTOPLACE.strategy(a._[0]);if(!k)throw new Error('balanced · thermal · noise · compact');npPush();npEnsure().strategy=k;npRender();return'배치 전략 '+k;}

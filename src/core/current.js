@@ -1,4 +1,4 @@
-/* ---------- net current estimate → IPC-2221 track width ----------
+/* ---------- net current estimate → IPC-2221 / IPC-2152 track width ----------
    Which net carries how much current is read off the board: rails by name/voltage, the parts on them (regulators,
    drivers, MCU, transceivers, LEDs …) by part number or description, motor phases by name. Widths follow IPC-2221
    (external / internal layers, copper weight, allowed temperature rise). Rough early-design numbers: a load table,
@@ -10,6 +10,42 @@ function ipcWidth(I,o){o=o||{};const k=o.inner?0.024:0.048,dT=o.dT||10,oz=o.oz||
   const A=Math.pow(I/(k*Math.pow(dT,0.44)),1/0.725);const wMil=A/(1.378*oz);return +(wMil*0.0254).toFixed(2);}
 function ipcCurrent(w,o){o=o||{};const k=o.inner?0.024:0.048,dT=o.dT||10,oz=o.oz||1;const A=(w/0.0254)*1.378*oz;return +(k*Math.pow(dT,0.44)*Math.pow(A,0.725)).toFixed(2);}
 function ipcRise(w,I,o){o=o||{};const k=o.inner?0.024:0.048,oz=o.oz||1;if(!(w>0)||!(I>0))return 0;const A=(w/0.0254)*1.378*oz;return +Math.pow(I/(k*Math.pow(A,0.725)),1/0.44).toFixed(1);}
+/* ---- IPC-2152: universal chart (still air, no plane, 70 mil FR-4, 3 oz) × modifiers ----
+   Curve fits of the IPC-2152 charts as published with the open NinjaCalc calculator (mbedded.ninja): unadjusted area [mil²] =
+   (I / (a·ΔT^b))^(1/(c·ΔT^d)); × copper-weight modifier (5th-order polynomial in the current, coefficients cubic in oz; 3 oz = 1) ×
+   board-thickness modifier 24.93·t[mil]^−0.755 × plane modifier 0.00313·d[mil] + 0.4045 (a copper plane d away; none = 1) ×
+   conductivity modifier −1.421·k[BTU/(ft·h·°F)] + 1.196. Chart ranges: 0.5–3 oz, board 0.72–2.36 mm, plane 0.144–2.4 mm,
+   k 0.18–0.34 W/m·K; inputs are clamped to them and the copper-weight polynomial is not evaluated past 30 A (it diverges).
+   Inner and outer layers share the chart. Without a plane it asks for about 2.6× the IPC-2221 outer area at 20 A — the
+   IPC-2221 outer chart is the optimistic one; with a plane 0.15–0.25 mm away the two come out close. */
+const TM=[[9.8453567795e-1,-2.2281787548e-1,2.0061423196e-1,-4.1541116264e-2],[-1.657194921e-2,1.7520059279e-4,-5.0615234096e-3,2.281483634e-3],[8.8711317661e-4,1.3631745743e-3,-2.237330971e-4,-1.0974218613e-4],[-6.6729255031e-6,-1.4976736827e-4,5.8082340133e-5,-2.4728159584e-6],[-7.9576264561e-7,5.5788354958e-6,-2.4912026388e-6,2.4000295954e-7],[1.6619678738e-8,-7.1122635445e-8,3.3800191741e-8,-3.9797591878e-9]];
+const clampN=(x,a,b)=>Math.min(b,Math.max(a,x));
+function mods2152(I,o){o=o||{};const oz=clampN(o.oz||1,0.5,3),Ic=clampN(I,0.1,30);const tm=oz>=3?1:clampN(TM.reduce((a,r,i)=>a+r.reduce((b,c,j)=>b+c*Math.pow(oz,j),0)*Math.pow(Ic,i),0),0.7,1);
+  const bm=24.929779905*Math.pow(clampN(o.tb||1.6,0.72,2.36)/0.0254,-0.75501997929);const pm=o.plane>0?0.0031298662911*clampN(o.plane,0.144,2.4)/0.0254+0.40450883823:1;
+  const km=-1.4210148167*clampN(o.k||0.25,0.18,0.34)/1.730735+1.1958174134;return{t:+tm.toFixed(3),board:+bm.toFixed(3),plane:+pm.toFixed(3),k:+km.toFixed(3),all:tm*bm*pm*km};}
+function area2152(I,dT){return Math.pow(I/(8.9710902134e-2*Math.pow(dT,3.9379253898e-1)),1/(5.0382053698e-1*Math.pow(dT,3.8495772461e-2)));} // mil², unadjusted
+function ipc2152Width(I,o){o=o||{};if(!(I>0))return 0;const dT=o.dT||10,oz=o.oz||1;const A=area2152(I,dT)*mods2152(I,o).all;return +(A/(1.378*oz)*0.0254).toFixed(2);}
+function ipc2152Rise(w,I,o){o=o||{};if(!(w>0)||!(I>0))return 0;let lo=0.2,hi=400;if(ipc2152Width(I,Object.assign({},o,{dT:hi}))>w)return hi;if(ipc2152Width(I,Object.assign({},o,{dT:lo}))<=w)return lo;
+  for(let k=0;k<40;k++){const m=Math.sqrt(lo*hi);if(ipc2152Width(I,Object.assign({},o,{dT:m}))<=w)hi=m;else lo=m;}return +hi.toFixed(1);}
+/* one entry for both standards: o.std '2152' → IPC-2152 with o.tb / o.plane / o.k, anything else → IPC-2221 (o.inner) */
+function wFor(I,o){return o&&o.std==='2152'?ipc2152Width(I,o):ipcWidth(I,o);}
+function riseFor(w,I,o){return o&&o.std==='2152'?ipc2152Rise(w,I,o):ipcRise(w,I,o);}
+/* the board's conditions: copper weight, allowed rises, standard, board thickness, distance to the nearest plane (inner planes
+   spread evenly through the board unless B.planeDist says otherwise; a 2-layer board has none) */
+function env(B,opt){opt=opt||{};const NL=B.copperLayers||(B.stack?B.stack.length:2)||2;const std=opt.std||B.ipcStd||'2221';
+  const plane=B.planeDist>0?+B.planeDist:(NL>2&&(B.stack||[]).some(x=>x.net&&x.role!=='sig')?(B.t||1.6)/(NL-1):0);
+  return{std,oz:opt.oz||B.oz||1,dT:opt.dT||B.dT||10,dTpk:opt.dTpk||B.dTpk||40,tb:B.t||1.6,plane:std==='2152'?plane:0,k:B.kFr4||0.25};}
+/* ---- current profile ----
+   A load is a continuous current plus peaks "I@t/T" (I amps for t seconds every T seconds; no /T = a single event), e.g.
+   "40@2/30, 60@0.1". Copper heats with I², so what the steady-state chart needs is the RMS over the cycle:
+   Irms² = Icont²·(1 − Σ t/T) + Σ I²·t/T. Every peak is still checked on its own for the rise during the peak. */
+function profile(I,str,main){const pk=[];if(main&&main.I>I&&main.t>0)pk.push({I:+main.I,t:+main.t,T:+main.T>0?+main.T:0});
+  String(str||'').split(/[,;]/).forEach(x=>{const m=x.trim().match(/^(\d+(?:\.\d+)?)\s*A?\s*@\s*(\d+(?:\.\d+)?)\s*(ms|s)?\s*(?:\/\s*(\d+(?:\.\d+)?)\s*(ms|s)?)?$/i);if(!m)return;
+    const t=+m[2]*(/^ms$/i.test(m[3]||'')?1e-3:1),T=m[4]?+m[4]*(/^ms$/i.test(m[5]||'')?1e-3:1):0;if(+m[1]>0&&t>0)pk.push({I:+m[1],t,T:T>t?T:0});});
+  let d=0,q=0;pk.forEach(x=>{if(x.T>0&&x.I>I){d+=x.t/x.T;q+=x.I*x.I*x.t/x.T;}});d=Math.min(1,d);const rms=Math.sqrt(I*I*(1-d)+q);
+  return{I,rms:+rms.toFixed(2),duty:+d.toFixed(3),peaks:pk.filter(x=>x.I>I).sort((a,b)=>b.I-a.I)};}
+/* allowed rises from the ambient and the board's limits: steady = tmax − tamb, during a peak = tmaxpk − tamb (FR-4: 105 / 125 °C) */
+function budget(tamb,tmax,tmaxpk){tamb=+tamb;tmax=+tmax||105;tmaxpk=+tmaxpk||Math.max(tmax,125);const dT=tmax-tamb,dTpk=tmaxpk-tamb;return{dT:Math.max(5,+dT.toFixed(1)),dTpk:Math.max(10,+dTpk.toFixed(1)),tight:dT<5||dTpk<10,tamb,tmax,tmaxpk};}
 /* ---- peak current for a few seconds (start · stall · overload) ----
    Temperature rise of a conductor (total width w mm, outer copper oz) carrying Ipk for t seconds: copper heats with almost no
    time to shed it, so the rise is set by heat capacity, not by the IPC steady-state chart. Joule heat I²ρ/A per length goes into
@@ -18,11 +54,12 @@ function ipcRise(w,I,o){o=o||{};const k=o.inner?0.024:0.048,oz=o.oz||1;if(!(w>0)
 function peakRise(w,Ipk,t,o){o=o||{};if(!(w>0)||!(Ipk>0)||!(t>0))return 0;const oz=o.oz||1,tb=(o.tb||1.6)*1e-3;const W=w*1e-3,A=W*35e-6*oz;
   const d=Math.min(0.886*Math.sqrt(1.5e-7*t),tb/2);/* effective depth of a semi-infinite solid under constant flux: √(π·α·t)/2 */const C=A*3.45e6+W*d*2.0e6;return +(Ipk*Ipk*1.72e-8*t/(A*C)).toFixed(1);}
 /* width for a continuous current I (IPC rise ≤ dT) that also keeps continuous rise + peak rise ≤ dTpk while Ipk flows for t s */
-function needWidth(I,pk,o){o=o||{};const oz=o.oz||1,dT=o.dT||10,dTpk=o.dTpk||40;const w0=ipcWidth(I,{oz,dT});
-  if(!pk||!(pk.I>I))return{w:w0,by:'cont',rise:I>0?ipcRise(w0,I,{oz}):0,riseP:0};
-  const tot=w=>(I>0?ipcRise(w,I,{oz}):0)+peakRise(w,pk.I,pk.t,{oz,tb:o.tb});
-  let lo=Math.max(0.05,w0),hi=Math.max(lo,ipcWidth(pk.I,{oz,dT:Math.min(dT,dTpk)}))*1.5;if(tot(lo)<=dTpk)return{w:lo,by:'cont',rise:ipcRise(lo,I,{oz}),riseP:peakRise(lo,pk.I,pk.t,{oz,tb:o.tb})};
-  for(let k=0;k<40;k++){const m=(lo+hi)/2;if(tot(m)<=dTpk)hi=m;else lo=m;}const w=+hi.toFixed(2);return{w,by:'peak',rise:I>0?ipcRise(w,I,{oz}):0,riseP:peakRise(w,pk.I,pk.t,{oz,tb:o.tb})};}
+function needWidth(I,pk,o){o=o||{};const oz=o.oz||1,dT=o.dT||10,dTpk=o.dTpk||40;const e=Object.assign({},o,{oz,dT});const w0=wFor(I,e);
+  const pks=(pk?[pk].concat(pk.more||[]):[]).filter(x=>x&&x.I>I&&x.t>0);
+  if(!pks.length)return{w:w0,by:'cont',rise:I>0?riseFor(w0,I,e):0,riseP:0};
+  const rp=w=>Math.max(...pks.map(x=>peakRise(w,x.I,x.t,{oz,tb:o.tb})));const tot=w=>(I>0?riseFor(w,I,e):0)+rp(w);
+  let lo=Math.max(0.05,w0),hi=Math.max(lo,ipcWidth(pks[0].I,{oz,dT:Math.min(dT,dTpk)}),wFor(pks[0].I,Object.assign({},e,{dT:Math.min(dT,dTpk)})))*1.5;if(tot(lo)<=dTpk)return{w:lo,by:'cont',rise:riseFor(lo,I,e),riseP:rp(lo)};
+  for(let k=0;k<40;k++){const m=(lo+hi)/2;if(tot(m)<=dTpk)hi=m;else lo=m;}const w=+hi.toFixed(2);return{w,by:'peak',rise:I>0?riseFor(w,I,e):0,riseP:rp(w)};}
 /* ---- vias carrying power current ----
    A plated via is a copper tube: width π·drill, thickness = plating (25 µm ≈ 0.71 oz). Its rise follows the same rules as a track
    (IPC-2221 outer chart — what common via calculators use) plus the peak rise for the peak current over its duration.
@@ -41,8 +78,10 @@ function viaCheck(B,o){o=o||{};const r=o.r!=null?o.r:2.5,dT=o.dT||B.dT||10,dTpk=
   // without circuit tags: FETs, milliohm shunts and big-pad connectors
   const tagged=B.comps.some(c=>c.lk);const isTerm=c=>/^J\d/i.test(c.ref)&&(/전원 입력|모터|power|motor|battery|배터리/i.test(c.desc||'')||c.pads.some(p=>p.drill>=1.3));
   const power=c=>tagged?(!!c.lk||isTerm(c)||/^F\d/i.test(c.ref)):(/^Q\d/i.test(c.ref)||(/^R\d/i.test(c.ref)&&/[mµu]Ω|mohm/i.test(c.val||''))||isTerm(c)||/^F\d/i.test(c.ref));
-  (o.nets||[]).forEach(n=>{const I0=+((o.I||{})[n]||0);if(!(I0>0))return;const sh=o.share&&o.share[n]!=null?+o.share[n]:1;if(!(sh>0))return;const I=I0*sh;const pk0=(o.pk||{})[n]||null;const pk=pk0?{I:pk0.I*sh,t:pk0.t}:null;const vs=(B.vias||[]).filter(v=>v.net===n);
-    B.comps.filter(power).forEach(c=>{const ps=c.pads.filter(p=>p.net===n);if(!ps.length)return;
+  (o.nets||[]).forEach(n=>{const I0=+((o.I||{})[n]||0);if(!(I0>0))return;const sh=o.share&&o.share[n]!=null?+o.share[n]:1;if(!(sh>0))return;const pk0=(o.pk||{})[n]||null;const vs=(B.vias||[]).filter(v=>v.net===n);
+    B.comps.filter(power).forEach(c0=>{const ps=c0.pads.filter(p=>p.net===n);if(!ps.length)return;const c=c0;
+      // a bridge switch or shunt carries its own share of the net current (c.It / c.Itpk from the circuit: per-switch RMS, per parallel part)
+      const own=c.It>0&&c.Itx!==n;const I=own?Math.min(I0,c.It)*sh:I0*sh;const pk=pk0?{I:(own&&c.Itpk>0?Math.min(pk0.I,c.Itpk):pk0.I)*sh,t:pk0.t}:null;
       const th=ps.filter(p=>p.drill);const near=vs.filter(v=>ps.some(p=>inRect(v,p)));const nb=near.length+th.length;
       const dr=near.length?near.reduce((a,v)=>a+(v.drill||0.3),0)/near.length:th.reduce((a,p)=>a+(+p.drill),0)/th.length;
       if(!nb){out.push({net:n,ref:c.ref,n:0,I,ok:false,msg:'비아 없음'});return;}
@@ -101,20 +140,20 @@ function netCurrents(B,opt){opt=opt||{};const out={};const rails={};const Im=mot
   nets.forEach(n=>{const o=out[n];if(o.cls==='sig'&&!o.I)o.I=0.02;if(o.cls==='gnd'){o.I=Math.max(...Object.values(out).filter(x=>x.cls==='rail'||x.cls==='phase').map(x=>x.I),0);o.loads=['플레인/동박면 귀환 (모터 전류 포함)'];}});
   return out;}
 /* ---- widths per net, with the user's overrides (B.netWidth: net → mm, B.netCurrent: net → A) ---- */
-function widths(B,opt){opt=opt||{};const oz=opt.oz||B.oz||1,dT=opt.dT||10,cap=opt.cap||3;const cur=netCurrents(B,opt);const out={};const dTpk=opt.dTpk||B.dTpk||40;
-  Object.keys(cur).forEach(n=>{const c=cur[n];const I=B.netCurrent&&B.netCurrent[n]!=null?+B.netCurrent[n]:c.I;const pk=B.netPeak&&B.netPeak[n]||null;const nw=needWidth(I,pk,{oz,dT,dTpk,tb:B.t});const ipc=nw.w;
+function widths(B,opt){opt=opt||{};const E=env(B,{oz:opt.oz,dT:opt.dT||10,dTpk:opt.dTpk,std:opt.std});const oz=E.oz,dT=E.dT,dTpk=E.dTpk,cap=opt.cap||3;const cur=netCurrents(B,opt);const out={};
+  Object.keys(cur).forEach(n=>{const c=cur[n];const I=B.netCurrent&&B.netCurrent[n]!=null?+B.netCurrent[n]:c.I;const pk=B.netPeak&&B.netPeak[n]||null;const nw=needWidth(I,pk,E);const ipc=nw.w;
     let w=B.netWidth&&B.netWidth[n]!=null?+B.netWidth[n]:ipc;const min=c.cls==='rail'||c.cls==='phase'?0.3:0.2;w=Math.max(min,w);
-    out[n]={I:+I.toFixed(3),pk,by:nw.by,riseP:nw.riseP,cls:c.cls,v:c.v,ipc,w:+Math.min(cap,w).toFixed(2),pour:ipc>cap,loads:c.loads,manual:!!(B.netWidth&&B.netWidth[n]!=null),manualI:!!(B.netCurrent&&B.netCurrent[n]!=null)};});
+    const If=B.netCurrentFull&&+B.netCurrentFull[n]>I?+B.netCurrentFull[n]:0;out[n]={I:+I.toFixed(3),pk,std:E.std,full:If||undefined,ipcFull:If?needWidth(If,pk,E).w:undefined,by:nw.by,riseP:nw.riseP,cls:c.cls,v:c.v,ipc,w:+Math.min(cap,w).toFixed(2),pour:ipc>cap,loads:c.loads,manual:!!(B.netWidth&&B.netWidth[n]!=null),manualI:!!(B.netCurrent&&B.netCurrent[n]!=null)};});
   return out;}
 /* ---- check: routed tracks narrower than the current needs ---- */
 function check(B,opt){opt=opt||{};const W=widths(B,opt);const out=[];const keys=(typeof PCB!=='undefined'?PCB.cuKeys(B):['T','B']);
   Object.keys(W).forEach(n=>{const w=W[n];if(w.cls!=='rail'&&w.cls!=='phase'||w.I<0.5)return;let minW=null;keys.forEach(k=>(B.layers[k+'.cu']||[]).forEach(p=>{if(p.net!==n||!(p.t==='seg'||p.t==='path'))return;if(minW==null||p.w<minW)minW=p.w;}));
-    if(minW==null)return;const need=w.ipc;if(minW<need*0.85){const oz=opt.oz||1;const rise=ipcRise(minW,w.I,{oz});const rp=w.pk?peakRise(minW,w.pk.I,w.pk.t,{oz,tb:B.t}):0;out.push({net:n,I:w.I,w:minW,need,rise,riseP:rp,msg:`${n}: 트랙 ${minW} mm 에 ${w.I} A → 온도 상승 약 ${rise} °C${w.pk?` · 피크 ${w.pk.I} A ${w.pk.t} s 동안 +${rp} °C`:''} (권장 ${need} mm${w.by==='peak'?' — 피크 기준':''}${w.pour?' → 동박면 권장':''})`});}});
+    if(minW==null)return;const need=w.ipc;if(minW<need*0.85){const E=env(B,{oz:opt.oz,dT:opt.dT||10,std:opt.std});const oz=E.oz;const rise=riseFor(minW,w.I,E);const rp=w.pk?peakRise(minW,w.pk.I,w.pk.t,{oz,tb:B.t}):0;out.push({net:n,I:w.I,w:minW,need,rise,riseP:rp,msg:`${n}: 트랙 ${minW} mm 에 ${w.I} A → 온도 상승 약 ${rise} °C${w.pk?` · 피크 ${w.pk.I} A ${w.pk.t} s 동안 +${rp} °C`:''} (권장 ${need} mm${w.by==='peak'?' — 피크 기준':''}${w.pour?' → 동박면 권장':''})`});}});
   return out;}
 function text(B,opt){const W=widths(B,opt);const rows=Object.entries(W).filter(([n,w])=>w.cls!=='sig').sort((a,b)=>b[1].I-a[1].I);
-  const L=[`넷 전류 · 폭 (IPC-2221 상시, ${opt&&opt.oz||B.oz||1} oz, ΔT ${opt&&opt.dT||B.dT||10} °C · 피크는 ${B.dTpk||40} °C 이내) — 추정값`];
+  const E=env(B,opt||{});const L=[`넷 전류 · 폭 (${E.std==='2152'?`IPC-2152${E.plane?` · 플레인 ${E.plane.toFixed(2)} mm`:' · 플레인 없음'}`:'IPC-2221'} 상시, ${E.oz} oz, ΔT ${opt&&opt.dT||B.dT||10} °C · 피크는 ${B.dTpk||40} °C 이내${B.tamb!=null?` · 주위 ${B.tamb} °C`:''}) — 추정값`];
   rows.forEach(([n,w])=>L.push(`  ${n.padEnd(12)} ${w.cls==='gnd'?'접지':w.cls==='phase'?'모터상':'전원'}${w.v!=null?' '+w.v+' V':''}  ${w.I.toFixed(2)} A${w.pk?` (피크 ${w.pk.I} A ${w.pk.t} s → +${w.riseP} °C)`:''} → 권장 ${w.ipc} mm${w.by==='peak'?' [피크 기준]':''}${w.pour?' (동박면)':''}${w.manual?` · 지정 ${w.w} mm`:''}${w.manualI?' · 전류 지정':''}${w.loads.length?'  ← '+w.loads.slice(0,3).join(', '):''}`));
   const sig=Object.values(W).filter(w=>w.cls==='sig').length;L.push(`  신호 넷 ${sig}개: 0.02 A → 0.2 mm`);return L.join('\n');}
-return{viaRise,viaCheck,planeCheck,ipcWidth,ipcCurrent,ipcRise,peakRise,needWidth,partLoad,railV,isRail,isPhase,netCurrents,widths,check,text,LOADS};
+return{ipc2152Width,ipc2152Rise,mods2152,area2152,wFor,riseFor,env,profile,budget,viaRise,viaCheck,planeCheck,ipcWidth,ipcCurrent,ipcRise,peakRise,needWidth,partLoad,railV,isRail,isPhase,netCurrents,widths,check,text,LOADS};
 })();
 if(typeof module!=='undefined')module.exports=CURRENT;
