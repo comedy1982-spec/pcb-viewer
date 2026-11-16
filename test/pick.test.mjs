@@ -45,7 +45,7 @@ test('picked parts: CAN · NTC · LDO · ideal diode · smart high-side switch g
 });
 
 test('picked parts: no confirmed pins or unknown pin roles → library part and a warning', () => {
-  for (const [type, pick, re] of [['can', 'TJA1443AT', /TJA1443AT: 데이터시트로 확인된 핀 표가 없어/], ['hs_switch', 'TPS1HB16AQPWPRQ1', /ILIM/], ['ldo', 'LM317DCYR', /ADJ/]]) {
+  for (const [type, pick, re] of [['can', 'XCAN9999T', /XCAN9999T: 데이터시트로 확인된 핀 표가 없어/], ['hs_switch', 'TPS1HB16AQPWPRQ1', /ILIM/], ['ldo', 'LM317DCYR', /ADJ/]]) {
     const r = NEWPROJ.build(plan(type, pick));
     assert.ok(r.warn.some(w => re.test(w)), `${pick}: ${r.warn.join(' | ')}`);
     assert.ok(!r.parts.some(c => (c.mpn || '').startsWith(pick)), `${pick} not used`);

@@ -76,6 +76,8 @@ const LIB={
   ldo:{label:'LDO 레귤레이터',desc:'AMS1117 (SOT-223) · 입력/출력 10 µF',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},vout:{def:3.3,desc:'출력 전압 (3.3 · 5)'},iout:{def:'auto',desc:'예상 부하 전류 [A] (auto = 블록 합)'}},
     build(ctx,p){const vout=+p.vout;const out=railOf(vout);
       // other rails (9 V hall supply, 8 V, 12 V …): adjustable LM317 (40 V input) + 240 Ω / R2 divider, Vout = 1.25·(1 + R2/240)
+      // a picked adjustable LDO whose feedback voltage is on record (TPS7B86: 0.65 V) is built with its own FB divider
+      if(vout!==5&&vout!==3.3&&p.pick&&LDO_VFB.some(([re])=>re.test(p.pick))){const src=p.vin==='auto'?ctx.highest(vout+0.6):p.vin;ctx.provide(out,vout,'LDO');ctx.use(src);if(ldoPick(ctx,p,src,out,vout,true))return;}
       if(vout!==5&&vout!==3.3){const src=p.vin==='auto'?ctx.highest(vout+2):p.vin;ctx.provide(out,vout,'LDO');ctx.use(src);const adj=ctx.uniq('LDO_ADJ');
         const E24=[1,1.1,1.2,1.3,1.5,1.6,1.8,2,2.2,2.4,2.7,3,3.3,3.6,3.9,4.3,4.7,5.1,5.6,6.2,6.8,7.5,8.2,9.1];const r2x=240*(vout/1.25-1);const dec=Math.pow(10,Math.floor(Math.log10(r2x)));const r2=E24.map(e=>e*dec).concat([10*dec]).reduce((a,b)=>Math.abs(b-r2x)<Math.abs(a-r2x)?b:a);
         const fmt=r=>r>=1000?(+(r/1000).toFixed(2))+'kΩ':Math.round(r)+'Ω';const vr=1.25*(1+r2/240);
@@ -208,10 +210,42 @@ const LIB={
     build(ctx){ctx.use('+3V3');ctx.part('J','I²C','HDR-1x4',{1:'+3V3',2:'I2C_SDA',3:'I2C_SCL',4:'GND'},{mpn:'61300411121',desc:'I²C 확장 헤더',pinNames:{1:'3V3',2:'SDA',3:'SCL',4:'GND'}});
       ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:'I2C_SDA'},{desc:'SDA 풀업'});ctx.part('R','4.7kΩ','0603',{1:'+3V3',2:'I2C_SCL'},{desc:'SCL 풀업'});ctx.sig('I2C_SCL','i2c_scl','i2c');ctx.sig('I2C_SDA','i2c_sda','i2c');}},
   supervisor:{label:'전원 감시 + 외부 워치독',desc:'TPS3823 (SOT-23-5): VDD 감시 리셋 + WDI 윈도우 워치독 → MCU 리셋 · WDI는 MCU GPIO',params:{rail:{def:'+3V3',desc:'감시할 코어 레일'},wdt:{def:1,desc:'WDI 워치독 연결 (1/0)'}},
-    build(ctx,p){const rail=p.rail||'+3V3';ctx.use(rail);const rst=ctx.mcu()==='tc364'?'PORST':'NRST';
+    build(ctx,p){const rail=p.rail||'+3V3';ctx.use(rail);const rst=rstNet(ctx);
       // TPS3823 DBV pinout (datasheet · KiCad TPS3823-xxDBV): 1 RESET · 2 GND · 3 MR (unused → VDD) · 4 WDI · 5 VDD
       ctx.part('U','TPS3823-33','SOT-23-5',{1:rst,2:'GND',3:rail,4:+p.wdt?'WDI':'',5:rail},{mpn:'TPS3823-33DBVR',desc:'전원 감시 리셋 + 윈도우 워치독 (1.6 s)',pinNames:{1:'RESET',2:'GND',3:'MR',4:'WDI',5:'VDD'}});
       ctx.cap(rail,'100nF','감시 IC 디커플링');if(+p.wdt)ctx.sig('WDI','gpio_out');}},
+  // Infineon TLF35584 safety PMIC: step-down pre-regulator → µC LDO (QUC) · communication LDO (QCO 5 V) · reference (QVR 5 V) ·
+  // standby LDO (QST) · trackers, window/functional watchdog, reset (ROT), interrupt, error-pin monitor, safe-state outputs, SPI.
+  // Built without the optional step-up stage (battery ≥ 6 V): BSG / RSH / RSL / STU to GND, DRG open. External parts from the data sheet
+  // pin table and Infineon's support notes: 2.2 MHz → 4.7 µH + 10–47 µF, 400 kHz → 22 µH + 68–100 µF; 100 nF FB–PG; QST 2 × 1 µF;
+  // QUC 2.2–47 µF, QCO 1–47 µF, QVR 1–10 µF.
+  pmic:{label:'안전 PMIC (TLF35584)',desc:'TLF35584 (VQFN-48): 스텝다운 프리레귤레이터 + µC LDO 3.3 V/600 mA + 통신 LDO 5 V/200 mA + 기준 5 V + 스탠바이 LDO + 윈도 워치독 · 리셋 · 안전 상태 출력 · SPI',
+    params:{part:{def:'TLF35584QVVS2',desc:'TLF35584QVVS2 (µC 3.3 V) · TLF35584QVVS1 (µC 5 V)'},vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},freq:{def:'2.2M',desc:'스텝다운 주파수 2.2M (FRE 개방, 4.7 µH) · 400k (FRE = GND, 22 µH)'}},
+    build(ctx,p){const mpn=String(p.part||'TLF35584QVVS2');const rec=pickRec(mpn)||pickRec('TLF35584QVVS2');if(!rec)throw new Error('TLF35584 핀 표가 없습니다 (datasheets/pins.json)');
+      const src=p.vin==='auto'?ctx.highest(6):p.vin;ctx.use(src);const vuc=/VS1/i.test(mpn)?5:3.3;const quc=railOf(vuc),qco=vuc===5?'+5V_COM':'+5V';const lf=/400/.test(String(p.freq));
+      ctx.provide(quc,vuc,'PMIC');ctx.provide(qco,5,'PMIC');const pre=ctx.uniq('PMIC_PRE'),sw=ctx.uniq('PMIC_SW'),qvr=ctx.uniq('VREF_5V'),qst=ctx.uniq('VSTBY');ctx.provide(qvr,5,'PMIC');ctx.provide(qst,vuc,'PMIC');
+      const rst=rstNet(ctx);const qt1=ctx.uniq('PMIC_QT1'),qt2=ctx.uniq('PMIC_QT2');
+      const N={BSG:'GND',VST:src,ENA:'GND',WAK:'PMIC_WAK',QST:qst,AG1:'GND',AG2:'GND',AG3:'GND',AGS1:'GND',AGS2:'GND',SS1:'PMIC_SS1',SS2:'PMIC_SS2',SDI:'PMIC_SDI',SDO:'PMIC_SDO',SCL:'PMIC_SCL',SCS:'PMIC_SCS',WDI:'WDI',ROT:rst,INT:'PMIC_INT',SYN:'',ERR:'PMIC_ERR',EVC:'',
+        MPS:'GND',SEC:'GND',FRE:lf?'GND':'',STU:'GND',VCI:'GND',GST:'GND',QVR:qvr,QUC:quc,QCO:qco,QT1:qt1,QT2:qt2,FB1:pre,FB2:pre,PG1:'GND',PG2:'GND',SW1:sw,VS1:src,DRG:'',RSH:'GND',RSL:'GND'};
+      const pins={},names={};let ep=false;rec.pins.forEach(q=>{const num=String(q.num),nm=String(q.name||'').toUpperCase().replace(/[\s.]/g,'');if(/^EP\d$/.test(num))return; // corner pads: not soldered, not connected
+        if(/^(EP|PAD|TAB)$/.test(num)){ep=true;return;}names[num]=q.name;if(/^NC$/.test(nm))return;if(!(nm in N)){ctx.warn(`${rec.mpn}: 핀 ${q.name}의 역할을 몰라 개방으로 둡니다`);return;}if(N[nm])pins[num]=N[nm];});
+      const fp=(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')?FPGEN.ensure(PCB,'VQFN-48-EP',48):'QFN-48';if(ep){pins['49']='GND';names['49']='GND (쿨링 탭)';}
+      const u=ctx.part('U',rec.mpn,fp,pins,{mpn:rec.mpn,desc:`안전 PMIC ${rec.mpn}: 프리레귤레이터 ${lf?'400 kHz':'2.2 MHz'} → ${quc} ${vuc} V/600 mA (µC) · ${qco} 5 V/200 mA (통신) · ${qvr} 5 V 기준 · ${qst} 스탠바이 · 워치독 · 리셋 ${rst} · SS1/SS2 (입력 ${src}, 스텝업 미사용 — 배터리 6 V 이상)`,pinNames:names,P:0.6});
+      if(u)u.pmic={src,vmin:6,outs:[{out:quc,vout:vuc},{out:qco,vout:5},{out:qvr,vout:5},{out:qst,vout:vuc}],basis:'TLF35584 공급 6–40 V (스텝업 미사용), 기동 시 6.0 V 이상'};
+      ctx.part('L',lf?'22µH':'4.7µH','IND-5x5',{1:sw,2:pre},{mpn:lf?'SRN5040-220M':'SRN5040-4R7M',desc:`TLF35584 스텝다운 인덕터 (${lf?'400 kHz → 22 µH':'2.2 MHz → 4.7 µH'}, Infineon 지원 안내값 · 포화 전류는 부하로 확인)`,P:0.1});
+      ctx.part('C','22µF','1210',{1:pre,2:'GND'},{desc:`TLF35584 프리레귤레이터 출력 커패시터 (${lf?'400 kHz는 68–100 µF 필요 — 병렬 추가':'2.2 MHz: 10–47 µF'}, FB1/FB2에 저임피던스로)`});
+      if(lf){ctx.part('C','22µF','1210',{1:pre,2:'GND'},{desc:'TLF35584 프리레귤레이터 출력 커패시터 (병렬 2)'});ctx.part('C','22µF','1210',{1:pre,2:'GND'},{desc:'TLF35584 프리레귤레이터 출력 커패시터 (병렬 3)'});}
+      ctx.part('C','100nF','0603',{1:pre,2:'GND'},{desc:'TLF35584 FB1/FB2 – PG1/PG2 100 nF (핀 가까이)'});
+      ctx.cap(src,'10µF','TLF35584 VS1 입력 커패시터 (역접속 보호 뒤)');ctx.cap(src,'100nF','TLF35584 VS1 · VST 디커플링');
+      ctx.part('C','1µF','0603',{1:qst,2:'GND'},{desc:'TLF35584 QST 스탠바이 LDO 출력 (2 × 680 nF–1 µF 권장) 1'});ctx.part('C','1µF','0603',{1:qst,2:'GND'},{desc:'TLF35584 QST 스탠바이 LDO 출력 2'});
+      ctx.cap(quc,'10µF','TLF35584 QUC 출력 커패시터 (2.2–47 µF, ESR ≤ 200 mΩ)');ctx.part('C','4.7µF','0805',{1:qco,2:'GND'},{desc:'TLF35584 QCO 출력 커패시터 (1–47 µF, ESR ≤ 200 mΩ)'});
+      ctx.part('C','2.2µF','0603',{1:qvr,2:'GND'},{desc:'TLF35584 QVR 기준 출력 커패시터 (1–10 µF, ESR ≤ 200 mΩ)'});
+      ctx.part('C','2.2µF','0603',{1:qt1,2:'GND'},{desc:'TLF35584 트래커 1 출력 커패시터 (값은 데이터시트 확인 — 센서 전원으로 쓰면 이 넷에서)'});ctx.part('C','2.2µF','0603',{1:qt2,2:'GND'},{desc:'TLF35584 트래커 2 출력 커패시터 (값은 데이터시트 확인)'});
+      ctx.part('R','10kΩ','0603',{1:src,2:'PMIC_WAK'},{desc:'TLF35584 WAK — 배터리가 있으면 켜짐 (IWAK 한계 5 mA · 이그니션 신호로 켜려면 이 저항을 IGN으로)'});
+      ctx.sig('PMIC_SCL','spi_sck','spi');ctx.sig('PMIC_SDI','spi_mosi','spi');ctx.sig('PMIC_SDO','spi_miso','spi');ctx.sig('PMIC_SCS','gpio_out');ctx.sig('WDI','gpio_out');ctx.sig('PMIC_INT','irq_in');ctx.sig('PMIC_ERR','gpio_out');
+      ctx.warn(`${rec.mpn}: 스텝다운 스위치 노드에 외부 환류 다이오드를 넣지 않았습니다(전력 GND 핀 PG1/PG2가 있어 동기식으로 봄) — 데이터시트 응용 회로도로 확인`);
+      ctx.warn(`${rec.mpn}: VCI는 GND(외부 코어 레귤레이터 미사용, SEC = GND) · 트래커 캡 2.2 µF · SS1/SS2는 넷만 만들고 미연결 — 데이터시트 응용 회로와 대조 필요`);
+      ctx.warn(`${rec.mpn}: 스텝업 단을 넣지 않아 배터리 6 V 미만(크랭킹)에서는 출력이 유지되지 않습니다 — 필요하면 외부 MOSFET · 다이오드 · 인덕터 · 센스 저항으로 스텝업 추가`);}},
   hs_switch:{label:'하이사이드 전원 스위치 (세이프 스테이트)',desc:'P-MOSFET 하이사이드 + N-MOSFET 레벨시프트 · MCU SAFE_EN이 High일 때만 부하 전원 공급 (이중 차단)',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},rail:{def:'auto',desc:'끊을 전원 레일 (auto = 입력)'}},
     build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);const out=r+'_SW';ctx.provide(out,ctx.railV?ctx.railV(r):12,'스위치');
       if(p.pick&&hsPick(ctx,p,r,out))return;
@@ -244,7 +278,7 @@ const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'
 const blockKey=s=>{const k=String(s||'').toLowerCase();return LIB[k]?k:BLOCK_ALIAS[k]||null;};
 
 /* ---------- plan ---------- */
-function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced'};}
+function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true};}
 function addBlock(plan,type,params){const k=blockKey(type);if(!k)throw new Error(`블록: ${Object.keys(LIB).join(', ')}`);const L=LIB[k];const p={};Object.entries(L.params).forEach(([n,d])=>{p[n]=d.def;});
   Object.entries(params||{}).forEach(([n,v])=>{if(!(n in L.params))throw new Error(`${k} 블록 파라미터: ${Object.keys(L.params).join(', ')||'(없음)'}`);p[n]=v;});
   if(k==='mcu'&&plan.blocks.some(b=>b.type==='mcu'))throw new Error('MCU는 하나만 넣을 수 있습니다 (set으로 바꾸기)');
@@ -432,6 +466,9 @@ function canPick(ctx,p){const rec=pickRec(p.pick);const keep='CAN 트랜시버�
   if(v.includes('CAN_ERR')){ctx.part('R','10kΩ','0603',{1:'CAN_ERR',2:'+3V3'},{desc:`${rec.mpn} 고장 출력 풀업 (오픈 드레인)`});ctx.sig('CAN_ERR','irq_in');}
   if(v.includes('CAN_WAKE'))ctx.part('R','10kΩ','0603',{1:'CAN_WAKE',2:'GND'},{desc:`${rec.mpn} WAKE 미사용 — 10 kΩ로 GND (로컬 웨이크를 쓰면 스위치 입력으로 바꾸고 데이터시트 전류 제한 확인)`});
   if(rec.pins.some(q=>/^INH$/i.test(q.name)))ctx.warn(`${rec.mpn}: INH 출력은 개방 — 레귤레이터 EN을 이 핀으로 켜려면 회로도에서 연결`);
+  // an active-low standby input (STB_N: LOW = Standby, as on TJA1043 / TJA1443): pull it down so the transceiver stays in Standby while the MCU is in reset
+  {const stb=Object.keys(w.pins).find(k=>w.pins[k]==='CAN_STB');const un=stb?String(w.names[stb]||'').toUpperCase().replace(/[\s_]/g,''):'';
+    if(stb&&/^(NSTB|STBN|NSTBY|NSTANDBY)$/.test(un))ctx.part('R','10kΩ','0603',{1:'CAN_STB',2:'GND'},{desc:`${rec.mpn} ${w.names[stb]} 풀다운 (액티브 LOW — MCU 리셋 중 Standby 유지)`});}
   p._noStb=!v.includes('CAN_STB');
   return true;}
 // temperature sensor picked for the NTC block: a 2-terminal NTC keeps the pull-up divider (only the part changes, size from the
@@ -445,11 +482,24 @@ function ntcPick(ctx,p,t){const mpn=String(p.pick||'');const rec=pickRec(mpn);
   ctx.warn(`${mpn}: 표면실장 NTC(0402/0603/0805)나 3핀 온도 센서 IC로 확인되지 않아 기본 NCP18XH103F03RB를 씁니다`);return null;}
 // LDO picked for a 3.3 / 5 V LDO block (fixed-output version): IN / OUT / GND / EN (tied to IN) and an optional power-good
 // output with a pull-up to the output; parts that need a feedback divider (FB-only pin) or other pins keep the library LDO
-function ldoPick(ctx,p,src,out,vout){const rec=pickRec(p.pick);const keep='기본 AMS1117로 만듭니다';if(!rec){ctx.warn(`${p.pick}: 데이터시트로 확인된 핀 표가 없어 ${keep}`);return false;}
+// the MCU's reset net for a supervisor / PMIC: PORST on AURIX, NRST otherwise — from the plan's MCU block (the MCU block is built
+// after the power blocks, so ctx.mcu() is not set yet). Plans saved before v1.114.0 (plan.rstFix !== true) keep the old net "NRST",
+// which left the reset output unconnected on AURIX boards.
+function rstNet(ctx){const P=ctx.plan||{};if(P.rstFix!==true)return'NRST';const mb=(P.blocks||[]).find(b=>b.type==='mcu');const k=mb?(mcuKey(mb.params&&mb.params.part)||''):'';return/^TC3/i.test(k)?'PORST':'NRST';}
+const LDO_VFB=[[/TPS7B86/i,0.65,'TPS7B86-Q1 VFB 0.65 V (0.644–0.656 V)']];
+function ldoPick(ctx,p,src,out,vout,adj){const rec=pickRec(p.pick);const keep='기본 AMS1117로 만듭니다';if(!rec){ctx.warn(`${p.pick}: 데이터시트로 확인된 핀 표가 없어 ${keep}`);return false;}
   const pg='PG_'+out.replace(/[^A-Za-z0-9]/g,'');
   const w=wireByName(rec,[[/^(IN|VIN|VI|VBAT)$/,src],[/^(OUT|VOUT|VO)$/,out],[/^(GND|VSS|EP|PAD|THERMALPAD|TAB)$/,'GND'],[/^(EN|ENABLE|INH)$/,src],
-    [/^(FB\/NC|NC\/FB|SENSE|NC|N\.C\.|DNC|DELAY|CT|DLY)$/,null],[/^(PG|PGOOD|POK|RESET|NRESET|RO|RST|NRST)$/,pg]]);
+    [/^(FB\/NC|NC\/FB)$/,adj?'@FB':null],[/^(FB|ADJ)$/,adj?'@FB':undefined],[/^(SENSE|NC|N\.C\.|DNC|DELAY|CT|DLY)$/,null],[/^(PG|PGOOD|POK|RESET|NRESET|RO|RST|NRST)$/,pg]]);
   if(w.miss.length){ctx.warn(`${rec.mpn}: 핀 ${w.miss.join(', ')}의 역할을 정하지 못해 ${keep} (가변형 FB 핀은 분압이 필요)`);return false;}
+  if(adj){const vf=LDO_VFB.find(([re])=>re.test(rec.mpn)||re.test(p.pick));const fbPin=Object.keys(w.pins).find(k=>w.pins[k]==='@FB');if(!vf||!fbPin){ctx.warn(`${rec.mpn}: 가변 출력에 쓸 FB 핀 · 기준 전압 기록이 없어 기본 LM317로 만듭니다`);return false;}
+    const fb=ctx.uniq('LDO_FB');w.pins[fbPin]=fb;const f=recFootprint(rec,w.pins,w.names);if(!f){ctx.warn(`${rec.mpn}: 패키지(${rec.pkg||'?'}) 풋프린트를 만들 수 없어 기본 LM317로 만듭니다`);return false;}
+    // Vout = VFB·(1 + R1/R2), R2 = 10 kΩ, R1 from E96
+    const E96=[100,102,105,107,110,113,115,118,121,124,127,130,133,137,140,143,147,150,154,158,162,165,169,174,178,182,187,191,196,200,205,210,215,221,226,232,237,243,249,255,261,267,274,280,287,294,301,309,316,324,332,340,348,357,365,374,383,392,402,412,422,432,442,453,464,475,487,499,511,523,536,549,562,576,590,604,619,634,649,665,681,698,715,732,750,768,787,806,825,845,866,887,909,931,953,976];
+    const r2=10000,r1x=r2*(vout/vf[1]-1);const dec=Math.pow(10,Math.floor(Math.log10(r1x))-2);const r1=E96.map(e=>e*dec).reduce((a,b)=>Math.abs(b-r1x)<Math.abs(a-r1x)?b:a);const vr=vf[1]*(1+r1/r2);const fmt=r=>r>=1000?(+(r/1000).toFixed(2))+'kΩ':Math.round(r)+'Ω';
+    ctx.part('U',rec.mpn,f.fp,f.pins,{mpn:rec.mpn,desc:`${vout} V 가변 LDO ${rec.mpn} (입력 ${src} · 시스템 설계에서 고른 부품 · ${pickNote(rec)} — 가변(01) 버전 주문 코드 확인)`,pinNames:f.names,ldo:{src,out,vout}});
+    ctx.part('R',fmt(r1),'0603',{1:out,2:fb},{desc:`${rec.mpn} FB 분압 상단 1 % (Vout = ${vr.toFixed(2)} V · ${vf[2]})`});ctx.part('R','10kΩ','0603',{1:fb,2:'GND'},{desc:`${rec.mpn} FB 분압 하단 1 %`});
+    ctx.cap(src,'1µF','LDO 입력 커패시터 (≥ 0.5 µF, EMI)');ctx.cap(out,'10µF','LDO 출력 커패시터 (X7R, 실효 ≥ 1 µF)');return true;}
   const f=recFootprint(rec,w.pins,w.names);if(!f){ctx.warn(`${rec.mpn}: 패키지(${rec.pkg||'?'}) 풋프린트를 만들 수 없어 ${keep}`);return false;}
   ctx.part('U',rec.mpn,f.fp,f.pins,{mpn:rec.mpn,desc:`${vout} V LDO ${rec.mpn} 고정 ${vout} V 버전 (입력 ${src} · 시스템 설계에서 고른 부품 · ${pickNote(rec)} — 주문 코드의 출력 전압 확인)`,pinNames:f.names,ldo:{src,out,vout}});
   ctx.cap(src,'1µF','LDO 입력 커패시터 (≥ 0.5 µF, EMI)');ctx.cap(out,'10µF','LDO 출력 커패시터 (X7R)');

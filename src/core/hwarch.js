@@ -121,7 +121,9 @@ function toPlan(A){
   const order=['power','ctrl','comm','io','ext'];
   // a part picked for a single-implementation block goes to that block as "pick"; the block uses it when its pins fit
   const PICK=/^(can|ntc|ldo|pwr_in|hs_switch)$/;
-  order.forEach(g=>A.blocks.filter(b=>b.group===g).forEach(b=>(b.impl||[]).forEach(im=>{try{const pick=b.part&&b.part.mpn&&(b.impl||[]).length===1&&PICK.test(im.type)?{pick:b.part.mpn}:{};const x=NEWPROJ.addBlock(P,im.type,Object.assign({},im.params||{},pick));map.push({arch:b.id,plan:x.id});}catch(e){log.push(`${b.id}: ${e.message}`);}})));
+  // a safety PMIC picked for a power block whose implementations are regulators / a supervisor: one PMIC block replaces them all
+  const PMIC=/^TLF35584/i;const pmicOf=b=>b.part&&PMIC.test(b.part.mpn||'')&&(b.impl||[]).length&&(b.impl||[]).every(i=>/^(ldo|buck|supervisor|pmic)$/.test(i.type))&&NEWPROJ.LIB&&NEWPROJ.LIB.pmic;
+  order.forEach(g=>A.blocks.filter(b=>b.group===g).forEach(b=>(pmicOf(b)?[{type:'pmic',params:{part:b.part.mpn}}]:(b.impl||[])).forEach(im=>{try{const pick=b.part&&b.part.mpn&&(b.impl||[]).length===1&&PICK.test(im.type)?{pick:b.part.mpn}:{};const x=NEWPROJ.addBlock(P,im.type,Object.assign({},im.params||{},pick));map.push({arch:b.id,plan:x.id});}catch(e){log.push(`${b.id}: ${e.message}`);}})));
   NEWPROJ.ldoToBuck(P,log,false);
   const motor=A.blocks.some(b=>(b.impl||[]).some(i=>i.type==='bldc'||i.type==='gdrv3'||i.type==='hbridge'));P.strategy=motor?'thermal':A.blocks.some(b=>(b.impl||[]).some(i=>i.type==='can'||i.type==='dcmotor'))?'noise':'balanced';
   const unmapped=A.blocks.filter(b=>!b.ext&&!b.via&&!(b.impl||[]).length).map(b=>b.label);

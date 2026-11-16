@@ -12,9 +12,9 @@ test('check: picked parts — Claude-estimated pins, recorded-only picks, librar
   const lookup = NEWPROJ.partLookup;
   try {
     // 1) a pick the circuit does not use: recorded only (the CAN block keeps its library transceiver)
-    can.part = { mpn: 'TJA1443AT' };
+    can.part = { mpn: 'XCAN9999T' };
     let I = HWARCH.check(A);
-    assert.ok(I.some(x => x.code === 'pinsNone' && x.mpn === 'TJA1443AT' && /기록만/.test(x.msg) && /datasheet TJA1443AT/.test(x.fix)));
+    assert.ok(I.some(x => x.code === 'pinsNone' && x.mpn === 'XCAN9999T' && /기록만/.test(x.msg) && /datasheet XCAN9999T/.test(x.fix)));
     // 2) the library block already uses the picked part: no warning (the MCU block is the picked MCU)
     const mcuMpn = NEWPROJ.build(HWARCH.toPlan(A).plan).parts.find(c => c.ref.startsWith('U') && /TC3/i.test(c.mpn || c.val));
     if (mcuMpn) { mcu.part = { mpn: mcuMpn.mpn || mcuMpn.val }; I = HWARCH.check(A); assert.ok(!I.some(x => x.sev === 'warn' && x.mpn === mcu.part.mpn), 'library part is not "recorded only"'); }

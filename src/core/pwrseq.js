@@ -22,6 +22,9 @@ const CONS=[
   {re:/TC3[0-9]{2}/i,pin:/^VEXT|^VDDP3|^VDDM|^VEVRSB/i,min:v=>v<=3.63?2.97:4.5,src:'TC364 VEXT 최소 2.97 V (3.3 V 공급) / 4.5 V (5 V 공급)',what:'MCU'},
   {re:/TLE9251/i,pin:/^VCC$/i,min:()=>4.5,alt:[3.8,'수신만 (VCC 저전압 3.8–4.5 V에서 송신 정지)'],src:'TLE9251V VCC 4.5–5.5 V · 저전압 3.8–4.5 V',what:'CAN 송신'},
   {re:/TLE9251/i,pin:/^VIO$/i,min:()=>3.0,src:'TLE9251V VIO 최소 3.0 V',what:'CAN 로직'},
+  {re:/TJA1443|TJR1443/i,pin:/^VCC$/i,min:()=>4.5,src:'TJA1443 VCC 4.5–5.5 V (저전압 감지 4.0–4.5 V)',what:'CAN 송신'},
+  {re:/TJA1443|TJR1443/i,pin:/^VIO$/i,min:()=>2.95,src:'TJA1443 VIO 2.95–5.5 V (저전압 감지 2.65–2.95 V · 150 ms 넘으면 Sleep)',what:'CAN 로직'},
+  {re:/TJA1443|TJR1443/i,pin:/^VBAT$/i,min:()=>4.5,src:'TJA1443 VBAT 4.5–28 V (저전압 감지 4.0–4.5 V → Off)',what:'CAN 웨이크업'},
   {re:/TPS3823/i,pin:/^VDD$/i,min:()=>1.1,src:'TPS3823 VDD 최소 1.1 V',what:'리셋 IC'},
   {re:/DRV8334/i,pin:/^PVDD$/i,min:()=>4.5,alt:[4.0,'로직 · SPI만 (게이트 구동 정지)'],start:4.85,src:'DRV8334-Q1 PVDD 4.5 V (기동 4.85 V · 크랭킹 중 로직 4.0 V)',what:'게이트 드라이버'},
   {re:/A49(11|10|18)/i,pin:/^VBB$/i,min:()=>5.5,alt:[3.4,'출력만 꺼짐 (리셋 없음)'],src:'A4911 VBB 5.5 V (3.4 V까지 리셋 없이 출력만 off · 차지펌프 7 V부터 완전 구동)',what:'게이트 드라이버'},
@@ -49,6 +52,8 @@ function run(R,plan,opt){opt=opt||{};plan=plan||{};const parts=R.parts||[];const
     const mI=String(c.desc||'').match(/부하 약 (\d+) mA/);const I=mI?+mI[1]/1000:0.3;
     let uv=null;if(c.buck){const en=parts.find(p=>/^R/.test(p.ref)&&/저전압 차단 EN 분압 상단/.test(p.desc||''));if(en){const m=String(en.desc).match(/계산 약 ([\d.]+) V \/ ([\d.]+) V/);if(m)uv={stop:+m[1],start:+m[2]};}}
     return{ref:c.ref,mpn:c.mpn||c.val,src:k.src,out:k.out,vout:+k.vout,buck:!!c.buck,t,I,uv};});
+  // a PMIC makes several rails from one input; each holds while the input stays above the PMIC's minimum supply
+  parts.filter(c=>c.pmic).forEach(c=>c.pmic.outs.forEach(o=>regs.push({ref:c.ref,mpn:c.mpn||c.val,src:c.pmic.src,out:o.out,vout:+o.vout,buck:false,pmic:true,t:{do:0,vmin:c.pmic.vmin,src:c.pmic.basis},I:0.3,uv:null})));
   const regOf=n=>regs.find(g=>g.out===n);
   /* rail voltages (worst case) at a battery voltage; rising = power-up (start thresholds) else falling (stop thresholds) */
   function railsAt(vb,rising){const V={};const get=n=>{if(V[n]!=null)return V[n];if(batRails.includes(n)||/^(VIN|VIN_RAW|VBAT)$/i.test(n))return V[n]=Math.max(0,vb-revDrop(vb));
@@ -59,9 +64,9 @@ function run(R,plan,opt){opt=opt||{};plan=plan||{};const parts=R.parts||[];const
   const vbMin=(net,need,rising)=>{if(railsAt(40,rising)[net]==null||railsAt(40,rising)[net]<need-1e-9)return null;let lo=0,hi=40;for(let i=0;i<40;i++){const m=(lo+hi)/2;if(railsAt(m,rising)[net]>=need-1e-9)hi=m;else lo=m;}return+hi.toFixed(2);};
   // rails: lowest battery voltage that keeps each regulated rail in regulation (−1 % of nominal)
   const railRows=regs.map(g=>{const need=g.vout*0.99;const vb=vbMin(g.out,need,false);const at=railsAt(vop[0],false)[g.out],atC=railsAt(vcrank,false)[g.out];
-    return{rail:g.out,ref:g.ref,mpn:g.mpn,src:g.src,kind:g.buck?'벅':'LDO',basis:g.t.src+(g.uv?` · EN 저전압 차단 정지 ${g.uv.stop} V / 재시작 ${g.uv.start} V`:''),vbMin:vb,atLow:at,atCrank:atC};});
+    return{rail:g.out,ref:g.ref,mpn:g.mpn,src:g.src,kind:g.pmic?'PMIC':g.buck?'벅':'LDO',basis:g.t.src+(g.uv?` · EN 저전압 차단 정지 ${g.uv.stop} V / 재시작 ${g.uv.start} V`:''),vbMin:vb,atLow:at,atCrank:atC};});
   // ICs: their supply pins and minimums
-  const cons=[];parts.filter(c=>/^U/.test(c.ref)&&!(c.ldo||c.buck)).forEach(c=>{let names={};try{const rec=lookup&&(lookup(c.mpn)||lookup(c.val));(rec&&rec.pins||[]).forEach(q=>{names[String(q.num)]=String(q.name||'');});}catch(e){}
+  const cons=[];parts.filter(c=>/^U/.test(c.ref)&&!(c.ldo||c.buck||c.pmic)).forEach(c=>{let names={};try{const rec=lookup&&(lookup(c.mpn)||lookup(c.val));(rec&&rec.pins||[]).forEach(q=>{names[String(q.num)]=String(q.name||'');});}catch(e){}
     Object.assign(names,Object.fromEntries(Object.entries(c.pinNames||{}).filter(([n])=>!names[n])));
     CONS.filter(k=>k.re.test((c.mpn||'')+' '+c.val)).forEach(k=>{const nets=[...new Set(Object.entries(c.pins||{}).filter(([n,net])=>net&&k.pin.test(names[n]||'')).map(([,net])=>net))];
       nets.forEach(net=>{const nom=rails[net]?rails[net].v:railNom(net);const min=k.min(nom||0);cons.push({ref:c.ref,mpn:c.mpn||c.val,net,min,alt:k.alt,start:k.start,src:k.src,what:k.what});});});});

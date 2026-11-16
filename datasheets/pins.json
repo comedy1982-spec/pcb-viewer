@@ -15298,5 +15298,83 @@
     "passive"
    ]
   ]
+ },
+ "TJA1443AT": {
+  "t": "High-speed CAN FD transceiver with Sleep mode, SO14 (NXP TJA1443 data sheet Rev. 2, 6.1 Pinning / Table 3)",
+  "pkg": "SOIC-14",
+  "fp": "",
+  "pdf": "https://www.nxp.com/docs/en/data-sheet/TJA1443.pdf",
+  "p": [
+   [
+    "1",
+    "TXD",
+    "in"
+   ],
+   [
+    "2",
+    "GND",
+    "power_in"
+   ],
+   [
+    "3",
+    "VCC",
+    "power_in"
+   ],
+   [
+    "4",
+    "RXD",
+    "out"
+   ],
+   [
+    "5",
+    "VIO",
+    "power_in"
+   ],
+   [
+    "6",
+    "EN",
+    "in"
+   ],
+   [
+    "7",
+    "INH",
+    "out"
+   ],
+   [
+    "8",
+    "ERR_N",
+    "out"
+   ],
+   [
+    "9",
+    "WAKE",
+    "in"
+   ],
+   [
+    "10",
+    "VBAT",
+    "power_in"
+   ],
+   [
+    "11",
+    "n.c.",
+    "nc"
+   ],
+   [
+    "12",
+    "CANL",
+    "bidi"
+   ],
+   [
+    "13",
+    "CANH",
+    "bidi"
+   ],
+   [
+    "14",
+    "STB_N",
+    "in"
+   ]
+  ]
  }
 }

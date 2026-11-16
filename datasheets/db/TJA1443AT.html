@@ -16,34 +16,36 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </head>
 <body>
 <!-- generated from datasheets/records/TJA1443AT.json by scripts/dsdb.mjs — edit the record, not this page -->
-<article data-mpn="TJA1443AT" data-mfr="NXP" data-cat="통신" data-price="0.75" data-status="stub" data-src="https://xonelec.com/mpn/nxp/tja1443atk0z https://www.flux.ai/adrian95/tja1443at0z.md https://www.mouser.in/new/nxp-semiconductors/nxp-tja144x-transceivers/">
+<article data-mpn="TJA1443AT" data-mfr="NXP" data-cat="통신" data-price="0.75" data-status="done" data-src="https://xonelec.com/mpn/nxp/tja1443atk0z https://www.flux.ai/adrian95/tja1443at0z.md https://www.mouser.in/new/nxp-semiconductors/nxp-tja144x-transceivers/">
 <h1>TJA1443AT</h1>
 <p class="meta">NXP · 통신 · High-speed CAN FD transceiver with Sleep mode, SO14 · 참고 단가 약 $0.75 (추정)</p>
-<p class="meta">원본: <a href="https://cn.nxp.com/docs/en/data-sheet/TJA1443.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.nxp.com/part/TJA1443ATK" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TJA1443AT" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TJA1443 Rev. 2 (2021-10-15) — PDF 직접 열람 실패, 배포처 요약으로 작성</p>
-<p class="todo">3차 시도(2026-11)도 NXP 원문 미열람: cn.nxp.com/docs/en/data-sheet/TJA1443.pdf → nxp.com 홈 리다이렉트, www.nxp.com/docs/en/data-sheet/TJA1443.pdf(flux.ai 링크)는 가져오기 승인 안 됨, chipdip·dtsheet 검색 결과는 TJA1044/TJA1145 문서. 남은 항목: Limiting values 전체, VBAT·VIO 동작 범위, 모드별 소비 전류, 핀 기능 설명(핀 번호는 flux.ai 라이브러리 기준 미확인), Rth(vj-a), WAKE 직렬 저항·INH·디커플링 권장값. NXP TJA1443 PDF를 사람이 내려받아 확인 필요.</p>
-<div class="ds-issues"><b>알려진 문제</b><ul><li>[패키지·핀] package is SO14 (SOT108-1, 14 pins), not SO8 (the BRIEF pins example shows TJA1443AT as SO8 with TXD/GND pins); pinout is TJA1043-compatible 14-pin (TXD,GND,VCC,RXD,VIO,EN,INH,ERR_N,WAKE,VBAT,n.c.,CANL,CANH,STB_N per flux.ai, unverified) — <i>use SOIC-14 footprint; verify pin table against NXP TJA1443 Rev.2 PDF (nxp.com docs URL was blocked/redirected in this run, no pins JSON written)</i> <a href="https://kr.element14.com/nxp/tja1443at-0z/can-transceiver-aec-q100-40to150deg/dp/3677404" target="_blank" rel="noopener">근거</a></li><li>[기타] NXP datasheet still unreadable: cn.nxp.com PDF redirects to nxp.com home, www.nxp.com.cn/docs/en/data-sheet/TJA1443.pdf (LCSC link) and farnell.com/datasheets/3190576.pdf (Farnell link) were blocked by fetch provenance — <i>fetch one of those two PDFs manually to fill limiting values / pins</i> <a href="https://lcsc.com/product-detail/CAN-Transceivers_NXP-Semicon-TJA1443AT-0Z_C3233835.html" target="_blank" rel="noopener">근거</a></li></ul></div>
+<p class="meta">원본: <a href="https://cn.nxp.com/docs/en/data-sheet/TJA1443.pdf" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://www.nxp.com/part/TJA1443ATK" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=TJA1443AT" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 TJA1443 Rev. 2 (2021-10-15) — 값은 NXP 데이터시트 Rev. 2의 검색 발췌(Quick reference · Static characteristics · Pinning)로 확인. 한계값 표의 CANH/CANL/WAKE는 자매품 TJR1443 Rev. 1 표 기준</p>
 <h2>핵심 사양</h2>
 <dl>
-  <dt>기능</dt><dd>고속 CAN 트랜시버, 클래식 CAN · CAN FD 최대 5 Mbit/s, Standby / Sleep / Listen-only 모드</dd>
+  <dt>기능</dt><dd>고속 CAN 트랜시버, 클래식 CAN · CAN FD 최대 5 Mbit/s, Normal / Listen-only / Standby / Go-to-Sleep / Sleep 모드, INH로 외부 레귤레이터 제어</dd>
   <dt>표준</dt><dd>ISO 11898-2:2016, SAE J2284-1~-5, SAE J1939-14</dd>
-  <dt>전원</dt><dd>VCC 4.5–5.5 V (element14·Farnell·LCSC 사양), VIO로 3.3–5 V MCU 인터페이스, VBAT 범위 데이터시트 확인 필요</dd>
-  <dt>웨이크업</dt><dd>웨이크업 패턴 필터 시간 0.5–1.8 µs (배포처 요약에는 's'로 표기 — 데이터시트 확인 필요)</dd>
-  <dt>대기 전류</dt><dd>2 µA (LCSC "quiescent supply current" 표기, 모드·조건 미확인)</dd>
-  <dt>ESD</dt><dd>버스 핀 8 kV (IEC, HBM)</dd>
-  <dt>등급</dt><dd>AEC-Q100 Grade 1, Tvj -40~+150 °C (Grade 0 버전은 TJR1443)</dd>
-  <dt>패키지</dt><dd>SO14 (SOT108-1) — TJA1443AT / HVSON14 3.0 × 4.5 mm — TJA1443ATK</dd>
-  <dt>호환</dt><dd>TJA1043 핀 호환 대체품</dd>
+  <dt>전원</dt><dd>VBAT 4.5–28 V (한계 40 V 로드덤프) · VCC 4.5–5.5 V · VIO 2.95–5.5 V</dd>
+  <dt>저전압 감지</dt><dd>VBAT 4.0–4.5 V · VCC 4.0–4.5 V · VIO 2.65–2.95 V (이 범위 안에서 감지)</dd>
+  <dt>소비 전류</dt><dd>IBAT Normal/Listen-only 80 µA 일반 / 300 µA 최대, Standby·Sleep 13 / 20 µA · ICC 도미넌트 38 / 60 mA, 리세시브 4 / 7 mA, Standby·Sleep ≤ 2 µA (Tvj < 85 °C)</dd>
+  <dt>웨이크업</dt><dd>버스 웨이크업 패턴(저전력 수신기는 VBAT로 동작 — VCC · VIO를 꺼도 됨), WAKE 핀 로컬 웨이크업</dd>
+  <dt>등급 / 온도</dt><dd>AEC-Q100, Tvj −40 ~ 150 °C</dd>
+  <dt>패키지</dt><dd>SO14 (TJA1443AT) · HVSON14 (TJA1443ATK)</dd>
+  <dt>호환</dt><dd>TJA1043 핀 호환 (11번은 SPLIT 대신 n.c.)</dd>
 </dl>
 <h2>절대 최대 정격</h2>
-<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>데이터시트 확인 필요</td><td></td><td></td><td></td><td>PDF 미열람</td></tr></tbody></table>
+<table><thead><tr><th>항목</th><th>최소</th><th>최대</th><th>단위</th><th>비고</th></tr></thead><tbody><tr><td>VBAT</td><td>−0.3</td><td>40</td><td>V</td><td>로드덤프 포함 (동작 범위는 28 V까지)</td></tr><tr><td>VCC, VIO</td><td>−0.3</td><td>6</td><td>V</td><td>데이터시트 Figure 4 주: 6 V가 VCC · VIO의 AMR</td></tr><tr><td>CANH, CANL, WAKE</td><td>−36</td><td>40</td><td>V</td><td>TJR1443 Rev. 1 한계값 표 기준 — TJA1443 표로 확인 필요</td></tr><tr><td>INH</td><td>−0.3</td><td>VBAT + 0.3</td><td>V</td><td>출력 전류 −2 mA까지 (TJR1443 표 기준)</td></tr><tr><td>RXD, ERR_N</td><td>−0.3</td><td>VIO + 0.3</td><td>V</td><td>TJR1443 표 기준</td></tr></tbody></table>
 <h2>권장 동작 조건</h2>
-<table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>VCC</td><td>4.5</td><td></td><td>5.5</td><td>V</td></tr><tr><td>가상 접합 온도 Tvj</td><td>-40</td><td></td><td>150</td><td>°C</td></tr></tbody></table>
+<table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>VBAT</td><td>4.5</td><td></td><td>28</td><td>V</td></tr><tr><td>VCC</td><td>4.5</td><td></td><td>5.5</td><td>V</td></tr><tr><td>VIO</td><td>2.95</td><td></td><td>5.5</td><td>V</td></tr><tr><td>가상 접합 온도 Tvj</td><td>-40</td><td></td><td>150</td><td>°C</td></tr></tbody></table>
 <h2>핀 배치</h2>
-<p>SO14 (SOT108-1) — 핀 이름 미확인(flux.ai), 기능은 TJA1043 호환 구조 기준 추정 금지 → 데이터시트 확인 필요</p>
-<table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1</td><td>TXD</td><td></td></tr><tr><td>2</td><td>GND</td><td></td></tr><tr><td>3</td><td>VCC</td><td></td></tr><tr><td>4</td><td>RXD</td><td></td></tr><tr><td>5</td><td>VIO</td><td></td></tr><tr><td>6</td><td>EN</td><td></td></tr><tr><td>7</td><td>INH</td><td></td></tr><tr><td>8</td><td>ERR_N</td><td></td></tr><tr><td>9</td><td>WAKE</td><td></td></tr><tr><td>10</td><td>VBAT</td><td></td></tr><tr><td>11</td><td>n.c.</td><td></td></tr><tr><td>12</td><td>CANL</td><td></td></tr><tr><td>13</td><td>CANH</td><td></td></tr><tr><td>14</td><td>STB_N</td><td></td></tr></tbody></table>
+<p>SO14 (SOT108-1). NXP 데이터시트 Rev. 2, 6.1 Pinning · Table 3.</p>
+<table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1</td><td>TXD</td><td>송신 데이터 입력 (CAN 컨트롤러 → 버스)</td></tr><tr><td>2</td><td>GND</td><td>접지</td></tr><tr><td>3</td><td>VCC</td><td>5 V 공급</td></tr><tr><td>4</td><td>RXD</td><td>수신 데이터 출력 (버스 → CAN 컨트롤러)</td></tr><tr><td>5</td><td>VIO</td><td>I/O 레벨 어댑터 공급</td></tr><tr><td>6</td><td>EN</td><td>enable 제어 입력 (VBAT가 있을 때 내부 풀다운)</td></tr><tr><td>7</td><td>INH</td><td>외부 레귤레이터를 켜고 끄는 inhibit 출력 (VBAT 레벨)</td></tr><tr><td>8</td><td>ERR_N</td><td>로컬 고장 감지 · 웨이크업 원인 · 파워온 표시 출력</td></tr><tr><td>9</td><td>WAKE</td><td>로컬 웨이크업 입력</td></tr><tr><td>10</td><td>VBAT</td><td>배터리 공급</td></tr><tr><td>11</td><td>n.c.</td><td>연결 없음</td></tr><tr><td>12</td><td>CANL</td><td>CAN 버스 LOW</td></tr><tr><td>13</td><td>CANH</td><td>CAN 버스 HIGH</td></tr><tr><td>14</td><td>STB_N</td><td>standby 제어 입력 (액티브 LOW)</td></tr></tbody></table>
 <h2>응용 회로 · 주변 부품</h2>
 <ul>
-    <li>디커플링·WAKE 직렬 저항·INH 사용법은 데이터시트 확인 필요</li>
+    <li>모드는 STB_N · EN 두 핀으로 고릅니다 (MCU GPIO 2개). VBAT가 올라오면 Standby로 시작하고 INH가 HIGH가 됩니다. STB_N이 LOW면 Standby에 머뭅니다.</li>
+    <li>VIO가 저전압 감지 아래로 150 ms(t det(uv)long) 넘게 있으면 Sleep으로 들어갑니다.</li>
+    <li>VBAT · VCC · VIO 각각 100 nF 디커플링 (일반 관례 — 데이터시트 응용 회로 값은 확인 필요).</li>
+    <li>WAKE를 쓰지 않으면 고정 레벨로 묶습니다. 로컬 웨이크업 스위치를 쓰면 직렬 저항 값은 데이터시트 응용 정보 확인.</li>
+    <li>INH는 VBAT 레벨 출력입니다. 레귤레이터 EN에 연결하면 Sleep에서 전원을 끌 수 있습니다.</li>
   </ul>
 <h2>패키지 · 열</h2>
 <p>SO14 (SOT108-1), 1.27 mm 피치. 열저항·열 차단 온도는 데이터시트 확인 필요.</p>

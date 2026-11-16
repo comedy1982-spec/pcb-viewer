@@ -16,11 +16,11 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 </head>
 <body>
 <!-- generated from datasheets/records/IAUC60N04S6N050H.json by scripts/dsdb.mjs — edit the record, not this page -->
-<article data-mpn="IAUC60N04S6N050H" data-mfr="Infineon" data-cat="트랜지스터" data-price="" data-status="stub" data-src="https://pdf.elecfans.com/EUPEC/IAUC60N04S6N050HATMA1.html https://xonstorage.blob.core.windows.net/pdf/infineon_iauc60n04s6n050hatma1_apr22_xonlink.pdf">
+<article data-mpn="IAUC60N04S6N050H" data-mfr="Infineon" data-cat="트랜지스터" data-price="" data-status="done" data-src="https://pdf.elecfans.com/EUPEC/IAUC60N04S6N050HATMA1.html https://xonstorage.blob.core.windows.net/pdf/infineon_iauc60n04s6n050hatma1_apr22_xonlink.pdf">
 <h1>IAUC60N04S6N050H</h1>
 <p class="meta">Infineon · 트랜지스터 · OptiMOS 6 통합 하프브리지 (N-채널 2개), 40 V, 5.0 mΩ max, 차량용</p>
 <p class="meta">원본: <a href="https://www.infineon.com/dgdl/Infineon-IAUC60N04S6N050H-DataSheet-v01_00-EN.pdf?fileId=5546d4627506bb3201753090f4715fe6" target="_blank" rel="noopener">데이터시트 PDF</a> · <a href="https://pdf.elecfans.com/EUPEC/IAUC60N04S6N050HATMA1.html" target="_blank" rel="noopener">읽은 사본</a> · <a href="https://www.infineon.com/cms/en/product/power/mosfet/automotive-mosfet/iauc60n04s6n050h/" target="_blank" rel="noopener">제품 페이지</a> · <a href="https://octopart.com/search?q=IAUC60N04S6N050H" target="_blank" rel="noopener">부품 검색 (Octopart)</a> · 문서 Rev. 1.0 (2020-09-22, Final)</p>
-<p class="todo">핀 배치 미완: PG-TDSON-8-57 하프브리지의 패드별 G1/S1(=위상)/G2/S2/드레인 매핑이 데이터시트에서 그림으로만 있어 텍스트로 확인 불가 (3차 확인 2026-11: Infineon 원본 dgdl 링크는 fetch 승인 불가, xonlink 사본 https://xonstorage.blob.core.windows.net/pdf/infineon_iauc60n04s6n050hatma1_apr22_xonlink.pdf 텍스트에도 핀 매핑·외형 치수 없음; RS/zenode 페이지도 매핑 없음). 원본 PDF 1쪽 내부 회로도와 8쪽 외형도로 채우세요. 또한 ID 60 A(DC)·칩 한계 74 A의 TC 조건이 추출 텍스트에 표시되지 않음(2s2p, Ta 85 °C에서 16 A만 조건 명시). 구성은 하프브리지(상·하 N-채널 2개)로 확인됨.</p>
+<p class="todo">ID 60 A(DC) · 칩 한계 74 A의 TC 조건이 추출 텍스트에 없음 (2s2p, Ta 85 °C에서 16 A만 조건 명시). 핀 표는 pins.json(데이터시트 1쪽 핀 그림에서 옮긴 것) 기준 — 원본 그림과 한 번 대조 권장.</p>
 <h2>핵심 사양</h2>
 <dl>
   <dt>기능</dt><dd>상·하 N-채널 MOSFET 2개를 한 패키지에 넣은 하프브리지, 노멀 레벨</dd>
@@ -38,7 +38,8 @@ table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #d8dde2;pad
 <h2>권장 동작 조건</h2>
 <table><thead><tr><th>항목</th><th>최소</th><th>일반</th><th>최대</th><th>단위</th></tr></thead><tbody><tr><td>게이트 구동 (RDS(on) 보증점)</td><td>7</td><td>10</td><td></td><td>V</td></tr></tbody></table>
 <h2>핀 배치</h2>
-<p>PG-TDSON-8-57. 핀 번호별 기능은 데이터시트 확인 필요 (위 안내 참고).</p>
+<p>PG-TDSON-8-57 (5 × 6 mm, 노출 패드 2개). 핀 표는 부품 핀 DB(데이터시트 1쪽 핀 그림) 기준.</p>
+<table><thead><tr><th>핀</th><th>이름</th><th>기능</th></tr></thead><tbody><tr><td>1</td><td>G_HS</td><td>하이사이드 게이트</td></tr><tr><td>2</td><td>PHASE</td><td>위상 출력 (하이사이드 소스 = 로우사이드 드레인)</td></tr><tr><td>3</td><td>PHASE</td><td>위상 출력 (하이사이드 소스 = 로우사이드 드레인)</td></tr><tr><td>4</td><td>G_LS</td><td>로우사이드 게이트</td></tr><tr><td>5</td><td>GND</td><td>로우사이드 소스</td></tr><tr><td>6</td><td>GND</td><td>로우사이드 소스</td></tr><tr><td>7</td><td>BATTERY</td><td>하이사이드 드레인 (배터리)</td></tr><tr><td>8</td><td>BATTERY</td><td>하이사이드 드레인 (배터리)</td></tr><tr><td>9</td><td>BATTERY(EP)</td><td>하이사이드 드레인 노출 패드</td></tr><tr><td>10</td><td>PHASE(EP)</td><td>위상 노출 패드</td></tr></tbody></table>
 <h2>응용 회로 · 주변 부품</h2>
 <ul>
     <li>Qg 13 nC로 작아서 부트스트랩 커패시터를 작게 쓸 수 있습니다 (드라이버 선정식 사용, 예: A4911/A3941은 QBOOT ≈ 20 × QGATE).</li>

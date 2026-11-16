@@ -1,5 +1,5 @@
 {
-  "built": "2026-11-15",
+  "built": "2026-11-16",
   "items": {
     "1729128": {
       "file": "datasheets/db/1729128.html",
@@ -876,7 +876,7 @@
       "mfr": "Infineon",
       "cat": "트랜지스터",
       "price": null,
-      "status": "stub",
+      "status": "done",
       "title": "40 V OptiMOS 6 integrated half-bridge"
     },
     "INA181A1QDBVRQ1": {
@@ -1788,7 +1788,7 @@
       "mfr": "NXP",
       "cat": "통신",
       "price": 0.75,
-      "status": "stub",
+      "status": "done",
       "title": "High-speed CAN FD transceiver with Sleep mode, SO14"
     },
     "TJA1463ATK/0Z": {
