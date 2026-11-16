@@ -218,15 +218,16 @@ const LIB={
   // standby LDO (QST) · trackers, window/functional watchdog, reset (ROT), interrupt, error-pin monitor, safe-state outputs, SPI.
   // Built without the optional step-up stage (battery ≥ 6 V): BSG / RSH / RSL / STU to GND, DRG open. External parts from the data sheet
   // pin table and Infineon's support notes: 2.2 MHz → 4.7 µH + 10–47 µF, 400 kHz → 22 µH + 68–100 µF; 100 nF FB–PG; QST 2 × 1 µF;
-  // QUC 2.2–47 µF, QCO 1–47 µF, QVR 1–10 µF.
+  // QUC 2.2–47 µF, QCO 1–47 µF, QVR 1–10 µF, QT1/QT2 1–10 µF, QST 0.47–10 µF (data sheet tables 13/16/27). The step-down is synchronous
+  // (internal P/N MOSFETs, no catch diode; VPREREG 5.8 V typ). Unused pins per the pin table: WAK/ENA to GND, VCI/SYN/EVC open.
   pmic:{label:'안전 PMIC (TLF35584)',desc:'TLF35584 (VQFN-48): 스텝다운 프리레귤레이터 + µC LDO 3.3 V/600 mA + 통신 LDO 5 V/200 mA + 기준 5 V + 스탠바이 LDO + 윈도 워치독 · 리셋 · 안전 상태 출력 · SPI',
     params:{part:{def:'TLF35584QVVS2',desc:'TLF35584QVVS2 (µC 3.3 V) · TLF35584QVVS1 (µC 5 V)'},vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},freq:{def:'2.2M',desc:'스텝다운 주파수 2.2M (FRE 개방, 4.7 µH) · 400k (FRE = GND, 22 µH)'}},
     build(ctx,p){const mpn=String(p.part||'TLF35584QVVS2');const rec=pickRec(mpn)||pickRec('TLF35584QVVS2');if(!rec)throw new Error('TLF35584 핀 표가 없습니다 (datasheets/pins.json)');
       const src=p.vin==='auto'?ctx.highest(6):p.vin;ctx.use(src);const vuc=/VS1/i.test(mpn)?5:3.3;const quc=railOf(vuc),qco=vuc===5?'+5V_COM':'+5V';const lf=/400/.test(String(p.freq));
       ctx.provide(quc,vuc,'PMIC');ctx.provide(qco,5,'PMIC');const pre=ctx.uniq('PMIC_PRE'),sw=ctx.uniq('PMIC_SW'),qvr=ctx.uniq('VREF_5V'),qst=ctx.uniq('VSTBY');ctx.provide(qvr,5,'PMIC');ctx.provide(qst,vuc,'PMIC');
       const rst=rstNet(ctx);const qt1=ctx.uniq('PMIC_QT1'),qt2=ctx.uniq('PMIC_QT2');
-      const N={BSG:'GND',VST:src,ENA:'GND',WAK:'PMIC_WAK',QST:qst,AG1:'GND',AG2:'GND',AG3:'GND',AGS1:'GND',AGS2:'GND',SS1:'PMIC_SS1',SS2:'PMIC_SS2',SDI:'PMIC_SDI',SDO:'PMIC_SDO',SCL:'PMIC_SCL',SCS:'PMIC_SCS',WDI:'WDI',ROT:rst,INT:'PMIC_INT',SYN:'',ERR:'PMIC_ERR',EVC:'',
-        MPS:'GND',SEC:'GND',FRE:lf?'GND':'',STU:'GND',VCI:'GND',GST:'GND',QVR:qvr,QUC:quc,QCO:qco,QT1:qt1,QT2:qt2,FB1:pre,FB2:pre,PG1:'GND',PG2:'GND',SW1:sw,VS1:src,DRG:'',RSH:'GND',RSL:'GND'};
+      const N={BSG:'GND',VST:src,ENA:'GND',WAK:'GND',QST:qst,AG1:'GND',AG2:'GND',AG3:'GND',AGS1:'GND',AGS2:'GND',SS1:'PMIC_SS1',SS2:'PMIC_SS2',SDI:'PMIC_SDI',SDO:'PMIC_SDO',SCL:'PMIC_SCL',SCS:'PMIC_SCS',WDI:'WDI',ROT:rst,INT:'PMIC_INT',SYN:'',ERR:'PMIC_ERR',EVC:'',
+        MPS:'GND',SEC:'GND',FRE:lf?'GND':'',STU:'GND',VCI:'',GST:'GND',QVR:qvr,QUC:quc,QCO:qco,QT1:qt1,QT2:qt2,FB1:pre,FB2:pre,PG1:'GND',PG2:'GND',SW1:sw,VS1:src,DRG:'',RSH:'GND',RSL:'GND'};
       const pins={},names={};let ep=false;rec.pins.forEach(q=>{const num=String(q.num),nm=String(q.name||'').toUpperCase().replace(/[\s.]/g,'');if(/^EP\d$/.test(num))return; // corner pads: not soldered, not connected
         if(/^(EP|PAD|TAB)$/.test(num)){ep=true;return;}names[num]=q.name;if(/^NC$/.test(nm))return;if(!(nm in N)){ctx.warn(`${rec.mpn}: 핀 ${q.name}의 역할을 몰라 개방으로 둡니다`);return;}if(N[nm])pins[num]=N[nm];});
       const fp=(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')?FPGEN.ensure(PCB,'VQFN-48-EP',48):'QFN-48';if(ep){pins['49']='GND';names['49']='GND (쿨링 탭)';}
@@ -237,14 +238,12 @@ const LIB={
       if(lf){ctx.part('C','22µF','1210',{1:pre,2:'GND'},{desc:'TLF35584 프리레귤레이터 출력 커패시터 (병렬 2)'});ctx.part('C','22µF','1210',{1:pre,2:'GND'},{desc:'TLF35584 프리레귤레이터 출력 커패시터 (병렬 3)'});}
       ctx.part('C','100nF','0603',{1:pre,2:'GND'},{desc:'TLF35584 FB1/FB2 – PG1/PG2 100 nF (핀 가까이)'});
       ctx.cap(src,'10µF','TLF35584 VS1 입력 커패시터 (역접속 보호 뒤)');ctx.cap(src,'100nF','TLF35584 VS1 · VST 디커플링');
-      ctx.part('C','1µF','0603',{1:qst,2:'GND'},{desc:'TLF35584 QST 스탠바이 LDO 출력 (2 × 680 nF–1 µF 권장) 1'});ctx.part('C','1µF','0603',{1:qst,2:'GND'},{desc:'TLF35584 QST 스탠바이 LDO 출력 2'});
+      ctx.part('C','1µF','0603',{1:qst,2:'GND'},{desc:'TLF35584 QST 스탠바이 LDO 출력 (0.47–10 µF, ESR ≤ 200 mΩ · 2 × 1 µF) 1'});ctx.part('C','1µF','0603',{1:qst,2:'GND'},{desc:'TLF35584 QST 스탠바이 LDO 출력 2'});
       ctx.cap(quc,'10µF','TLF35584 QUC 출력 커패시터 (2.2–47 µF, ESR ≤ 200 mΩ)');ctx.part('C','4.7µF','0805',{1:qco,2:'GND'},{desc:'TLF35584 QCO 출력 커패시터 (1–47 µF, ESR ≤ 200 mΩ)'});
       ctx.part('C','2.2µF','0603',{1:qvr,2:'GND'},{desc:'TLF35584 QVR 기준 출력 커패시터 (1–10 µF, ESR ≤ 200 mΩ)'});
-      ctx.part('C','2.2µF','0603',{1:qt1,2:'GND'},{desc:'TLF35584 트래커 1 출력 커패시터 (값은 데이터시트 확인 — 센서 전원으로 쓰면 이 넷에서)'});ctx.part('C','2.2µF','0603',{1:qt2,2:'GND'},{desc:'TLF35584 트래커 2 출력 커패시터 (값은 데이터시트 확인)'});
-      ctx.part('R','10kΩ','0603',{1:src,2:'PMIC_WAK'},{desc:'TLF35584 WAK — 배터리가 있으면 켜짐 (IWAK 한계 5 mA · 이그니션 신호로 켜려면 이 저항을 IGN으로)'});
+      ctx.part('C','2.2µF','0603',{1:qt1,2:'GND'},{desc:'TLF35584 트래커 1 출력 커패시터 (1–10 µF, ESR ≤ 200 mΩ · QVR 추종 ±10 mV, 150 mA — 센서 전원으로 쓰면 이 넷에서)'});ctx.part('C','2.2µF','0603',{1:qt2,2:'GND'},{desc:'TLF35584 트래커 2 출력 커패시터 (1–10 µF, ESR ≤ 200 mΩ)'});
       ctx.sig('PMIC_SCL','spi_sck','spi');ctx.sig('PMIC_SDI','spi_mosi','spi');ctx.sig('PMIC_SDO','spi_miso','spi');ctx.sig('PMIC_SCS','gpio_out');ctx.sig('WDI','gpio_out');ctx.sig('PMIC_INT','irq_in');ctx.sig('PMIC_ERR','gpio_out');
-      ctx.warn(`${rec.mpn}: 스텝다운 스위치 노드에 외부 환류 다이오드를 넣지 않았습니다(전력 GND 핀 PG1/PG2가 있어 동기식으로 봄) — 데이터시트 응용 회로도로 확인`);
-      ctx.warn(`${rec.mpn}: VCI는 GND(외부 코어 레귤레이터 미사용, SEC = GND) · 트래커 캡 2.2 µF · SS1/SS2는 넷만 만들고 미연결 — 데이터시트 응용 회로와 대조 필요`);
+      ctx.warn(`${rec.mpn}: WAK · ENA는 GND(미사용) — 배터리 연결 시 자동 기동, STANDBY/SLEEP에서 깨우려면 WAK 또는 ENA에 신호 필요(임계 0.8–2.0 V) · SS1/SS2는 넷만 만들고 미연결(INIT/FAILSAFE에서 Low, NORMAL에서 High)`);
       ctx.warn(`${rec.mpn}: 스텝업 단을 넣지 않아 배터리 6 V 미만(크랭킹)에서는 출력이 유지되지 않습니다 — 필요하면 외부 MOSFET · 다이오드 · 인덕터 · 센스 저항으로 스텝업 추가`);}},
   hs_switch:{label:'하이사이드 전원 스위치 (세이프 스테이트)',desc:'P-MOSFET 하이사이드 + N-MOSFET 레벨시프트 · MCU SAFE_EN이 High일 때만 부하 전원 공급 (이중 차단)',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},rail:{def:'auto',desc:'끊을 전원 레일 (auto = 입력)'}},
     build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);const out=r+'_SW';ctx.provide(out,ctx.railV?ctx.railV(r):12,'스위치');

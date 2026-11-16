@@ -48,7 +48,7 @@ function diagnose(B,opt){opt=opt||{};const rats=opt.rats||PCBEDIT.ratsnest(B);co
     const cls=B.netClass?B.netClass(r.net):'';const mcuEnd=A.mcu?A:E.mcu?E:null;
     const strip=e=>{const o=Object.assign({},e);delete o.pad;delete o.comp;return o;};
     return{net:r.net,len:+r.len.toFixed(1),cls,a:strip(A),b:strip(E),blockers,parts,swap:!!mcuEnd&&cls!=='전원'&&!/^(\+|GND|VDD|VIN)/i.test(r.net),mcuPin:mcuEnd?`${mcuEnd.ref}.${mcuEnd.pin}`:null};});
-  const pr=B.powerReport||null;const badPower=pr?pr.nets.filter(n=>n.width!=='직결'&&n.width<n.need).map(n=>({net:n.net,width:n.width,need:n.need})):[];
+  const pr=B.powerReport||null;const badPower=pr?pr.nets.filter(n=>n.ok!=null?!n.ok:(n.width!=='직결'&&n.width<n.need*0.95)).map(n=>({net:n.net,width:n.width,need:n.need})):[];
   const badVia=pr?(pr.viaChk||[]).filter(v=>!v.ok).map(v=>({net:v.net,ref:v.ref,n:v.n,rise:+(v.rise+(v.riseP||0)).toFixed(0)})):[];
   const D={W:B.W,H:B.H,layers:keys.length,rats:rats.length,drc:drc.length,drcMsgs:drc.slice(0,4).map(d=>d.msg),open,badPower,badVia};
   D.score=score(D);D.ok=!D.rats&&!D.drc&&!badPower.length;return D;}

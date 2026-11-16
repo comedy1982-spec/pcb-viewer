@@ -464,7 +464,7 @@
    "h": "응용 회로 · 주변 부품",
    "blocks": [
     {
-     "html": "<ul>\n    <li>스텝다운 필터 (Infineon 지원 안내): 2.2 MHz(FRE 개방) → 인덕터 4.7 µH + 커패시터 10–47 µF · 400 kHz(FRE = GND) → 22 µH + 68–100 µF. 출력 리플 ≤ 100 mV로 설계.</li>\n    <li>FB1/FB2: 프리레귤레이터 출력 필터 커패시터를 저임피던스로 연결하고, PG1/PG2로 100 nF를 핀 가까이.</li>\n    <li>VS1: 스텝업 미사용이면 배터리에 역접속 보호 다이오드 + 커패시터. VST: 배터리에 역접속 보호 다이오드 + 커패시터.</li>\n    <li>QUC 출력 C 2.2–47 µF (ESR 0–200 mΩ) · QCO 출력 C 1–47 µF (ESR 0–200 mΩ) · QVR 출력 C 1–10 µF (ESR 0–200 mΩ), QVR 5.00 V ±1 % (4.95–5.05 V, 0–150 mA), 드롭 최대 400 mV.</li>\n    <li>QST: 680 nF–1 µF 두 개 권장 (Infineon 지원 안내). QT1/QT2: 핀 가까이 커패시터 (값은 데이터시트 표 확인 필요).</li>\n    <li>스텝업 과전류 임계 V<sub>RSH−RSL</sub> 190–230 mV (210 typ) → 센스 저항 = 0.21 V / 원하는 피크 전류.</li>\n    <li>VCI: 외부 코어 레귤레이터를 쓰면 그 출력을 분압해 연결. ROT: 약한 내부 풀업(6–60 µA)이라 MCU PORST에 직결 가능 (TC2xx 하드웨어 설계 가이드).</li>\n    <li>미확인: 스텝다운 환류 다이오드 필요 여부(전력 GND 핀이 있어 동기식으로 추정) · 트래커 커패시터 값 — 원본 응용 회로도로 확인 필요.</li>\n  </ul>"
+     "html": "<ul>\n    <li>스텝다운 필터 (Infineon 지원 안내): 2.2 MHz(FRE 개방) → 인덕터 4.7 µH + 커패시터 10–47 µF · 400 kHz(FRE = GND) → 22 µH + 68–100 µF. 출력 리플 ≤ 100 mV로 설계.</li>\n    <li>FB1/FB2: 프리레귤레이터 출력 필터 커패시터를 저임피던스로 연결하고, PG1/PG2로 100 nF를 핀 가까이.</li>\n    <li>VS1: 스텝업 미사용이면 배터리에 역접속 보호 다이오드 + 커패시터. VST: 배터리에 역접속 보호 다이오드 + 커패시터.</li>\n    <li>QUC 출력 C 2.2–47 µF (ESR 0–200 mΩ) · QCO 출력 C 1–47 µF (ESR 0–200 mΩ) · QVR 출력 C 1–10 µF (ESR 0–200 mΩ), QVR 5.00 V ±1 % (4.95–5.05 V, 0–150 mA), 드롭 최대 400 mV.</li>\n    <li>QST 출력 C 0.47–10 µF (ESR 0–200 mΩ), 3.3 V(VS2) 3.17–3.43 V, 부하 0–10 mA, 전류 제한 15–40 mA. QT1/QT2 출력 C 1–10 µF (ESR 0–200 mΩ), QVR 추종 ±10 mV (0–150 mA), 전류 제한 170–320 mA, 드롭 최대 400 mV.</li>\n    <li>스텝다운은 동기식 — 내부 P채널(하이사이드) · N채널(로우사이드) MOSFET, 외부 환류 다이오드 불필요. V<sub>PREREG</sub> 5.65 / 5.8 / 5.95 V (PWM, V<sub>VS</sub> ≥ 6.5 V).</li>\n    <li>응용 회로 표 27: 스텝업 22 µH + 100 µF (500 kHz) · 스텝다운 2.2 MHz 4.7 µH + 10–47 µF · 400 kHz 22 µH + 68–100 µF. 설정 핀: FRE 개방/GND = 고/저 주파수, STU 개방/GND = 스텝업 사용/미사용, SEC 개방/GND = 외부 코어 레귤레이터 사용/미사용.</li>\n    <li>미사용 핀: WAK · ENA → GND (배터리 연결 시 POR로 자동 기동해 INIT로 감, WAK/ENA는 저전력 상태에서 깨울 때만 · 임계 0.8–2.0 V) · VCI · SYN · EVC → 개방 · AGS1/AGS2 → GND에 직접.</li>\n    <li>QUC 리셋 임계 (3.3 V): 저전압 2.90 / 2.97 / 3.05 V · 과전압 3.46 / 3.53 / 3.60 V. SS1/SS2는 INIT · FAILSAFE · STANDBY · SLEEP에서 Low, NORMAL에서 High (SS2는 ΔtSS2 지연).</li>\n    <li>스텝업 과전류 임계 V<sub>RSH−RSL</sub> 190–230 mV (210 typ) → 센스 저항 = 0.21 V / 원하는 피크 전류.</li>\n    <li>VCI: 외부 코어 레귤레이터를 쓰면 그 출력을 분압해 연결. ROT: 약한 내부 풀업(6–60 µA)이라 MCU PORST에 직결 가능 (TC2xx 하드웨어 설계 가이드).</li>\n    <li>미확인: 스텝다운 환류 다이오드 필요 여부(전력 GND 핀이 있어 동기식으로 추정) · 트래커 커패시터 값 — 원본 응용 회로도로 확인 필요.</li>\n  </ul>"
     }
    ]
   },
@@ -486,7 +486,8 @@
   }
  ],
  "src": [
-  "https://www.farnell.com/datasheets/2820311.pdf"
+  "https://www.farnell.com/datasheets/2820311.pdf",
+  "https://www.infineon.com/assets/row/public/documents/10/49/infineon-tlf35584-datasheet-en.pdf"
  ],
  "key": {
   "spec": {

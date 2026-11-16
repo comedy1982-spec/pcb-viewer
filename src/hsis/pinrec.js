@@ -5,6 +5,9 @@ const PINREC=(function(){
 "use strict";
 const MP=typeof MCU_PINS!=='undefined'?MCU_PINS:(typeof require!=='undefined'?require('../parts/mcu-pins.js'):null);
 const FIXED_CATS=/전원|접지|클럭|리셋|부트/;
+// dedicated pins that have one place on the package: debug access (JTAG / SWD / DAP), reset, boot / hardware configuration, crystal
+const FIXED_FUNC=/^(TMS|TCK|TDI|TDO|N?TRST|SWDIO|SWCLK|SWO|DAP\d?|DAPE\d?|JTAG\w*|PORST|N?RST|NRST|ESR\d|XTAL\d|OSC_?(IN|OUT)|BOOT\d?|HWCFG\d?|TESTMODE)$/;
+const isFixed=it=>FIXED_CATS.test(it.cat||it._cat||'')||FIXED_FUNC.test(String(it.func||'').toUpperCase().trim())||FIXED_FUNC.test(String(it.signal||'').toUpperCase().trim());
 const up=s=>String(s||'').toUpperCase();
 const parsePins=s=>String(s||'').split(/[,;\s]+/).filter(Boolean).map(t=>t.replace(/^(pin|p)(?=\d)/i,''));
 
@@ -12,7 +15,7 @@ const parsePins=s=>String(s||'').split(/[,;\s]+/).filter(Boolean).map(t=>t.repla
 function roleOf(it,peerRole){
   const f=up(it.func)+' '+up(it.periph),sig=up(it.signal),dir=up(it.dir),all=f+' '+sig;
   const out=/출력|OUT/.test(dir)&&!/입력|^IN/.test(dir),inp=/입력|^IN/.test(dir);
-  if(FIXED_CATS.test(it.cat||it._cat||''))return null;
+  if(isFixed(it))return null;
   if(/USB/.test(all)&&/D[MP]|DP|DM/.test(sig))return /DM|D-|N$/.test(sig)?'usb_dm':'usb_dp';
   if(/ADC|EVADC|\bAN\d|아날로그/.test(f)||/아날로그/.test(it.cat||''))return'adc';
   if(/SPI|QSPI/.test(f)){if(/SCK|SCLK|CLK/.test(all))return'spi_sck';if(/MOSI|MTSR|SDO/.test(all))return'spi_mosi';if(/MISO|MRST|SDI/.test(all))return'spi_miso';if(/NSS|CS|SLSO/.test(all))return'spi_cs';}
@@ -58,7 +61,7 @@ function recommend(B,H,mcuRef,opts){
   // signals to place
   const recs=[];
   H.items.forEach(it=>{
-    const pins=parsePins(it.pins);if(FIXED_CATS.test(it.cat||it._cat||''))return;
+    const pins=parsePins(it.pins);if(isFixed(it))return;
     if(pins.length>1)return;
     const pr=peerOf(B,it,mcuRef);const pinfo=pr&&MP.peer(pr.c.mpn||pr.c.val);const pp=pinfo&&pinfo[pr.p.n];
     const role=roleOf(it,pp&&pp[1]);if(!role)return;

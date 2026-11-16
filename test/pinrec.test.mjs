@@ -109,3 +109,11 @@ test('TC364: auto-routing joins every applied signal net without clearance viola
   assert.ok(!B.vias.some((v) => v.auto) && !B.layers['T.cu'].some((p) => p.auto));
   assert.equal(AUTOROUTE.openNets(B, (n) => nets.includes(n)).length, nets.length);
 });
+
+test('pin recommendation never moves dedicated pins: debug access (TMS / TCK), reset, crystal', () => {
+  const L = load();const { PRODUCTS, HWARCH, NEWPROJ, HSIS, PINREC } = L;const prof = PRODUCTS.detect('ELD only');const ans = {};prof.questions.forEach(q => { ans[q.key] = q.options ? q.options[0].label : q.def; });
+  const B = NEWPROJ.toBoard(HWARCH.toPlan(PRODUCTS.apply(prof, ans, 'ELD only').arch).plan, { seed: 5 }).B;const mcu = HSIS.pickMcu(B, []);const H = HSIS.fromBoard(B, mcu);
+  assert.ok(H.items.some(i => i.func === 'TMS') && H.items.some(i => i.func === 'TCK'));
+  for (const mode of ['keep', 'all']) { const R = PINREC.recommend(B, H, mcu, { mode });assert.ok(!R.error, R.error);const sig = R.recs.map(r => r.signal);
+    assert.ok(!sig.some(x => /^(TMS|TCK|PORST|ESR0|XTAL[12])$/.test(x)), mode + ': ' + sig.join(' '));if (mode === 'all') assert.ok(sig.includes('CAN_TX')); }
+});

@@ -22,7 +22,9 @@ test('parts picked in the system diagram become the circuit: TLF35584 PMIC, TPS7
   const l = r.parts.find(c => c.ref[0] === 'L' && c.pins['1'] === 'PMIC_SW');assert.equal(l.val, '4.7µH');assert.equal(l.pins['2'], u.pins['37']);
   assert.equal(on(r, 'VSTBY').filter(c => c.ref[0] === 'C').length, 2);
   ['PMIC_SCL', 'PMIC_SDI', 'PMIC_SDO', 'PMIC_SCS', 'PMIC_INT', 'PMIC_ERR', 'WDI'].forEach(n => assert.ok(r.pinmap[n], n + ' on an MCU pin'));
-  assert.ok(r.warn.some(w => /환류 다이오드/.test(w)));
+  // data sheet: synchronous step-down (no catch-diode warning), unused WAK / ENA to ground, VCI open, tracker and standby caps inside their ranges
+  assert.ok(!r.warn.some(w => /환류 다이오드/.test(w)));assert.equal(u.pins['4'], 'GND');assert.equal(u.pins['3'], 'GND');assert.equal(u.pins['26'], undefined);assert.ok(!r.parts.some(c => Object.values(c.pins).includes('PMIC_WAK')));
+  ['PMIC_QT1', 'PMIC_QT2'].forEach(n => assert.equal(on(r, n).filter(c => c.ref[0] === 'C' && c.val === '2.2µF').length, 1, n));
   // its rails hold down to the PMIC's 6 V minimum supply (plus the input path)
   const rail = r.pwrseq.rails.find(x => x.rail === '+3V3');assert.equal(rail.kind, 'PMIC');assert.ok(rail.vbMin >= 6 && rail.vbMin < 6.5);
   // 9 V hall supply: TPS7B86 adjustable with a 0.65 V feedback divider instead of the LM317
