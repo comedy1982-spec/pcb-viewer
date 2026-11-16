@@ -36,3 +36,11 @@ node scripts/pcbrun.cjs --profile Dadu --param gdrv3.driver=IR2104,pwr_in.revq=d
 ```
 결과: 85 × 55 mm · 8층 · 아래층 부품 52개 · 미연결 0 · DRC 0 · 전류 폭(유효/필요 mm) PH_U 9.79/6.14 · PH_V 10.5/6.14 · PH_W 7.49/6.14 · VIN_RAW 18.9/6.14 · PH_U_SNS 직결/6.14 · PH_V_SNS 직결/6.14
 입력 역접속 FET은 DPAK을 유지합니다(85 × 55에 D2PAK-7이 들어가지 않음). 그래서 +12V Q1 비아 전류 점검은 이전처럼 통과하지 못합니다.
+
+## v1.115.0 리셋 연결 수정 후 다시 배선
+감시 IC(TPS3823) RESET 출력이 MCU 리셋 핀(PORST)에 연결되도록 회로를 고치고 다시 배치 · 배선했습니다(이전 판은 출력이 `NRST` 넷에 혼자 있어 MCU에 닿지 않았음).
+```
+... reset --strategy compact --both --seed 13; route
+```
+결과: 85 × 55 mm · 8층 · 미연결 0 · DRC 0 · 전류 폭 충족 · 비아 전류 미달: +12V Q1 1개 +2396°C, GND R28 7개 +41°C
+입력 FET(DPAK) Q1과 션트 R28(+41 °C)의 비아 점검은 미달입니다 — 85 × 55의 한계.

@@ -45,3 +45,11 @@ node scripts/pcbrun.cjs --profile Dadu --param gdrv3.driver=IR2104 \
   --cmds "board layers 8; board size 100 65 --anchor center; reset --strategy compact --seed 2; route"
 ```
 결과: 100 × 65 mm · 8층 · 아래층 부품 0개 · 미연결 0 · DRC 0 · 전류 폭(유효/필요 mm) PH_U 9.98/6.14 · PH_V 10.12/6.14 · PH_W 8.95/6.14 · VIN_RAW 24.17/6.14 · PH_U_SNS 직결/6.14 · PH_V_SNS 직결/6.14
+
+## v1.115.0 리셋 연결 수정 후 다시 배선
+감시 IC(TPS3823) RESET 출력이 MCU 리셋 핀(PORST)에 연결되도록 회로를 고치고 다시 배치 · 배선했습니다(이전 판은 출력이 `NRST` 넷에 혼자 있어 MCU에 닿지 않았음).
+```
+... reset --strategy compact --seed 5; route --ai
+```
+결과: 100 × 65 mm · 8층 · 미연결 0 · DRC 0 · 전류 폭 충족 · 비아 전류 미달: GND R28 9개 +25°C
+션트 R28 GND 귀환 비아 9개 +25 °C로 비아 점검 미달(이 예제는 비아 점검을 요구하지 않음).

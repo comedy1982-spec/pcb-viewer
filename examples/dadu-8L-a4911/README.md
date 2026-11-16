@@ -50,3 +50,10 @@ node scripts/pcbrun.cjs --profile Dadu --param gdrv3.driver=A4911 \
 
 ## v1.110.0 감독 배선으로 미연결 0
 같은 배치(시드 2 · `--no-pincap`)에 `route --ai`를 써서 남아 있던 PH_W_HO 1건을 해결했습니다. 미연결 0 · DRC 0 · 전류 폭 · 비아 통과.
+
+## v1.115.0 리셋 연결 수정 후 다시 배선
+감시 IC(TPS3823) RESET 출력이 MCU 리셋 핀(PORST)에 연결되도록 회로를 고치고 다시 배치 · 배선했습니다(이전 판은 출력이 `NRST` 넷에 혼자 있어 MCU에 닿지 않았음).
+```
+... reset --strategy compact --both --seed 8; route
+```
+결과: 90 × 60 mm · 8층 · 미연결 0 · DRC 0 · 전류 폭 충족 · 비아 전류 통과

@@ -39,3 +39,10 @@ node scripts/pcbrun.cjs --profile Dadu --cur "~10 A (소형 팬 · 펌프)" --pa
   --cmds "board layers 8; board size 90 60 --anchor center; reset --strategy compact --both --seed 1; route"
 ```
 결과: 90 × 60 mm · 8층 · 아래층 부품 46개 · 미연결 0 · DRC 0 · 전류 폭(유효/필요 mm) PH_U 9.96/4.44 · PH_V 9.7/4.44 · PH_W 8.62/4.44 · VIN_RAW 28.12/4.44 · PH_U_SNS 직결/4.44 · PH_V_SNS 직결/4.44
+
+## v1.115.0 리셋 연결 수정 후 다시 배선
+감시 IC(TPS3823) RESET 출력이 MCU 리셋 핀(PORST)에 연결되도록 회로를 고치고 다시 배치 · 배선했습니다(이전 판은 출력이 `NRST` 넷에 혼자 있어 MCU에 닿지 않았음).
+```
+... reset --strategy compact --both --seed 1; route --ai
+```
+결과: 90 × 60 mm · 8층 · 미연결 0 · DRC 0 · 전류 폭 충족 · 비아 전류 통과

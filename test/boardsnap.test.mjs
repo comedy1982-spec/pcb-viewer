@@ -51,3 +51,9 @@ test('20 A supply input picks the D2PAK-7 reverse FET (five source leads); an ol
   plan.blocks.find(b => b.type === 'pwr_in').params.revq = 'dpak';
   const q2 = NEWPROJ.toBoard(plan, { place: false }).B.comps.find(c => /역전압 보호 P-MOSFET/.test(c.desc || ''));assert.equal(q2.fp, 'TO-252');
 });
+
+test('every saved example carries the reset fix: the reset IC output and the MCU reset pin share one routed net', () => {
+  const L = load();for (const k of ['SNAP_DADU8', 'SNAP_DADU8B', 'SNAP_DADU8C', 'SNAP_DADU8D', 'SNAP_DADU8E', 'SNAP_ELD6']) assert.equal(L[k].meta.rstFix, true, k);
+  const B = fresh(L.SNAP_DADU8.meta);L.BOARDSNAP.apply(B, L.SNAP_DADU8);const pads = B.nets.PORST.pads.map(p => B.comps.find(c => c.pads.includes(p)).val);
+  assert.ok(pads.some(v => /TPS3823/.test(v)) && pads.some(v => /TC364/.test(v)), pads.join(' '));assert.equal(L.PCBEDIT.ratsnest(B, ['PORST']).length, 0);
+});

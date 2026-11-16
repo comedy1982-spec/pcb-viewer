@@ -51,3 +51,10 @@ node scripts/pcbrun.cjs --profile "ELD only" --cur "~7 A (ELD 솔레노이드)" 
 ```
 ... --cmds "board layers 6; board size 80 55 --anchor center; reset --strategy compact --both --seed 5; route"
 ```
+
+## v1.115.0 리셋 연결 수정 후 다시 배선
+감시 IC(TPS3823) RESET 출력이 MCU 리셋 핀(PORST)에 연결되도록 회로를 고치고 다시 배치 · 배선했습니다(이전 판은 출력이 `NRST` 넷에 혼자 있어 MCU에 닿지 않았음).
+```
+... reset --strategy compact --both --no-pincap --seed 10; route
+```
+결과: 80 × 55 mm · 6층 · 미연결 0 · DRC 0 · 전류 폭 충족 · 비아 전류 통과
