@@ -131,7 +131,11 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
     const lanes=[];{const X1=rect[2]-edge,X0=fR+0.2;const cx=R.map(r=>padX(r.ph));const yC=Math.min(...lp.map(p=>p.y-p.h/2)),yS=Math.max(...lp.map(p=>p.y+p.h/2))+1.0;const n=R.length,wq=(X1-X0)/n;const f=v=>+v.toFixed(2);
       R.forEach((r,k)=>{const xa=k===n-1?X0:(cx[k]+cx[k+1])/2,xb=k===0?X1:(cx[k-1]+cx[k])/2;const ea=X0+(n-1-k)*wq,eb=X0+(n-k)*wq;const yE=r.c.bb[3];
         if(xb-xa>=1)lanes.push({net:r.ph,rect:[f(xa),f(yC),f(xb),f(Math.min(yS,yE))]});
-        if(yE>yS)lanes.push({net:r.ph,rect:[f(ea),f(yS),f(eb),f(yE)]});
+        // from the contact split to the equal split in a few short steps: a single jump leaves only the overlap of the two rectangles
+        // (V: 7.0 and 7.4 mm wide but 1.45 mm apart → 5.55 mm, the bottom-layer neck right above the contacts)
+        const NS=xb-xa>=1&&(Math.abs(ea-xa)>0.3||Math.abs(eb-xb)>0.3)?4:0,yT=Math.min(yE,yS+NS*1.0);
+        for(let j=0;j<NS;j++){const t=(j+0.5)/NS,y0=yS+j*1.0,y1=Math.min(yE,y0+1.0);if(y1-y0<0.2)break;lanes.push({net:r.ph,rect:[f(xa+(ea-xa)*t),f(y0),f(xb+(eb-xb)*t),f(y1)]});}
+        if(yE>yT)lanes.push({net:r.ph,rect:[f(ea),f(NS?yT:yS),f(eb),f(yE)]});
         const nxt=R[k+1];if(nxt&&r.c.bb[3]>nxt.c.bb[3]+1)lanes.push({net:r.ph,rect:[f(X0),f(Math.max(yS,nxt.c.bb[3]+0.6)),f(eb),f(yE)]});});}
     // the supply FET was posed before the bridge column's shunts: if it now sits on one of the macro parts (load contacts spread over
     // more connector columns push the column toward it), slide it away from the column until it is clear

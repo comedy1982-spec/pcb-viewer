@@ -216,7 +216,9 @@ function returnVias(B,opts){opts=opts||{};const gnd=opts.gnd||Object.keys(B.nets
   let S=shapesOfBoard(B);const freeAt=(x,y)=>{const r=via.d/2+clr;for(const s of S){if(s.net===gnd&&s.via)continue;if(s.hole||s.net!==gnd){const bb=bboxOf(s,r);if(x<bb[0]||x>bb[2]||y<bb[1]||y>bb[3])continue;if(dist(s,x,y)<r)return false;}}
     return x>r&&y>r&&x<B.W-r&&y<B.H-r&&(!B.outline[0]||PC.inRing(x,y,B.outline[0]));};
   let added=0,skipped=0;const near=(x,y)=>B.vias.some(v=>v.net===gnd&&Math.hypot(v.x-x,v.y-y)<=d*1.3);
-  B.vias.filter(v=>v.auto&&!v.fan&&!v.ret&&v.net&&v.net!==gnd&&(want?want.has(v.net):netPrio(B,v.net,opts.W)<=2)).forEach(v=>{if(near(v.x,v.y))return;let ok=false;
+  // only clock / high-speed and sensitive analog nets (priority 1–2): a ground via beside a phase or supply via (priority 0) does
+  // nothing for the return path and punches a hole in that net's own copper — it cut a phase's exit from its FET from 3.5 to 0.6 mm
+  B.vias.filter(v=>v.auto&&!v.fan&&!v.ret&&v.net&&v.net!==gnd&&(want?want.has(v.net):(p=>p>=1&&p<=2)(netPrio(B,v.net,opts.W)))).forEach(v=>{if(near(v.x,v.y))return;let ok=false;
     for(const rr of[d,d*1.25,d*1.6]){for(let k=0;k<8&&!ok;k++){const a=k*Math.PI/4;const x=+(v.x+rr*Math.cos(a)).toFixed(3),y=+(v.y+rr*Math.sin(a)).toFixed(3);if(!freeAt(x,y))continue;
         const nv={x,y,d:via.d,drill:via.drill,net:gnd,auto:true,ret:true,layers:'all'};B.vias.push(nv);if(B.nets[gnd])B.nets[gnd].vias.push(nv);S.push({k:'cap',a:[x,y],b:[x,y],r:via.d/2,L:ALL(keys.length),net:gnd,via:nv});added++;ok=true;}if(ok)break;}
     if(!ok)skipped++;});
@@ -608,11 +610,12 @@ function bottleneck(B,net,o){o=Object.assign({layer:0,grid:0.2,rect:null,padRing
     // maximin Dijkstra with a bucket-less binary heap
     const heap=[];const push=(i,v)=>{heap.push([v,i]);let k=heap.length-1;while(k>0){const p=(k-1)>>1;if(heap[p][0]>=heap[k][0])break;[heap[p],heap[k]]=[heap[k],heap[p]];k=p;}};
     const pop=()=>{const t=heap[0];const l=heap.pop();if(heap.length){heap[0]=l;let k=0;for(;;){const a=2*k+1,b=a+1;let m=k;if(a<heap.length&&heap[a][0]>heap[m][0])m=a;if(b<heap.length&&heap[b][0]>heap[m][0])m=b;if(m===k)break;[heap[m],heap[k]]=[heap[k],heap[m]];k=m;}}return t;};
-    H.forEach(i=>push(i,INF));const done=new Uint8Array(G.N);
-    while(heap.length){const[v,i]=pop();if(done[i])continue;done[i]=1;const x=i%nx;for(const j of [x>0?i-1:-1,x<nx-1?i+1:-1,i-nx,i+nx]){if(j<0||j>=G.N||!mask[j]||done[j])continue;const w=Math.min(v,D[j]);if(w>best[j]){best[j]=w;push(j,w);}}}
-    terms.forEach((U,ui)=>{if(ui<=ti)return;let m=0;U.cells.forEach(i=>{if(best[i]>m)m=best[i];});pairs.push({a:T.ref,b:U.ref,width:m>=INF?null:+(m>0?(2*m-1)*g:0).toFixed(2),open:m===0});});});
+    H.forEach(i=>push(i,INF));const done=new Uint8Array(G.N);const nk=new Int32Array(G.N).fill(-1); // nk: the cell where the path to here is narrowest
+    while(heap.length){const[v,i]=pop();if(done[i])continue;done[i]=1;const x=i%nx;for(const j of [x>0?i-1:-1,x<nx-1?i+1:-1,i-nx,i+nx]){if(j<0||j>=G.N||!mask[j]||done[j])continue;const w=Math.min(v,D[j]);if(w>best[j]){best[j]=w;nk[j]=D[j]<v?j:nk[i];push(j,w);}}}
+    terms.forEach((U,ui)=>{if(ui<=ti)return;let m=0,mi=-1;U.cells.forEach(i=>{if(best[i]>m){m=best[i];mi=i;}});const k=mi>=0?nk[mi]:-1;pairs.push({a:T.ref,b:U.ref,width:m>=INF?null:+(m>0?(2*m-1)*g:0).toFixed(2),open:m===0,at:k>=0?[+(G.ox+(k%nx)*g).toFixed(1),+(G.oy+Math.floor(k/nx)*g).toFixed(1)]:null});});});
   const ws=pairs.filter(p=>p.width!=null).map(p=>p.width);const open=pairs.filter(p=>p.open).length;
-  return{net,terms:terms.map(t=>t.ref),width:ws.length?Math.min(...ws):null,open,pairs};}
+  const wp=pairs.filter(p=>p.width!=null).sort((a,b)=>a.width-b.width)[0];
+  return{net,terms:terms.map(t=>t.ref),width:ws.length?Math.min(...ws):null,open,pairs,neck:wp&&wp.at?{at:wp.at,a:wp.a,b:wp.b}:null};}
 
 
 /* vias between the copper fills of the same net on two layers (outer top + bottom) so both carry the current */
