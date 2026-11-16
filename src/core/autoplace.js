@@ -133,6 +133,10 @@ function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
         if(xb-xa>=1)lanes.push({net:r.ph,rect:[f(xa),f(yC),f(xb),f(Math.min(yS,yE))]});
         if(yE>yS)lanes.push({net:r.ph,rect:[f(ea),f(yS),f(eb),f(yE)]});
         const nxt=R[k+1];if(nxt&&r.c.bb[3]>nxt.c.bb[3]+1)lanes.push({net:r.ph,rect:[f(X0),f(Math.max(yS,nxt.c.bb[3]+0.6)),f(eb),f(yE)]});});}
+    // the supply FET was posed before the bridge column's shunts: if it now sits on one of the macro parts (load contacts spread over
+    // more connector columns push the column toward it), slide it away from the column until it is clear
+    if(qin){const oth=[...new Set(fixed.filter(x=>x!==qin.ref&&x!==term.ref).map(x=>B.comps.find(c=>c.ref===x)).concat(R.map(r=>r.c),R.map(r=>r.sh)).filter(Boolean))];const hit=()=>oth.some(c=>qin.bb[0]<c.bb[2]+0.4&&c.bb[0]<qin.bb[2]+0.4&&qin.bb[1]<c.bb[3]+0.4&&c.bb[1]<qin.bb[3]+0.4);
+      for(let k=0;k<30&&hit()&&qin.bb[0]-0.5>=edge;k++){PCBEDIT.move(B,qin,-0.5,0);PCBEDIT.prepare(B);}}
     const planeBus=o.planes&&o.planes.has(bat);const busX1=fx-fw/2-0.4,busX0=busX1-Math.max(3,o.busW||4);if(!planeBus)keepout.push([busX0,yIn-1,busX1,top]);
     const drv=placeDrv(busX0);
     return{fixed,keepout,bus:planeBus?null:[busX0,rect[1],busX1,top],net:bat,fit:P*R.length<=H+0.01,planeBus,driver:drv?drv.ref:null,lanes};}

@@ -104,7 +104,7 @@ test('Dadu A4911 10 A / 40 A example snapshot restores: DRC 0, nothing left unco
   const L = load();const { BOARDSNAP, PCBEDIT } = L;const S = L.SNAP_DADU8D;const m = S.meta;
   const prof = PRODUCTS.detect(m.profile);const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[m.fet || 0].label;
   const R = PRODUCTS.apply(prof, ans, m.profile);const plan = HWARCH.toPlan(R.arch).plan;const g3 = plan.blocks.find(b => b.type === 'gdrv3');
-  if (m.pwrIn) { const pi = plan.blocks.find(b => b.type === 'pwr_in'); if (pi) pi.params = Object.assign({}, pi.params, m.pwrIn); }g3.params = Object.assign({}, g3.params, { driver: m.driver }, m.gdrv3);plan.ifaceFix = m.ifaceFix === true;plan.rstFix = m.rstFix === true;plan.curModel = m.curModel === 2 ? 2 : 1;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };plan.name = m.name;
+  if (m.pwrIn) { const pi = plan.blocks.find(b => b.type === 'pwr_in'); if (pi) pi.params = Object.assign({}, pi.params, m.pwrIn); }g3.params = Object.assign({}, g3.params, { driver: m.driver }, m.gdrv3);plan.ifaceFix = m.ifaceFix === true;plan.rstFix = m.rstFix === true;plan.curModel = m.curModel === 2 ? 2 : 1;plan.connGap = m.connGap === true;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };plan.name = m.name;
   const { B } = NEWPROJ.toBoard(plan, { place: false });const r = BOARDSNAP.apply(B, S);
   assert.equal(r.missing.length, 0);assert.equal(PCBEDIT.drc(B).length, 0);assert.equal(PCBEDIT.ratsnest(B).length, 0);
   assert.ok(B.powerReport.nets.filter(n => n.width !== '직결').every(n => n.width >= n.need));assert.equal(B.powerReport.nets[0].need, 4.44);
@@ -145,7 +145,8 @@ test('ELD only (Dadu based): 12 V BAT/IGN/GND 3-pin input, A4911 on two legs as 
   const ecu = J.find(p => p.val === 'ECU');assert.equal(ecu.fp, 'MX150-2x6-RA');assert.equal(ecu.mpn, '0348301201');
   const on = net => Object.keys(ecu.pins).filter(k => ecu.pins[k] === net).length;
   assert.deepEqual(['VIN_RAW', 'GND', 'HB_A', 'HB_B', 'IGN_IN', 'CANH', 'CANL'].map(on), [2, 2, 2, 2, 1, 1, 1]);
-  assert.deepEqual([1, 7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12].map(k => ecu.pinNames[k]), ['BAT', 'BAT', 'GND', 'GND', 'IGN', 'NC', 'CAN_H', 'CAN_L', 'ELD+', 'ELD+', 'ELD−', 'ELD−']);
+  assert.deepEqual([1, 7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12].map(k => ecu.pinNames[k]), ['BAT', 'BAT', 'GND', 'GND', 'CAN_H', 'CAN_L', 'ELD+', 'ELD+', 'IGN', 'NC', 'ELD−', 'ELD−']); // a small-signal column between the two outputs
+  { const P0 = JSON.parse(JSON.stringify(T.plan));P0.connGap = false;const e0 = NEWPROJ.build(P0).parts.find(p => p.val === 'ECU');assert.deepEqual([1, 7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12].map(k => e0.pinNames[k]), ['BAT', 'BAT', 'GND', 'GND', 'IGN', 'NC', 'CAN_H', 'CAN_L', 'ELD+', 'ELD+', 'ELD−', 'ELD−']); } // saved plans keep the old pinout
   assert.ok(!J.some(p => /^(IGN|CAN|ELD|BAT\/IGN\/GND)$/.test(p.val)), 'no other external connector');
   // the separate-connector variant still works: BAT / IGN / GND 3-pin + ELD 2-pin
   const T2 = HWARCH.toPlan(R.arch);T2.plan.blocks.find(b => b.type === 'pwr_in').params.conn = 'combo';const J2 = NEWPROJ.build(T2.plan).parts.filter(p => /^J/.test(p.ref));
@@ -163,7 +164,7 @@ test('ELD only (Dadu based): 12 V BAT/IGN/GND 3-pin input, A4911 on two legs as 
 test('ELD only A4911 H-bridge example snapshot restores: DRC 0, nothing unconnected, copper and vias rated for 7 A / 20 A', () => {
   const L = load();const { BOARDSNAP, PCBEDIT } = L;const S = L.SNAP_ELD6;const m = S.meta;
   const prof = PRODUCTS.detect(m.profile);assert.equal(prof.key, 'eld');const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[m.fet || 0].label;
-  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;plan.ifaceFix = m.ifaceFix === true;plan.rstFix = m.rstFix === true;plan.curModel = m.curModel === 2 ? 2 : 1;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };plan.name = m.name;
+  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;plan.ifaceFix = m.ifaceFix === true;plan.rstFix = m.rstFix === true;plan.curModel = m.curModel === 2 ? 2 : 1;plan.connGap = m.connGap === true;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };plan.name = m.name;
   const { B } = NEWPROJ.toBoard(plan, { place: false });const r = BOARDSNAP.apply(B, S);
   assert.equal(r.missing.length, 0);assert.equal(PCBEDIT.drc(B).length, 0);assert.equal(PCBEDIT.ratsnest(B).length, 0);
   assert.ok(B.powerReport.nets.filter(n => n.width !== '직결').every(n => n.width >= n.need));
@@ -180,7 +181,7 @@ test('Dadu ECU-connector example (DRV8334, MX150 20-pin, 10 A / 30 A, 8 layers) 
   const prof = PRODUCTS.detect(m.profile);const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');if (fq) ans.fet = fq.options[m.fet || 0].label;
   const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;
   (m.params || []).forEach(t => { const q = t.match(/^([\w]+)\.([\w]+)=(.*)$/);if (q) plan.blocks.filter(b => b.type === q[1]).forEach(b => { b.params = Object.assign({}, b.params, { [q[2]]: q[3] }); }); });
-  (m.add || []).forEach(t => NEWPROJ.addBlock(plan, t, {}));plan.ifaceFix = m.ifaceFix === true;plan.rstFix = m.rstFix === true;plan.curModel = m.curModel === 2 ? 2 : 1;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };plan.name = m.name;
+  (m.add || []).forEach(t => NEWPROJ.addBlock(plan, t, {}));plan.ifaceFix = m.ifaceFix === true;plan.rstFix = m.rstFix === true;plan.curModel = m.curModel === 2 ? 2 : 1;plan.connGap = m.connGap === true;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };plan.name = m.name;
   const { B } = NEWPROJ.toBoard(plan, { place: false });const r = BOARDSNAP.apply(B, S);
   assert.equal(r.missing.length, 0);assert.equal(PCBEDIT.drc(B).length, 0);assert.equal(PCBEDIT.ratsnest(B).length, 0);
   const J = B.comps.find(c => c.val === 'ECU');assert.equal(J.pads.length, 20);

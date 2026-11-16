@@ -6,7 +6,7 @@ test('routing diagnosis and the rule supervisor: an open net is described by its
   const L = load();const { BOARDSNAP, PRODUCTS, HWARCH, NEWPROJ, ROUTEDIAG, AUTOROUTE, PCBEDIT, PCB } = L;const S = L.SNAP_DADU8C, m = S.meta;
   const prof = PRODUCTS.detect(m.profile);const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');ans.fet = fq.options[0].label;
   const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;(m.params || []).forEach(t => { const q = t.match(/^([\w]+)\.([\w]+)=(.*)$/);if (q) plan.blocks.filter(b => b.type === q[1]).forEach(b => { b.params = Object.assign({}, b.params, { [q[2]]: q[3] }); }); });
-  plan.ifaceFix = true;plan.rstFix = m.rstFix === true;plan.curModel = m.curModel === 2 ? 2 : 1;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };
+  plan.ifaceFix = true;plan.rstFix = m.rstFix === true;plan.curModel = m.curModel === 2 ? 2 : 1;plan.connGap = m.connGap === true;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };
   const { B } = NEWPROJ.toBoard(plan, { place: false });BOARDSNAP.apply(B, S);
   const D0 = ROUTEDIAG.diagnose(B);assert.equal(D0.rats, 0);assert.equal(D0.ok, true);assert.equal(D0.score, 0);assert.equal(ROUTEDIAG.plan(D0, B, {}).length, 0);
   // open one gate signal: take its auto copper off

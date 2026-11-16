@@ -277,7 +277,7 @@ const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'
 const blockKey=s=>{const k=String(s||'').toLowerCase();return LIB[k]?k:BLOCK_ALIAS[k]||null;};
 
 /* ---------- plan ---------- */
-function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2};}
+function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2,connGap:true};}
 function addBlock(plan,type,params){const k=blockKey(type);if(!k)throw new Error(`블록: ${Object.keys(LIB).join(', ')}`);const L=LIB[k];const p={};Object.entries(L.params).forEach(([n,d])=>{p[n]=d.def;});
   Object.entries(params||{}).forEach(([n,v])=>{if(!(n in L.params))throw new Error(`${k} 블록 파라미터: ${Object.keys(L.params).join(', ')||'(없음)'}`);p[n]=v;});
   if(k==='mcu'&&plan.blocks.some(b=>b.type==='mcu'))throw new Error('MCU는 하나만 넣을 수 있습니다 (set으로 바꾸기)');
@@ -374,14 +374,22 @@ function ecuConnector(plan,parts,curr,peak,warn){
   // contacts by column (inner row + outer row): a power signal with parallel contacts takes whole columns, so its copper enters
   // on the inner pad and the outer pad hangs on it — no other net between them. Single contacts pair up; CAN_H / CAN_L share one column.
   sig.forEach(s=>{if(s.n>1&&s.n%2)s.n++;});
-  // column order from one end: supply and ground, the small signals, then the load outputs at the far end (the power stage sits there)
-  const cols=[];const whole=s=>{for(let i=0;i<s.n/2;i++)cols.push([s,s]);};const isLoad=s=>!s.own&&!/^(VIN_RAW|GND)$/.test(s.net);
-  sig.filter(s=>s.n>1&&!isLoad(s)).forEach(whole);
+  // column order from one end: supply and ground, the small signals, then the load outputs at the far end (the power stage sits there).
+  // Load outputs are not put side by side: the copper of a middle output (phase V between U and W) is boxed in by its neighbours'
+  // pours and leaves the connector as a bare track. A column of unused contacts or of a small signal goes between two outputs
+  // (unused first, CAN last — it is kept away from the switching outputs while anything else is left), so each output has a lane
+  // of two pitches less one pad on every copper layer.
+  const whole=s=>Array.from({length:s.n/2},()=>[s,s]);const isLoad=s=>!s.own&&!/^(VIN_RAW|GND)$/.test(s.net);
+  const sup=[].concat(...sig.filter(s=>s.n>1&&!isLoad(s)).map(whole));
   const can=sig.filter(s=>s.n===1&&/^CAN/.test(s.net)),one=sig.filter(s=>s.n===1&&!/^CAN/.test(s.net));if(one.length%2)one.push(null);
-  for(let i=0;i<one.length;i+=2)cols.push([one[i],one[i+1]]);if(can.length===2)cols.push([can[0],can[1]]);else can.forEach(c=>cols.push([c,null]));
-  sig.filter(s=>s.n>1&&isLoad(s)).forEach(whole);
-  const n=MX150.sizes.find(v=>v>=cols.length*2);if(!n){warn.push(`ECU 커넥터: 접점 ${cols.length*2}개 — MX150 20핀을 넘어 합치지 않았습니다`);return;}
-  while(cols.length<n/2)cols.push([null,null]);const c2=n/2;
+  const small=[];for(let i=0;i<one.length;i+=2)small.push([one[i],one[i+1]]);const canC=can.length===2?[[can[0],can[1]]]:can.map(c=>[c,null]);
+  const loads=sig.filter(s=>s.n>1&&isLoad(s));const used=sup.length+small.length+canC.length+loads.reduce((a,s)=>a+s.n/2,0);
+  const n=MX150.sizes.find(v=>v>=used*2);if(!n){warn.push(`ECU 커넥터: 접점 ${used*2}개 — MX150 20핀을 넘어 합치지 않았습니다`);return;}
+  const c2=n/2;const gaps=plan.connGap===true?Math.max(0,loads.length-1):0;/* plans saved before v1.119 keep their pinout */const sp=[];for(let i=0;i<c2-used&&sp.length<gaps;i++)sp.push([null,null]);
+  while(sp.length<gaps&&small.length)sp.push(small.pop());while(sp.length<gaps&&canC.length)sp.push(canC.pop());
+  const cols=sup.concat(small,canC);while(cols.length+sp.length+loads.reduce((a,s)=>a+s.n/2,0)<c2)cols.push([null,null]);
+  loads.forEach((s,i)=>{if(i&&sp.length)cols.push(sp.shift());whole(s).forEach(c=>cols.push(c));});
+  if(gaps&&cols.length>c2)throw new Error('ECU connector columns');
   const pins={},names={};cols.forEach((cl,i)=>{[0,1].forEach(r=>{const k=r*c2+i+1,s=cl[r];names[k]=s?s.name:'NC';if(s)pins[k]=s.net;});});
   const fp=mx150Fp(n);const all=inJ.concat(ignJ,canJ,outJ,hallJ,spJ);const blk=inJ[0].block;
   const at=parts.indexOf(inJ[0]);for(const c of all){const i=parts.indexOf(c);if(i>=0)parts.splice(i,1);}
