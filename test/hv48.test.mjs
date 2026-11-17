@@ -31,3 +31,17 @@ test('48 V dual BLAC plan: parts wired from the datasheet pin tables, 100 V part
   assert.ok(!r.parts.some(c => /P04/.test(c.val)), 'no 40 V reverse-polarity FET');assert.ok(r.warn.some(w => /역접속 보호 없음/.test(w)));
   assert.equal(r.curr['+48V'], 40);assert.equal(r.curr.PH2_W, 20);
 });
+test('conn = ecu-io: an input ECU connector and one output ECU connector per motor block', () => {
+  const L = load();const P = plan(L);P.blocks.find(b => b.type === 'pwr_in').params.conn = 'ecu-io';const r = L.NEWPROJ.build(P);
+  const J = r.parts.filter(c => /^J/.test(c.ref));assert.deepEqual(J.slice(0, 3).map(c => c.ref + ' ' + c.val + ' ' + c.fp).join(' | '), 'J1 ECU-IN MX150-2x6-RA | J2 ECU-OUT1 MX150-2x10-RA | J3 ECU-OUT2 MX150-2x10-RA');
+  assert.ok(!J.some(c => /^TERM|단자/.test(c.fp) || c.val === 'CAN' || c.val === '모터 상'), 'terminal blocks and the CAN header are gone');
+  const cnt = (c, net) => Object.values(c.pins).filter(n => n === net).length;const [ji, j1, j2] = J;
+  assert.equal(cnt(ji, '+48V'), 4);assert.equal(cnt(ji, 'GND'), 4);assert.equal(cnt(ji, 'CANH'), 1);assert.equal(cnt(ji, 'CANL'), 1); // 40 A at 12 A a contact
+  ['U', 'V', 'W'].forEach(h => { assert.equal(cnt(j1, 'PH_' + h), 2);assert.equal(cnt(j2, 'PH2_' + h), 2); });
+  // a contact pair is one column (inner + outer row), and outputs are spare columns apart
+  const col = (c, net) => [...new Set(Object.entries(c.pins).filter(([, n]) => n === net).map(([k]) => (+k - 1) % 10))];
+  const cu = col(j1, 'PH_U'), cv = col(j1, 'PH_V'), cw = col(j1, 'PH_W');assert.deepEqual([cu.length, cv.length, cw.length], [1, 1, 1]);assert.equal(Math.abs(cu[0] - cv[0]), 4);assert.equal(Math.abs(cv[0] - cw[0]), 4); // discrete FETs: one phase cell is four columns (14 mm) wide
+  assert.ok(r.warn.some(w => /^ECU 커넥터: 입력 MX150 12핀/.test(w)));
+  // the single-connector option and the default are untouched
+  P.blocks.find(b => b.type === 'pwr_in').params.conn = 'sep';assert.ok(L.NEWPROJ.build(P).parts.some(c => c.val === '모터 상'));
+});

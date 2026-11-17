@@ -7055,6 +7055,43 @@ function zoneReport(B){const Z=B.zones;if(!Z||!Z.rects)return null;const out=[];
    puts the motor terminal on the stage zone's outer edge, one 2-FET package per phase in a column facing it (battery pads
    toward the bus side, phase pad toward the terminal, low-side source / shunt node up) and the shunt right on that source;
    everything else is placed around them by the annealer. Returns the refs it fixed (or null). */
+/* Bridges of discrete FETs (one small package per switch, several in parallel) with ECU connectors: connectors in a row on the
+   low-y board edge (input, then one output connector per bridge), and above every output contact column one phase cell —
+   the phase copper rises straight from its contacts as a lane; the high-side FETs stand on its left with their source leads on
+   the lane (drains to the supply plane through vias), the low-side FETs on its right with their drain on the lane, and the
+   leg shunt above the low-side FETs. Outputs are four connector columns (14 mm) apart, one cell wide. */
+function discreteMacro(B,o){o=o||{};PCBEDIT.prepare(B);
+  const outJ=B.comps.filter(c=>/^J/.test(c.ref)&&/^ECU-OUT/.test(c.val||'')).sort((a,b)=>a.ref.localeCompare(b.ref,undefined,{numeric:true}));if(!outJ.length)return null;
+  const inJ=B.comps.find(c=>/^J/.test(c.ref)&&(c.val||'')==='ECU-IN');const isF=c=>/^Q/.test(c.ref)&&c.pads.length===9&&c.pads.some(p=>p.n==='9');
+  if(!B.comps.some(isF))return null;
+  const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];const ob=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
+  const edge=o.edge||1.0,fixed=[],keepout=[],lanes=[],f=v=>+v.toFixed(2);
+  const pose=(c,x,y,rot)=>{canonical(B,c);if(rot)PCBEDIT.rotate(B,c,rot);PCBEDIT.prepare(B);const bx=(c.bb[0]+c.bb[2])/2,by=(c.bb[1]+c.bb[3])/2;PCBEDIT.move(B,c,x-bx,y-by);PCBEDIT.prepare(B);};
+  const bestRot=(c,score)=>{let best=null;[0,90,180,270].forEach(rot=>{canonical(B,c);if(rot)PCBEDIT.rotate(B,c,rot);PCBEDIT.prepare(B);const sc=score(c);if(!best||sc>best.sc)best={rot,sc};});canonical(B,c);if(best.rot)PCBEDIT.rotate(B,c,best.rot);PCBEDIT.prepare(B);return best.rot;};
+  const padC=(c,f2)=>{const ps=c.pads.filter(f2);return ps.length?[ps.reduce((a,p)=>a+p.x,0)/ps.length,ps.reduce((a,p)=>a+p.y,0)/ps.length]:null;};
+  // connectors: pad rows horizontal and toward the board interior, in a row from the right corner (outputs) — input leftmost
+  const cRot=c=>bestRot(c,k=>{const xs=k.pads.map(p=>p.x),ys=k.pads.map(p=>p.y);const py=ys.reduce((a,b)=>a+b,0)/ys.length;const by=k.body&&k.body.cy!=null?k.body.cy:py;return(Math.max(...xs)-Math.min(...xs))-(Math.max(...ys)-Math.min(...ys))+(py-by);});
+  const row=(inJ?[inJ]:[]).concat(outJ);const rots=row.map(cRot);const ws=row.map(c=>c.bb[2]-c.bb[0]);const gap=3;const tot=ws.reduce((a,b)=>a+b,0)+gap*(row.length-1);
+  if(tot>ob[2]-ob[0]-2*edge)return null;let x=ob[2]-edge-tot;row.forEach((c,i)=>{const h=c.bb[3]-c.bb[1];pose(c,x+ws[i]/2,ob[1]+edge+h/2,rots[i]);fixed.push(c.ref);x+=ws[i]+gap;});
+  const LH=2.2,GAP=0.35;let cells=0;
+  outJ.forEach(J=>{const nets=[...new Set(J.pads.map(p=>p.net).filter(Boolean))];const y0=J.bb[3]+1.2;
+    nets.forEach(ph=>{const cp=J.pads.filter(p=>p.net===ph);const xc=cp.reduce((a,p)=>a+p.x,0)/cp.length,yLo=Math.min(...cp.map(p=>p.y-p.h/2));
+      const hs=B.comps.filter(c=>isF(c)&&c.pads.find(p=>p.n==='1').net===ph),ls=B.comps.filter(c=>isF(c)&&c.pads.find(p=>p.n==='9').net===ph);if(!hs.length||!ls.length)return;
+      // high side: stacked on the left of the lane, source leads on the lane (drain flag outward — its plane vias go in the free
+      // strip toward the neighbouring cell). Low side: a row across the top of the lane, drain flags down onto it, source leads up.
+      let yH=y0;hs.forEach((c,j)=>{const rr=bestRot(c,k=>{const s1=padC(k,p=>p.n==='1'),d=padC(k,p=>p.n==='9');return s1[0]-d[0];});const fw=c.bb[2]-c.bb[0],fh=c.bb[3]-c.bb[1];
+        pose(c,xc-(LH+GAP+fw/2),y0+fh/2+j*(fh+0.6),rr);fixed.push(c.ref);yH=Math.max(yH,c.bb[3]);});
+      const yL0=yH+0.6;let yL=yL0,xa=xc,xb=xc;ls.forEach((c,j)=>{const rr=bestRot(c,k=>{const s1=padC(k,p=>p.n==='1'),d=padC(k,p=>p.n==='9');return s1[1]-d[1];});const fw=c.bb[2]-c.bb[0],fh=c.bb[3]-c.bb[1];
+        pose(c,xc+(j-(ls.length-1)/2)*(fw+0.6),yL0+fh/2,rr);fixed.push(c.ref);yL=Math.max(yL,c.bb[3]);xa=Math.min(xa,c.bb[0]);xb=Math.max(xb,c.bb[2]);});
+      lanes.push({net:ph,rect:[f(xc-LH-0.5),f(yLo-0.6),f(xc+LH+0.5),f(yH+0.2)]});lanes.push({net:ph,rect:[f(xa),f(yH+0.1),f(xb),f(yL0+2.3)]});keepout.push([xc-LH,y0-0.2,xc+LH,yL0]);
+      const sns=ls[0].pads.find(p=>p.n==='1').net;const sh=sns?B.comps.find(c=>/^R/.test(c.ref)&&c.pads.length===2&&/^(2512|2010)$/.test(c.fp||'')&&c.pads.some(p=>p.net===sns)):null;
+      if(sh){const r=bestRot(sh,k=>{const a=k.pads.find(p=>p.net===sns),g=k.pads.find(p=>p.net!==sns);return((k.bb[3]-k.bb[1])-(k.bb[2]-k.bb[0]))+(g.y-a.y)*0.2;});const shh=sh.bb[3]-sh.bb[1];
+        pose(sh,xc,yL+0.8+shh/2,r);fixed.push(sh.ref);const sp=sh.pads.find(p=>p.net===sns);
+        // shunt node: the low-side source leads and the shunt's lower pad right above them
+        lanes.push({net:sns,rect:[f(xa),f(yL-0.9),f(xb),f(sp.y+sp.h/2)]});keepout.push([xa,yL,xb,sp.y-sp.h/2]);}
+      cells++;});});
+  if(!cells)return null;
+  return{fixed,keepout,bus:null,net:null,fit:true,planeBus:true,driver:null,lanes};}
 function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
   const fets=B.comps.filter(c=>c.pads.length===10&&c.pads.some(p=>p.n==='9')&&c.pads.some(p=>p.n==='10')&&/^Q/.test(c.ref));if(fets.length<2)return null;
   const role=c=>{const bat=c.pads.find(p=>p.n==='9').net,ph=c.pads.find(p=>p.n==='10').net;const sns=c.pads.find(p=>p.net&&p.net!==bat&&p.net!==ph&&/SNS|GND/i.test(p.net)&&p.n!=='9'&&p.n!=='10');return{bat,ph,sns:sns?sns.net:null};};
@@ -7242,6 +7279,7 @@ function place(B,opts){
     const Imax=Math.max(0,...Object.values(B.netCurrent||{}).map(Number));const Pk=Object.values(B.netPeak||{}).sort((a,b)=>b.I-a.I)[0]||null;const need=typeof CURRENT!=='undefined'&&Imax?(CURRENT.needWidth?CURRENT.needWidth(Imax,Pk,{oz:B.oz||1,dT:B.dT||10,dTpk:B.dTpk||40,tb:B.t}).w:CURRENT.ipcWidth(Imax,{oz:B.oz||1,dT:B.dT||10})):4;
     const planes=new Set(PCB.stackOf(B).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));
     try{macro=powerMacro(B,col,{busW:Math.min(8,need),planes,drvGap:opts.drvGap});}catch(e){macro=null;}
+    if(!macro)try{macro=discreteMacro(B,{planes});}catch(e){macro=null;}
     if(macro){B.powerBus=macro.bus?{rect:macro.bus,net:macro.net}:null;B.powerLanes=macro.lanes&&macro.lanes.length?macro.lanes:null;opts=Object.assign({},opts,{fixed:(opts.fixed||[]).concat(macro.fixed),keepout:(opts.keepout||[]).concat(macro.keepout)});}else{B.powerBus=null;B.powerLanes=null;}}
   const info=classify(B,opts);const R=rng(opts.seed!=null?opts.seed:1);
   const fixed=new Set((opts.fixed||[]).map(String));const only=opts.only?new Set(opts.only.map(String)):null;
@@ -8359,7 +8397,7 @@ const tvsFor=v=>v<=5.5?'SMAJ5.0A':v<=13?'SMAJ15A':v<=26?'SMAJ28A':'SMAJ58A';
 
 /* ---------- blocks ---------- */
 const LIB={
-  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'입력 TVS: 1 (서지) · loaddump (로드덤프 SMB, ISO 16750-2 중앙 억제 전제) · 0'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'},revq:{def:'auto',desc:'역접속 P-FET 패키지: auto (상시 15 A 또는 피크 25 A 이상 D2PAK-7 · 그 밖 DPAK) · dpak · d2pak7'},ign:{def:0,desc:'IGN(KL15) 입력 감지 — 분압 · 필터 · 클램프 → MCU 웨이크업 (1/0)'},uvlo:{def:'off',desc:'입력 저전압 차단: off · auto (12 V계 6.0 V 정지 / 7.0 V 재시작) · 정지 전압 V (재시작 = +1 V) — 1단 벅 EN 분압'},conn:{def:'sep',desc:'외부 커넥터: sep (전원 2핀 + IGN 2핀 따로) · combo (BAT · IGN · GND 3핀 하나, ign=1일 때) · ecu (차량용 ECU 커넥터 하나 — Molex MX150 방수 직각 헤더: 전원 · IGN · 부하 출력 · CAN을 한 커넥터로, 전류에 맞춰 핀 병렬)'}},
+  pwr_in:{label:'DC 전원 입력',desc:'커넥터 + 역전압 보호 쇼트키 + 서지 TVS + 벌크 캡 → 입력 레일',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},vin:{def:12,desc:'입력 전압 [V]'},tvs:{def:1,desc:'입력 TVS: 1 (서지) · loaddump (로드덤프 SMB, ISO 16750-2 중앙 억제 전제) · 0'},bulk:{def:'auto',desc:'벌크 캡 (auto · 10µF · 22µF · 470µF)'},revq:{def:'auto',desc:'역접속 P-FET 패키지: auto (상시 15 A 또는 피크 25 A 이상 D2PAK-7 · 그 밖 DPAK) · dpak · d2pak7'},ign:{def:0,desc:'IGN(KL15) 입력 감지 — 분압 · 필터 · 클램프 → MCU 웨이크업 (1/0)'},uvlo:{def:'off',desc:'입력 저전압 차단: off · auto (12 V계 6.0 V 정지 / 7.0 V 재시작) · 정지 전압 V (재시작 = +1 V) — 1단 벅 EN 분압'},conn:{def:'sep',desc:'외부 커넥터: sep (전원 2핀 + IGN 2핀 따로) · combo (BAT · IGN · GND 3핀 하나, ign=1일 때) · ecu (차량용 ECU 커넥터 하나 — Molex MX150 방수 직각 헤더: 전원 · IGN · 부하 출력 · CAN을 한 커넥터로, 전류에 맞춰 핀 병렬) · ecu-io (입력 ECU 커넥터 하나 — 전원 · IGN · CAN + 모터 블록마다 출력 ECU 커넥터 하나)'}},
     build(ctx,p){const vin=+p.vin;const rail=railOf(vin);ctx.provide(rail,vin,'입력');
       // 48 V systems: the 40 V reverse-polarity P-FETs do not apply — the connector feeds the DC link directly (keyed connector assumed)
       const hv=vin>40,RAW=hv?rail:'VIN_RAW';if(hv)ctx.warn(`${vin} V 입력: 역접속 보호 없음 (키 커넥터 전제) — 필요하면 이상적 다이오드 컨트롤러 + 100 V N-FET을 DC 링크 앞에 추가 · 80 V FET/드라이버는 ISO 21780 동적 과전압 70 V 기준, TVS 클램프 전압은 그보다 높으므로 벌크 캡으로 서지를 흡수해야 함`);
@@ -8681,7 +8719,8 @@ function apmPkg(){if(typeof PCB==='undefined'||!PCB.FP||PCB.FP['QFN-24-4x4-APM81
   // in the terminal list (creepage around VIN and SW). Exposed pads: 26 = PGND next to pins 1–3, 25 = VIN next to pin 5 — positions assumed.
   const p=[],skip=new Set([4,6,8,20,22,24]);const at=i=>{const k=(i-1)%6,o=-1.25+0.5*k;const side=Math.floor((i-1)/6);return side===0?[-1.95,-o,0.8,0.26]:side===1?[o,-1.95,0.26,0.8]:side===2?[1.95,o,0.8,0.26]:[-o,1.95,0.26,0.8];};
   for(let i=1;i<=24;i++){if(skip.has(i))continue;const[x,y,w,h]=at(i);p.push({n:''+i,x:+x.toFixed(3),y:+y.toFixed(3),w,h});}
-  p.push({n:'26',x:0,y:0.72,w:2.5,h:1.0});p.push({n:'25',x:0,y:-0.72,w:2.5,h:1.0});
+  // pads kept 0.6 mm clear of the pin rows so a pin can reach its pad's net (GND pin 15 → PGND) and the 48 V pad keeps its distance
+  p.push({n:'26',x:0,y:0.72,w:1.9,h:1.0});p.push({n:'25',x:-0.3,y:-0.72,w:1.3,h:1.0});
   const f={kind:'ic',stand:0,body:[4,4,2.1],pads:p,dot:[-1.95,1.75],gen:true};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP['QFN-24-4x4-APM81815']=f;}
 function fet1Pkg(){if(typeof PCB==='undefined'||!PCB.FP||PCB.FP['WDFN8-3.3-FET'])return;
   // source / gate leads 1–4 down the left edge (0.65 mm pitch), drain leads 5–8 up the right edge joined to the drain flag (pad 9).
@@ -8730,6 +8769,36 @@ const MX150={pitch:3.5,iMax:15,sizes:[4,6,8,12,16,20]};
 function mx150Fp(n){if(typeof PCB==='undefined'||!PCB.FP)return'MX150-2x'+n/2+'-RA';const k='MX150-2x'+n/2+'-RA';if(PCB.FP[k])return k;const c=n/2,p=MX150.pitch,D=22,W=c*p+8;
   const pads=[];for(let r=0;r<2;r++)for(let i=0;i<c;i++)pads.push({n:''+(r*c+i+1),x:+((i-(c-1)/2)*p).toFixed(3),y:+(D/2-3-r*p).toFixed(3),w:2.3,h:2.3,round:true,drill:1.4});
   const f={kind:'hdr',body:[W,D,14],pads,gen:true,note:'Molex MX150 방수 직각 헤더 (가정 치수 — 34830 도면 확인)'};if(typeof FPGEN!=='undefined')FPGEN.lbb(f);PCB.FP[k]=f;return k;}
+/* conn = ecu-io: one ECU connector for the input side (supply, ground, IGN, CAN) and one per load block for its outputs (and its
+   hall sensor) — the harness to the vehicle and the harness to each motor are separate. Same header family and the same column
+   rules as the single connector: parallel contacts take whole columns, a spare column between two outputs when the size allows. */
+function ecuConnectorIO(plan,parts,curr,peak,warn){
+  const pi=plan.blocks.find(b=>b.type==='pwr_in');const J=parts.filter(c=>/^J/.test(c.ref));
+  const inJ=J.filter(c=>c.block===pi.id&&Object.values(c.pins).includes('GND')&&c.val!=='IGN');if(!inJ.length){warn.push('ECU 커넥터: 전원 입력 커넥터가 없어 바꾸지 않았습니다');return;}
+  const bat=Object.values(inJ[0].pins).find(n=>n&&n!=='GND'&&n!=='IGN_IN');const ignJ=J.filter(c=>c.val==='IGN'),canJ=J.filter(c=>c.val==='CAN'&&Object.values(c.pins).includes('CANH'));
+  const need=net=>{const I=+curr[net]||0,pk=peak[net]?+peak[net].I:I;return Math.max(1,Math.ceil(I/(MX150.iMax*0.8)),Math.ceil(pk/MX150.iMax));};
+  const pack=(sig,g)=>{g=g||1;sig.forEach(s=>{if(s.n>1&&s.n%2)s.n++;});const whole=s=>Array.from({length:Math.max(1,s.n/2)},()=>s.n>1?[s,s]:[s,null]);
+    const sup=[].concat(...sig.filter(s=>!s.load&&s.n>1).map(whole));const can=sig.filter(s=>!s.load&&s.n===1&&/^CAN/.test(s.net)),one=sig.filter(s=>!s.load&&s.n===1&&!/^CAN/.test(s.net));if(one.length%2)one.push(null);
+    const small=[];for(let i=0;i<one.length;i+=2)small.push([one[i],one[i+1]]);const canC=can.length===2?[[can[0],can[1]]]:can.map(c=>[c,null]);const loads=sig.filter(s=>s.load);
+    const used=sup.length+small.length+canC.length+loads.reduce((a,s)=>a+Math.max(1,s.n/2),0);let gaps=Math.max(0,loads.length-1)*g;let n=MX150.sizes.find(v=>v>=(used+gaps)*2);if(!n){gaps=Math.max(0,loads.length-1);g=1;n=MX150.sizes.find(v=>v>=(used+gaps)*2)||MX150.sizes.find(v=>v>=used*2);}if(!n)return null;const c2=n/2; // room for spare columns between outputs when a size has it
+    let free=c2-used;const cols=sup.concat(small,canC);while(free>gaps){cols.push([null,null]);free--;}
+    loads.forEach((s,i)=>{if(i)for(let k=0;k<g&&free>0;k++){cols.push([null,null]);free--;}whole(s).forEach(c=>cols.push(c));});while(cols.length<c2)cols.push([null,null]);
+    const pins={},names={};cols.forEach((cl,i)=>{[0,1].forEach(r=>{const k=r*c2+i+1,s=cl[r];names[k]=s?s.name:'NC';if(s)pins[k]=s.net;});});return{n,pins,names,sig};};
+  const mk=(val,P,blk,what)=>({ref:'J?',val,fp:mx150Fp(P.n),pins:P.pins,mpn:'034830'+String(P.n).padStart(2,'0')+'01',desc:`${what} Molex MX150 방수 직각 헤더 2열 ${P.n}핀 (3.50 mm · 접점당 최대 15 A로 계산 · 30 V를 넘는 계통은 MX150 Mid-Voltage(60 V) 품번 지정) — ${P.sig.map(s=>s.name+(s.n>1?'×'+s.n:'')).join(' · ')} · 품번 · 풋프린트 치수는 Molex 도면으로 확인`,pinNames:P.names,block:blk,P:0,mcu:false});
+  // input side
+  const si=[{name:'BAT',net:bat,n:need(bat)},{name:'GND',net:'GND',n:need('GND')}];if(Object.values(inJ[0].pins).includes('IGN_IN')||ignJ.length)si.push({name:'IGN',net:'IGN_IN',n:1});if(canJ.length){si.push({name:'CAN_H',net:'CANH',n:1});si.push({name:'CAN_L',net:'CANL',n:1});}
+  const Pin=pack(si);if(!Pin){warn.push('ECU 입력 커넥터: 접점이 MX150 20핀을 넘어 바꾸지 않았습니다');return;}
+  // one output connector per load block
+  const outs=[];let fail=false;plan.blocks.filter(b=>/^(hbridge|gdrv3|dcmotor|bldc)$/.test(b.type)).forEach((b,bi)=>{const oj=J.filter(c=>c.block===b.id);if(!oj.length)return;const so=[];
+    oj.filter(c=>c.val!=='홀').forEach(c=>Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>{const net=c.pins[k];if(net&&!so.some(s=>s.net===net))so.push({name:(c.pinNames&&c.pinNames[k])||c.val+k,net,n:need(net),load:true});}));
+    oj.filter(c=>c.val==='홀').forEach(c=>Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>{const nm0=(c.pinNames&&c.pinNames[k])||'';so.push({name:{H1:'HALL_U',H2:'HALL_V',H3:'HALL_W',GND:'HALL_GND'}[nm0]||nm0,net:c.pins[k],n:1});}));
+    // discrete FETs beside each output need a wider cell than one connector pitch pair: three spare columns between outputs (14 mm)
+    const P=pack(so,FET1[String(b.params.fet||'')]?3:1);if(!P){fail=true;return;}outs.push({P,b,oj,bi});});
+  if(fail){warn.push('ECU 출력 커넥터: 접점이 MX150 20핀을 넘어 바꾸지 않았습니다');return;}
+  const gone=inJ.concat(ignJ,canJ,...outs.map(o=>o.oj));const at=parts.indexOf(inJ[0]);gone.forEach(c=>{const i=parts.indexOf(c);if(i>=0)parts.splice(i,1);});
+  const nu=[mk('ECU-IN',Pin,pi.id,'ECU 입력 커넥터')].concat(outs.map((o,i)=>mk(outs.length>1?'ECU-OUT'+(i+1):'ECU-OUT',o.P,o.b.id,`ECU 출력 커넥터${outs.length>1?' '+(i+1):''} (모터)`)));parts.splice(Math.max(0,Math.min(at,parts.length)),0,...nu);
+  let m=0;nu.forEach(c=>{c.ref='J'+(++m);});parts.filter(c=>/^J/.test(c.ref)&&!nu.includes(c)).forEach(c=>{c.ref='J'+(++m);});
+  warn.push(`ECU 커넥터: 입력 MX150 ${Pin.n}핀 (${Pin.sig.map(s=>s.name+(s.n>1?'×'+s.n:'')).join(', ')}) + 출력 ${outs.map(o=>`MX150 ${o.P.n}핀 (${o.P.sig.map(s=>s.name+(s.n>1?'×'+s.n:'')).join(', ')})`).join(' · ')}`);}
 function ecuConnector(plan,parts,curr,peak,warn){
   const J=parts.filter(c=>/^J/.test(c.ref));const pick=f=>J.filter(f);
   const inJ=pick(c=>Object.values(c.pins).includes('VIN_RAW')),ignJ=pick(c=>c.val==='IGN'),canJ=pick(c=>c.val==='CAN'&&Object.values(c.pins).includes('CANH'));
@@ -9113,7 +9182,7 @@ function build(plan){plan=motorOptions(inputOptions(plan));const asil=plan.asil&
   // power first (rails), then MCU, then the rest
   const order=['pwr_in','usb_in','buck','ldo','mcu','xtal'];const bl=plan.blocks.slice().sort((a,b)=>{const i=order.indexOf(a.type),j=order.indexOf(b.type);return(i<0?9:i)-(j<0?9:j);});
   bl.forEach(b=>{ctx._b=b.id;ctx._cu=null;try{LIB[b.type].build(ctx,b.params);}catch(e){warn.push(`${b.id}: ${e.message}`);}ctx._cu=null;});
-  {const pi=plan.blocks.find(b=>b.type==='pwr_in');if(pi&&String(pi.params&&pi.params.conn)==='ecu')ecuConnector(plan,parts,curr,peak,warn);}
+  {const pi=plan.blocks.find(b=>b.type==='pwr_in');if(pi&&String(pi.params&&pi.params.conn)==='ecu')ecuConnector(plan,parts,curr,peak,warn);else if(pi&&String(pi.params&&pi.params.conn)==='ecu-io')ecuConnectorIO(plan,parts,curr,peak,warn);}
   // rails used but never produced
   used.forEach(r=>{if(r!=='GND'&&r!=='VDD'&&!rails[r])warn.push(`${r} 레일을 만드는 블록이 없음 (예: add ldo --vout ${r==='+5V'?5:3.3})`);});
   // LDO checks: headroom and dissipation from the loads on its rail
@@ -13096,7 +13165,7 @@ async function routeJob(B,a,ui){
       // FETs' output side cut two phases' exits from 3.5 to 0.6 mm, and a gate via between a FET's pad rows sits in the copper that
       // joins its output pads to the lane — the FET bodies cost extra on the top layer for the stage's power and drive nets
       const avQ=B.comps.filter(c=>/^Q\d/.test(c.ref)&&c.side!=='B'&&inStage(c)&&c.pads.some(p=>PW.route.includes(p.net))).map(c=>({net:null,r:0,layers:[0],shapes:[{k:'rect',x:(c.bb[0]+c.bb[2])/2,y:(c.bb[1]+c.bb[3])/2,hw:(c.bb[2]-c.bb[0])/2,hh:(c.bb[3]-c.bb[1])/2,ang:0,L:[0]}]}));
-      for(const [list,extra] of [[pw1,avL.length||avQ.length?{innerCost:30,avoid:avL.concat(avQ),avoidCost:6}:{innerCost:30}],[st1,{netBottom:undefined,avoid:avQ.length?(avB||[]).concat(avQ):avB,avoidCost:6}]]){if(!list.length)continue;const it1=AUTOROUTE.jobRR(B,list,Object.assign({width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6},extra));
+      for(const [list,extra] of [[pw1,avL.length||avQ.length?{innerCost:30,avoid:avL.concat(avQ),avoidCost:6}:{innerCost:30}],[st1,{netBottom:undefined,avoid:(avB||[]).concat(avQ,avL),avoidCost:avL.length?10:6}]]){if(!list.length)continue;const it1=AUTOROUTE.jobRR(B,list,Object.assign({width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6},extra));
       for(;;){const q=it1.next();if(q.done)break;if(ui.stopped())break;}}PCBEDIT.rebuildNets(B);}
     const SS=AUTOROUTE.shapesOfBoard(B);const R=PW.rect;const inR=s=>{const x=s.k==='cap'?(s.a[0]+s.b[0])/2:s.x,y=s.k==='cap'?(s.a[1]+s.b[1])/2:s.y;return x>=R[0]-1&&x<=R[2]+1&&y>=R[1]-1&&y<=R[3]+1;};
     const NLc=PCB.cuKeys(B).length;avoid=PW.route.map(n=>({net:n,r:Math.min(4,(WW[n].ipcFull||PW.need[n])/2),layers:ml?[0,NLc-1]:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
@@ -13215,13 +13284,21 @@ function powerFill(B,WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.p
   const pr=AUTOROUTE.pruneIslands?AUTOROUTE.pruneIslands(B,hi):{fills:0,vias:0};
   const BP1=AUTOROUTE.bottleneckPrep(B);const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return;const need=WW[n].ipc!=null?WW[n].ipc:CURRENT.ipcWidth(WW[n].I,{oz,dT});const pk=WW[n].pk||null;
     const bs=layers.map(l=>AUTOROUTE.bottleneck(B,n,{layer:l,proj:l!==0,P:BP1}));const dir=bs[0].terms.length>=2&&!bs[0].open&&bs[0].width==null;
-    const ws=bs.map(b=>b.width!=null&&!b.open?b.width:0);const eff=+(ws.reduce((x,y,i)=>x+y*LW[i],0)+(dir?0:bar)).toFixed(2);
-    rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,layers:ws,lw:LW,ln:LN,bar:bar||undefined,necks:bs.map(b=>b.neck||null),open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.riseFor(eff,WW[n].I,CURRENT.env(B,{oz,dT})):null,pk:pk?{I:pk.I,t:pk.t,rise:!dir&&eff?CURRENT.peakRise(eff,pk.I,pk.t,{oz,tb:B.t}):null}:null,by:WW[n].by,terms:bs[0].terms});});
+    const ws=bs.map(b=>b.width!=null&&!b.open?b.width:0);let eff=+(ws.reduce((x,y,i)=>x+y*LW[i],0)+(dir?0:bar)).toFixed(2);
+    // parallel switches: a terminal that carries only its share of the net current (c.It — one of several FETs on the phase) needs
+    // only the width for that share. Every terminal pair is rated at the smaller of its two currents and its width is scaled to the
+    // net's full-current need, so one "유효 폭 / 필요 폭" figure still reads true. (The shared trunk is not rated separately.)
+    let shared=false,topOk=false;if(!dir&&bs[0]&&bs[0].pairs&&bs[0].pairs.length&&CURRENT.wFor&&B.comps.some(c=>c.It>0&&c.Itx!==n&&c.It<WW[n].I&&c.pads.some(p=>p.net===n))){
+      const E=CURRENT.env(B,{oz,dT});const It=ref=>{const c=B.comps.find(x=>x.ref===ref);return c&&c.It>0&&c.Itx!==n?Math.min(WW[n].I,c.It):WW[n].I;};const wN=Math.max(0.01,CURRENT.wFor(WW[n].I,E));let worst=Infinity,worstT=Infinity;
+      bs[0].pairs.forEach(p0=>{let w=bar,w0=0,seen=false;bs.forEach((b,i)=>{const q=(b.pairs||[]).find(x=>(x.a===p0.a&&x.b===p0.b)||(x.a===p0.b&&x.b===p0.a));if(q&&q.width!=null){seen=true;if(!q.open){w+=q.width*LW[i];if(!i)w0=q.width*LW[0];}}});if(!seen)return;
+        const k=CURRENT.wFor(Math.min(It(p0.a),It(p0.b)),E)/wN;worst=Math.min(worst,w/Math.max(k,0.05));worstT=Math.min(worstT,w0/Math.max(k,0.05));});
+      if(isFinite(worst)){eff=+Math.min(worst,99).toFixed(2);shared=true;topOk=worstT>=PW.need[n];}}
+    rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,shared:shared||undefined,topOk:topOk||undefined,layers:ws,lw:LW,ln:LN,bar:bar||undefined,necks:bs.map(b=>b.neck||null),open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.riseFor(eff,WW[n].I,CURRENT.env(B,{oz,dT})):null,pk:pk?{I:pk.I,t:pk.t,rise:!dir&&eff?CURRENT.peakRise(eff,pk.I,pk.t,{oz,tb:B.t}):null}:null,by:WW[n].by,terms:bs[0].terms});});
   const area={};fs.forEach((f,i)=>f.area.forEach(x=>{area[x.net]=(area[x.net]||0)+x.mm2;}));
   // vias at each power terminal (current changing layers) and the inner planes, at the continuous and the peak current
   const Ic={},Pk={};hi.forEach(n=>{Ic[n]=WW[n].I;if(WW[n].pk)Pk[n]=WW[n].pk;});// share of a net's current that has to change layers at a terminal: top + bottom copper in parallel → the bottom share; a plane net
   // also reachable on the top copper → half; nets whose terminals touch directly need none
-  const share={};hi.forEach(n=>{const x=rep.find(q=>q.net===n);if(x){const tw=x.layers?x.layers.reduce((a,w,i)=>a+w*(x.lw?x.lw[i]:1),0):0;share[n]=x.width==='직결'?0:(x.layers&&x.layers.length>1&&tw>0?1-x.layers[0]*(x.lw?x.lw[0]:1)/tw:1);return;}
+  const share={};hi.forEach(n=>{const x=rep.find(q=>q.net===n);if(x){const tw=x.layers?x.layers.reduce((a,w,i)=>a+w*(x.lw?x.lw[i]:1),0):0;share[n]=x.width==='직결'||x.topOk?0:( /* topOk: the top layer alone carries every terminal's share — no current has to change layers */x.layers&&x.layers.length>1&&tw>0?1-x.layers[0]*(x.lw?x.lw[0]:1)/tw:1);return;}
     let top=null;try{const b=AUTOROUTE.bottleneck(B,n,{layer:0,P:BP1});top=b&&!b.open&&b.width>0?b.width:null;}catch(e){}share[n]=top?0.5:1;});
   AUTOROUTE.releaseGrid(BP1.G);  let VC=ml&&CURRENT.viaCheck?CURRENT.viaCheck(B,{nets:hi,I:Ic,pk:Pk,share}):[];
   // terminals whose vias run too hot: add 0.6 / 0.3 mm vias in the net's copper around them (to the bottom copper, or down to the

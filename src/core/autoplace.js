@@ -65,6 +65,43 @@ function zoneReport(B){const Z=B.zones;if(!Z||!Z.rects)return null;const out=[];
    puts the motor terminal on the stage zone's outer edge, one 2-FET package per phase in a column facing it (battery pads
    toward the bus side, phase pad toward the terminal, low-side source / shunt node up) and the shunt right on that source;
    everything else is placed around them by the annealer. Returns the refs it fixed (or null). */
+/* Bridges of discrete FETs (one small package per switch, several in parallel) with ECU connectors: connectors in a row on the
+   low-y board edge (input, then one output connector per bridge), and above every output contact column one phase cell —
+   the phase copper rises straight from its contacts as a lane; the high-side FETs stand on its left with their source leads on
+   the lane (drains to the supply plane through vias), the low-side FETs on its right with their drain on the lane, and the
+   leg shunt above the low-side FETs. Outputs are four connector columns (14 mm) apart, one cell wide. */
+function discreteMacro(B,o){o=o||{};PCBEDIT.prepare(B);
+  const outJ=B.comps.filter(c=>/^J/.test(c.ref)&&/^ECU-OUT/.test(c.val||'')).sort((a,b)=>a.ref.localeCompare(b.ref,undefined,{numeric:true}));if(!outJ.length)return null;
+  const inJ=B.comps.find(c=>/^J/.test(c.ref)&&(c.val||'')==='ECU-IN');const isF=c=>/^Q/.test(c.ref)&&c.pads.length===9&&c.pads.some(p=>p.n==='9');
+  if(!B.comps.some(isF))return null;
+  const ring=B.outline[0]||[[0,0],[B.W,0],[B.W,B.H],[0,B.H]];const ob=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
+  const edge=o.edge||1.0,fixed=[],keepout=[],lanes=[],f=v=>+v.toFixed(2);
+  const pose=(c,x,y,rot)=>{canonical(B,c);if(rot)PCBEDIT.rotate(B,c,rot);PCBEDIT.prepare(B);const bx=(c.bb[0]+c.bb[2])/2,by=(c.bb[1]+c.bb[3])/2;PCBEDIT.move(B,c,x-bx,y-by);PCBEDIT.prepare(B);};
+  const bestRot=(c,score)=>{let best=null;[0,90,180,270].forEach(rot=>{canonical(B,c);if(rot)PCBEDIT.rotate(B,c,rot);PCBEDIT.prepare(B);const sc=score(c);if(!best||sc>best.sc)best={rot,sc};});canonical(B,c);if(best.rot)PCBEDIT.rotate(B,c,best.rot);PCBEDIT.prepare(B);return best.rot;};
+  const padC=(c,f2)=>{const ps=c.pads.filter(f2);return ps.length?[ps.reduce((a,p)=>a+p.x,0)/ps.length,ps.reduce((a,p)=>a+p.y,0)/ps.length]:null;};
+  // connectors: pad rows horizontal and toward the board interior, in a row from the right corner (outputs) — input leftmost
+  const cRot=c=>bestRot(c,k=>{const xs=k.pads.map(p=>p.x),ys=k.pads.map(p=>p.y);const py=ys.reduce((a,b)=>a+b,0)/ys.length;const by=k.body&&k.body.cy!=null?k.body.cy:py;return(Math.max(...xs)-Math.min(...xs))-(Math.max(...ys)-Math.min(...ys))+(py-by);});
+  const row=(inJ?[inJ]:[]).concat(outJ);const rots=row.map(cRot);const ws=row.map(c=>c.bb[2]-c.bb[0]);const gap=3;const tot=ws.reduce((a,b)=>a+b,0)+gap*(row.length-1);
+  if(tot>ob[2]-ob[0]-2*edge)return null;let x=ob[2]-edge-tot;row.forEach((c,i)=>{const h=c.bb[3]-c.bb[1];pose(c,x+ws[i]/2,ob[1]+edge+h/2,rots[i]);fixed.push(c.ref);x+=ws[i]+gap;});
+  const LH=2.2,GAP=0.35;let cells=0;
+  outJ.forEach(J=>{const nets=[...new Set(J.pads.map(p=>p.net).filter(Boolean))];const y0=J.bb[3]+1.2;
+    nets.forEach(ph=>{const cp=J.pads.filter(p=>p.net===ph);const xc=cp.reduce((a,p)=>a+p.x,0)/cp.length,yLo=Math.min(...cp.map(p=>p.y-p.h/2));
+      const hs=B.comps.filter(c=>isF(c)&&c.pads.find(p=>p.n==='1').net===ph),ls=B.comps.filter(c=>isF(c)&&c.pads.find(p=>p.n==='9').net===ph);if(!hs.length||!ls.length)return;
+      // high side: stacked on the left of the lane, source leads on the lane (drain flag outward — its plane vias go in the free
+      // strip toward the neighbouring cell). Low side: a row across the top of the lane, drain flags down onto it, source leads up.
+      let yH=y0;hs.forEach((c,j)=>{const rr=bestRot(c,k=>{const s1=padC(k,p=>p.n==='1'),d=padC(k,p=>p.n==='9');return s1[0]-d[0];});const fw=c.bb[2]-c.bb[0],fh=c.bb[3]-c.bb[1];
+        pose(c,xc-(LH+GAP+fw/2),y0+fh/2+j*(fh+0.6),rr);fixed.push(c.ref);yH=Math.max(yH,c.bb[3]);});
+      const yL0=yH+0.6;let yL=yL0,xa=xc,xb=xc;ls.forEach((c,j)=>{const rr=bestRot(c,k=>{const s1=padC(k,p=>p.n==='1'),d=padC(k,p=>p.n==='9');return s1[1]-d[1];});const fw=c.bb[2]-c.bb[0],fh=c.bb[3]-c.bb[1];
+        pose(c,xc+(j-(ls.length-1)/2)*(fw+0.6),yL0+fh/2,rr);fixed.push(c.ref);yL=Math.max(yL,c.bb[3]);xa=Math.min(xa,c.bb[0]);xb=Math.max(xb,c.bb[2]);});
+      lanes.push({net:ph,rect:[f(xc-LH-0.5),f(yLo-0.6),f(xc+LH+0.5),f(yH+0.2)]});lanes.push({net:ph,rect:[f(xa),f(yH+0.1),f(xb),f(yL0+2.3)]});keepout.push([xc-LH,y0-0.2,xc+LH,yL0]);
+      const sns=ls[0].pads.find(p=>p.n==='1').net;const sh=sns?B.comps.find(c=>/^R/.test(c.ref)&&c.pads.length===2&&/^(2512|2010)$/.test(c.fp||'')&&c.pads.some(p=>p.net===sns)):null;
+      if(sh){const r=bestRot(sh,k=>{const a=k.pads.find(p=>p.net===sns),g=k.pads.find(p=>p.net!==sns);return((k.bb[3]-k.bb[1])-(k.bb[2]-k.bb[0]))+(g.y-a.y)*0.2;});const shh=sh.bb[3]-sh.bb[1];
+        pose(sh,xc,yL+0.8+shh/2,r);fixed.push(sh.ref);const sp=sh.pads.find(p=>p.net===sns);
+        // shunt node: the low-side source leads and the shunt's lower pad right above them
+        lanes.push({net:sns,rect:[f(xa),f(yL-0.9),f(xb),f(sp.y+sp.h/2)]});keepout.push([xa,yL,xb,sp.y-sp.h/2]);}
+      cells++;});});
+  if(!cells)return null;
+  return{fixed,keepout,bus:null,net:null,fit:true,planeBus:true,driver:null,lanes};}
 function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
   const fets=B.comps.filter(c=>c.pads.length===10&&c.pads.some(p=>p.n==='9')&&c.pads.some(p=>p.n==='10')&&/^Q/.test(c.ref));if(fets.length<2)return null;
   const role=c=>{const bat=c.pads.find(p=>p.n==='9').net,ph=c.pads.find(p=>p.n==='10').net;const sns=c.pads.find(p=>p.net&&p.net!==bat&&p.net!==ph&&/SNS|GND/i.test(p.net)&&p.n!=='9'&&p.n!=='10');return{bat,ph,sns:sns?sns.net:null};};
@@ -252,6 +289,7 @@ function place(B,opts){
     const Imax=Math.max(0,...Object.values(B.netCurrent||{}).map(Number));const Pk=Object.values(B.netPeak||{}).sort((a,b)=>b.I-a.I)[0]||null;const need=typeof CURRENT!=='undefined'&&Imax?(CURRENT.needWidth?CURRENT.needWidth(Imax,Pk,{oz:B.oz||1,dT:B.dT||10,dTpk:B.dTpk||40,tb:B.t}).w:CURRENT.ipcWidth(Imax,{oz:B.oz||1,dT:B.dT||10})):4;
     const planes=new Set(PCB.stackOf(B).filter(x=>x.net&&x.role!=='sig').map(x=>x.net));
     try{macro=powerMacro(B,col,{busW:Math.min(8,need),planes,drvGap:opts.drvGap});}catch(e){macro=null;}
+    if(!macro)try{macro=discreteMacro(B,{planes});}catch(e){macro=null;}
     if(macro){B.powerBus=macro.bus?{rect:macro.bus,net:macro.net}:null;B.powerLanes=macro.lanes&&macro.lanes.length?macro.lanes:null;opts=Object.assign({},opts,{fixed:(opts.fixed||[]).concat(macro.fixed),keepout:(opts.keepout||[]).concat(macro.keepout)});}else{B.powerBus=null;B.powerLanes=null;}}
   const info=classify(B,opts);const R=rng(opts.seed!=null?opts.seed:1);
   const fixed=new Set((opts.fixed||[]).map(String));const only=opts.only?new Set(opts.only.map(String)):null;

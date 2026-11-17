@@ -123,7 +123,7 @@ async function routeJob(B,a,ui){
       // FETs' output side cut two phases' exits from 3.5 to 0.6 mm, and a gate via between a FET's pad rows sits in the copper that
       // joins its output pads to the lane — the FET bodies cost extra on the top layer for the stage's power and drive nets
       const avQ=B.comps.filter(c=>/^Q\d/.test(c.ref)&&c.side!=='B'&&inStage(c)&&c.pads.some(p=>PW.route.includes(p.net))).map(c=>({net:null,r:0,layers:[0],shapes:[{k:'rect',x:(c.bb[0]+c.bb[2])/2,y:(c.bb[1]+c.bb[3])/2,hw:(c.bb[2]-c.bb[0])/2,hh:(c.bb[3]-c.bb[1])/2,ang:0,L:[0]}]}));
-      for(const [list,extra] of [[pw1,avL.length||avQ.length?{innerCost:30,avoid:avL.concat(avQ),avoidCost:6}:{innerCost:30}],[st1,{netBottom:undefined,avoid:avQ.length?(avB||[]).concat(avQ):avB,avoidCost:6}]]){if(!list.length)continue;const it1=AUTOROUTE.jobRR(B,list,Object.assign({width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6},extra));
+      for(const [list,extra] of [[pw1,avL.length||avQ.length?{innerCost:30,avoid:avL.concat(avQ),avoidCost:6}:{innerCost:30}],[st1,{netBottom:undefined,avoid:(avB||[]).concat(avQ,avL),avoidCost:avL.length?10:6}]]){if(!list.length)continue;const it1=AUTOROUTE.jobRR(B,list,Object.assign({width:{signal:sig,power:pwr},netWidth,widthCap:wCap,netBottom:nb1,W:WW,clear:clr,via,laneVia:ml?2:0,keepOrder:true,reserve:0.6,neck:0.25,maxExp:a.exp?+a.exp:300000,viaCost:ml?1.2:2,rounds:6},extra));
       for(;;){const q=it1.next();if(q.done)break;if(ui.stopped())break;}}PCBEDIT.rebuildNets(B);}
     const SS=AUTOROUTE.shapesOfBoard(B);const R=PW.rect;const inR=s=>{const x=s.k==='cap'?(s.a[0]+s.b[0])/2:s.x,y=s.k==='cap'?(s.a[1]+s.b[1])/2:s.y;return x>=R[0]-1&&x<=R[2]+1&&y>=R[1]-1&&y<=R[3]+1;};
     const NLc=PCB.cuKeys(B).length;avoid=PW.route.map(n=>({net:n,r:Math.min(4,(WW[n].ipcFull||PW.need[n])/2),layers:ml?[0,NLc-1]:[0],shapes:SS.filter(s=>s.net===n&&s.L.includes(0)&&!s.via&&!s.hole&&inR(s))}));
@@ -242,13 +242,21 @@ function powerFill(B,WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.p
   const pr=AUTOROUTE.pruneIslands?AUTOROUTE.pruneIslands(B,hi):{fills:0,vias:0};
   const BP1=AUTOROUTE.bottleneckPrep(B);const rep=[];hi.forEach(n=>{if(WW[n].cls==='gnd'||PW.planes.has(n))return;const need=WW[n].ipc!=null?WW[n].ipc:CURRENT.ipcWidth(WW[n].I,{oz,dT});const pk=WW[n].pk||null;
     const bs=layers.map(l=>AUTOROUTE.bottleneck(B,n,{layer:l,proj:l!==0,P:BP1}));const dir=bs[0].terms.length>=2&&!bs[0].open&&bs[0].width==null;
-    const ws=bs.map(b=>b.width!=null&&!b.open?b.width:0);const eff=+(ws.reduce((x,y,i)=>x+y*LW[i],0)+(dir?0:bar)).toFixed(2);
-    rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,layers:ws,lw:LW,ln:LN,bar:bar||undefined,necks:bs.map(b=>b.neck||null),open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.riseFor(eff,WW[n].I,CURRENT.env(B,{oz,dT})):null,pk:pk?{I:pk.I,t:pk.t,rise:!dir&&eff?CURRENT.peakRise(eff,pk.I,pk.t,{oz,tb:B.t}):null}:null,by:WW[n].by,terms:bs[0].terms});});
+    const ws=bs.map(b=>b.width!=null&&!b.open?b.width:0);let eff=+(ws.reduce((x,y,i)=>x+y*LW[i],0)+(dir?0:bar)).toFixed(2);
+    // parallel switches: a terminal that carries only its share of the net current (c.It — one of several FETs on the phase) needs
+    // only the width for that share. Every terminal pair is rated at the smaller of its two currents and its width is scaled to the
+    // net's full-current need, so one "유효 폭 / 필요 폭" figure still reads true. (The shared trunk is not rated separately.)
+    let shared=false,topOk=false;if(!dir&&bs[0]&&bs[0].pairs&&bs[0].pairs.length&&CURRENT.wFor&&B.comps.some(c=>c.It>0&&c.Itx!==n&&c.It<WW[n].I&&c.pads.some(p=>p.net===n))){
+      const E=CURRENT.env(B,{oz,dT});const It=ref=>{const c=B.comps.find(x=>x.ref===ref);return c&&c.It>0&&c.Itx!==n?Math.min(WW[n].I,c.It):WW[n].I;};const wN=Math.max(0.01,CURRENT.wFor(WW[n].I,E));let worst=Infinity,worstT=Infinity;
+      bs[0].pairs.forEach(p0=>{let w=bar,w0=0,seen=false;bs.forEach((b,i)=>{const q=(b.pairs||[]).find(x=>(x.a===p0.a&&x.b===p0.b)||(x.a===p0.b&&x.b===p0.a));if(q&&q.width!=null){seen=true;if(!q.open){w+=q.width*LW[i];if(!i)w0=q.width*LW[0];}}});if(!seen)return;
+        const k=CURRENT.wFor(Math.min(It(p0.a),It(p0.b)),E)/wN;worst=Math.min(worst,w/Math.max(k,0.05));worstT=Math.min(worstT,w0/Math.max(k,0.05));});
+      if(isFinite(worst)){eff=+Math.min(worst,99).toFixed(2);shared=true;topOk=worstT>=PW.need[n];}}
+    rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,shared:shared||undefined,topOk:topOk||undefined,layers:ws,lw:LW,ln:LN,bar:bar||undefined,necks:bs.map(b=>b.neck||null),open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.riseFor(eff,WW[n].I,CURRENT.env(B,{oz,dT})):null,pk:pk?{I:pk.I,t:pk.t,rise:!dir&&eff?CURRENT.peakRise(eff,pk.I,pk.t,{oz,tb:B.t}):null}:null,by:WW[n].by,terms:bs[0].terms});});
   const area={};fs.forEach((f,i)=>f.area.forEach(x=>{area[x.net]=(area[x.net]||0)+x.mm2;}));
   // vias at each power terminal (current changing layers) and the inner planes, at the continuous and the peak current
   const Ic={},Pk={};hi.forEach(n=>{Ic[n]=WW[n].I;if(WW[n].pk)Pk[n]=WW[n].pk;});// share of a net's current that has to change layers at a terminal: top + bottom copper in parallel → the bottom share; a plane net
   // also reachable on the top copper → half; nets whose terminals touch directly need none
-  const share={};hi.forEach(n=>{const x=rep.find(q=>q.net===n);if(x){const tw=x.layers?x.layers.reduce((a,w,i)=>a+w*(x.lw?x.lw[i]:1),0):0;share[n]=x.width==='직결'?0:(x.layers&&x.layers.length>1&&tw>0?1-x.layers[0]*(x.lw?x.lw[0]:1)/tw:1);return;}
+  const share={};hi.forEach(n=>{const x=rep.find(q=>q.net===n);if(x){const tw=x.layers?x.layers.reduce((a,w,i)=>a+w*(x.lw?x.lw[i]:1),0):0;share[n]=x.width==='직결'||x.topOk?0:( /* topOk: the top layer alone carries every terminal's share — no current has to change layers */x.layers&&x.layers.length>1&&tw>0?1-x.layers[0]*(x.lw?x.lw[0]:1)/tw:1);return;}
     let top=null;try{const b=AUTOROUTE.bottleneck(B,n,{layer:0,P:BP1});top=b&&!b.open&&b.width>0?b.width:null;}catch(e){}share[n]=top?0.5:1;});
   AUTOROUTE.releaseGrid(BP1.G);  let VC=ml&&CURRENT.viaCheck?CURRENT.viaCheck(B,{nets:hi,I:Ic,pk:Pk,share}):[];
   // terminals whose vias run too hot: add 0.6 / 0.3 mm vias in the net's copper around them (to the bottom copper, or down to the
