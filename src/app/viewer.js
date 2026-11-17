@@ -89,7 +89,9 @@ const CORE='#4a4230',CU_IN='#d4844a';
 function drawZones(ctx){const Z=typeof AUTOPLACE!=='undefined'&&AUTOPLACE.zonesFit?AUTOPLACE.zonesFit(BD):BD.zones;const lw=Math.max(0.12,BD.W/500);
   Object.entries(Z.rects).forEach(([g,r])=>{const col=(AUTOPLACE.ZONES[g]||{}).col||'#888';ctx.save();ctx.globalAlpha=0.10;ctx.fillStyle=col;ctx.fillRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
     ctx.globalAlpha=0.85;ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash([lw*6,lw*4]);ctx.strokeRect(r[0]+lw/2,r[1]+lw/2,r[2]-r[0]-lw,r[3]-r[1]-lw);ctx.setLineDash([]);
-    ctx.fillStyle=col;ctx.globalAlpha=0.95;const sz=Math.max(1.2,Math.min(3,(r[2]-r[0])/9));drawText(ctx,{x:r[0]+1,y:r[3]-sz*0.9,s:(AUTOPLACE.ZONES[g]||{}).label||g,size:sz,align:'left',bold:true});ctx.restore();});}
+    ctx.fillStyle=col;ctx.globalAlpha=0.95;const sz=Math.max(1.2,Math.min(3,(r[2]-r[0])/9));drawText(ctx,{x:r[0]+1,y:r[3]-sz*0.9,s:(AUTOPLACE.ZONES[g]||{}).label||g,size:sz,align:'left',bold:true});ctx.restore();});
+  // block cohesion: the rectangle each bridge channel's parts are kept in (set by the last placement)
+  if(BD.blockRects)Object.entries(BD.blockRects).forEach(([b,r],i)=>{const col=AUTOPLACE.ZONES.stage.col;ctx.save();ctx.globalAlpha=0.9;ctx.strokeStyle=col;ctx.lineWidth=lw*1.4;ctx.strokeRect(r[0]+lw,r[1]+lw,r[2]-r[0]-2*lw,r[3]-r[1]-2*lw);ctx.fillStyle=col;drawText(ctx,{x:r[0]+1.2,y:r[3]-3.2,s:'채널 '+(i+1)+' · '+b,size:2,align:'left',bold:true});ctx.restore();});}
 function drawSide(ctx,side,o){
   const L=S.layers,M=MASKS[S.mask];const ik=innerKey(side,o);
   const base=ik?CORE:L.mask?M.mask:FR4,cu=ik?CU_IN:L.mask?M.under:CU,fin=ik?CU_IN:L.mask?FIN:CU_PAD;

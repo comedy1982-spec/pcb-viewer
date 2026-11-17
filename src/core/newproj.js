@@ -300,7 +300,7 @@ const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'
 const blockKey=s=>{const k=String(s||'').toLowerCase();return LIB[k]?k:BLOCK_ALIAS[k]||null;};
 
 /* ---------- plan ---------- */
-function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2,connGap:true};}
+function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2,connGap:true,cohesion:1};}
 function addBlock(plan,type,params){const k=blockKey(type);if(!k)throw new Error(`블록: ${Object.keys(LIB).join(', ')}`);const L=LIB[k];const p={};Object.entries(L.params).forEach(([n,d])=>{p[n]=d.def;});
   Object.entries(params||{}).forEach(([n,v])=>{if(!(n in L.params))throw new Error(`${k} 블록 파라미터: ${Object.keys(L.params).join(', ')||'(없음)'}`);p[n]=v;});
   if(k==='mcu'&&plan.blocks.some(b=>b.type==='mcu'))throw new Error('MCU는 하나만 넣을 수 있습니다 (set으로 바꾸기)');
@@ -974,7 +974,8 @@ function shrinkText(r){const s=r&&r.shrink;if(!s)return'패키지 축소: 꺼짐
 const GROUP_OF={pwr_in:'input',usb_in:'input',ldo:'power',buck:'power',supervisor:'power',mcu:'mcu',xtal:'mcu',flash:'mcu',uart:'mcu',led:'mcu',button:'mcu',i2c:'mcu',can:'comm',
   gdrv3:'stage',hbridge:'stage',bldc:'stage',dcmotor:'stage',hs_switch:'stage',vmon:'sense',ntc:'sense'};
 function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks.find(x=>x.id===c.block);let k=b?GROUP_OF[b.type]:null;
-    if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';g[c.ref]=k||null;});return g;}
+    if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';
+    /* cohesion plans: the PMIC and the 48 V module belong to the power zone (older plans left them without a zone) */if(!k&&b&&plan.cohesion>=2)k={pmic:'power',hvbuck:'power'}[b.type]||null;g[c.ref]=k||null;});return g;}
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));if(r.pwrseq)B.pwrseq=r.pwrseq;
   // dissipation the generator worked out (FET conduction · regulator loss · shunt I²R · IC typical) travels with the part — the thermal analysis starts from it
   {const PM=Object.fromEntries(r.parts.filter(c=>c.P>0).map(c=>[c.ref,c]));B.comps.forEach(c=>{const q=PM[c.ref];if(q){c.P=q.P;if(q.lk)c.lk=q.lk;}});
@@ -986,7 +987,7 @@ function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finali
   // copper weight / allowed temperature rise for the current-based widths: motor boards default to 2 oz · ΔT 20 °C
   const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(plan.curModel===2)B.curModel=2;if(String(pc.std)==='2152')B.ipcStd='2152';if(+pc.plane>0)B.planeDist=+pc.plane;
   // capacity methods chosen at design time (CURRENT, capacity methods)
-  if(pc.inner===true||/^(on|1|true|yes)$/i.test(String(pc.inner)))B.innerPower=true;if(+pc.ozin>0)B.ozIn=+pc.ozin;if(pc.mask===true||/^(on|1|true|yes)$/i.test(String(pc.mask))){B.maskOpen=true;if(+pc.solder>0)B.solderT=+pc.solder;}{const bb=typeof CURRENT!=='undefined'&&CURRENT.parseBusbar?CURRENT.parseBusbar(pc.busbar):null;if(bb)B.busbar=bb;}if(+pc.k>0)B.kFr4=+pc.k;if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
+  if(pc.inner===true||/^(on|1|true|yes)$/i.test(String(pc.inner)))B.innerPower=true;if(+pc.ozin>0)B.ozIn=+pc.ozin;if(pc.mask===true||/^(on|1|true|yes)$/i.test(String(pc.mask))){B.maskOpen=true;if(+pc.solder>0)B.solderT=+pc.solder;}{const bb=typeof CURRENT!=='undefined'&&CURRENT.parseBusbar?CURRENT.parseBusbar(pc.busbar):null;if(bb)B.busbar=bb;}if(+pc.k>0)B.kFr4=+pc.k;if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z){B.zones=Z;/* block of every part: the placer keeps a circuit block together (plan.cohesion: 1 = bridge channels around their fixed FET cells, 2 = also the other blocks around their own centre) */if(plan.cohesion){Z.blockOf=Object.fromEntries(r.parts.filter(c=>c.block).map(c=>[c.ref,c.block]));Z.coh=+plan.cohesion||1;}}}
   if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});
   // leg-return nets: the whole phase current still passes the node (one switch at a time) — placement pull and routing keep-out stay sized for it
   if(r.currFull&&Object.keys(r.currFull).length)B.netCurrentFull=r.currFull;

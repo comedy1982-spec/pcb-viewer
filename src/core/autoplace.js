@@ -101,7 +101,7 @@ function discreteMacro(B,o){o=o||{};PCBEDIT.prepare(B);
         lanes.push({net:sns,rect:[f(xa),f(yL-0.9),f(xb),f(sp.y+sp.h/2)]});keepout.push([xa,yL,xb,sp.y-sp.h/2]);}
       cells++;});});
   if(!cells)return null;
-  return{fixed,keepout,bus:null,net:null,fit:true,planeBus:true,driver:null,lanes};}
+  return{fixed,keepout,bus:null,net:null,fit:true,planeBus:true,driver:null,lanes,discrete:true};}
 function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
   const fets=B.comps.filter(c=>c.pads.length===10&&c.pads.some(p=>p.n==='9')&&c.pads.some(p=>p.n==='10')&&/^Q/.test(c.ref));if(fets.length<2)return null;
   const role=c=>{const bat=c.pads.find(p=>p.n==='9').net,ph=c.pads.find(p=>p.n==='10').net;const sns=c.pads.find(p=>p.net&&p.net!==bat&&p.net!==ph&&/SNS|GND/i.test(p.net)&&p.n!=='9'&&p.n!=='10');return{bat,ph,sns:sns?sns.net:null};};
@@ -318,6 +318,29 @@ function place(B,opts){
   const FACE=movable.map(o=>{if(!o.conn)return null;const c=o.c,bd=c.body;if(!bd||!(bd.w>0))return null;let px=0,py=0;c.pads.forEach(p=>{px+=p.x;py+=p.y;});px/=c.pads.length;py/=c.pads.length;
     const vx=bd.cx-px,vy=bd.cy-py;if(Math.hypot(vx,vy)<Math.max(1,0.18*Math.max(bd.w,bd.h)))return null;return Math.abs(vx)>Math.abs(vy)?[Math.sign(vx),0]:[0,Math.sign(vy)];});
   const idx=new Map(movable.map((o,i)=>[o.ref,i]));
+  // block cohesion (zones.blockOf, from plans with cohesion): the zones only know six functions, so two bridge channels share
+  // one 'stage' rectangle and their drivers, bootstrap parts and gate resistors mix, 30–60 mm from their own FETs.
+  //  · a block with macro-fixed parts (the FET cells of a discrete bridge) gets its own rectangle right above those cells,
+  //    sized for its parts — that replaces the shared stage rectangle for the block's stage parts
+  //  · level 2: every other block of ≥ 4 parts is pulled toward its own centre beyond the radius its parts need
+  const COH=ZN&&ZN.blockOf&&opts.cohesion!==false?(+ZN.coh||1):0;const CB=[];const cbOf=new Int16Array(n).fill(-1);B.blockRects=null;const NB={};const cohNet=opts.cohNet!=null?+opts.cohNet:3;
+  if(COH){const by={};info.list.forEach(o=>{const b=ZN.blockOf[o.ref];if(b)(by[b]=by[b]||[]).push(o);});const mf=new Set(macro&&macro.discrete?macro.fixed:[]);const rects={};
+    Object.keys(by).forEach(b=>{const L=by[b];const fx=L.filter(o=>mf.has(o.ref)&&!idx.has(o.ref));const mv=L.filter(o=>idx.has(o.ref)&&!o.conn);if(mv.length<4)return;
+      const ar=mv.reduce((a,o)=>a+(o.c.bb[2]-o.c.bb[0]+1.2)*(o.c.bb[3]-o.c.bb[1]+1.2),0);
+      if(fx.length>=2){const st2=mv.filter(o=>ZN.groupOf[o.ref]==='stage');if(st2.length<4)return;const as=st2.reduce((a,o)=>a+(o.c.bb[2]-o.c.bb[0]+1.2)*(o.c.bb[3]-o.c.bb[1]+1.2),0);
+        const f=[Math.min(...fx.map(o=>o.c.bb[0])),Math.min(...fx.map(o=>o.c.bb[1])),Math.max(...fx.map(o=>o.c.bb[2])),Math.max(...fx.map(o=>o.c.bb[3]))];
+        const fill=opts.cohFill!=null?+opts.cohFill:1.3,w=f[2]-f[0]+2;const d=Math.min(ob[3]-edgeM-f[3],Math.max(8,as*fill/w));
+        const r=[Math.max(ob[0]+edgeM,f[0]-1),f[1],Math.min(ob[2]-edgeM,f[2]+1),f[3]+d].map(v=>+v.toFixed(2));rects[b]=r;st2.forEach(o=>{ZR[idx.get(o.ref)]=r;});return;}
+      if(COH>=2){const k=CB.length;CB.push({b,r0:Math.sqrt(ar*(opts.cohFill!=null?+opts.cohFill:2.4)/Math.PI),x:0,y:0,m:mv.map(o=>idx.get(o.ref))});mv.forEach(o=>{cbOf[idx.get(o.ref)]=k;});}});
+    if(Object.keys(rects).length){B.blockRects=rects;
+      // the short signal nets inside such a block (driver → gate resistor → gate, bootstrap, sense Kelvin lines) pull harder: the
+      // gate loop stays at the cells while the long PWM / SPI lines to the MCU take the distance
+      info.list.forEach(o=>{const b=ZN.blockOf[o.ref]||'-';o.c.pads.forEach(p=>{if(!p.net)return;const v=NB[p.net];NB[p.net]=v===undefined?b:(v===b?b:'*');});});Object.keys(NB).forEach(k=>{if(!rects[NB[k]])delete NB[k];});
+      // the other zones give way: a zone rectangle that a channel rectangle cuts into is trimmed to the part beyond it when enough is left
+      const top=Math.max(...Object.values(rects).map(r=>r[3]));const cut={};Object.keys(ZN.rects).forEach(g=>{if(g==='stage'||g==='input')return;const z=ZN.rects[g];
+        const hit=Object.values(rects).some(r=>r[0]<z[2]&&z[0]<r[2]&&r[1]<z[3]&&z[1]<r[3]);if(hit&&z[3]-top>=0.35*(z[3]-z[1]))cut[g]=[z[0],+(top+0.5).toFixed(2),z[2],z[3]];});
+      movable.forEach((o,i)=>{const g=ZN.groupOf[o.ref];if(cut[g]&&ZR[i]===ZN.rects[g])ZR[i]=cut[g];});}}
+  const cohW=opts.cohW!=null?+opts.cohW:3;
   const both=opts.both||opts.sides==='both';
   // bottom side (--both): passives, and small SMD ICs (SOT-23 · SOIC-8 class, ≤ 7 mm) that are not heat sources / the MCU;
   // through-hole parts, connectors and electrolytics stay on top. opts.bothIcs=false limits it to 2-pin parts.
@@ -346,6 +369,7 @@ function place(B,opts){
     // (the 0 Ω sense / LSS net ties too: the long run from the shunt to the tie carries no current, so the Kelvin point stays at the
     // shunt pad while the fine-pitch pin only has to reach the tie next to it)
     if(onDrv&&pins.length===1&&fx.length===1)w=Math.max(w,8);
+    if(NB[nm]&&pins.length+fx.length<=4&&cls(nm)==='신호')w*=cohNet;
     const id=NET.length;NET.push({nm,pins,fx,w:w*st.wl});pins.forEach(([i])=>{if(!netsOf[i].includes(id))netsOf[i].push(id);});});
   // decoupling: each cap belongs to the IC with the most pins on its rail (spread over ICs by pin share)
   const DEC=[];const decOf=movable.map(()=>[]);{const load={};
@@ -409,6 +433,7 @@ function place(B,opts){
     else{const cx=(A[0]+A[2])/2-(ob[0]+ob[2])/2,cy=(A[1]+A[3])/2-(ob[1]+ob[3])/2;c+=st.cen*Math.hypot(cx,cy)*Math.sqrt(G[i].area+1);}
     obst.forEach(q=>{c+=pairCost(i,q.bb,q.side,q.halo,q.o||null);});
     if(PZ&&V[i]>=4){const ov=pzOv(A);if(ov>0)c+=(wOv*2+40)*(1+ov);}
+    if(cbOf[i]>=0){const q=CB[cbOf[i]];const d=Math.hypot((A[0]+A[2])/2-q.x,(A[1]+A[3])/2-q.y)-q.r0;if(d>0)c+=cohW*d*(1+Math.sqrt(G[i].area)/4);}
     const z=ZR[i];if(z){const zx=Math.max(0,z[0]-A[0])+Math.max(0,A[2]-z[2])+Math.max(0,z[1]-A[1])+Math.max(0,A[3]-z[3]);if(zx>0)c+=zw*(zx+0.3*zx*zx)*(1+Math.sqrt(G[i].area)/4);}
     return c;}
   const px=(i,k)=>X[i]+G[i].pads[V[i]][k][0],py=(i,k)=>Y[i]+G[i].pads[V[i]][k][1];
@@ -432,9 +457,10 @@ function place(B,opts){
   // annealing
   const iters=Math.min(600000,Math.round((opts.effort||1)*n*(scratch?1500:900)));
   const sv=[0,0,0],sv2=[0,0,0];const save=(i,s)=>{s[0]=X[i];s[1]=Y[i];s[2]=V[i];},load=(i,s)=>{X[i]=s[0];Y[i]=s[1];V[i]=s[2];};
+  const cohUp=()=>{CB.forEach(q=>{let sx=0,sy=0,sw=0;q.m.forEach(i=>{const b=G[i].bb[V[i]],w=G[i].area+1;sx+=(X[i]+(b[0]+b[2])/2)*w;sy+=(Y[i]+(b[1]+b[3])/2)*w;sw+=w;});q.x=sx/sw;q.y=sy/sw;});};cohUp();
   let T0=0;{let s=0,k=0;for(let t=0;t<Math.min(300,n*10);t++){const i=Math.floor(R()*n);save(i,sv);const c0=costSet([i]);X[i]+=(R()-0.5)*BW*0.3;Y[i]+=(R()-0.5)*BH*0.3;const c1=costSet([i]);load(i,sv);s+=Math.abs(c1-c0);k++;}T0=Math.max(1,s/k)*(scratch?1.2:0.4);}
   const Tend=T0*2e-4;let acc=0;
-  for(let it=0;it<iters;it++){
+  for(let it=0;it<iters;it++){if(CB.length&&it%Math.max(200,n*4)===0)cohUp();
     const prog=it/iters,T=T0*Math.pow(Tend/T0,prog);wOv=5+400*prog*prog;
     const range=Math.max(0.3,Math.max(BW,BH)*0.5*Math.pow(1-prog,1.6)*(scratch?1:0.5));
     const i=Math.floor(R()*n);const u=R();

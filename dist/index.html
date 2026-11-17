@@ -7091,7 +7091,7 @@ function discreteMacro(B,o){o=o||{};PCBEDIT.prepare(B);
         lanes.push({net:sns,rect:[f(xa),f(yL-0.9),f(xb),f(sp.y+sp.h/2)]});keepout.push([xa,yL,xb,sp.y-sp.h/2]);}
       cells++;});});
   if(!cells)return null;
-  return{fixed,keepout,bus:null,net:null,fit:true,planeBus:true,driver:null,lanes};}
+  return{fixed,keepout,bus:null,net:null,fit:true,planeBus:true,driver:null,lanes,discrete:true};}
 function powerMacro(B,rect,o){o=o||{};PCBEDIT.prepare(B);
   const fets=B.comps.filter(c=>c.pads.length===10&&c.pads.some(p=>p.n==='9')&&c.pads.some(p=>p.n==='10')&&/^Q/.test(c.ref));if(fets.length<2)return null;
   const role=c=>{const bat=c.pads.find(p=>p.n==='9').net,ph=c.pads.find(p=>p.n==='10').net;const sns=c.pads.find(p=>p.net&&p.net!==bat&&p.net!==ph&&/SNS|GND/i.test(p.net)&&p.n!=='9'&&p.n!=='10');return{bat,ph,sns:sns?sns.net:null};};
@@ -7308,6 +7308,29 @@ function place(B,opts){
   const FACE=movable.map(o=>{if(!o.conn)return null;const c=o.c,bd=c.body;if(!bd||!(bd.w>0))return null;let px=0,py=0;c.pads.forEach(p=>{px+=p.x;py+=p.y;});px/=c.pads.length;py/=c.pads.length;
     const vx=bd.cx-px,vy=bd.cy-py;if(Math.hypot(vx,vy)<Math.max(1,0.18*Math.max(bd.w,bd.h)))return null;return Math.abs(vx)>Math.abs(vy)?[Math.sign(vx),0]:[0,Math.sign(vy)];});
   const idx=new Map(movable.map((o,i)=>[o.ref,i]));
+  // block cohesion (zones.blockOf, from plans with cohesion): the zones only know six functions, so two bridge channels share
+  // one 'stage' rectangle and their drivers, bootstrap parts and gate resistors mix, 30–60 mm from their own FETs.
+  //  · a block with macro-fixed parts (the FET cells of a discrete bridge) gets its own rectangle right above those cells,
+  //    sized for its parts — that replaces the shared stage rectangle for the block's stage parts
+  //  · level 2: every other block of ≥ 4 parts is pulled toward its own centre beyond the radius its parts need
+  const COH=ZN&&ZN.blockOf&&opts.cohesion!==false?(+ZN.coh||1):0;const CB=[];const cbOf=new Int16Array(n).fill(-1);B.blockRects=null;const NB={};const cohNet=opts.cohNet!=null?+opts.cohNet:3;
+  if(COH){const by={};info.list.forEach(o=>{const b=ZN.blockOf[o.ref];if(b)(by[b]=by[b]||[]).push(o);});const mf=new Set(macro&&macro.discrete?macro.fixed:[]);const rects={};
+    Object.keys(by).forEach(b=>{const L=by[b];const fx=L.filter(o=>mf.has(o.ref)&&!idx.has(o.ref));const mv=L.filter(o=>idx.has(o.ref)&&!o.conn);if(mv.length<4)return;
+      const ar=mv.reduce((a,o)=>a+(o.c.bb[2]-o.c.bb[0]+1.2)*(o.c.bb[3]-o.c.bb[1]+1.2),0);
+      if(fx.length>=2){const st2=mv.filter(o=>ZN.groupOf[o.ref]==='stage');if(st2.length<4)return;const as=st2.reduce((a,o)=>a+(o.c.bb[2]-o.c.bb[0]+1.2)*(o.c.bb[3]-o.c.bb[1]+1.2),0);
+        const f=[Math.min(...fx.map(o=>o.c.bb[0])),Math.min(...fx.map(o=>o.c.bb[1])),Math.max(...fx.map(o=>o.c.bb[2])),Math.max(...fx.map(o=>o.c.bb[3]))];
+        const fill=opts.cohFill!=null?+opts.cohFill:1.3,w=f[2]-f[0]+2;const d=Math.min(ob[3]-edgeM-f[3],Math.max(8,as*fill/w));
+        const r=[Math.max(ob[0]+edgeM,f[0]-1),f[1],Math.min(ob[2]-edgeM,f[2]+1),f[3]+d].map(v=>+v.toFixed(2));rects[b]=r;st2.forEach(o=>{ZR[idx.get(o.ref)]=r;});return;}
+      if(COH>=2){const k=CB.length;CB.push({b,r0:Math.sqrt(ar*(opts.cohFill!=null?+opts.cohFill:2.4)/Math.PI),x:0,y:0,m:mv.map(o=>idx.get(o.ref))});mv.forEach(o=>{cbOf[idx.get(o.ref)]=k;});}});
+    if(Object.keys(rects).length){B.blockRects=rects;
+      // the short signal nets inside such a block (driver → gate resistor → gate, bootstrap, sense Kelvin lines) pull harder: the
+      // gate loop stays at the cells while the long PWM / SPI lines to the MCU take the distance
+      info.list.forEach(o=>{const b=ZN.blockOf[o.ref]||'-';o.c.pads.forEach(p=>{if(!p.net)return;const v=NB[p.net];NB[p.net]=v===undefined?b:(v===b?b:'*');});});Object.keys(NB).forEach(k=>{if(!rects[NB[k]])delete NB[k];});
+      // the other zones give way: a zone rectangle that a channel rectangle cuts into is trimmed to the part beyond it when enough is left
+      const top=Math.max(...Object.values(rects).map(r=>r[3]));const cut={};Object.keys(ZN.rects).forEach(g=>{if(g==='stage'||g==='input')return;const z=ZN.rects[g];
+        const hit=Object.values(rects).some(r=>r[0]<z[2]&&z[0]<r[2]&&r[1]<z[3]&&z[1]<r[3]);if(hit&&z[3]-top>=0.35*(z[3]-z[1]))cut[g]=[z[0],+(top+0.5).toFixed(2),z[2],z[3]];});
+      movable.forEach((o,i)=>{const g=ZN.groupOf[o.ref];if(cut[g]&&ZR[i]===ZN.rects[g])ZR[i]=cut[g];});}}
+  const cohW=opts.cohW!=null?+opts.cohW:3;
   const both=opts.both||opts.sides==='both';
   // bottom side (--both): passives, and small SMD ICs (SOT-23 · SOIC-8 class, ≤ 7 mm) that are not heat sources / the MCU;
   // through-hole parts, connectors and electrolytics stay on top. opts.bothIcs=false limits it to 2-pin parts.
@@ -7336,6 +7359,7 @@ function place(B,opts){
     // (the 0 Ω sense / LSS net ties too: the long run from the shunt to the tie carries no current, so the Kelvin point stays at the
     // shunt pad while the fine-pitch pin only has to reach the tie next to it)
     if(onDrv&&pins.length===1&&fx.length===1)w=Math.max(w,8);
+    if(NB[nm]&&pins.length+fx.length<=4&&cls(nm)==='신호')w*=cohNet;
     const id=NET.length;NET.push({nm,pins,fx,w:w*st.wl});pins.forEach(([i])=>{if(!netsOf[i].includes(id))netsOf[i].push(id);});});
   // decoupling: each cap belongs to the IC with the most pins on its rail (spread over ICs by pin share)
   const DEC=[];const decOf=movable.map(()=>[]);{const load={};
@@ -7399,6 +7423,7 @@ function place(B,opts){
     else{const cx=(A[0]+A[2])/2-(ob[0]+ob[2])/2,cy=(A[1]+A[3])/2-(ob[1]+ob[3])/2;c+=st.cen*Math.hypot(cx,cy)*Math.sqrt(G[i].area+1);}
     obst.forEach(q=>{c+=pairCost(i,q.bb,q.side,q.halo,q.o||null);});
     if(PZ&&V[i]>=4){const ov=pzOv(A);if(ov>0)c+=(wOv*2+40)*(1+ov);}
+    if(cbOf[i]>=0){const q=CB[cbOf[i]];const d=Math.hypot((A[0]+A[2])/2-q.x,(A[1]+A[3])/2-q.y)-q.r0;if(d>0)c+=cohW*d*(1+Math.sqrt(G[i].area)/4);}
     const z=ZR[i];if(z){const zx=Math.max(0,z[0]-A[0])+Math.max(0,A[2]-z[2])+Math.max(0,z[1]-A[1])+Math.max(0,A[3]-z[3]);if(zx>0)c+=zw*(zx+0.3*zx*zx)*(1+Math.sqrt(G[i].area)/4);}
     return c;}
   const px=(i,k)=>X[i]+G[i].pads[V[i]][k][0],py=(i,k)=>Y[i]+G[i].pads[V[i]][k][1];
@@ -7422,9 +7447,10 @@ function place(B,opts){
   // annealing
   const iters=Math.min(600000,Math.round((opts.effort||1)*n*(scratch?1500:900)));
   const sv=[0,0,0],sv2=[0,0,0];const save=(i,s)=>{s[0]=X[i];s[1]=Y[i];s[2]=V[i];},load=(i,s)=>{X[i]=s[0];Y[i]=s[1];V[i]=s[2];};
+  const cohUp=()=>{CB.forEach(q=>{let sx=0,sy=0,sw=0;q.m.forEach(i=>{const b=G[i].bb[V[i]],w=G[i].area+1;sx+=(X[i]+(b[0]+b[2])/2)*w;sy+=(Y[i]+(b[1]+b[3])/2)*w;sw+=w;});q.x=sx/sw;q.y=sy/sw;});};cohUp();
   let T0=0;{let s=0,k=0;for(let t=0;t<Math.min(300,n*10);t++){const i=Math.floor(R()*n);save(i,sv);const c0=costSet([i]);X[i]+=(R()-0.5)*BW*0.3;Y[i]+=(R()-0.5)*BH*0.3;const c1=costSet([i]);load(i,sv);s+=Math.abs(c1-c0);k++;}T0=Math.max(1,s/k)*(scratch?1.2:0.4);}
   const Tend=T0*2e-4;let acc=0;
-  for(let it=0;it<iters;it++){
+  for(let it=0;it<iters;it++){if(CB.length&&it%Math.max(200,n*4)===0)cohUp();
     const prog=it/iters,T=T0*Math.pow(Tend/T0,prog);wOv=5+400*prog*prog;
     const range=Math.max(0.3,Math.max(BW,BH)*0.5*Math.pow(1-prog,1.6)*(scratch?1:0.5));
     const i=Math.floor(R()*n);const u=R();
@@ -8662,7 +8688,7 @@ const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'
 const blockKey=s=>{const k=String(s||'').toLowerCase();return LIB[k]?k:BLOCK_ALIAS[k]||null;};
 
 /* ---------- plan ---------- */
-function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2,connGap:true};}
+function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2,connGap:true,cohesion:1};}
 function addBlock(plan,type,params){const k=blockKey(type);if(!k)throw new Error(`블록: ${Object.keys(LIB).join(', ')}`);const L=LIB[k];const p={};Object.entries(L.params).forEach(([n,d])=>{p[n]=d.def;});
   Object.entries(params||{}).forEach(([n,v])=>{if(!(n in L.params))throw new Error(`${k} 블록 파라미터: ${Object.keys(L.params).join(', ')||'(없음)'}`);p[n]=v;});
   if(k==='mcu'&&plan.blocks.some(b=>b.type==='mcu'))throw new Error('MCU는 하나만 넣을 수 있습니다 (set으로 바꾸기)');
@@ -9336,7 +9362,8 @@ function shrinkText(r){const s=r&&r.shrink;if(!s)return'패키지 축소: 꺼짐
 const GROUP_OF={pwr_in:'input',usb_in:'input',ldo:'power',buck:'power',supervisor:'power',mcu:'mcu',xtal:'mcu',flash:'mcu',uart:'mcu',led:'mcu',button:'mcu',i2c:'mcu',can:'comm',
   gdrv3:'stage',hbridge:'stage',bldc:'stage',dcmotor:'stage',hs_switch:'stage',vmon:'sense',ntc:'sense'};
 function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks.find(x=>x.id===c.block);let k=b?GROUP_OF[b.type]:null;
-    if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';g[c.ref]=k||null;});return g;}
+    if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';
+    /* cohesion plans: the PMIC and the 48 V module belong to the power zone (older plans left them without a zone) */if(!k&&b&&plan.cohesion>=2)k={pmic:'power',hvbuck:'power'}[b.type]||null;g[c.ref]=k||null;});return g;}
 function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(r.spec))));B.newPlan=JSON.parse(JSON.stringify(plan));if(r.pwrseq)B.pwrseq=r.pwrseq;
   // dissipation the generator worked out (FET conduction · regulator loss · shunt I²R · IC typical) travels with the part — the thermal analysis starts from it
   {const PM=Object.fromEntries(r.parts.filter(c=>c.P>0).map(c=>[c.ref,c]));B.comps.forEach(c=>{const q=PM[c.ref];if(q){c.P=q.P;if(q.lk)c.lk=q.lk;}});
@@ -9348,7 +9375,7 @@ function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finali
   // copper weight / allowed temperature rise for the current-based widths: motor boards default to 2 oz · ΔT 20 °C
   const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(plan.curModel===2)B.curModel=2;if(String(pc.std)==='2152')B.ipcStd='2152';if(+pc.plane>0)B.planeDist=+pc.plane;
   // capacity methods chosen at design time (CURRENT, capacity methods)
-  if(pc.inner===true||/^(on|1|true|yes)$/i.test(String(pc.inner)))B.innerPower=true;if(+pc.ozin>0)B.ozIn=+pc.ozin;if(pc.mask===true||/^(on|1|true|yes)$/i.test(String(pc.mask))){B.maskOpen=true;if(+pc.solder>0)B.solderT=+pc.solder;}{const bb=typeof CURRENT!=='undefined'&&CURRENT.parseBusbar?CURRENT.parseBusbar(pc.busbar):null;if(bb)B.busbar=bb;}if(+pc.k>0)B.kFr4=+pc.k;if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z)B.zones=Z;}
+  if(pc.inner===true||/^(on|1|true|yes)$/i.test(String(pc.inner)))B.innerPower=true;if(+pc.ozin>0)B.ozIn=+pc.ozin;if(pc.mask===true||/^(on|1|true|yes)$/i.test(String(pc.mask))){B.maskOpen=true;if(+pc.solder>0)B.solderT=+pc.solder;}{const bb=typeof CURRENT!=='undefined'&&CURRENT.parseBusbar?CURRENT.parseBusbar(pc.busbar):null;if(bb)B.busbar=bb;}if(+pc.k>0)B.kFr4=+pc.k;if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z){B.zones=Z;/* block of every part: the placer keeps a circuit block together (plan.cohesion: 1 = bridge channels around their fixed FET cells, 2 = also the other blocks around their own centre) */if(plan.cohesion){Z.blockOf=Object.fromEntries(r.parts.filter(c=>c.block).map(c=>[c.ref,c.block]));Z.coh=+plan.cohesion||1;}}}
   if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});
   // leg-return nets: the whole phase current still passes the node (one switch at a time) — placement pull and routing keep-out stay sized for it
   if(r.currFull&&Object.keys(r.currFull).length)B.netCurrentFull=r.currFull;
@@ -9476,7 +9503,7 @@ function save(B,meta){const keys=PCB.cuKeys(B);const nets=[];const ni=n=>{if(n==
   S.pours=[];keys.forEach((k,L)=>B.layers[k+'.cu'].forEach(p=>{if(p.t==='pour')S.pours.push([L,JSON.parse(JSON.stringify(p))]);}));
   if(B.powerReport)S.powerReport=JSON.parse(JSON.stringify(B.powerReport));
   if(B.powerBus)S.powerBus=JSON.parse(JSON.stringify(B.powerBus));
-  if(B.powerLanes)S.powerLanes=JSON.parse(JSON.stringify(B.powerLanes));
+  if(B.powerLanes)S.powerLanes=JSON.parse(JSON.stringify(B.powerLanes));if(B.blockRects)S.blockRects=JSON.parse(JSON.stringify(B.blockRects));
   return S;}
 /* restore onto B (the board generated from the same plan): layers, placement, copper, vias. Returns the parts it could
    not find (should be none). */
@@ -9498,7 +9525,7 @@ function apply(B,S){if(!S||S.v!==1)throw new Error('스냅샷 형식이 다릅�
   if(S.pours){keys.forEach(k=>{B.layers[k+'.cu']=B.layers[k+'.cu'].filter(p=>p.t!=='pour');});S.pours.slice().reverse().forEach(([L,p])=>{B.layers[keys[L]+'.cu'].unshift(JSON.parse(JSON.stringify(p)));});}
   if(S.powerReport)B.powerReport=JSON.parse(JSON.stringify(S.powerReport));
   if(S.powerBus)B.powerBus=JSON.parse(JSON.stringify(S.powerBus));
-  B.powerLanes=S.powerLanes?JSON.parse(JSON.stringify(S.powerLanes)):null;
+  B.powerLanes=S.powerLanes?JSON.parse(JSON.stringify(S.powerLanes)):null;B.blockRects=S.blockRects?JSON.parse(JSON.stringify(S.blockRects)):null;
   B.pcbPending=false;PCBEDIT.rebuildNets(B);return{missing:miss};}
 return{save,apply};
 })();
@@ -13973,7 +14000,9 @@ const CORE='#4a4230',CU_IN='#d4844a';
 function drawZones(ctx){const Z=typeof AUTOPLACE!=='undefined'&&AUTOPLACE.zonesFit?AUTOPLACE.zonesFit(BD):BD.zones;const lw=Math.max(0.12,BD.W/500);
   Object.entries(Z.rects).forEach(([g,r])=>{const col=(AUTOPLACE.ZONES[g]||{}).col||'#888';ctx.save();ctx.globalAlpha=0.10;ctx.fillStyle=col;ctx.fillRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
     ctx.globalAlpha=0.85;ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash([lw*6,lw*4]);ctx.strokeRect(r[0]+lw/2,r[1]+lw/2,r[2]-r[0]-lw,r[3]-r[1]-lw);ctx.setLineDash([]);
-    ctx.fillStyle=col;ctx.globalAlpha=0.95;const sz=Math.max(1.2,Math.min(3,(r[2]-r[0])/9));drawText(ctx,{x:r[0]+1,y:r[3]-sz*0.9,s:(AUTOPLACE.ZONES[g]||{}).label||g,size:sz,align:'left',bold:true});ctx.restore();});}
+    ctx.fillStyle=col;ctx.globalAlpha=0.95;const sz=Math.max(1.2,Math.min(3,(r[2]-r[0])/9));drawText(ctx,{x:r[0]+1,y:r[3]-sz*0.9,s:(AUTOPLACE.ZONES[g]||{}).label||g,size:sz,align:'left',bold:true});ctx.restore();});
+  // block cohesion: the rectangle each bridge channel's parts are kept in (set by the last placement)
+  if(BD.blockRects)Object.entries(BD.blockRects).forEach(([b,r],i)=>{const col=AUTOPLACE.ZONES.stage.col;ctx.save();ctx.globalAlpha=0.9;ctx.strokeStyle=col;ctx.lineWidth=lw*1.4;ctx.strokeRect(r[0]+lw,r[1]+lw,r[2]-r[0]-2*lw,r[3]-r[1]-2*lw);ctx.fillStyle=col;drawText(ctx,{x:r[0]+1.2,y:r[3]-3.2,s:'채널 '+(i+1)+' · '+b,size:2,align:'left',bold:true});ctx.restore();});}
 function drawSide(ctx,side,o){
   const L=S.layers,M=MASKS[S.mask];const ik=innerKey(side,o);
   const base=ik?CORE:L.mask?M.mask:FR4,cu=ik?CU_IN:L.mask?M.under:CU,fin=ik?CU_IN:L.mask?FIN:CU_PAD;

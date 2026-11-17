@@ -45,3 +45,25 @@ test('conn = ecu-io: an input ECU connector and one output ECU connector per mot
   // the single-connector option and the default are untouched
   P.blocks.find(b => b.type === 'pwr_in').params.conn = 'sep';assert.ok(L.NEWPROJ.build(P).parts.some(c => c.val === '모터 상'));
 });
+test('block cohesion: each bridge channel keeps its driver and gate parts in its own rectangle above its FET cells', () => {
+  const L = load();const { NEWPROJ, AUTOPLACE } = L;
+  const mk = coh => { const P = plan(L);P.blocks.find(b => b.type === 'pwr_in').params.conn = 'ecu-io';P.board = { w: 160, h: 110 };P.pcb = { layers: 8 };P.strategy = 'compact';P.cohesion = coh;
+    const { B } = NEWPROJ.toBoard(P, { place: false });B.copperLayers = 8;AUTOPLACE.place(B, { scratch: true, strategy: 'compact', seed: 1, effort: 0.5 });return B; };
+  const ctr = c => [(c.bb[0] + c.bb[2]) / 2, (c.bb[1] + c.bb[3]) / 2];
+  // parts of one channel that sit nearer the other channel's centre, and the length of the gate-drive nets
+  const stat = B => { const bo = B.zones.blockOf || Object.fromEntries(NEWPROJ.build(B.newPlan).parts.map(c => [c.ref, c.block]));const ch = [...new Set(Object.values(bo))].filter(b => /^gdrv3/.test(b));
+    const cen = Object.fromEntries(ch.map(b => { const m = B.comps.filter(c => bo[c.ref] === b).map(ctr);return [b, [m.reduce((a, p) => a + p[0], 0) / m.length, m.reduce((a, p) => a + p[1], 0) / m.length]]; }));
+    let mixed = 0;B.comps.forEach(c => { const b = bo[c.ref];if (!cen[b]) return;const p = ctr(c);const o = ch.find(x => x !== b);if (Math.hypot(p[0] - cen[o][0], p[1] - cen[o][1]) < Math.hypot(p[0] - cen[b][0], p[1] - cen[b][1])) mixed++; });
+    const g = [];Object.keys(B.nets).filter(n => /_(HO|LO)$|_[HL]G_\d$/.test(n)).forEach(n => { const ps = [];B.comps.forEach(c => c.pads.forEach(p => { if (p.net === n) ps.push(p); }));if (ps.length > 1) g.push(Math.max(...ps.map(p => p.x)) - Math.min(...ps.map(p => p.x)) + Math.max(...ps.map(p => p.y)) - Math.min(...ps.map(p => p.y))); });
+    g.sort((a, b) => a - b);return { mixed, gate: g[g.length >> 1], n: g.length, bo }; };
+  const B0 = mk(0), B1 = mk(1), B2 = mk(2);const s0 = stat(B0), s2 = stat(B2);
+  assert.equal(B0.blockRects, null, 'plans without the flag place as before');assert.equal(B0.zones.groupOf[B0.comps.find(c => /TLF35584/.test(c.val)).ref], null);
+  const R = B2.blockRects;assert.deepEqual(Object.keys(R).sort(), ['gdrv37', 'gdrv38']);assert.ok(R.gdrv37[2] <= R.gdrv38[0] + 2.5, 'the two channel rectangles sit side by side: ' + JSON.stringify(R));
+  assert.equal(B2.zones.groupOf[B2.comps.find(c => /TLF35584/.test(c.val)).ref], 'power');
+  // level 1 (new plans): the channel rectangles alone — the other blocks and their zones stay as they were
+  assert.deepEqual(Object.keys(B1.blockRects).sort(), ['gdrv37', 'gdrv38']);assert.equal(B1.zones.groupOf[B1.comps.find(c => /TLF35584/.test(c.val)).ref], null);{ const s1 = stat(B1);assert.ok(s1.mixed < s0.mixed / 2, `level 1 mixed ${s0.mixed} → ${s1.mixed}`); }
+  assert.equal(NEWPROJ.newPlan('x').cohesion, 1);
+  // drivers inside their own channel
+  B2.comps.filter(c => c.val === 'AMT49100').forEach(u => { const r = R[s2.bo[u.ref]], p = ctr(u);assert.ok(p[0] > r[0] - 8 && p[0] < r[2] + 8 && p[1] < r[3] + 8, `${u.ref} at ${p.map(v => v.toFixed(1))} outside ${r}`); });
+  assert.equal(s2.n, 36);assert.ok(s2.mixed < s0.mixed / 2, `mixed parts ${s0.mixed} → ${s2.mixed}`);assert.ok(s2.gate < 0.8 * s0.gate, `gate net median ${s0.gate.toFixed(1)} → ${s2.gate.toFixed(1)} mm`);
+});
