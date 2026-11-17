@@ -160,6 +160,17 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
     <details class="np-impl" id="implSec"><summary><b>회로 구현 (2단계 준비)</b><span id="implHint"></span></summary>
       <p class="lead" style="margin:4px 0 8px">HW 블록마다 회로 라이브러리 블록을 연결해 둡니다. 부품은 다음 단계에서 정해지며, 여기서 바꾸면 아키텍처 다이어그램은 그대로입니다.</p>
       <div id="npBlocks"></div><div class="np-add"><select id="npAddSel" aria-label="추가할 회로 블록"></select><button class="btn sm" id="npAdd">회로 블록 추가</button></div></details>
+    <details class="np-impl" id="capSec"><summary><b>전류 용량 확보 방법</b><span id="capHint"></span></summary>
+      <p class="lead" style="margin:4px 0 8px">패턴 폭을 넓히는 것 외에 전류를 감당할 방법을 고릅니다. 3단계 PCB를 만들 때 적용되고, 배선 보고의 유효 폭에 반영됩니다.</p>
+      <label class="fld"><span>층 수</span><select id="capLayers" aria-label="층 수"><option value="2">2층</option><option value="4">4층</option><option value="6">6층</option><option value="8">8층</option><option value="10">10층</option></select></label>
+      <label class="fld"><span>외층 동박 두께</span><select id="capOz" aria-label="외층 동박 두께"><option value="">자동 (모터 보드 2 oz · 그 외 1 oz)</option><option value="1">1 oz (35 µm)</option><option value="2">2 oz (70 µm)</option><option value="3">3 oz (105 µm) — 최소 선폭 · 간격 확인</option></select></label>
+      <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" id="capInner"><span>내층 병렬 — 내층 신호층에도 같은 넷 동박 (6층 이상)</span></label>
+      <label class="fld"><span>내층 동박 두께</span><select id="capOzIn" aria-label="내층 동박 두께"><option value="">1 oz (기본)</option><option value="0.5">0.5 oz</option><option value="2">2 oz</option></select></label>
+      <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" id="capMask"><span>솔더 마스크 개방 + 납 도포 (추정치)</span></label>
+      <label class="fld"><span>구리 버스바 (계산만 · 직접 배치)</span><select id="capBus" aria-label="구리 버스바"><option value="">없음</option><option value="3x1">3 × 1 mm</option><option value="5x1">5 × 1 mm</option><option value="8x1.5">8 × 1.5 mm</option></select></label>
+      <label class="fld"><span>폭 판정 기준</span><select id="capStd" aria-label="폭 판정 기준"><option value="">IPC-2221 (기본)</option><option value="2152">IPC-2152 (플레인 거리 반영 · 20 A 이상에서 더 엄격)</option></select></label>
+      <label class="fld"><span>주위 온도 °C (비우면 모터 보드 ΔT 20 / 40 °C)</span><input id="capTamb" type="number" min="-40" max="125" step="5" placeholder="예: 85"></label>
+      <pre class="np-sum" id="capSum"></pre></details>
     <details class="np-impl"><summary><b>계획 · BOM · MCU 핀 배정</b></summary><pre class="np-sum" id="npSum">요구사항을 적고 [계획 세우기]를 누르거나, 블록을 직접 추가하세요.</pre></details>
     <div class="sys-next"><span class="msg" id="npMsg"></span><button class="btn primary" id="npGen">다음: 회로 생성 →</button></div>
   </aside>

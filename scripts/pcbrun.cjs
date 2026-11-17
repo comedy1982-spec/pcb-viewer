@@ -5,7 +5,7 @@
    node scripts/pcbrun.cjs --profile Dadu --cur "~20 A (팬 · 소형 펌프)" --tag t1 --out /tmp/runs \
      --cmds "board layers 8; board size 85 55 --anchor center; reset --strategy compact --both --seed 1; route"
 
-   Options: --param gdrv3.driver=A4911[,blk.key=val] (block parameters by type or id; pcb.tamb=85 · pcb.std=2152 set PCB conditions, plan.curModel=1 the pre-v1.118 current model) · --add spare[,type] (extra library blocks) · --fet N (index of the FET question option, default 0) · --shrink 2 · --w 100 --h 65 (generated size)
+   Options: --param gdrv3.driver=A4911[,blk.key=val] (block parameters by type or id; pcb.tamb=85 · pcb.std=2152 · pcb.inner=on · pcb.mask=on · pcb.busbar=5x1 set PCB conditions, plan.curModel=1 the pre-v1.118 current model) · --add spare[,type] (extra library blocks) · --fet N (index of the FET question option, default 0) · --shrink 2 · --w 100 --h 65 (generated size)
             --snap (also write <tag>.snap.json, a BOARDSNAP) · --kicad (write <tag>.kicad_pcb) · --shots (top/bottom PNG)
    Prints one JSON line: {tag, W, H, layers, bottom, rats, drc, power:[{net,width,need,ok}], ok, steps:[{cmd,s}], ratNets}
    ok = no unconnected pads, DRC 0 and every power net at its IPC width. Exit code 0 when ok, 1 otherwise. */

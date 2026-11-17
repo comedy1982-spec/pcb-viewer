@@ -35,6 +35,27 @@ function riseFor(w,I,o){return o&&o.std==='2152'?ipc2152Rise(w,I,o):ipcRise(w,I,
 function env(B,opt){opt=opt||{};const NL=B.copperLayers||(B.stack?B.stack.length:2)||2;const std=opt.std||B.ipcStd||'2221';
   const plane=B.planeDist>0?+B.planeDist:(NL>2&&(B.stack||[]).some(x=>x.net&&x.role!=='sig')?(B.t||1.6)/(NL-1):0);
   return{std,oz:opt.oz||B.oz||1,dT:opt.dT||B.dT||10,dTpk:opt.dTpk||B.dTpk||40,tb:B.t||1.6,plane:std==='2152'?plane:0,k:B.kFr4||0.25};}
+/* ---- other ways to carry the current than a wider outer-layer pattern (selectable per board) ----
+   B.innerPower  the same net is also filled on the inner signal layers and tied with vias. Inner copper is B.ozIn (default
+                 1 oz, never more than the outer weight) and, under IPC-2221, an inner conductor needs 2^(1/0.725) ≈ 2.6× the
+                 area of an outer one for the same rise (k 0.024 against 0.048) — 1 mm of inner copper counts as
+                 (ozIn / oz) × 0.384 mm of outer width; under IPC-2152 inner and outer share the chart, so (ozIn / oz) × 1.
+   B.maskOpen    solder-mask opening over the outer power copper, tinned or flooded with solder B.solderT thick (0.1 mm):
+                 solder conducts about 1/7.6 as well as copper (SAC305 0.13 against 0.0172 µΩ·m), so it adds solderT / 7.6
+                 of copper thickness — +19 % on 2 oz, +38 % on 1 oz. Thickness varies in production: an estimate, not a rating.
+   B.busbar      {w, t} mm copper bar soldered along every high-current net: w·t of copper counted as outer width at the
+                 board's copper thickness. The bar itself is not drawn or placed — a calculation credit to check by hand. */
+const OZ_MM=0.035,SOLDER_RHO=7.6;
+function ozIn(B){const oz=B.oz||1;return Math.min(oz,+B.ozIn>0?+B.ozIn:1);}
+function layerWeight(B,l,NL){const oz=B.oz||1;NL=NL||B.copperLayers||2;const outer=l===0||l===NL-1;
+  if(outer)return B.maskOpen?+(1+((+B.solderT>0?+B.solderT:0.1)/SOLDER_RHO)/(oz*OZ_MM)).toFixed(3):1;
+  return +((ozIn(B)/oz)*(B.ipcStd==='2152'?1:Math.pow(0.5,1/0.725))).toFixed(3);}
+function busbarWidth(B){const b=B.busbar;if(!b||!(b.w>0)||!(b.t>0))return 0;return +((b.w*b.t)/((B.oz||1)*OZ_MM)).toFixed(2);}
+function parseBusbar(v){if(v==null||v===''||/^(off|none|0|false|no|없음)$/i.test(String(v)))return null;if(typeof v==='object')return v.w>0&&v.t>0?{w:+v.w,t:+v.t}:null;
+  const m=String(v).match(/^(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)$/i);if(!m)return null;const a=+m[1],b=+m[2];return a>0&&b>0?{w:Math.max(a,b),t:Math.min(a,b)}:null;}
+/* what is switched on, for report headers */
+function methods(B){const L=[];if(B.innerPower)L.push(`내층 병렬 (${ozIn(B)} oz · 폭 환산 ×${layerWeight(B,1,Math.max(3,B.copperLayers||4))})`);if(B.maskOpen)L.push(`마스크 개방 + 납 ${+B.solderT>0?+B.solderT:0.1} mm (×${layerWeight(B,0,2)})`);
+  if(B.busbar&&busbarWidth(B))L.push(`버스바 ${B.busbar.w} × ${B.busbar.t} mm (+${busbarWidth(B)} mm 환산 · 계산만)`);return L;}
 /* ---- current profile ----
    A load is a continuous current plus peaks "I@t/T" (I amps for t seconds every T seconds; no /T = a single event), e.g.
    "40@2/30, 60@0.1". Copper heats with I², so what the steady-state chart needs is the RMS over the cycle:
@@ -154,6 +175,6 @@ function text(B,opt){const W=widths(B,opt);const rows=Object.entries(W).filter((
   const E=env(B,opt||{});const L=[`넷 전류 · 폭 (${E.std==='2152'?`IPC-2152${E.plane?` · 플레인 ${E.plane.toFixed(2)} mm`:' · 플레인 없음'}`:'IPC-2221'} 상시, ${E.oz} oz, ΔT ${opt&&opt.dT||B.dT||10} °C · 피크는 ${B.dTpk||40} °C 이내${B.tamb!=null?` · 주위 ${B.tamb} °C`:''}) — 추정값`];
   rows.forEach(([n,w])=>L.push(`  ${n.padEnd(12)} ${w.cls==='gnd'?'접지':w.cls==='phase'?'모터상':'전원'}${w.v!=null?' '+w.v+' V':''}  ${w.I.toFixed(2)} A${w.pk?` (피크 ${w.pk.I} A ${w.pk.t} s → +${w.riseP} °C)`:''} → 권장 ${w.ipc} mm${w.by==='peak'?' [피크 기준]':''}${w.pour?' (동박면)':''}${w.manual?` · 지정 ${w.w} mm`:''}${w.manualI?' · 전류 지정':''}${w.loads.length?'  ← '+w.loads.slice(0,3).join(', '):''}`));
   const sig=Object.values(W).filter(w=>w.cls==='sig').length;L.push(`  신호 넷 ${sig}개: 0.02 A → 0.2 mm`);return L.join('\n');}
-return{ipc2152Width,ipc2152Rise,mods2152,area2152,wFor,riseFor,env,profile,budget,viaRise,viaCheck,planeCheck,ipcWidth,ipcCurrent,ipcRise,peakRise,needWidth,partLoad,railV,isRail,isPhase,netCurrents,widths,check,text,LOADS};
+return{layerWeight,busbarWidth,parseBusbar,methods,ozIn,ipc2152Width,ipc2152Rise,mods2152,area2152,wFor,riseFor,env,profile,budget,viaRise,viaCheck,planeCheck,ipcWidth,ipcCurrent,ipcRise,peakRise,needWidth,partLoad,railV,isRail,isPhase,netCurrents,widths,check,text,LOADS};
 })();
 if(typeof module!=='undefined')module.exports=CURRENT;

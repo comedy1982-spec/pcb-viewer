@@ -315,6 +315,8 @@ function toKicadPcb(B,meta){
     else if(p.t==='path')for(let k=1;k<p.pts.length;k++)o.push(` (segment (start ${P(p.pts[k-1])}) (end ${P(p.pts[k])}) (width ${n(p.w)}) (layer "${cuL(s)}")${NID(p.net)} (tstamp ${q(uuid())}))`);
     else if(p.t==='poly'&&p.net)p.rings.slice(0,1).forEach(r=>o.push(` (zone${NET(p.net).replace(/^ \(net (\d+) ("[^"]*")\)$/,' (net $1) (net_name $2)')} (layer "${cuL(s)}") (tstamp ${q(uuid())}) (hatch edge 0.5) (connect_pads (clearance 0.3)) (min_thickness 0.25) (filled_areas_thickness no) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5)) (polygon (pts ${r.map(v=>`(xy ${P(v)})`).join(' ')})))`));
     else if(p.t==='pour'&&p.net){const r=B.outline[0];o.push(` (zone${NET(p.net).replace(/^ \(net (\d+) ("[^"]*")\)$/,' (net $1) (net_name $2)')} (layer "${cuL(s)}") (tstamp ${q(uuid())}) (hatch edge 0.5) (connect_pads (clearance ${n(p.clr||0.3)})) (min_thickness 0.25) (filled_areas_thickness no) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5)) (polygon (pts ${r.map(v=>`(xy ${P(v)})`).join(' ')})))`);}}));
+  // B.maskOpen: solder-mask openings over the outer power-fill copper (to be tinned / flooded with solder)
+  if(B.maskOpen){const ks=PCB.cuKeys(B);[[ks[0],'F.Mask'],[ks[ks.length-1],'B.Mask']].forEach(([k,ml],i)=>{if(i&&ks.length<2)return;B.layers[k+'.cu'].forEach(p=>{if(p.t==='poly'&&p.fill&&p.rect&&p.net)o.push(` (gr_rect (start ${P([p.rect[0],p.rect[1]])}) (end ${P([p.rect[2],p.rect[3]])}) (stroke (width 0) (type solid)) (fill solid) (layer "${ml}") (tstamp ${q(uuid())}))`);});});}
   B.vias.forEach(v=>o.push(` (via (at ${P([v.x,v.y])}) (size ${n(v.d)}) (drill ${n(v.drill)}) (layers "F.Cu" "B.Cu")${NID(v.net)} (tstamp ${q(uuid())}))`));
   o.push(')');return o.join('\n')+'\n';
 }

@@ -43,3 +43,21 @@ test('3-phase bridge: leg-return nets and switch terminals carry I/√2, phases 
   // …but the phase pad of a half-bridge package carries the whole phase current
   const pp = hs.pads.find(p => p.net === hs.Itx);Bv.vias.push({ x: pp.x, y: pp.y, net: hs.Itx, drill: 0.3, d: 0.6 });assert.equal(L.CURRENT.viaCheck(Bv, { nets: [hs.Itx], I: { [hs.Itx]: 20 } }).find(x => x.ref === hs.ref).I, 20);hs.It = 0;assert.equal(L.CURRENT.viaCheck(Bv, { nets: ['+12V'], I: { '+12V': 20 } }).find(x => x.ref === hs.ref).I, 20);
 });
+test('capacity methods other than a wider pattern: inner layers, mask opening + solder, busbar', () => {
+  const L = load();const C = L.CURRENT;
+  // equivalent outer width of 1 mm on each layer
+  assert.equal(C.layerWeight({ oz: 2 }, 0, 8), 1);near(C.layerWeight({ oz: 2 }, 3, 8), 0.5 * Math.pow(0.5, 1 / 0.725), 0.001); // inner 1 oz under 2 oz outer, IPC-2221 inner chart
+  near(C.layerWeight({ oz: 2, ozIn: 2 }, 3, 8), 0.384, 0.001);assert.equal(C.layerWeight({ oz: 2, ozIn: 2, ipcStd: '2152' }, 3, 8), 1);assert.equal(C.layerWeight({ oz: 1, ozIn: 2 }, 3, 8), C.layerWeight({ oz: 1 }, 3, 8)); // never above the outer weight
+  near(C.layerWeight({ oz: 2, maskOpen: true }, 0, 8), 1.188, 0.001);near(C.layerWeight({ oz: 1, maskOpen: true }, 7, 8), 1.376, 0.001);assert.equal(C.layerWeight({ oz: 2, maskOpen: true }, 3, 8), C.layerWeight({ oz: 2 }, 3, 8));
+  assert.deepEqual(JSON.stringify(C.parseBusbar('5x1')), '{"w":5,"t":1}');assert.equal(JSON.stringify(C.parseBusbar('1.5×8')), '{"w":8,"t":1.5}');assert.equal(C.parseBusbar('off'), null);assert.equal(C.parseBusbar('wide'), null);
+  near(C.busbarWidth({ oz: 2, busbar: { w: 5, t: 1 } }), 71.43, 0.01);assert.equal(C.busbarWidth({ oz: 2 }), 0);
+  assert.equal(C.methods({ oz: 2 }).length, 0);assert.equal(C.methods({ oz: 2, copperLayers: 8, innerPower: true, maskOpen: true, busbar: { w: 5, t: 1 } }).length, 3);
+  // design-time choice reaches the board, a snapshot and the KiCad file
+  const B = board(L, 2, {}, { layers: 8, inner: 'on', ozin: 1, mask: true, busbar: '5x1' });assert.equal(B.innerPower, true);assert.equal(B.ozIn, 1);assert.equal(B.maskOpen, true);assert.equal(B.busbar.w, 5);
+  const B0 = board(L, 2, {});assert.ok(!B0.innerPower && !B0.maskOpen && !B0.busbar);
+  const S = L.BOARDSNAP.save(B, {});assert.equal(S.cap.inner, 1);assert.equal(S.cap.mask, 1);assert.equal(S.cap.busbar.t, 1);
+  const S0 = L.BOARDSNAP.save(B0, {});assert.equal(S0.cap, undefined);
+  const k0 = L.PCB.cuKeys(B)[0];B.layers[k0 + '.cu'].push({ t: 'poly', rings: [[[10, 10], [14, 10], [14, 12], [10, 12]]], rect: [10, 10, 14, 12], net: 'PH_U', fill: true });
+  const kc = L.PCBEDIT.toKicadPcb(B);assert.match(kc, /\(gr_rect [^\n]*\(fill solid\) \(layer "F\.Mask"\)/);
+  B.maskOpen = false;assert.doesNotMatch(L.PCBEDIT.toKicadPcb(B), /\(fill solid\) \(layer "F\.Mask"\)/);
+});

@@ -23,7 +23,7 @@ const CLI_HELP=[
   ['diag','배선 진단: 남은 연결마다 양 끝 핀, 통로를 막는 넷(층) · 부품, 핀 주변 혼잡, MCU 핀 교환 후보, 전류 폭 · 비아 미달'],
   ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90] [--dir 1.5] [--mst] [--gloss] [--par auto|N|0]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔 · --mst: 다핀 넷을 MST 순서(짧은 핀 쌍부터)로 — 기본 끔(실측 효과 미미) · --dir N: 층별 선호 방향(홀수 신호층 수평·짝수 수직, 역방향 N배 비용 — 기본 끔, DCM-10A 실측에서 비아 +25%): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
   ['unroute','자동 배선한 트랙·비아 지우기'],
-  ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10] [--tamb 85 [--tmax 105 --tmaxpk 125]] [--std 2221|2152 [--plane mm]]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 (--tamb 주위 온도에서 허용 온도 상승 계산 · --std 2152 는 IPC-2152: 플레인 거리 · 보드 두께 반영) · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
+  ['width [넷 <mm|x2|+50%|auto>] [--apply] [넷 --current A] [--oz 1|2] [--dt 10] [--tamb 85 [--tmax 105 --tmaxpk 125]] [--std 2221|2152 [--plane mm]] [--inner on|off [--ozin 1]] [--mask on|off [--solder 0.1]] [--busbar 5x1|off]','넷별 전류 추정과 IPC-2221 권장 트랙 폭 보기 (전류 용량 확보 방법: --inner 내층 신호층에도 같은 넷 동박 · --mask 마스크 개방 + 납 · --busbar 구리 버스바 환산, 계산만) (--tamb 주위 온도에서 허용 온도 상승 계산 · --std 2152 는 IPC-2152: 플레인 거리 · 보드 두께 반영) · 넷 폭 직접 지정(mm) 또는 현재 폭의 배수(x2·2배·+50%) · --apply 로 그 넷만 지우고 새 폭으로 다시 배선 · 전류 지정 · 동박 두께/허용 온도 상승. 넷 이름은 느슨하게 찾음(12V → +12V)'],
   ['pinswap [--all] [--apply] [--route]','배선을 위한 MCU 핀 재배정 (회로 동시 수정): 데이터시트 핀 기능이 맞는 핀 중 상대 부품에 가까운 핀을 추천. --apply면 보드 넷·회로도·HSIS를 함께 바꾸고 해당 넷 배선을 지움, --route면 이어서 배선. --all은 유효한 핀도 다시 배정'],
   ['gloss [--passes 1] [--via 3] [--all] [--par auto|N|0]','사후 최적화: 넷을 하나씩 다른 넷은 고정한 채 비아 비용 3배로 다시 깔아 비아가 줄거나(같으면 길이가 줄면) 채택 · DRC·연결 악화 시 되돌림. route --gloss 로 배선에 이어 실행'],
   ['fix [--maxgrow 1.5] [--maxlayers 6] [--no-grow] [--no-layers] [--pinswap]','미배선 자동 개선: 비용이 적은 순서로 시도하고 다 배선되면 멈춤 — ① 전부 다시 배선(짧은 넷 먼저) ② 다른 시드로 재배치 ③ 다른 전략 ④ 보드 10·20·35·50% 키움 ⑤ 층 늘림(2→4→6) ⑥ (--pinswap) MCU 핀 재배정. 가장 좋은 결과를 남기고 한 번에 되돌리기. autofix on|off: 배선 뒤 미배선이 남으면 자동 실행(기본 켬)'],
@@ -451,6 +451,12 @@ async function cliRun(line,quiet,by){
     case 'unroute':return cliUnroute();
     case 'width':{if(typeof CURRENT==='undefined')throw new Error('전류 모듈 없음');if(a.oz){BD.oz=Math.max(0.5,+a.oz);}if(a.dt){BD.dT=Math.max(5,+a.dt);}
       if(a.std!=null){if(!/^(2221|2152)$/.test(String(a.std)))throw new Error('width --std 2221|2152');if(String(a.std)==='2152')BD.ipcStd='2152';else delete BD.ipcStd;}if(a.plane!=null){if(+a.plane>0)BD.planeDist=+a.plane;else delete BD.planeDist;}
+      {const on=v=>!/^(off|0|false|no)$/i.test(String(v));let ch=0;
+        if(a.inner!=null){if(on(a.inner)){if(PCB.cuKeys(BD).length<4||!PCB.stackOf(BD).some((x,i,A)=>i>0&&i<A.length-1&&x.role==='sig'))throw new Error('width --inner: 내층 신호층이 있는 6층 이상 스택에서만 (board layers 6|8)');BD.innerPower=true;}else delete BD.innerPower;ch++;}
+        if(a.ozin!=null){if(+a.ozin>0)BD.ozIn=+a.ozin;else delete BD.ozIn;ch++;}
+        if(a.mask!=null){if(on(a.mask))BD.maskOpen=true;else delete BD.maskOpen;ch++;}if(a.solder!=null&&+a.solder>0){BD.solderT=+a.solder;ch++;}
+        if(a.busbar!=null){const bb=CURRENT.parseBusbar(a.busbar);if(!bb&&on(a.busbar)&&a.busbar!==true)throw new Error('width --busbar <폭x두께 mm, 예: 5x1> | off');if(bb)BD.busbar=bb;else delete BD.busbar;ch++;}
+        if(ch){const M=CURRENT.methods(BD);cliSay('out',`전류 용량 확보 방법: ${M.length?M.join(' · '):'패턴 폭만 (위·아래층)'} — route 를 다시 실행하면 반영됩니다`);}}
       if(a.tamb!=null){const bg=CURRENT.budget(+a.tamb,a.tmax,a.tmaxpk);BD.tamb=+a.tamb;BD.dT=bg.dT;BD.dTpk=bg.dTpk;cliSay('out',`주위 ${a.tamb} °C · 기판 한계 ${bg.tmax} / ${bg.tmaxpk} °C → 허용 온도 상승 상시 ${bg.dT} °C · 피크 ${bg.dTpk} °C${bg.tight?' (여유가 거의 없음 — 최소값으로 제한)':''}`);}
       const net=a._[0];if(net){const key=cliNetFind(net);if(!key)throw new Error('넷 '+net+' 없음'+cliNetHint(net));
         BD.netWidth=BD.netWidth||{};BD.netCurrent=BD.netCurrent||{};

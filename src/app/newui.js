@@ -33,7 +33,7 @@ const NP_HELP=[
   ['set pwr_in ign 1 · uvlo auto|6 · tvs loaddump','입력단 옵션: IGN(KL15) 감지 → MCU 웨이크업 · 저전압 차단(벅 EN 분압) · 로드덤프 TVS (말로: "IGN 추가", "저전압 차단 6V", "로드덤프 보호")'],
   ['add <블록> [--파라미터 값]','블록 추가 (예: add led --n 3 --color 빨강, add ldo --vout 5, add pwr_in --vin 24)'],
   ['set <블록ID> <파라미터> <값> · remove <블록ID>','블록 수정·삭제 (ID는 plan에 표시)'],['mcu <stm32|tc364>','MCU 바꾸기'],
-  ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · board thermal [--tamb 85] [--std 2221|2152] · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 주위 온도 · 전류 폭 기준(board thermal) · 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
+  ['board <가로> <세로> | board auto | board min · board layers <2|4|6|8|10> · board route on|off · board thermal [--tamb 85] [--std 2221|2152] · board current [--oz 2] [--inner on|off] [--ozin 1] [--mask on|off] [--busbar 5x1|off] · strategy <balanced|thermal|noise|compact>','PCB 조건 (3단계 PCB 시작 때 적용): 주위 온도 · 전류 폭 기준(board thermal) · 전류 용량 확보 방법(board current: 외층 동박 두께 · 내층 병렬 · 마스크 개방 + 납 · 버스바) · 보드 크기(자동 · 최소화 · 직접) · 동박 층 수 · 자동 배선 · 배치 전략'],
   ['diagram','시스템 다이어그램을 글로 (블록 · 전원 레일 · MCU 신호 · 외부 연결)'],
   ['cands [블록] [순위|MPN]','블록의 주요 소자 후보를 요구사항 기준 순위로 (사양·ASIL·차량용 등급·단가·핀 데이터) · 순위나 MPN을 주면 지정. 오른쪽 선택 패널의 표와 같음'],
   ['check [--fix]','회로 생성 전 점검: 구현(impl) 없는 블록 · 전원 레일 미연결 · MCU 미연결 · 고립 블록 · 고른 부품의 핀 확인(Claude 추정 핀 · 기록만 되고 회로에 안 들어간 부품 · 데이터시트 요약 초안)을 고치는 명령과 함께 (--fix: 이름으로 추측한 구현을 자동 지정). [다음: 회로 생성] 때 자동 실행'],
@@ -55,10 +55,28 @@ function npInit(){
     npSay('out','요구사항을 적고 [블록 다이어그램 만들기]를 누르세요. 1단계는 부품을 정하지 않은 HW 블록 다이어그램입니다. 결정론 모드는 정해진 규칙으로, AI 모드는 Claude가 블록·인터페이스를 설계합니다. 명령은 help.');}
   npRender();
 }
+/* capacity methods chosen in the design step: one-line summary and the effect on the width each layer has to provide */
+function npCapInfo(P){const pc=(P&&P.pcb)||{};const NL=+pc.layers||2;const st=PCB.STACKS[NL]||PCB.STACKS[2];const motor=!!(P&&P.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type)));
+  const oz=+pc.oz||(motor?2:1);const nIn=st.filter((r,i)=>i>0&&i<NL-1&&r==='sig').length;const inner=!!pc.inner&&nIn>0;
+  const Bf={oz,copperLayers:NL,ozIn:+pc.ozin||0,innerPower:inner,maskOpen:!!pc.mask,solderT:+pc.solder||0,ipcStd:String(pc.std)==='2152'?'2152':undefined,busbar:CURRENT.parseBusbar(pc.busbar)};
+  const bg=pc.tamb!=null&&pc.tamb!==''?CURRENT.budget(+pc.tamb,pc.tmax,pc.tmaxpk):null;const dT=+pc.dT||(bg?bg.dT:(motor?20:10));
+  const I=P?Math.max(0,...P.blocks.filter(b=>/^(gdrv3|hbridge)$/.test(b.type)).map(b=>+b.params.i||0)):0;
+  const plane=NL>2?1.6/(NL-1):0;const need=I>0?CURRENT.wFor(I,{oz,dT,std:Bf.ipcStd,tb:1.6,plane:Bf.ipcStd?plane:0}):0;
+  const wo=CURRENT.layerWeight(Bf,0,NL),wi=inner?CURRENT.layerWeight(Bf,1,NL):0;const mult=+((NL>2?2:1)*wo+nIn*wi).toFixed(2);const bar=CURRENT.busbarWidth(Bf);
+  return{NL,oz,nIn,inner,Bf,dT,I,need,mult,bar,per:need?Math.max(0,+((need-bar)/mult).toFixed(2)):0,base:need?+(need/(NL>2?2:1)).toFixed(2):0,bg};}
+function npCapText(P){const c=npCapInfo(P);const M=CURRENT.methods(Object.assign({},c.Bf,{innerPower:c.inner}));
+  const L=[`${c.NL}층 · 외층 ${c.oz} oz · ΔT ${c.dT} °C${c.bg?` (주위 ${c.bg.tamb} °C)`:''} · IPC-${c.Bf.ipcStd||'2221'}`,`방법: ${M.length?M.join(' · '):'패턴 폭만'}${P&&P.pcb&&P.pcb.inner&&!c.nIn?' — 내층 병렬은 내층 신호층이 있는 6층 이상에서만 적용':''}`];
+  if(c.need)L.push(`상시 ${c.I} A 필요 폭 ${c.need} mm → 층마다 ${c.per} mm (패턴 폭만: ${c.base} mm · 환산 ${c.mult}배${c.bar?` · 버스바 +${c.bar} mm`:''})`);
+  return L.join('\n');}
+function npCapSync(){const P=NP.plan,pc=(P&&P.pcb)||{};const set=(id,v)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v==null?'':String(v);};if(!$('#capLayers'))return;
+  set('#capLayers',pc.layers||2);set('#capOz',pc.oz||'');set('#capOzIn',pc.ozin||'');set('#capBus',pc.busbar||'');set('#capStd',String(pc.std)==='2152'?'2152':'');set('#capTamb',pc.tamb!=null?pc.tamb:'');
+  $('#capInner').checked=!!pc.inner;$('#capMask').checked=!!pc.mask;const c=npCapInfo(P);$('#capInner').disabled=!c.nIn;$('#capOzIn').disabled=!c.inner;
+  $('#capSum').textContent=npCapText(P);$('#capHint').textContent=' · '+(CURRENT.methods(Object.assign({},c.Bf,{innerPower:c.inner})).length?CURRENT.methods(Object.assign({},c.Bf,{innerPower:c.inner})).map(s=>s.split(' (')[0]).join(' · '):'패턴 폭만');}
 function npRender(){
   const P=NP.plan;$('#npPlanHint').textContent=AIM.mode==='ai'?'AI: Claude가 블록·인터페이스를 설계 (보는 사람의 사용량)':'결정론: 낱말 규칙으로 블록 설계';
   if(P){if(document.activeElement!==$('#npName'))$('#npName').value=P.name;if(document.activeElement!==$('#npReq')&&P.req)$('#npReq').value=P.req;}
   if(P&&P.blocks.length){const k=JSON.stringify(P.blocks);if(SYS.pk!==k){SYS.pk=k;SYS.src='plan';}}sysRender();
+  try{npCapSync();}catch(e){}
   {const h=$('#implHint');if(h)h.textContent=P&&P.blocks.length?` · 회로 블록 ${P.blocks.length}개${NP.planManual?' (직접 수정)':' (아키텍처에서 자동)'}`:'';}
   if(NP.arch&&document.activeElement!==$('#npName')&&NP.arch.name)$('#npName').value=NP.arch.name;
   const host=$('#npBlocks');
@@ -157,8 +175,10 @@ async function npRun(line,by){
       const live=()=>BD&&!BD.pcbPending&&BD.newPlan?'\n지금 보드는 이미 PCB가 배치돼 있습니다. 3단계 배치·배선 CLI에서 같은 명령(board layers / board minimize --route)을 실행하면 바로 바뀝니다.':(BD&&BD.pcbPending?(BD.pcbPlan=Object.assign(BD.pcbPlan||{},P.pcb,P.board?{board:{w:P.board.w,h:P.board.h}}:{}),''):'');
       if(s0==='layers'||s0==='layer'){const n=+a._[1];if(!PCB.STACKS[n])throw new Error('board layers <2|4|6|8|10>');P.pcb.layers=n;npRender();return`PCB 조건: ${n}층 (${PCB.STACKS[n].map(x=>x==='sig'?'S':x==='gnd'?'GND':'PWR').join('·')}) — 3단계 PCB 시작 때 적용`+live();}
       if(/^(min|minimize|minimise|최소|최소화)$/.test(s0)){P.board=null;P.pcb.min=true;npRender();return'PCB 조건: 보드 크기 최소화 — 3단계에서 부품이 들어가고 배선되는 가장 작은 크기를 찾습니다.'+live();}
-      if(/^(thermal|temp|열|온도)$/.test(s0)){if(a.tamb!=null)P.pcb.tamb=+a.tamb;if(a.tmax!=null)P.pcb.tmax=+a.tmax;if(a.tmaxpk!=null)P.pcb.tmaxpk=+a.tmaxpk;if(a.std!=null){if(!/^(2221|2152)$/.test(String(a.std)))throw new Error('board thermal --std 2221|2152');P.pcb.std=String(a.std);}if(a.plane!=null)P.pcb.plane=+a.plane;npRender();
+      if(/^(thermal|temp|열|온도)$/.test(s0)){if(a.tamb!=null){if(/^(off|none|)$/i.test(String(a.tamb)))delete P.pcb.tamb;else P.pcb.tamb=+a.tamb;}if(a.tmax!=null)P.pcb.tmax=+a.tmax;if(a.tmaxpk!=null)P.pcb.tmaxpk=+a.tmaxpk;if(a.std!=null){if(!/^(2221|2152)$/.test(String(a.std)))throw new Error('board thermal --std 2221|2152');P.pcb.std=String(a.std);}if(a.plane!=null)P.pcb.plane=+a.plane;npRender();
         const bg=P.pcb.tamb!=null&&typeof CURRENT!=='undefined'?CURRENT.budget(P.pcb.tamb,P.pcb.tmax,P.pcb.tmaxpk):null;return`PCB 조건: ${bg?`주위 ${P.pcb.tamb} °C → 허용 온도 상승 상시 ${bg.dT} °C · 피크 ${bg.dTpk} °C`:'주위 온도 미지정 (모터 보드 ΔT 20 / 40 °C)'} · 전류 폭 기준 IPC-${P.pcb.std||'2221'}${P.pcb.plane?` · 플레인 ${P.pcb.plane} mm`:''} — 회로 생성 때 적용`;}
+      if(/^(current|cap|capacity|전류)$/.test(s0)){const on=v=>!/^(off|0|false|no)$/i.test(String(v));if(a.oz!=null)P.pcb.oz=+a.oz>0?+a.oz:undefined;if(a.inner!=null)P.pcb.inner=on(a.inner);if(a.ozin!=null)P.pcb.ozin=+a.ozin>0?+a.ozin:undefined;if(a.mask!=null)P.pcb.mask=on(a.mask);if(a.solder!=null)P.pcb.solder=+a.solder>0?+a.solder:undefined;
+        if(a.busbar!=null){const bb=CURRENT.parseBusbar(a.busbar);if(!bb&&on(a.busbar))throw new Error('board current --busbar <폭x두께 mm, 예: 5x1> | off');P.pcb.busbar=bb?`${bb.w}x${bb.t}`:undefined;}npRender();return'PCB 조건: '+npCapText(P);}
       if(s0==='route'){P.pcb.route=!/^(off|0|false|no)$/i.test(a._[1]||'on');npRender();return`PCB 조건: 자동 배선 ${P.pcb.route?'켬':'끔'}`;}
       if(a._[0]==='auto'||!a._.length){P.board=null;P.pcb.min=false;}else{let w=+a._[0],h=+a._[1];if(!h&&/x|×/i.test(a._[0])){[w,h]=a._[0].split(/x|×/i).map(Number);}if(!(w>=20&&h>=20))throw new Error('board <가로> <세로> (mm, 20 이상) 또는 board auto');P.board={w,h};P.pcb.min=false;}npRender();return(P.board?`보드 ${P.board.w} × ${P.board.h} mm`:'보드 크기 자동')+' — 3단계 PCB 시작 때 적용';}
     case'strategy':{const k=AUTOPLACE.strategy(a._[0]);if(!k)throw new Error('balanced · thermal · noise · compact');npPush();npEnsure().strategy=k;npRender();return'배치 전략 '+k;}
@@ -496,6 +516,10 @@ $('#sysWs').addEventListener('click',e=>{
 $('#npBlocks').addEventListener('change',e=>{const i=e.target.closest('[data-p]');if(!i)return;const id=e.target.closest('[data-b]').dataset.b;npExec(`set ${id} ${i.dataset.p} ${i.value.trim()}`);});
 $('#npPlan').addEventListener('click',()=>{if(NP.busy)return;const req=$('#npReq').value.trim();if(!req){npSay('err','요구사항을 적어 주세요.');copFocus();return;}npAnalyze(req);});
 $('#npAdd').addEventListener('click',()=>npExec('add '+$('#npAddSel').value));
+// capacity-method panel: every control runs the matching console command (same undo history)
+[['#capLayers',v=>'board layers '+v],['#capOz',v=>'board current --oz '+(v||0)],['#capOzIn',v=>'board current --ozin '+(v||0)],['#capBus',v=>'board current --busbar '+(v||'off')],['#capStd',v=>'board thermal --std '+(v||'2221')],['#capTamb',v=>'board thermal --tamb '+(v===''?'off':v)]]
+  .forEach(([id,f])=>{const e=$(id);if(e)e.addEventListener('change',()=>npExec(f(e.value)));});
+[['#capInner','inner'],['#capMask','mask']].forEach(([id,k])=>{const e=$(id);if(e)e.addEventListener('change',()=>npExec(`board current --${k} ${e.checked?'on':'off'}`));});
 $('#npName').addEventListener('change',()=>{const v=$('#npName').value.trim();if(NP.arch&&v)NP.arch.name=v;if(NP.plan){NP.plan.name=v||NP.plan.name;}npRender();});
 $('#npGen').addEventListener('click',()=>{if(NP.busy)return;npExec('generate');});
 {const nx=$('#schNext');if(nx)nx.addEventListener('click',()=>setStep(3));}
