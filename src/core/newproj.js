@@ -268,6 +268,35 @@ const LIB={
       ctx.sig('PMIC_SCL','spi_sck','spi');ctx.sig('PMIC_SDI','spi_mosi','spi');ctx.sig('PMIC_SDO','spi_miso','spi');ctx.sig('PMIC_SCS','gpio_out');ctx.sig('WDI','gpio_out');ctx.sig('PMIC_INT','irq_in');ctx.sig('PMIC_ERR','gpio_out');
       ctx.warn(`${rec.mpn}: WAK · ENA는 GND(미사용) — 배터리 연결 시 자동 기동, STANDBY/SLEEP에서 깨우려면 WAK 또는 ENA에 신호 필요(임계 0.8–2.0 V) · SS1/SS2는 넷만 만들고 미연결(INIT/FAILSAFE에서 Low, NORMAL에서 High)`);
       ctx.warn(`${rec.mpn}: 스텝업 단을 넣지 않아 배터리 6 V 미만(크랭킹)에서는 출력이 유지되지 않습니다 — 필요하면 외부 MOSFET · 다이오드 · 인덕터 · 센스 저항으로 스텝업 추가`);}},
+  pmic48:{label:'48 V 안전 PMIC (A81481)',desc:'Allegro A81481 (QFN 6 × 6): 48 V 직결 단일 칩 PMIC — VIN 12–72 V(절대 최대 80 V), 벅 2개(12.5 V · 5.4 V) + 1 % LDO 5개, 3중 워치독, ASIL D 대응. 출시 전 부품 — 핀 배치는 A81411 계열 기준 가정',
+    params:{vin:{def:'auto',desc:'입력 레일 (auto = 가장 높은 레일)'},vuc:{def:3.3,desc:'µC LDO 전압 3.3 · 5 (VUCSEL)'}},
+    build(ctx,p){const rec=pickRec('A81481');if(!rec)throw new Error('A81481 핀 표가 없습니다 (datasheets/pins.json)');
+      // published: 12–72 V input, 80 V abs max, buck 12.5 V and 5.4 V feeding five LDOs, triple watchdog, 6 × 6 QFN. Everything else here —
+      // pin numbers, the split of the five LDOs (µC · general · always-on · two protected sensor outputs, as on the A81411), switching
+      // frequency and the L / C values — is an assumption until the data sheet is available
+      const src=p.vin==='auto'?ctx.highest(14):p.vin;ctx.use(src);const vuc=+p.vuc===5?5:3.3;const quc=railOf(vuc),qa=vuc===5?'+5V_COM':'+5V',v12=railOf(12);
+      const v54=ctx.uniq('PMIC_VREG2'),lx1=ctx.uniq('PMIC_LX1'),lx2=ctx.uniq('PMIC_LX2'),b1=ctx.uniq('PMIC_BOOT1'),b2=ctx.uniq('PMIC_BOOT2'),vcc=ctx.uniq('PMIC_VCC'),qb=ctx.uniq('V5_AON'),p1=ctx.uniq('V5P1'),p2=ctx.uniq('V5P2');
+      ctx.provide(v12,12.5,'PMIC');ctx.provide(quc,vuc,'PMIC');ctx.provide(qa,5,'PMIC');ctx.provide(qb,5,'PMIC');ctx.provide(p1,5,'PMIC');ctx.provide(p2,5,'PMIC');const rst=rstNet(ctx);
+      const N={VIN:src,BOOT1:b1,LX1:lx1,PGND1:'GND',VREG1:v12,VIN2:v12,BOOT2:b2,LX2:lx2,PGND2:'GND',VREG2:v54,VREGLDO:v54,VUCIN:v54,VUC:quc,VUCSEL:vuc===5?vcc:'GND',VLDOA:qa,VLDOB:qb,VLDOBSEL:vcc,VLDOP1:p1,VLDOP2:p2,VCC:vcc,AGND:'GND',
+        ENBAT:'PMIC_ENBAT',ENCAN:'GND',EN:'GND',NPOR:rst,FFN:'PMIC_FFN',POE:'PMIC_POE',WD_FN:'PMIC_WDF',WDIN:'WDI',SCK:'PMIC_SCL',SDI:'PMIC_SDI',SDO:'PMIC_SDO',STRN:'PMIC_SCS',DIAG:'PMIC_DIAG',GND:'GND'};
+      const pins={},names={};rec.pins.forEach(q=>{const num=String(q.num),nm=String(q.name||'').toUpperCase().replace(/[\s.]/g,'');names[num]=q.name;if(/^(EP|PAD|TAB)$/.test(nm)){pins[num]='GND';names[num]='GND (노출 패드)';return;}if(/^NC$/.test(nm))return;
+        if(!(nm in N)){ctx.warn(`A81481: 핀 ${q.name}의 역할을 몰라 개방으로 둡니다`);return;}if(N[nm])pins[num]=N[nm];});
+      const fp=(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')?FPGEN.ensure(PCB,'QFN-40-6x6',40):'QFN-40-6x6';
+      const u=ctx.part('U','A81481',fp,pins,{mpn:'A81481',desc:`48 V 안전 PMIC A81481 (입력 ${src} 12–72 V): 벅 1 → ${v12} 12.5 V · 벅 2 → 5.4 V → LDO ${quc} ${vuc} V (µC) · ${qa} 5 V · ${qb} 5 V 상시 · ${p1}/${p2} 5 V 보호 센서 출력 · 워치독 · 리셋 ${rst} — 핀 배치 가정(출시 전)`,pinNames:names,P:0.9});
+      if(u){u.pmic={src,vmin:12,outs:[{out:v12,vout:12.5},{out:quc,vout:vuc},{out:qa,vout:5},{out:qb,vout:5},{out:p1,vout:5},{out:p2,vout:5}],basis:'A81481 공급 12–72 V (제품 페이지), 기동 시 12 V 이상'};}
+      ctx.cap(src,'4.7µF','A81481 VIN 입력 커패시터 (VIN–PGND1 바로 옆)');ctx.cap(src,'100nF','A81481 VIN 고주파 디커플링');
+      ctx.part('C','100nF','0603',{1:b1,2:lx1},{desc:'A81481 벅 1 부트스트랩 (BOOT1–LX1)'});ctx.part('C','100nF','0603',{1:b2,2:lx2},{desc:'A81481 벅 2 부트스트랩 (BOOT2–LX2)'});
+      ctx.part('L','22µH','IND-5x5',{1:lx1,2:v12},{mpn:'SRN5040-220M',desc:'A81481 벅 1 인덕터 48 → 12.5 V (가정값 — 주파수 · 전류 미공개)',P:0.15});
+      ctx.cap(v12,'10µF','A81481 벅 1 출력 커패시터 (VREG1)');ctx.cap(v12,'10µF','A81481 벅 1 출력 커패시터 (DC 바이어스 여유)');
+      ctx.part('L','4.7µH','IND-5x5',{1:lx2,2:v54},{mpn:'SRN5040-4R7M',desc:'A81481 벅 2 인덕터 12.5 → 5.4 V (가정값)',P:0.1});
+      ctx.part('C','22µF','1210',{1:v54,2:'GND'},{desc:'A81481 벅 2 출력 커패시터 (VREG2 5.4 V · LDO 입력)'});ctx.part('C','100nF','0603',{1:v54,2:'GND'},{desc:'A81481 VREGLDO · VUCIN 디커플링 (핀 가까이)'});
+      ctx.part('C','1µF','0603',{1:vcc,2:'GND'},{desc:'A81481 VCC 내부 바이어스 바이패스'});
+      ctx.cap(quc,'10µF','A81481 VUC 출력 커패시터');ctx.part('C','2.2µF','0603',{1:qa,2:'GND'},{desc:'A81481 VLDOA 출력 커패시터 (5 V · CAN 등)'});ctx.part('C','2.2µF','0603',{1:qb,2:'GND'},{desc:'A81481 VLDOB 출력 커패시터 (5 V 상시)'});
+      ctx.part('C','2.2µF','0603',{1:p1,2:'GND'},{desc:'A81481 VLDOP1 출력 커패시터 (보호 센서 전원 1)'});ctx.part('C','2.2µF','0603',{1:p2,2:'GND'},{desc:'A81481 VLDOP2 출력 커패시터 (보호 센서 전원 2)'});
+      ctx.part('R','100kΩ','0603',{1:src,2:'PMIC_ENBAT'},{desc:'A81481 ENBAT 직렬 저항 (입력에서 상시 기동 · 전류 제한)'});
+      ['PMIC_FFN','PMIC_WDF'].forEach(n=>ctx.part('R','10kΩ','0603',{1:n,2:quc},{desc:`A81481 ${n==='PMIC_FFN'?'FFn 고장 플래그':'WD_Fn 워치독 고장'} 오픈 드레인 풀업`}));
+      ctx.sig('PMIC_SCL','spi_sck','spi');ctx.sig('PMIC_SDI','spi_mosi','spi');ctx.sig('PMIC_SDO','spi_miso','spi');ctx.sig('PMIC_SCS','gpio_out');ctx.sig('WDI','gpio_out');ctx.sig('PMIC_FFN','irq_in');ctx.sig('PMIC_WDF','irq_in');ctx.sig('PMIC_POE','gpio_in');ctx.sig('PMIC_DIAG','adc');
+      ctx.warn('A81481: 출시 전 부품(데이터시트 비공개 · 샘플 요청 단계) — 핀 번호 · LDO 구성 · 인덕터/커패시터 값은 A81411 계열 기준 가정입니다. 실제 데이터시트로 핀 표(datasheets/pins.json)와 주변 회로를 교체하기 전에는 출도 불가');}},
   hs_switch:{label:'하이사이드 전원 스위치 (세이프 스테이트)',desc:'P-MOSFET 하이사이드 + N-MOSFET 레벨시프트 · MCU SAFE_EN이 High일 때만 부하 전원 공급 (이중 차단)',params:{pick:{def:'',desc:'시스템 설계에서 고른 부품 (핀 표가 블록 역할에 맞으면 이 부품으로 회로를 만듦)'},rail:{def:'auto',desc:'끊을 전원 레일 (auto = 입력)'}},
     build(ctx,p){const r=p.rail==='auto'?ctx.highest(0):p.rail;ctx.use(r);const out=r+'_SW';ctx.provide(out,ctx.railV?ctx.railV(r):12,'스위치');
       if(p.pick&&hsPick(ctx,p,r,out))return;
@@ -972,7 +1001,7 @@ function shrinkText(r){const s=r&&r.shrink;if(!s)return'패키지 축소: 꺼짐
 // board from a plan: place from scratch with the plan's strategy (routing is left to the caller)
 /* functional group of a generated part (for PCB zones): from its circuit block, refined by what the part does */
 const GROUP_OF={pwr_in:'input',usb_in:'input',ldo:'power',buck:'power',supervisor:'power',mcu:'mcu',xtal:'mcu',flash:'mcu',uart:'mcu',led:'mcu',button:'mcu',i2c:'mcu',can:'comm',
-  gdrv3:'stage',hbridge:'stage',bldc:'stage',dcmotor:'stage',hs_switch:'stage',vmon:'sense',ntc:'sense'};
+  gdrv3:'stage',hbridge:'stage',bldc:'stage',dcmotor:'stage',hs_switch:'stage',vmon:'sense',ntc:'sense',pmic48:'power'};
 function partGroups(plan,parts){const g={};parts.forEach(c=>{const b=plan.blocks.find(x=>x.id===c.block);let k=b?GROUP_OF[b.type]:null;
     if(k==='stage'&&/전류 앰프|ADC RC|홀 (출력|입력)|홀 커넥터 측|홀 입력/.test(c.desc||''))k='sense';
     /* cohesion plans: the PMIC and the 48 V module belong to the power zone (older plans left them without a zone) */if(!k&&b&&plan.cohesion>=2)k={pmic:'power',hvbuck:'power'}[b.type]||null;g[c.ref]=k||null;});return g;}

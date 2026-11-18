@@ -67,3 +67,20 @@ test('block cohesion: each bridge channel keeps its driver and gate parts in its
   B2.comps.filter(c => c.val === 'AMT49100').forEach(u => { const r = R[s2.bo[u.ref]], p = ctr(u);assert.ok(p[0] > r[0] - 8 && p[0] < r[2] + 8 && p[1] < r[3] + 8, `${u.ref} at ${p.map(v => v.toFixed(1))} outside ${r}`); });
   assert.equal(s2.n, 36);assert.ok(s2.mixed < s0.mixed / 2, `mixed parts ${s0.mixed} → ${s2.mixed}`);assert.ok(s2.gate < 0.8 * s0.gate, `gate net median ${s0.gate.toFixed(1)} → ${s2.gate.toFixed(1)} mm`);
 });
+test('48 V single-chip PMIC (A81481, assumed pin map): one part replaces the 48 → 12 V module and the 12 V PMIC', () => {
+  const L = load();const { NEWPROJ } = L;const P = NEWPROJ.newPlan('48V A81481');const add = (t, p) => NEWPROJ.addBlock(P, t, p || {});
+  add('pwr_in', { vin: 48, tvs: 1 });add('pmic48', { vin: '+48V' });add('mcu', { part: 'TC364DP-64F300F' });add('xtal', {});add('can', { pick: 'TCAN1043HDRQ1', vsup: '+12V' });
+  add('gdrv3', { i: 20, driver: 'AMT49100', fet: 'NVTFS6H850N', hall: 0 });P.ifaceFix = true;
+  const r = NEWPROJ.build(P);const by = v => r.parts.filter(c => c.val === v);const net = (c, nm) => Object.entries(c.pinNames).filter(([, n]) => n === nm).map(([k]) => c.pins[k]);
+  assert.equal(by('APM81815').length, 0);assert.ok(!r.parts.some(c => /TLF35584/.test(c.val)));const u = by('A81481');assert.equal(u.length, 1);const c = u[0];
+  ['+12V', '+3V3', '+5V', 'V5_AON', 'V5P1', 'V5P2'].forEach(n => assert.equal(r.rails[n].by, 'PMIC', n));assert.equal(r.rails['+12V'].v, 12.5);
+  assert.deepEqual(net(c, 'VIN'), ['+48V', '+48V']);assert.deepEqual(net(c, 'VREG1'), ['+12V']);assert.deepEqual(net(c, 'VIN2'), ['+12V']);assert.deepEqual(net(c, 'VUC'), ['+3V3']);assert.deepEqual(net(c, 'NPOR'), ['PORST']);
+  assert.deepEqual(net(c, 'VREG2'), net(c, 'VREGLDO'));assert.deepEqual(net(c, 'WDIN'), ['WDI']);assert.equal(c.pins['41'], 'GND');assert.equal(c.pins['38'], undefined);
+  // both buck stages have an inductor, a bootstrap cap and output caps; the 48 V input caps are 100 V parts
+  assert.equal(r.parts.filter(q => q.block === c.block && /^L/.test(q.ref)).length, 2);assert.equal(r.parts.filter(q => /A81481 벅 \d 부트스트랩/.test(q.desc)).length, 2);
+  r.parts.filter(q => q.block === c.block && /^C/.test(q.ref) && Object.values(q.pins).includes('+48V')).forEach(q => assert.match(q.desc, /100 V/, q.ref));
+  assert.deepEqual(net(by('TCAN1043HDRQ1')[0], 'VSUP'), ['+12V']);assert.deepEqual(net(by('TCAN1043HDRQ1')[0], 'VCC'), ['+5V']);
+  assert.ok(r.warn.some(w => /A81481: 출시 전 부품/.test(w)), 'the assumption is stated');assert.ok(!r.warn.some(w => /^인터페이스 ✕|내압 여유 부족/.test(w)), r.warn.filter(w => /✕/.test(w)).join(' | '));
+  const { B } = NEWPROJ.toBoard(P, { place: false });const f = B.comps.find(x => x.val === 'A81481');assert.equal(f.pads.length, 41);assert.ok(Math.abs((f.bb[2] - f.bb[0]) - 6.8) < 0.3, '6 × 6 mm body: ' + (f.bb[2] - f.bb[0]));
+  assert.equal(B.zones.groupOf[f.ref], 'power');
+});
