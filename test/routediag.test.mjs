@@ -25,3 +25,36 @@ test('routing diagnosis and the rule supervisor: an open net is described by its
   // the supervisor prompt carries the diagnosis and what was tried
   const P = ROUTEDIAG.prompt(D, [{ cmd: p1[0].cmd, res: '나빠져 되돌림' }], 2, 4);assert.match(P, /이미 시도: route --nets/);assert.match(P, /감독 2\/4회차/);
 });
+
+test('orchestration: every open net has an owning agent, the planner serves agents in priority order, and the verifier refuses a change that makes a higher-priority item worse', () => {
+  const L = load();const { BOARDSNAP, PRODUCTS, HWARCH, NEWPROJ, ROUTEDIAG, AUTOROUTE, PCBEDIT, PCB } = L;const S = L.SNAP_DADU8C, m = S.meta;
+  const prof = PRODUCTS.detect(m.profile);const ans = { cur: m.cur };const fq = prof.questions.find(q => q.key === 'fet');ans.fet = fq.options[0].label;
+  const plan = HWARCH.toPlan(PRODUCTS.apply(prof, ans, m.profile).arch).plan;(m.params || []).forEach(t => { const q = t.match(/^([\w]+)\.([\w]+)=(.*)$/);if (q) plan.blocks.filter(b => b.type === q[1]).forEach(b => { b.params = Object.assign({}, b.params, { [q[2]]: q[3] }); }); });
+  plan.ifaceFix = true;plan.rstFix = m.rstFix === true;plan.curModel = m.curModel === 2 ? 2 : 1;plan.connGap = m.connGap === true;plan.shrink = m.shrink;plan.strategy = m.strategy;plan.board = { w: m.W, h: m.H };
+  const { B } = NEWPROJ.toBoard(plan, { place: false });BOARDSNAP.apply(B, S);
+  const own = ROUTEDIAG.ownerFn(B);
+  assert.deepEqual(['+12V', 'GND', 'PH_U', 'PH_W_HO', 'PH_U_VB', 'PH_ISNS_U_AMP'].map(own), ['power', 'power', 'power', 'gate', 'gate', 'sense']);
+  const mcuNet = B.comps.find(c => /TC3\d\d/.test(c.val)).pads.map(p => p.net).find(n => n && !['power', 'gate', 'sense'].includes(own(n)));assert.equal(own(mcuNet), 'mcu');
+  const D0 = ROUTEDIAG.diagnose(B);assert.deepEqual([...D0.vec], [0, 0, 0, 0, 0, D0.badVia.length]);assert.equal(ROUTEDIAG.agentPlan(D0, B, {}).length, 0);
+  // open a gate net and an MCU signal
+  const cut = net => { const kill = [];PCB.cuKeys(B).forEach(k => B.layers[k + '.cu'].forEach(p => { if (p.auto && !p.fan && p.net === net) kill.push(p); }));B.vias.forEach(v => { if (v.auto && v.net === net) kill.push(v); });assert.ok(kill.length > 0, net);AUTOROUTE.unroute(B, kill); };
+  cut('PH_W_HO');cut(mcuNet);PCBEDIT.rebuildNets(B);const D = ROUTEDIAG.diagnose(B, { max: 16 });
+  assert.equal(D.openNets.PH_W_HO, 'gate');assert.equal(D.openNets[mcuNet], 'mcu');assert.ok(D.byOwner.gate >= 1 && D.byOwner.mcu >= 1);assert.equal(D.vec[0], 0);assert.equal(D.vec[3], D.byOwner.gate);
+  D.open.forEach(o => assert.equal(o.owner, own(o.net)));assert.match(ROUTEDIAG.agentText(D), /게이트 · EMC: 미연결 \d+건 — PH_W_HO\(/);
+  // the gate agent goes first, with one action on its own nets only; when its remedies are used up the MCU agent follows
+  const hist = {};const seq = [];for (let i = 0; i < 12; i++) { const a = ROUTEDIAG.agentPlan(D, B, hist);if (!a.length) break;assert.equal(a.length, 1);seq.push(a[0]); }
+  assert.equal(seq[0].agent, 'gate');assert.ok(seq.some(a => a.agent === 'mcu'));assert.ok(seq.findIndex(a => a.agent === 'mcu') > seq.map(a => a.agent).lastIndexOf('gate'), 'gate remedies come before the MCU agent');
+  seq.filter(a => a.agent === 'gate').forEach(a => { assert.ok(!a.cmd.includes(mcuNet) || /--rip/.test(a.cmd));assert.match(a.why, /^\[게이트 · EMC\]/); });
+  seq.forEach(a => { const rip = (a.cmd.match(/--rip (\S+)/) || [])[1];if (rip) rip.split(',').forEach(n => assert.notEqual(own(n), 'power', 'a power net is never ripped: ' + n)); });
+  assert.ok(seq.some(a => a.kind === 'swap' && a.agent === 'mcu'), 'the MCU agent tries a pin swap');assert.equal(new Set(seq.map(a => a.cmd)).size, seq.length, 'no remedy twice');
+  // verifier
+  const V = (b, a, bo, ao) => ROUTEDIAG.verdict({ vec: b, openNets: bo || {} }, { vec: a, openNets: ao || {} });
+  assert.deepEqual([V([0, 0, 0, 1, 5, 1], [0, 0, 0, 1, 4, 2]).ok, V([0, 0, 0, 1, 5, 1], [0, 0, 0, 1, 4, 2]).better], [true, true]);       // a signal closed, one more hot via: accepted
+  assert.equal(V([0, 0, 0, 1, 5, 1], [0, 0, 0, 2, 2, 1]).ok, false);                                                                    // three signals closed for one gate net: refused
+  assert.equal(V([0, 0, 0, 0, 6, 0], [0, 0, 1, 0, 0, 0]).ok, false);                                                                    // all signals closed but a power net under width: refused
+  assert.equal(V([1, 0, 0, 0, 6, 0], [1, 0, 0, 0, 3, 0], { PH_U: 'power' }, { PH_V: 'power' }).ok, false);                              // a connected power net came open
+  assert.match(V([1, 0, 0, 0, 6, 0], [1, 0, 0, 0, 3, 0], { PH_U: 'power' }, { PH_V: 'power' }).why, /PH_V/);
+  assert.deepEqual([V([0, 0, 0, 0, 2, 0], [0, 0, 0, 0, 2, 0]).ok, V([0, 0, 0, 0, 2, 0], [0, 0, 0, 0, 2, 0]).better], [true, false]);
+  // the old scalar score would have taken the gate-for-signals trade
+  assert.ok(ROUTEDIAG.score({ rats: 4, drc: 0, badPower: [], badVia: [0] }) < ROUTEDIAG.score({ rats: 6, drc: 0, badPower: [], badVia: [0] }));
+});

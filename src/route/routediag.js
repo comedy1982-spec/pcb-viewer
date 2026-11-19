@@ -51,7 +51,59 @@ function diagnose(B,opt){opt=opt||{};const rats=opt.rats||PCBEDIT.ratsnest(B);co
   const pr=B.powerReport||null;const badPower=pr?pr.nets.filter(n=>n.ok!=null?!n.ok:(n.width!=='직결'&&n.width<n.need*0.95)).map(n=>({net:n.net,width:n.width,need:n.need})):[];
   const badVia=pr?(pr.viaChk||[]).filter(v=>!v.ok).map(v=>({net:v.net,ref:v.ref,n:v.n,rise:+(v.rise+(v.riseP||0)).toFixed(0)})):[];
   const D={W:B.W,H:B.H,layers:keys.length,rats:rats.length,drc:drc.length,drcMsgs:drc.slice(0,4).map(d=>d.msg),open,badPower,badVia};
+  // orchestration: who owns each open connection, and the priority vector the verifier compares (see AGENTS / verdict)
+  const own=ownerFn(B);open.forEach(o=>{o.owner=own(o.net);});const cnt={};AGENT_ORDER.forEach(k=>{cnt[k]=0;});const openNets={};rats.forEach(r=>{const k=own(r.net);cnt[k]++;openNets[r.net]=k;});
+  D.byOwner=cnt;D.openNets=openNets;D.vec=[cnt.power,D.drc,badPower.length,cnt.gate,cnt.sense+cnt.mcu+cnt.signal,badVia.length];
   D.score=score(D);D.ok=!D.rats&&!D.drc&&!badPower.length;return D;}
+/* ---------- orchestration: function agents and the verifier ----------
+   Each open connection belongs to one function agent; the orchestrator lets them work in a fixed priority order and the
+   verifier accepts a change only when nothing of higher priority got worse:
+     power  — rails, phases, shunt nodes (current width, thermal)      gate — gate drive, bootstrap, driver supplies (loop area)
+     sense  — current sense, ADC, references                           mcu  — signals ending on a fine-pitch MCU pin
+     signal — everything else
+   verdict() compares [open power nets, DRC, power nets under width, open gate nets, other open nets, hot via sites]
+   lexicographically, and rejects outright when a power net that was connected came open (the scalar score let a
+   supervisor trade a phase net for a signal). */
+const AGENT_ORDER=['power','gate','sense','mcu','signal'];
+const AGENTS={power:{label:'파워스테이지',goal:'전류 경로(레일 · 상 · 션트 노드)를 먼저 잇는다 — 신호선만 뜯고 전력 동박은 건드리지 않는다',steps:['rip','deep']},
+  gate:{label:'게이트 · EMC',goal:'게이트 구동 · 부트스트랩 · 드라이버 전원 루프를 잇는다',steps:['rot','rip','move','deep','ripwide']},
+  sense:{label:'센싱',goal:'전류 센스 · ADC 선을 잇는다',steps:['rot','move','rip','deep']},
+  mcu:{label:'MCU 탈출',goal:'미세 피치 MCU 핀에서 빠져나오는 신호를 잇는다 — 핀 재배정을 먼저 쓴다',steps:['swap','rip','deep','ripwide']},
+  signal:{label:'일반 신호',goal:'남은 신호를 잇는다',steps:['rot','rip','swap','move','deep']}};
+const GATE_RE=/(^|_)(HO|LO|[HL]G(_?\d+)?|G[HL][A-C1-3]?|VB|BOOT\w*|BST\w*|LSS|HSS?|CP\d?[PN]?|VCP|VREG|LX|SW)$/i,SENSE_RE=/SNS|ISNS|ISEN|_AMP|ADC|AIN|NTC|VMON|VREF|TEMP/i;
+function ownerFn(B){const pw=new Set((B.powerReport&&B.powerReport.nets||[]).map(n=>n.net));const mcuNets=new Set();B.comps.forEach(c=>{if(isMcu(c))c.pads.forEach(p=>{if(p.net)mcuNets.add(p.net);});});const memo={};
+  return net=>{if(net in memo)return memo[net];const n=String(net||'');const cls=B.netClass?B.netClass(n):'';let k;
+    if(cls==='전원'||cls==='접지'||pw.has(n)||/^(GND|AGND|PGND|VDD|VIN|VBAT)|^\+/i.test(n)||(B.netCurrent&&B.netCurrent[n]>=2))k='power';
+    else if(GATE_RE.test(n))k='gate';else if(SENSE_RE.test(n)||(typeof AUTOROUTE!=='undefined'&&AUTOROUTE.AN_RE&&AUTOROUTE.AN_RE.test(n)))k='sense';else if(mcuNets.has(n))k='mcu';else k='signal';return memo[net]=k;};}
+const VEC_LABEL=['전력 넷 미연결','DRC','전류 폭 미달','게이트 넷 미연결','신호 미연결','비아 전류 미달'];
+/* the verifier: {ok, better, why}. ok=false → the orchestrator undoes the change */
+function verdict(before,after){const lost=Object.keys(after.openNets||{}).filter(n=>after.openNets[n]==='power'&&!(before.openNets||{})[n]);
+  if(lost.length)return{ok:false,better:false,why:`연결돼 있던 전력 넷이 끊김: ${lost.join(', ')}`};
+  const a=before.vec,b=after.vec;for(let i=0;i<a.length;i++){if(b[i]<a[i])return{ok:true,better:true,why:`${VEC_LABEL[i]} ${a[i]} → ${b[i]}`};if(b[i]>a[i])return{ok:false,better:false,why:`${VEC_LABEL[i]} ${a[i]} → ${b[i]}`};}
+  return{ok:true,better:false,why:'변화 없음'};}
+/* the orchestrator's next move: the highest-priority agent that still has open nets and an untried remedy. One action per call —
+   small steps the verifier can judge one at a time. hist: {'@agent:nets':[kinds…], _all:[…]} */
+function agentPlan(D,B,hist,opt){hist=hist||{};opt=opt||{};const G=hist._all||(hist._all=[]);
+  for(const k of AGENT_ORDER){const opens=D.open.filter(o=>o.owner===k);if(!opens.length)continue;const nets=[...new Set(opens.map(o=>o.net))].slice(0,4);const key='@'+k+':'+nets.slice().sort().join(',');const h=hist[key]||(hist[key]=[]);
+    const ripSet=n=>{const w={};opens.forEach(o=>{[o.a,o.b].forEach(e=>(e.near||[]).forEach((x,i)=>{w[x]=(w[x]||0)+6-i;}));o.blockers.filter(b=>b.rip).forEach(b=>{w[b.net]=(w[b.net]||0)+Math.min(4,b.n/2);});});
+      const own=ownerFn(B);return Object.keys(w).filter(x=>!nets.includes(x)&&own(x)!=='power'&&(k==='power'||k==='gate'||own(x)!=='gate')).sort((x,y)=>w[y]-w[x]).slice(0,n);};
+    const act=(kind,cmd,why,then)=>({agent:k,net:nets.join(','),kind,cmd,then,why:`[${AGENTS[k].label}] ${why}`});
+    for(const st of AGENTS[k].steps){if(h.includes(st))continue;
+      if(st==='rot'){const c=[];opens.forEach(o=>[o.a,o.b].forEach(e=>{if(e.flip&&e.flip.gain>-0.5&&!G.includes('rot:'+e.flip.ref)&&!c.some(x=>x.ref===e.flip.ref))c.push(e.flip);}));c.sort((x,y)=>y.gain-x.gain);if(!c.length){h.push(st);continue;}
+        const f=c[0];G.push('rot:'+f.ref);if(c.length===1)h.push(st);const rp=ripSet(6).filter(n=>!f.nets.includes(n));const ns=[...new Set(nets.concat(f.nets.filter(n=>!/^(GND|AGND|PGND)$/i.test(n)&&!/^\+/.test(n))))];
+        return[act('rot',`rotate ${f.ref} 180 --no-route`,`${f.ref}를 180° 돌려 교차를 풀고(${f.gain} mm) ${nets.join(', ')}부터 다시 배선`,`route --nets ${ns.join(',')}${rp.length?' --rip '+rp.join(','):' --refill'} --first ${nets.join(',')}`)];}
+      if(st==='swap'){const o=opens.find(o=>o.swap&&!G.includes('swap:'+o.net));if(!o||opt.pinswap===false){h.push(st);continue;}G.push('swap:'+o.net);if(!opens.some(q=>q.swap&&!G.includes('swap:'+q.net)))h.push(st);
+        return[act('swap',`pinswap --nets ${o.net} --apply --route`,`${o.net}: MCU 핀 ${o.mcuPin}을 상대에 가까운 핀으로 재배정`)];}
+      if(st==='move'){let hit=null;for(const o of opens){const mv=o.parts.find(p=>p.movable&&!G.includes('move:'+p.ref));if(!mv)continue;const pos=B&&nudge(B,mv.ref,[o.a.x,o.a.y],[o.b.x,o.b.y]);G.push('move:'+mv.ref);if(pos){hit={o,mv,pos};break;}}
+        if(!hit){h.push(st);continue;}return[act('move',`move ${hit.mv.ref} ${hit.pos.x} ${hit.pos.y}`,`${hit.o.net}: 통로 위 ${hit.mv.ref}를 ${hit.pos.d} mm 옮김`,`route --nets ${hit.o.net} --exp 1200000`)];}
+      if(st==='rip'||st==='ripwide'){h.push(st);const rp=ripSet(st==='rip'?6:14);if(!rp.length||(st==='ripwide'&&rp.length<=6))continue;
+        return[act(st,`route --nets ${nets.join(',')} --rip ${rp.join(',')} --first ${nets.join(',')}${st==='ripwide'?' --exp 1200000':''}`,`${nets.join(', ')}의 핀 주변 · 통로 배선 ${rp.length}개를 뜯고 먼저 배선`)];}
+      if(st==='deep'){h.push(st);return[act('deep',`route --nets ${nets.join(',')} --exp 2400000`,`${nets.join(', ')}: 더 깊게 탐색`)];}}}
+  return[];}
+/* what is left, by agent, with the likely cause of each open connection */
+function causeOf(o){const fine=e=>e.pitch&&e.pitch<=0.65;if((o.a.boxed>=4&&fine(o.a))||(o.b.boxed>=4&&fine(o.b)))return'미세 피치 핀이 이웃 배선에 막힘';if(o.blockers.some(b=>!b.rip))return'통로를 전력 동박 · 고정 배선이 가로막음';
+  if(o.parts.length>=2)return'통로 위에 부품이 있음';if(o.blockers.length>=3)return'통로 혼잡';if(o.len>40)return'거리가 멀어 층 전환이 많이 필요';return'원인 불명 (더 깊은 탐색 필요)';}
+function agentText(D){const L=[];AGENT_ORDER.forEach(k=>{const n=D.byOwner[k];if(!n)return;const os=D.open.filter(o=>o.owner===k);L.push(`${AGENTS[k].label}: 미연결 ${n}건${os.length?' — '+os.map(o=>`${o.net}(${causeOf(o)})`).join(', '):''}`);});return L.join('\n');}
 /* lower is better: an open connection or a DRC error weighs 1000, a power net under its width 500, a hot via site 100 */
 function score(D){return(D.rats+D.drc)*1000+D.badPower.length*500+D.badVia.length*100;}
 function text(D){const L=[`보드 ${f1(D.W)} × ${f1(D.H)} mm · ${D.layers}층 · 미연결 ${D.rats} · DRC ${D.drc} · 전류 폭 미달 ${D.badPower.length} · 비아 전류 미달 ${D.badVia.length} (점수 ${D.score}, 낮을수록 좋음)`];
@@ -102,6 +154,6 @@ const SYS=`You supervise a PCB auto-router. The algorithmic router (A* on a grid
 - diag : the diagnosis again (after your changes). rats / drc : details.
 Rules: at most 5 commands. Fix the open connections first (each weighs 1000), then DRC, then power widths. Do not repeat a remedy listed under "이미 시도" for the same net — choose a different one. Never touch GND or supply-plane nets. After your commands, answer in Korean in 2–4 short sentences: what you did and why, and what is left. Do not invent numbers.`;
 function prompt(D,tried,round,max){return`${SYS}\n\n진단 (감독 ${round}/${max}회차):\n${text(D)}\n\n이미 시도: ${tried&&tried.length?tried.map(t=>`${t.cmd} → ${t.res}`).join(' ; '):'없음'}\n\n사용자 요청: 위 진단의 문제를 고쳐줘.`;}
-return{diagnose,score,text,plan,nudge,prompt,SYS};
+return{diagnose,score,text,plan,nudge,prompt,SYS,AGENTS,AGENT_ORDER,ownerFn,verdict,agentPlan,agentText,causeOf,VEC_LABEL};
 })();
 if(typeof module!=='undefined')module.exports=ROUTEDIAG;
