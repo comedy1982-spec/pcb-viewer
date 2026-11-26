@@ -34,11 +34,16 @@ function dist(s,x,y){
   return lx>0||ly>0?Math.hypot(Math.max(lx,0),Math.max(ly,0)):Math.max(lx,ly);
 }
 function bboxOf(s,m){if(s.k==='cap')return[Math.min(s.a[0],s.b[0])-s.r-m,Math.min(s.a[1],s.b[1])-s.r-m,Math.max(s.a[0],s.b[0])+s.r+m,Math.max(s.a[1],s.b[1])+s.r+m];
-  const e=Math.hypot(s.hw,s.hh)+m;return[s.x-e,s.y-e,s.x+e,s.y+e];}
+  // exact extent of the (rotated) rectangle. It used to be the circumscribed circle: a 40 × 0.1 mm strip of the power fill then
+  // claimed a 40 × 40 mm box, landed in hundreds of hash cells and made every connectivity / clearance pass on a filled board slow
+  if(!s.ang){return[s.x-s.hw-m,s.y-s.hh-m,s.x+s.hw+m,s.y+s.hh+m];}
+  const c=Math.abs(Math.cos(s.ang)),sn=Math.abs(Math.sin(s.ang));const ex=s.hw*c+s.hh*sn+m,ey=s.hw*sn+s.hh*c+m;return[s.x-ex,s.y-ey,s.x+ex,s.y+ey];}
 function shapeGap(a,b){ // ≤ 0 when touching (sampled; fine for pads/tracks)
   if(a.k==='cap'&&b.k==='cap'){const d=Math.min(PC.segDist(a.a[0],a.a[1],b.a,b.b),PC.segDist(a.b[0],a.b[1],b.a,b.b),PC.segDist(b.a[0],b.a[1],a.a,a.b),PC.segDist(b.b[0],b.b[1],a.a,a.b));return d-a.r-b.r;}
   if(a.k!=='cap')[a,b]=[b,a];
   if(a.k==='cap'){const n=Math.max(1,Math.ceil(Math.hypot(a.b[0]-a.a[0],a.b[1]-a.a[1])/0.05));let m=1e9;for(let i=0;i<=n;i++){const t=i/n;m=Math.min(m,dist(b,a.a[0]+(a.b[0]-a.a[0])*t,a.a[1]+(a.b[1]-a.a[1])*t)-a.r);}return m;}
+  // two axis-aligned rectangles (fill strips, most pads): closed form
+  if(!a.ang&&!b.ang&&a.k!=='cap'&&b.k!=='cap'){const ox=Math.min(a.x+a.hw,b.x+b.hw)-Math.max(a.x-a.hw,b.x-b.hw),oy=Math.min(a.y+a.hh,b.y+b.hh)-Math.max(a.y-a.hh,b.y-b.hh);return ox<0||oy<0?Math.hypot(Math.min(ox,0),Math.min(oy,0)):-Math.min(ox,oy);}
   // two rectangles: exact (separating axes; overlap → −penetration, else closest edge distance) — corner sampling missed crossings
   const cor=s=>{const c=Math.cos(s.ang),sn=Math.sin(s.ang);return[[1,1],[1,-1],[-1,-1],[-1,1]].map(([u,v])=>[s.x+u*s.hw*c-v*s.hh*sn,s.y+u*s.hw*sn+v*s.hh*c]);};
   const P=cor(a),Q=cor(b);let pen=1e9,sep=false;
@@ -716,6 +721,6 @@ function workerMain(){self.onmessage=e=>{const m=e.data;wasmInit().then(()=>{try
       self.postMessage({id:m.id,ok:true,changed,tracks,vias,res:r.value,ms:Date.now()-t0});}
     else self.postMessage({id:m.id,ok:false,err:'unknown cmd'});}
   catch(err){self.postMessage({id:m.id,ok:false,err:String(err&&err.message||err)});}});};}
-return{pack,unpack,workerMain,prepareFast,wasmInit,WASM,releaseGrid,bridgeRats,pruneIslands,rimVias,padVias,stitchLayers,powerFill,bottleneck,bottleneckPrep,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
+return{bboxOf,shapeGap,pack,unpack,workerMain,prepareFast,wasmInit,WASM,releaseGrid,bridgeRats,pruneIslands,rimVias,padVias,stitchLayers,powerFill,bottleneck,bottleneckPrep,gloss,jobPF,routeNetPF,groups,mstEdges,DEF,prepare,paint,dist,routeNet,route,job,jobRR,copperSnap,copperRestore,estimate,openNets,components,shapesOfBoard,unroute,drc,widthFor,netPrio,PRIO_LABEL,returnVias,HS_RE,AN_RE};
 })();
 if(typeof module!=='undefined')module.exports=AUTOROUTE;

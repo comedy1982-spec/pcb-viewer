@@ -93,7 +93,7 @@ function ratsnest(B,onlyNets){
 const DRC_DEF={clear:0.15,hole:0.25,edge:0.3,courtyard:0.1};
 function drc(B,opts){
   const o=Object.assign({},DRC_DEF,opts||{});const S=AUTOROUTE.shapesOfBoard(B);const out=[];
-  const box=s=>s.k==='cap'?[Math.min(s.a[0],s.b[0])-s.r,Math.min(s.a[1],s.b[1])-s.r,Math.max(s.a[0],s.b[0])+s.r,Math.max(s.a[1],s.b[1])+s.r]:(e=>[s.x-e,s.y-e,s.x+e,s.y+e])(Math.hypot(s.hw,s.hh));
+  const box=s=>s.k==='cap'?[Math.min(s.a[0],s.b[0])-s.r,Math.min(s.a[1],s.b[1])-s.r,Math.max(s.a[0],s.b[0])+s.r,Math.max(s.a[1],s.b[1])+s.r]:AUTOROUTE.bboxOf(s,0);
   const cell=4,grid=new Map();S.forEach((s,i)=>{s._b=box(s);for(let x=Math.floor(s._b[0]/cell);x<=Math.floor(s._b[2]/cell);x++)for(let y=Math.floor(s._b[1]/cell);y<=Math.floor(s._b[3]/cell);y++){const k=x+','+y;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);}});
   const seen=new Set();const owner=s=>s.pad&&s.pad.ref;
   grid.forEach(list=>{for(let a=0;a<list.length;a++)for(let b=a+1;b<list.length;b++){const i=list[a],j=list[b];if(S[i].net&&S[i].net===S[j].net&&!S[i].hole&&!S[j].hole)continue;const k=i<j?i*1048576+j:j*1048576+i;if(seen.has(k))continue;seen.add(k);
