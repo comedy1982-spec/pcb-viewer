@@ -47,6 +47,17 @@ test('orchestration: every open net has an owning agent, the planner serves agen
   seq.filter(a => a.agent === 'gate').forEach(a => { assert.ok(!a.cmd.includes(mcuNet) || /--rip/.test(a.cmd));assert.match(a.why, /^\[게이트 · EMC\]/); });
   seq.forEach(a => { const rip = (a.cmd.match(/--rip (\S+)/) || [])[1];if (rip) rip.split(',').forEach(n => assert.notEqual(own(n), 'power', 'a power net is never ripped: ' + n)); });
   assert.ok(seq.some(a => a.kind === 'swap' && a.agent === 'mcu'), 'the MCU agent tries a pin swap');assert.equal(new Set(seq.map(a => a.cmd)).size, seq.length, 'no remedy twice');
+  // speed rules: a remedy is not repeated on a net it already failed on; the deep search is rationed and runs with --refill;
+  // a move leaves the routing to ONE partial route; an agent that fails three times in a row yields to the next
+  { const h = {};const a1 = ROUTEDIAG.agentPlan(D, B, h, { patience: 1 })[0];assert.equal(a1.agent, 'gate');ROUTEDIAG.agentFeedback(h, a1, false);
+    const nx = ROUTEDIAG.agentPlan(D, B, h, { patience: 1 });assert.ok(nx.length && nx[0].agent === 'mcu', 'the gate agent yields after its failure budget');
+    const h2 = {};const all = [];for (let i = 0; i < 20; i++) { const a = ROUTEDIAG.agentPlan(D, B, h2, { patience: 99 });if (!a.length) break;all.push(a[0]); }
+    const deep = all.filter(a => a.kind === 'deep');assert.equal(deep.length, 1, 'one deep search per run');assert.match(deep[0].cmd, /--refill --exp 1200000$/);
+    all.filter(a => a.kind === 'move').forEach(a => { assert.match(a.cmd, /--no-route$/);assert.match(a.then, /^route --nets \S+ --refill --first \S+$/); });
+    const rips = all.filter(a => a.kind === 'rip' && a.agent === 'gate');assert.equal(rips.length, 1, 'rip once per net while nothing changed');
+    // after an accepted change the cheap rip may run again on what is still open
+    const h3 = {};let a = ROUTEDIAG.agentPlan(D, B, h3, { patience: 99 })[0];while (a && a.kind !== 'rip') a = ROUTEDIAG.agentPlan(D, B, h3, { patience: 99 })[0];ROUTEDIAG.agentFeedback(h3, a, true);
+    const again = [];for (let i = 0; i < 6; i++) { const q = ROUTEDIAG.agentPlan(D, B, h3, { patience: 99 });if (!q.length) break;again.push(q[0].kind); }assert.ok(again.includes('rip'), again.join()); }
   // verifier
   const V = (b, a, bo, ao) => ROUTEDIAG.verdict({ vec: b, openNets: bo || {} }, { vec: a, openNets: ao || {} });
   assert.deepEqual([V([0, 0, 0, 1, 5, 1], [0, 0, 0, 1, 4, 2]).ok, V([0, 0, 0, 1, 5, 1], [0, 0, 0, 1, 4, 2]).better], [true, true]);       // a signal closed, one more hot via: accepted
