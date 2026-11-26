@@ -109,6 +109,40 @@ function agentPlan(D,B,hist,opt){hist=hist||{};opt=opt||{};const G=hist._all||(h
 /* the orchestrator tells the planner how a step ended: an agent that fails `patience` times in a row yields to the next one; after an
    accepted change the cheap remedy (rip) may be tried again on the nets still open, since the board around them is different now */
 function agentFeedback(hist,act,better){const Y=hist._yield||(hist._yield={});if(better){Y[act.agent]=0;const NK=hist._nk||{};Object.keys(NK).forEach(n=>{NK[n]=NK[n].filter(k=>k!=='rip');});}else Y[act.agent]=(Y[act.agent]||0)+1;}
+/* ---------- stage 2: Claude prescribes for the agent whose turn it is ----------
+   The planner still decides WHOSE turn it is (priority order, yield after `patience` failures) and the verifier still judges
+   every step; Claude only chooses the remedy. It answers one JSON object; agentCheck() turns that into an action and enforces
+   the hard rules in code, whatever the answer says: only route / rotate / move / pinswap, never a route without --nets, never
+   a power net in --rip (and no gate net for the agents below gate), parts move without their own re-route. */
+function agentNext(D,hist,opt){const Y=(hist&&hist._yield)||{};const patience=(opt&&opt.patience)||3;for(const k of AGENT_ORDER){if((Y[k]||0)>=patience)continue;if(D.open.some(o=>o.owner===k))return k;}return null;}
+const AGENT_SYS=`You are one function agent in a PCB routing orchestration. An algorithmic router (grid A*, rip-up and re-route) has finished and left open connections. Each open net belongs to one agent; you are given yours. Prescribe ONE remedy for this turn. A verifier then compares [open power nets, DRC, power nets under width, open gate nets, other open nets, hot via sites] in that order and undoes your step unless something improved and nothing earlier in the list got worse.
+Remedies (console commands):
+- route --nets A,B --rip N1,N2,… --first A,B   lift the auto-routed copper of N1,N2,… then route A,B first and the lifted nets after. Lift the nets listed as "핀을 둘러싼 배선" at the end pins and the rippable "통로를 막는 넷" (not 고정). 3–12 nets. Add --exp 1200000 to search deeper.
+- route --nets A --refill --exp 1200000        deeper search for A with the power fill lifted and rebuilt (slow, use once).
+- rotate REF 180                                turn a two-pin part end for end when the diagnosis says "rotate REF 180 후보".
+- move REF x y                                  move a part marked 옮길 수 있음 by 0.5–1.5 mm off the corridor (board coordinates in mm).
+- pinswap --nets NET --apply --route            re-assign the MCU pin of NET (only where the diagnosis says "pinswap 후보").
+Hard rules: only your own open nets in --nets and --first. Never lift GND, a supply rail, a phase or a shunt node. Do not repeat a command listed under "이미 시도"; pick a different remedy or different nets to lift, using what the verifier said about the earlier attempts. If nothing sensible is left, pass.
+Answer with ONE JSON object and nothing else: {"cmd":"<one command>","why":"<one short Korean sentence: what and why>"} or {"pass":true,"why":"<reason>"}.`;
+function agentPrompt(D,B,k,tried,suggest){const A=AGENTS[k];const own=ownerFn(B);const Dk=Object.assign({},D,{open:D.open.filter(o=>o.owner===k)});const body=text(Dk).split('\n').filter(l=>!/^전류 폭|^비아|^DRC/.test(l)||true).join('\n');
+  const mine=(tried||[]).filter(t=>t.agent===k),others=(tried||[]).filter(t=>t.agent!==k&&t.better);
+  const pw=[...new Set(Dk.open.reduce((a,o)=>a.concat((o.a.near||[]),(o.b.near||[]),o.blockers.map(b=>b.net)),[]))].filter(n=>own(n)==='power');
+  return`${AGENT_SYS}\n\n당신의 역할: ${A.label} 에이전트 — ${A.goal}.\n지금 보드: ${VEC_LABEL.map((l,i)=>`${l} ${D.vec[i]}`).join(' · ')}\n\n담당 미연결 (${Dk.open.length}건):\n${body}\n${pw.length?`\n뜯으면 안 되는 전력 넷(주변에 있음): ${pw.join(', ')}\n`:''}\n이미 시도 (이 담당): ${mine.length?mine.map(t=>`${t.cmd}${t.then?' → '+t.then:''} ⇒ ${t.res}`).join(' ; '):'없음'}\n다른 담당이 방금 바꾼 것: ${others.length?others.slice(-3).map(t=>`${t.cmd} ⇒ ${t.res}`).join(' ; '):'없음'}\n규칙 엔진의 다음 제안(참고): ${suggest?suggest.cmd+(suggest.then?' → '+suggest.then:''):'없음'}`;}
+function agentCheck(B,D,k,ans,triedCmds){if(!ans||typeof ans!=='object')return{err:'JSON 객체가 아님'};if(ans.pass)return{pass:true,why:String(ans.why||'').slice(0,200)};let cmd=String(ans.cmd||'').trim().replace(/\s+/g,' ');if(!cmd)return{err:'cmd 없음'};
+  const own=ownerFn(B);const mine=new Set(D.open.filter(o=>o.owner===k).map(o=>o.net));const tok=cmd.split(' ');const f=tok[0].toLowerCase();const why=`[${AGENTS[k].label} · Claude] ${String(ans.why||'').slice(0,200)}`;
+  const opt=name=>{const i=tok.indexOf('--'+name);return i>=0&&tok[i+1]&&!/^--/.test(tok[i+1])?tok[i+1]:null;};const list=v=>v?v.split(',').map(x=>x.trim()).filter(Boolean):[];
+  const sigOf=ref=>{const c=B.comps.find(x=>x.ref===ref);return c?[...new Set(c.pads.map(p=>p.net).filter(n=>n&&own(n)!=='power'))]:null;};let then;
+  if(f==='route'){const nets=list(opt('nets')).filter(n=>mine.has(n));if(!nets.length)return{err:'--nets에 담당 미연결 넷이 없음'};const dropped=[];
+    const rip=list(opt('rip')).filter(n=>{if(!B.nets[n]||nets.includes(n))return false;const o=own(n);if(o==='power'||(o==='gate'&&k!=='power'&&k!=='gate')){dropped.push(n);return false;}return true;}).slice(0,16);
+    const exp=opt('exp');const e=exp&&+exp>0?Math.min(2400000,Math.round(+exp)):0;cmd=`route --nets ${nets.join(',')}${rip.length?' --rip '+rip.join(','):' --refill'} --first ${nets.join(',')}${e?' --exp '+e:''}`;
+    return fin({agent:k,kind:rip.length?'rip':'deep',net:nets.join(','),cmd,why:why+(dropped.length?` (뜯지 못하는 넷 제외: ${dropped.join(', ')})`:''),ai:true});}
+  if(f==='rotate'||f==='move'){const ref=tok[1];const ns=sigOf(ref);if(!ns)return{err:'부품 없음: '+ref};const c=B.comps.find(x=>x.ref===ref);if(c.pads.length>4||c.locked)return{err:`${ref}: 작은 부품만 ${f==='move'?'옮길':'돌릴'} 수 있음`};
+    if(f==='rotate')cmd=`rotate ${ref} 180 --no-route`;else{const x=+tok[2],y=+tok[3];if(!isFinite(x)||!isFinite(y))return{err:'move 좌표 없음'};const cx=(c.bb[0]+c.bb[2])/2,cy=(c.bb[1]+c.bb[3])/2;if(Math.hypot(x-cx,y-cy)>3)return{err:`${ref}: 3 mm 넘게 옮기려 함`};
+      if(x<1||y<1||x>B.W-1||y>B.H-1)return{err:'보드 밖'};cmd=`move ${ref} ${+x.toFixed(2)} ${+y.toFixed(2)} --no-route`;}
+    const nets=[...mine].slice(0,4);then=`route --nets ${[...new Set(nets.concat(ns))].join(',')} --refill --first ${nets.join(',')}`;return fin({agent:k,kind:f==='rotate'?'rot':'move',net:nets.join(','),cmd,then,why,ai:true});}
+  if(f==='pinswap'){const nets=list(opt('nets')).filter(n=>mine.has(n));if(!nets.length)return{err:'--nets에 담당 미연결 넷이 없음'};return fin({agent:k,kind:'swap',net:nets[0],cmd:`pinswap --nets ${nets[0]} --apply --route`,why,ai:true});}
+  return{err:'허용되지 않는 명령: '+f};
+  function fin(x){if(triedCmds&&triedCmds.has(x.cmd+(x.then?' | '+x.then:'')))return{err:'이미 시도한 처방'};return x;}}
 /* what is left, by agent, with the likely cause of each open connection */
 function causeOf(o){const fine=e=>e.pitch&&e.pitch<=0.65;if((o.a.boxed>=4&&fine(o.a))||(o.b.boxed>=4&&fine(o.b)))return'미세 피치 핀이 이웃 배선에 막힘';if(o.blockers.some(b=>!b.rip))return'통로를 전력 동박 · 고정 배선이 가로막음';
   if(o.parts.length>=2)return'통로 위에 부품이 있음';if(o.blockers.length>=3)return'통로 혼잡';if(o.len>40)return'거리가 멀어 층 전환이 많이 필요';return'원인 불명 (더 깊은 탐색 필요)';}
@@ -163,6 +197,6 @@ const SYS=`You supervise a PCB auto-router. The algorithmic router (A* on a grid
 - diag : the diagnosis again (after your changes). rats / drc : details.
 Rules: at most 5 commands. Fix the open connections first (each weighs 1000), then DRC, then power widths. Do not repeat a remedy listed under "이미 시도" for the same net — choose a different one. Never touch GND or supply-plane nets. After your commands, answer in Korean in 2–4 short sentences: what you did and why, and what is left. Do not invent numbers.`;
 function prompt(D,tried,round,max){return`${SYS}\n\n진단 (감독 ${round}/${max}회차):\n${text(D)}\n\n이미 시도: ${tried&&tried.length?tried.map(t=>`${t.cmd} → ${t.res}`).join(' ; '):'없음'}\n\n사용자 요청: 위 진단의 문제를 고쳐줘.`;}
-return{diagnose,score,text,plan,nudge,prompt,SYS,AGENTS,AGENT_ORDER,ownerFn,verdict,agentPlan,agentFeedback,agentText,causeOf,VEC_LABEL};
+return{diagnose,score,text,plan,nudge,prompt,SYS,AGENTS,AGENT_ORDER,ownerFn,verdict,agentPlan,agentFeedback,agentText,causeOf,VEC_LABEL,agentNext,agentPrompt,agentCheck,AGENT_SYS};
 })();
 if(typeof module!=='undefined')module.exports=ROUTEDIAG;

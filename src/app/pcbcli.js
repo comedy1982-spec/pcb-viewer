@@ -19,7 +19,7 @@ const CLI_HELP=[
   ['reset [--strategy S] [--seed N] [--both] [--top sense,mcu] [--route] [--no-grow]','배선을 모두 지우고 회로도(넷리스트) 기준으로 처음부터 자동 배치. 자리가 모자라면 보드를 10 %씩 키워(최대 3배 면적) 다시 배치. 기본은 상단 단면(조립 1회); --both 면 수동소자·소형 IC를 하단에도 배치(양면 조립), --top 그룹(input · power · mcu · comm · sense …)은 상단에 둠. --route면 이어서 자동 배선'],
   ['place [--strategy S] [--only U1,C3] [--effort N]','현재 배치에서 다시 최적화 (트랙·비아는 지움)'],
   ['reset|place … --untangle','(실험) 배치 뒤, 두 패드가 모두 신호 넷인 2핀 부품을 180° 돌렸을 때 두 연결이 0.15 mm 이상 짧아지면 돌림 — 부트스트랩 캡 · 게이트 저항이 드라이버 핀 순서와 엇갈린 경우. 12건 실측에서 뚜렷한 이득이 없어 기본은 꺼짐'],
-  ['route --ai --agents [--steps 14] [--deep 1] [--patience 3]','오케스트레이션 배선: 미연결을 담당 에이전트(파워스테이지 → 게이트·EMC → 센싱 → MCU 탈출 → 일반 신호)에 배정해 우선순위 순서로 한 번에 한 가지씩 처방하고, 검증 에이전트가 단계마다 [전력 넷 미연결 · DRC · 전류 폭 · 게이트 넷 · 신호 · 비아] 순으로 비교해 상위 항목이 나빠지면 되돌립니다. 연결돼 있던 전력 넷이 끊기는 처방은 무조건 거부'],
+  ['route --ai --agents [--steps 14] [--deep 1] [--patience 3] [--rules]','오케스트레이션 배선(Claude를 쓸 수 있으면 담당별 처방을 Claude가 고르고, --rules거나 쓸 수 없으면 규칙으로 처방): 미연결을 담당 에이전트(파워스테이지 → 게이트·EMC → 센싱 → MCU 탈출 → 일반 신호)에 배정해 우선순위 순서로 한 번에 한 가지씩 처방하고, 검증 에이전트가 단계마다 [전력 넷 미연결 · DRC · 전류 폭 · 게이트 넷 · 신호 · 비아] 순으로 비교해 상위 항목이 나빠지면 되돌립니다. 연결돼 있던 전력 넷이 끊기는 처방은 무조건 거부'],
   ['route --ai [--rounds 4] [--rules] [--no-pinswap] · supervise','감독 배선: 알고리즘이 배선한 뒤 남은 미연결·DRC·전류 폭을 진단(diag)하고, Claude가(없으면 규칙이) 처방 — 막는 넷을 뜯고 실패한 넷부터 재배선(route --nets N --rip A,B --first N), MCU 핀 교환(pinswap --nets N), 통로 위 소형 부품 이동(move), 깊은 탐색. 처방마다 채점해 나빠지면 되돌림. supervise는 배선을 다시 하지 않고 지금 상태에서 감독만'],
   ['diag','배선 진단: 남은 연결마다 양 끝 핀, 통로를 막는 넷(층) · 부품, 핀 주변 혼잡, MCU 핀 교환 후보, 전류 폭 · 비아 미달'],
   ['route [--strategy S] [--signal 0.2] [--power 0.3] [--clear 0.2] [--nets A,B] [--iw] [--iwmax 2] [--order length] [--edge 2|--no-edge] [--retvia 0.8|--no-retvia] [--no-pf] [--pf-rounds 14] [--pf-time 90] [--dir 1.5] [--mst] [--gloss] [--par auto|N|0]','열린 넷을 자동 배선(① 순차 A* ② 막힌 넷 rip-up ③ 남으면 PathFinder 협상 배선 — --no-pf 로 끔 · --mst: 다핀 넷을 MST 순서(짧은 핀 쌍부터)로 — 기본 끔(실측 효과 미미) · --dir N: 층별 선호 방향(홀수 신호층 수평·짝수 수직, 역방향 N배 비용 — 기본 끔, DCM-10A 실측에서 비아 +25%): 순서 ① 대전류 전원·구동 ② 고속·클록·차동 ③ 민감 아날로그 ④ 일반 디지털, 고속 넷은 보드 외곽 2 mm 띠를 피함, 층 전환 옆에 GND 리턴 비아. --iw 면 전원·모터 넷 폭을 추정 전류(IPC-2221)로'],
@@ -525,7 +525,7 @@ async function cliSupervise(a){a=a||{};if(BD.pcbPending)throw new Error('부품�
   const diag=()=>ROUTEDIAG.diagnose(BD,a.agents?{max:16}:undefined);let D=diag();const D0=D;
   if(D.ok&&!D.badVia.length)return'배선 감독: 고칠 것이 없습니다 (미연결 0 · DRC 0 · 전류 폭 충족).';
   await cliAiProbe();let useAI=!!CLI.sample&&!a.rules;const hist={},tried=[];
-  if(a.agents)return await cliOrchestrate(a,D0,diag,u0);
+  if(a.agents)return await cliOrchestrate(a,D0,diag,u0,useAI);
   cliSay('out',`배선 감독 시작 — ${useAI?'Claude가 진단을 읽고 처방합니다':'Claude를 쓸 수 없어 규칙으로 처방합니다'} (최대 ${max}회)\n${ROUTEDIAG.text(D)}`);
   const revert=n=>{while(PE.undo.length>n)peUndo();PE.redo.length=0;};
   const pid=typeof progStart==='function'?progStart('sup','배선 감독',{total:max,stop:()=>{CLI.stopReq=true;}}):null;
@@ -556,22 +556,32 @@ async function cliSupervise(a){a=a||{};if(BD.pcbPending)throw new Error('부품�
 /* ---- orchestrated routing (route --ai --agents): function agents take turns in priority order (power → gate/EMC → sense → MCU
    escape → signals), one small remedy at a time on their own open nets; the verifier (ROUTEDIAG.verdict) judges every step
    on the priority vector and the change is undone unless nothing of higher priority got worse. --steps N (default 14). ---- */
-async function cliOrchestrate(a,D0,diag,u0){const maxA=Math.max(1,Math.min(40,a.steps!=null&&a.steps!==true?+a.steps:14));const hist={},tried=[];let D=D0;const st={};ROUTEDIAG.AGENT_ORDER.forEach(k=>{st[k]={ok:0,keep:0,no:0};});
-  cliSay('out',`배선 오케스트레이션 시작 — 기능별 에이전트가 우선순위 순서로 처방하고 검증 에이전트가 단계마다 판정합니다 (최대 ${maxA}단계)\n${ROUTEDIAG.agentText(D)}`);
+async function cliOrchestrate(a,D0,diag,u0,useAI){const maxA=Math.max(1,Math.min(40,a.steps!=null&&a.steps!==true?+a.steps:14));const hist={},tried=[];let D=D0;const st={};ROUTEDIAG.AGENT_ORDER.forEach(k=>{st[k]={ok:0,keep:0,no:0};});
+  const popt={pinswap:!a['no-pinswap'],deep:a.deep!=null&&a.deep!==true?+a.deep:1,patience:a.patience!=null&&a.patience!==true?+a.patience:3};const seenCmd=new Set();const ai={calls:0,used:0,pass:0,bad:0,fail:0,skips:0,inTok:0,outTok:0};
+  // stage 2: Claude chooses the remedy for the agent whose turn it is (one JSON answer per step); the rule planner is the fallback for a
+  // step where Claude is unavailable, answers something unusable or repeats itself, and two failed calls in a row switch it off
+  const askClaude=async(D,k)=>{const sug=ROUTEDIAG.agentPlan(D,BD,JSON.parse(JSON.stringify(hist)),popt)[0];const prompt=ROUTEDIAG.agentPrompt(D,BD,k,tried,sug&&sug.agent===k?sug:null);ai.calls++;const tok=typeof aimTok==='function'?aimTok:(t=>Math.round(String(t).length/3));ai.inTok+=tok(prompt);
+    let ans;try{const ctl=new AbortController();CLI.abort=ctl;ans=await CLI.sample.json(prompt,{signal:ctl.signal,cache:false,modelTier:typeof AIM!=='undefined'?AIM.tier:undefined});}catch(e){ai.fail++;cliSay('err',`Claude 호출 실패 (${String(e&&(e.code||e.message)||e).slice(0,80)}) — 이 단계는 규칙으로 처방합니다`);if(ai.fail>=2||/^(not_granted|sampling_disabled|not_declared|capability_disabled|capability_removed)$/.test(e&&e.code||'')){useAI=false;cliSay('out','Claude를 쓸 수 없어 이후 단계는 규칙으로 처방합니다.');}return null;}finally{CLI.abort=null;}
+    ai.fail=0;ai.outTok+=tok(JSON.stringify(ans||''));const x=ROUTEDIAG.agentCheck(BD,D,k,ans,seenCmd);if(x.pass){ai.pass++;cliSay('ai',`[${ROUTEDIAG.AGENTS[k].label} · Claude] 넘김 — ${x.why||'더 쓸 처방이 없음'}`);return{pass:true};}
+    if(x.err){ai.bad++;cliSay('err',`Claude의 처방을 쓸 수 없음 (${x.err}) — 이 단계는 규칙으로 처방합니다`);return null;}ai.used++;/* Claude took the rule planner's suggestion: the planner counts it as used, so a later fallback does not offer it again */if(sug&&x.cmd===sug.cmd)ROUTEDIAG.agentPlan(D,BD,hist,popt);return x;};
+  cliSay('out',`배선 오케스트레이션 시작 — ${useAI?'Claude가 담당별로 처방하고':'기능별 에이전트가 규칙으로 처방하고'} 검증 에이전트가 단계마다 판정합니다 (최대 ${maxA}단계)\n${ROUTEDIAG.agentText(D)}`);
   const revert=n=>{while(PE.undo.length>n)peUndo();PE.redo.length=0;};const pid=typeof progStart==='function'?progStart('sup','배선 오케스트레이션',{total:maxA,stop:()=>{CLI.stopReq=true;}}):null;
   try{for(let step=1;step<=maxA&&(D.rats||D.drc||D.badPower.length)&&!CLI.stopReq;step++){
-      const acts=ROUTEDIAG.agentPlan(D,BD,hist,{pinswap:!a['no-pinswap'],deep:a.deep!=null&&a.deep!==true?+a.deep:1,patience:a.patience!=null&&a.patience!==true?+a.patience:3});if(!acts.length){cliSay('out','더 시도할 처방이 없습니다.');break;}const x=acts[0];
+      let x=null;if(useAI){const k=ROUTEDIAG.agentNext(D,hist,popt);if(!k){cliSay('out','더 시도할 처방이 없습니다.');break;}if(pid)progSet('sup',{i:step-1,label:`${ROUTEDIAG.AGENTS[k].label} · Claude에게 묻는 중 ${step}/${maxA}`});
+        const r=await askClaude(D,k);if(CLI.stopReq)break;if(r&&r.pass){(hist._yield||(hist._yield={}))[k]=popt.patience;step--;if(++ai.skips>12)break;continue;}x=r;}
+      if(!x){let acts=ROUTEDIAG.agentPlan(D,BD,hist,popt);for(let g=0;g<8&&acts.length&&seenCmd.has(acts[0].cmd+(acts[0].then?' | '+acts[0].then:''));g++)acts=ROUTEDIAG.agentPlan(D,BD,hist,popt);if(!acts.length){cliSay('out','더 시도할 처방이 없습니다.');break;}x=acts[0];}seenCmd.add(x.cmd+(x.then?' | '+x.then:''));
       if(pid)progSet('sup',{i:step-1,label:`${ROUTEDIAG.AGENTS[x.agent].label} ${step}/${maxA} · 미연결 ${D.rats}`});const uA=PE.undo.length;cliSay('cmd',`${x.cmd}   — ${x.why}`);await cliTick();const t0=performance.now();
       try{await cliRun(x.cmd,true,'ai');if(x.then)await cliRun(x.then,true,'ai');}catch(e){cliSay('err',String(e.message||e).split('\n')[0]);}
       const t1=performance.now();const dA=diag();const t2=performance.now();const v=ROUTEDIAG.verdict(D,dA);/* only an improvement stays: a change the verifier calls equal is undone too, so the board every agent sees is the last accepted one (equal steps used to trade one open net for another and back) */if(!v.better)revert(uA);else D=dA;ROUTEDIAG.agentFeedback(hist,x,v.better);const t3=performance.now();st[x.agent][!v.ok?'no':v.better?'ok':'keep']++;
-      tried.push({agent:x.agent,kind:x.kind,cmd:x.cmd,ok:v.ok,better:v.better,t:[t1-t0,t2-t1,t3-t2].map(v=>+(v/1000).toFixed(1)),res:(!v.ok?'거부 · 되돌림 — ':v.better?'채택 — ':'되돌림 — ')+v.why});cliSay(v.ok?'ok':'err',`→ 검증: ${tried[tried.length-1].res}`);}}
+      tried.push({agent:x.agent,kind:x.kind,cmd:x.cmd,then:x.then,ai:!!x.ai,ok:v.ok,better:v.better,t:[t1-t0,t2-t1,t3-t2].map(v=>+(v/1000).toFixed(1)),res:(!v.ok?'거부 · 되돌림 — ':v.better?'채택 — ':'되돌림 — ')+v.why});cliSay(v.ok?'ok':'err',`→ 검증: ${tried[tried.length-1].res}`);}}
   finally{if(pid)progEnd('sup');CLI.routed=true;}
   D=diag();const es=PE.undo.splice(u0);if(es.length)pePush({copper:true,label:'orchestrate',undo:()=>{for(let i=es.length-1;i>=0;i--)es[i].undo();},redo:()=>{es.forEach(e=>e.redo());}});cliAfter(false);
   const V=ROUTEDIAG.VEC_LABEL;const L=[`배선 오케스트레이션: ${V.map((l,i)=>`${l} ${D0.vec[i]} → ${D.vec[i]}`).join(' · ')}`];
   ROUTEDIAG.AGENT_ORDER.forEach(k=>{const q=st[k];if(q.ok+q.keep+q.no)L.push(`${ROUTEDIAG.AGENTS[k].label}: 처방 ${q.ok+q.keep+q.no}건 — 채택 ${q.ok} · 변화 없어 되돌림 ${q.keep} · 검증 거부 ${q.no}`);});
+  if(ai.calls){L.push(`Claude 처방: 호출 ${ai.calls}회 — 채택된 처방 ${tried.filter(t=>t.ai&&t.better).length} / 실행 ${ai.used} · 넘김 ${ai.pass} · 쓸 수 없는 답 ${ai.bad} · 토큰(추정) 입력 ~${ai.inTok} / 출력 ~${ai.outTok}`);if(typeof AIM!=='undefined'){AIM.calls+=ai.calls;AIM.inTok+=ai.inTok;AIM.outTok+=ai.outTok;if(typeof aimPaint==='function')aimPaint();}}
   L.push(`걸린 시간: ${tried.reduce((x,t)=>x+t.t[0]+t.t[1]+t.t[2],0).toFixed(0)} s (처방 실행 ${tried.reduce((x,t)=>x+t.t[0],0).toFixed(0)} · 진단 ${tried.reduce((x,t)=>x+t.t[1],0).toFixed(0)} · 되돌림 ${tried.reduce((x,t)=>x+t.t[2],0).toFixed(0)})`);
-  if(tried.length)L.push('단계: '+tried.map((t,i)=>`${i+1}. [${ROUTEDIAG.AGENTS[t.agent].label}] ${t.cmd.length>110?t.cmd.slice(0,110)+'…':t.cmd} (${t.res})`).join('\n      '));
-  if(D.rats||D.drc)L.push(`남은 문제 (담당별):\n${ROUTEDIAG.agentText(D)}`);L.push('되돌리기 한 번(Ctrl+Z)으로 오케스트레이션 전 상태로 돌아갑니다.');CLI.orch={before:D0.vec,after:D.vec,steps:tried.map(t=>({agent:t.agent,kind:t.kind,ok:t.ok,better:t.better,t:t.t,res:t.res}))};return L.join('\n');}
+  if(tried.length)L.push('단계: '+tried.map((t,i)=>`${i+1}. [${ROUTEDIAG.AGENTS[t.agent].label}${t.ai?' · Claude':''}] ${t.cmd.length>110?t.cmd.slice(0,110)+'…':t.cmd} (${t.res})`).join('\n      '));
+  if(D.rats||D.drc)L.push(`남은 문제 (담당별):\n${ROUTEDIAG.agentText(D)}`);L.push('되돌리기 한 번(Ctrl+Z)으로 오케스트레이션 전 상태로 돌아갑니다.');CLI.orch={before:D0.vec,after:D.vec,ai:ai.calls?ai:null,steps:tried.map(t=>({agent:t.agent,kind:t.kind,ai:t.ai,cmd:t.cmd,ok:t.ok,better:t.better,t:t.t,res:t.res}))};return L.join('\n');}
 /* ---- Claude drives the CLI ---- */
 function cliBrief(){
   const I=AUTOPLACE.classify(BD,{power:cliPower()});

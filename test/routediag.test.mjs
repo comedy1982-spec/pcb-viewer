@@ -58,6 +58,28 @@ test('orchestration: every open net has an owning agent, the planner serves agen
     // after an accepted change the cheap rip may run again on what is still open
     const h3 = {};let a = ROUTEDIAG.agentPlan(D, B, h3, { patience: 99 })[0];while (a && a.kind !== 'rip') a = ROUTEDIAG.agentPlan(D, B, h3, { patience: 99 })[0];ROUTEDIAG.agentFeedback(h3, a, true);
     const again = [];for (let i = 0; i < 6; i++) { const q = ROUTEDIAG.agentPlan(D, B, h3, { patience: 99 });if (!q.length) break;again.push(q[0].kind); }assert.ok(again.includes('rip'), again.join()); }
+  // stage 2: Claude prescribes for the agent whose turn it is; the validator enforces the hard rules in code
+  { assert.equal(ROUTEDIAG.agentNext(D, {}), 'gate');assert.equal(ROUTEDIAG.agentNext(D, { _yield: { gate: 3 } }), 'mcu');assert.equal(ROUTEDIAG.agentNext(D0, {}), null);
+    const tried = [{ agent: 'gate', cmd: 'route --nets PH_W_HO --rip X --first PH_W_HO', res: '되돌림 — 변화 없음' }, { agent: 'mcu', cmd: 'pinswap --nets Z --apply --route', better: true, res: '채택 — 신호 미연결 2 → 1' }];
+    const pr = ROUTEDIAG.agentPrompt(D, B, 'gate', tried, { cmd: 'route --nets PH_W_HO --refill --exp 1200000' });
+    assert.match(pr, /게이트 · EMC 에이전트/);assert.match(pr, /PH_W_HO/);assert.ok(!pr.includes(mcuNet + ':') && !new RegExp('^\\s*[-·]?\\s*' + mcuNet + '\\b', 'm').test(pr.split('담당 미연결')[1].split('이미 시도')[0]), 'only the agent\'s own open nets are described');
+    assert.match(pr, /이미 시도 \(이 담당\): route --nets PH_W_HO --rip X --first PH_W_HO ⇒ 되돌림/);assert.match(pr, /다른 담당이 방금 바꾼 것: pinswap --nets Z/);assert.match(pr, /규칙 엔진의 다음 제안\(참고\): route --nets PH_W_HO --refill/);assert.match(pr, /\{"cmd":/);
+    const chk = (k, ans, seen) => ROUTEDIAG.agentCheck(B, D, k, ans, seen);const sig = B.comps.find(c => /TC3\d\d/.test(c.val)).pads.map(p => p.net).filter(n => n && own(n) === 'mcu' && n !== mcuNet)[0];
+    // a rip list with power and unknown nets: they are dropped, --first is forced, the exploration budget is capped
+    const r1 = chk('gate', { cmd: `route --nets PH_W_HO,${mcuNet} --rip GND,PH_W,+12V,${sig},NOPE,PH_V_HO --exp 99999999`, why: '게이트 저항 주변을 뜯음' });
+    assert.equal(r1.cmd, `route --nets PH_W_HO --rip ${sig},PH_V_HO --first PH_W_HO --exp 2400000`);assert.equal(r1.agent, 'gate');assert.equal(r1.ai, true);assert.match(r1.why, /^\[게이트 · EMC · Claude\] 게이트 저항 주변을 뜯음 \(뜯지 못하는 넷 제외: GND, PH_W, \+12V\)/);
+    // the MCU agent may not lift a gate net; with nothing left to lift the route becomes a --refill search
+    assert.equal(chk('mcu', { cmd: `route --nets ${mcuNet} --rip PH_V_HO,GND` }).cmd, `route --nets ${mcuNet} --refill --first ${mcuNet}`);
+    assert.match(chk('mcu', { cmd: 'route --nets PH_W_HO --rip ' + sig }).err, /담당 미연결 넷이 없음/);assert.match(chk('gate', { cmd: 'route --rip ' + sig }).err, /담당/);
+    for (const bad of ['unroute', 'reset --seed 3', 'board size 200 200', 'fix', 'route']) assert.ok(chk('gate', { cmd: bad }).err, bad);
+    assert.ok(chk('gate', null).err);assert.ok(chk('gate', { cmd: '' }).err);assert.equal(JSON.stringify(chk('gate', { pass: true, why: '남은 처방 없음' })), JSON.stringify({ pass: true, why: '남은 처방 없음' }));
+    // parts: small ones only, moved at most 3 mm, never re-routed by the move itself; one partial route follows
+    const two = B.comps.find(c => /^R/.test(c.ref) && c.pads.length === 2 && c.pads.some(p => own(p.net) !== 'power'));const cx = (two.bb[0] + two.bb[2]) / 2, cy = (two.bb[1] + two.bb[3]) / 2;
+    const mv = chk('gate', { cmd: `move ${two.ref} ${(cx + 1).toFixed(2)} ${cy.toFixed(2)}` });assert.match(mv.cmd, new RegExp(`^move ${two.ref} [\\d.]+ [\\d.]+ --no-route$`));assert.match(mv.then, /^route --nets \S+ --refill --first PH_W_HO$/);assert.ok(!/GND|\+12V/.test(mv.then));
+    assert.match(chk('gate', { cmd: `move ${two.ref} ${(cx + 9).toFixed(2)} ${cy.toFixed(2)}` }).err, /3 mm/);assert.match(chk('gate', { cmd: `rotate ${B.comps.find(c => /TC3\d\d/.test(c.val)).ref} 180` }).err, /작은 부품/);
+    assert.equal(chk('gate', { cmd: `rotate ${two.ref} 90` }).cmd, `rotate ${two.ref} 180 --no-route`);assert.equal(chk('mcu', { cmd: `pinswap --nets ${mcuNet}` }).cmd, `pinswap --nets ${mcuNet} --apply --route`);
+    // a repeat is refused
+    assert.match(chk('gate', { cmd: `route --nets PH_W_HO --rip ${sig}` }, new Set([`route --nets PH_W_HO --rip ${sig} --first PH_W_HO`])).err, /이미 시도/); }
   // verifier
   const V = (b, a, bo, ao) => ROUTEDIAG.verdict({ vec: b, openNets: bo || {} }, { vec: a, openNets: ao || {} });
   assert.deepEqual([V([0, 0, 0, 1, 5, 1], [0, 0, 0, 1, 4, 2]).ok, V([0, 0, 0, 1, 5, 1], [0, 0, 0, 1, 4, 2]).better], [true, true]);       // a signal closed, one more hot via: accepted
