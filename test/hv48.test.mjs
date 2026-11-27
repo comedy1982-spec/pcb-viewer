@@ -84,3 +84,13 @@ test('48 V single-chip PMIC (A81481, assumed pin map): one part replaces the 48 
   const { B } = NEWPROJ.toBoard(P, { place: false });const f = B.comps.find(x => x.val === 'A81481');assert.equal(f.pads.length, 41);assert.ok(Math.abs((f.bb[2] - f.bb[0]) - 6.8) < 0.3, '6 × 6 mm body: ' + (f.bb[2] - f.bb[0]));
   assert.equal(B.zones.groupOf[f.ref], 'power');
 });
+
+/* examples that carry their own block plan (no product profile): rebuilt from S.plan, layout restored */
+function restorePlanSnap(L, S) { const plan = JSON.parse(JSON.stringify(S.plan));plan.board = { w: S.meta.W, h: S.meta.H };const { B } = L.NEWPROJ.toBoard(plan, { place: false });const r = L.BOARDSNAP.apply(B, S);return { B, r }; }
+test('48 V single-channel BLAC example (A81481 · AMT49100 · 12 × NVTFS6H850N, 8 layers, 90 × 62, top side only) restores: nothing open, DRC 0, phase widths rated', () => {
+  const L = load();const S = L.SNAP_B48S;assert.equal(S.meta.W, 90);assert.equal(S.meta.H, 62);assert.equal(S.plan.blocks.filter(b => b.type === 'gdrv3').length, 1);assert.ok(S.plan.blocks.some(b => b.type === 'pmic48'));
+  const { B, r } = restorePlanSnap(L, S);assert.equal(r.missing.length, 0);assert.equal(B.comps.length, 132);assert.equal(B.comps.filter(c => c.side === 'B').length, 0);
+  assert.equal(L.PCBEDIT.drc(B).length, 0);assert.equal(L.PCBEDIT.ratsnest(B).length, 0);assert.equal(L.PCB.cuKeys(B).length, 8);
+  const w = Object.fromEntries(B.powerReport.nets.map(n => [n.net, n]));['PH_U', 'PH_V', 'PH_W'].forEach(n => assert.ok(w[n].ok && w[n].width >= 6.14, n + ' ' + w[n].width));assert.ok(B.powerReport.nets.every(n => n.ok));
+  assert.equal(B.powerReport.viaChk.filter(v => !v.ok).length, 0);assert.ok(B.comps.some(c => c.val === 'A81481'));assert.equal(B.comps.filter(c => c.val === 'NVTFS6H850N').length, 12);
+});

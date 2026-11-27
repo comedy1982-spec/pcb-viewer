@@ -731,15 +731,19 @@ $('#flist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');
 $('#impClear').addEventListener('click',()=>{IMP.entries=[];setMsg('');renderImport();});
 const EXAMPLES={sense:['SENSE-32',()=>SAMPLE_SPEC],mcu:['MCU DC 모터',()=>SAMPLE_MCU],bldc:['MCU BLDC 3상',()=>SAMPLE_BLDC],tc364:['AURIX TC364 핀 추천',()=>SAMPLE_TC364]};
 /* a placed + routed example kept as a snapshot: the board is generated from its product profile, then the layout restored */
-function boardFromSnap(S){const m=S.meta;const prof=PRODUCTS.detect(m.profile);const ans={cur:m.cur};const fq=prof.questions.find(q=>q.key==='fet');if(fq)ans.fet=fq.options[m.fet||0].label;
+function boardFromSnap(S){const m=S.meta;
+  // an example that carries its own block plan (no product profile behind it): the plan is the source, the diagram is drawn from its requirement line
+  if(S.plan){const plan=JSON.parse(JSON.stringify(S.plan));plan.board={w:m.W,h:m.H};plan.name=m.name;let arch=null;try{const r=HWARCH.archFrom(plan.req||m.name,m.name);arch=r&&(r.arch||r);}catch(e){arch=null;}
+    const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+String(m.id||m.name).toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch,manual:true};}
+  const prof=PRODUCTS.detect(m.profile);const ans={cur:m.cur};const fq=prof.questions.find(q=>q.key==='fet');if(fq)ans.fet=fq.options[m.fet||0].label;
   const R=PRODUCTS.apply(prof,ans,m.profile);
   // the snapshot's motor-stage settings go into the diagram too, so a later edit that regenerates the plan keeps them
   (R.arch.blocks||[]).forEach(b=>(b.impl||[]).forEach(im=>{if(im.type==='gdrv3')im.params=Object.assign({},im.params,{driver:m.driver||'IR2104'},m.gdrv3||{});}));
   const plan=HWARCH.toPlan(R.arch).plan;plan.ifaceFix=m.ifaceFix===true;plan.rstFix=m.rstFix===true;plan.curModel=m.curModel===2?2:1;plan.connGap=m.connGap===true;if(m.pcb)plan.pcb=Object.assign({},plan.pcb,m.pcb);if(m.pwrIn){const pi=plan.blocks.find(b=>b.type==='pwr_in');if(pi)pi.params=Object.assign({},pi.params,m.pwrIn);}const g3=plan.blocks.find(b=>b.type==='gdrv3');if(g3)g3.params=Object.assign({},g3.params,{driver:m.driver||'IR2104'},m.gdrv3||{});(m.params||[]).forEach(t=>{const q=String(t).match(/^([\w]+)\.([\w]+)=(.*)$/);if(q)plan.blocks.filter(b=>b.type===q[1]||b.id===q[1]).forEach(b=>{b.params=Object.assign({},b.params,{[q[2]]:q[3]});});});(m.add||[]).forEach(t=>NEWPROJ.addBlock(plan,t,{}));plan.shrink=m.shrink;plan.strategy=m.strategy;plan.board={w:m.W,h:m.H};plan.name=m.name;
   const {B}=NEWPROJ.toBoard(plan,{place:false});B.source='신규 설계';B.name=m.name;B.pid='p-'+m.profile.toLowerCase().replace(/\s+/g,'-')+'-'+m.W+'x'+m.H;BOARDSNAP.apply(B,S);return{B,plan,arch:R.arch};}
-const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C],dadu8d:['Dadu A4911 상시 10 A · 피크 40 A · 90 × 60',()=>SNAP_DADU8D],eld6:['ELD only A4911 H-브리지 7 A / 20 A · 80 × 55',()=>SNAP_ELD6],dadu8e:['Dadu ECU 커넥터 · DRV8334 · 10 A / 30 A · 100 × 70',()=>SNAP_DADU8E]};
+const SNAP_EXAMPLES={dadu8:['Dadu 8층 (배선 완료)',()=>SNAP_DADU8],dadu8b:['Dadu 8층 양면 85 × 55',()=>SNAP_DADU8B],dadu8c:['Dadu A4911 · 8층 양면 90 × 60',()=>SNAP_DADU8C],dadu8d:['Dadu A4911 상시 10 A · 피크 40 A · 90 × 60',()=>SNAP_DADU8D],eld6:['ELD only A4911 H-브리지 7 A / 20 A · 80 × 55',()=>SNAP_ELD6],dadu8e:['Dadu ECU 커넥터 · DRV8334 · 10 A / 30 A · 100 × 70',()=>SNAP_DADU8E],b48s:['48 V BLAC 단일 채널 · A81481 · 20 A · 90 × 62',()=>SNAP_B48S]};
 function loadSnapExample(which){const r=boardFromSnap(SNAP_EXAMPLES[which][1]());
-  Object.assign(NP,{plan:r.plan,arch:r.arch,answers:{},vkey:null,picked:null,chooser:false,variants:null,hist:[],planManual:false});const n=$('#npName');if(n)n.value=r.B.name;
+  Object.assign(NP,{plan:r.plan,arch:r.arch,answers:{},vkey:null,picked:null,chooser:false,variants:null,hist:[],planManual:!!r.manual});const n=$('#npName');if(n)n.value=r.B.name;
   setBoard(r.B);closeImport();if(typeof setMode==='function'){APP.mode='steps';setMode('steps');if(typeof setStep==='function')setStep(3);}
   const nb=r.B.comps.filter(c=>c.side==='B').length;toast(`${r.B.name} 예제: ${+r.B.W.toFixed(1)} × ${+r.B.H.toFixed(1)} mm · ${PCB.cuKeys(r.B).length}층${nb?` · 양면(아래층 부품 ${nb}개)`:''}, 배치·배선·전력 동박까지 끝난 보드입니다(DRC 0${PCBEDIT.ratsnest(r.B).length?` · 손으로 이을 연결 ${PCBEDIT.ratsnest(r.B).length}곳 — 저장소 examples 폴더 README에 좌표`:' · 미연결 0'}). 1·2단계에서 블록 다이어그램과 회로를 보고, PCB 콘솔의 drc · report로 확인하거나 [내보내기]로 KiCad 파일을 받을 수 있습니다.`);}
 function loadExample(which){if(SNAP_EXAMPLES[which])return loadSnapExample(which);const spec=(EXAMPLES[which]||EXAMPLES.sense)[1]();setBoard(PCB.finalize(PCB.fromSpec(JSON.parse(JSON.stringify(spec)))));closeImport();
@@ -751,7 +755,7 @@ $('#impSample').addEventListener('click',()=>loadExample('sense'));
 $('#impSample2').addEventListener('click',()=>loadExample('mcu'));
 $('#impSample3').addEventListener('click',()=>loadExample('bldc'));
 $('#impSample4').addEventListener('click',()=>loadExample('tc364'));
-{const b5=$('#impSample5');if(b5)b5.addEventListener('click',()=>loadExample('dadu8'));const b6=$('#impSample6');if(b6)b6.addEventListener('click',()=>loadExample('dadu8b'));const b7=$('#impSample7');if(b7)b7.addEventListener('click',()=>loadExample('dadu8c'));const b8=$('#impSample8');if(b8)b8.addEventListener('click',()=>loadExample('dadu8d'));const b9=$('#impSample9');if(b9)b9.addEventListener('click',()=>loadExample('eld6'));const b10=$('#impSample10');if(b10)b10.addEventListener('click',()=>loadExample('dadu8e'));}
+{const b5=$('#impSample5');if(b5)b5.addEventListener('click',()=>loadExample('dadu8'));const b6=$('#impSample6');if(b6)b6.addEventListener('click',()=>loadExample('dadu8b'));const b7=$('#impSample7');if(b7)b7.addEventListener('click',()=>loadExample('dadu8c'));const b8=$('#impSample8');if(b8)b8.addEventListener('click',()=>loadExample('dadu8d'));const b9=$('#impSample9');if(b9)b9.addEventListener('click',()=>loadExample('eld6'));const b10=$('#impSample10');if(b10)b10.addEventListener('click',()=>loadExample('dadu8e'));const b11=$('#impSample11');if(b11)b11.addEventListener('click',()=>loadExample('b48s'));}
 $('#impGo').addEventListener('click',()=>{
   setMsg('보드를 만드는 중…');IMP.busy=true;$('#impGo').disabled=true;
   setTimeout(()=>{
