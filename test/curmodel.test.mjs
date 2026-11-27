@@ -54,7 +54,10 @@ test('capacity methods other than a wider pattern: inner layers, mask opening + 
   assert.equal(C.methods({ oz: 2 }).length, 0);assert.equal(C.methods({ oz: 2, copperLayers: 8, innerPower: true, maskOpen: true, busbar: { w: 5, t: 1 } }).length, 3);
   // design-time choice reaches the board, a snapshot and the KiCad file
   const B = board(L, 2, {}, { layers: 8, inner: 'on', ozin: 1, mask: true, busbar: '5x1' });assert.equal(B.innerPower, true);assert.equal(B.ozIn, 1);assert.equal(B.maskOpen, true);assert.equal(B.busbar.w, 5);
-  const B0 = board(L, 2, {});assert.ok(!B0.innerPower && !B0.maskOpen && !B0.busbar);
+  // inner-layer sharing is the default for new plans (plan.capInner); pcb.inner=off turns it off; plans from before the flag stay off
+  const Bd = board(L, 2, {});assert.equal(Bd.innerPower, true);assert.ok(!Bd.maskOpen && !Bd.busbar);assert.equal(L.NEWPROJ.newPlan('x').capInner, true);
+  assert.equal(L.NEWPROJ.innerOn({ capInner: true, pcb: { inner: false } }), false);assert.equal(L.NEWPROJ.innerOn({ capInner: true, pcb: { inner: 'off' } }), false);assert.equal(L.NEWPROJ.innerOn({ pcb: {} }), false);assert.equal(L.NEWPROJ.innerOn({ pcb: { inner: 'on' } }), true);assert.equal(L.NEWPROJ.innerOn({ capInner: true }), true);
+  const B0 = board(L, 2, {}, { inner: 'off' });assert.ok(!B0.innerPower && !B0.maskOpen && !B0.busbar);
   const S = L.BOARDSNAP.save(B, {});assert.equal(S.cap.inner, 1);assert.equal(S.cap.mask, 1);assert.equal(S.cap.busbar.t, 1);
   const S0 = L.BOARDSNAP.save(B0, {});assert.equal(S0.cap, undefined);
   const k0 = L.PCB.cuKeys(B)[0];B.layers[k0 + '.cu'].push({ t: 'poly', rings: [[[10, 10], [14, 10], [14, 12], [10, 12]]], rect: [10, 10, 14, 12], net: 'PH_U', fill: true });

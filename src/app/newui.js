@@ -57,7 +57,7 @@ function npInit(){
 }
 /* capacity methods chosen in the design step: one-line summary and the effect on the width each layer has to provide */
 function npCapInfo(P){const pc=(P&&P.pcb)||{};const NL=+pc.layers||2;const st=PCB.STACKS[NL]||PCB.STACKS[2];const motor=!!(P&&P.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type)));
-  const oz=+pc.oz||(motor?2:1);const nIn=st.filter((r,i)=>i>0&&i<NL-1&&r==='sig').length;const inner=!!pc.inner&&nIn>0;
+  const oz=+pc.oz||(motor?2:1);const nIn=st.filter((r,i)=>i>0&&i<NL-1&&r==='sig').length;const inner=NEWPROJ.innerOn(P)&&nIn>0;
   const Bf={oz,copperLayers:NL,ozIn:+pc.ozin||0,innerPower:inner,maskOpen:!!pc.mask,solderT:+pc.solder||0,ipcStd:String(pc.std)==='2152'?'2152':undefined,busbar:CURRENT.parseBusbar(pc.busbar)};
   const bg=pc.tamb!=null&&pc.tamb!==''?CURRENT.budget(+pc.tamb,pc.tmax,pc.tmaxpk):null;const dT=+pc.dT||(bg?bg.dT:(motor?20:10));
   const I=P?Math.max(0,...P.blocks.filter(b=>/^(gdrv3|hbridge)$/.test(b.type)).map(b=>+b.params.i||0)):0;
@@ -65,12 +65,12 @@ function npCapInfo(P){const pc=(P&&P.pcb)||{};const NL=+pc.layers||2;const st=PC
   const wo=CURRENT.layerWeight(Bf,0,NL),wi=inner?CURRENT.layerWeight(Bf,1,NL):0;const mult=+((NL>2?2:1)*wo+nIn*wi).toFixed(2);const bar=CURRENT.busbarWidth(Bf);
   return{NL,oz,nIn,inner,Bf,dT,I,need,mult,bar,per:need?Math.max(0,+((need-bar)/mult).toFixed(2)):0,base:need?+(need/(NL>2?2:1)).toFixed(2):0,bg};}
 function npCapText(P){const c=npCapInfo(P);const M=CURRENT.methods(Object.assign({},c.Bf,{innerPower:c.inner}));
-  const L=[`${c.NL}층 · 외층 ${c.oz} oz · ΔT ${c.dT} °C${c.bg?` (주위 ${c.bg.tamb} °C)`:''} · IPC-${c.Bf.ipcStd||'2221'}`,`방법: ${M.length?M.join(' · '):'패턴 폭만'}${P&&P.pcb&&P.pcb.inner&&!c.nIn?' — 내층 병렬은 내층 신호층이 있는 6층 이상에서만 적용':''}`];
+  const L=[`${c.NL}층 · 외층 ${c.oz} oz · ΔT ${c.dT} °C${c.bg?` (주위 ${c.bg.tamb} °C)`:''} · IPC-${c.Bf.ipcStd||'2221'}`,`방법: ${M.length?M.join(' · '):'패턴 폭만'}${P&&NEWPROJ.innerOn(P)&&!c.nIn?' — 내층 병렬은 내층 신호층이 있는 6층 이상에서만 적용':''}`];
   if(c.need)L.push(`상시 ${c.I} A 필요 폭 ${c.need} mm → 층마다 ${c.per} mm (패턴 폭만: ${c.base} mm · 환산 ${c.mult}배${c.bar?` · 버스바 +${c.bar} mm`:''})`);
   return L.join('\n');}
 function npCapSync(){const P=NP.plan,pc=(P&&P.pcb)||{};const set=(id,v)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v==null?'':String(v);};if(!$('#capLayers'))return;
   set('#capLayers',pc.layers||2);set('#capOz',pc.oz||'');set('#capOzIn',pc.ozin||'');set('#capBus',pc.busbar||'');set('#capStd',String(pc.std)==='2152'?'2152':'');set('#capTamb',pc.tamb!=null?pc.tamb:'');
-  $('#capInner').checked=!!pc.inner;$('#capMask').checked=!!pc.mask;const c=npCapInfo(P);$('#capInner').disabled=!c.nIn;$('#capOzIn').disabled=!c.inner;
+  $('#capInner').checked=NEWPROJ.innerOn(P);$('#capMask').checked=!!pc.mask;const c=npCapInfo(P);$('#capInner').disabled=!c.nIn;$('#capOzIn').disabled=!c.inner;
   $('#capSum').textContent=npCapText(P);$('#capHint').textContent=' · '+(CURRENT.methods(Object.assign({},c.Bf,{innerPower:c.inner})).length?CURRENT.methods(Object.assign({},c.Bf,{innerPower:c.inner})).map(s=>s.split(' (')[0]).join(' · '):'패턴 폭만');}
 function npRender(){
   const P=NP.plan;$('#npPlanHint').textContent=AIM.mode==='ai'?'AI: Claude가 블록·인터페이스를 설계 (보는 사람의 사용량)':'결정론: 낱말 규칙으로 블록 설계';

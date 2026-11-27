@@ -8728,7 +8728,8 @@ const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'
 const blockKey=s=>{const k=String(s||'').toLowerCase();return LIB[k]?k:BLOCK_ALIAS[k]||null;};
 
 /* ---------- plan ---------- */
-function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2,connGap:true,cohesion:1,underKeep:true};}
+function innerOn(plan){const v=plan&&plan.pcb?plan.pcb.inner:null;return v!=null&&v!==''?(v===true||/^(on|1|true|yes)$/i.test(String(v))):!!(plan&&plan.capInner===true);}
+function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2,connGap:true,cohesion:1,underKeep:true,capInner:true};}
 function addBlock(plan,type,params){const k=blockKey(type);if(!k)throw new Error(`블록: ${Object.keys(LIB).join(', ')}`);const L=LIB[k];const p={};Object.entries(L.params).forEach(([n,d])=>{p[n]=d.def;});
   Object.entries(params||{}).forEach(([n,v])=>{if(!(n in L.params))throw new Error(`${k} 블록 파라미터: ${Object.keys(L.params).join(', ')||'(없음)'}`);p[n]=v;});
   if(k==='mcu'&&plan.blocks.some(b=>b.type==='mcu'))throw new Error('MCU는 하나만 넣을 수 있습니다 (set으로 바꾸기)');
@@ -9415,7 +9416,7 @@ function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finali
   // copper weight / allowed temperature rise for the current-based widths: motor boards default to 2 oz · ΔT 20 °C
   const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(plan.curModel===2)B.curModel=2;if(plan.underKeep===true)B.underKeep=true;if(String(pc.std)==='2152')B.ipcStd='2152';if(+pc.plane>0)B.planeDist=+pc.plane;
   // capacity methods chosen at design time (CURRENT, capacity methods)
-  if(pc.inner===true||/^(on|1|true|yes)$/i.test(String(pc.inner)))B.innerPower=true;if(+pc.ozin>0)B.ozIn=+pc.ozin;if(pc.mask===true||/^(on|1|true|yes)$/i.test(String(pc.mask))){B.maskOpen=true;if(+pc.solder>0)B.solderT=+pc.solder;}{const bb=typeof CURRENT!=='undefined'&&CURRENT.parseBusbar?CURRENT.parseBusbar(pc.busbar):null;if(bb)B.busbar=bb;}if(+pc.k>0)B.kFr4=+pc.k;if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z){B.zones=Z;/* block of every part: the placer keeps a circuit block together (plan.cohesion: 1 = bridge channels around their fixed FET cells, 2 = also the other blocks around their own centre) */if(plan.cohesion){Z.blockOf=Object.fromEntries(r.parts.filter(c=>c.block).map(c=>[c.ref,c.block]));Z.coh=+plan.cohesion||1;}}}
+  /* inner-layer current sharing: on by default for new plans (plan.capInner) — the phase / rail copper also runs on the inner signal layers, tied with vias; pcb.inner=off turns it off */if(innerOn(plan))B.innerPower=true;if(+pc.ozin>0)B.ozIn=+pc.ozin;if(pc.mask===true||/^(on|1|true|yes)$/i.test(String(pc.mask))){B.maskOpen=true;if(+pc.solder>0)B.solderT=+pc.solder;}{const bb=typeof CURRENT!=='undefined'&&CURRENT.parseBusbar?CURRENT.parseBusbar(pc.busbar):null;if(bb)B.busbar=bb;}if(+pc.k>0)B.kFr4=+pc.k;if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z){B.zones=Z;/* block of every part: the placer keeps a circuit block together (plan.cohesion: 1 = bridge channels around their fixed FET cells, 2 = also the other blocks around their own centre) */if(plan.cohesion){Z.blockOf=Object.fromEntries(r.parts.filter(c=>c.block).map(c=>[c.ref,c.block]));Z.coh=+plan.cohesion||1;}}}
   if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});
   // leg-return nets: the whole phase current still passes the node (one switch at a time) — placement pull and routing keep-out stay sized for it
   if(r.currFull&&Object.keys(r.currFull).length)B.netCurrentFull=r.currFull;
@@ -9515,7 +9516,7 @@ function variants(plan){
 // weighted pick: w = {price,feat,ext} in 0..1
 function recommend(vs,w){w=Object.assign({price:1,feat:1,ext:1},w||{});let best=null;vs.forEach(v=>{const s=v.score.price*w.price+v.score.feat*w.feat+v.score.ext*w.ext;v.total=Math.round(s/(w.price+w.feat+w.ext));if(!best||v.total>best.total)best=v;});return best;}
 function variantsText(vs){return vs.map(v=>`[${v.key}] ${v.label} (${v.tag}) · 예상 단가 약 $${v.m.price} (부품 $${v.m.partsPrice} + PCB $${v.m.cost.pcb} + 조립 $${v.m.cost.asm}${v.m.cost.grade?' + 등급 $'+v.m.cost.grade:''})${v.m.unknown?' (+미정 '+v.m.unknown+')':''} · 부품 ${v.m.parts}개 · 기능 ${v.m.feat} · 여유 핀 ${v.m.spare} · MCU ${v.m.mcu||'-'} · 손실 ${v.m.loss} W\n  ${v.diff.join(' · ')}`).join('\n');}
-return{motorCurrents,peakOf,LIB,MCUS,partGroups,GROUP_OF,shrink,shrinkText,LDO_S,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.merge([PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null),typeof KPINS!=='undefined'?PARTLIB.fromKpins(KPINS):[]]);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,costModel,PCB_COST,GRADE_K,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
+return{innerOn,motorCurrents,peakOf,LIB,MCUS,partGroups,GROUP_OF,shrink,shrinkText,LDO_S,partLookup:(mpn)=>{if(typeof PARTLIB==='undefined')return null;const lib=PARTLIB.merge([PARTLIB.fromBuiltin(typeof PARTS!=='undefined'?PARTS:null),typeof KPINS!=='undefined'?PARTLIB.fromKpins(KPINS):[]]);const r=PARTLIB.find(lib,mpn);if(r&&!(r.pins&&r.pins.length)){const kp=PARTLIB.pinoutFor(r.mpn,r.val,r.pkg);if(kp)r.pins=kp;}return r;},mcuKey,blockKey,newPlan,addBlock,setParam,removeBlock,planFrom,costModel,PCB_COST,GRADE_K,ldoToBuck,guessName,build,toBoard,summary,railOf,bom,planMetrics,variants,recommend,variantsText};
 })();
 
 
@@ -13367,7 +13368,10 @@ function powerFill(B,WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.p
     // net's full-current need, so one "유효 폭 / 필요 폭" figure still reads true. (The shared trunk is not rated separately.)
     let shared=false,topOk=false;if(!dir&&bs[0]&&bs[0].pairs&&bs[0].pairs.length&&CURRENT.wFor&&B.comps.some(c=>c.It>0&&c.Itx!==n&&c.It<WW[n].I&&c.pads.some(p=>p.net===n))){
       const E=CURRENT.env(B,{oz,dT});const It=ref=>{const c=B.comps.find(x=>x.ref===ref);return c&&c.It>0&&c.Itx!==n?Math.min(WW[n].I,c.It):WW[n].I;};const wN=Math.max(0.01,CURRENT.wFor(WW[n].I,E));let worst=Infinity,worstT=Infinity;
-      bs[0].pairs.forEach(p0=>{let w=bar,w0=0,seen=false;bs.forEach((b,i)=>{const q=(b.pairs||[]).find(x=>(x.a===p0.a&&x.b===p0.b)||(x.a===p0.b&&x.b===p0.a));if(q&&q.width!=null){seen=true;if(!q.open){w+=q.width*LW[i];if(!i)w0=q.width*LW[0];}}});if(!seen)return;
+      bs[0].pairs.forEach(p0=>{let w=bar,w0=0,seen=false;const qs=bs.map(b=>(b.pairs||[]).find(x=>(x.a===p0.a&&x.b===p0.b)||(x.a===p0.b&&x.b===p0.a)));
+        // a pair whose pads touch on the top layer (width null there) is joined directly: it is not rated — with inner layers in the list their
+        // projected width of 0 for such a pair used to count as the pair's width and the whole net read 0 mm
+        if(!qs[0]||qs[0].width==null)return;qs.forEach((q,i)=>{if(q&&q.width!=null){seen=true;if(!q.open){w+=q.width*LW[i];if(!i)w0=q.width*LW[0];}}});if(!seen)return;
         const k=CURRENT.wFor(Math.min(It(p0.a),It(p0.b)),E)/wN;worst=Math.min(worst,w/Math.max(k,0.05));worstT=Math.min(worstT,w0/Math.max(k,0.05));});
       if(isFinite(worst)){eff=+Math.min(worst,99).toFixed(2);shared=true;topOk=worstT>=PW.need[n];}}
     rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,shared:shared||undefined,topOk:topOk||undefined,layers:ws,lw:LW,ln:LN,bar:bar||undefined,necks:bs.map(b=>b.neck||null),open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.riseFor(eff,WW[n].I,CURRENT.env(B,{oz,dT})):null,pk:pk?{I:pk.I,t:pk.t,rise:!dir&&eff?CURRENT.peakRise(eff,pk.I,pk.t,{oz,tb:B.t}):null}:null,by:WW[n].by,terms:bs[0].terms});});
@@ -19008,7 +19012,7 @@ function npInit(){
 }
 /* capacity methods chosen in the design step: one-line summary and the effect on the width each layer has to provide */
 function npCapInfo(P){const pc=(P&&P.pcb)||{};const NL=+pc.layers||2;const st=PCB.STACKS[NL]||PCB.STACKS[2];const motor=!!(P&&P.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type)));
-  const oz=+pc.oz||(motor?2:1);const nIn=st.filter((r,i)=>i>0&&i<NL-1&&r==='sig').length;const inner=!!pc.inner&&nIn>0;
+  const oz=+pc.oz||(motor?2:1);const nIn=st.filter((r,i)=>i>0&&i<NL-1&&r==='sig').length;const inner=NEWPROJ.innerOn(P)&&nIn>0;
   const Bf={oz,copperLayers:NL,ozIn:+pc.ozin||0,innerPower:inner,maskOpen:!!pc.mask,solderT:+pc.solder||0,ipcStd:String(pc.std)==='2152'?'2152':undefined,busbar:CURRENT.parseBusbar(pc.busbar)};
   const bg=pc.tamb!=null&&pc.tamb!==''?CURRENT.budget(+pc.tamb,pc.tmax,pc.tmaxpk):null;const dT=+pc.dT||(bg?bg.dT:(motor?20:10));
   const I=P?Math.max(0,...P.blocks.filter(b=>/^(gdrv3|hbridge)$/.test(b.type)).map(b=>+b.params.i||0)):0;
@@ -19016,12 +19020,12 @@ function npCapInfo(P){const pc=(P&&P.pcb)||{};const NL=+pc.layers||2;const st=PC
   const wo=CURRENT.layerWeight(Bf,0,NL),wi=inner?CURRENT.layerWeight(Bf,1,NL):0;const mult=+((NL>2?2:1)*wo+nIn*wi).toFixed(2);const bar=CURRENT.busbarWidth(Bf);
   return{NL,oz,nIn,inner,Bf,dT,I,need,mult,bar,per:need?Math.max(0,+((need-bar)/mult).toFixed(2)):0,base:need?+(need/(NL>2?2:1)).toFixed(2):0,bg};}
 function npCapText(P){const c=npCapInfo(P);const M=CURRENT.methods(Object.assign({},c.Bf,{innerPower:c.inner}));
-  const L=[`${c.NL}층 · 외층 ${c.oz} oz · ΔT ${c.dT} °C${c.bg?` (주위 ${c.bg.tamb} °C)`:''} · IPC-${c.Bf.ipcStd||'2221'}`,`방법: ${M.length?M.join(' · '):'패턴 폭만'}${P&&P.pcb&&P.pcb.inner&&!c.nIn?' — 내층 병렬은 내층 신호층이 있는 6층 이상에서만 적용':''}`];
+  const L=[`${c.NL}층 · 외층 ${c.oz} oz · ΔT ${c.dT} °C${c.bg?` (주위 ${c.bg.tamb} °C)`:''} · IPC-${c.Bf.ipcStd||'2221'}`,`방법: ${M.length?M.join(' · '):'패턴 폭만'}${P&&NEWPROJ.innerOn(P)&&!c.nIn?' — 내층 병렬은 내층 신호층이 있는 6층 이상에서만 적용':''}`];
   if(c.need)L.push(`상시 ${c.I} A 필요 폭 ${c.need} mm → 층마다 ${c.per} mm (패턴 폭만: ${c.base} mm · 환산 ${c.mult}배${c.bar?` · 버스바 +${c.bar} mm`:''})`);
   return L.join('\n');}
 function npCapSync(){const P=NP.plan,pc=(P&&P.pcb)||{};const set=(id,v)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v==null?'':String(v);};if(!$('#capLayers'))return;
   set('#capLayers',pc.layers||2);set('#capOz',pc.oz||'');set('#capOzIn',pc.ozin||'');set('#capBus',pc.busbar||'');set('#capStd',String(pc.std)==='2152'?'2152':'');set('#capTamb',pc.tamb!=null?pc.tamb:'');
-  $('#capInner').checked=!!pc.inner;$('#capMask').checked=!!pc.mask;const c=npCapInfo(P);$('#capInner').disabled=!c.nIn;$('#capOzIn').disabled=!c.inner;
+  $('#capInner').checked=NEWPROJ.innerOn(P);$('#capMask').checked=!!pc.mask;const c=npCapInfo(P);$('#capInner').disabled=!c.nIn;$('#capOzIn').disabled=!c.inner;
   $('#capSum').textContent=npCapText(P);$('#capHint').textContent=' · '+(CURRENT.methods(Object.assign({},c.Bf,{innerPower:c.inner})).length?CURRENT.methods(Object.assign({},c.Bf,{innerPower:c.inner})).map(s=>s.split(' (')[0]).join(' · '):'패턴 폭만');}
 function npRender(){
   const P=NP.plan;$('#npPlanHint').textContent=AIM.mode==='ai'?'AI: Claude가 블록·인터페이스를 설계 (보는 사람의 사용량)':'결정론: 낱말 규칙으로 블록 설계';

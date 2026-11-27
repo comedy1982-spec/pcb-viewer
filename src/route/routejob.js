@@ -248,7 +248,10 @@ function powerFill(B,WW,clr,via){if(typeof AUTOROUTE==='undefined'||!AUTOROUTE.p
     // net's full-current need, so one "유효 폭 / 필요 폭" figure still reads true. (The shared trunk is not rated separately.)
     let shared=false,topOk=false;if(!dir&&bs[0]&&bs[0].pairs&&bs[0].pairs.length&&CURRENT.wFor&&B.comps.some(c=>c.It>0&&c.Itx!==n&&c.It<WW[n].I&&c.pads.some(p=>p.net===n))){
       const E=CURRENT.env(B,{oz,dT});const It=ref=>{const c=B.comps.find(x=>x.ref===ref);return c&&c.It>0&&c.Itx!==n?Math.min(WW[n].I,c.It):WW[n].I;};const wN=Math.max(0.01,CURRENT.wFor(WW[n].I,E));let worst=Infinity,worstT=Infinity;
-      bs[0].pairs.forEach(p0=>{let w=bar,w0=0,seen=false;bs.forEach((b,i)=>{const q=(b.pairs||[]).find(x=>(x.a===p0.a&&x.b===p0.b)||(x.a===p0.b&&x.b===p0.a));if(q&&q.width!=null){seen=true;if(!q.open){w+=q.width*LW[i];if(!i)w0=q.width*LW[0];}}});if(!seen)return;
+      bs[0].pairs.forEach(p0=>{let w=bar,w0=0,seen=false;const qs=bs.map(b=>(b.pairs||[]).find(x=>(x.a===p0.a&&x.b===p0.b)||(x.a===p0.b&&x.b===p0.a)));
+        // a pair whose pads touch on the top layer (width null there) is joined directly: it is not rated — with inner layers in the list their
+        // projected width of 0 for such a pair used to count as the pair's width and the whole net read 0 mm
+        if(!qs[0]||qs[0].width==null)return;qs.forEach((q,i)=>{if(q&&q.width!=null){seen=true;if(!q.open){w+=q.width*LW[i];if(!i)w0=q.width*LW[0];}}});if(!seen)return;
         const k=CURRENT.wFor(Math.min(It(p0.a),It(p0.b)),E)/wN;worst=Math.min(worst,w/Math.max(k,0.05));worstT=Math.min(worstT,w0/Math.max(k,0.05));});
       if(isFinite(worst)){eff=+Math.min(worst,99).toFixed(2);shared=true;topOk=worstT>=PW.need[n];}}
     rep.push({net:n,I:WW[n].I,width:dir?'직결':eff,shared:shared||undefined,topOk:topOk||undefined,layers:ws,lw:LW,ln:LN,bar:bar||undefined,necks:bs.map(b=>b.neck||null),open:bs[0].open,need,ok:dir||eff>=need*0.95,rise:!dir&&eff?CURRENT.riseFor(eff,WW[n].I,CURRENT.env(B,{oz,dT})):null,pk:pk?{I:pk.I,t:pk.t,rise:!dir&&eff?CURRENT.peakRise(eff,pk.I,pk.t,{oz,tb:B.t}):null}:null,by:WW[n].by,terms:bs[0].terms});});
