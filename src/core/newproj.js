@@ -461,7 +461,7 @@ function ecuConnectorIO(plan,parts,curr,peak,warn){
     oj.filter(c=>c.val!=='홀').forEach(c=>Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>{const net=c.pins[k];if(net&&!so.some(s=>s.net===net))so.push({name:(c.pinNames&&c.pinNames[k])||c.val+k,net,n:need(net),load:true});}));
     oj.filter(c=>c.val==='홀').forEach(c=>Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>{const nm0=(c.pinNames&&c.pinNames[k])||'';so.push({name:{H1:'HALL_U',H2:'HALL_V',H3:'HALL_W',GND:'HALL_GND'}[nm0]||nm0,net:c.pins[k],n:1});}));
     // discrete FETs beside each output need a wider cell than one connector pitch pair: three spare columns between outputs (14 mm)
-    const P=pack(so,FET1[String(b.params.fet||'')]?3:1);if(!P){fail=true;return;}outs.push({P,b,oj,bi});});
+    /* one FET per switch: the cell is one FET narrower, two spare columns (10.5 mm) are enough and the connector drops a size */const nF=parts.filter(c=>c.block===b.id&&c.val===String(b.params.fet||'')).length;const P=pack(so,FET1[String(b.params.fet||'')]?(nF>6?3:2):1);if(!P){fail=true;return;}outs.push({P,b,oj,bi});});
   if(fail){warn.push('ECU 출력 커넥터: 접점이 MX150 20핀을 넘어 바꾸지 않았습니다');return;}
   const gone=inJ.concat(ignJ,canJ,...outs.map(o=>o.oj));const at=parts.indexOf(inJ[0]);gone.forEach(c=>{const i=parts.indexOf(c);if(i>=0)parts.splice(i,1);});
   const nu=[mk('ECU-IN',Pin,pi.id,'ECU 입력 커넥터')].concat(outs.map((o,i)=>mk(outs.length>1?'ECU-OUT'+(i+1):'ECU-OUT',o.P,o.b.id,`ECU 출력 커넥터${outs.length>1?' '+(i+1):''} (모터)`)));parts.splice(Math.max(0,Math.min(at,parts.length)),0,...nu);
