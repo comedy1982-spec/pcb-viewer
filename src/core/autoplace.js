@@ -407,6 +407,11 @@ function place(B,opts){
   const bbI=(i,out)=>{const b=G[i].bb[V[i]];out[0]=X[i]+b[0];out[1]=Y[i]+b[1];out[2]=X[i]+b[2];out[3]=Y[i]+b[3];return out;};
   const A=[0,0,0,0],Bq=[0,0,0,0];
   const conflict=(s,t)=>s==='both'||t==='both'||s===t;
+  // nothing on the far side under a fine-pitch IC (≤ 0.65 mm, 16 pins or more) or within 1 mm of it (plans with underKeep): every pin that
+  // leaves the row needs a through via right there, and so does the exposed pad. With parts underneath those vias have no place — on the
+  // 48 V board six passives sat under the PMIC, its µC-rail pin could not be fanned out and GND stubs ended 0.10 mm from pads
+  const NU=!!B.underKeep&&opts.under!==false;const nuG=opts.underGap!=null?+opts.underGap:1.0;const isNu=o=>!!(o&&o.ic&&!o.conn&&o.pitch>0&&o.pitch<0.66&&o.c.pads.length>=16);
+  const under=(s,t,o1,o2)=>NU&&s!==t&&s!=='both'&&t!=='both'&&(isNu(o1)||isNu(o2));
   const Dth=0.38*diag,Dhs=0.25*diag,Dn=Math.min(30,0.3*diag);
   let wOv=5;const halo=i=>ROLE[i].halo*st.halo;
   // fan-out lane around fine-pitch ICs (≤ 0.65 mm pitch): 2.3 mm to any other part — room for the escape tracks and their vias
@@ -418,6 +423,7 @@ function place(B,opts){
   function pairCost(i,b,sb,hb,ob2){ // i movable; b = box of the other part, ob2 = role of the other (or null)
     bbI(i,A);let c=0;
     if(conflict(sideOf(i),sb)){let h=halo(i)+hb;if(ob2&&TG.size){const t=TG.get(ROLE[i]._id*100000+ob2._id);if(t!=null)h=t;}const ox=(A[2]<b[2]?A[2]:b[2])-(A[0]>b[0]?A[0]:b[0])+h;if(ox>0){const oy=(A[3]<b[3]?A[3]:b[3])-(A[1]>b[1]?A[1]:b[1])+h;if(oy>0){const m=ox<oy?ox:oy;c+=wOv*(ox*oy+m*m);}}}
+    else if(NU&&ob2&&under(sideOf(i),sb,ROLE[i],ob2)){const ox=(A[2]<b[2]?A[2]:b[2])-(A[0]>b[0]?A[0]:b[0])+nuG;if(ox>0){const oy=(A[3]<b[3]?A[3]:b[3])-(A[1]>b[1]?A[1]:b[1])+nuG;if(oy>0){const m=ox<oy?ox:oy;c+=wOv*(ox*oy+m*m);}}}
     if(ob2&&ob2._q){const o=ROLE[i];if(!o._q)return c;
       const th=o._h&&(ob2._h||ob2.hs)||ob2._h&&o.hs,nz=(o.noisy&&ob2.sens)||(o.sens&&ob2.noisy);if(!th&&!nz)return c;
       const dx=(A[0]+A[2]-b[0]-b[2])/2,dy=(A[1]+A[3]-b[1]-b[3])/2,d=Math.sqrt(dx*dx+dy*dy);
@@ -509,8 +515,8 @@ function place(B,opts){
     const si=sideOf(i);const gap=(q,o2)=>{const t=o2&&TG.get(ROLE[i]._id*100000+o2._id);
       // next to a fine-pitch IC keep a fan-out lane even when space is tight (vias and escape tracks need it)
       const fl=Math.max(0.2,laneH(i,o2,t));return Math.max(fl,t!=null?t*Math.max(f,0.7):(halo(i)+q)*f);};
-    for(const q of obst){if(!conflict(si,q.side))continue;const g=gap(q.halo,q.o);if(A[0]<q.bb[2]+g&&q.bb[0]<A[2]+g&&A[1]<q.bb[3]+g&&q.bb[1]<A[3]+g)return false;}
-    for(const j of placed){if(!conflict(si,sideOf(j)))continue;bbI(j,Bq);const g=gap(halo(j),ROLE[j]);if(A[0]<Bq[2]+g&&Bq[0]<A[2]+g&&A[1]<Bq[3]+g&&Bq[1]<A[3]+g)return false;}
+    for(const q of obst){if(!conflict(si,q.side)){if(under(si,q.side,ROLE[i],q.o)&&A[0]<q.bb[2]+nuG&&q.bb[0]<A[2]+nuG&&A[1]<q.bb[3]+nuG&&q.bb[1]<A[3]+nuG)return false;continue;}const g=gap(q.halo,q.o);if(A[0]<q.bb[2]+g&&q.bb[0]<A[2]+g&&A[1]<q.bb[3]+g&&q.bb[1]<A[3]+g)return false;}
+    for(const j of placed){if(!conflict(si,sideOf(j))){if(under(si,sideOf(j),ROLE[i],ROLE[j])){bbI(j,Bq);if(A[0]<Bq[2]+nuG&&Bq[0]<A[2]+nuG&&A[1]<Bq[3]+nuG&&Bq[1]<A[3]+nuG)return false;}continue;}bbI(j,Bq);const g=gap(halo(j),ROLE[j]);if(A[0]<Bq[2]+g&&Bq[0]<A[2]+g&&A[1]<Bq[3]+g&&Bq[1]<A[3]+g)return false;}
     return true;};
   for(const i of order){const x0=snap(X[i]),y0=snap(Y[i]);let done=false;
     for(const f of[1,0.6,0]){

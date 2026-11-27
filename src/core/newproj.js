@@ -329,7 +329,7 @@ const BLOCK_ALIAS={dcdc:'buck',smps:'buck',switching:'buck',power:'pwr_in',pwr:'
 const blockKey=s=>{const k=String(s||'').toLowerCase();return LIB[k]?k:BLOCK_ALIAS[k]||null;};
 
 /* ---------- plan ---------- */
-function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2,connGap:true,cohesion:1};}
+function newPlan(name){return{name:name||'새 프로젝트',req:'',blocks:[],board:null,seq:0,strategy:'balanced',rstFix:true,curModel:2,connGap:true,cohesion:1,underKeep:true};}
 function addBlock(plan,type,params){const k=blockKey(type);if(!k)throw new Error(`블록: ${Object.keys(LIB).join(', ')}`);const L=LIB[k];const p={};Object.entries(L.params).forEach(([n,d])=>{p[n]=d.def;});
   Object.entries(params||{}).forEach(([n,v])=>{if(!(n in L.params))throw new Error(`${k} 블록 파라미터: ${Object.keys(L.params).join(', ')||'(없음)'}`);p[n]=v;});
   if(k==='mcu'&&plan.blocks.some(b=>b.type==='mcu'))throw new Error('MCU는 하나만 넣을 수 있습니다 (set으로 바꾸기)');
@@ -1014,7 +1014,7 @@ function toBoard(plan,opts){opts=opts||{};const r=build(plan);const B=PCB.finali
    const mbs=plan.blocks.filter(b=>/^(gdrv3|hbridge|dcmotor|bldc)$/.test(b.type));const I0=mbs.reduce((a,b)=>a+(+b.params.i||0),0);if(I0>0){B.lossI0=I0;B.lossIpk=mbs.reduce((a,b)=>a+peakOf(b.params,+b.params.i||0).Ipk,0);B.lossTpk=Math.max(...mbs.map(b=>peakOf(b.params,+b.params.i||0).tpk));}}
   r.groups=partGroups(plan,r.parts);
   // copper weight / allowed temperature rise for the current-based widths: motor boards default to 2 oz · ΔT 20 °C
-  const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(plan.curModel===2)B.curModel=2;if(String(pc.std)==='2152')B.ipcStd='2152';if(+pc.plane>0)B.planeDist=+pc.plane;
+  const motor=plan.blocks.some(b=>/^(gdrv3|hbridge)$/.test(b.type));const pc=plan.pcb||{};B.oz=+pc.oz||(motor?2:1);B.dT=+pc.dT||(motor?20:10);if(plan.curModel===2)B.curModel=2;if(plan.underKeep===true)B.underKeep=true;if(String(pc.std)==='2152')B.ipcStd='2152';if(+pc.plane>0)B.planeDist=+pc.plane;
   // capacity methods chosen at design time (CURRENT, capacity methods)
   if(pc.inner===true||/^(on|1|true|yes)$/i.test(String(pc.inner)))B.innerPower=true;if(+pc.ozin>0)B.ozIn=+pc.ozin;if(pc.mask===true||/^(on|1|true|yes)$/i.test(String(pc.mask))){B.maskOpen=true;if(+pc.solder>0)B.solderT=+pc.solder;}{const bb=typeof CURRENT!=='undefined'&&CURRENT.parseBusbar?CURRENT.parseBusbar(pc.busbar):null;if(bb)B.busbar=bb;}if(+pc.k>0)B.kFr4=+pc.k;if(typeof AUTOPLACE!=='undefined'&&AUTOPLACE.floorplan&&plan.zones!==false&&(plan.pcb||{}).zones!==false){const Z=AUTOPLACE.floorplan(B,r.groups,{template:plan.zoneTemplate});if(Z){B.zones=Z;/* block of every part: the placer keeps a circuit block together (plan.cohesion: 1 = bridge channels around their fixed FET cells, 2 = also the other blocks around their own centre) */if(plan.cohesion){Z.blockOf=Object.fromEntries(r.parts.filter(c=>c.block).map(c=>[c.ref,c.block]));Z.coh=+plan.cohesion||1;}}}
   if(r.curr&&Object.keys(r.curr).length)B.netCurrent=Object.assign({},r.curr,B.netCurrent||{});

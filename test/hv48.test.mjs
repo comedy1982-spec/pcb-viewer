@@ -94,3 +94,25 @@ test('48 V single-channel BLAC example (A81481 · AMT49100 · 12 × NVTFS6H850N,
   const w = Object.fromEntries(B.powerReport.nets.map(n => [n.net, n]));['PH_U', 'PH_V', 'PH_W'].forEach(n => assert.ok(w[n].ok && w[n].width >= 6.14, n + ' ' + w[n].width));assert.ok(B.powerReport.nets.every(n => n.ok));
   assert.equal(B.powerReport.viaChk.filter(v => !v.ok).length, 0);assert.ok(B.comps.some(c => c.val === 'A81481'));assert.equal(B.comps.filter(c => c.val === 'NVTFS6H850N').length, 12);
 });
+
+test('double-sided placement keeps the far side under fine-pitch ICs clear (plan.underKeep): nothing on the far side under the PMIC, the MCU or the gate driver', () => {
+  const L = load();const { NEWPROJ, AUTOPLACE } = L;
+  const mk = keep => { const P = JSON.parse(JSON.stringify(L.SNAP_B48S.plan));P.board = { w: 90, h: 62 };if (keep) P.underKeep = true;else delete P.underKeep;
+    const { B } = NEWPROJ.toBoard(P, { place: false });B.copperLayers = 8;AUTOPLACE.place(B, { scratch: true, strategy: 'compact', seed: 1, both: true, effort: 0.5 });return B; };
+  const under = B => { const ics = B.comps.filter(c => c.pads.length >= 16 && /A81481|AMT49100|TC364/.test(c.val));assert.equal(ics.length, 3);const hit = [];const sd = c => c.side === 'B' ? 'B' : 'T';
+    B.comps.forEach(c => ics.forEach(u => { if (c !== u && sd(c) !== sd(u) && !c.pads.some(p => p.drill) && c.bb[0] < u.bb[2] && u.bb[0] < c.bb[2] && c.bb[1] < u.bb[3] && u.bb[1] < c.bb[3]) hit.push(c.ref + '/' + u.ref); }));return { hit, bot: B.comps.filter(c => c.side === 'B').length }; };
+  const a = under(mk(false)), b = under(mk(true));
+  assert.ok(a.hit.length >= 3, 'without the rule parts land under the ICs: ' + a.hit.join(' '));assert.equal(b.hit.length, 0, 'with the rule: ' + b.hit.join(' '));assert.ok(b.bot >= 25, 'parts still go to the bottom: ' + b.bot);
+  assert.equal(NEWPROJ.newPlan('x').underKeep, true);
+});
+
+test('48 V single-channel BLAC example, double-sided (8 layers, 90 × 62, 33 parts on the bottom) restores: nothing open, DRC 0, nothing on the far side under the fine-pitch ICs', () => {
+  const L = load();const S = L.SNAP_B48D;assert.equal(S.meta.W, 90);assert.equal(S.meta.H, 62);assert.equal(S.plan.underKeep, true);
+  const { B, r } = restorePlanSnap(L, S);assert.equal(r.missing.length, 0);assert.equal(B.comps.length, 132);assert.equal(B.comps.filter(c => c.side === 'B').length, 33);
+  assert.equal(L.PCBEDIT.drc(B).length, 0);assert.equal(L.PCBEDIT.ratsnest(B).length, 0);assert.ok(B.powerReport.nets.every(n => n.ok));assert.equal(B.powerReport.viaChk.filter(v => !v.ok).length, 0);
+  ['PH_U', 'PH_V', 'PH_W'].forEach(n => { const w = B.powerReport.nets.find(x => x.net === n);assert.ok(w.width >= 6.14, n + ' ' + w.width); });
+  const sd = c => c.side === 'B' ? 'B' : 'T';const ics = B.comps.filter(c => /A81481|AMT49100|TC364/.test(c.val));assert.equal(ics.length, 3);
+  B.comps.forEach(c => ics.forEach(u => { if (c !== u && sd(c) !== sd(u) && !c.pads.some(p => p.drill)) assert.ok(!(c.bb[0] < u.bb[2] && u.bb[0] < c.bb[2] && c.bb[1] < u.bb[3] && u.bb[1] < c.bb[3]), `${c.ref} under ${u.ref}`); }));
+  // the FETs and the gate driver stay on top
+  assert.ok(B.comps.filter(c => /NVTFS6H850N|AMT49100/.test(c.val)).every(c => c.side !== 'B'));
+});
