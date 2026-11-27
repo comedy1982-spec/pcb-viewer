@@ -116,3 +116,13 @@ test('48 V single-channel BLAC example, double-sided (8 layers, 90 × 62, 33 par
   // the FETs and the gate driver stay on top
   assert.ok(B.comps.filter(c => /NVTFS6H850N|AMT49100/.test(c.val)).every(c => c.side !== 'B'));
 });
+
+test('48 V single-channel BLAC example with inner-layer current sharing (8 layers, 82 × 62) restores: nothing open, DRC 0, the phases have continuous copper on the reserved inner layer', () => {
+  const L = load();const S = L.SNAP_B48I;assert.equal(S.meta.W, 82);assert.equal(S.meta.H, 62);assert.equal(S.plan.capInner, true);assert.equal(S.cap.inner, 1);
+  const { B, r } = restorePlanSnap(L, S);assert.equal(r.missing.length, 0);assert.equal(B.innerPower, true);assert.equal(B.comps.length, 132);assert.equal(B.comps.filter(c => c.side === 'B').length, 0);
+  assert.equal(L.PCBEDIT.drc(B).length, 0);assert.equal(L.PCBEDIT.ratsnest(B).length, 0);assert.ok(B.powerReport.nets.every(n => n.ok));assert.equal(B.powerReport.viaChk.filter(v => !v.ok).length, 0);
+  // layers of the report: top, inner L3, inner L6, bottom — L6 (index 2) is the reserved one and carries a lane's width on every phase
+  ['PH_U', 'PH_V', 'PH_W'].forEach(n => { const w = B.powerReport.nets.find(x => x.net === n);assert.equal(w.layers.length, 4, n);assert.ok(w.layers[2] >= 2.5, `${n} inner L6 ${w.layers[2]}`);assert.ok(w.layers[0] > 0 && w.layers[3] > 0);assert.ok(w.width >= 6.14); });
+  // the copper is really there: fill pieces of each phase on the inner signal layer next to the bottom
+  const k = L.PCB.cuKeys(B)[5];['PH_U', 'PH_V', 'PH_W'].forEach(n => assert.ok(B.layers[k + '.cu'].filter(p => p.fill && p.net === n).length > 100, n + ' fill on ' + k));
+});

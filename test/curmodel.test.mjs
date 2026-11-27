@@ -58,6 +58,8 @@ test('capacity methods other than a wider pattern: inner layers, mask opening + 
   const Bd = board(L, 2, {});assert.equal(Bd.innerPower, true);assert.ok(!Bd.maskOpen && !Bd.busbar);assert.equal(L.NEWPROJ.newPlan('x').capInner, true);
   assert.equal(L.NEWPROJ.innerOn({ capInner: true, pcb: { inner: false } }), false);assert.equal(L.NEWPROJ.innerOn({ capInner: true, pcb: { inner: 'off' } }), false);assert.equal(L.NEWPROJ.innerOn({ pcb: {} }), false);assert.equal(L.NEWPROJ.innerOn({ pcb: { inner: 'on' } }), true);assert.equal(L.NEWPROJ.innerOn({ capInner: true }), true);
   const B0 = board(L, 2, {}, { inner: 'off' });assert.ok(!B0.innerPower && !B0.maskOpen && !B0.busbar);
+  // how many inner signal layers the router reserves for the power copper (pcb.inres; default 1, decided in the route job)
+  assert.equal(Bd.innerReserve, undefined);assert.equal(board(L, 2, {}, { layers: 8, inres: 2 }).innerReserve, 2);assert.equal(board(L, 2, {}, { layers: 8, inres: '0' }).innerReserve, 0);
   const S = L.BOARDSNAP.save(B, {});assert.equal(S.cap.inner, 1);assert.equal(S.cap.mask, 1);assert.equal(S.cap.busbar.t, 1);
   const S0 = L.BOARDSNAP.save(B0, {});assert.equal(S0.cap, undefined);
   const k0 = L.PCB.cuKeys(B)[0];B.layers[k0 + '.cu'].push({ t: 'poly', rings: [[[10, 10], [14, 10], [14, 12], [10, 12]]], rect: [10, 10, 14, 12], net: 'PH_U', fill: true });

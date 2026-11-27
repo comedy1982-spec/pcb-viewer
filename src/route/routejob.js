@@ -118,7 +118,8 @@ async function routeJob(B,a,ui){
       const pw1=first.filter(n=>PW.route.includes(n)),st1=first.filter(n=>!PW.route.includes(n));
       // power nets on the top layer only (their width comes from the fill there), then the stage's drive nets anywhere
       const NL0=PCB.cuKeys(B).length,avB=ml?[{net:null,r:0,layers:[NL0-1],shapes:[{k:'rect',x:(R0[0]+R0[2])/2,y:(R0[1]+R0[3])/2,hw:(R0[2]-R0[0])/2,hh:(R0[3]-R0[1])/2,ang:0,L:[NL0-1]}]}]:null;
-      const NLl=PCB.cuKeys(B).length,avL=(B.powerLanes||[]).filter(c=>B.nets[c.net]).map(c=>{const b=c.rect,L=ml?[0,NLl-1]:[0];return{net:c.net,r:0.2,layers:L,shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L}]};});
+      const NLl=PCB.cuKeys(B).length;/* reserved inner layer(s) for the power copper (B.innerPower, see below): the stage's own drive nets keep off the lanes there too */const rs0=(()=>{if(!ml||!B.innerPower)return[];const inL=PCB.stackOf(B).map((x,i)=>i>0&&i<NLl-1&&x&&x.role==='sig'?i:-1).filter(i=>i>0);const want=a['inner-reserve']!=null?+a['inner-reserve']:(B.innerReserve!=null?+B.innerReserve:1);return inL.slice(Math.max(0,inL.length-Math.max(0,Math.min(inL.length,want|0))));})();
+      const avL=(B.powerLanes||[]).filter(c=>B.nets[c.net]).map(c=>{const b=c.rect,L=ml?[0].concat(rs0,[NLl-1]):[0];return{net:c.net,r:0.2,layers:L,shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L}]};});
       // nothing of the stage runs along a bridge FET on the top layer: a shunt-node tap (PH_V_SNS to its sense parts) routed up the
       // FETs' output side cut two phases' exits from 3.5 to 0.6 mm, and a gate via between a FET's pad rows sits in the copper that
       // joins its output pads to the lane — the FET bodies cost extra on the top layer for the stage's power and drive nets
@@ -134,6 +135,15 @@ async function routeJob(B,a,ui){
     // multilayer: the bottom layer of the whole stage ∪ input region carries phase / supply copper — every other net pays
     // to cross it there (it has the inner signal layers), so a single signal track cannot cut the phase fill in two
     if(ml){const r=PW.rect;avoid.push({net:null,r:0,layers:[NLc-1],shapes:[{k:'rect',x:(r[0]+r[2])/2,y:(r[1]+r[3])/2,hw:(r[2]-r[0])/2,hh:(r[3]-r[1])/2,ang:0,L:[NLc-1]}]});}
+    // inner-layer current sharing (B.innerPower): the fill on the inner signal layers only gets what the signals left, and a gate or
+    // sense track across a phase lane cut it to nothing (measured: 0–0.6 mm equivalent per phase). Reserve the lane rectangles and
+    // the corridor of each routed power net on the inner signal layer(s) next to the bottom — other nets pay to cross there and use
+    // the other inner layer. --inner-reserve 0 | 1 (default) | 2 = how many inner signal layers; pcb.inres in the plan.
+    if(ml&&B.innerPower){const SKr=PCB.stackOf(B);const inL=SKr.map((x,i)=>i>0&&i<NLc-1&&x&&x.role==='sig'?i:-1).filter(i=>i>0);const want=a['inner-reserve']!=null?+a['inner-reserve']:(B.innerReserve!=null?+B.innerReserve:1);
+      const rs=inL.slice(Math.max(0,inL.length-Math.max(0,Math.min(inL.length,want|0))));
+      if(rs.length){(B.powerLanes||[]).forEach(c=>{if(!B.nets[c.net])return;const b=c.rect;avoid.push({net:c.net,r:0.2,layers:rs,shapes:[{k:'rect',x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,hw:(b[2]-b[0])/2,hh:(b[3]-b[1])/2,ang:0,L:rs}]});});
+        PW.route.forEach(n=>{const sh=SS.filter(q=>q.net===n&&q.L.includes(0)&&!q.via&&!q.hole&&inR(q)).map(q=>Object.assign({},q,{L:rs}));if(sh.length)avoid.push({net:n,r:Math.min(3,(WW[n].ipcFull||PW.need[n])/2),layers:rs,shapes:sh});});
+        B._innerRes=rs.slice();lines.push(`내층 전류 통로 예약: L${rs.map(l=>l+1).join(' · L')} (상 통로 · 전력 넷 주변을 다른 넷이 피해 갑니다)`);}else B._innerRes=null;}
     B._avoid=avoid;
     const done=new Set(first.filter(n=>!AUTOROUTE.openNets(B,x=>x===n).length));nets=nets.filter(n=>!done.has(n));}
   else{B._avoid=null;B._nb=null;}
