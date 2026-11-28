@@ -138,3 +138,12 @@ test('48 V single-channel BLAC example for 6 A (8 layers, 84 × 66): right-sized
   assert.equal(L.PCBEDIT.drc(B).length, 0);assert.equal(L.PCBEDIT.ratsnest(B).length, 0);assert.ok(B.powerReport.nets.every(n => n.ok));assert.equal(B.powerReport.viaChk.filter(v => !v.ok).length, 0);
   ['PH_U', 'PH_V', 'PH_W'].forEach(n => { const w = B.powerReport.nets.find(x => x.net === n);assert.ok(w.need < 1.5 && w.width > 5, `${n} ${w.width} / ${w.need}`); });
 });
+
+test('48 V single-channel BLAC example for 6 A, double-sided (8 layers, 80 × 62, 29 parts on the bottom) restores clean', () => {
+  const L = load();const S = L.SNAP_B48A6D;assert.equal(S.meta.W, 80);assert.equal(S.meta.H, 62);assert.equal(S.plan.underKeep, true);
+  const { B, r } = restorePlanSnap(L, S);assert.equal(r.missing.length, 0);assert.equal(B.comps.length, 113);assert.equal(B.comps.filter(c => c.side === 'B').length, 29);
+  assert.equal(L.PCBEDIT.drc(B).length, 0);assert.equal(L.PCBEDIT.ratsnest(B).length, 0);assert.ok(B.powerReport.nets.every(n => n.ok));assert.equal(B.powerReport.viaChk.filter(v => !v.ok).length, 0);
+  assert.ok(B.comps.filter(c => /NVTFS6H850N|AMT49100|ECU-/.test(c.val)).every(c => c.side !== 'B'));
+  const sd = c => c.side === 'B' ? 'B' : 'T';const ics = B.comps.filter(c => /A81481|AMT49100|TC364/.test(c.val));
+  B.comps.forEach(c => ics.forEach(u => { if (c !== u && sd(c) !== sd(u) && !c.pads.some(p => p.drill)) assert.ok(!(c.bb[0] < u.bb[2] && u.bb[0] < c.bb[2] && c.bb[1] < u.bb[3] && u.bb[1] < c.bb[3]), `${c.ref} under ${u.ref}`); }));
+});
