@@ -70,6 +70,7 @@ ${script(read('src/app/sample-dadu8e.js'))}
 ${script(read('src/app/sample-b48s.js'))}
 ${script(read('src/app/sample-b48d.js'))}
 ${script(read('src/app/sample-b48i.js'))}
+${script(read('src/app/sample-b48a6.js'))}
 ${script(stripExport(read('src/core/housing.js')))}
 ${script(stripExport(read('src/core/text2cad.js')))}
 ${script(stripExport(read('src/core/stepw.js')))}

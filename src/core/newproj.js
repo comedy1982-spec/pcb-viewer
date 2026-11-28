@@ -400,17 +400,17 @@ function motorPower0(ctx,I,V,fet){const F=fet&&FET2[fet];const F1=fet&&FET1[fet]
     // parallel count from the loss one small package can shed (≈ 1 W on 2 oz copper with thermal vias): each switch carries I/√2
     // RMS (×1.2 for switching), RDS(on) ×1.6 hot → P ≈ (I/par)² · RDS · 0.6 · 1.6
     const pq=n=>((I/n)**2)*F1.rds*0.6*1.6+0.02;let par=1;while(par<4&&pq(par)>F1.pmax)par++;
-    if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['2512','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
+    if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['2512','2010','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
     if(pq(par)>F1.pmax&&ctx.warn)ctx.warn(`${fet}: 상전류 ${I} A — ${par}개 병렬에서도 FET당 ${pq(par).toFixed(1)} W, 방열 설계 필요`);
     return{f:{mpn:fet,label:F1.label,rds:F1.rds,qg:F1.qg},f1:Object.assign({mpn:fet},F1),par,Pq:+pq(par).toFixed(2),I};}
   if(F1&&ctx.warn)ctx.warn(`${fet}: ${F1.v} V 정격 — VM ${V} V에 내압 여유 부족, 다른 FET로 대체`);
   if(F&&F.v>=fetVneed(V)){const par=Math.max(1,Math.ceil(I/F.i));if(I>F.i*0.66*par&&ctx.warn)ctx.warn(`${fet}: 상전류 ${I} A — 정격 ${F.i} A(케이스 25~100 °C)의 66 % 초과, 방열(써멀 비아 · 하우징 접촉) 확인`);const Pq=+(((I/par)**2)*F.rds*0.6+0.02).toFixed(2);
-    if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['2512','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
+    if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['2512','2010','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
     if(par>2&&ctx.warn)ctx.warn(`${fet}: 상전류 ${I} A에 상마다 ${par}개 병렬 — 더 큰 정격(하프브리지 IAUC60N04S6N050H 또는 단일 FET) 권장`);
     return{f:{mpn:fet,label:F.label,rds:F.rds},f2:Object.assign({mpn:fet},F),par,Pq,I};}
   if(F&&ctx.warn)ctx.warn(`${fet}: ${F.v} V 정격 — VM ${V} V에 내압 여유 부족, 단일 FET로 대체`);
   const f=FETS.find(x=>x.v>=fetVneed(V))||FETS[FETS.length-1];const par=I<=25?1:I<=60?2:I<=100?3:4;
-  if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['TO-252','2512','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
+  if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined'){['TO-252','2512','2010','SOT-23-6','HDR-1x5'].forEach(k=>FPGEN.ensure(PCB,k,k==='SOT-23-6'?6:k==='HDR-1x5'?5:0));termFp(2);termFp(3);}
   const Pq=+(((I/par)**2)*f.rds*0.6+0.02).toFixed(2);return{f,par,Pq,I};}
 // screw terminal: 5.08 mm pitch (≤ ~15 A), 7.62 mm pitch for higher currents (wider copper between the pins, larger pad / drill)
 const termName=(n,I)=>`TERM-${n}-${I>15?'7.62':'5.08'}`;
@@ -461,7 +461,7 @@ function ecuConnectorIO(plan,parts,curr,peak,warn){
     oj.filter(c=>c.val!=='홀').forEach(c=>Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>{const net=c.pins[k];if(net&&!so.some(s=>s.net===net))so.push({name:(c.pinNames&&c.pinNames[k])||c.val+k,net,n:need(net),load:true});}));
     oj.filter(c=>c.val==='홀').forEach(c=>Object.keys(c.pins).sort((a,b)=>a-b).forEach(k=>{const nm0=(c.pinNames&&c.pinNames[k])||'';so.push({name:{H1:'HALL_U',H2:'HALL_V',H3:'HALL_W',GND:'HALL_GND'}[nm0]||nm0,net:c.pins[k],n:1});}));
     // discrete FETs beside each output need a wider cell than one connector pitch pair: three spare columns between outputs (14 mm)
-    /* one FET per switch: the cell is one FET narrower, two spare columns (10.5 mm) are enough and the connector drops a size */const nF=parts.filter(c=>c.block===b.id&&c.val===String(b.params.fet||'')).length;const P=pack(so,FET1[String(b.params.fet||'')]?(nF>6?3:2):1);if(!P){fail=true;return;}outs.push({P,b,oj,bi});});
+    /* one FET per switch: the cell is one FET narrower, two spare columns (10.5 mm) are enough and the connector drops a size */const nF=parts.filter(c=>c.block===b.id&&c.val===String(b.params.fet||'')).length;/* plan.outGap overrides the spare columns */const P=pack(so,FET1[String(b.params.fet||'')]?(plan.outGap!=null?+plan.outGap:nF>6?3:2):1);if(!P){fail=true;return;}outs.push({P,b,oj,bi});});
   if(fail){warn.push('ECU 출력 커넥터: 접점이 MX150 20핀을 넘어 바꾸지 않았습니다');return;}
   const gone=inJ.concat(ignJ,canJ,...outs.map(o=>o.oj));const at=parts.indexOf(inJ[0]);gone.forEach(c=>{const i=parts.indexOf(c);if(i>=0)parts.splice(i,1);});
   const nu=[mk('ECU-IN',Pin,pi.id,'ECU 입력 커넥터')].concat(outs.map((o,i)=>mk(outs.length>1?'ECU-OUT'+(i+1):'ECU-OUT',o.P,o.b.id,`ECU 출력 커넥터${outs.length>1?' '+(i+1):''} (모터)`)));parts.splice(Math.max(0,Math.min(at,parts.length)),0,...nu);
@@ -539,7 +539,9 @@ function fets(ctx,pw,ho,lo,vm,ph,ret,h,N){if(pw.f2){fetPkg();const F=pw.f2;
     ctx.part('Q',pw.f.mpn,'TO-252',{1:lg,2:ph,3:ret},{mpn:pw.f.mpn,desc:`로우사이드 N-MOSFET ${pw.f.label}${pw.par>1?' · 병렬 '+pw.par:''}`,pinNames:{1:'G',2:'D',3:'S'},P:pw.Pq,lk:'phase'});}}
 const SHUNTS=[0.01,0.005,0.002,0.001,0.0005,0.00025];
 function shunt(ctx,net,I,what,vmax,Ipk,tpk){vmax=vmax||0.045;Ipk=Math.max(I,+Ipk||0);const R=SHUNTS.find(r=>r*Ipk<=vmax)||SHUNTS[SHUNTS.length-1];const P=+(I*I*R).toFixed(2);const lab=R>=0.001?(R*1000)+'mΩ':(R*1e6)+'µΩ';
-  ctx.part('R',lab,'2512',{1:net,2:'GND'},{mpn:'',desc:`${what} 전류 션트 ${lab} · 상시 ${I} A에서 ${(R*I*1000).toFixed(0)} mV · ${P} W${Ipk>I?` · 피크 ${Ipk} A에서 ${(R*Ipk*1000).toFixed(0)} mV · ${(Ipk*Ipk*R).toFixed(1)} W 순간`:''}${P>2?' (2 W 초과 — 병렬 또는 3 W 2512)':''}`,P,lk:'phase',pk:Ipk>I?{P:+(Ipk*Ipk*R).toFixed(2),t:+tpk||2}:null});return R;}
+  // small 48 V drives (≤ 8 A, ≤ 0.5 W in the shunt, ≤ 1 W at the peak): a 2010 part (1 W class) instead of the 2512
+  const hv=Object.values(ctx.rails||{}).some(r=>r&&r.v>30);const fpS=hv&&I<=8&&P<=0.5&&Ipk*Ipk*R<=1?'2010':'2512';
+  ctx.part('R',lab,fpS,{1:net,2:'GND'},{mpn:'',desc:`${what} 전류 션트 ${lab}${fpS==='2010'?' (2010 · 1 W급)':''} · 상시 ${I} A에서 ${(R*I*1000).toFixed(0)} mV · ${P} W${Ipk>I?` · 피크 ${Ipk} A에서 ${(R*Ipk*1000).toFixed(0)} mV · ${(Ipk*Ipk*R).toFixed(1)} W 순간`:''}${P>2?' (2 W 초과 — 병렬 또는 3 W 2512)':''}`,P,lk:'phase',pk:Ipk>I?{P:+(Ipk*Ipk*R).toFixed(2),t:+tpk||2}:null});return R;}
 /* ---------- parts picked in the system design (block.part → plan param "pick") ----------
    A library block builds its circuit around the picked part when the part's pin table fits the block's job: pins are wired by
    their datasheet names (wireByName), the footprint comes from the part's package. Otherwise the block keeps its own part and
@@ -805,7 +807,7 @@ function shuntAmp(ctx,net,out,I,what,Ipk,tpk){Ipk=Math.max(I,+Ipk||0);const R=sh
   ctx.part('U','INA181A2-Q1','SOT-23-6',{1:amp,2:'GND',3:net,4:'GND',5:'GND',6:vs},{mpn:'INA181A2QDBVRQ1',desc:`${what} 전류 앰프 ×50 (${(R*Ipk*50).toFixed(2)} V @ 피크 ${Ipk} A)`,pinNames:{1:'OUT',2:'GND',3:'IN+',4:'IN−',5:'REF',6:'VS'},P:0.002});
   ctx.cap(vs,'100nF','전류 앰프 디커플링');ctx.part('R','1kΩ','0603',{1:amp,2:out},{desc:'ADC RC 필터'});ctx.part('C','1nF','0603',{1:out,2:'GND'},{desc:'ADC RC 필터'});ctx.sig(out,'adc');}
 function bulk(ctx,vm,I,what){const Vb=ctx.railV?ctx.railV(vm):12;
-  if(Vb>30){const n=Math.max(2,Math.min(6,Math.ceil(I/10)));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'CP-SMD-10x10');
+  if(Vb>30){/* 8 A or less: one bulk cap (the ceramics carry the ripple) */const n=I<=8?1:Math.max(2,Math.min(6,Math.ceil(I/10)));if(typeof FPGEN!=='undefined'&&typeof PCB!=='undefined')FPGEN.ensure(PCB,'CP-SMD-10x10');
     for(let i=0;i<n;i++)ctx.part('CP','100µF','CP-SMD-10x10',{1:vm,2:'GND'},{mpn:'',desc:`${what} DC 링크 벌크 (100 µF · 정격 80 V 이상 하이브리드/알루미늄 · 리플 전류 정격으로 품번 지정 필요)`});
     for(let i=0;i<4;i++)ctx.part('C','2.2µF','1210',{1:vm,2:'GND'},{mpn:capHV['2.2µF'][0],desc:`${what} DC 링크 세라믹 (100 V X7R — FET 가까이)`});ctx.cap(vm,'100nF',`${what} DC 링크 고주파 바이패스`);return;}
   const n=Math.max(1,Math.min(4,Math.ceil(I/20)));for(let i=0;i<n;i++)ctx.part('CP','470µF','CP-SMD-10x10',{1:vm,2:'GND'},{mpn:'EEE-FK1V471SP',desc:`${what} VM 벌크 (35 V 470 µF · 리플 전류)`});

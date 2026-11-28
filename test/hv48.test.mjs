@@ -126,3 +126,15 @@ test('48 V single-channel BLAC example with inner-layer current sharing (8 layer
   // the copper is really there: fill pieces of each phase on the inner signal layer next to the bottom
   const k = L.PCB.cuKeys(B)[5];['PH_U', 'PH_V', 'PH_W'].forEach(n => assert.ok(B.layers[k + '.cu'].filter(p => p.fill && p.net === n).length > 100, n + ' fill on ' + k));
 });
+
+test('48 V single-channel BLAC example for 6 A (8 layers, 84 × 66): right-sized parts — six FETs, 2010 shunts, one bulk cap, 16-pin output connector — and a clean restore', () => {
+  const L = load();const S = L.SNAP_B48A6;assert.equal(S.meta.W, 84);assert.equal(S.meta.H, 66);assert.equal(S.plan.blocks.find(b => b.type === 'gdrv3').params.i, 6);
+  const r0 = L.NEWPROJ.build(JSON.parse(JSON.stringify(S.plan)));const by = v => r0.parts.filter(c => c.val === v);
+  assert.equal(by('NVTFS6H850N').length, 6);const sh = r0.parts.filter(c => /전류 션트/.test(c.desc || ''));assert.equal(sh.length, 3);sh.forEach(c => { assert.equal(c.val, '10mΩ');assert.equal(c.fp, '2010');assert.match(c.desc, /상시 6 A에서 60 mV · 0.36 W/); });
+  assert.equal(r0.parts.filter(c => /DC 링크 벌크/.test(c.desc || '')).length, 1);const jo = by('ECU-OUT');assert.equal(jo.length, 1);assert.equal(Object.keys(jo[0].pinNames).length, 16);
+  // the 20 A plan keeps the larger parts
+  const r20 = L.NEWPROJ.build(JSON.parse(JSON.stringify(L.SNAP_B48I.plan)));assert.equal(r20.parts.filter(c => /DC 링크 벌크/.test(c.desc || '')).length, 2);assert.ok(r20.parts.filter(c => /전류 션트/.test(c.desc || '')).every(c => c.fp === '2512'));assert.equal(Object.keys(r20.parts.find(c => c.val === 'ECU-OUT').pinNames).length, 20);
+  const { B, r } = restorePlanSnap(L, S);assert.equal(r.missing.length, 0);assert.equal(B.comps.length, r0.parts.length);B.comps.filter(c => c.fp === '2010').forEach(c => assert.equal(c.pads.length, 2));
+  assert.equal(L.PCBEDIT.drc(B).length, 0);assert.equal(L.PCBEDIT.ratsnest(B).length, 0);assert.ok(B.powerReport.nets.every(n => n.ok));assert.equal(B.powerReport.viaChk.filter(v => !v.ok).length, 0);
+  ['PH_U', 'PH_V', 'PH_W'].forEach(n => { const w = B.powerReport.nets.find(x => x.net === n);assert.ok(w.need < 1.5 && w.width > 5, `${n} ${w.width} / ${w.need}`); });
+});
